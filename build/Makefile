@@ -879,6 +879,28 @@ checkpgplot:
 #	@echo "PGPLOT was compiled with ${PGPLOT_COMP}";
    endif
 
+checkgiza:
+	@if [ ! -e $(GIZA_DIR)/include/giza-fortran.F90 ]; then \
+	   if [ -d ../giza/ ]; then \
+	   echo "*********************************************************"; \
+	   echo "*                                                       *"; \
+	   echo "* ERROR: Cannot find system install of giza             *"; \
+	   echo "* Type \"make withgiza\" to build local copy of giza     *"; \
+	   echo "*                                                       *"; \
+	   echo "*********************************************************"; \
+	   else \
+	   echo "*********************************************************"; \
+	   echo "*                                                       *"; \
+	   echo "* ERROR: giza is not installed. Please install it.      *"; \
+	   echo "*                                                       *"; \
+	   echo "* e.g:                                                  *"; \
+	   echo "*   git clone https://github.com/danieljprice/giza.git  *"; \
+	   echo "*   make withgiza                                       *"; \
+	   echo "*                                                       *"; \
+	   echo "*********************************************************"; \
+	   fi; \
+	fi;
+
 checkh5part: checkhdf5
    ifeq (X${H5PART_DIR}, X)
 	@echo; echo "ERROR: H5PART_DIR should be set before compiling splash with h5part read/write"; echo; ${MAKE} err;
@@ -947,12 +969,19 @@ plotlib_pgplot.o: checkpgplot
 
 plotlib_giza.o : giza-fortran.o
 
-giza-fortran.o : giza-fortran.F90 $(GIZA_DIR)/lib/libgiza.a
+giza-fortran.o : giza-fortran.F90
 	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $< -o $@
 
-.PHONY: gizabuild libgiza
+.PHONY: giza gizabuild libgiza
 
-giza:
+giza-fortran.F90 : checkgiza
+#
+# LOCAL build of giza
+#
+withgiza: ../giza/lib/libgiza.a
+	$(MAKE) $(MAKECMDFLAGS) GIZA_DIR="../giza"
+
+../giza/lib/libgiza.a:
 	@echo "Compiling local copy of giza..."
 	cd ../giza; ./configure --prefix=$(PWD)/../giza CC=$(CC) CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
 	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
@@ -1016,7 +1045,5 @@ include .depends
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash
 
-#cleangiza:
-#ifneq ($(BACKEND),pgplot)
-#	${MAKE} -C $(GIZA_DIR) clean
-#endif
+cleangiza:
+	${MAKE} -C ../giza clean uninstall
