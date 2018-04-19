@@ -2169,7 +2169,7 @@ subroutine set_labels
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,itstop,igrainsize,igraindens
   use params
-  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread
