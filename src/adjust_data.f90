@@ -357,10 +357,21 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
              if (irho.gt.0) dat(jdust,irho,i)       = rhodust
              if (idustfracsum == 0) then
+                !--copy the dustfracion
                 dat(jdust,idustfrac,i) = dustfraci
+                if (ideltav /= 0) then
+                   !--copy the deltav's
+                   dat(jdust,ideltav:ideltav+ndimV-1,i) = dat(j,ideltav:ideltav+ndimV-1,i)
+                endif
              else
+                !--copy the dustfracion
                 dat(jdust,idustfracsum:idustfracsum+ndusttypes,i) = &
                     dat(j,idustfracsum:idustfracsum+ndusttypes,i)
+                !--copy the deltav's
+                if (ideltavsum /= 0) then
+                   dat(jdust,ideltavsum:ideltavsum+ndimV*(ndusttypes+1)-1,i) = &
+                              dat(j,ideltavsum:ideltavsum+ndimV*(ndusttypes+1)-1,i)
+                endif
              endif
              iamtype(ntoti + ndust,i) = 2
 

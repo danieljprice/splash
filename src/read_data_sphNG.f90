@@ -346,7 +346,7 @@ contains
   if (index(fileident,'RT=on').ne.0) then
      rt_in_header = .true.
   endif
-  if (index(fileident,'dust').ne.0) then
+  if (index(fileident,'1dust').ne.0) then
      use_dustfrac = .true.
   endif
   if (index(fileident,'This is a test').ne.0) then
@@ -1059,7 +1059,7 @@ contains
 
   ! Look for ndusttypes in the header
   do i = 1,maxinblock
-     if (tags(i)=='ndusttypes') then
+     if (trim(tags(i))=='ndusttypes') then
          igotndusttypes = .true.
      endif
   enddo
@@ -2168,7 +2168,7 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum
+              idustfrac,ideltav,idustfracsum,ideltavsum,itstop
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,&
                             ndusttypes
@@ -2182,7 +2182,7 @@ subroutine set_labels
   integer :: i,j
   real(doub_prec)   :: uergg,unitx
   character(len=20) :: string,unitlabelx
-  character(len=20) :: dustfrac_string,deltav_string
+  character(len=20) :: dustfrac_string,deltav_string,tstop_string
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -2204,6 +2204,7 @@ subroutine set_labels
      ih = 4       !  smoothing length
   endif
   irho = ih + 1     !  density
+  itstop = 0
   iutherm = 0
   idustfrac = 0
 
@@ -2244,6 +2245,8 @@ subroutine set_labels
            idustfracsum = i
         case('dustfrac')
            idustfrac = i
+        case('tstop')
+           itstop = i
         case('deltavsumx')
            ideltavsum = i
         case('deltavx')
@@ -2315,6 +2318,14 @@ subroutine set_labels
         write(dustfrac_string,'(I10)') i-idustfracsum
         write(dustfrac_string,'(A)') 'dustfrac'//trim(adjustl(dustfrac_string))
         label(i) = dustfrac_string
+     enddo
+  endif
+  if (itstop.gt.0) then
+     ! Make N tstop labels
+     do i = itstop-(ndusttypes-1),itstop
+        write(tstop_string,'(I10)') i-(itstop-ndusttypes)
+        write(tstop_string,'(A)') 'tstop'//trim(adjustl(tstop_string))
+        label(i) = tstop_string
      enddo
   endif
   if (ideltavsum.gt.0) then
