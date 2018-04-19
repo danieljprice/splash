@@ -92,8 +92,11 @@ module exact
   real :: machs,macha
   !--planet-disc interaction
   real :: HonR,rplanet
+  real :: spiral_params(7,maxexact)
+  integer :: ispiral,narms
   !--bondi flow
-  logical :: relativistic
+  logical :: relativistic, geodesic_flow,is_wind
+  real    :: const1,const2
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -113,7 +116,7 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet,relativistic
+       HonR,rplanet,relativistic,geodesic_flow,is_wind,const1,const2,ispiral,narms,spiral_params
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -196,8 +199,16 @@ contains
 !   planet-disc interaction
     HonR = 0.05
     rplanet = 1.
+    ispiral = 1
+    narms = 1
+    spiral_params = 0.
+    spiral_params(2,:) = 360.
 !   Bondi
-    relativistic = .false.
+    relativistic  = .true.
+    geodesic_flow = .false.
+    is_wind       = .true.
+    const1 = 8.
+    const2 = 1.
 
 !   gamma, if not read from file
     gamma_exact = 5./3.
@@ -228,9 +239,10 @@ contains
   subroutine submenu_exact(iexact)
     use settings_data, only:ndim
     use prompting,     only:prompt
-    use filenames,     only:rootname,ifileopen
+    use filenames,     only:rootname,ifileopen,fileprefix
     use exactfunction, only:check_function
     use mhdshock,      only:nmhdshocksolns,mhdprob
+    use planetdisc,    only:maxspirals,labelspiral
     use asciiutils,    only:get_ncolumns,get_nrows,string_replace
     integer, intent(inout) :: iexact
     integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
@@ -256,7 +268,7 @@ contains
            '14) dusty waves', /, &
            '15) Roche lobes/potential ',/, &
            '16) C-shock ',/, &
-           '17) Planet-disc interaction',/, &
+           '17) Spiral arms (planet-disc interaction)',/, &
            '18) Bondi flow')
     call prompt('enter exact solution to plot',iexact,0,18)
     print "(a,i2)",'plotting exact solution number ',iexact
@@ -503,13 +515,54 @@ contains
        call prompt('enter sonic Mach number',machs,0.)
        call prompt('enter Alfvenic Mach number ',macha,0.)
     case(17)
-       call prompt('enter disc aspect ratio (H/R)',HonR,0.,1.)
-       !call prompt('enter planet orbital radius ',rplanet,0.)
+       do i=1,maxspirals
+          print "(1x,i1,')',1x,a)",i,trim(labelspiral(i))
+       enddo
+       call prompt('Which spiral arm solution to plot?',ispiral,0,maxspirals)
+       select case(ispiral)
+       case(2)
+          call prompt('enter number of spiral arms to plot',narms,1,maxexact)
+          print "(3(/,a),/)",' Spiral data can be read from '//trim(fileprefix)//'.spirals file', &
+                             ' with one line per arm and columns corresponding to:', &
+                             ' PAmin, PAmax, a0, a1, a2, a3, a4'
+          do i=1,narms
+             print "(a,i1,a)",' -- arm ',i,' --'
+             call prompt('enter starting position angle (deg)',spiral_params(1,i))
+             call prompt('enter finishing position angle (deg)',spiral_params(2,i))
+             call prompt('enter a0 in r = \sum a_i phi^i',spiral_params(3,i))
+             call prompt('enter a1 in r = \sum a_i phi^i',spiral_params(4,i))
+             call prompt('enter a2 in r = \sum a_i phi^i',spiral_params(5,i))
+             call prompt('enter a3 in r = \sum a_i phi^i',spiral_params(6,i))
+             call prompt('enter a4 in r = \sum a_i phi^i',spiral_params(7,i))
+          enddo
+       case default
+          call prompt('enter disc aspect ratio (H/R)',HonR,0.,1.)
+          !call prompt('enter planet orbital radius ',rplanet,0.)
+       end select
     case(18)
-       call prompt('use relativistic solution?',relativistic)
-       call prompt('enter radius where v is 0 (r0)',Rtorus,0.)
-       call prompt('enter mass of central object',Mstar,0.)
        prompt_for_gamma = .true.
+       call prompt('is it a wind (instead of accretion)?',is_wind)
+       call prompt('enter mass of central object',Mstar,0.)
+       call prompt('do you want a relativistic solution?',relativistic)
+       if(.not.relativistic) then
+          prompt_for_gamma = .false.
+          call prompt('enter Parker/Bondi critical radius (rcrit)',const1)
+          call prompt('enter density at critical radius (rhocrit)',const2)
+       elseif(relativistic) then
+          call prompt('is it the geodesic flow?',geodesic_flow)
+          if (geodesic_flow) then
+             const1 = 1.
+             const2 = 1.e-9
+             call prompt('enter constant den0',const1,min=0.)
+             call prompt('enter constant en0 ',const2,min=0.)
+          else
+             call prompt('enter the critical radius in units of the central mass M',const1,min=2.)
+             const1 = const1*Mstar
+             const2 = 1.
+             call prompt('enter adiabat (entropy normalisation)',const2,min=0.)
+          endif
+       endif
+
     end select
 
     if (prompt_for_gamma) then
@@ -574,7 +627,7 @@ contains
     character(len=*), intent(in)  :: rootname
     integer,          intent(out) :: ierr
 
-    integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6)
+    integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6),narmsread
     character(len=len_trim(rootname)+8) :: filename
     character(len=120) :: line
     character(len=30)  :: var
@@ -587,7 +640,6 @@ contains
     case(1)
        !
        !--read functions from file
-       !
        !
        filename=trim(rootname)//'.func'
        call read_asciifile(trim(filename),nf,funcstring,ierr)
@@ -783,7 +835,27 @@ contains
        endif
        close(unit=19)
        return
-
+    case(17)
+       !
+       !--spiral arm parameters from .spirals file
+       !
+       filename=trim(rootname)//'.spirals'
+       call read_asciifile(trim(filename),narmsread,spiral_params,ierr)
+       if (ierr.eq.-1) then
+          if (iverbose > 0) write(*,"(a)",advance='no') ' no file '//trim(filename)//'; '
+          filename = trim(fileprefix)//'.spirals'
+          call read_asciifile(trim(filename),narmsread,spiral_params,ierr)
+          if (ierr.eq.-1) then
+             if (iverbose > 0) print "(a)",' no file '//trim(filename)
+             return
+          else
+             if (iverbose > 0) print*,trim(filename)//' read ',narmsread,' arms, err = ',ierr
+             if (narmsread >= 0) narms = narmsread
+          endif
+       else
+          if (iverbose > 0) print*,trim(filename)//' read ',narmsread,' arms, err = ',ierr
+          narms = max(narmsread,0)
+       endif
     end select
 
     return
@@ -864,7 +936,6 @@ contains
     real, allocatable :: xexact(:),yexact(:),xtemp(:)
     real :: dx,timei,gammai
     character(len=len(filename_exact)) :: filename_tmp
-    logical :: iplot_type_tmp(maxparttypes)
 
     !
     !--change line style and colour settings, but save old ones
@@ -1268,12 +1339,16 @@ contains
        endif
     case(17) ! planet-disc interaction
        if (ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
-          call exact_planetdisc(igeom,timei,HonR,rplanet,xexact,yexact,ierr)
+          call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,narms,spiral_params,xexact,yexact,ierr)
        endif
     case(18)
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.ivx .and. igeom==3) then
-             call exact_bondi(1,timei,gammai,Rtorus,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(1,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
+          elseif (iploty.eq.iutherm .and. igeom==3) then
+             call exact_bondi(2,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
+          elseif (iploty.eq.irho .and. igeom==3) then
+             call exact_bondi(3,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           endif
        endif
     end select

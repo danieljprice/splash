@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -31,7 +31,8 @@ module projections3Dgeom
  use projections3D, only:setup_integratedkernel,wfromtable,coltable
  use kernels,       only:radkernel,radkernel2
  use geometry,      only:igeom_cartesian,coord_transform,coord_is_length, &
-                         coord_transform_limits,igeom_cylindrical,get_coord_limits
+                         coord_transform_limits,igeom_cylindrical,&
+                         get_coord_limits,coord_is_periodic
  implicit none
 
  public :: interpolate3D_proj_geom, interpolate3D_xsec_geom
@@ -52,7 +53,7 @@ contains
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_b weight_b dat_b W(r-r_b, h_b)
-! 
+!
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
 !
@@ -78,8 +79,9 @@ contains
 
 subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom,&
-     iplotx,iploty,iplotz,ix)
+     iplotx,iploty,iplotz,ix,xorigin)
 
+  use timing, only:wall_time,print_time
   implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -89,11 +91,12 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   logical, intent(inout) :: normalise
   integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
+  real,    dimension(3), intent(in) :: xorigin
   real, dimension(npixx,npixy) :: datnorm
   real, parameter :: pi = 3.1415926536
 
-  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  integer :: ixcoord,iycoord,izcoord,ierr
+  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
+  integer :: ixcoord,iycoord,izcoord,ierr,ncpus
   integer :: iprintinterval, iprintnext, itmin
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
@@ -104,18 +107,32 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real, dimension(3), save :: xci, xi
 !$omp threadprivate(xci,xi)
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
-  real :: term,termnorm,dx,dx2,dy,dy2
+  real :: term,termnorm,dx,dx2,dy,dy2,dz
   real :: xmax,ymax,hmin,horigi
   real :: t_start,t_end,t_used,tsec
   logical :: iprintprogress,islengthx,islengthy,islengthz
-  
+  character(len=64) :: string
+
   datsmooth = 0.
   term = 0.
+  string = 'projecting'
   if (normalise) then
-     print "(1x,a)",'projecting (normalised, non-cartesian) from particles to pixels...'
+     string = trim(string)//' (normalised, non-cartesian)'
      datnorm = 0.
   else
-     print "(1x,a)",'projecting (non-cartesian) from particles to pixels...'  
+     string = trim(string)//' (non-cartesian)'
+  endif
+  ncpus = 0
+  !$omp parallel
+  !$omp master
+  !$ ncpus = omp_get_num_threads()
+  !$omp end master
+  !$omp end parallel
+
+  if (ncpus > 0) then
+     write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3,' cpus')") trim(string),npixx,npixy,ncpus
+  else
+     write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
      print "(1x,a)",'interpolate3D_proj_geom: error: pixel width <= 0'
@@ -156,7 +173,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !
 !--get starting CPU time
 !
-  call cpu_time(t_start)
+  call wall_time(t_start)
 
   xminpix = xmin - 0.5*pixwidthx
   yminpix = ymin - 0.5*pixwidthy
@@ -174,15 +191,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart,hmin) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
-!$omp shared(datnorm,normalise,radkernel,radkernel2) &
+!$omp shared(datnorm,normalise,radkernel,radkernel2,xorigin) &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
-!$omp private(q2,dx,dx2,dy,dy2,wab,xcoord,xpix) &
-!$omp private(i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
-!$omp master
-!$    print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
-
+!$omp private(q2,dx,dx2,dy,dy2,dz,wab,xcoord,xpix) &
+!$omp private(i,ipix,jpix,ip,jp,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
 !$omp do schedule (guided, 2)
   over_particles: do i=1,npart
      !
@@ -209,16 +222,16 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      hi = max(horigi,hmin)
 
      radkern = radkernel*hi ! radius of the smoothing kernel
-     
+
      !
      !--get limits of contribution from particle in cartesian space
      !
-     xci(1) = x(i)
-     xci(2) = y(i)
-     xci(3) = z(i)
+     xci(1) = x(i) + xorigin(1)  ! xci = position in cartesians
+     xci(2) = y(i) + xorigin(2)
+     xci(3) = z(i) + xorigin(3)
      call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
-     if (ierr /= 0) cycle over_particles  
+     if (ierr /= 0) cycle over_particles
      !
      !--set kernel related quantities
      !
@@ -244,20 +257,28 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
         xcoord(izcoord) = 0. ! use phi=0 so get x = r cos(phi) = r
      endif
      do jpix = jpixmin,jpixmax
-        xcoord(iycoord) = yminpix + jpix*pixwidthy
+        jp = jpix
+        if (jp < 1)     jp = jp + npixy
+        if (jp > npixy) jp = jp - npixy
+        xcoord(iycoord) = yminpix + jp*pixwidthy
         do ipix = ipixmin,ipixmax
-           xcoord(ixcoord) = xminpix + ipix*pixwidthx
-           
+           ip = ipix
+           if (ip < 1)     ip = ip + npixx
+           if (ip > npixx) ip = ip - npixx
+           xcoord(ixcoord) = xminpix + ip*pixwidthx
+
            !--now transform to get location of pixel in cartesians
            call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
-           
+
            !--find distances using cartesians and perform interpolation
            dy   = xpix(iycoord) - xci(iycoord)
            dx   = xpix(ixcoord) - xci(ixcoord)
+           dz   = xpix(izcoord) - xci(izcoord)  ! z dir important if surface not flat (e.g. r slice)
 
            dx2  = dx*dx
            dy2  = dy*dy
-           q2   = (dx2 + dy2)*hi21
+           q2   = (dx2 + dy2 +dz*dz)*hi21
+
            !
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
@@ -266,15 +287,16 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
-              !                  
+              !
               !$omp atomic
-              datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+              datsmooth(ip,jp) = datsmooth(ip,jp) + term*wab
 
               if (normalise) then
                  !$omp atomic
-                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                 datnorm(ip,jp) = datnorm(ip,jp) + termnorm*wab
               endif
            endif
+           !endif
         enddo
      enddo
 
@@ -291,19 +313,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      end where
   endif
 !
-!--get ending CPU time
+!--get/print timings
 !
-  call cpu_time(t_end)
+  call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60.) then
-     itmin = int(t_used/60.)
-     tsec = t_used - (itmin*60.)
-     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,trim(str)
-  else
-     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,trim(str)
-  endif
-  
-  return
+  if (t_used > 5.) call print_time(t_used)
 
 end subroutine interpolate3D_proj_geom
 
@@ -328,7 +342,7 @@ end subroutine interpolate3D_proj_geom
 
 subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,igeom, &
-     iplotx,iploty,iplotz,ix)
+     iplotx,iploty,iplotz,ix,xorigin)
 
   use kernels, only:cnormk3D,wfunc
   implicit none
@@ -340,9 +354,10 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
   logical, intent(in) :: normalise
   integer, intent(in) :: igeom,iplotx,iploty,iplotz
   integer, dimension(3), intent(in) :: ix
+  real,    dimension(3), intent(in) :: xorigin
   real, dimension(npixx,npixy) :: datnorm
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
   integer :: ixcoord,iycoord,izcoord,ierr
   real :: hi,hi1,radkern,q2,wab,const,hi21
   real :: termnorm,term,dx,dx2,dy,dy2,dz,dz2
@@ -424,9 +439,9 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
         !
         !--get limits of contribution from particle in cartesian space
         !
-        xci(1) = x(i)
-        xci(2) = y(i)
-        xci(3) = z(i)
+        xci(1) = x(i) + xorigin(1)
+        xci(2) = y(i) + xorigin(2)
+        xci(3) = z(i) + xorigin(3)
         call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
                               npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
         if (ierr /= 0) cycle over_parts
@@ -437,9 +452,15 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           xcoord(iycoord) = yminpix + jpix*pixwidthy
+           jp = jpix
+           if (jp < 1)     jp = jp + npixy
+           if (jp > npixy) jp = jp - npixy
+           xcoord(iycoord) = yminpix + jp*pixwidthy
            do ipix = ipixmin,ipixmax
-              xcoord(ixcoord) = xminpix + ipix*pixwidthx
+              ip = ipix
+              if (ip < 1)     ip = ip + npixx
+              if (ip > npixx) ip = ip - npixx
+              xcoord(ixcoord) = xminpix + ip*pixwidthx
 
               !--now transform to get location of pixel in cartesians
               call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
@@ -460,10 +481,10 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
                  !
                  !--calculate data value at this pixel using the summation interpolant
                  !
-                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+                 datsmooth(ip,jp) = datsmooth(ip,jp) + term*wab
 
                  if (normalise) then
-                    datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                    datnorm(ip,jp) = datnorm(ip,jp) + termnorm*wab
                  endif
               endif
            enddo
@@ -527,31 +548,33 @@ end subroutine get_coord_info
 !--------------------------------------------------------------------------
 !
 !  utility routine for use in above routines
+!  IN:
+!    xci - coordinates of particle in transformed space (e.g. r, phi, z)
+!    radkern - radius of kernel (e.g. 2h)
+!  OUT:
+!    xi - cartesian coordinates of particle
+!    ipixmin,ipixmax,jpixmin,jpixmax - pixel limits
 !
 !--------------------------------------------------------------------------
 subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom,&
-                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)  
+                            npixx,npixy,pixwidthx,pixwidthy,xmin,ymin,ixcoord,iycoord,ierr)
   real, intent(in)  :: xci(3),radkern,pixwidthx,pixwidthy,xmin,ymin
   real, intent(out) :: xi(3)
   integer, intent(out) :: ipixmin,ipixmax,jpixmin,jpixmax,ierr
   integer, intent(in)  :: igeom,npixx,npixy,ixcoord,iycoord
   real :: xpixmin(3),xpixmax(3)
-  
+
   ierr = 0
-  
-  xpixmin(:) = xci(:) - radkern
-  xpixmax(:) = xci(:) + radkern
   !
-  !--transform these into limits of the contributions 
-  !  in the new coordinate system
+  !--get limits of rendering in new coordinate system
   !
   call get_coord_limits(radkern,xci,xi,xpixmin,xpixmax,igeom)
   !
   !--now work out contributions to pixels in the the transformed space
   !
-  ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)
+  ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)+1
   if (ipixmax.lt.1) ierr = 1
-  jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)
+  jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)+1
   if (jpixmax.lt.1) ierr = 2
 
   ipixmin = int((xpixmin(ixcoord) - xmin)/pixwidthx)
@@ -559,10 +582,14 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
   if (jpixmin.gt.npixy) ierr = 4
 
-  if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-  if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-  if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-  if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+  if (.not.coord_is_periodic(ixcoord,igeom)) then
+     if (ipixmin.lt.1)     ipixmin = 1       ! make sure they only contribute
+     if (ipixmax.gt.npixx) ipixmax = npixx   ! to pixels in the image
+  endif
+  if (.not.coord_is_periodic(iycoord,igeom)) then
+     if (jpixmin.lt.1)     jpixmin = 1       ! (note that this optimises
+     if (jpixmax.gt.npixy) jpixmax = npixy   !  much better than using min/max)
+  endif
 
 end subroutine get_pixel_limits
 

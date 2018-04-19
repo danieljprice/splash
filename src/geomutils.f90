@@ -76,20 +76,21 @@ end subroutine change_coords
 !-------------------------------------------------------------------
 ! interface to coordinate-system transformations
 !-------------------------------------------------------------------
-subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
+subroutine changecoords(iplotx,iploty,iplotz,xplot,yplot,zplot,ntot,ndim,itrackpart,dat)
  use geometry,      only:coord_transform,labelcoordsys
  use settings_data, only:xorigin,icoords,icoordsnew,debugmode
  use labels,        only:is_coord,ix
  implicit none
- integer, intent(in) :: iplotx,iploty,ntot,ndim,itrackpart
- real, dimension(:), intent(inout) :: xplot,yplot
+ integer, intent(in) :: iplotx,iploty,iplotz,ntot,ndim,itrackpart
+ real, dimension(:), intent(inout) :: xplot,yplot,zplot
  real, dimension(:,:), intent(in)  :: dat
  real, dimension(ndim) :: xcoords,xcoordsnew
- integer :: j,ixcoord,iycoord
- logical :: iscoordx,iscoordy
+ integer :: j,ixcoord,iycoord,izcoord
+ logical :: iscoordx,iscoordy,iscoordz
 
  iscoordx = is_coord(iplotx,ndim)
  iscoordy = is_coord(iploty,ndim)
+ iscoordz = is_coord(iplotz,ndim) ! should always be true if x and y are coords
  if (iscoordx .or. iscoordy) then
     if (debugmode) print*,'changing coords from ',trim(labelcoordsys(icoords)), &
                   ' to ',trim(labelcoordsys(icoordsnew))
@@ -107,6 +108,11 @@ subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
        print*,'ERROR in y coordinate offset in arrays: cannot change coordinate system'
        return
     endif
+    izcoord = iplotz - ix(1) + 1
+    if (iscoordz .and. (izcoord.le.0 .or. izcoord.gt.ndim)) then
+       print*,'ERROR in z coordinate offset in arrays: cannot change coordinate system'
+       return
+    endif
 
     do j=1,ntot
        if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
@@ -119,6 +125,7 @@ subroutine changecoords(iplotx,iploty,xplot,yplot,ntot,ndim,itrackpart,dat)
                             xcoordsnew(1:ndim),ndim,icoordsnew)
        if (iscoordx) xplot(j) = xcoordsnew(ixcoord)
        if (iscoordy) yplot(j) = xcoordsnew(iycoord)
+       if (iscoordz) zplot(j) = xcoordsnew(izcoord)
     enddo
  endif
 

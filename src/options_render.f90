@@ -79,6 +79,17 @@ subroutine defaults_set_render
   return
 end subroutine defaults_set_render
 
+!---------------------------------------------
+! set default values for 360 video
+!---------------------------------------------
+subroutine defaults_set_render_360
+  use colourbar, only:set_floating_bar_style
+
+  iColourBarStyle = 7
+  call set_floating_bar_style(iColourBarStyle,4)
+
+end subroutine defaults_set_render_360
+
 !-----------------------------------------------------------------------------
 ! options for rendered plots
 !-----------------------------------------------------------------------------

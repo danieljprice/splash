@@ -340,6 +340,9 @@ subroutine add_shape(istart,iend,nshape)
        if (itype.ne.7 .and. itype.ne.2) then
           call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
           call prompt('enter'//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
+       elseif (itype.eq.7) then
+          call prompt('enter xmin for line segment (0=ignore)',shape(ishape)%xpos)
+          call prompt('enter xmax for line segment (0=ignore)',shape(ishape)%xlen)
        endif
        if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
@@ -429,7 +432,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  integer :: i,j,ierr,iplotonthispanel,ndec,nc
  integer, parameter :: maxfuncpts = 1000
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,charheightprev
- real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust
+ real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust,xmini,xmaxi
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
  character(len=lentext) :: text
@@ -499,6 +502,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
              print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
           else
              call plot_circ(xpos,ypos,xlen)
+             if (shape(i)%ifillstyle > 2) then
+                call plot_sfs(2)  ! also plot outline if fill style is hatched
+                call plot_circ(xpos,ypos,xlen)
+             endif
           endif
        case(5) ! line
           xline(1) = xpos
@@ -517,9 +524,13 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
           call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(text))
        case(7) ! arbitrary function
           !--set x to be evenly spaced in transformed (plot) coordinates
-          dx = (xmax-xmin)/real(maxfuncpts - 1)
+          xmini = xmin
+          xmaxi = xmax
+          if (abs(shape(i)%xpos) > 0.) xmini = shape(i)%xpos
+          if (abs(shape(i)%xlen) > 0.) xmaxi = shape(i)%xlen
+          dx = (xmaxi-xmini)/real(maxfuncpts - 1)
           do j=1,maxfuncpts
-             xfunc(j) = xmin + (j-1)*dx
+             xfunc(j) = xmini + (j-1)*dx
           enddo
           !--transform x array back to untransformed space to evaluate f(x)
           if (itransx.gt.0) call transform_inverse(xfunc,itransx)
@@ -527,7 +538,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
           if (ierr.eq.0) then
              !--reset x values
              do j=1,maxfuncpts
-                xfunc(j) = xmin + (j-1)*dx
+                xfunc(j) = xmini + (j-1)*dx
              enddo
              !--transform y if necessary
              if (itransy.gt.0) call transform(yfunc,itransy)

@@ -244,7 +244,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            endif
            call plot_sfs(2)
            if (icoordsnew.ne.icoords) then
-              call plot_kernel_gr(icoordsnew,icoords,xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
+              call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
+                   xcoords(iclosest),ycoords(iclosest),zcoords(iclosest),2.*hi(iclosest))
            else
               call plot_circ(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
            endif

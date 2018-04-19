@@ -149,6 +149,7 @@ subroutine submenu_xsecrotate(ichoose)
  integer, intent(in) :: ichoose
  integer :: ians,i
  logical :: ichangedorigin
+ character(len=1) :: labelx(3)
  character(len=4) :: text
  real, dimension(3) :: xorigintemp
 
@@ -202,8 +203,9 @@ subroutine submenu_xsecrotate(ichoose)
     xorigintemp(1:ndim) = xorigin(1:ndim)
     ichangedorigin = .false.
     print "(a)",' Note that origin settings affect both rotation and radius calculations'
+    labelx=(/'x','y','z'/)
     do i=1,ndim
-       call prompt('enter location of origin '//trim(label(ix(i))),xorigin(i))
+       call prompt('enter location of origin '//labelx(i),xorigin(i))
        if (abs(xorigin(i)-xorigintemp(i)).gt.tiny(0.)) then
           ichangedorigin = .true.
        endif

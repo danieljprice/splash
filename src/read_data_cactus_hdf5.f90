@@ -47,46 +47,6 @@
 !
 ! Columns with the 'required' flag set to false are not read 
 !-------------------------------------------------------------------------
-!
-!  The module below contains interface routines to c functions
-!  that perform the actual calls to the HDF5 libs
-!
-!-------------------------------------------------------------------------
-module cactushdf5read
- use params, only:maxplot,doub_prec
- use labels, only:lenlabel
- use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
- implicit none
- character(len=lenlabel), dimension(maxplot) :: blocklabel
- character(len=130) :: datfileprev = ' '
- logical :: file_is_open = .false.
- integer :: ntoti_prev,ncol_prev,nstep_prev
-
- interface
-   subroutine open_cactus_hdf5_file(filename,istep,npart,ncol,nstep_max,ndim,ndimV,time,ierr) bind(c)
-    import
-    character(kind=c_char), dimension(*), intent(in) :: filename
-    integer(kind=c_int), intent(in), value :: istep
-    integer(kind=c_int), intent(out) :: npart,ncol,nstep_max,ndim,ndimV,ierr
-    real(kind=c_double), intent(out) :: time
-   end subroutine open_cactus_hdf5_file
-
-   subroutine read_cactus_hdf5_data(filename,istep,npart,time,dx,ierr) bind(c)
-    import
-    character(kind=c_char), dimension(*), intent(in)  :: filename
-    integer(kind=c_int), intent(in), value :: istep
-    integer(kind=c_int), intent(out) :: npart,ierr
-    real(kind=c_double), intent(out) :: time,dx
-   end subroutine read_cactus_hdf5_data
-
-   subroutine close_cactus_hdf5_file(ierr) bind(c)
-    import
-    integer(kind=c_int), intent(out) :: ierr
-   end subroutine close_cactus_hdf5_file
-
- end interface
-
-end module cactushdf5read
 
 !-------------------------------------------------------------------------
 !
@@ -103,17 +63,17 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
   use asciiutils,     only:cstring
   use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file,&
-                           datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev
+                           datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev,compute_extra_columns
   use dataread_utils, only:count_types
   implicit none
   integer, intent(in)                :: istepstart,ipos
   integer, intent(out)               :: nstepsread
   character(len=*), intent(in)       :: rootname
   character(len=len(rootname)+10)    :: datfile
-  integer               :: i,istep,ierr
-  integer               :: nunknown
+  integer               :: i,istep,ierr,nextra
+  integer               :: nunknown,ignoretl
   integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti
-  logical               :: iexist,reallocate,goterrors
+  logical               :: iexist,reallocate,goterrors,ignore_time_levels
   real(doub_prec) :: timetemp,dx,vol
 
   nstepsread = 0
@@ -154,6 +114,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
   ndim  = 3
   ndimV = 3
+  ignore_time_levels = lenvironment('CSPLASH_IGNORE_TIME_LEVELS')
+  ignoretl = 0
+  if (ignore_time_levels) ignoretl = 1
+  nextra = 0
 ! 
 !--read data from snapshots
 !
@@ -167,7 +131,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      ncolstep  = ncol_prev
      nstep_max = nstep_prev
   else
-     call open_cactus_hdf5_file(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ierr)
+     call open_cactus_hdf5_file(cstring(datfile),ipos,ntoti,ncolstep,nstep_max,ndim,ndimV,timetemp,ignoretl,ierr)
      if (ierr /= 0) then
         print "(a)", '*** ERROR READING HEADER ***'
         call close_cactus_hdf5_file(ierr)
@@ -179,7 +143,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      ncol_prev  = ncolstep
      nstep_prev = nstep_max
   endif
-  ncolumns = ncolstep
+  call compute_extra_columns(ncolstep,nextra)
+  ncolumns = ncolstep + nextra
   if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
 
   istep = 1 
@@ -219,12 +184,20 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   got_particles: if (ntoti > 0) then
 
      if (buffer_steps_in_file .or. ipos.eq.istep) then
-        call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,dx,ierr)
+        call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,dx,ignoretl,ierr)
         call set_labels
         ! set smoothing length and particle mass
+        !print*,' Setting h = ',dx, 'ndim = ',ndim,' in column ',ih,' step ',i
         if (ih > 0) dat(:,ih,i) = real(dx)
         vol = dx**ndim
         if (ipmass > 0 .and. irho > 0) dat(:,ipmass,i) = dat(:,irho,i)*real(vol)
+        !
+        ! compute extra quantities (tr K, 3^R, etc)
+        !
+        call compute_extra_columns(ncolstep,nextra,dat(:,:,i))
+        !
+        ! get number of cells of each type (normal, ghost)
+        !
         call count_types(ntoti,iamtype(:,i),npartoftype(:,i),nunknown)
         masstype(:,i) = 0. ! all masses read from file
         time(i) = real(timetemp)
@@ -275,14 +248,19 @@ subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
   i1 = ntot-np+1
   i2 = ntot
   
-  if (debugmode) print "(a,i2,a,i8,a,i8)",'DEBUG: reading column ',icol,' -> '//trim(label(icolput))//' parts ',i1,' to ',i2
+  if (debugmode) print "(a,i2,a,i8,a,i8)",&
+  'DEBUG: reading column ',icol,' -> '//trim(label(icolput))//' parts ',i1,' to ',i2
   
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
-
+  if (i2 > size(dat(:,1,1))) then
+     print*,' ERROR with index range: ',i1,':',i2,' exceeds size ',size(dat(:,1,1)),' for column ',icol
+     read*
+     return
+  endif
   ! ensure no array overflows
   nmax = min(i2,size(dat(:,1,1)))
 
@@ -299,12 +277,17 @@ subroutine read_cactus_itype_fromc(ntot,np,itype) bind(c)
   implicit none
   integer(kind=c_int), intent(in) :: ntot,np
   integer(kind=c_int), intent(in) :: itype(np)
-  integer :: i1,i2
+  integer :: i1,i2,len_type
 
   i1 = ntot-np+1
   i2 = ntot
   ! set particle type
-  if (size(iamtype(:,1)).gt.1) then
+  len_type = size(iamtype(:,1))
+  if (len_type.gt.1) then
+     if (i2 > len_type) then
+        print*,'error with itype length',i2,len_type
+        return
+     endif
      iamtype(i1:i2,1) = int(itype(1:np),kind=int1)
   endif
 
@@ -334,26 +317,22 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-  blocklabel(1:5) = (/'x','y','z','h','m'/)
+  blocklabel(1:5) = (/'x ','y ','z ','dx','m '/)
 
-  ix = 0
+  ix(1) = 1
+  ix(2) = 2
+  ix(3) = 3
+  ih = 4
+  ipmass = 5
   iutherm = 0
   irho = 0
   do icol=1,size(blocklabel)
-     select case(trim(lcase(blocklabel(icol))))
-     case('x')
-        ix(1) = icol
-     case('y')
-        ix(2) = icol
-     case('z')
-        ix(3) = icol
-     case('vx')
+     select case(trim(blocklabel(icol)))
+     case('vel[0]')
         ivx = icol
-     case('h')
-        ih = icol
-     case('mass','m')
-        ipmass = icol
-     case('dens','density','rho')
+     case('dens','density')
+        if (irho==0) irho = icol
+     case('rho')
         irho = icol
      end select
      label(icol) = trim(blocklabel(icol))
@@ -387,32 +366,3 @@ subroutine set_labels
   return
 end subroutine set_labels
 
-subroutine set_blocklabel(icol,name) bind(c)
- use, intrinsic :: iso_c_binding, only:c_int, c_char
- use cactushdf5read, only:blocklabel
- use asciiutils,    only:fstring
- implicit none
- integer(kind=c_int),    intent(in) :: icol
- character(kind=c_char), intent(in) :: name(24)
- character(len=24) :: temp
- integer :: ivar
- 
- temp = fstring(name)
- ivar = index(temp,'::')
- if (ivar > 0) temp = temp(ivar+2:)
- blocklabel(icol) = trim(temp)
- !print*,icol,' name = ',trim(blocklabel(icol))
-
-end subroutine set_blocklabel
-
-subroutine sort_cactus_data(n,iter,iorder) bind(c)
- use, intrinsic :: iso_c_binding, only:c_int
- use sort, only:indexxi
- implicit none
- integer(kind=c_int), intent(in)  :: n
- integer(kind=c_int), intent(in)  :: iter(n)
- integer(kind=c_int), intent(out) :: iorder(n)
-
- call indexxi(n,iter,iorder)
-
-end subroutine sort_cactus_data

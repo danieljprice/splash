@@ -747,7 +747,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
   logical :: dumxsec, isetrenderlimits, iscoordplot
-  logical :: ichangesize, initx, inity, isameweights, volweightedpdf, got_h
+  logical :: ichangesize, initx, inity, initz, isameweights, volweightedpdf, got_h
   logical, parameter :: isperiodicx = .false. ! feature not implemented
   logical, parameter :: isperiodicy = .false. ! feature not implemented
   logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -1027,13 +1027,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      ! also set labels end plot limits
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+     iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
+     iz = 0
+     if (iscoordplot .and. ndim.ge.3) then
+        do j=1,ndim
+           if ((iplotx.ne.iploty).and. &
+               (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
+        enddo
+     endif
+     iplotz = iz
+
      initx = (iplotx.gt.0 .and. iplotx.le.ndataplots)
      inity = (iploty.gt.0 .and. iploty.le.ndataplots)
+     initz = (iplotz.gt.0 .and. iplotz.le.ndataplots)
      if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
      if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
-     iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
+     if (iplotz.gt.0 .and. iplotz.le.numplot) labelz = label(iplotz)
 
-     initdataplots: if (initx .or. inity) then
+     initdataplots: if (initx .or. inity .or. initz) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
         if (initx) then
            !--check for errors
@@ -1057,13 +1068,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         else
            iamvecy = 0
         endif
+        if (initz) then
+           zplot(1:ntoti) = dat(1:ntoti,iplotz)
+        else
+           zplot = 0.
+        endif
+
+        if (debugmode) print*,'DEBUG: iplotz = ',iplotz
         if (debugmode) print*,'DEBUG: setting itrans...'
         itransx = 0
         itransy = 0
         if (iplotx.gt.0 .and. iplotx.le.numplot) itransx = itrans(iplotx)
         if (iploty.gt.0 .and. iploty.le.numplot) itransy = itrans(iploty)
 
-        zplot = 0.   !--set later if x-sec
         zslicemin = -huge(zslicemax) !-- " "
         zslicemax = huge(zslicemax)
         if (.not.interactivereplot) then
@@ -1103,7 +1120,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         if (icoordsnew.ne.icoords) then
            !--do this if one is a coord but not if rendering
-           call changecoords(iplotx,iploty,xplot,yplot,ntoti,ndim,itrackpart,dat)
+           call changecoords(iplotx,iploty,iplotz,xplot,yplot,zplot,ntoti,ndim,itrackpart,dat)
            if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
            if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
         endif
@@ -1148,7 +1165,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
 
      endif initdataplots
-     
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! plots with co-ordinates as x and y axis
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1177,22 +1194,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  (leave space in page setup if so)
         iPlotColourBar = .false.
         if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
-
-
-        !!--work out coordinate that is not being plotted
-        iz = 0
-        if (ndim.ge.3) then
-           do j=1,ndim
-              if ((iplotx.ne.iploty).and. &
-                  (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
-           enddo
-        endif
-        iplotz = iz ! this is used as cross sectioned quantity
-        if (iplotz.gt.0 .and. iplotz.le.ndataplots) then
-           zplot(1:ntoti) = dat(1:ntoti,iplotz)
-           labelz = label(iplotz)
-        endif
-        if (debugmode) print*,'DEBUG: iplotz = ',iplotz
 
         if (.not.interactivereplot) then
            irerender = .false.
@@ -1395,7 +1396,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            if (irenderplot.gt.0 .and. ndim.eq.3) then
 
               !!--allocate memory for 2D rendered array
-              
+
               if (.not.interactivereplot) then
                  if (allocated(datpix)) then
                     if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
@@ -1416,7 +1417,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        endif
                     else
                        if (debugmode) print*,'allocating datpixcont...'
-                       allocate ( datpixcont(npixx,npixy) )                    
+                       allocate ( datpixcont(npixx,npixy) )
                     endif
                  endif
               endif
@@ -1504,7 +1505,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
                                   ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                           else
                              call interpolate3D_fastxsec( &
                                   xplot(1:ninterp),yplot(1:ninterp), &
@@ -1523,7 +1524,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
                                      ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
-                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                              else
                                 call interpolate3D_fastxsec( &
                                      xplot(1:ninterp),yplot(1:ninterp), &
@@ -1597,7 +1598,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                                  pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                           else
                              call interpolate3D_projection( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1615,7 +1616,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix)
+                                     pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                              else
                                 call interpolate3D_projection( &
                                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1922,7 +1923,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
                        call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                          npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax,alpha=brightness)                    
+                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax,alpha=brightness)
                     else
                        call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                          npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
@@ -1948,7 +1949,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (use3Dperspective .and. use3Dopacityrendering .and. rendersinks .and. isinktype > 0) then
                     PlotOnRender_tmp(isinktype) = .false.
                  endif
-                 
+
                  !!--write ppm if interpolate3D_opacity
                  if ((.not. plotlib_supports_alpha) .and. &
                      (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm)) then
@@ -2656,7 +2657,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
-           
+
            if (irender.eq.icolpixmap) then
               labelrender = '|B_\phi|/|B_p|'
            else
@@ -3025,11 +3026,11 @@ contains
           if (debugmode) print*,'DEBUG: finished dummy page setup'
           return
        else
-       
+
           !--if we are not changing page, do not reprint the axes
           iprint_axes = ipagechange .or. inewpage .or. &
                         ((iplots.le.nacross*ndown) .and. (nyplot.le.nacross*ndown .and. istepsonpage.eq.1))
-         
+
           if (iprint_axes) then
              if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
              string = ' '
@@ -3244,7 +3245,7 @@ contains
        else
           ititle = ipanel
        endif
-       
+
        if (len_trim(pagetitles(ititle)).gt.0) then
 
           !--change to background colour index if title is overlaid
@@ -3435,7 +3436,7 @@ contains
                        dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
                        xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
                        ninterp,numpixx,numpixy,zplot(1:ninterp),zslicemin,zslicemax)
-               endif            
+               endif
             endif
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
@@ -3544,7 +3545,7 @@ contains
                     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),icolourme(1:ninterp), &
                     xmin,ymin,pixwidthvec,pixwidthvecy,vecpixx,vecpixy, &
                     ninterp,numpixx,numpixy)
-            endif         
+            endif
          endif
 
       case default
@@ -3574,7 +3575,7 @@ contains
                call vecplot3D_proj(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp), &
                        vecplot(1,1:ninterp),vecplot(2,1:ninterp),vecplot(3,1:ninterp),vmax, &
-                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)            
+                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
             else
                ivecz = ivecx + (iplotz - ix(1))
                call vecplot3D_proj(xplot(1:ninterp), &

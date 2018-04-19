@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2017 Daniel Price
+!     Copyright (C) 2005-2018 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.8.0  : (06/04/18)
+!             360/4pi video mode added; automatically read labels from ascii file headers;
+!             nearest sensible unit (e.g. au or pc) used by default; cactus hdf5 data read;
+!             kernel-smoothed particle plots of arbitrary quantities;
+!             Viridis, Ocean and Inferno colour schemes; can customise line colours;
+!             Bondi flow exact solution; option for ticks but no labels;
+!             correct units in surface density plots; colour bar on top or left;
+!             support for multi-grain dust in Phantom; bug fix with NaNs in ascii files
 !     2.7.0  : (03/05/17)
 !             Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas
 !             phantom data; added rotated cartesian geometry; rendering implemented in r-phi
@@ -64,7 +72,7 @@ program splash
 !     2.5.1  : (29/01/15)
 !             error bar style options; support for 5K displays; can plot vectors
 !             and render with colours if h not read; range restrictions apply during splash to grid;
-!             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; 
+!             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read;
 !             phantom read handles star/dm particles; various bugs fixed
 !     2.5.0  : (22/08/14)
 !             instant multiplots by giving multiple columns as y axis;
@@ -112,7 +120,7 @@ program splash
 !             bug fixes with calculated quantities + change of coordinate systems;
 !             improved vector plot legend; option for box+numbers but no labels added
 !     2.1.0  : (16/05/12)
-!             3D vector field visualisation added; 
+!             3D vector field visualisation added;
 !             GADGET HDF5 read implemented;
 !             page sizes can be specified in pixels;
 !             limits can auto-adapt to device aspect ratio;
@@ -355,7 +363,7 @@ program splash
                       fileprefix,set_filenames
   use getdata,   only:get_data
   use geomutils, only:set_coordlabels
-  use defaults,  only:defaults_set_initial,defaults_set,defaults_read
+  use defaults,  only:defaults_set_initial,defaults_set,defaults_read,defaults_set_360
   use limits,    only:read_limits
   use kernels,   only:ikernel,select_kernel_by_name,select_kernel
   use mainmenu,  only:menu,allowrendering,set_extracols
@@ -374,10 +382,10 @@ program splash
   use settings_page,      only:interactive,device,nomenu
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
-  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist
+  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.7.0 [3rd May 2017]'
+  character(len=*), parameter :: version = 'v2.8.0 [6th April 2018]'
 
   !
   ! initialise some basic code variables
@@ -412,6 +420,7 @@ program splash
   irender = 0
   icontour = 0
   ivecplot = 0
+  use_360 = .false.
 
   do while (i < nargs)
      i = i + 1
@@ -486,6 +495,11 @@ program splash
            evsplash = .true.
            fileprefix = 'evsplash'
            call set_filenames(trim(fileprefix))
+        case('360','4pi','fourpi')
+           use_360 = .true.
+           ipickx = 2
+           ipicky = 3
+           nomenu = .true.
         case('lowmem','lm')
            lowmemorymode = .true.
         case('nolowmem','nlm')
@@ -545,6 +559,7 @@ program splash
   ! set default options (used if defaults file does not exist)
   !
   call defaults_set(evsplash)
+  if (use_360) call defaults_set_360()
 
   !
   ! read default options from file if it exists
@@ -667,6 +682,9 @@ program splash
            elseif (icontour.gt.0) then
               print "(a)",' ERROR: -cont also requires -render setting'
               stop
+           elseif (use_360) then
+              print "(a)",' ERROR -360 also requires -render setting (e.g. -r 6)'
+              stop
            endif
         else
            if (irender.gt.0 .and. ndim.ge.2) then
@@ -753,7 +771,8 @@ subroutine print_usage(quit)
  print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
  print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
  print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
- print "(a)",' -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)'
+ print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
+ print "(a)",' -360              : set default options suited to 360 video'
  print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(/,a,/)",'Command line plotting mode:'
