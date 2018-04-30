@@ -221,7 +221,7 @@ subroutine submenu_particleplots(ichoose)
            ideltav_plot = ideltavsum + ndimV*(idustfrac_plot - idustfracsum)
            if (idustfrac_prev /= idustfrac_plot) then
               !--Modify calculated data for fake dust particles if necessary
-              if (ncalc /= 0) then 
+              if (ncalc /= 0) then
                  print*,'...recalibrating calculated quantities...'
                  call setup_calculated_quantities(ncalc,quiet=.true.)
                  print*,'...done!'
@@ -269,7 +269,7 @@ subroutine submenu_particleplots(ichoose)
      !                 ' 1) render particle plots with fixed h', &
      !                 ' 2) render particle plots with adaptive h (slower)'
      call prompt('smooth particle plots? (0=none 1=fixed 2=adaptive)',ismooth_particle_plots,0,2)
-     if (ismooth_particle_plots.eq.0) then 
+     if (ismooth_particle_plots.eq.0) then
         if (size(iamtype(:,1)).gt.1) then
            print "(3(/,a),/)", &
              ' WARNING: changing type plotting order currently has no effect ', &
@@ -393,7 +393,7 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(9)
-     call options_exact
+     call options_exact(iexact)
      return
 !------------------------------------------------------------------------
   case default
