@@ -44,7 +44,7 @@ module labels
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
- integer :: irhorestframe,idustfrac,ideltav
+ integer :: irhorestframe,idustfrac,ideltav,itstop
  integer :: idustfracsum,ideltavsum
  integer :: igrainsize,igraindens
 
@@ -89,6 +89,7 @@ subroutine reset_columnids
  iradenergy = 0
  icolpixmap = 0
  irhorestframe = 0
+ itstop = 0
  idustfrac = 0
  idustfracsum = 0
  ideltav = 0
