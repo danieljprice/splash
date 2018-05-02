@@ -35,7 +35,7 @@ module asciiutils
  public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename
  public :: cstring,fstring,add_escape_chars
  public :: string_replace, string_delete, nheaderlines, string_sub
- public :: ucase,lcase
+ public :: ucase,lcase,strip
  public :: get_line_containing
  public :: enumerate,isdigit,split
  public :: get_column_labels
@@ -421,7 +421,7 @@ end function ncolumnsline
 !
 ! Small utility to return the number of comment lines in an ascii
 ! file. These are lines that do not begin with a number.
-! 
+!
 ! This is slightly different to what is done in the get_ncolumns
 ! routine, where header lines are any lines not having the same number
 ! of columns. Here we do not attempt to evaluate the number of data
@@ -461,7 +461,7 @@ function safename(string)
  !--remove forward slashes which can be mistaken for directories: replace with '_'
  call string_replace(safename,'/','_')
  call string_replace(safename,' ','_')
- 
+
  !--delete brackets and operators of all kinds
  call string_delete(safename,'{')
  call string_delete(safename,'}')
@@ -634,11 +634,24 @@ end subroutine string_delete
 
 !---------------------------------------------------------------------------
 !
+! function version of string_delete
+!
+!---------------------------------------------------------------------------
+pure elemental function strip(string,skey)
+ character(len=*), intent(in) :: string,skey
+ character(len=len(string))   :: strip
+
+ strip = string
+ call string_delete(strip,skey)
+
+end function strip
+
+!---------------------------------------------------------------------------
+!
 ! Converts a string to upper case
 !
 !---------------------------------------------------------------------------
-function ucase(string)
- implicit none
+pure elemental function ucase(string)
  character(len=*), intent(in) :: string
  character(len=len(string))   :: ucase
  integer :: is,ia
@@ -658,8 +671,7 @@ end function ucase
 ! Converts a string to lower case
 !
 !---------------------------------------------------------------------------
-function lcase(string)
- implicit none
+pure elemental function lcase(string)
  character(len=*), intent(in) :: string
  character(len=len(string))   :: lcase
  integer :: is,ia
@@ -679,7 +691,7 @@ end function lcase
 ! indicate if a character is a digit (number) or not
 !
 !---------------------------------------------------------------------------
-logical function isdigit(string)
+pure elemental logical function isdigit(string)
  character(len=1), intent(in) :: string
  integer :: ia
 
@@ -699,7 +711,7 @@ integer function get_line_containing(filename,string)
  character(len=130) :: line
  integer :: i,ierr
  integer, parameter :: lu=95
- 
+
  get_line_containing = 0
  open(unit=lu,file=filename,status='old',iostat=ierr)
  i = 0
@@ -709,7 +721,7 @@ integer function get_line_containing(filename,string)
     if (index(line,string).ne.0) get_line_containing = i
  enddo
  close(lu)
- 
+
 end function get_line_containing
 
 !---------------------------------------------------------------------------
@@ -739,7 +751,7 @@ end function enumerate
 ! Split a string into substrings based on a delimiter
 !
 !---------------------------------------------------------------------------
-subroutine split(string,delim,stringarr,nsplit)
+pure subroutine split(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: string
  character(len=*), intent(in)  :: delim
  character(len=*), intent(out), dimension(:) :: stringarr
