@@ -89,7 +89,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=68)  :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2017 Daniel Price'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2018 Daniel Price'
 
  public
 
