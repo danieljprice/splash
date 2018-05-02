@@ -560,10 +560,10 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          options_render.f90 options_particleplots.f90 \
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_limits.f90 options_page.f90 \
-	 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+	    options_powerspec.f90 \
+	    options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.F90 interpolate3D_xsec.f90 \
+         interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          particleplot.f90 interactive.f90 analysis.f90 \
