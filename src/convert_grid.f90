@@ -40,7 +40,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
  use limits,               only:lim,get_particle_subset
  use settings_units,       only:units,unit_interp
- use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew
+ use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin
  use settings_part,        only:iplotpartoftype
  use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation
  use params,               only:int1
@@ -297,7 +297,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     if (igeom /= igeom_cartesian) then
        call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
-            xmin,datgrid,npixels,pixwidthx,inormalise,isperiodic)
+            xmin,datgrid,npixels,pixwidthx,xorigin,inormalise,isperiodic)
     else
        call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
@@ -372,11 +372,11 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (ndim.eq.3) then
     if (lowmem .or. interpolateall .or. ncolstogrid.gt.0) then
        call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
-                       labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat=datgrid)
+                       labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat=datgrid)
     endif
  else
     call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
-                    labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+                    labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat2D=datgrid2D)
  endif
  !
  !--interpolate remaining quantities to the 3D grid
@@ -404,7 +404,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 if (igeom /= igeom_cartesian) then
                    call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-                        xmin,datgrid,npixels,pixwidthx,.true.,isperiodic)
+                        xmin,datgrid,npixels,pixwidthx,xorigin,.true.,isperiodic)
                 else
                    call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
@@ -426,12 +426,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
              call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                  labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat=datgrid)
+                  labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat=datgrid)
           else
              call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
              call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                  labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+                  labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat2D=datgrid2D)
           endif
        endif
     enddo
@@ -507,12 +507,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                    call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                        labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat=datgrid)
+                        labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat=datgrid)
                 else
                    call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                        labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat2D=datgrid2D)
+                        labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,dat2D=datgrid2D)
                 endif
              enddo
           else
@@ -552,12 +552,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !
              if (ndim.eq.3) then
                 call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
-                                label(irho),labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,&
+                                label(irho),labelcoordsys(igeom),xlab,time,pixwidthx,xmin,ierr,&
                                 dat=datgrid,dat3D=datgridvec,label3D=label(iloc:iloc+ndimV))
              else
                 do i=1,ndimV
                    call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
-                                   label(iloc+i-1),labelcoordsys(igeom),xlab,time,pixwidth,xmin,ierr,dat2D=datgridvec2D(i,:,:))
+                                   label(iloc+i-1),labelcoordsys(igeom),xlab,time,pixwidthx,&
+                                   xmin,ierr,dat2D=datgridvec2D(i,:,:))
                 enddo
              endif
           endif

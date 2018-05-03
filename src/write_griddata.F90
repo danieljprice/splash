@@ -227,7 +227,7 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
  integer, dimension(ndim), intent(in) :: npixels
  character(len=*), intent(in)         :: label,labelcoordsys
  character(len=*), dimension(3), intent(in) :: xlab
- real, intent(in)                     :: time,pixwidth
+ real, intent(in)                     :: time,pixwidth(3)
  real, dimension(3), intent(in)       :: xmin
  integer, intent(out)                 :: ierr
  character(len=len(filenamein)+20)    :: filename
@@ -294,7 +294,7 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# grid dimensions:'
     if (present(dat)) then
-       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//xlab(i),i=1,3)
+       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
        write(iunit,*,err=100) npixels(1:ndim)
        do k=1,npixels(3)
           do j=1,npixels(2)
@@ -302,7 +302,7 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
           enddo
        enddo
     elseif (present(dat3D)) then
-       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//xlab(i),i=1,3)
+       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
        write(iunit,*,err=100) npixels(1:ndim)
        do k=1,npixels(3)
           do j=1,npixels(2)
@@ -351,44 +351,59 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
       '" on file '//trim(filenamein)
     write(iunit,"(a)",err=100) '# grid dimensions:'
     if (present(dat3D) .and. present(dat)) then
-       write(iunit,"(a)",err=100) '# nx    ny    nz'
+       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
        write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
-       write(iunit,"('#',64('[',a13,']'))",err=100) 'x','y','z',trim(label),(trim(label3D(n)),n=1,ncolgrid)
+       write(iunit,"('#',64('[',a13,']'))",err=100) xlab,trim(label),(trim(label3D(n)),n=1,ncolgrid)
        do k=1,npixels(3)
           write(*,"('.')",ADVANCE='NO')
-          zi = xmin(3) + (k-0.5)*pixwidth
+          zi = xmin(3) + (k-0.5)*pixwidth(3)
           do j=1,npixels(2)
-             yi = xmin(2) + (j-0.5)*pixwidth
+             yi = xmin(2) + (j-0.5)*pixwidth(2)
              do i=1,npixels(1)
-                xi = xmin(1) + (i-0.5)*pixwidth
+                xi = xmin(1) + (i-0.5)*pixwidth(1)
                 write(iunit,"(64(es14.6,1x))") xi,yi,zi,dat(i,j,k),(dat3D(n,i,j,k),n=1,ncolgrid)
              enddo
           enddo
        enddo
     elseif (present(dat3D)) then
-       write(iunit,"(a)",err=100) '# nx    ny    nz'
+       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
        write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
-       write(iunit,"('#',64('[',a13,']'))",err=100) 'x','y','z',(trim(label3D(n)),n=1,ncolgrid)
+       write(iunit,"('#',64('[',a13,']'))",err=100) xlab,(trim(label3D(n)),n=1,ncolgrid)
        do k=1,npixels(3)
           write(*,"('.')",ADVANCE='NO')
-          zi = xmin(3) + (k-0.5)*pixwidth
+          zi = xmin(3) + (k-0.5)*pixwidth(3)
           do j=1,npixels(2)
-             yi = xmin(2) + (j-0.5)*pixwidth
+             yi = xmin(2) + (j-0.5)*pixwidth(2)
              do i=1,npixels(1)
-                xi = xmin(1) + (i-0.5)*pixwidth
+                xi = xmin(1) + (i-0.5)*pixwidth(1)
                 write(iunit,"(64(es14.6,1x))") xi,yi,zi,(dat3D(n,i,j,k),n=1,ncolgrid)
              enddo
           enddo
        enddo
+    elseif (present(dat)) then
+        write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
+        write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
+        write(iunit,"('#',4('[',a13,']'))",err=100) xlab,trim(label)
+        do k=1,npixels(3)
+           write(*,"('.')",ADVANCE='NO')
+           zi = xmin(3) + (k-0.5)*pixwidth(3)
+           do j=1,npixels(2)
+              yi = xmin(2) + (j-0.5)*pixwidth(2)
+              do i=1,npixels(1)
+                 xi = xmin(1) + (i-0.5)*pixwidth(1)
+                 write(iunit,"(64(es14.6,1x))") xi,yi,zi,dat(i,j,k)
+              enddo
+           enddo
+        enddo
     elseif (present(dat2D)) then
        write(iunit,"(a)",err=100) '# nx    ny '
        write(iunit,"(a,2(i5,1x))",err=100) '# ',npixels(1:2)
        write(iunit,"('#',3('[',a13,']'))",err=100) 'x','y',trim(label)
        do j=1,npixels(2)
           write(*,"('.')",ADVANCE='NO')
-          yi = xmin(2) + (j-0.5)*pixwidth
+          yi = xmin(2) + (j-0.5)*pixwidth(2)
           do i=1,npixels(1)
-             xi = xmin(1) + (i-0.5)*pixwidth
+             xi = xmin(1) + (i-0.5)*pixwidth(1)
              write(iunit,"(3(es14.6,1x))") xi,yi,dat2D(i,j)
           enddo
        enddo
