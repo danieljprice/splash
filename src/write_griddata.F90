@@ -349,6 +349,10 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
     write(iunit,"(a)",err=100) &
       '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
       '" on file '//trim(filenamein)
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a)",err=100) '# time:'
+    write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
+    write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# grid dimensions:'
     if (present(dat3D) .and. present(dat)) then
        write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
