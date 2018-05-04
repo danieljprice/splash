@@ -499,12 +499,12 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
 !
      dxdx(1,1) = cos(xin(2))*cos(xin(3))         ! dx/dr
      dxdx(1,2) = -sin(xin(2))*cos(xin(3))        ! 1/r dx/dtheta
-     dxdx(1,3) = sin(xin(3))                     ! 1/rcyl dx/dphi
+     dxdx(1,3) = -sin(xin(3))                    ! 1/rcyl dx/dphi
      dxdx(2,1) = cos(xin(2))*sin(xin(3))         ! dy/dr
      dxdx(2,2) = -sin(xin(2))*sin(xin(3))        ! 1/r dy/dtheta
      dxdx(2,3) = cos(xin(3))                     ! 1/rcyl dy/dphi
-     dxdx(3,1) = sin(xin(3))                     ! dz/dr
-     dxdx(3,2) = cos(xin(3))                     ! 1/r dz/dtheta
+     dxdx(3,1) = sin(xin(2))                     ! dz/dr
+     dxdx(3,2) = cos(xin(2))                     ! 1/r dz/dtheta
 !        dxdx(3,3) = 0.                             ! dz/dphi
   case(3)
 !
