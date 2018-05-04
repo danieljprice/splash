@@ -2640,7 +2640,7 @@ v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_
 v_z      & = & v_z & & v_z & = & v_z. \\
 \end{array}
 \end{displaymath}
-In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$. At the origin we assume $\phi = 0$, implying $\cos\phi = 1$ and therefore $\frac{x}{R} = 1$ and $\frac{y}{R} = 0$. This ensures the transformations are reversible everywhere.
 
 \subsection{ Spherical Polar Coordinates}
 For spherical coordinates the transformations are:
@@ -2680,9 +2680,9 @@ v_\phi & = & v_{x} \left(\frac{-y}{r_{cyl}}\right) + v_{y} \left(\frac{x}{r_{cyl
 \end{displaymath}
 where we have defined, for convenience,
 \begin{equation}
-r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
+r_{\rm cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 \end{equation}
-The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
+and the velocities $v_\theta$ and $v_\phi$ correspond to $r \dot{\theta}$ and $r_{\rm cyl} \dot{\phi}$, respectively. The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
 
 \subsection{ Flared Cylindrical Polar Coordinates}
 For flared cylindrical coordinates the transformations are:
