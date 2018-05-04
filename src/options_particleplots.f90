@@ -35,13 +35,13 @@ module settings_part
  integer :: ncircpart,ismooth_particle_plots
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep,ErrorBarType
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
- real    :: hfacmarkers
+ real    :: hfacmarkers,rref,betaflare
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
    itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers,&
-   ErrorBarType,ismooth_particle_plots
+   ErrorBarType,ismooth_particle_plots,rref,betaflare
 
 contains
 
@@ -82,6 +82,8 @@ subroutine defaults_set_part
   hfacmarkers = 1.0
   ErrorBarType = 0
   ismooth_particle_plots = 0
+  rref = 1.
+  betaflare = 1.25
 
   return
 end subroutine defaults_set_part
@@ -104,15 +106,15 @@ end subroutine defaults_set_part_ev
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
-  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum, &
-                            ideltavsum
+  use labels,          only:labeltype,ih,label,idustfracsum,ideltavsum
   use limits,          only:lim
   use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
                             ndataplots,ndusttypes,idustfrac_plot,ideltav_plot,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
-  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits
+  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits,&
+                            igeom_flaredcyl,igeom_logflared,set_flaring_index
   use multiplot,       only:itrans
   use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
   use calcquantities,  only:calc_quantities
@@ -375,6 +377,19 @@ subroutine submenu_particleplots(ichoose)
      call prompt(' Enter coordinate system to plot in:', &
                  icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
+     select case(icoordsnew)
+     !case(igeom_rotated)
+      !  call prompt('enter rotation angle a (degrees)',rot_angle_a)
+       ! call prompt('enter rotation angle b (degrees)',rot_angle_b)
+        !call set_rotation_angles(rot_angle_a*pi/180.,rot_angle_b*pi/180.)
+     case(igeom_flaredcyl,igeom_logflared)
+        call prompt('enter reference radius (Rref) in z''=z(R/Rref)**(-beta)',rref)
+        print "(2(/,a),/)",' Use beta = 1.5 - q to give correct flaring index in a disc', &
+                         ' where q is sound speed index i.e. cs = cs_0(R/R_0)^-q '
+        call prompt('enter flaring index beta',betaflare)
+        call set_flaring_index(rref,betaflare)
+     end select
+
      if (icoordsnew.ne.icoordsprev) then
         itrans(1:ndim) = 0
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
