@@ -573,8 +573,8 @@ end function wkernel
      ipixmax(i) = int((xpixmax(i) - xmin(i))/pixwidth(i))+1
      if (ipixmax(i) < 1) ierr = ierr + 1
      if (.not.periodic(i)) then
-        if (ipixmin(i) < 1)       ipixmin = 1         ! make sure they only contribute
-        if (ipixmax(i) > npix(i)) ipixmax = npix(i)   ! to pixels in the image
+        if (ipixmin(i) < 1)       ipixmin(i) = 1         ! make sure they only contribute
+        if (ipixmax(i) > npix(i)) ipixmax(i) = npix(i)   ! to pixels in the image
      endif
   enddo
 
