@@ -271,27 +271,24 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 
 end subroutine interpolate3Dgeom
 
-subroutine interpolate3Dgeom_vec(x,y,z,hh,weight,datvec,itype,npart,&
-     xmin,datsmooth,npix,pixwidth,normalise,periodic)
-  implicit none
-  integer, intent(in) :: npart,npix(3)
-  real, intent(in), dimension(npart)    :: x,y,z,hh,weight
+subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
+     xmin,datsmooth,npix,pixwidth,xorigin,normalise,periodic)
+  integer, intent(in) :: igeom,npart,npix(3)
+  real, intent(in), dimension(npart) :: x,y,z,hh,weight
   real, intent(in), dimension(npart,3)  :: datvec
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin(3),pixwidth(3)
+  real, intent(in) :: xmin(3),pixwidth(3),xorigin(3)
   real, intent(out), dimension(3,npix(1),npix(2),npix(3)) :: datsmooth
   logical, intent(in) :: normalise,periodic(3)
   real, dimension(npix(1),npix(2),npix(3)) :: datnorm
 
-  integer :: i,ipix,jpix,kpix
+  integer :: i,ipix,jpix,kpix,ierr
   integer :: iprintinterval,iprintnext
-  integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
-  integer :: ipixi,jpixi,kpixi,nxpix,nwarn
-  real :: xminpix(3)
-  real, dimension(npix(1)) :: dx2i
-  real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
-  real :: termnorm,dy,dz,ypix,zpix,xpixi,ddatnorm
-  real, dimension(3) :: term
+  integer :: ipixmin(3),ipixmax(3)
+  integer :: ipixi,jpixi,kpixi
+  real :: xminpix(3),hmin !,dhmin3
+  real :: xi(3),xci(3),xcoord(3),hi,hi1,hi21,radkern,wab,q2,const
+  real :: term(3),termnorm,xpix(3),dx(3),ddatnorm
   !real :: t_start,t_end
   logical :: iprintprogress
 #ifdef _OPENMP
@@ -303,9 +300,9 @@ subroutine interpolate3Dgeom_vec(x,y,z,hh,weight,datvec,itype,npart,&
   datsmooth = 0.
   datnorm = 0.
   if (normalise) then
-     print "(1x,a)",'interpolating from particles to 3D grid (normalised) ...'
+     print "(1x,a)",'interpolating from particles to 3D '//trim(labelcoordsys(igeom))//' grid (normalised) ...'
   else
-     print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
+     print "(1x,a)",'interpolating from particles to 3D '//trim(labelcoordsys(igeom))//' grid (non-normalised) ...'
   endif
   if (any(pixwidth <= 0.)) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
@@ -332,30 +329,37 @@ subroutine interpolate3Dgeom_vec(x,y,z,hh,weight,datvec,itype,npart,&
   !call cpu_time(t_start)
 
   xminpix(:) = xmin(:) - 0.5*pixwidth(:)
+  !
+  !--use a minimum smoothing length on the grid to make
+  !  sure that particles contribute to at least one pixel
+  !
+  hmin = 0.
+  do i=1,3
+     if (coord_is_length(i,igeom)) hmin = max(hmin,0.5*pixwidth(i))
+  enddo
 
   const = cnormk3D  ! normalisation constant (3D)
-  nwarn = 0
-
+  !
+  !--loop over particles
+  !
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,datvec,itype,datsmooth,npart) &
 !$omp shared(xmin,radkernel,radkernel2) &
-!$omp shared(xminpix,pixwidth) &
-!$omp shared(npix,const) &
+!$omp shared(xminpix,pixwidth,xorigin) &
+!$omp shared(npix,const,igeom) &
 !$omp shared(datnorm,normalise,periodic) &
-!$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi) &
-!$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
+!$omp shared(hmin) & !,dhmin3) &
+!$omp private(hi,xi,xci,xcoord,xpix,radkern,hi1,hi21) &
+!$omp private(term,termnorm) &
+!$omp private(ipixmin,ipixmax,ierr) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
-!$omp reduction(+:nwarn)
+!$omp private(dx,q2,wab)
 !$omp master
 #ifdef _OPENMP
   print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 #endif
 !$omp end master
-  !
-  !--loop over particles
-  !
+
 !$omp do schedule (guided, 2)
   over_parts: do i=1,npart
      !
@@ -376,99 +380,68 @@ subroutine interpolate3Dgeom_vec(x,y,z,hh,weight,datvec,itype,npart,&
      if (itype(i).lt.0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
-
+     if (hi.le.0.) then
+        cycle over_parts
+     elseif (hi.lt.hmin) then
      !
-     !--set kernel related quantities
+     !--use minimum h to capture subgrid particles
+     !  (get better results *without* adjusting weights)
      !
-     xi = x(i)
-     yi = y(i)
-     zi = z(i)
-
+        termnorm = const*weight(i) !*(hi*hi*hi)*dhmin3
+        hi = hmin
+     else
+        termnorm = const*weight(i)
+     endif
      hi1 = 1./hi
      hi21 = hi1*hi1
      radkern = radkernel*hi   ! radius of the smoothing kernel
-     termnorm = const*weight(i)
+     !termnorm = const*weight(i)
      term(:) = termnorm*datvec(i,:)
      !
-     !--for each particle work out which pixels it contributes to
+     !--set kernel related quantities
      !
-     ipixmin = int((xi - radkern - xmin(1))/pixwidth(1))
-     jpixmin = int((yi - radkern - xmin(2))/pixwidth(2))
-     kpixmin = int((zi - radkern - xmin(3))/pixwidth(3))
-     ipixmax = int((xi + radkern - xmin(1))/pixwidth(1)) + 1
-     jpixmax = int((yi + radkern - xmin(2))/pixwidth(2)) + 1
-     kpixmax = int((zi + radkern - xmin(3))/pixwidth(3)) + 1
+     xci(1) = x(i) + xorigin(1)  ! xci = position in cartesians
+     xci(2) = y(i) + xorigin(2)
+     xci(3) = z(i) + xorigin(3)
+     call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,npix,pixwidth,xmin,periodic,igeom,ierr)
+     !print*,' got particle ',i,' x,y,z = ',xci,' r,phi,z = ',xi,' R=',radkern,' pixel limits = ',&
+     !    (ipixmin(ipix),ipixmax(ipix),ipix=1,3)
+     !read*
+     if (ierr /= 0) cycle over_parts
 
-     if (.not.periodic(1)) then
-        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-        if (ipixmax.gt.npix(1)) ipixmax = npix(1)  ! to pixels in the image
-     endif
-     if (.not.periodic(2)) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npix(2)) jpixmax = npix(2)
-     endif
-     if (.not.periodic(3)) then
-        if (kpixmin.lt.1)     kpixmin = 1
-        if (kpixmax.gt.npix(3)) kpixmax = npix(3)
-     endif
-     !
-     !--precalculate an array of dx2 for this particle (optimisation)
-     !
-     nxpix = 0
-     do ipix=ipixmin,ipixmax
-        nxpix = nxpix + 1
-        ipixi = ipix
-        if (periodic(1)) then
-           if (ipixi.lt.1)     ipixi = mod(ipixi,npix(1)) + npix(1)
-           if (ipixi.gt.npix(1)) ipixi = mod(ipixi-1,npix(1)) + 1
-        endif
-        xpixi = xminpix(1) + ipix*pixwidth(1)
-        !--watch out for errors with perioic wrapping...
-        if (nxpix.le.size(dx2i)) then
-           dx2i(nxpix) = ((xpixi - xi)**2)*hi21
-        endif
-     enddo
-
-     !--if particle contributes to more than npix(1) pixels
-     !  (i.e. periodic boundaries wrap more than once)
-     !  truncate the contribution and give warning
-     if (nxpix.gt.npix(1)) then
-        nwarn = nwarn + 1
-        ipixmax = ipixmin + npix(1) - 1
-     endif
      !
      !--loop over pixels, adding the contribution from this particle
      !
-     do kpix = kpixmin,kpixmax
+     do kpix = ipixmin(3),ipixmax(3)
         kpixi = kpix
         if (periodic(3)) then
-           if (kpixi.lt.1)     kpixi = mod(kpixi,npix(3)) + npix(3)
+           if (kpixi.lt.1)       kpixi = mod(kpixi,npix(3)) + npix(3)
            if (kpixi.gt.npix(3)) kpixi = mod(kpixi-1,npix(3)) + 1
         endif
-        zpix = xminpix(3) + kpix*pixwidth(3)
-        dz = zpix - zi
-        dz2 = dz*dz*hi21
+        xcoord(3) = xminpix(3) + kpix*pixwidth(3)
 
-        do jpix = jpixmin,jpixmax
+        do jpix = ipixmin(2),ipixmax(2)
            jpixi = jpix
            if (periodic(2)) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npix(2)) + npix(2)
+              if (jpixi.lt.1)       jpixi = mod(jpixi,npix(2)) + npix(2)
               if (jpixi.gt.npix(2)) jpixi = mod(jpixi-1,npix(2)) + 1
            endif
-           ypix = xminpix(2) + jpix*pixwidth(2)
-           dy = ypix - yi
-           dyz2 = dy*dy*hi21 + dz2
+           xcoord(2) = xminpix(2) + jpix*pixwidth(2)
 
-           nxpix = 0
-           do ipix = ipixmin,ipixmax
+           do ipix = ipixmin(1),ipixmax(1)
               ipixi = ipix
               if (periodic(1)) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npix(1)) + npix(1)
+                 if (ipixi.lt.1)       ipixi = mod(ipixi,npix(1)) + npix(1)
                  if (ipixi.gt.npix(1)) ipixi = mod(ipixi-1,npix(1)) + 1
               endif
-              nxpix = nxpix + 1
-              q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
+              xcoord(1) = xminpix(1) + ipix*pixwidth(1)
+
+              !--now transform to get location of pixel in cartesians
+              call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
+
+              !--find distances using cartesians and perform interpolation
+              dx   = xpix(:) - xci(:)
+              q2   = (dx(1)*dx(1) + dx(2)*dx(2) + dx(3)*dx(3))*hi21
               !
               !--SPH kernel - standard cubic spline
               !
@@ -495,10 +468,6 @@ subroutine interpolate3Dgeom_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp end do
 !$omp end parallel
 
-  if (nwarn.gt.0) then
-     print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
-                           '                that wrap periodic boundaries more than once'
-  endif
   !
   !--normalise dat array
   !
