@@ -493,10 +493,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                    datgrid = 0.
                 else
                    if (ndim.eq.3) then
-                      call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                      if (igeom /= igeom_cartesian) then
+                         call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
-                           xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                           pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                           xmin,datgrid,npixels,pixwidthx,xorigin,.true.,isperiodic)
+                      else
+                         call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                              dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
+                              xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
+                              pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                      endif
                    else
                       call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
