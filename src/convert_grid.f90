@@ -184,7 +184,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        hmin = 0.
        call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
        hmin = partmin(1)
-       if (hmin.gt.0.) then
+       if (hmin.gt.0. .and. igeom==igeom_cartesian) then
           print*,'based on the minimum smoothing length of hmin = ',hmin
           npixels8(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin,kind=int8) + 1
           if (ndim.eq.3) then
@@ -206,7 +206,11 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           endif
        else
           npixx = 512
-          print "(a)",' ...but cannot get auto pixel number because hmin = 0'
+          if (hmin <= 0.) then
+             print "(a)",' ...but cannot get auto pixel number because hmin = 0'
+          else
+             print "(a)",' ...but cannot get auto pixel number because of non-cartesian geometry'
+          endif
           print "(a)",'    so instead we choose npixels = ',npixx
        endif
     endif
