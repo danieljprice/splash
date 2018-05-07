@@ -660,16 +660,26 @@ end subroutine vector_transform
 ! this subroutine attempts to switch plot limits / boundaries
 ! between various co-ordinate systems.
 !------------------------------------------------------------------
-subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
+recursive subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
  integer, intent(in) :: itypein,itypeout,ndim
  real, dimension(ndim), intent(inout) :: xmin,xmax
  real, dimension(ndim) :: xmaxtemp,xmintemp
- real :: rcyl
+ real    :: rcyl
+ integer :: i
 !
 !--check for errors in input
 !
  if (ndim < 1 .or. ndim > 3) then
     print*,'Error: limits coord transform: ndim invalid on input'
+    return
+ endif
+!
+!--for transformations that are not to/from cartesian
+!  we transform to cartesians as an intermediate step
+!
+ if (itypein /= 1 .and. itypeout /= 1) then
+    call coord_transform_limits(xmin,xmax,itypein,1,ndim)
+    call coord_transform_limits(xmin,xmax,1,itypeout,ndim)
     return
  endif
  !print*,'modifying plot limits for new coordinate system'
@@ -768,12 +778,11 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
     !
     !--output is cylindrical, flared cylindrical or log flared cylindrical
     !
-    case(2,6)
+    case(2,6,7)
        !--rmin, rmax
        xmintemp(1) = 0.
        if (ndim >= 2) then
-          xmaxtemp(1) = sqrt(max((xmin(1)**2 + xmin(2)**2), &
-                                 (xmax(1)**2 + xmax(2)**2)))
+          xmaxtemp(1) = sqrt(max(xmin(1)**2,xmin(2)**2,xmax(1)**2,xmax(2)**2))
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
           if (itypeout==igeom_flaredcyl .and. ndim >= 3) then
@@ -784,14 +793,16 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
           xmaxtemp(1) = max(abs(xmin(1)),abs(xmax(1)))
        endif
        if (itypeout==igeom_logflared) then
-          xmintemp(1) = -log10(small_number)  ! log zero
+          xmintemp(1) = log10(small_number)  ! log zero
           xmaxtemp(1) = log10(xmaxtemp(1))
        endif
     end select
  end select
 
- xmin(:) = min(xmintemp(:),xmaxtemp(:))
- xmax(:) = max(xmintemp(:),xmaxtemp(:))
+ do i=1,ndim
+    xmin(i) = min(xmintemp(i),xmaxtemp(i))
+    xmax(i) = max(xmintemp(i),xmaxtemp(i))
+ enddo
 
  return
 end subroutine coord_transform_limits
