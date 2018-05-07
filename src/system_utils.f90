@@ -28,6 +28,7 @@ module system_utils
  use system_commands, only:get_environment
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
+ public :: envlist,ienvlist
 
 contains
  !
@@ -143,6 +144,30 @@ contains
     endif
 
  end function ienvstring
+
+ function ienvlist(variable,nlist)
+  character(len=*), intent(in) :: variable
+  integer, intent(in) :: nlist
+  character(len=120), dimension(nlist) :: list
+  integer :: ienvlist(nlist),i,ierr,ngot
+  character(len=5) :: fmtstring
+
+  ngot = nlist
+  call envlist(variable,ngot,list)
+
+  do i=1,nlist
+    if (len_trim(list(i)).gt.0) then
+    !--use a formatted read - this is to avoid a compiler bug
+    !  should in general be more robust anyway
+       write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(list(i)),')'
+       read(list(i),fmtstring,iostat=ierr) ienvlist(i)
+    else
+       ienvlist(i) = 0
+       ierr = 1
+    endif
+  enddo
+
+ end function ienvlist
  !
  !--this routine returns an arbitrary number of
  !  comma separated strings

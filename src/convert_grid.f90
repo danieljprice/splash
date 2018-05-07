@@ -48,7 +48,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use interpolations3D,     only:interpolate3D,interpolate3D_vec
  use interpolations3Dgeom, only:interpolate3Dgeom,interpolate3Dgeom_vec
  use interpolations2D,     only:interpolate2D,interpolate2D_vec
- use system_utils,         only:renvironment
+ use system_utils,         only:renvironment,ienvlist
  use readwrite_griddata,   only:open_gridfile_w,write_grid,write_gridlimits
  use particle_data,        only:icolourme
  use params,               only:int8
@@ -175,46 +175,51 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--work out how many pixels to use
  !
  npixx = npix
- if (npixx.le.0) then
-    print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
-    hmin = 0.
-    call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
-    hmin = partmin(1)
-    if (hmin.gt.0.) then
-       print*,'based on the minimum smoothing length of hmin = ',hmin
-       npixels8(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin,kind=int8) + 1
-       if (ndim.eq.3) then
-          print "(a,i6,2(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
-          if (product(npixels8(1:ndim)).gt.512**3 .or. product(npixels8(1:ndim)).le.0) then
-             npixx = 512
-             print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
+ npixels = ienvlist('SPLASH_TO_GRID_NPIX',3)
+ if (product(npixels) > 0) then
+    print*,'Using npixels = ',npixels,' from SPLASH_TO_GRID_NPIX'
+ else
+    if (npixx.le.0) then
+       print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
+       hmin = 0.
+       call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
+       hmin = partmin(1)
+       if (hmin.gt.0.) then
+          print*,'based on the minimum smoothing length of hmin = ',hmin
+          npixels8(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin,kind=int8) + 1
+          if (ndim.eq.3) then
+             print "(a,i6,2(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
+             if (product(npixels8(1:ndim)).gt.512**3 .or. product(npixels8(1:ndim)).le.0) then
+                npixx = 512
+                print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
+             else
+                npixx = int(npixels8(1))
+             endif
           else
-             npixx = int(npixels8(1))
+             print "(a,i6,1(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
+             if (product(npixels8(1:ndim)).gt.1024**ndim .or. product(npixels8(1:ndim)).le.0) then
+                npixx = 1024
+                print "(a,i4)",' but this is very large, so instead we choose ',npixx
+             else
+                npixx = int(npixels8(1))
+             endif
           endif
        else
-          print "(a,i6,1(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
-          if (product(npixels8(1:ndim)).gt.1024**ndim .or. product(npixels8(1:ndim)).le.0) then
-             npixx = 1024
-             print "(a,i4)",' but this is very large, so instead we choose ',npixx
-          else
-             npixx = int(npixels8(1))
-          endif
+          npixx = 512
+          print "(a)",' ...but cannot get auto pixel number because hmin = 0'
+          print "(a)",'    so instead we choose npixels = ',npixx
        endif
-    else
-       npixx = 512
-       print "(a)",' ...but cannot get auto pixel number because hmin = 0'
-       print "(a)",'    so instead we choose npixels = ',npixx
     endif
+    print "(a,/)",' Set this manually using SPLASH_TO_GRID_NPIX=100,100,100'
+    pixwidth = (xmax(1)-xmin(1))/npixx
+    do i=1,ndim
+       if (coord_is_length(i,igeom)) then
+          npixels(i) = int((xmax(i)-xmin(i) - 0.5*pixwidth)/pixwidth) + 1
+       else
+          npixels(i) = npixx
+       endif
+    enddo
  endif
- print*
- pixwidth = (xmax(1)-xmin(1))/npixx
- do i=1,ndim
-    if (coord_is_length(i,igeom)) then
-       npixels(i) = int((xmax(i)-xmin(i) - 0.5*pixwidth)/pixwidth) + 1
-    else
-       npixels(i) = npixx
-    endif
- enddo
  pixwidthx(:) = (xmax(:) - xmin(:))/npixels(:)
  !
  !--work out how many columns will be written to file
