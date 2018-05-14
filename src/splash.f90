@@ -380,6 +380,7 @@ program splash
   use analysis,           only:isanalysis
   use timestepping,       only:timestep_loop
   use settings_page,      only:interactive,device,nomenu
+  use settings_part,      only:initialise_coord_transforms
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
@@ -627,6 +628,9 @@ program splash
      call select_kernel(ikernel)
   endif
 
+  ! set geometry defaults
+  call initialise_coord_transforms
+
   if (doconvert) then
 
      !
@@ -742,7 +746,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2017 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2018 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &

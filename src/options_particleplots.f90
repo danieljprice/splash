@@ -101,6 +101,16 @@ subroutine defaults_set_part_ev
   return
 end subroutine defaults_set_part_ev
 
+!---------------------------------------------
+! changed default values for these options
+!---------------------------------------------
+subroutine initialise_coord_transforms
+  use geometry, only:set_flaring_index
+
+  call set_flaring_index(rref,betaflare)
+
+end subroutine initialise_coord_transforms
+
 !----------------------------------------------------------------------
 ! submenu with options relating to particle plots
 !----------------------------------------------------------------------
