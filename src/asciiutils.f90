@@ -756,27 +756,33 @@ pure subroutine split(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: delim
  character(len=*), intent(out), dimension(:) :: stringarr
  integer,          intent(out) :: nsplit
- integer :: i,j
+ integer :: i,j,imax,iend
 
  i = 1
  nsplit = 0
- do while(nsplit < size(stringarr) .and. i < len(string))
+ imax = len(string)
+ do while(nsplit < size(stringarr) .and. i <= imax)
     ! find next non-blank character
-    do while (string(i:i)==' ')
-       i = i + 1
-       if (i > len(string)) exit
-    enddo
-    i = i - 1
-    if (i < 1) i = 1 ! first character is non-blank
+    if (string(i:i)==' ') then
+       do while (string(i:i)==' ')
+          i = i + 1
+          if (i > imax) exit
+       enddo
+       if (i > imax) exit
+    endif
 
     ! look for next occurrence of delimiter
-    j = index(string(i:),delim)
-    if (j==0) j = len(string(i:))
+    j = index(string(i:),delim) - 1
+    ! if no delimiter found, use whole rest of string
+    if (j < 0) j = imax
+    ! set end of substring
+    iend = min(i+j-1,imax)
+    ! extract the substring
     nsplit = nsplit + 1
     if (nsplit <= size(stringarr)) then
-       stringarr(nsplit) = string(i:min(i+j,len(string)))
+       stringarr(nsplit) = string(i:iend)
     endif
-    i = i + j + 1
+    i = iend + len(delim) + 1
  enddo
 
 end subroutine split
@@ -878,6 +884,9 @@ logical function is_sensible_label(string)
  integer :: ierr
 
  is_sensible_label = .true.
+
+ ! should not start with a decimal point
+ if (string(1:1)=='.') is_sensible_label = .false.
 
  ! should not contain equals sign
  !if (index(string,'=') > 0) is_sensible_label = .false.
