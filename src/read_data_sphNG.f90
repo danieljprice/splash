@@ -99,13 +99,15 @@ contains
 
   select case(int(iphase))
   case(0)
-    itypemap_sphNG = 1
+    itypemap_sphNG = 1 ! gas
+  case(11:)
+    itypemap_sphNG = 2 ! dust
   case(1:9)
-    itypemap_sphNG = 3
-  case(10:)
-    itypemap_sphNG = 4
+    itypemap_sphNG = 4 ! nptmass
+  case(10)
+    itypemap_sphNG = 5 ! star
   case default
-    itypemap_sphNG = 5
+    itypemap_sphNG = 6 ! unknown
   end select  
   
  end function itypemap_sphNG
@@ -1105,7 +1107,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   integer :: narrsizes
   integer :: nskip,ntotal,npart,n1,ngas,nreals
   integer :: iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nstar,nunknown,ilastrequired
+  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
   integer :: imaxcolumnread,nhydroarraysinfile,nremoved
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
@@ -1921,7 +1923,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
     nptmassi = 0
     nunknown = 0
-    ngas = 0
+    ngas  = 0
+    ndust = 0
     nstar = 0
     !--can only do this loop if we have read the iphase array
     iphasealloc: if (allocated(iphase)) then
@@ -1945,9 +1948,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                 endif
              case(itypemap_unknown_phantom)
                 nunknown = nunknown + 1
-             end select
+            end select
           enddo
-       else
+      else
        !
        !--sphNG: translate iphase to splash types
        !
@@ -1957,9 +1960,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              select case(itype)
              case(1)
                ngas = ngas + 1
-             case(3)
-               nptmassi = nptmassi + 1
+             case(2)
+               ndust = ndust + 1
              case(4)
+               nptmassi = nptmassi + 1
+             case(5)
                nstar = nstar + 1
              case default
                nunknown = nunknown + 1
@@ -2057,12 +2062,17 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
      call set_labels
      if (.not.phantomdump) then
+        if (ngas /= npart - nptmassi - ndust - nstar - nunknown) &
+           print*,'WARNING!!! ngas =',ngas,'but should be',npart-nptmassi-ndust-nstar-nunknown
+        if (ndust /= npart - nptmassi - ngas - nstar - nunknown) &
+           print*,'WARNING!!! ndust =',ndust,'but should be',npart-nptmassi-ngas-nstar-nunknown
         npartoftype(:,j) = 0
-        npartoftype(1,j) = npart - nptmassi - nstar - nunknown
-        npartoftype(2,j) = ntotal - npart
-        npartoftype(3,j) = nptmassi
-        npartoftype(4,j) = nstar
-        npartoftype(5,j) = nunknown
+        npartoftype(1,j) = ngas  ! npart - nptmassi - ndust - nstar - nunknown
+        npartoftype(2,j) = ndust ! npart - nptmassi - ngas  - nstar - nunknown
+        npartoftype(3,j) = ntotal - npart
+        npartoftype(4,j) = nptmassi
+        npartoftype(5,j) = nstar
+        npartoftype(6,j) = nunknown
      else
         npartoftype(1,j) = npartoftype(1,j) - nunknown
         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
@@ -2473,17 +2483,19 @@ subroutine set_labels
         UseTypeInRenderings(6) = .false.
      endif
   else
-     ntypes = 5
+     ntypes = 6
      labeltype(1) = 'gas'
-     labeltype(2) = 'ghost'
-     labeltype(3) = 'sink'
-     labeltype(4) = 'star'
-     labeltype(5) = 'unknown/dead'
+     labeltype(2) = 'dust'
+     labeltype(3) = 'ghost'
+     labeltype(4) = 'sink'
+     labeltype(5) = 'star'
+     labeltype(6) = 'unknown/dead'
      UseTypeInRenderings(1) = .true.
-     UseTypeInRenderings(2) = .true.
-     UseTypeInRenderings(3) = .false.
-     UseTypeInRenderings(4) = .true.
-     UseTypeInRenderings(5) = .true.  ! only applies if turned on
+     UseTypeInRenderings(2) = .false.
+     UseTypeInRenderings(3) = .true.
+     UseTypeInRenderings(4) = .false.
+     UseTypeInRenderings(5) = .true.
+     UseTypeInRenderings(6) = .true.  ! only applies if turned on
   endif
 
 !-----------------------------------------------------------
