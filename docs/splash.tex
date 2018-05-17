@@ -2627,20 +2627,20 @@ system'' option. The actual coordinate transformations are defined in a standalo
 For cylindrical coordinates the transformations are:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-r & = & \sqrt{x^2 + y^2}    & & x & = & r\cos\phi \\
-\phi & = & \tan^{-1}{(y/x)} &; & y & = & r\sin\phi \\
+R & = & \sqrt{x^2 + y^2}    & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
 z & = & z                             & & z & = & z\\
 \end{array}
 \end{displaymath}
 where vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi \sin\phi \\
-v_\phi & = & v_x \left(\frac{-y}{r}\right) + v_y \left(\frac{x}{r}\right) &; &v_y & = & v_r \sin\phi + v_\phi \cos\phi \\
+v_R      & = & v_x \frac{x}{R} + v_y \frac{y}{R}  & & v_x & = & v_R \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & v_R \sin\phi + v_\phi \cos\phi \\
 v_z      & = & v_z & & v_z & = & v_z. \\
 \end{array}
 \end{displaymath}
-In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$. At the origin we assume $\phi = 0$, implying $\cos\phi = 1$ and therefore $\frac{x}{R} = 1$ and $\frac{y}{R} = 0$. This ensures the transformations are reversible everywhere.
 
 \subsection{ Spherical Polar Coordinates}
 For spherical coordinates the transformations are:
@@ -2680,9 +2680,47 @@ v_\phi & = & v_{x} \left(\frac{-y}{r_{cyl}}\right) + v_{y} \left(\frac{x}{r_{cyl
 \end{displaymath}
 where we have defined, for convenience,
 \begin{equation}
-r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
+r_{\rm cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 \end{equation}
-The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
+and the velocities $v_\theta$ and $v_\phi$ correspond to $r \dot{\theta}$ and $r_{\rm cyl} \dot{\phi}$, respectively. The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
+
+\subsection{ Flared Cylindrical Polar Coordinates}
+For flared cylindrical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+R & = & \sqrt{x^2 + y^2}    & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
+z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
+\end{array}
+\end{displaymath}
+where $R_{\rm ref}$ is the reference radius and $\beta$ is the flaring index, both parameters that can be set by the user. Vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_R      & = & v_x \frac{x}{R} + v_y \frac{y}{R}  & & v_x & = & v_R \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & v_R \sin\phi + v_\phi \cos\phi \\
+v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta v_R + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
+\end{array}
+\end{displaymath}
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
+
+\subsection{ Logarithmic Flared Cylindrical Polar Coordinates}
+For logarithmic flared cylindrical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+d & = & \log_{10} ( \sqrt{x^2 + y^2} )   & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
+z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
+\end{array}
+\end{displaymath}
+where $R_{\rm ref}$ is the reference radius and $\beta$ is the flaring index, both parameters that can be set by the user. Vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_d      & = & v_x \frac{x}{R}f^{-1} + v_y \frac{y}{R}f^{-1}  & & v_x & = & f v_d \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & f v_d \sin\phi + v_\phi \cos\phi \\
+v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta f v_d + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
+\end{array}
+\end{displaymath}
+where $R \equiv 10^d$ and correspondingly $d = \log_{10} R$ and $f \equiv R \ln (10)$.
 
 
 \section{Exact solution details}%HEVEA\cutname{exactsolutions.html}

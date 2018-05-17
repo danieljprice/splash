@@ -163,10 +163,10 @@ contains
       !  Make sure default argument is within range!
       !
       if (present(min)) then
-         if (value < min) value = min
+         if (value < min .and. .not. (present(min2) .or. present(max2))) value = min
       endif
       if (present(max)) then
-         if (value > max) value = max
+         if (value > max .and. .not. (present(min2) .or. present(max2))) value = max
       endif
 
       !

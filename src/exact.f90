@@ -38,7 +38,7 @@ module exact
   !
   !--options used to plot the exact solution line
   !
-  integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
+  integer :: maxexactpts, iExactLineColour(maxexact), iExactLineStyle(maxexact),iPlotExactOnlyOnPanel
   integer :: iNormaliseErrors
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
   logical :: iApplyUnitsExactFile
@@ -127,6 +127,8 @@ contains
   ! sets default values of the exact solution parameters
   !----------------------------------------------------------------------
   subroutine defaults_set_exact
+    use plotlib, only:plotlib_maxlinestyle
+    integer :: i
 
     lambda = 1.0    ! sound wave exact solution : wavelength
     ampl = 0.005    ! sound wave exact solution : amplitude
@@ -220,7 +222,9 @@ contains
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
-    iExactLineStyle = 1     ! solid
+    do i=1,size(iExactLineStyle)
+       iExactLineStyle(i) = mod(i,plotlib_maxlinestyle)
+    enddo
     iApplyTransExactFile = .true. ! false if exact from file is already logged
     iApplyUnitsExactFile = .false.
     iCalculateExactErrors = .true.
@@ -578,14 +582,27 @@ contains
   !---------------------------------------------------
   ! sets options relating to exact solution plotting
   !---------------------------------------------------
-  subroutine options_exact
+  subroutine options_exact(iexact)
     use prompting, only:prompt
     use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
     implicit none
+    integer, intent(in) :: iexact
+    character(len=12) :: string
+    integer :: nexact,i
 
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
-    call prompt('enter line colour ',iExactLineColour,1,plotlib_maxlinecolour)
-    call prompt('enter line style  ',iExactLineStyle,1,plotlib_maxlinestyle)
+    nexact = 1
+    if (iexact==1) nexact = nfunc
+    if (iexact==2) nexact = nfiles
+    string = ''
+    do i=1,nexact
+       if (nexact > 1) write(string,"(a,i2)") 'for line ',i
+       call prompt('enter line colour '//trim(string),iExactLineColour(i),1,plotlib_maxlinecolour)
+    enddo
+    do i=1,nexact
+       if (nexact > 1) write(string,"(a,i2)") 'for line ',i
+       call prompt('enter line style '//trim(string),iExactLineStyle(i),1,plotlib_maxlinestyle)
+    enddo
     call prompt('calculate error norms?',iCalculateExactErrors)
     if (iCalculateExactErrors) then
        print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
@@ -942,8 +959,8 @@ contains
     !
     call plot_qci(iCurrentColour)
     call plot_qls(iCurrentLineStyle)
-    call plot_sci(iExactLineColour)
-    call plot_sls(iExactLineStyle)
+    call plot_sci(iExactLineColour(1))
+    call plot_sls(iExactLineStyle(1))
     !
     !--allocate memory
     !
@@ -1006,10 +1023,14 @@ contains
     case(1) ! arbitrary function parsing
        do i=1,nfunc
           if ((iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) .or. iexactploty(i).eq.0) then
+             !--allow user-specified colours and line styles
+             LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
+
              call exact_function(funcstring(i),xexact,yexact,timei,ierr)
              !--plot each solution separately and calculate errors
              call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
-                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy)
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                      ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
           endif
        enddo
@@ -1031,10 +1052,11 @@ contains
                    endif
                 endif
                 !--change line style between files
-                LineStyle = mod(iExactLineStyle+i-1,plotlib_maxlinestyle)
+                LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
                 !--plot each solution separately and calculate errors
                 call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
-                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=LineStyle)
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                         ls=LineStyle,lc=iExactLineColour(i))
                 ierr = 1 ! indicate that we have already plotted the solution
              endif
           endif
@@ -1379,7 +1401,7 @@ contains
   ! and calculate errors with respect to the data
   !------------------------------------------------------------------
   subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
-                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,matchtype,err)
+                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,lc,matchtype,err)
    use transforms, only:transform,transform_inverse
    use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci
    use params,     only:int1,maxparttypes
@@ -1390,7 +1412,7 @@ contains
    integer(int1), intent(in) :: iamtype(:)
    integer,       intent(in) :: noftype(maxparttypes)
    logical,       intent(in) :: iplot_type(maxparttypes)
-   integer,       intent(in), optional :: ls, matchtype
+   integer,       intent(in), optional :: ls, matchtype, lc
    logical,       intent(in), optional :: err
    real :: residuals(np),ypart(np)
    real :: errL1,errL2,errLinf
@@ -1399,7 +1421,7 @@ contains
    character(len=12) :: str1,str2
 
    call plot_qci(iCurrentColour)
-   call plot_sci(iExactLineColour)
+   if (present(lc)) call plot_sci(lc)
 
    if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
    if (itransy > 0) call transform(yexact(1:iexactpts),itransy)

@@ -28,6 +28,9 @@ module system_utils
  use system_commands, only:get_environment
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
+ public :: envlist,ienvlist,lenvlist
+
+ private
 
 contains
  !
@@ -39,7 +42,6 @@ contains
  !  (default is zero)
  !
  integer function ienvironment(variable,errval)
-    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
     integer, intent(in), optional :: errval
@@ -62,7 +64,6 @@ contains
  !  (default is zero)
  !
  real function renvironment(variable,errval)
-    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
     real, intent(in), optional :: errval
@@ -90,7 +91,6 @@ contains
  !  from an environment variable setting
  !
  logical function lenvironment(variable)
-    implicit none
     character(len=*), intent(in) :: variable
     character(len=30) :: string
 
@@ -104,7 +104,6 @@ contains
  !  should be interpreted as true or false
  !
  logical function lenvstring(string)
-    implicit none
     character(len=*), intent(in) :: string
 
     if (string(1:1).eq.'y'.or.string(1:1).eq.'Y' &
@@ -118,8 +117,10 @@ contains
 
  end function lenvstring
 
+ !
+ !--utility routine to extract integer value from string
+ !
  integer function ienvstring(string,errval)
-    implicit none
     character(len=*), intent(in)  :: string
     integer, intent(in), optional :: errval
     character(len=5) :: fmtstring
@@ -148,7 +149,6 @@ contains
  !  comma separated strings
  !
  subroutine envlist(variable,nlist,list)
-    implicit none
     character(len=*), intent(in) :: variable
     integer, intent(out) :: nlist
     character(len=*), dimension(:), intent(out), optional :: list
@@ -195,5 +195,40 @@ contains
 
     return
  end subroutine envlist
+!
+!--return comma separated list of integers
+!
+ function ienvlist(variable,nlist)
+  character(len=*), intent(in) :: variable
+  integer, intent(in) :: nlist
+  character(len=30), dimension(nlist) :: list
+  integer :: ienvlist(nlist),i,ngot
+
+  ngot = nlist
+  call envlist(variable,ngot,list)
+
+  do i=1,nlist
+     ienvlist(i) = ienvstring(list(i))
+  enddo
+
+ end function ienvlist
+!
+!--return comma separated list of logicals
+!
+ function lenvlist(variable,nlist)
+  character(len=*), intent(in) :: variable
+  integer, intent(in) :: nlist
+  character(len=30), dimension(nlist) :: list
+  logical :: lenvlist(nlist)
+  integer :: i,ngot
+
+  ngot = nlist
+  call envlist(variable,ngot,list)
+
+  do i=1,nlist
+     lenvlist(i) = lenvstring(list(i))
+  enddo
+
+ end function lenvlist
 
 end module system_utils

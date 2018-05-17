@@ -45,7 +45,6 @@ CAIRO_CFLAGS= -I$(X11_DIR)/include
 ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
    GIZA_DIR= $(PREFIX)
-   VPATH+= $(GIZA_DIR)/include
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
@@ -560,10 +559,10 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          options_render.f90 options_particleplots.f90 \
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_limits.f90 options_page.f90 \
-	 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+	    options_powerspec.f90 \
+	    options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.F90 interpolate3D_xsec.f90 \
+         interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          particleplot.f90 interactive.f90 analysis.f90 \
@@ -970,7 +969,7 @@ plotlib_pgplot.o: checkpgplot
 plotlib_giza.o : giza-fortran.o
 
 giza-fortran.o : giza-fortran.F90
-	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $< -o $@
+	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $(GIZA_DIR)/include/giza-fortran.F90 -o $@
 
 .PHONY: giza gizabuild libgiza
 

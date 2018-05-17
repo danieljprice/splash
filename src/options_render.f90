@@ -37,13 +37,14 @@ module settings_render
  logical :: double_rendering
  character(len=lenlabel+20) :: projlabelformat
  integer :: iapplyprojformat
+ character(len=120) :: rgbfile
 
  namelist /renderopts/ npix,icolours,ncontours,iplotcont_nomulti, &
    icolour_particles,ColourBarDisp,inormalise_interpolations, &
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
    double_rendering,ikernel,ColourBarPosx,ColourBarPosy,ColourBarLen,&
-   ColourBarFmtStr,ColourBarWidth,iColourBarPos
+   ColourBarFmtStr,ColourBarWidth,iColourBarPos,rgbfile
 
 contains
 
@@ -70,11 +71,12 @@ subroutine defaults_set_render
   double_rendering = .false.
   ikernel = 0 ! just take default kernel
   ColourBarPosx = 0.75 ! default values used for floating colour bars
-  ColourBarPosy = 0.7 
+  ColourBarPosy = 0.7
   ColourBarLen  = 0.25
   ColourBarWidth = 2.
   ColourBarFmtStr = 'BCMSTV'
   iColourBarPos = 3
+  rgbfile = 'colours.ctb'
 
   return
 end subroutine defaults_set_render
@@ -97,17 +99,18 @@ subroutine submenu_render(ichoose)
   use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical,&
                       isfloating,iscustombar,labelfloatingstyles,&
                       set_floating_bar_style,maxfloatingstyles
-  use colours,   only:schemename,ncolourschemes,colour_demo
+  use colours,   only:schemename,ncolourschemes,ncoltable,rgbtable,icustom
   use prompting, only:prompt,print_logical
   use params,    only:maxplot
   use plotlib,   only:plotlib_supports_alpha
   use filenames, only:fileprefix
   use kernels,   only:select_kernel,kernelname,nkernels
   use projections3D, only:setup_integratedkernel
+  use asciiutils,    only:read_asciifile
   implicit none
   integer, intent(in) :: ichoose
-  character(len=5)  :: string
-  character(len=20) :: kname
+  character(len=5)    :: string
+  character(len=20)   :: kname
   integer :: ians,i,ierr,icolourprev
 !
 !--rendering options
@@ -160,18 +163,26 @@ subroutine submenu_render(ichoose)
        ierr = 1
        icolourprev = icolours
        write(*,"(i2,a,1x)") (i,': '//trim(schemename(i)),i=1,ncolourschemes)
-       write(*,"(i2,a,1x)") ncolourschemes+1,': demo plot of all schemes'
+       write(*,"(i3,a,1x)") icustom,': custom'
        print "(a)",'(-ve = inverse, 0 = contours only)'
        promptloop: do while (ierr /= 0)
-          call prompt('enter colour scheme for rendering ',icolours,-ncolourschemes,ncolourschemes+1)
+          call prompt('enter colour scheme for rendering ',icolours,&
+                      -ncolourschemes+1,ncolourschemes+1,icustom,icustom)
           !
-          ! demonstration plot of all colour schemes
+          ! custom colour map from file !demonstration plot of all colour schemes
           !
           ierr = 0
-          if (abs(icolours).eq.ncolourschemes+1) then
-             call colour_demo
-             icolours = icolourprev
-             ierr = 1
+          if (icolours==ncolourschemes+1)    icolours=icustom
+          if (icolours==-(ncolourschemes+1)) icolours=-icustom
+          if (abs(icolours).eq.icustom) then
+             call prompt('enter filename for rgb table',rgbfile,noblank=.true.)
+             call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
+             if (ierr /= 0 .or. ncoltable <= 0) then
+                print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
+             else
+                print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+             endif
+             if (ierr /= 0) icolours = icolourprev
           endif
        enddo promptloop
 !------------------------------------------------------------------------

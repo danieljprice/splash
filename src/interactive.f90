@@ -441,10 +441,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
                                          xmin,xmax,ymin,ymax,contmin,contmax)
                     print*,'setting doublerender min = ',contmin
-                    print*,'setting doublerender max = ',contmax                 
+                    print*,'setting doublerender max = ',contmax
                  else
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
-                                         xmin,xmax,ymin,ymax,rendermin,rendermax)                 
+                                         xmin,xmax,ymin,ymax,rendermin,rendermax)
                     print*,'setting render min = ',rendermin
                     print*,'setting render max = ',rendermax
                  endif
@@ -463,7 +463,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            iselectcircle = (char==plot_right_click .and. .not.plotlib_is_pgplot)
            if (iselectpoly) then
               if (plotlib_is_pgplot) then
-                 print*,'left click/a)dd points; middle click/d)elete points; X/x)finish'              
+                 print*,'left click/a)dd points; middle click/d)elete points; X/x)finish'
               else
                  print*,'left click/a)dd points; middle click/d)elete points; q)uit/abort'
                  if (irender.le.0) print*,'1-9 = close polygon and mark particles with colours 1-9'
@@ -484,7 +484,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               print*,'r = use particles within x and y parameter range only'
               print*,'R = remove all range restrictions'
            endif
-           
+
            npts = 1
            xpts(1) = xpt   ! to avoid problems with uninitialised variables
            ypts(1) = ypt
@@ -688,7 +688,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               contmin = renderpt - 0.5*contlength
               contmax = renderpt + 0.5*contlength
               call assert_sensible_limits(contmin,contmax)
-              print*,'zooming on colour bar: min, max = ',contmin,contmax           
+              print*,'zooming on colour bar: min, max = ',contmin,contmax
            else
               renderpt = 0.5*(rendermin + rendermax)
               rendermin = renderpt - 0.5*renderlength
@@ -1556,7 +1556,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   xpt2 = 0.
   ypt2 = 0.
   verticalbar = barisvertical(iColourBarStyle)
-  
+
   !
   !--convert saved cursor position (saved in viewport coords)
   !  back to world coordinates:
@@ -1626,7 +1626,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      else
         iamincolourbar = .false.
      endif
-     
+
      !--work out if this plot is double rendered or not
      double_render = (icontourarr(ipanel).gt.0 .and. use_double_rendering)
 
@@ -1760,7 +1760,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
                  else
                     call adjustcolourbar(iColourBarStyle,vptxi,vptyi,vptx2i,vpty2i,&
                          vptxmin(ipanel),vptxmax(ipanel),vptymin(ipanel),vptymax(ipanel),&
-                         xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))                 
+                         xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
                  endif
               else
               !--for global colour bars (ie. on tiled plots) use viewport co-ordinates to set render limits
@@ -1937,7 +1937,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            if (double_render) then
               print*,'adapting double-render limits ',xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel))
               xmin(icontourarr(ipanel)) = xminadapt(icontourarr(ipanel))
-              xmax(icontourarr(ipanel)) = xmaxadapt(icontourarr(ipanel))           
+              xmax(icontourarr(ipanel)) = xmaxadapt(icontourarr(ipanel))
               call assert_sensible_limits(xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
            else
               print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
@@ -2009,7 +2009,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            if (double_render) then
               call change_itrans2(icontourarr(ipanel),xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)),&
-                               xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel)))           
+                               xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel)))
            else
               call change_itrans2(irenderarr(ipanel),xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)),&
                                xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel)))
@@ -2354,25 +2354,25 @@ end subroutine interactive_multi
 logical function inslice(x,xmin,xmax)
  implicit none
  real, intent(in) :: x,xmin,xmax
- 
+
  inslice = (x.ge.xmin .and. x.le.xmax)
- 
+
 end function inslice
 
 logical function inrectangle(x,y,xmin,xmax,ymin,ymax)
  implicit none
  real, intent(in) :: x,y,xmin,xmax,ymin,ymax
- 
+
  inrectangle = (x.ge.xmin .and. x.le.xmax .and. y.ge.ymin .and. y.le.ymax)
- 
+
 end function inrectangle
 
 logical function incircle(x,y,r2)
  implicit none
  real, intent(in) :: x,y,r2
- 
+
  incircle = ((x*x + y*y) <= r2)
- 
+
 end function incircle
 
 !
@@ -2385,7 +2385,7 @@ logical function inpoly(x,y,xpts,ypts,npts)
  real, dimension(:), intent(in) :: xpts,ypts
  integer, intent(in) :: npts
  integer :: i,j
- 
+
  inpoly = .false.
  j = npts
  do i=1,npts
@@ -2759,7 +2759,7 @@ subroutine save_itrackpart_recalcradius(itrackpart)
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
  implicit none
  integer, intent(in) :: itrackpart
- 
+
  itracktype   = 0  ! cannot interactively track by type
  itrackoffset = itrackpart
 
@@ -2904,13 +2904,13 @@ end subroutine save_circles
 !--change colour map
 !
 subroutine change_colourmap(imap,istep)
- use colours, only:colour_set,ncolourschemes
+ use colours, only:colour_set,ncolourschemes,icustom
  implicit none
  integer, intent(inout) :: imap
  integer, intent(in) :: istep
 
  imap = imap + istep
- if (abs(imap).gt.ncolourschemes) imap = 1
+ if (abs(imap).gt.ncolourschemes .and. abs(imap).ne.icustom) imap = 1
  if (abs(imap).lt.1) imap = ncolourschemes
  call colour_set(imap)
 
