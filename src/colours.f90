@@ -68,12 +68,14 @@ module colours
       'ocean            ', &
       'casa blue        ', &
       'green-brown      '/)
+  integer, parameter :: icustom = 100 ! number 100 is custom colour table
 !
 !--rgb colours of the colour table are stored in the array below
 !  this is used for colour blending (opacity rendering)
 !
-  integer :: ifirstcolour, ncolours
+  integer :: ifirstcolour, ncolours,ncoltable
   real, dimension(3,ncolourmax) :: rgbtable
+  real, dimension(ncolourmax)   :: ltable
 
 contains
 
@@ -118,12 +120,12 @@ subroutine colour_set(icolourscheme)
   if (debugmode) print*,'DEBUG: querying colour index range'
   call plot_scir(ifirstcolour,ifirstcolour+ncolours)
 
-  if (abs(icolourscheme).le.ncolourschemes) then
-     brightness = 0.5
-     contrast = 1.0
-     !--invert colour table for negative values
-     if (icolourscheme.lt.0) contrast = -1.0
+  brightness = 0.5
+  contrast = 1.0
+  !--invert colour table for negative values
+  if (icolourscheme.lt.0) contrast = -1.0
 
+  if (abs(icolourscheme).le.ncolourschemes) then
      select case(abs(icolourscheme))
      case(1)
      !--greyscale
@@ -517,13 +519,25 @@ subroutine colour_set(icolourscheme)
 !--if icolourscheme = ncolourschemes+1 set the PGPLOT colour indices
 !  from the contents of the rgbtable array
 !
-  if (abs(icolourscheme).eq.ncolourschemes+1) then
-     call plot_scir(ifirstcolour,ifirstcolour+ncolourmax)
-     do i=1,ncolourmax
+  if (abs(icolourscheme).eq.icustom) then
+     print "(1x,a)",'using colour scheme other'
+     !
+     !--for giza we have to call set_ctab directly with all 256 colours
+     !
+     do i=1,ncoltable
+        ltable(i) = (i-1)/real(ncoltable-1)
+     enddo
+     nset = ncoltable
+     call plot_ctab(ltable(1:nset),rgbtable(1,1:nset),rgbtable(2,1:nset),rgbtable(3,1:nset), &
+                    nset,contrast,brightness)
+
+     ! for pgplot we set the colours in the colour table individually
+     ncolours = ncoltable-1
+     call plot_scir(ifirstcolour,ifirstcolour+ncolours)
+     do i=1,ncolours
         index = ifirstcolour + (i-1)
         call plot_scr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
      enddo
-     print "(1x,a)",'using colour scheme other'
 
   elseif (abs(icolourscheme).le.ncolourschemes) then
 !

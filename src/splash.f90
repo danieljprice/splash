@@ -381,12 +381,14 @@ program splash
   use timestepping,       only:timestep_loop
   use settings_page,      only:interactive,device,nomenu
   use settings_part,      only:initialise_coord_transforms
+  use settings_render,    only:icolours,rgbfile
+  use colours,            only:rgbtable,ncoltable,icustom
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.8.0 [6th April 2018]'
+  character(len=*), parameter :: version = 'v2.8.1beta [18th May 2018]'
 
   !
   ! initialise some basic code variables
@@ -648,6 +650,15 @@ program splash
         call get_data(1,ihavereadfilenames,firsttime=.true.)
      endif
 
+     ! read tabulated colour table, if necessary
+     if (icolours==icustom) then
+        call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
+        if (ierr /= 0 .or. ncoltable <= 0) then
+           print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
+        else
+           print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+        endif
+     endif
      !
      ! setup kernel table for fast column density plots in 3D
      !
