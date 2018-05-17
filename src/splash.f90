@@ -651,7 +651,7 @@ program splash
      endif
 
      ! read tabulated colour table, if necessary
-     if (icolours==icustom) then
+     if (abs(icolours)==icustom) then
         call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
         if (ierr /= 0 .or. ncoltable <= 0) then
            print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
