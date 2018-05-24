@@ -2177,7 +2177,8 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum,itstop,igrainsize,igraindens
+              idustfrac,ideltav,idustfracsum,ideltavsum,itstop,igrainsize,igraindens, &
+              ivrel
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
   use geometry,        only:labelcoord
@@ -2298,6 +2299,8 @@ subroutine set_labels
            igrainsize = i
         case('graindens')
            igraindens = i
+        case('vrel')
+           ivrel = i
         case default
            if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
            label(i) = tagarr(i)
@@ -2427,6 +2430,10 @@ subroutine set_labels
    if (igraindens.gt.0) then
        units(igraindens) = umass/udist**3
        unitslabel(igraindens) = ' [g/cm\u3\d]'
+   endif
+   if (ivrel.gt.0) then
+      units(ivrel) = udist/utime/100
+      unitslabel(ivrel) = ' [m/s]'
    endif
 
    !--use the following two lines for time in years
