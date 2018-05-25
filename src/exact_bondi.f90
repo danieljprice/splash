@@ -55,7 +55,7 @@ subroutine exact_bondi(iplot,time,gamma,const1,const2,m,relativistic,geodesic_fl
 
  npts = size(xpts)
 
- print "(4(a,g8.2))",' Plotting exact Bondi solution at t = ',time
+ print "(a,es10.3)",' Plotting exact Bondi solution at t = ',time
 
  if (.not.relativistic) then
     rcrit   = const1

@@ -67,7 +67,7 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  if ( printout ) open(unit = 625,file="Cshock_splash.dat")
 
 
- print "(4(a,g8.2))",&
+ print "(4(a,g10.2))",&
   ' Plotting exact C-shock at t = ',time,' M = ',machs,' M_A = ',macha,' theta = ',theta
  print "(4(a,es10.3))",' shock length L = ',shockL,' shock is at x = ',xshock
 
