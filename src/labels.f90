@@ -26,11 +26,12 @@
 !
 !-----------------------------------------------------------
 module labels
- use params, only:maxplot, maxparttypes
+ use params, only:maxplot,maxparttypes,maxhdr,ltag
  implicit none
  integer, parameter :: lenlabel = 80
  integer, parameter :: lenunitslabel = 40  ! length of units label
  character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
+ character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
  character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
@@ -95,6 +96,7 @@ subroutine reset_columnids
  idustfracsum = 0
  ideltav = 0
  ideltavsum = 0
+ headertags = ''
 
  return
 end subroutine reset_columnids
@@ -340,5 +342,22 @@ subroutine print_types(noftype,ltype)
  write(*,*)
 
 end subroutine print_types
+
+!-----------------------------------------------------------------
+!
+!  utility to count number of non-blank strings in a list
+!
+!-----------------------------------------------------------------
+integer function count_non_blank(string)
+ character(len=*), dimension(:), intent(in) :: string
+ integer :: i
+
+ count_non_blank = 0
+ do i=1,size(string)
+    if (len_trim(string(i))<=0) exit
+    count_non_blank = count_non_blank + 1
+ enddo
+
+end function count_non_blank
 
 end module labels

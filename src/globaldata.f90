@@ -36,6 +36,8 @@ module params
  integer, parameter :: int8 = selected_int_kind(10)
  integer, parameter :: maxplot=512   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 12  ! max # of different particle types
+ integer, parameter :: ltag = 16     ! length of header tags
+ integer, parameter :: maxhdr = 64   ! maximum number of header variables stored
 
  public
 
@@ -61,6 +63,7 @@ module particle_data
  integer, allocatable, dimension(:,:) :: npartoftype
  real, allocatable, dimension(:,:)    :: masstype
  real, allocatable, dimension(:)      :: time, gamma
+ real, allocatable, dimension(:,:)    :: headervals
  real, allocatable, dimension(:,:,:)  :: dat
  real, parameter :: time_not_read_val = -0.5*huge(0.)
 
@@ -70,10 +73,10 @@ contains
 
  logical function time_was_read(t)
   real, intent(in) :: t
-  
+
   time_was_read = .true.
   if (t <= time_not_read_val) time_was_read = .false.
-  
+
  end function time_was_read
 
 end module particle_data
