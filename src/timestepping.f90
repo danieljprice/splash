@@ -32,7 +32,8 @@ contains
 !
 subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   use filenames,         only:nsteps,ifileopen
-  use particle_data,     only:iamtype,npartoftype,masstype,time,gamma,dat,time_was_read
+  use particle_data,     only:iamtype,npartoftype,masstype,time,gamma,headervals,&
+                              dat,time_was_read
   use settings_data,     only:istartatstep,iendatstep,nfreq,DataIsBuffered, &
                               iUsesteplist,isteplist,ncolumns,ipartialread
   use settings_page,     only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
@@ -165,7 +166,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
      call plotstep(ipos,istep,istepsonpage,irender,icontourplot,ivecplot,iamtype(:,ilocindat), &
                    npartoftype(:,ilocindat),masstype(:,ilocindat),dat(:,:,ilocindat), &
-                   time(ilocindat),gamma(ilocindat),ipagechange,iadvance)
+                   time(ilocindat),gamma(ilocindat),headervals(:,ilocindat),ipagechange,iadvance)
 !
 !--increment timestep -- iadvance can be changed interactively
 !
