@@ -559,6 +559,16 @@ contains
      endif
      if (.not.tagged) call fake_header_tags(nreals,realarr,tagsreal)
   endif
+!
+!--append integers to realarr so they can be used in
+!  legends and calculated quantities
+!
+ if (nreals+nints <= maxinblock) then
+    tagsreal(nreals+1:nreals+nints) = tags(1:nints)
+    realarr(nreals+1:nreals+nints)  = real(intarr(1:nints))
+    nreals = nreals + nints
+ endif
+
 !--real*4, real*8
   read(iunit,iostat=ierr) nreal4s
   if (nreal4s > 0) then
@@ -594,6 +604,16 @@ contains
      endif
      ! extract the number of dust arrays are in the file
      if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
+!
+!--append real*8s to realarr so they can be used in
+!  legends and calculated quantities
+!
+     if (nreals+nreal8s <= maxinblock) then
+        tagsreal(nreals+1:nreals+nreal8s) = tags(1:nreal8s)
+        realarr(nreals+1:nreals+nreal8s)  = real(real8arr(1:nreal8s))
+        nreals = nreals + nreal8s
+     endif
+
   else
      if (nreal8s.ge.4) then
         read(iunit,iostat=ierr) udist,umass,utime,umagfd
