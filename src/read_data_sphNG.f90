@@ -420,6 +420,49 @@ contains
 
  end subroutine fake_header_tags
 
+!------------------------------
+! Append a number to a string
+! e.g. string,2 -> string2
+!------------------------------
+ subroutine append_number(string,j)
+  character(len=*), intent(inout) :: string
+  integer,          intent(in)    :: j
+  character(len=12) :: strj
+
+  write(strj,"(i12)") j
+  string = trim(string)//trim(adjustl(strj))
+
+ end subroutine append_number
+
+!----------------------------------------------------------------------
+! Append numbers to header tags to make them unique so they can
+! be used in splash calculated quantities
+! e.g. massoftype1, massoftype2, massoftype3, etc.
+!----------------------------------------------------------------------
+ subroutine make_header_tags_unique(nreals,tagsreal)
+  integer, intent(in) :: nreals
+  character(len=lentag), dimension(nreals), intent(inout) :: tagsreal
+  character(len=lentag) :: tagprev
+  integer :: i,j
+
+  j = 0
+  tagprev = tagsreal(1)
+  do i=2,nreals
+     if (tagsreal(i)==tagprev) then
+        j = j + 1
+        if (j==1) then
+           call append_number(tagsreal(i-1),j)
+           j = j + 1
+        endif
+        call append_number(tagsreal(i),j)
+     else
+        tagprev = tagsreal(i)
+        j = 0
+     endif
+  enddo
+
+ end subroutine make_header_tags_unique
+
  !----------------------------------------------------------------------
  ! Routine to read the header of sphNG dump files and extract relevant
  ! information
@@ -1468,6 +1511,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       nhdr = min(nreals,maxhdr)
       headervals(1:nhdr,j) = dummyreal(1:nhdr)
       headertags(1:nhdr)   = tagsreal(1:nhdr)
+      call make_header_tags_unique(nhdr,headertags)
 
       nstepsread = nstepsread + 1
       !
