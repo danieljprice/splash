@@ -88,7 +88,7 @@ module sphNGread
   module procedure extract_int, extract_real4, extract_real8, &
          extract_intarr, extract_real4arr, extract_real8arr
  end interface extract
- 
+
 contains
 
  !-------------------------------------------------------------------
@@ -99,15 +99,17 @@ contains
 
   select case(int(iphase))
   case(0)
-    itypemap_sphNG = 1
+    itypemap_sphNG = 1 ! gas
+  case(11:)
+    itypemap_sphNG = 2 ! dust
   case(1:9)
-    itypemap_sphNG = 3
-  case(10:)
-    itypemap_sphNG = 4
+    itypemap_sphNG = 4 ! nptmass
+  case(10)
+    itypemap_sphNG = 5 ! star
   case default
-    itypemap_sphNG = 5
-  end select  
-  
+    itypemap_sphNG = 6 ! unknown
+  end select
+
  end function itypemap_sphNG
 
  !---------------------------------------------------------------------
@@ -115,7 +117,7 @@ contains
  !---------------------------------------------------------------------
  elemental integer function itypemap_phantom(iphase)
   integer*1, intent(in) :: iphase
-  
+
   select case(int(iphase))
   case(1:2)
     itypemap_phantom = iphase
@@ -126,7 +128,7 @@ contains
   case default
     itypemap_phantom = itypemap_unknown_phantom
   end select
-  
+
  end function itypemap_phantom
 
  !------------------------------------------
@@ -155,7 +157,7 @@ contains
   enddo over_tags
   if (matched) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
-  
+
  end subroutine extract_int
 
  !------------------------------------------
@@ -185,7 +187,7 @@ contains
   enddo over_tags
   if (matched) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
-  
+
  end subroutine extract_real8
 
  !------------------------------------------
@@ -215,7 +217,7 @@ contains
   enddo over_tags
   if (matched) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
-  
+
  end subroutine extract_real4
 
  !------------------------------------------
@@ -242,7 +244,7 @@ contains
   enddo over_tags
   if (nmatched==size(ival)) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
- 
+
  end subroutine extract_intarr
 
  !------------------------------------------
@@ -270,7 +272,7 @@ contains
   enddo over_tags
   if (nmatched==size(rval)) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
-  
+
  end subroutine extract_real8arr
 
  !------------------------------------------
@@ -298,7 +300,7 @@ contains
   enddo over_tags
   if (nmatched==size(rval)) ierr = 0
   if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
-  
+
  end subroutine extract_real4arr
 
  !----------------------------------------------------------------------
@@ -346,7 +348,7 @@ contains
   if (index(fileident,'RT=on').ne.0) then
      rt_in_header = .true.
   endif
-  if (index(fileident,'dust').ne.0) then
+  if (index(fileident,'1dust').ne.0) then
      use_dustfrac = .true.
   endif
   if (index(fileident,'This is a test').ne.0) then
@@ -417,6 +419,49 @@ contains
   endif
 
  end subroutine fake_header_tags
+
+!------------------------------
+! Append a number to a string
+! e.g. string,2 -> string2
+!------------------------------
+ subroutine append_number(string,j)
+  character(len=*), intent(inout) :: string
+  integer,          intent(in)    :: j
+  character(len=12) :: strj
+
+  write(strj,"(i12)") j
+  string = trim(string)//trim(adjustl(strj))
+
+ end subroutine append_number
+
+!----------------------------------------------------------------------
+! Append numbers to header tags to make them unique so they can
+! be used in splash calculated quantities
+! e.g. massoftype1, massoftype2, massoftype3, etc.
+!----------------------------------------------------------------------
+ subroutine make_header_tags_unique(nreals,tagsreal)
+  integer, intent(in) :: nreals
+  character(len=lentag), dimension(nreals), intent(inout) :: tagsreal
+  character(len=lentag) :: tagprev
+  integer :: i,j
+
+  j = 0
+  tagprev = tagsreal(1)
+  do i=2,nreals
+     if (tagsreal(i)==tagprev) then
+        j = j + 1
+        if (j==1) then
+           call append_number(tagsreal(i-1),j)
+           j = j + 1
+        endif
+        call append_number(tagsreal(i),j)
+     else
+        tagprev = tagsreal(i)
+        j = 0
+     endif
+  enddo
+
+ end subroutine make_header_tags_unique
 
  !----------------------------------------------------------------------
  ! Routine to read the header of sphNG dump files and extract relevant
@@ -557,6 +602,16 @@ contains
      endif
      if (.not.tagged) call fake_header_tags(nreals,realarr,tagsreal)
   endif
+!
+!--append integers to realarr so they can be used in
+!  legends and calculated quantities
+!
+ if (nreals+nints <= maxinblock) then
+    tagsreal(nreals+1:nreals+nints) = tags(1:nints)
+    realarr(nreals+1:nreals+nints)  = real(intarr(1:nints))
+    nreals = nreals + nints
+ endif
+
 !--real*4, real*8
   read(iunit,iostat=ierr) nreal4s
   if (nreal4s > 0) then
@@ -592,6 +647,16 @@ contains
      endif
      ! extract the number of dust arrays are in the file
      if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
+!
+!--append real*8s to realarr so they can be used in
+!  legends and calculated quantities
+!
+     if (nreals+nreal8s <= maxinblock) then
+        tagsreal(nreals+1:nreals+nreal8s) = tags(1:nreal8s)
+        realarr(nreals+1:nreals+nreal8s)  = real(real8arr(1:nreal8s))
+        nreals = nreals + nreal8s
+     endif
+
   else
      if (nreal8s.ge.4) then
         read(iunit,iostat=ierr) udist,umass,utime,umagfd
@@ -642,7 +707,7 @@ contains
   integer*8, intent(out)   :: isize(:)
   integer,   intent(out)   :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,ierr
   integer,   intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
-  
+
   read(iunit,iostat=ierr) isize(iarr),nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
   if (iarr.eq.1) then
      ntotblock = isize(iarr)
@@ -685,11 +750,11 @@ contains
   integer :: i,ierrs(10)
   integer :: itype
   real,    parameter :: pi=3.141592653589
-  
+
   if (phantomdump) then
      call extract('time',time,realarr,tags,nreals,ierrs(1))
   else
-     call extract('gt',time,realarr,tags,nreals,ierrs(1))  
+     call extract('gt',time,realarr,tags,nreals,ierrs(1))
   endif
   call extract('gamma',gamma,realarr,tags,nreals,ierrs(2))
   call extract('rhozero',rhozero,realarr,tags,nreals,ierrs(3))
@@ -780,7 +845,7 @@ contains
            ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dtmax
   endif
  end subroutine extract_variables_from_header
- 
+
 !---------------------------------------------------------------
 ! old subroutine for guessing labels in non-tagged sphNG format
 !---------------------------------------------------------------
@@ -796,7 +861,7 @@ contains
   real,    intent(inout) :: units(:)
   integer :: i
   real(doub_prec) :: uergg
-  
+
 !--the following only for mhd small dumps or full dumps
   if (ncolumns.ge.7) then
      if (mhddump) then
@@ -975,7 +1040,7 @@ contains
            idustarr = idustarr + 1
            icolumn = nhydroarrays + idustarr
         else
-           icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)     
+           icolumn = max(nhydroarrays + ndustarrays + nmhdarrays + 1,imaxcolumnread + 1)
         endif
      case('Bx')
         icolumn = nhydroarrays + ndustarrays + 1
@@ -1058,7 +1123,7 @@ contains
 
   ! Look for ndusttypes in the header
   do i = 1,maxinblock
-     if (tags(i)=='ndusttypes') then
+     if (trim(tags(i))=='ndusttypes') then
          igotndusttypes = .true.
      endif
   enddo
@@ -1085,13 +1150,14 @@ end module sphNGread
 !  Main read_data routine for splash
 !----------------------------------------------------------------------
 subroutine read_data(rootname,indexstart,iposn,nstepsread)
-  use particle_data,  only:dat,gamma,time,iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
+  use particle_data,  only:dat,gamma,time,headervals,&
+                      iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   !use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose,ndusttypes
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
-  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types
+  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags
   use calcquantities, only:calc_quantities
   use sphNGread
   implicit none
@@ -1105,8 +1171,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   integer :: narrsizes
   integer :: nskip,ntotal,npart,n1,ngas,nreals
   integer :: iblock,nblocks,ntotblock,ncolcopy
-  integer :: ipos,nptmass,nptmassi,nstar,nunknown,ilastrequired
-  integer :: imaxcolumnread,nhydroarraysinfile,nremoved
+  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
+  integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
@@ -1129,7 +1195,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   real :: hfact,omega
   logical :: skip_corrupted_block_3
   character(len=lentag) :: tagsreal(maxinblock), tagtmp
-  
+
   integer, parameter :: splash_max_iversion = 1
 
   nstepsread = 0
@@ -1442,6 +1508,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
            gotbinary,nblocks,nptmasstot,npartoftypei,ntypes,&
            time(j),gamma(j),hfact,npart,ntotal,npartoftype(:,j),masstype(:,j), &
            dat(:,:,j),ix,ih,ipmass,ivx)
+      nhdr = min(nreals,maxhdr)
+      headervals(1:nhdr,j) = dummyreal(1:nhdr)
+      headertags(1:nhdr)   = tagsreal(1:nhdr)
+      call make_header_tags_unique(nhdr,headertags)
 
       nstepsread = nstepsread + 1
       !
@@ -1570,7 +1640,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                      if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr),' tag = ',trim(tagtmp)
                      read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                      if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
-                     
+
                      select case(k)
                      case(1:3)
                         iloc = ix(k)
@@ -1741,7 +1811,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          endif
 !
 !        real4 arrays (may need converting if splash is compiled in double precision)
-! 
+!
          if (nreal4(iarr).gt.0 .and. kind(dat).eq.doub_prec) then
             if (allocated(dattempsingle)) deallocate(dattempsingle)
             allocate(dattempsingle(isize(iarr)),stat=ierr)
@@ -1873,7 +1943,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
     endif
- ! 
+ !
  !--remove particles at large H/R is "SSPLASH_REMOVE_LARGE_HR" is set
  !
     if (lenvironment('SSPLASH_REMOVE_LARGE_HR')) then
@@ -1881,7 +1951,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        print "(a)", 'SSPLASH_REMOVE_LARGE_HR set:'
        print "(a)", 'Removing particles at large H/R values'
        print "(a,F7.4)", 'H/R limit set to ',hrlim
-       
+
        nremoved = 0
        do i = 1,npart
           if (int(iphase(i)) == 0) then
@@ -1921,7 +1991,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
     nptmassi = 0
     nunknown = 0
-    ngas = 0
+    ngas  = 0
+    ndust = 0
     nstar = 0
     !--can only do this loop if we have read the iphase array
     iphasealloc: if (allocated(iphase)) then
@@ -1945,9 +2016,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                 endif
              case(itypemap_unknown_phantom)
                 nunknown = nunknown + 1
-             end select
+            end select
           enddo
-       else
+      else
        !
        !--sphNG: translate iphase to splash types
        !
@@ -1957,9 +2028,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              select case(itype)
              case(1)
                ngas = ngas + 1
-             case(3)
-               nptmassi = nptmassi + 1
+             case(2)
+               ndust = ndust + 1
              case(4)
+               nptmassi = nptmassi + 1
+             case(5)
                nstar = nstar + 1
              case default
                nunknown = nunknown + 1
@@ -2057,12 +2130,17 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
      call set_labels
      if (.not.phantomdump) then
+        if (ngas /= npart - nptmassi - ndust - nstar - nunknown) &
+           print*,'WARNING!!! ngas =',ngas,'but should be',npart-nptmassi-ndust-nstar-nunknown
+        if (ndust /= npart - nptmassi - ngas - nstar - nunknown) &
+           print*,'WARNING!!! ndust =',ndust,'but should be',npart-nptmassi-ngas-nstar-nunknown
         npartoftype(:,j) = 0
-        npartoftype(1,j) = npart - nptmassi - nstar - nunknown
-        npartoftype(2,j) = ntotal - npart
-        npartoftype(3,j) = nptmassi
-        npartoftype(4,j) = nstar
-        npartoftype(5,j) = nunknown
+        npartoftype(1,j) = ngas  ! npart - nptmassi - ndust - nstar - nunknown
+        npartoftype(2,j) = ndust ! npart - nptmassi - ngas  - nstar - nunknown
+        npartoftype(3,j) = ntotal - npart
+        npartoftype(4,j) = nptmassi
+        npartoftype(5,j) = nstar
+        npartoftype(6,j) = nunknown
      else
         npartoftype(1,j) = npartoftype(1,j) - nunknown
         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
@@ -2167,9 +2245,10 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum
+              idustfrac,ideltav,idustfracsum,ideltavsum,itstop,igrainsize,igraindens, &
+              ivrel
   use params
-  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread
@@ -2180,7 +2259,7 @@ subroutine set_labels
   integer :: i,j
   real(doub_prec)   :: unitx
   character(len=20) :: string,unitlabelx
-  character(len=20) :: dustfrac_string,deltav_string
+  character(len=20) :: dustfrac_string,deltav_string,tstop_string
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -2202,6 +2281,7 @@ subroutine set_labels
      ih = 4       !  smoothing length
   endif
   irho = ih + 1     !  density
+  itstop = 0
   iutherm = 0
   idustfrac = 0
 
@@ -2242,6 +2322,8 @@ subroutine set_labels
            idustfracsum = i
         case('dustfrac')
            idustfrac = i
+        case('tstop')
+           itstop = i
         case('deltavsumx')
            ideltavsum = i
         case('deltavx')
@@ -2281,6 +2363,12 @@ subroutine set_labels
            label(i) = 'e^- abundance'
         case('abco')
            label(i) = 'CO abundance'
+        case('grainsize')
+           igrainsize = i
+        case('graindens')
+           igraindens = i
+        case('vrel')
+           ivrel = i
         case default
            if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
            label(i) = tagarr(i)
@@ -2315,6 +2403,14 @@ subroutine set_labels
         label(i) = dustfrac_string
      enddo
   endif
+  if (itstop.gt.0) then
+     ! Make N tstop labels
+     do i = itstop-(ndusttypes-1),itstop
+        write(tstop_string,'(I10)') i-(itstop-ndusttypes)
+        write(tstop_string,'(A)') 'tstop'//trim(adjustl(tstop_string))
+        label(i) = tstop_string
+     enddo
+  endif
   if (ideltavsum.gt.0) then
      ! Modify the deltavsum labels to have vector subscripts
      do j=1,ndimV
@@ -2327,7 +2423,7 @@ subroutine set_labels
         do j=1,ndimV
            label(i+j-1) = trim(deltav_string)//'_'//labelcoord(j,1)
         enddo
-     enddo 
+     enddo
   endif
   !
   !--set labels for vector quantities
@@ -2395,6 +2491,18 @@ subroutine set_labels
       units(iBfirst:iBfirst+ndimV-1) = umagfd
       unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
    endif
+   if (igrainsize.gt.0) then
+       units(igrainsize) = udist
+       unitslabel(igrainsize) = ' [cm]'
+   endif
+   if (igraindens.gt.0) then
+       units(igraindens) = umass/udist**3
+       unitslabel(igraindens) = ' [g/cm\u3\d]'
+   endif
+   if (ivrel.gt.0) then
+      units(ivrel) = udist/utime/100
+      unitslabel(ivrel) = ' [m/s]'
+   endif
 
    !--use the following two lines for time in years
    call get_environment('SSPLASH_TIMEUNITS',string)
@@ -2450,17 +2558,19 @@ subroutine set_labels
         UseTypeInRenderings(6) = .false.
      endif
   else
-     ntypes = 5
+     ntypes = 6
      labeltype(1) = 'gas'
-     labeltype(2) = 'ghost'
-     labeltype(3) = 'sink'
-     labeltype(4) = 'star'
-     labeltype(5) = 'unknown/dead'
+     labeltype(2) = 'dust'
+     labeltype(3) = 'ghost'
+     labeltype(4) = 'sink'
+     labeltype(5) = 'star'
+     labeltype(6) = 'unknown/dead'
      UseTypeInRenderings(1) = .true.
-     UseTypeInRenderings(2) = .true.
-     UseTypeInRenderings(3) = .false.
-     UseTypeInRenderings(4) = .true.
-     UseTypeInRenderings(5) = .true.  ! only applies if turned on
+     UseTypeInRenderings(2) = .false.
+     UseTypeInRenderings(3) = .true.
+     UseTypeInRenderings(4) = .false.
+     UseTypeInRenderings(5) = .true.
+     UseTypeInRenderings(6) = .true.  ! only applies if turned on
   endif
 
 !-----------------------------------------------------------

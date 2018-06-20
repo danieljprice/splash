@@ -643,8 +643,8 @@ end subroutine initialise_plotting
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Internal subroutines !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
-                    iamtype,npartoftype,masstype,dat,timei,gammai,ipagechange,iadvance)
-  use params,             only:int1,maxparttypes,doub_prec
+                    iamtype,npartoftype,masstype,dat,timei,gammai,headervalsi,ipagechange,iadvance)
+  use params,             only:int1,maxparttypes,doub_prec,maxhdr
   use colours,            only:colour_set
   use filenames,          only:nsteps,rootname,ifileopen,tagline
   use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel
@@ -715,6 +715,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real,    dimension(maxparttypes), intent(in) :: masstype
   real,    dimension(:,:),          intent(in) :: dat
   real,       intent(in) :: timei,gammai
+  real,    dimension(maxhdr), intent(in) :: headervalsi
   logical,    intent(in) :: ipagechange
   integer, intent(inout) :: iadvance
 
@@ -3131,13 +3132,13 @@ contains
     use shapes,        only:nshapes,plot_shapes
     use pagesetup,     only:xlabeloffset
     use plotlib,       only:plot_qci,plot_sci,plot_annotate,plot_set_opacity
-    use labels,        only:is_coord
+    use labels,        only:is_coord,headertags,count_non_blank
     use asciiutils,    only:add_escape_chars
     implicit none
     integer :: icoloursave
     character(len=lensteplegend) :: steplegendtext
     real :: xlabeloffsettemp
-    integer :: ititle
+    integer :: ititle,nhdr
     logical :: usebox
 
     !--save colour index
@@ -3199,7 +3200,9 @@ contains
        endif
        usebox = (ivectorplot.gt.0)
        if (istepsonpage.eq.1) then
-          call legend(legendtext,timei,labeltimeunits,hposlegend,vposlegend,fjustlegend,usebox)
+          nhdr = count_non_blank(headertags)
+          call legend(legendtext,timei,nhdr,headervalsi,headertags,labeltimeunits,&
+                      hposlegend,vposlegend,fjustlegend,usebox)
        endif
     endif
 

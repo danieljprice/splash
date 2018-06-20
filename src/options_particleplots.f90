@@ -35,13 +35,13 @@ module settings_part
  integer :: ncircpart,ismooth_particle_plots
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep,ErrorBarType
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
- real    :: hfacmarkers
+ real    :: hfacmarkers,rref,betaflare
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
    itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers,&
-   ErrorBarType,ismooth_particle_plots
+   ErrorBarType,ismooth_particle_plots,rref,betaflare
 
 contains
 
@@ -82,6 +82,8 @@ subroutine defaults_set_part
   hfacmarkers = 1.0
   ErrorBarType = 0
   ismooth_particle_plots = 0
+  rref = 1.
+  betaflare = 1.25
 
   return
 end subroutine defaults_set_part
@@ -99,20 +101,30 @@ subroutine defaults_set_part_ev
   return
 end subroutine defaults_set_part_ev
 
+!---------------------------------------------
+! changed default values for these options
+!---------------------------------------------
+subroutine initialise_coord_transforms
+  use geometry, only:set_flaring_index
+
+  call set_flaring_index(rref,betaflare)
+
+end subroutine initialise_coord_transforms
+
 !----------------------------------------------------------------------
 ! submenu with options relating to particle plots
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
   use exact,           only:options_exact,submenu_exact
-  use labels,          only:labeltype,ih,label,idustfrac,idustfracsum, &
-                            ideltavsum
+  use labels,          only:labeltype,ih,label,idustfracsum,ideltavsum
   use limits,          only:lim
   use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
                             ndataplots,ndusttypes,idustfrac_plot,ideltav_plot,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
-  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits
+  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits,&
+                            igeom_flaredcyl,igeom_logflared,set_flaring_index
   use multiplot,       only:itrans
   use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
   use calcquantities,  only:calc_quantities
@@ -221,7 +233,7 @@ subroutine submenu_particleplots(ichoose)
            ideltav_plot = ideltavsum + ndimV*(idustfrac_plot - idustfracsum)
            if (idustfrac_prev /= idustfrac_plot) then
               !--Modify calculated data for fake dust particles if necessary
-              if (ncalc /= 0) then 
+              if (ncalc /= 0) then
                  print*,'...recalibrating calculated quantities...'
                  call setup_calculated_quantities(ncalc,quiet=.true.)
                  print*,'...done!'
@@ -269,7 +281,7 @@ subroutine submenu_particleplots(ichoose)
      !                 ' 1) render particle plots with fixed h', &
      !                 ' 2) render particle plots with adaptive h (slower)'
      call prompt('smooth particle plots? (0=none 1=fixed 2=adaptive)',ismooth_particle_plots,0,2)
-     if (ismooth_particle_plots.eq.0) then 
+     if (ismooth_particle_plots.eq.0) then
         if (size(iamtype(:,1)).gt.1) then
            print "(3(/,a),/)", &
              ' WARNING: changing type plotting order currently has no effect ', &
@@ -375,6 +387,19 @@ subroutine submenu_particleplots(ichoose)
      call prompt(' Enter coordinate system to plot in:', &
                  icoordsnew,0,maxcoordsys)
      if (icoordsnew.eq.0) icoordsnew = icoords
+     select case(icoordsnew)
+     !case(igeom_rotated)
+      !  call prompt('enter rotation angle a (degrees)',rot_angle_a)
+       ! call prompt('enter rotation angle b (degrees)',rot_angle_b)
+        !call set_rotation_angles(rot_angle_a*pi/180.,rot_angle_b*pi/180.)
+     case(igeom_flaredcyl,igeom_logflared)
+        call prompt('enter reference radius (Rref) in z''=z(R/Rref)**(-beta)',rref)
+        print "(2(/,a),/)",' Use beta = 1.5 - q to give correct flaring index in a disc', &
+                         ' where q is sound speed index i.e. cs = cs_0(R/R_0)^-q '
+        call prompt('enter flaring index beta',betaflare)
+        call set_flaring_index(rref,betaflare)
+     end select
+
      if (icoordsnew.ne.icoordsprev) then
         itrans(1:ndim) = 0
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
@@ -393,7 +418,7 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(9)
-     call options_exact
+     call options_exact(iexact)
      return
 !------------------------------------------------------------------------
   case default

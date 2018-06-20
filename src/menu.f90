@@ -665,7 +665,7 @@ logical function allowrendering(iplotx,iploty,xsec)
  logical, intent(in), optional :: xsec
  integer :: itransx,itransy,iz
  logical :: is_xsec,islengthz
- 
+
  if (present(xsec)) then
     is_xsec = xsec
  else
@@ -798,7 +798,7 @@ subroutine set_instant_multiplot(string,ipicky,ipickx,numplot,nmulti,multiplotx,
  integer, intent(inout) :: nmulti,nx,ny
  integer, intent(inout) :: multiplotx(:),multiploty(:)
  integer :: ipickarr(maxplot),ierr,i
- 
+
  ipickarr = 0
  read(string,*,iostat=ierr) ipickarr
  i = 1
@@ -835,6 +835,12 @@ subroutine print_header
  integer, parameter :: d(49) = (/32,79,111,79,111,79,111,79,32,83,80,76,65,83,72,32,119, &
                       105,115,104,101,115,32,121,111,117,32,97,32,118,101,114,121,32,104,&
                       97,112,112,121,32,33,32,79,111,79,111,79,111,79/)
+ integer, parameter :: l(45) = (/64,130,64,216,222,220,206,64,232,210,218,202,64,194,&
+                      206,222,64,210,220,64,194,64,206,194,216,194,240,242,64,204,194,&
+                      228,88,64,204,194,228,64,194,238,194,242,92,92,92/)
+ integer, parameter :: a(49) = (/32,83,101,103,109,101,110,116,97,116,105,111,110,32,&
+                      102,97,117,108,116,46,32,80,108,101,97,115,101,32,114,101,98,111,&
+                      111,116,32,121,111,117,114,32,99,111,109,112,117,116,101,114,46/)
  call date_and_time(values=v)
  if (v(2)==m(1)/4 .and. v(3)==v(2)-2) then
     print "(/,48(a))",(achar(m(i)),i=1,48)
@@ -842,6 +848,10 @@ subroutine print_header
     print "(/,49(a))",(achar(c(i)),i=1,49)
  elseif (v(2)==nint(0.6) .and. v(3)==d(2)/79) then
     print "(/,40(a),i4,9(a))",(achar(d(i)),i=1,40),v(1),(achar(d(i)),i=41,49)
+ elseif (v(2)==l(1)-59 .and. v(3)==l(1)/4**2) then
+    print "(/,45(a))",(achar(l(i)/2),i=1,45)
+ elseif (v(2)==a(14)/8 .and. v(3)==int(1.3) .and. v(5) < (l(1)-16)/4) then
+    print "(/,49(a))",(achar(a(i)),i=1,49)
  else
     print "(/a)",' You may choose from a delectable sample of plots'
  endif

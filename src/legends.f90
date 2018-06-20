@@ -30,10 +30,10 @@
 !-----------------------------------------------------------------
 module legends
  implicit none
- 
+
  public :: legend, legend_vec, legend_markers, legend_scale
  public :: prompt_panelselect, ipanelselect
- 
+
  private
 
 contains
@@ -46,19 +46,23 @@ contains
 !        vpos : vertical position in character heights from top
 !-----------------------------------------------------------------
 
-subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
+subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,usebox)
  use plotlib,    only:plot_annotate
  use asciiutils, only:string_replace
  use parsetext,  only:parse_text,rn
+ use params,     only:ltag
  implicit none
  real, intent(in) :: t,hpos,vpos,fjust
+ integer, intent(in) :: nvar
+ real, intent(in), dimension(nvar) :: allvars
+ character(len=*), dimension(nvar), intent(in) :: tags
  character(len=*), intent(in) :: legendtext,unitslabel
  logical,          intent(in) :: usebox
  character(len=len(legendtext)+len(unitslabel)+20) :: label
- integer, parameter :: nvars = 1
- real(kind=rn),    dimension(nvars) :: vals
- character(len=1), dimension(nvars) :: vars
- 
+ real(kind=rn),    dimension(size(tags)+1) :: vals
+ character(len=ltag), dimension(size(tags)+1) :: vars
+ integer :: nvars
+
  label = trim(legendtext)
 
  !
@@ -69,7 +73,7 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
     if (t < 1.) then
        label = trim(label)//'%t.2'
     else
-       label = trim(label)//'%t.3'    
+       label = trim(label)//'%t.3'
     endif
  endif
  !
@@ -78,6 +82,8 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
  !
  vars = (/'t'/)
  vals(1) = real(t,kind=rn)
+ vars(2:2+nvar) = tags(1:nvar)
+ vals(2:2+nvar) = allvars(1:nvar)
  call parse_text(label,vars,vals)
 
  if (index(label,'%ut').gt.0) then
@@ -85,7 +91,7 @@ subroutine legend(legendtext,t,unitslabel,hpos,vpos,fjust,usebox)
  else
     label = trim(label)//trim(unitslabel)
  endif
- 
+
  if (usebox) call plot_box_around_text(trim(label),hpos,vpos,fjust)
  call plot_annotate('T',-vpos,hpos,fjust,trim(label))
 
@@ -395,7 +401,7 @@ subroutine prompt_panelselect(string,iselect)
  implicit none
  character(len=*), intent(in) :: string
  integer,       intent(inout) :: iselect
- 
+
  print "(4(/,a))", &
    '  0 : plot '//trim(string)//' on every panel ', &
    '  n : plot '//trim(string)//' on nth panel only ', &

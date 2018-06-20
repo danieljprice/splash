@@ -106,7 +106,7 @@ subroutine defaults_set_page
   modlinestyle = 1
   modcolour = 1
   maxcolour = plotlib_maxlinecolour
-  
+
   yscalealt = 1.
   labelyalt = ' '
 
@@ -188,7 +188,7 @@ subroutine submenu_page(ichoose)
  character(len=3)    :: string
 
  iaction = ichoose
- 
+
  papersizey = papersizex*aspectratio
  if (ipapersizeunits.gt.0) then
     write(paperfmtstr,"(f5.2,1x,f5.2)") papersizex,papersizey
@@ -309,7 +309,7 @@ subroutine submenu_page(ichoose)
         print*,'24) Custom size '
         call prompt(' Enter option for paper size ',ipapersize,0,24)
      endif
-     
+
      select case(ipapersize)
      case(1)
         ipapersizeunits = 1
@@ -449,13 +449,13 @@ subroutine submenu_page(ichoose)
            else
               aspectratio = papersizey/papersizex
            endif
-       endif 
+       endif
      case default
         ipapersizeunits = 1
         papersizex = 0.0         ! no call to PGPAP if they are zero
         aspectratio = 0.0
      end select
-     
+
      call prompt('Adjust plot limits to match device aspect ratio?',adjustlimitstodevice)
 
      return
@@ -552,8 +552,9 @@ subroutine submenu_legend(ichoose)
  use prompting, only:prompt,print_logical
  use shapes,    only:nshapes,labelshapetype,shape,submenu_shapes
  use legends,   only:prompt_panelselect
+ use labels,    only:headertags,count_non_blank
  integer, intent(in) :: ichoose
- integer             :: iaction,i,ierr,i1,i2
+ integer             :: iaction,i,ierr,i1,i2,nhdr
  character(len=50)   :: string
 
  iaction = ichoose
@@ -618,6 +619,10 @@ subroutine submenu_legend(ichoose)
        '  %(t + 2013)      : prints time offset by 2013', &
        '  %(t + 2013).5    : as above, to 5 sig. figs.', &
        '  %(t*100)         : multiplied by 100'
+       nhdr = count_non_blank(headertags)
+       print "(a)",' You can print any header variables using %(var):'
+       print "(12(2x,6(a),/))",headertags(1:nhdr)
+       print "(a)"
 
        call prompt('Enter legend text ',legendtext)
 

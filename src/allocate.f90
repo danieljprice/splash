@@ -46,6 +46,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   real, dimension(:,:), allocatable :: masstypetemp
   real, dimension(:), allocatable :: timetemp, gammatemp
   real, dimension(:,:,:), allocatable :: dattemp
+  real, dimension(:,:), allocatable :: headervalstemp
 !
 !--check for errors in input
 !
@@ -67,7 +68,6 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   if (npartin.eq.maxpart .and. ncolumnsin.eq.maxcol .and. nstep.eq.maxstep) then
      return
   endif
-
 !
 !--save array sizes
 !
@@ -145,6 +145,10 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
         timetemp = time
         gammatemp = gamma
         deallocate(time,gamma)
+
+        allocate(headervalstemp(maxhdr,maxstep))
+        if (ierr /= 0) stop 'error allocating memory (hdrvalstemp)'
+        headervalstemp = headervals
      endif
 
   else
@@ -231,18 +235,24 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      allocate(time(maxstep),gamma(maxstep),stat=ierr)
      if (ierr /= 0) stop 'error allocating memory for header arrays'
 
+     allocate(headervals(maxhdr,maxstep),stat=ierr)
+     if (ierr /= 0) stop 'error allocating memory for header arrays'
+
      npartoftype = 0
      masstype = 0.
      time = time_not_read_val ! initialise like this so we know if has not been read
      gamma = 0.
+     headervals = 0.
 
      if (reallocate_step) then
         npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
         masstype(:,1:maxstepold) = masstypetemp(:,1:maxstepold)
         time(1:maxstepold) = timetemp(1:maxstepold)
         gamma(1:maxstepold) = gammatemp(1:maxstepold)
+        headervals(:,1:maxstepold) = headervalstemp(:,1:maxstepold)
         deallocate(npartoftypetemp,masstypetemp)
         deallocate(timetemp,gammatemp)
+        deallocate(headervalstemp)
      endif
   endif
 
@@ -257,7 +267,8 @@ end subroutine alloc
 !
 !-----------------------------------------
 subroutine deallocate_all
- use particle_data, only:dat,icolourme,iamtype,npartoftype,masstype,time,gamma
+ use particle_data, only:dat,icolourme,iamtype,npartoftype,masstype,&
+                         time,gamma,headervals
  implicit none
 
  if (allocated(dat)) deallocate(dat)
@@ -267,6 +278,7 @@ subroutine deallocate_all
  if (allocated(masstype)) deallocate(masstype)
  if (allocated(time)) deallocate(time)
  if (allocated(gamma)) deallocate(gamma)
+ if (allocated(headervals)) deallocate(headervals)
 
  return
 end subroutine deallocate_all

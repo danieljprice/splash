@@ -48,13 +48,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.8.0  : (xx/xx/18)
-!             Viridis, Ocean and Inferno colour schemes added; can customise line colours;
-!             360 mode added for 4pi videos; cactus hdf5 data read added; Bondi flow exact solution;
-!             automatically read labels from ascii file headers; option for ticks but no labels;
-!             better surface density plots; automatic "nearest" unit selection; 
-!             option for colour bar on top or left; support for multi-grain dust in Phantom
-!             option for kernel-smoothed particle plots of arbitrary quantities
+!     2.8.0  : (06/04/18)
+!             360/4pi video mode added; automatically read labels from ascii file headers;
+!             nearest sensible unit (e.g. au or pc) used by default; cactus hdf5 data read;
+!             kernel-smoothed particle plots of arbitrary quantities;
+!             Viridis, Ocean and Inferno colour schemes; can customise line colours;
+!             Bondi flow exact solution; option for ticks but no labels;
+!             correct units in surface density plots; colour bar on top or left;
+!             support for multi-grain dust in Phantom; bug fix with NaNs in ascii files
 !     2.7.0  : (03/05/17)
 !             Hollywood mode added (ctrl-m in interactive mode); better handling of dust/gas
 !             phantom data; added rotated cartesian geometry; rendering implemented in r-phi
@@ -71,7 +72,7 @@ program splash
 !     2.5.1  : (29/01/15)
 !             error bar style options; support for 5K displays; can plot vectors
 !             and render with colours if h not read; range restrictions apply during splash to grid;
-!             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read; 
+!             improved line-style legend; now up to 6 line styles; fixes to amuse-hdf5 read;
 !             phantom read handles star/dm particles; various bugs fixed
 !     2.5.0  : (22/08/14)
 !             instant multiplots by giving multiple columns as y axis;
@@ -119,7 +120,7 @@ program splash
 !             bug fixes with calculated quantities + change of coordinate systems;
 !             improved vector plot legend; option for box+numbers but no labels added
 !     2.1.0  : (16/05/12)
-!             3D vector field visualisation added; 
+!             3D vector field visualisation added;
 !             GADGET HDF5 read implemented;
 !             page sizes can be specified in pixels;
 !             limits can auto-adapt to device aspect ratio;
@@ -379,12 +380,15 @@ program splash
   use analysis,           only:isanalysis
   use timestepping,       only:timestep_loop
   use settings_page,      only:interactive,device,nomenu
+  use settings_part,      only:initialise_coord_transforms
+  use settings_render,    only:icolours,rgbfile
+  use colours,            only:rgbtable,ncoltable,icustom
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.8.0 [10th Feb 2018]'
+  character(len=*), parameter :: version = 'v2.8.1beta [18th May 2018]'
 
   !
   ! initialise some basic code variables
@@ -626,6 +630,9 @@ program splash
      call select_kernel(ikernel)
   endif
 
+  ! set geometry defaults
+  call initialise_coord_transforms
+
   if (doconvert) then
 
      !
@@ -643,6 +650,15 @@ program splash
         call get_data(1,ihavereadfilenames,firsttime=.true.)
      endif
 
+     ! read tabulated colour table, if necessary
+     if (abs(icolours)==icustom) then
+        call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
+        if (ierr /= 0 .or. ncoltable <= 0) then
+           print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
+        else
+           print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+        endif
+     endif
      !
      ! setup kernel table for fast column density plots in 3D
      !
@@ -741,7 +757,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2017 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2018 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &

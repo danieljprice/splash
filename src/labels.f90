@@ -26,11 +26,12 @@
 !
 !-----------------------------------------------------------
 module labels
- use params, only:maxplot, maxparttypes
+ use params, only:maxplot,maxparttypes,maxhdr,ltag
  implicit none
  integer, parameter :: lenlabel = 80
  integer, parameter :: lenunitslabel = 40  ! length of units label
  character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
+ character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
  character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
@@ -44,8 +45,9 @@ module labels
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
- integer :: irhorestframe,idustfrac,ideltav
+ integer :: irhorestframe,idustfrac,ideltav,itstop
  integer :: idustfracsum,ideltavsum
+ integer :: igrainsize,igraindens,ivrel
 
  public
 
@@ -78,6 +80,9 @@ subroutine reset_columnids
  iax = 0      ! ax (acceleration)
  iBpol = 0    ! B_polx
  iBtor = 0    ! B_torx
+ igrainsize = 0 ! grainsize
+ igraindens = 0 ! graindens
+ ivrel = 0      ! relative velocity
  iacplane = 0
  ike = 0
  idivB = 0
@@ -86,10 +91,12 @@ subroutine reset_columnids
  iradenergy = 0
  icolpixmap = 0
  irhorestframe = 0
+ itstop = 0
  idustfrac = 0
  idustfracsum = 0
  ideltav = 0
  ideltavsum = 0
+ headertags = ''
 
  return
 end subroutine reset_columnids
@@ -335,5 +342,22 @@ subroutine print_types(noftype,ltype)
  write(*,*)
 
 end subroutine print_types
+
+!-----------------------------------------------------------------
+!
+!  utility to count number of non-blank strings in a list
+!
+!-----------------------------------------------------------------
+integer function count_non_blank(string)
+ character(len=*), dimension(:), intent(in) :: string
+ integer :: i
+
+ count_non_blank = 0
+ do i=1,size(string)
+    if (len_trim(string(i))<=0) exit
+    count_non_blank = count_non_blank + 1
+ enddo
+
+end function count_non_blank
 
 end module labels

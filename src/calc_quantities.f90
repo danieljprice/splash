@@ -26,7 +26,7 @@
 !-----------------------------------------------------------------
 module calcquantities
  use labels, only:lenlabel,lenunitslabel
- use params, only:maxplot
+ use params, only:maxplot,maxhdr
  implicit none
  public :: calc_quantities,setup_calculated_quantities
  public :: calc_quantities_use_x0,get_calc_data_dependencies
@@ -148,17 +148,17 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn,verbos
  use prompting,     only:prompt
  use fparser,       only:checkf
  use settings_data, only:ncolumns,iRescale,required
- use labels,        only:shortstring
+ use labels,        only:shortstring,headertags,count_non_blank
  implicit none
  integer, intent(in)  :: istart,iend
  integer, intent(out) :: ncalc
  logical, intent(in)  :: printhelp
  integer, dimension(maxcalc), intent(in) :: incolumn
  logical, intent(in)  :: verbose
- integer :: i,j,ntries,ierr,iequal,nvars
+ integer :: i,j,ntries,ierr,iequal,nvars,nhdr
  logical :: iask
  character(len=120) :: string
- character(len=lenvars), dimension(maxplot+nextravars) :: vars
+ character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
 
  i = istart + 1
  ntries = 0
@@ -173,9 +173,11 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn,verbos
 
  if (printhelp) then
     print "(/,a)",' Specify a function to calculate from the data '
-    print "(10(a))",' Valid variables are the column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars-1),&
-                ' and '''//trim(extravars(nextravars))//''''
-    print "(a)",' Spaces, escape sequences (\d), arithmetic operators and units labels'
+    print "(10(a))",' Valid variables are column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars),&
+                ' and header variables:'
+    nhdr = count_non_blank(headertags)
+    print "(12(2x,6(a),/))",headertags(1:nhdr)
+    print "(/,a)",' Spaces, escape sequences (\d), arithmetic operators and units labels'
     print "(a)",' are removed from variable names. Note that previously calculated'
     print "(a)",' quantities can be used in subsequent calculations.'
  endif
@@ -409,11 +411,11 @@ subroutine print_example_quantities(verbose,ncalc)
        if (ndusttypes>1) then
           write(idust_string,"(I10)") i
           write(idust_string,"(a)") '{d,'//trim(adjustl(idust_string))//'}'
-          ldfrac = shortlabel(label(idustfracsum+i),unitslabel(idustfracsum+i))    
+          ldfrac = shortlabel(label(idustfracsum+i),unitslabel(idustfracsum+i))
           ldfake = shortlabel(label(idustfrac_plot),unitslabel(idustfrac))
        else
           write(idust_string,"(a)") '{d}'
-          ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))    
+          ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))
           ldfake = '1'
        endif
        write(string,"(a)",iostat=ierr) '\rho_'//trim(adjustl(idust_string))//' = ' &
@@ -454,7 +456,7 @@ subroutine print_example_quantities(verbose,ncalc)
                 call splitstring(string,calclabel(ncalc),calcstring(ncalc))
              else
                 print "(11x,a)",trim(string)
-             endif       
+             endif
           enddo
           !--dust velocities
           do i=1,ndimV
@@ -472,13 +474,13 @@ subroutine print_example_quantities(verbose,ncalc)
                 call splitstring(string,calclabel(ncalc),calcstring(ncalc))
              else
                 print "(11x,a)",trim(string)
-             endif       
+             endif
           enddo
        else
           ! Still needs to be implemented...
        endif
     endif
- endif 
+ endif
 
  !
  !--magnitudes of all vector quantities (only if cartesian coords are set)
@@ -584,7 +586,7 @@ subroutine print_example_quantities(verbose,ncalc)
        print "(11x,a)",trim(string)
     endif
  endif
- 
+
  if (.not.prefill) print "(a)"
 
 end subroutine print_example_quantities
@@ -604,7 +606,7 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  integer, dimension(maxcalc), intent(out), optional :: incolumn
  logical, intent(in), optional :: verbose
  integer :: i,ierr,nvars,indexinactive
- character(len=lenvars), dimension(maxplot+nextravars) :: vars
+ character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
  logical :: isverbose
 
  if (present(verbose)) then
@@ -671,7 +673,7 @@ subroutine get_calc_data_dependencies(required)
  use fparser,        only:checkf
  use labels,         only:label,shortlabel,shortstring
  logical, dimension(0:maxplot), intent(inout) :: required
- character(len=lenvars), dimension(maxplot+nextravars) :: vars
+ character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
  integer, dimension(maxcalc) :: incolumn
  integer :: ncalcok,ncalctot,nvars,i,j
 
@@ -706,7 +708,7 @@ subroutine get_calc_data_dependencies(required)
        endif
     endif
  enddo
- 
+
 end subroutine get_calc_data_dependencies
 
 !-----------------------------------------------------------------
@@ -716,8 +718,8 @@ end subroutine get_calc_data_dependencies
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
-                           irho,idustfracsum
-  use particle_data,  only:dat,npartoftype,gamma,time,maxpart,maxstep,maxcol,iamtype
+                           irho,idustfracsum,count_non_blank,headertags
+  use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes, &
                            idustfrac_plot
@@ -731,13 +733,14 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   implicit none
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart,ndust,icolumn
+  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
+  integer :: ndust,icolumn,nhdr
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
-  real(kind=rn), dimension(maxplot+nextravars)          :: vals
-  character(len=lenvars), dimension(maxplot+nextravars) :: vars
+  real(kind=rn), dimension(maxplot+nextravars+maxhdr)          :: vals
+  character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
   real, dimension(3) :: x0,v0
   real :: t1,t2
 
@@ -849,6 +852,10 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
               vals(ncolumns+icalc+2) = x0(1)
               vals(ncolumns+icalc+3) = x0(2)
               vals(ncolumns+icalc+4) = x0(3)
+              nhdr = count_non_blank(headertags)
+              do j=1,nhdr
+                 vals(ncolumns+icalc+4+j) = headervals(j,i)
+              enddo
               if (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0)) then
                  !
                  !--if alternative coordinate system is in use, then we need to apply
@@ -859,7 +866,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                     vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
                     call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
                     !--evaluate function with transformed values
-                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                  enddo
               else
                  !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns,ndusttypes,iamtype,idustfracsum,idustfrac_plot)
@@ -884,7 +891,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                        endif
                     enddo
                     !vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars-1)))
+                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                  enddo
                  !!$omp end parallel do
               endif
@@ -976,12 +983,12 @@ end subroutine identify_calculated_quantity
 !
 !-----------------------------------------------------------------
 subroutine get_variables(maxlabel,nvars,variables)
- use labels,         only:label,shortlabel,unitslabel
+ use labels,         only:label,shortlabel,unitslabel,headertags,count_non_blank
  implicit none
  integer,                        intent(in)  :: maxlabel
  integer,                        intent(out) :: nvars
  character(len=*), dimension(:), intent(out) :: variables
- integer :: i
+ integer :: i,nheader
  !
  !--can use column labels up to the previous quantity calculated
  !
@@ -993,6 +1000,11 @@ subroutine get_variables(maxlabel,nvars,variables)
  enddo
  do i=1,nextravars
     variables(maxlabel+i) = trim(extravars(i))
+ enddo
+ nheader = count_non_blank(headertags)
+ nvars = nvars + nheader
+ do i=1,nheader
+    variables(maxlabel+nextravars+i) = trim(headertags(i))
  enddo
 
 end subroutine get_variables

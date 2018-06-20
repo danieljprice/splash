@@ -12,7 +12,7 @@
  linkcolor=blue,
  urlcolor=blue
 }
-\def\thisyear{2014\unskip}
+\def\thisyear{2018\unskip}
 
 %HEVEA\usepackage{hevea}
 %HEVEA\htmlfoot{\@hr{\textwidth}{1pt}\textsc{SPLASH}: A visualisation tool for SPH data \copyright   2004--\thisyear Daniel Price. \newline \url{http://users.monash.edu.au/~dprice/splash/}}
@@ -64,31 +64,26 @@
 \newpage
 
 \section{Introduction}%HEVEA\cutname{intro.html}
- Whilst many wonderful commercial software packages exist for visualising scientific
-data (such as the widely used Interactive Data Language), I found that such packages
-could be somewhat cumbersome for the manipulation and visualisation of particle-based data. The
-main problem was that much of what I wanted to do was fairly specific to SPH (such as
-interpolation to an array of pixels using the kernel) and while generic routines exist
-for such tasks, I could not explain how they worked, nor were they
-particularly fast. Also, while interactive gizmos are handy, it can prove more difficult to perform the
+ While many wonderful commercial software packages exist for visualising scientific
+data (such as the widely used Interactive Data Language), I found they were cumbersome for particle-based data. Much of what I wanted to do was specific to SPH, like
+interpolating to an array of pixels using the kernel. While generic routines exist
+for such tasks, I could not explain how they worked, and they were slow. Also, while interactive gizmos are handy, it was more difficult to perform the
 same tasks non-interactively, as required for the production of animations. 
 The major work in the visualisation of SPH data is not the image production itself but the
 manipulation of data prior to plotting. Much of this manipulation makes sense
 within an SPH framework.
 
- \splash is designed for this specific task - to use SPH tools to analyse SPH data and to make this a
-straightforward task such that publishable images and animations can be obtained
-as efficiently as possible from the raw data with a minimum amount of effort
-from the user. I have found in the process that the development of powerful
+ \splash is designed for this specific task - to use SPH tools to analyse SPH data. Publishable images and animations can be obtained
+ efficiently from the raw data with a minimum amount of user effort. The development of powerful
 visualisation tools has enabled me to pick up on effects present in my
 simulation results that I would not otherwise have noticed --- the
 difference between a raw particle plot and a rendered image can be substantial. A key goal of
-\splash is to eliminate the use of crap-looking particle plots as a means of representing SPH data!
+\splash is to eliminate the use of crap-looking particle plots as a means of representing SPH data.
 
 \subsection{What it does}
 \splash is a utility for visualisation of output from (astrophysical) simulations using the
 Smoothed Particle Hydrodynamics (SPH) method in one, two and three dimensions.
-It is written in Fortran 90/95 and utilises \giza\unskip, a custom-build backend graphics library to do the actual plotting. In particular the following
+It is written in Fortran 90/95/20xx and utilises \giza\unskip, a custom-build backend graphics library to do the actual plotting. In particular the following
 features are included:
 \begin{itemize}
 \item Rendering of particle data to an array of pixels using the SPH kernel
@@ -119,7 +114,7 @@ converted into animations or inserted into \LaTeX  documents.
 
 \subsection{What it doesn't do}
  \splash is geared towards gas dynamics simulations with SPH and has basically grown out of my visualisation needs.
-Thus it may not be particularly useful for things like water and solids etc. in SPH. An SPH visualisation tool geared towards the non-gaseous side of things you may want to have a look at is {\it pv-meshless}, by John Biddiscombe:
+Thus it is not particularly useful for things like water and solids in SPH. An SPH visualisation tool geared towards the non-gaseous side of things you may want to have a look at is {\it pv-meshless}, by John Biddiscombe:
 
 \url{https://twiki.cscs.ch/twiki/bin/view/ParaViewMeshless}
 
@@ -130,7 +125,7 @@ Thus it may not be particularly useful for things like water and solids etc. in 
 
 \url{http://www.publish.csiro.au/?paper=AS07022}
 
-\noindent This paper should be cited if you use \splash for scientific purposes, and please do so as it is my only form of thanks!
+\noindent This paper should be cited if you use \splash for scientific purposes, and please do so as it is my only form of thanks.
 
 \subsection{Version History}
 
@@ -157,11 +152,10 @@ The basic steps for installation are as follows:
  By now, many Fortran 90/95/2003 compilers exist. The most widely available are:
  \begin{itemize}
 \item gfortran, the free Gnu Fortran Compiler \\\url{http://gcc.gnu.org/wiki/GFortran}
-\item g95, the other free gcc-based f90 compiler\\ \url{http://www.g95.org}
-\item Oracle Solaris Studio (formerly Sun studio), which contains an excellent free Fortran compiler for Linux and Solaris \\
-\url{http://www.oracle.com/us/products/tools/050872.html}
 \item ifort, one of the most widely available commercial compilers (and is very good) with (limited) free licence for Linux.
 \url{http://software.intel.com/en-us/articles/intel-compilers/}
+\item Oracle Solaris Studio (formerly Sun studio), which contains an excellent free Fortran compiler for Linux and Solaris \\
+\url{http://www.oracle.com/us/products/tools/050872.html}
 \end{itemize}
 All of these successfully compile \splash and the \giza library.
 
@@ -288,7 +282,7 @@ or by putting the above in your \verb+.cshrc+ file.
 %them in your .bashrc or tcsh/csh equivalent file). For other environment
 %variables which can be set, refer to the PGPLOT user guide.
 
-\subsubsection{\giza}
+\subsubsection{ Changing the font}
 Several environment variables affect the backend plotting library. Probably the most useful is the ability to change font:
 \begin{verbatim}
 export GIZA_FONT='Helvetica'
@@ -301,7 +295,6 @@ where the name is a reasonable guess as to the font you want to use (the default
 \begin{tabular}{lllll}
 Compiler & Environment variable & Setting for big endian & Setting for little endian & Other options \\
 \hline
-\verb+g95+ & \verb+G95_ENDIAN+ & \verb+BIG+ & \verb+LITTLE+ &  \\
 \verb+gfortran+ & \verb+GFORTRAN_CONVERT_UNIT+ & \verb+big_endian+ & \verb+little_endian+  & \verb+swap+ \\
 \verb+ifort+ & \verb+F_UFMTENDIAN+ & \verb+big+ & \verb+little+ & \\
 \hline
@@ -322,6 +315,7 @@ SPLASH\_DEFAULTS & gives the name of a system-wide \verb+splash.defaults+ file (
 SPLASH\_KERNEL & changes the smoothing kernel used in the interpolations (e.g. `cubic' or `quintic'). Can also be changed in the r)ender menu. \\
 SPLASH\_DEBUG & if set to `yes' or `true', turns on very verbose debugging output. Useful to trace code crashes (but of course, this never happens\ldots).\\
 SPLASH\_CENTRE\_ON\_SINK & if set to a number n, centres coordinates and velocities on the n{\it th} sink/star particle (e.g. \verb+export SPLASH_CENTRE_ON_SINK=2+). \\
+SPLASH\_COROTATE & plot in corotating frame based on locations of two sink particles \\
 SPLASH\_HMIN\_CODEUNITS & if given a value $>$0 enforces a minimum smoothing length, specified in code units as read from the dump file, on all the particles. This can be used to ``dumb-down'' the resolution of SPH simulations, e.g. to match observational resolution. If this variable is set it is \emph{highly} recommended that the ``use accelerated rendering'' option in the r)ender menu is also turned on as quite slow rendering can otherwise result. \\
 SPLASH\_VZERO\_CODEUNITS & if set to a comma separated list of vector components (e.g. \verb+export SPLASH_VZERO_CODEUNITS='0.0,1.0,0.0'+), can be used to subtract a mean velocity field from all particles --- specified in code units as read from the dump file. \\
 SPLASH\_MARGIN\_XMIN & can be used to manually adjust the left horizontal page margin (set to fraction of viewport, negative values are allowed). \\
@@ -2633,20 +2627,20 @@ system'' option. The actual coordinate transformations are defined in a standalo
 For cylindrical coordinates the transformations are:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-r & = & \sqrt{x^2 + y^2}    & & x & = & r\cos\phi \\
-\phi & = & \tan^{-1}{(y/x)} &; & y & = & r\sin\phi \\
+R & = & \sqrt{x^2 + y^2}    & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
 z & = & z                             & & z & = & z\\
 \end{array}
 \end{displaymath}
 where vectors transform according to:
 \begin{displaymath}
 \begin{array}{lclp{1cm}lcl}
-v_r      & = & v_x \frac{x}{r} + v_y \frac{y}{r}  & & v_x & = & v_r \cos\phi - v_\phi \sin\phi \\
-v_\phi & = & v_x \left(\frac{-y}{r}\right) + v_y \left(\frac{x}{r}\right) &; &v_y & = & v_r \sin\phi + v_\phi \cos\phi \\
+v_R      & = & v_x \frac{x}{R} + v_y \frac{y}{R}  & & v_x & = & v_R \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & v_R \sin\phi + v_\phi \cos\phi \\
 v_z      & = & v_z & & v_z & = & v_z. \\
 \end{array}
 \end{displaymath}
-In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$. At the origin we assume $\phi = 0$, implying $\cos\phi = 1$ and therefore $\frac{x}{R} = 1$ and $\frac{y}{R} = 0$. This ensures the transformations are reversible everywhere.
 
 \subsection{ Spherical Polar Coordinates}
 For spherical coordinates the transformations are:
@@ -2686,9 +2680,47 @@ v_\phi & = & v_{x} \left(\frac{-y}{r_{cyl}}\right) + v_{y} \left(\frac{x}{r_{cyl
 \end{displaymath}
 where we have defined, for convenience,
 \begin{equation}
-r_{cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
+r_{\rm cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 \end{equation}
-The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
+and the velocities $v_\theta$ and $v_\phi$ correspond to $r \dot{\theta}$ and $r_{\rm cyl} \dot{\phi}$, respectively. The torus radius $R$ is a parameter in the \verb+geometry+ module and is set to $1$ by default.
+
+\subsection{ Flared Cylindrical Polar Coordinates}
+For flared cylindrical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+R & = & \sqrt{x^2 + y^2}    & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
+z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
+\end{array}
+\end{displaymath}
+where $R_{\rm ref}$ is the reference radius and $\beta$ is the flaring index, both parameters that can be set by the user. Vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_R      & = & v_x \frac{x}{R} + v_y \frac{y}{R}  & & v_x & = & v_R \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & v_R \sin\phi + v_\phi \cos\phi \\
+v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta v_R + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
+\end{array}
+\end{displaymath}
+In the case where these vectors are velocities, the $v_{\phi}$ component corresponds to $v_{\phi} = r\dot{\phi}$.
+
+\subsection{ Logarithmic Flared Cylindrical Polar Coordinates}
+For logarithmic flared cylindrical coordinates the transformations are:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+d & = & \log_{10} ( \sqrt{x^2 + y^2} )   & & x & = & R\cos\phi \\
+\phi & = & \tan^{-1}{(y/x)} &; & y & = & R\sin\phi \\
+z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
+\end{array}
+\end{displaymath}
+where $R_{\rm ref}$ is the reference radius and $\beta$ is the flaring index, both parameters that can be set by the user. Vectors transform according to:
+\begin{displaymath}
+\begin{array}{lclp{1cm}lcl}
+v_d      & = & v_x \frac{x}{R}f^{-1} + v_y \frac{y}{R}f^{-1}  & & v_x & = & f v_d \cos\phi - v_\phi \sin\phi \\
+v_\phi & = & v_x \left(\frac{-y}{R}\right) + v_y \left(\frac{x}{R}\right) &; &v_y & = & f v_d \sin\phi + v_\phi \cos\phi \\
+v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta f v_d + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
+\end{array}
+\end{displaymath}
+where $R \equiv 10^d$ and correspondingly $d = \log_{10} R$ and $f \equiv R \ln (10)$.
 
 
 \section{Exact solution details}%HEVEA\cutname{exactsolutions.html}

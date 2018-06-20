@@ -38,7 +38,7 @@ module exact
   !
   !--options used to plot the exact solution line
   !
-  integer :: maxexactpts, iExactLineColour, iExactLineStyle,iPlotExactOnlyOnPanel
+  integer :: maxexactpts, iExactLineColour(maxexact), iExactLineStyle(maxexact),iPlotExactOnlyOnPanel
   integer :: iNormaliseErrors
   logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
   logical :: iApplyUnitsExactFile
@@ -95,8 +95,8 @@ module exact
   real :: spiral_params(7,maxexact)
   integer :: ispiral,narms
   !--bondi flow
-  logical :: relativistic
-  real :: rho0
+  logical :: relativistic, geodesic_flow,is_wind
+  real    :: const1,const2
   !--gamma, for manual setting
   real :: gamma_exact
   logical :: use_gamma_exact
@@ -116,7 +116,7 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet,relativistic,rho0,ispiral,narms,spiral_params
+       HonR,rplanet,relativistic,geodesic_flow,is_wind,const1,const2,ispiral,narms,spiral_params
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -127,6 +127,8 @@ contains
   ! sets default values of the exact solution parameters
   !----------------------------------------------------------------------
   subroutine defaults_set_exact
+    use plotlib, only:plotlib_maxlinestyle
+    integer :: i
 
     lambda = 1.0    ! sound wave exact solution : wavelength
     ampl = 0.005    ! sound wave exact solution : amplitude
@@ -204,8 +206,11 @@ contains
     spiral_params = 0.
     spiral_params(2,:) = 360.
 !   Bondi
-    relativistic = .true.
-    rho0 =1.
+    relativistic  = .true.
+    geodesic_flow = .false.
+    is_wind       = .true.
+    const1 = 8.
+    const2 = 1.
 
 !   gamma, if not read from file
     gamma_exact = 5./3.
@@ -217,7 +222,9 @@ contains
 
     maxexactpts = 1001      ! points in exact solution plot
     iExactLineColour = 1    ! foreground
-    iExactLineStyle = 1     ! solid
+    do i=1,size(iExactLineStyle)
+       iExactLineStyle(i) = mod(i,plotlib_maxlinestyle)
+    enddo
     iApplyTransExactFile = .true. ! false if exact from file is already logged
     iApplyUnitsExactFile = .false.
     iCalculateExactErrors = .true.
@@ -537,16 +544,29 @@ contains
           !call prompt('enter planet orbital radius ',rplanet,0.)
        end select
     case(18)
-       call prompt('use relativistic solution?',relativistic)
-       call prompt('enter mass of central object',Mstar,0.)
-       if(relativistic) then
-          Rtorus = 0.
-          call prompt('enter radius r0 where v = 0. For r0=infinity, enter 0',Rtorus,min=0.)
-       elseif(.not.relativistic) then
-          call prompt('enter Parker/Bondi critical radius',Rtorus,min=0.)
-          call prompt('enter density at critical radius',rho0,min=0.)
-       endif
        prompt_for_gamma = .true.
+       call prompt('is it a wind (instead of accretion)?',is_wind)
+       call prompt('enter mass of central object',Mstar,0.)
+       call prompt('do you want a relativistic solution?',relativistic)
+       if(.not.relativistic) then
+          prompt_for_gamma = .false.
+          call prompt('enter Parker/Bondi critical radius (rcrit)',const1)
+          call prompt('enter density at critical radius (rhocrit)',const2)
+       elseif(relativistic) then
+          call prompt('is it the geodesic flow?',geodesic_flow)
+          if (geodesic_flow) then
+             const1 = 1.
+             const2 = 1.e-9
+             call prompt('enter constant den0',const1,min=0.)
+             call prompt('enter constant en0 ',const2,min=0.)
+          else
+             call prompt('enter the critical radius in units of the central mass M',const1,min=2.)
+             const1 = const1*Mstar
+             const2 = 1.
+             call prompt('enter adiabat (entropy normalisation)',const2,min=0.)
+          endif
+       endif
+
     end select
 
     if (prompt_for_gamma) then
@@ -562,14 +582,27 @@ contains
   !---------------------------------------------------
   ! sets options relating to exact solution plotting
   !---------------------------------------------------
-  subroutine options_exact
+  subroutine options_exact(iexact)
     use prompting, only:prompt
     use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
     implicit none
+    integer, intent(in) :: iexact
+    character(len=12) :: string
+    integer :: nexact,i
 
     call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
-    call prompt('enter line colour ',iExactLineColour,1,plotlib_maxlinecolour)
-    call prompt('enter line style  ',iExactLineStyle,1,plotlib_maxlinestyle)
+    nexact = 1
+    if (iexact==1) nexact = nfunc
+    if (iexact==2) nexact = nfiles
+    string = ''
+    do i=1,nexact
+       if (nexact > 1) write(string,"(a,i2)") 'for line ',i
+       call prompt('enter line colour '//trim(string),iExactLineColour(i),1,plotlib_maxlinecolour)
+    enddo
+    do i=1,nexact
+       if (nexact > 1) write(string,"(a,i2)") 'for line ',i
+       call prompt('enter line style '//trim(string),iExactLineStyle(i),1,plotlib_maxlinestyle)
+    enddo
     call prompt('calculate error norms?',iCalculateExactErrors)
     if (iCalculateExactErrors) then
        print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
@@ -926,8 +959,8 @@ contains
     !
     call plot_qci(iCurrentColour)
     call plot_qls(iCurrentLineStyle)
-    call plot_sci(iExactLineColour)
-    call plot_sls(iExactLineStyle)
+    call plot_sci(iExactLineColour(1))
+    call plot_sls(iExactLineStyle(1))
     !
     !--allocate memory
     !
@@ -990,10 +1023,14 @@ contains
     case(1) ! arbitrary function parsing
        do i=1,nfunc
           if ((iplotx.eq.iexactplotx(i) .and. iploty.eq.iexactploty(i)) .or. iexactploty(i).eq.0) then
+             !--allow user-specified colours and line styles
+             LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
+
              call exact_function(funcstring(i),xexact,yexact,timei,ierr)
              !--plot each solution separately and calculate errors
              call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
-                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy)
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                      ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
           endif
        enddo
@@ -1015,10 +1052,11 @@ contains
                    endif
                 endif
                 !--change line style between files
-                LineStyle = mod(iExactLineStyle+i-1,plotlib_maxlinestyle)
+                LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
                 !--plot each solution separately and calculate errors
                 call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
-                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls=LineStyle)
+                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                         ls=LineStyle,lc=iExactLineColour(i))
                 ierr = 1 ! indicate that we have already plotted the solution
              endif
           endif
@@ -1328,11 +1366,11 @@ contains
     case(18)
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
           if (iploty.eq.ivx .and. igeom==3) then
-             call exact_bondi(1,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(1,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           elseif (iploty.eq.iutherm .and. igeom==3) then
-             call exact_bondi(2,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(2,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           elseif (iploty.eq.irho .and. igeom==3) then
-             call exact_bondi(3,timei,gammai,Rtorus,rho0,Mstar,relativistic,xexact,yexact,ierr)
+             call exact_bondi(3,timei,gammai,const1,const2,Mstar,relativistic,geodesic_flow,is_wind,xexact,yexact,ierr)
           endif
        endif
     end select
@@ -1363,7 +1401,7 @@ contains
   ! and calculate errors with respect to the data
   !------------------------------------------------------------------
   subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
-                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,matchtype,err)
+                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,lc,matchtype,err)
    use transforms, only:transform,transform_inverse
    use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci
    use params,     only:int1,maxparttypes
@@ -1374,7 +1412,7 @@ contains
    integer(int1), intent(in) :: iamtype(:)
    integer,       intent(in) :: noftype(maxparttypes)
    logical,       intent(in) :: iplot_type(maxparttypes)
-   integer,       intent(in), optional :: ls, matchtype
+   integer,       intent(in), optional :: ls, matchtype, lc
    logical,       intent(in), optional :: err
    real :: residuals(np),ypart(np)
    real :: errL1,errL2,errLinf
@@ -1383,7 +1421,7 @@ contains
    character(len=12) :: str1,str2
 
    call plot_qci(iCurrentColour)
-   call plot_sci(iExactLineColour)
+   if (present(lc)) call plot_sci(lc)
 
    if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
    if (itransy > 0) call transform(yexact(1:iexactpts),itransy)

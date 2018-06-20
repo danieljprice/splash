@@ -44,8 +44,7 @@ CAIRO_CFLAGS= -I$(X11_DIR)/include
 #--------------------------------------------------------------
 ifneq ($(BACKEND), pgplot)
 #-- C A I R O --
-   GIZA_DIR= ../giza
-   VPATH+= $(GIZA_DIR)/interface/ $(GIZA_DIR)/include $(GIZA_DIR)/src/
+   GIZA_DIR= $(PREFIX)
    PLOTLIB= giza-fortran.F90 plotlib_giza.f90
    PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
    CFLAGS= -fPIC -Wall -Wextra -O3 -g
@@ -67,7 +66,7 @@ endif
 #
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
-H5PART_LIBS    = -L$(H5PART_DIR)/lib -lpH5Part
+H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
@@ -560,10 +559,10 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          options_render.f90 options_particleplots.f90 \
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_limits.f90 options_page.f90 \
-	 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+	    options_powerspec.f90 \
+	    options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.F90 interpolate3D_xsec.f90 \
+         interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          particleplot.f90 interactive.f90 analysis.f90 \
@@ -638,7 +637,7 @@ falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read
 	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
 
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
-	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
 #---HDF5 gadget read ---
 gadgethdf5: gadget_hdf5
@@ -647,7 +646,7 @@ gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read
 	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---AMUSE HDF5 read ---
 amuse: amuse_hdf5
@@ -656,7 +655,7 @@ amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_d
 	$(FC) $(FFLAGS) -o $(BINDIR)/amsplash-hdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---CACTUS HDF5 read ---
 cactus: cactus_hdf5
@@ -665,7 +664,7 @@ cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o rea
 	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
 
 read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---PBOB read ---
 
@@ -691,7 +690,7 @@ silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
 
 read_data_silo_utils.o: read_data_silo_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #------------------
 
@@ -879,6 +878,28 @@ checkpgplot:
 #	@echo "PGPLOT was compiled with ${PGPLOT_COMP}";
    endif
 
+checkgiza:
+	@if [ ! -e $(GIZA_DIR)/include/giza-fortran.F90 ]; then \
+	   if [ -d ../giza/ ]; then \
+	   echo "*********************************************************"; \
+	   echo "*                                                       *"; \
+	   echo "* ERROR: Cannot find system install of giza             *"; \
+	   echo "* Type \"make withgiza\" to build local copy of giza     *"; \
+	   echo "*                                                       *"; \
+	   echo "*********************************************************"; \
+	   else \
+	   echo "*********************************************************"; \
+	   echo "*                                                       *"; \
+	   echo "* ERROR: giza is not installed. Please install it.      *"; \
+	   echo "*                                                       *"; \
+	   echo "* e.g:                                                  *"; \
+	   echo "*   git clone https://github.com/danieljprice/giza.git  *"; \
+	   echo "*   make withgiza                                       *"; \
+	   echo "*                                                       *"; \
+	   echo "*********************************************************"; \
+	   fi; \
+	fi;
+
 checkh5part: checkhdf5
    ifeq (X${H5PART_DIR}, X)
 	@echo; echo "ERROR: H5PART_DIR should be set before compiling splash with h5part read/write"; echo; ${MAKE} err;
@@ -936,7 +957,7 @@ installclean: destdircheck
 
 distclean: installclean
 
-cleanall: clean cleangiza installclean
+cleanall: clean installclean
 
 err:
 	$(error aborting);
@@ -947,19 +968,22 @@ plotlib_pgplot.o: checkpgplot
 
 plotlib_giza.o : giza-fortran.o
 
-giza-fortran.o : giza-fortran.F90 $(GIZA_DIR)/lib/libgiza.a
-	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $< -o $@
+giza-fortran.o : giza-fortran.F90
+	$(FC) $(FFLAGS) -I$(GIZA_DIR)/include/ -c $(GIZA_DIR)/include/giza-fortran.F90 -o $@
 
-.PHONY: gizabuild libgiza
+.PHONY: giza gizabuild libgiza
 
-##libgiza: gizabuild
+giza-fortran.F90 : checkgiza
+#
+# LOCAL build of giza
+#
+withgiza: ../giza/lib/libgiza.a
+	$(MAKE) $(MAKECMDFLAGS) GIZA_DIR="../giza"
 
-$(GIZA_DIR)/lib/libgiza.a: gizabuild
-
-gizabuild:
-	@echo "Compiling giza..."
-	cd $(GIZA_DIR); ./configure --prefix=$(PWD)/$(GIZA_DIR) CC=$(CC) CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
-	cd $(GIZA_DIR); $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
+../giza/lib/libgiza.a:
+	@echo "Compiling local copy of giza..."
+	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
+	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
 
@@ -1021,6 +1045,4 @@ clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash
 
 cleangiza:
-ifneq ($(BACKEND),pgplot)
-	${MAKE} -C $(GIZA_DIR) clean
-endif
+	${MAKE} -C ../giza clean uninstall

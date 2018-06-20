@@ -76,7 +76,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use labels,          only:ih,ipmass,irho,ix
   use h5part
   use h5partattrib,    only:h5pt_readstepattrib,h5pt_getnstepattribs,h5pt_getstepattribinfo, &
-                            h5pt_readstepattrib_r8
+                            h5pt_readstepattrib_r8, h5pt_readstepattrib_string
   use h5partdataread
   implicit none
   integer, intent(in)               :: indexstart,ipos
@@ -95,6 +95,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   character(len=lenlabel)           :: datasetname,type_datasetname
   real(kind=doub_prec),dimension(1) :: dtime
   real                              :: hsmooth,hfac,dndim
+  character(len=64)                 :: xstring
 
   nstepsread = 0
   nstep_max = 0
@@ -328,9 +329,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
               !
               if (nelem.eq.1 .and. (index(lcase(attribname),'time').ne.0  &
                  .or. index(lcase(attribname),'t ').ne.0)) then
-                 ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
+                 ierr = h5pt_readstepattrib_string(ifile,attribname,xstring)
                  if (ierr.eq.0) then
-                    time(j) = real(dtime(1))
+                    read(xstring,'(f10.0)') time(j)
                     print "(12x,a,es10.3,a)",'time   = ',time(j),' (from '//trim(attribname)//')'
                  else
                     print "(a,i2,a)",' ERROR could not read time from step ',istep,' (from '//trim(attribname)//')'
@@ -340,7 +341,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
               !
               elseif (nelem.eq.1 .and. (index(lcase(attribname),'gamma').ne.0  &
                  .or. index(lcase(attribname),'gam ').ne.0)) then
-                 ierr = h5pt_readstepattrib_r8(ifile,attribname,dtime)
+                 ierr = h5pt_readstepattrib_string(ifile,attribname,xstring)
 
                  if (ierr.eq.0) then
                     gamma(j) = real(dtime(1))

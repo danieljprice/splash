@@ -90,7 +90,6 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   character(len=len(rootname)+4) :: dumpfile
   character(len=2048)  :: line
   character(len=lenlabel), dimension(size(label)) :: tmplabel
-  character(len=30)   :: string
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -150,9 +149,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      do i=1,nheaderlines
         !--search through header for column labels
         read(iunit,"(a)",iostat=ierr) line
-        if ((i.eq.1 .or. .not.got_labels) .and. ncolstep > 1) then
+        !--if we get nlabels > ncolumns, use them, but keep trying for a better match
+        if ((.not.got_labels .or. nlabels /= ncolstep) .and. ncolstep > 1 ) then
            call get_column_labels(trim(line),nlabels,tmplabel)
-           if (nlabels>=ncolstep .and. .not.(isdigit(tmplabel(1)(1:1)) .or. tmplabel(1)(1:1)=='.')) then
+           ! use labels if > ncolumns, but replace if we match exact number on subsequent line
+           if ((got_labels .and. nlabels == ncolstep) .or. &
+               (.not.got_labels .and. nlabels >= ncolstep)) then
               label(1:ncolstep) = tmplabel(1:ncolstep)
               got_labels = .true.
            endif
@@ -260,7 +262,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      i = i + 1
      if (i.gt.npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
-        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))        
+        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
      endif
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
      if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0 .and. (size(iamtype(:,j)) > 1)) then
@@ -380,7 +382,7 @@ subroutine set_labels
      enddo overcols
      close(unit=51)
   endif
-  
+
   do i=1,ncolumns
 !
 !--compare all strings in lower case, trimmed and with no preceding spaces

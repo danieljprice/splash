@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -40,46 +40,55 @@
 !  toroidal r,theta,phi <-> cartesian
 !  rotated cartesian <-> cartesian
 !
-! written by Daniel Price 2004-2016
+! written by Daniel Price 2004-2018
 ! as part of the SPLASH SPH visualisation package
 !-----------------------------------------------------------------
 module geometry
  implicit none
- integer, parameter, public :: maxcoordsys = 5
+ integer, parameter, public :: maxcoordsys = 7
  integer, parameter, public :: igeom_cartesian   = 1
  integer, parameter, public :: igeom_cylindrical = 2
  integer, parameter, public :: igeom_spherical   = 3
  integer, parameter, public :: igeom_toroidal    = 4
  integer, parameter, public :: igeom_rotated     = 5
+ integer, parameter, public :: igeom_flaredcyl   = 6
+ integer, parameter, public :: igeom_logflared   = 7
 
  character(len=24), dimension(maxcoordsys), parameter, public :: labelcoordsys = &
     (/'cartesian   x,y,z      ', &
       'cylindrical R,phi,z    ', &
       'spherical   r,phi,theta', &
       'toroidal    r,theta,phi', &
-      'rotated     x_1,x_2,x_3'/)
+      'rotated     x_1,x_2,x_3', &
+      'flared cyl  R,phi,zdash', &
+      'log flared  logR,phi,zd'/)
  character(len=6), dimension(3,maxcoordsys), parameter, public :: labelcoord = &
     reshape((/'x     ','y     ','z     ', &
               'R     ','\phi  ','z     ', &
               'r     ','\phi  ','\theta', &
               'r_t   ','\theta','\phi  ', &
-              'x_1   ','x_2   ','x_3   '/),shape=(/3,maxcoordsys/))
+              'x_1   ','x_2   ','x_3   ', &
+              'R     ','\phi  ','zdash ', &
+              'log R ','\phi  ','zdash '/),shape=(/3,maxcoordsys/))
 
  public :: coord_transform, vector_transform, coord_transform_limits
  public :: coord_is_length, coord_is_periodic, print_error
  public :: set_rotation_angles, get_coord_limits
+ public :: set_flaring_index
 
  real, parameter, private :: pi = 3.1415926536
  real, parameter, private :: Rtorus = 1.0
+ real, parameter, public  :: small_number = 1.e-15
  real, private :: sina = 2./3.
  real, private :: cosa = sqrt(5.)/3.
  real, private :: sinb = 2./sqrt(5.)
  real, private :: cosb = 1./sqrt(5.)
+ real, private :: xref = 1.
+ real, private :: beta = 1.5
 
  integer, parameter, public :: ierr_invalid_dimsin  = 1
  integer, parameter, public :: ierr_invalid_dimsout = 2
  integer, parameter, public :: ierr_invalid_dims    = 3
- integer, parameter, public :: ierr_r_is_zero       = 4
  integer, parameter, public :: ierr_warning_assuming_cartesian = -1
 
  private
@@ -96,8 +105,10 @@ pure logical function coord_is_length(ix,igeom)
   select case(igeom)
   case(igeom_toroidal, igeom_spherical)
      if (ix==1) coord_is_length = .true.
-  case(igeom_cylindrical)
+  case(igeom_cylindrical,igeom_flaredcyl)
      if (ix==1 .or. ix==3) coord_is_length = .true.
+  case(igeom_logflared)
+     if (ix==3) coord_is_length = .true.
   case default
      coord_is_length = .true.
   end select
@@ -112,7 +123,8 @@ pure logical function coord_is_periodic(ix,igeom)
   integer, intent(in) :: ix,igeom
 
   coord_is_periodic = .false.
-  if ((igeom==igeom_cylindrical .or. igeom==igeom_spherical .and. ix==2) .or. &
+  if ((igeom==igeom_cylindrical .or. igeom==igeom_spherical .or. &
+       igeom==igeom_flaredcyl   .or. igeom==igeom_logflared .and. ix==2) .or. &
       (igeom==igeom_toroidal .and. ix==3)) then
      coord_is_periodic = .true.
   endif
@@ -134,8 +146,6 @@ subroutine print_error(ierr)
     print*,'Error: coord transform: invalid number of dimensions on output'
  case(ierr_invalid_dims)
     print*,'Error: coord transform: ndimout must be <= ndimin'
- case(ierr_r_is_zero)
-    print*,'Warning: coord transform: r=0 on input: cannot return angle'
  case(ierr_warning_assuming_cartesian)
     print*,'warning: using default cartesian output'
  case default
@@ -177,6 +187,18 @@ subroutine set_rotation_angles(a,b,sin_a,sin_b,cos_a,cos_b)
 
 end subroutine set_rotation_angles
 
+!-------------------------------------------------------------
+! utility to set flaring index and reference radius for
+! flared cylindrical coordinate systems
+!-------------------------------------------------------------
+subroutine set_flaring_index(r_ref,findex)
+ real, intent(in) :: r_ref,findex
+
+ xref = r_ref
+ beta = findex
+
+end subroutine set_flaring_index
+
 !-----------------------------------------------------------------
 ! Subroutine to transform between different co-ordinate systems
 ! (e.g. from cartesian to cylindrical polar and vice versa)
@@ -187,15 +209,13 @@ end subroutine set_rotation_angles
 ! xout(ndimout) : output co-ordinates, in ndimout dimensions
 ! itypeout      : output co-ordinate type
 !
-
-!
 !-----------------------------------------------------------------
 pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
   integer, intent(in)  :: ndimin,ndimout,itypein,itypeout
   real,    intent(in)  :: xin(ndimin)
   real,    intent(out) :: xout(ndimout)
   integer, intent(out), optional :: err
-  real    :: rcyl,xi(3),xouti(3),sintheta,costheta
+  real    :: rcyl,xi(3),xouti(3),sintheta
   integer :: ierr
 !
 !--check for errors in input
@@ -216,25 +236,16 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
      ierr = ierr_invalid_dims
      if (present(err)) err = ierr
      return
-  elseif (abs(xin(1)) < 1e-8 .and. ndimout >= 2 .and. &
-       (itypein==2 .or. itypein==3)) then
-     ierr = ierr_r_is_zero
-     if (present(err)) err = ierr
-     xout(1:ndimout) = xin(1:ndimout)
-     return
   endif
+  if (itypein /= 1 .and. itypeout /= 1) ierr = ierr_warning_assuming_cartesian
 !
 !--now do transformation
 !
   select case(itypein)
-!
-!--input is cylindrical polars
-!
   case(2)
-     !
-     ! output is cartesian (default)
-     !
-     if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
+!
+!--input is cylindrical polars, output is cartesian
+!
      if (ndimout==1) then
         xout(1) = xin(1)
      else  ! r,phi,z -> x,y,z
@@ -242,14 +253,10 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
         xout(2) = xin(1)*sin(xin(2))
         if (ndimout > 2) xout(3) = xin(3)
      endif
-!
-!--input is spherical polars
-!
   case(3)
-     !
-     ! output is cartesian (default)
-     !
-     if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
+!
+!--input is spherical polars, output is cartesian
+!
      select case(ndimout)
         case(1) ! r -> x
            xout(1) = xin(1)
@@ -262,14 +269,10 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
            xout(2) = xin(1)*sin(xin(2))*sintheta
            xout(3) = xin(1)*cos(xin(3))
      end select
-!
-!--input is torus co-ordinates
-!
   case(4)
-     !
-     ! output is cartesian (default)
-     !
-     if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
+!
+!--input is torus co-ordinates, output is cartesian
+!
      if (ndimin /= 3) then
         xout(1:ndimout) = xin(1:ndimout)
      else
@@ -281,18 +284,27 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
 
   case(5)
 !
-!--input is rotated cartesian coordinates
+!--input is rotated cartesian coordinates, output is cartesian
 !
-     !
-     ! output is cartesian
-     !
-     if (itypeout /= 1) ierr = ierr_warning_assuming_cartesian
      xi = 0.
      xi(1:ndimin) = xin
      xouti(1) = xi(1)*cosa*cosb - xi(2)*sinb - xi(3)*sina*cosb
      xouti(2) = xi(1)*cosa*sinb + xi(2)*cosb - xi(3)*sina*sinb
      xouti(3) = xi(1)*sina + xi(3)*cosa
      xout(1:ndimout) = xouti
+   case(6,7)
+!
+!--input is flared cylindrical polars or log flared, output is cartesian
+!
+     rcyl = xin(1)
+     if (itypein==7) rcyl = 10**xin(1)  ! log flared
+     if (ndimout==1) then
+        xout(1) = rcyl
+     else  ! r,phi,zdash -> x,y,z
+        xout(1) = rcyl*cos(xin(2))
+        xout(2) = rcyl*sin(xin(2))
+        if (ndimout > 2) xout(3) = xin(3)*(rcyl/xref)**beta
+     endif
 !
 !--input is cartesian co-ordinates
 !
@@ -317,7 +329,11 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
         if (ndimout >= 2) xout(2) = atan2(xin(2),xin(1)) ! phi
         if (ndimout >= 3) then
            ! theta = acos(z/r)
-           xout(3) = acos(xin(3)/xout(1))
+           if (xout(1) > 0.) then
+              xout(3) = acos(xin(3)/xout(1))
+           else
+              xout(3) = 0.
+           endif
         endif
      case(4)
         !
@@ -342,6 +358,27 @@ pure subroutine coord_transform(xin,ndimin,itypein,xout,ndimout,itypeout,err)
         xouti(2) = xi(2)*cosb - xi(1)*sinb
         xouti(3) = -sina*(xi(1)*cosb + xi(2)*sinb) + xi(3)*cosa
         xout(1:ndimout) = xouti(1:ndimout)
+     case(6,7)
+        !
+        !--output is flared cylindrical
+        !
+        if (ndimin==1) then
+           xout(1) = abs(xin(1))   ! cylindrical r
+        else
+           xout(1) = sqrt(dot_product(xin(1:2),xin(1:2)))
+           if (ndimout >= 2) xout(2) = atan2(xin(2),xin(1)) ! phi
+           if (ndimout==3) then
+              if (xout(1) > 0.) then
+                 xout(3) = xin(3)*(xref/xout(1))**beta ! zdash
+              else
+                 xout(3) = xin(3) ! this is arbitrary
+              endif
+           endif
+        endif
+        !
+        !--output is log flared
+        !
+        if (itypeout==7) xout(1) = log10(max(xout(1),small_number))
      case default
         !
         ! just copy
@@ -386,8 +423,8 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
   integer, intent(out), optional :: err
   integer :: i,ierr
   real :: dxdx(3,3)
-  real :: sinphi, cosphi
-  real :: rr,rr1,rcyl,rcyl2,rcyl1
+  real :: sinphi,cosphi,sintheta,costheta
+  real :: rr,rr1,rcyl,rcyl2,rcyl1,fac,zdash
 
   ierr = 0
 !
@@ -408,12 +445,6 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
      ierr = ierr_invalid_dimsout
      if (present(err)) err = ierr
      return
-  elseif (abs(xin(1)) < 1e-8 .and. &
-       (itypein==2 .or. itypein==3)) then
-     ierr = ierr_r_is_zero
-     if (present(err)) err = ierr
-     vecout = 0.
-     return
   endif
 !
 !--set Jacobian matrix to zero
@@ -423,6 +454,28 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
 !--calculate non-zero components of Jacobian matrix for the transformation
 !
   select case(itypein)
+  case(6,7)
+!
+!--input is flared cylindrical or log flared, output is cartesian
+!
+     rcyl = xin(1)
+     sinphi = sin(xin(2))
+     cosphi = cos(xin(2))
+     fac  = 1.
+     if (itypein==7) then
+        rcyl = 10**(xin(1))
+        if (rcyl > small_number) fac  = rcyl*log(10.)  ! dR/d(log R)
+     endif
+     dxdx(1,1) = cosphi*fac            ! dx/dr
+     dxdx(1,2) = -sinphi               ! 1/r*dx/dphi
+     dxdx(2,1) = sinphi*fac            ! dy/dr
+     dxdx(2,2) = cosphi                ! 1/r*dy/dphi
+     dxdx(3,1) = beta*xin(3)*(rcyl**(beta - 1.))/xref**beta*fac ! dz/dR
+     if (rcyl > small_number) then
+        dxdx(3,3) = 1.*(rcyl/xref)**beta    ! dz/dzdash
+     else
+        dxdx(3,3) = 1.
+     endif
 !
 !--rotated cartesian
 !
@@ -430,62 +483,77 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
      call coord_transform(vecin,ndimin,itypein,vecout,ndimout,itypeout,err=ierr)
      if (present(err)) err = ierr
      return
-!
-!--input is toroidal
-!
   case(4)
-     select case(itypeout)
-     case default
-        dxdx(1,1) = cos(xin(2))*cos(xin(3))         ! dx/dr
-        dxdx(1,2) = -sin(xin(2))*cos(xin(3))        ! 1/r dx/dtheta
-        dxdx(1,3) = sin(xin(3))                     ! 1/rcyl dx/dphi
-        dxdx(2,1) = cos(xin(2))*sin(xin(3))         ! dy/dr
-        dxdx(2,2) = -sin(xin(2))*sin(xin(3))        ! 1/r dy/dtheta
-        dxdx(2,3) = cos(xin(3))                     ! 1/rcyl dy/dphi
-        dxdx(3,1) = sin(xin(3))                     ! dz/dr
-        dxdx(3,2) = cos(xin(3))                     ! 1/r dz/dtheta
+!
+!--input is toroidal, output cartesian
+!
+     dxdx(1,1) = cos(xin(2))*cos(xin(3))         ! dx/dr
+     dxdx(1,2) = -sin(xin(2))*cos(xin(3))        ! 1/r dx/dtheta
+     dxdx(1,3) = -sin(xin(3))                    ! 1/rcyl dx/dphi
+     dxdx(2,1) = cos(xin(2))*sin(xin(3))         ! dy/dr
+     dxdx(2,2) = -sin(xin(2))*sin(xin(3))        ! 1/r dy/dtheta
+     dxdx(2,3) = cos(xin(3))                     ! 1/rcyl dy/dphi
+     dxdx(3,1) = sin(xin(2))                     ! dz/dr
+     dxdx(3,2) = cos(xin(2))                     ! 1/r dz/dtheta
 !        dxdx(3,3) = 0.                             ! dz/dphi
-     end select
-!
-!--input is spherical polars
-!
   case(3)
-     select case(itypeout)
-     case default
-        !
-        ! output is cartesian (default)
-        !
-        dxdx(1,1) = cos(xin(2))*sin(xin(3))         ! dx/dr
-        dxdx(1,2) = -sin(xin(2))                    ! 1/rcyl dx/dphi
-        dxdx(1,3) = cos(xin(2))*cos(xin(3))         ! 1/r dx/dtheta
-        dxdx(2,1) = sin(xin(2))*sin(xin(3))         ! dy/dr
-        dxdx(2,2) = cos(xin(2))                     ! 1/rcyl dy/dphi
-        dxdx(2,3) = sin(xin(2))*cos(xin(3))         ! 1/r dy/dtheta
-        dxdx(3,1) = cos(xin(3))                     ! dz/dr
-        dxdx(3,3) = -sin(xin(3))                    ! 1/r dz/dtheta
-     end select
 !
-!--input is cylindrical polars
+!--input is spherical polars, output cartesian
 !
+     sinphi = sin(xin(2))
+     cosphi = cos(xin(2))
+     sintheta = sin(xin(3))
+     costheta = cos(xin(3))
+     dxdx(1,1) = cosphi*sintheta        ! dx/dr
+     dxdx(1,2) = -sinphi                ! 1/rcyl dx/dphi
+     dxdx(1,3) = cosphi*costheta        ! 1/r dx/dtheta
+     dxdx(2,1) = sinphi*sintheta        ! dy/dr
+     dxdx(2,2) = cosphi                 ! 1/rcyl dy/dphi
+     dxdx(2,3) = sinphi*costheta        ! 1/r dy/dtheta
+     dxdx(3,1) = costheta               ! dz/dr
+     dxdx(3,3) = -sintheta              ! 1/r dz/dtheta
   case(2)
-     select case(itypeout)
-     case default
-        !
-        ! output is cartesian (default)
-        !
-        sinphi = sin(xin(2))
-        cosphi = cos(xin(2))
-        dxdx(1,1) = cosphi            ! dx/dr
-        dxdx(1,2) = -sinphi           ! 1/r*dx/dphi
-        dxdx(2,1) = sinphi            ! dy/dr
-        dxdx(2,2) = cosphi            ! 1/r*dy/dphi
-        dxdx(3,3) = 1.                ! dz/dz
-     end select
+!
+!--input is cylindrical polars, output cartesian
+!
+     sinphi = sin(xin(2))
+     cosphi = cos(xin(2))
+     dxdx(1,1) = cosphi            ! dx/dr
+     dxdx(1,2) = -sinphi           ! 1/r*dx/dphi
+     dxdx(2,1) = sinphi            ! dy/dr
+     dxdx(2,2) = cosphi            ! 1/r*dy/dphi
+     dxdx(3,3) = 1.                ! dz/dz
 !
 !--input is cartesian co-ordinates (default)
 !
   case default
      select case(itypeout)
+     case(6,7)
+        !
+        !--output is flared cylindrical
+        !
+        rr = sqrt(dot_product(xin(1:min(ndimin,2)),xin(1:min(ndimin,2))))
+        sinphi = 0.
+        fac = 1.
+        if (rr > small_number) then
+           rr1 = 1./rr
+           cosphi = xin(1)*rr1
+           if (ndimin >= 2) sinphi = xin(2)*rr1
+           if (itypeout==7) fac = rr1/log(10.)  ! d(log R)/dR
+        else
+           rr1 = 1./xref
+           cosphi = 1.
+        endif
+        dxdx(1,1) = fac*cosphi   ! xin(1)*rr1 = dr/dx
+        dxdx(1,2) = fac*sinphi   ! xin(2)*rr1 = dr/dy
+        dxdx(2,1) = -sinphi      ! r*dphi/dx
+        dxdx(2,2) =  cosphi      ! r*dphi/dy
+        if (ndimin==3 .and. ndimout==3) then
+           zdash = xin(3)*(xref*rr1)**beta
+           dxdx(3,1) = -beta*cosphi*zdash*rr1 ! dzdash/dx
+           dxdx(3,2) = -beta*sinphi*zdash*rr1 ! dzdash/dy
+           dxdx(3,3) = 1.*(xref*rr1)**beta    ! dzdash/dz
+        endif
      case(5)
         call coord_transform(vecin,ndimin,itypein,vecout,ndimout,itypeout,err=ierr)
         return
@@ -494,73 +562,83 @@ pure subroutine vector_transform(xin,vecin,ndimin,itypein,vecout,ndimout,itypeou
         ! output is toroidal
         !
         rcyl = sqrt(xin(1)**2 + xin(2)**2)
+        sinphi = 0.
         if (rcyl > tiny(rcyl)) then
            rcyl1 = 1./rcyl
+           cosphi = xin(1)*rcyl1
+           sinphi = xin(2)*rcyl1
         else
            rcyl1 = 0.
+           cosphi = 1.
         endif
         rr = sqrt((rcyl - Rtorus)**2 + xin(3)**2)
         if (rr > tiny(rr)) then
            rr1 = 1./rr
+           costheta = (rcyl - Rtorus)*rr1
+           sintheta = xin(3)*rr1
         else
            rr1 = 0.
+           costheta = 1.
+           sintheta = 0.
         endif
-        dxdx(1,1) = (rcyl - Rtorus)*xin(1)*rr1*rcyl1 ! dr/dx
-        dxdx(1,2) = (rcyl - Rtorus)*xin(2)*rr1*rcyl1 ! dr/dy
-        dxdx(1,3) = xin(3)*rr1                       ! dr/dz
-        dxdx(2,1) = -xin(3)*xin(1)*rr1*rcyl1         ! dtheta/dx
-        dxdx(2,2) = -xin(3)*xin(2)*rr1*rcyl1         ! dtheta/dy
-        dxdx(2,3) = (rcyl - Rtorus)*rr1              ! dtheta/dz
-        dxdx(3,1) = -xin(2)*rcyl1                    ! dphi/dx
-        dxdx(3,2) = xin(1)*rcyl1                     ! dphi/dy
-!        dxdx(3,3) = 0.                              ! dphi/dz
+        dxdx(1,1) = costheta*cosphi   ! dr/dx
+        dxdx(1,2) = costheta*sinphi   ! dr/dy
+        dxdx(1,3) = sintheta          ! dr/dz
+        dxdx(2,1) = -sintheta*cosphi  ! dtheta/dx
+        dxdx(2,2) = -sintheta*sinphi  ! dtheta/dy
+        dxdx(2,3) = costheta          ! dtheta/dz
+        dxdx(3,1) = -sinphi           ! dphi/dx
+        dxdx(3,2) = cosphi            ! dphi/dy
+!        dxdx(3,3) = 0.               ! dphi/dz
      case(3)
         !
         ! output is spherical
         !
         rr = sqrt(dot_product(xin,xin))
-        if (rr > tiny(rr)) then
-           rr1 = 1./rr
-        else
-           rr1 = 0.
-        endif
-        dxdx(1,1) = xin(1)*rr1  ! dr/dx
-        if (ndimin >= 2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-        if (ndimin==3) dxdx(1,3) = xin(3)*rr1  ! dr/dz
+        cosphi = 1.
+        sinphi = 0.
+        costheta = 1.
+        sintheta = 0.
+        if (ndimin==3 .and. rr > 0.) costheta = xin(3)/rr
         if (ndimin >= 2) then
            rcyl2 = dot_product(xin(1:2),xin(1:2))
-           rcyl = sqrt(rcyl2)
-           if (rcyl > tiny(rcyl)) then
+           if (rcyl2 > 0.) then
+              rcyl  = sqrt(rcyl2)
               rcyl1 = 1./rcyl
+              cosphi = xin(1)*rcyl1
+              sinphi = xin(2)*rcyl1
+              sintheta = rcyl/rr
            else
-              rcyl1 = 0.
-           endif
-           dxdx(2,1) = -xin(2)*rcyl1 ! rcyl dphi/dx
-           dxdx(2,2) = xin(1)*rcyl1  ! rcyl dphi/dy
-           dxdx(2,3) = 0.
-           if (ndimin >= 3) then
-              dxdx(3,1) = xin(1)*xin(3)*rr1*rcyl1 ! r dtheta/dx
-              dxdx(3,2) = xin(2)*xin(3)*rr1*rcyl1 ! r dtheta/dy
-              dxdx(3,3) = -rcyl2*rr1*rcyl1 ! r dtheta/dz
+              rcyl = 0.
            endif
         endif
+        dxdx(1,1) = cosphi*sintheta  ! dr/dx
+        dxdx(1,2) = sinphi*sintheta  ! dr/dy
+        dxdx(1,3) = costheta         ! dr/dz
+        dxdx(2,1) = -sinphi   !-xin(2)*rcyl1 = rcyl dphi/dx
+        dxdx(2,2) = cosphi    ! xin(1)*rcyl1 = rcyl dphi/dy
+        dxdx(2,3) = 0.
+        dxdx(3,1) = costheta*cosphi ! xin(1)*xin(3)*rr1*rcyl1 = r dtheta/dx
+        dxdx(3,2) = costheta*sinphi ! xin(2)*xin(3)*rr1*rcyl1 = r dtheta/dy
+        dxdx(3,3) = -sintheta       ! -rcyl2*rr1*rcyl1 = r dtheta/dz
      case(2)
         !
         !--output is cylindrical
         !
         rr = sqrt(dot_product(xin(1:min(ndimin,2)),xin(1:min(ndimin,2))))
+        sinphi = 0.
         if (rr > tiny(rr)) then
            rr1 = 1./rr
+           cosphi = xin(1)*rr1
+           if (ndimin >= 2) sinphi = xin(2)*rr1
         else
-           rr1 = 0.
+           cosphi = 1.
         endif
-        dxdx(1,1) = xin(1)*rr1  ! dr/dx
-        if (ndimin >= 2) dxdx(1,2) = xin(2)*rr1  ! dr/dy
-        if (ndimout >= 2) then
-           dxdx(2,1) = -xin(2)*rr1 ! r*dphi/dx
-           dxdx(2,2) = xin(1)*rr1  ! r*dphi/dy
-           if (ndimout==3) dxdx(3,3) = 1.  ! dz/dz
-        endif
+        dxdx(1,1) = cosphi  ! dr/dx
+        dxdx(1,2) = sinphi  ! dr/dy
+        dxdx(2,1) = -sinphi  ! r*dphi/dx
+        dxdx(2,2) =  cosphi  ! r*dphi/dy
+        dxdx(3,3) = 1.  ! dz/dz
      case default
         ierr = ierr_warning_assuming_cartesian
         vecout(1:ndimout) = vecin(1:ndimout)
@@ -582,15 +660,26 @@ end subroutine vector_transform
 ! this subroutine attempts to switch plot limits / boundaries
 ! between various co-ordinate systems.
 !------------------------------------------------------------------
-subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
+recursive subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
  integer, intent(in) :: itypein,itypeout,ndim
  real, dimension(ndim), intent(inout) :: xmin,xmax
  real, dimension(ndim) :: xmaxtemp,xmintemp
+ real    :: rcyl
+ integer :: i
 !
 !--check for errors in input
 !
  if (ndim < 1 .or. ndim > 3) then
     print*,'Error: limits coord transform: ndim invalid on input'
+    return
+ endif
+!
+!--for transformations that are not to/from cartesian
+!  we transform to cartesians as an intermediate step
+!
+ if (itypein /= 1 .and. itypeout /= 1) then
+    call coord_transform_limits(xmin,xmax,itypein,1,ndim)
+    call coord_transform_limits(xmin,xmax,1,itypeout,ndim)
     return
  endif
  !print*,'modifying plot limits for new coordinate system'
@@ -601,82 +690,75 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
  xmaxtemp(1:ndim) = xmax(1:ndim)
 
  select case(itypein)
+ case(6,7)
+!
+!--flared cylindrical or log flared in, cartesian out
+!
+    rcyl = abs(xmax(1))
+    if (itypein==igeom_logflared) rcyl = 10**(abs(xmax(1)))
+    xmintemp(:) = -rcyl
+    xmaxtemp(:) = rcyl
+    if (ndim > 2) then
+       xmintemp(3) = xmin(3)*(rcyl/xref)**beta
+       xmaxtemp(3) = xmax(3)*(rcyl/xref)**beta
+    endif
+
  case(5)
 !
-!--rotated cartesian
+!--rotated cartesian in, cartesian out
 !
     call coord_transform(xmin,ndim,itypein,xmintemp,ndim,itypeout)
     call coord_transform(xmax,ndim,itypein,xmaxtemp,ndim,itypeout)
-!
-!--input is toroidal
-!
  case(4)
-    select case(itypeout)
-    case default
-    !
-    !--cartesian output
-    !
+!
+!--toroidal in, cartesian out
+!
     xmintemp(1:min(ndim,2)) = -Rtorus - xmax(1)
     xmaxtemp(1:min(ndim,2)) = Rtorus + xmax(1)
     if (ndim==3) then
        xmintemp(3) = -xmax(1)
        xmaxtemp(3) = xmax(1)
     endif
-
-    end select
-!
-!--input is spherical
-!
  case(3)
-    select case(itypeout)
-    case default
-    !
-    !--cartesian output
-    !
+!
+!--spherical in, cartesian out
+!
     xmintemp(1:ndim) = -xmax(1)
     xmaxtemp(1:ndim) = xmax(1)
-
-    end select
-!
-!--input is cylindrical
-!
  case(2)
-    select case(itypeout)
-    case default
-    !
-    !--cartesian output
-    !
+!
+!--cylindrical in, cartesian out
+!
     xmintemp(1:max(ndim,2)) = -xmax(1)
     xmaxtemp(1:max(ndim,2)) = xmax(1)
 
-    end select
+ case default
 !
 !--input is cartesian
 !
- case default
     select case(itypeout)
     case(5)
     !
     !--rotated cartesian
     !
-    call coord_transform(xmin,ndim,itypein,xmintemp,ndim,itypeout)
-    call coord_transform(xmax,ndim,itypein,xmaxtemp,ndim,itypeout)
+       call coord_transform(xmin,ndim,itypein,xmintemp,ndim,itypeout)
+       call coord_transform(xmax,ndim,itypein,xmaxtemp,ndim,itypeout)
 
     case(4)
     !
     !--output is toroidal
     !
-    xmintemp(1) = 0.
-    xmaxtemp(1) = max(maxval(abs(xmax(1:min(ndim,2))))-Rtorus, &
-                      maxval(abs(xmin(1:min(ndim,2))))-Rtorus)
-    if (ndim >= 2) then
-       xmintemp(2) = -0.5*pi
-       xmaxtemp(2) = 0.5*pi
-       if (ndim >= 3) then
-          xmintemp(3) = -pi
-          xmaxtemp(3) = pi
+       xmintemp(1) = 0.
+       xmaxtemp(1) = max(maxval(abs(xmax(1:min(ndim,2))))-Rtorus, &
+                         maxval(abs(xmin(1:min(ndim,2))))-Rtorus)
+       if (ndim >= 2) then
+          xmintemp(2) = -0.5*pi
+          xmaxtemp(2) = 0.5*pi
+          if (ndim >= 3) then
+             xmintemp(3) = -pi
+             xmaxtemp(3) = pi
+          endif
        endif
-    endif
     !
     !--output is spherical
     !
@@ -694,24 +776,33 @@ subroutine coord_transform_limits(xmin,xmax,itypein,itypeout,ndim)
           endif
        endif
     !
-    !--output is cylindrical
+    !--output is cylindrical, flared cylindrical or log flared cylindrical
     !
-    case(2)
+    case(2,6,7)
        !--rmin, rmax
        xmintemp(1) = 0.
        if (ndim >= 2) then
-          xmaxtemp(1) = sqrt(max((xmin(1)**2 + xmin(2)**2), &
-                                 (xmax(1)**2 + xmax(2)**2)))
+          xmaxtemp(1) = sqrt(max(xmin(1)**2,xmin(2)**2,xmax(1)**2,xmax(2)**2))
           xmintemp(2) = -pi
           xmaxtemp(2) = pi
+          if (itypeout==igeom_flaredcyl .and. ndim >= 3) then
+             xmintemp(3) = xmin(3)*(xref/xmaxtemp(1))**beta
+             xmaxtemp(3) = xmax(3)*(xref/xmaxtemp(1))**beta
+          endif
        else
           xmaxtemp(1) = max(abs(xmin(1)),abs(xmax(1)))
+       endif
+       if (itypeout==igeom_logflared) then
+          xmintemp(1) = log10(small_number)  ! log zero
+          xmaxtemp(1) = log10(xmaxtemp(1))
        endif
     end select
  end select
 
- xmin(:) = min(xmintemp(:),xmaxtemp(:))
- xmax(:) = max(xmintemp(:),xmaxtemp(:))
+ do i=1,ndim
+    xmin(i) = min(xmintemp(i),xmaxtemp(i))
+    xmax(i) = max(xmintemp(i),xmaxtemp(i))
+ enddo
 
  return
 end subroutine coord_transform_limits
@@ -732,7 +823,7 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
  real, intent(in)  :: rad,xin(3)
  real, intent(out) :: xout(3),xmin(3),xmax(3)
  integer, intent(in) :: itypein
- real :: r,rcyl,dphi,dtheta
+ real :: r,rcyl,dphi,dtheta,fac
 
  select case(itypein)
  case(4) ! toroidal
@@ -760,7 +851,11 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
     r = sqrt(dot_product(xin,xin))
     xout(1) = r
     xout(2) = atan2(xin(2),xin(1)) ! phi
-    xout(3) = acos(xin(3)/r) ! theta = acos(z/r)
+    if (r > 0.) then
+       xout(3) = acos(xin(3)/r) ! theta = acos(z/r)
+    else
+       xout(3) = 0.
+    endif
     xmin(1) = max(r - rad,0.)
     xmax(1) = r + rad
     if (r > 0. .and. xmin(1) > 0.) then
@@ -784,11 +879,13 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
        xmin(3) = 0.
        xmax(3) = pi
     endif
- case(2) ! cylindrical
+ case(2,6,7) ! cylindrical, flared cylindrical
     r = sqrt(xin(1)**2 + xin(2)**2)
+    fac = 1.
+    if ((itypein==6 .or. itypein==7) .and. r > small_number) fac = (xref/r)**beta
     xout(1) = r
     xout(2) = atan2(xin(2),xin(1))
-    xout(3) = xin(3)
+    xout(3) = xin(3)*fac
     xmin(1) = max(r-rad,0.)
     xmax(1) = r+rad
     if (r > 0. .and. xmin(1) > 0.) then
@@ -799,8 +896,13 @@ subroutine get_coord_limits(rad,xin,xout,xmin,xmax,itypein)
        xmin(2) = -pi
        xmax(2) = pi
     endif
-    xmin(3) = xout(3)-rad
-    xmax(3) = xout(3)+rad
+    xmin(3) = xout(3)-rad*fac
+    xmax(3) = xout(3)+rad*fac
+    if (itypein==7) then
+       xout(1) = log10(max(r,small_number))
+       xmin(1) = log10(max(xmin(1),small_number))
+       xmax(1) = log10(max(xmax(1),small_number))
+    endif
  case default
     xout = xin
     xmin = xin - rad
