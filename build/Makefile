@@ -147,20 +147,6 @@ ifeq ($(SYSTEM), gfortran)
    KNOWN_SYSTEM=yes
 endif
 
-ifeq ($(SYSTEM),g95)
-#  using the g95 compiler
-   FC= g95
-   FFLAGS= -O3 -ffast-math
-   DBLFLAGS= -r8
-   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full -freal=NaN
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   PARALLEL= no
-   CC = gcc -m32
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
    FC= f95
@@ -249,36 +235,6 @@ endif
 #      installation of pgplot)
 #
 #--------------------------------------------------------------
-
-ifeq ($(SYSTEM),ukaff1a)
-#  this is for ukaff1a
-   FC= xlf90_r #-Wl,-t
-   FFLAGS= -O3 -qnoescape -qsuffix=f=f90 -qextname
-   OMPFLAGS= -qsmp=omp
-   DEBUGFLAG= -C -g
-   SYSTEMFILE= system_f2003.f90
-   X11_LIBS= -L/usr/X11R6/lib -lX11
-   PGPLOTLIBS=
-   STATICLIBS= /home/dprice/pgplot/libpgplot.a /home/dprice/plot/libg2cmodified.a
-   KNOWN_SYSTEM=yes
-#   EXT=_temp
-endif
-
-ifeq ($(SYSTEM),ukaff1b)
-#  this is for the new nodes on ukaff
-   FC= pathf95
-   FFLAGS= -Ofast -mcmodel=medium
-   DEBUGFLAG= -C -g
-   OMPFLAGS= -openmp
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -convert big_endian
-   ENDIANFLAGLITTLE= -convert little_endian
-   X11_LIBS= -L/home/dprice/lib -lX11 -lpng
-   PGPLOTLIBS= -L/home/dprice/pgplot2 -lpgplot
-   EXT=2   # call the binary something different
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),zen)
 #  this is for the intel fortran compiler
    FC= ifort
@@ -292,20 +248,6 @@ ifeq ($(SYSTEM),zen)
    PGPLOTLIBS= -lpng #-L${PGPLOT_DIR} -lpgplot -lpng
    STATICLIBS= /home/djp212/pgplot/libpgplot.a
 # or use setenv F_UFMTENDIAN=big or little at runtime
-  # EXT=-dev
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),mymac)
-#  these are the settings for a Mac G4 running Panther
-#  using g95 with pgplot installed via fink
-   FC= g95
-   FFLAGS= -O3 -ffast-math
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -fbounds-check -ftrace=full
-   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
-          -laquaterm -lcc_dynamic -Wl,-framework -Wl,Foundation
-   SYSTEMFILE= system_f2003.f90
-   PARALLEL= no
    KNOWN_SYSTEM=yes
 endif
 
@@ -319,86 +261,6 @@ ifeq ($(SYSTEM),intelmac)
           -laquaterm -Wl,-framework -Wl,Foundation -lSystemStubs
    SYSTEMFILE= system_f2003.f90
    PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM), gfortran_macosx)
-#   gfortran with pgplot installed via fink
-    FC= gfortran
-    FFLAGS= -O3 -Wall
-    PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -lg2c -L/sw/lib -lpng \
-          -laquaterm # -lSystemStubs use this on OS/X Tiger
-    SYSTEMFILE= system_unix.f90
-    DEBUGFLAG= -g -frange-check
-    OMPFLAGS= -fopenmp
-    ENDIANFLAGBIG= -fconvert=big-endian
-    ENDIANFLAGLITTLE= -fconvert=little-endian
-    KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),myg95)
-#  using the g95 compiler
-   FC= myg95
-   FFLAGS= -O3 -ffast-math
-   X11_LIBS= -L/usr/X11R6/lib64 -lX11
-   PGPLOTLIBS = -L/usr/local64/pgplot -lpgplot -lpng -lg2c
-   SYSTEMFILE= system_f2003.f90 # this is for Fortran 2003 compatible compilers
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   DBLFLAGS= -r8
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),maccluster)
-#  using the g95 compiler on the iMac cluster in Exeter
-   ifeq ($(MACHTYPE),i386)
-   #  this stuff is for building universal binaries across intel/ppc macs
-      FC= myg95
-      EXT= _i386
-   else
-      FC= g95
-      EXT= _ppc
-   endif
-   FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
-   X11_LIBS= -L/usr/X11R6/lib -lX11
-   PGPLOTLIBS= -lSystemStubs
-   STATICLIBS= /AstroUsers/djp212/pgplot/libpgplot.a
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   DEBUGFLAG=-fbounds-check -ftrace=full
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),astromac)
-#  using the g95 compiler on the Astrophysics cluster in Exeter
-   FC= g95
-   FFLAGS= -O3 -ffast-math -Wall -Wextra -Wno=165
-   X11_LIBS= -L/usr/X11R6/lib -lX11
-   PGPLOTLIBS= -L/opt/local/lib -lpng -lg2c
-   STATICLIBS= /usr/local/pgplot/libpgplot.a
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -fendian='BIG'
-   ENDIANFLAGLITTLE= -fendian='LITTLE'
-   DBLFLAGS= -r8
-   DEBUGFLAG=-fbounds-check -ftrace=full
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),spectrum)
-#  sun f95 compiler on linux
-   FC= f95
-   FFLAGS= -fast -ftrap=%none
-   OMPFLAGS= -openmp
-   DBLFLAGS= -xtypemap=real:64,double:64
-   DEBUGFLAG= -g -C -w4 -errtags -erroff=COMMENT_1582,COMMENT_1744 -ftrap=%all
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -xfilebyteorder=big16:%all
-   ENDIANFLAGLITTLE= -xfilebyteorder=little16:%all
-   X11_LIBS = -L/usr/X11R6/lib64 -lX11
    KNOWN_SYSTEM=yes
 endif
 
@@ -451,11 +313,6 @@ endif
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     FFLAGS += $(DEBUGFLAG)
-endif
-
-# rename the executable for development work
-ifeq ($(DEV),yes)
-    EXT= -dev
 endif
 
 # link with hdf5 libraries
@@ -585,11 +442,7 @@ all: mhutch ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/asplash$(EXT) $(OBJECTS) read_data_ascii.o $(LDFLAGS)
-#--build universal binary on mac cluster
-   ifeq ($(SYSTEM), maccluster)
-	lipo -create $(BINDIR)/asplash_ppc $(BINDIR)/asplash_i386 -output $(BINDIR)/asplash || cp $(BINDIR)/asplash$(EXT) $(BINDIR)/asplash
-   endif
+	$(FC) $(FFLAGS) -o $(BINDIR)/asplash $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 	cp $(BINDIR)/asplash $(BINDIR)/splash
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
@@ -760,11 +613,7 @@ spyros: checksystem $(OBJECTS) read_data_spyros.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
 
 sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash$(EXT) $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
-#--build universal binary on mac cluster
-   ifeq ($(SYSTEM), maccluster)
-	lipo -create $(BINDIR)/ssplash_ppc $(BINDIR)/ssplash_i386 -output $(BINDIR)/ssplash || cp $(BINDIR)/ssplash$(EXT) $(BINDIR)/ssplash
-   endif
+	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
 
 sphysics: checksystem $(OBJECTS) read_data_sphysics.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_sphysics.o $(LDFLAGS)
