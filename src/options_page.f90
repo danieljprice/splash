@@ -621,7 +621,7 @@ subroutine submenu_legend(ichoose)
        '  %(t*100)         : multiplied by 100'
        nhdr = count_non_blank(headertags)
        print "(a)",' You can print any header variables using %(var):'
-       print "(12(2x,6(a),/))",headertags(1:nhdr)
+       print "(43(2x,6(a),/))",headertags(1:nhdr)
        print "(a)"
 
        call prompt('Enter legend text ',legendtext)
