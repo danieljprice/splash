@@ -37,7 +37,7 @@ module params
  integer, parameter :: maxplot=512   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 12  ! max # of different particle types
  integer, parameter :: ltag = 16     ! length of header tags
- integer, parameter :: maxhdr = 64   ! maximum number of header variables stored
+ integer, parameter :: maxhdr = 256  ! maximum number of header variables stored
 
  public
 

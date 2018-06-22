@@ -39,7 +39,8 @@ MODULE fparser
   IMPLICIT NONE
 !--modification here by D.Price: define type parameters here rather than in a separate module
   integer, parameter, public  :: rn = KIND(0.0d0)          ! Precision of real numbers
-  integer, parameter, private :: is = SELECTED_INT_KIND(1) ! Data type of bytecode
+!--modification (22/6/2018), adjusted integer kind to allow more than 128 variables
+  integer, parameter, private :: is = SELECTED_INT_KIND(4) ! Data type of bytecode
 !--end modification
 
   !------- -------- --------- --------- --------- --------- --------- --------- -------
@@ -431,7 +432,7 @@ CONTAINS
           msg = ''
        ELSE
           msg = m(iErrType)
-       ENDIF    
+       ENDIF
     ELSE
        IF (EvalErrType < 1 .OR. EvalErrType > SIZE(m)) THEN
           msg = ''

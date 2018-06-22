@@ -481,7 +481,8 @@ contains
   real(doub_prec)       :: real8arr(maxinblock)
   real(sing_prec)       :: real4arr(maxinblock)
   integer               :: i,ierr1,ierr2,ierrs(4)
-  integer               :: nints,ninttypes,nreal4s,nreal8s,n2,nreassign,naccrete,nkill
+  integer               :: nints,ninttypes,nreal4s,nreal8s
+  integer               :: n2,nreassign,naccrete,nkill
   real(doub_prec), allocatable :: dattemp(:)
   real(sing_prec), allocatable :: dattempsingle(:)
 
@@ -849,11 +850,13 @@ contains
 !---------------------------------------------------------------
 ! old subroutine for guessing labels in non-tagged sphNG format
 !---------------------------------------------------------------
- subroutine guess_labels(ncolumns,iamvec,label,labelvec,istartmhd,istart_extra_real4,nmhd,nhydroreal4, &
-                         ndimV,irho,iBfirst,ivx,iutherm,idivB,iJfirst,iradenergy,icv,&
-                         udist,utime,units,unitslabel)
+ subroutine guess_labels(ncolumns,iamvec,label,labelvec,istartmhd, &
+             istart_extra_real4,nmhd,nhydroreal4,ndimV,irho,iBfirst,ivx,&
+             iutherm,idivB,iJfirst,iradenergy,icv,udist,utime,units,&
+             unitslabel)
   use geometry, only:labelcoord
-  integer, intent(in) :: ncolumns,istartmhd,istart_extra_real4,nmhd,nhydroreal4,ndimV,irho
+  integer, intent(in) :: ncolumns,istartmhd,istart_extra_real4
+  integer, intent(in) :: nmhd,nhydroreal4,ndimV,irho
   integer, intent(out) :: iBfirst,ivx,iutherm,idivB,iJfirst,iradenergy,icv
   integer, intent(inout) :: iamvec(:)
   character(len=*), intent(inout) :: label(:),labelvec(:),unitslabel(:)
@@ -1405,8 +1408,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !--   to handle both small and full dumps, we need to place the quantities dumped
 !     in both small and full dumps at the start of the dat array
 !     quantities only in the full dump then come after
-!     also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h and rho
-!     are in the same place for both types of dump
+!     also means that hydro/MHD are "semi-compatible" in the sense that x,y,z,m,h
+!     and rho are in the same place for both types of dump
 !
       ix(1) = 1
       ix(2) = 2

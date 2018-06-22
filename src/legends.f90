@@ -61,10 +61,8 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  character(len=len(legendtext)+len(unitslabel)+20) :: label
  real(kind=rn),    dimension(size(tags)+1) :: vals
  character(len=ltag), dimension(size(tags)+1) :: vars
- integer :: nvars
 
  label = trim(legendtext)
-
  !
  !  if string does not contain any formatting
  !  append the time variable to it

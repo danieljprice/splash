@@ -176,7 +176,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn,verbos
     print "(10(a))",' Valid variables are column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars),&
                 ' and header variables:'
     nhdr = count_non_blank(headertags)
-    print "(12(2x,6(a),/))",headertags(1:nhdr)
+    print "(43(2x,6(a),/))",headertags(1:nhdr)
     print "(/,a)",' Spaces, escape sequences (\d), arithmetic operators and units labels'
     print "(a)",' are removed from variable names. Note that previously calculated'
     print "(a)",' quantities can be used in subsequent calculations.'
