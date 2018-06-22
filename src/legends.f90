@@ -59,8 +59,8 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  character(len=*), intent(in) :: legendtext,unitslabel
  logical,          intent(in) :: usebox
  character(len=len(legendtext)+len(unitslabel)+20) :: label
- real(kind=rn),    dimension(size(tags)+1) :: vals
- character(len=ltag), dimension(size(tags)+1) :: vars
+ real(kind=rn),    dimension(nvar+1) :: vals
+ character(len=ltag), dimension(nvar+1) :: vars
 
  label = trim(legendtext)
  !
@@ -80,8 +80,10 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  !
  vars = (/'t'/)
  vals(1) = real(t,kind=rn)
- vars(2:2+nvar) = tags(1:nvar)
- vals(2:2+nvar) = allvars(1:nvar)
+ if (nvar > 0) then
+    vars(2:1+nvar) = tags(1:nvar)
+    vals(2:1+nvar) = allvars(1:nvar)
+ endif
  call parse_text(label,vars,vals)
 
  if (index(label,'%ut').gt.0) then
