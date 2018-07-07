@@ -73,7 +73,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   use settings_xsecrot, only:setsequenceend
   use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_textshape
   use multiplot,        only:itrans
-  use labels,           only:is_coord,ix
+  use labels,           only:is_coord,ix,get_sink_type
   use limits,           only:assert_sensible_limits
   use settings_render,  only:projlabelformat,iapplyprojformat
   use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
@@ -104,13 +104,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   logical, intent(in) :: use3Dopacity, double_rendering
   real,    parameter :: pi=3.141592653589
   integer, parameter :: maxpts = 64
-  integer :: i,iclosest,ierr,ixsec,ishape,itype,npts
-  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew
+  integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,itype,npts
+  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew,itypesink
   integer, dimension(1000) :: icircpart
   real :: xpt,ypt
   real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax,rptmax2
-  real :: rmin,rr,gradient,yint,dx,dy,dr,anglerad
+  real :: rmin,rminsink,rr,gradient,yint,dx,dy,dr,anglerad
   real :: xlength,ylength,renderlength,renderpt,zoomfac
   real :: dxlength,dylength,xmaxin,ymaxin,contlength
   real, dimension(4)      :: xline,yline
@@ -185,8 +185,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      !--find closest particle
      !
-     rmin = 1.e6
+     rmin = huge(rmin)
+     rminsink = huge(rmin)
      iclosest = 0
+     iclosestsink = 0
+     itypesink = get_sink_type(ntypes)
      xlength = xmax - xmin
      ylength = ymax - ymin
      if (xlength.gt.tiny(xlength)) then
@@ -213,6 +216,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         if (rr.lt.rmin) then
            iclosest = i
            rmin = rr
+        endif
+        if (itype==itypesink .and. rr.lt.rminsink) then
+           iclosestsink = i
+           rminsink = rr
         endif
      enddo over_npart
 
@@ -319,7 +326,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case('h')
         print "(/,a)",' -------------- interactive mode commands -----------------------------'
-        print*,' SPACE BAR (or n)         : skip to next timestep/file'
+        print*,' SPACE BAR                : skip to next timestep/file'
         print*,' 0,1,2,3..9 and click     : go forward/back n timesteps (back=r.click)'
         print*,' left click (or A)        : zoom/select'
         print*,' right click (or X or b)  : previous timestep'
@@ -328,7 +335,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         print*,' +/-      : zoom IN/OUT (_ for out by 20%) '
         print*,' a        : (a)dapt plot limits (inside box, over axes or colour bar)'
         print*,' l        : (l)og / unlog axis  (over x/y axis or colour bar)'
-        print*,' o/C      : re-centre plot on (o)rigin/(C)ursor position'
+        print*,' o/C/n    : re-centre plot on (o)rigin/(C)ursor/(n)earest sink position'
         print*,' backspace: delete annotation  (over axes, legend, title or colour bar)'
         print*,' r        : (r)eplot current plot'
         print*,' R        : (R)eset/remove all range restrictions'
@@ -636,7 +643,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      !--zooming
      !
-     case('-','_','+','o','C') ! zoom in/out
+     case('-','_','+','o','C','n','N') ! zoom in/out
         xlength = xmax - xmin
         ylength = ymax - ymin
         xcen = 0.5*(xmax + xmin)
@@ -680,6 +687,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         case('C')
            xcen = xpt
            ycen = ypt
+        case('n','N')
+           if (iclosestsink > 0) then
+              xcen = xcoords(iclosestsink)
+              ycen = ycoords(iclosestsink)
+              print*,'centreing limits on sink particle ',iclosestsink,'x,y = ',xcen,ycen
+           else
+              print*,'error: could not find closest sink particle, using origin instead'
+              xcen = 0.
+              ycen = 0.
+           endif
         end select
         if (iamincolourbar .and. irender.gt.0) then
            !--rendering zoom does not allow pan - renderpt is always centre of axis
@@ -1231,7 +1248,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         interactivereplot = .true.
         irerender = .true.
         iexit = .true.
-     case(' ','n','N',plot_scroll_right) ! space
+     case(' ',plot_scroll_right) ! space
         iadvance = abs(iadvance)
         iexit = .true.
      case('0','1','2','3','4','5','6','7','8','9')
