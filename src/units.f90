@@ -33,6 +33,44 @@ module settings_units
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
 
+ integer, parameter :: nx = 7
+ real(doub_prec), parameter :: unit_length(nx) = &
+    (/1.d0,    &
+      1.d5,    &
+      6.96d10, &
+      1.496d13,&
+      3.086d18,&
+      3.086d21,&
+      3.086d24/)
+
+ character(len=*), parameter :: unit_labels_length(nx) = &
+    (/' [cm]     ',&
+      ' [km]     ',&
+      ' [R_{Sun}]',&
+      ' [au]     ',&
+      ' [pc]     ',&
+      ' [kpc]    ',&
+      ' [Mpc]    '/)
+
+ integer, parameter :: nt = 7
+ real(doub_prec), parameter :: unit_time(nt) = &
+    (/1.d-3,        &
+      1.d0,         &
+      3.6d3,        &
+      8.64d4,       &
+      3.15568926d7, &
+      3.15568926d13,&
+      3.15568926d16/)
+
+ character(len=*), parameter :: unit_labels_time(nt) = &
+    (/' ms  ',&
+      ' s   ',&
+      ' hrs ',&
+      ' days',&
+      ' yrs ',&
+      ' Myr ',&
+      ' Gyr '/)
+
  private
 
 contains
@@ -62,27 +100,8 @@ subroutine get_nearest_length_unit(udist,unit,unitlabel)
  real(doub_prec),  intent(in)  :: udist
  real(doub_prec),  intent(out) :: unit
  character(len=*), intent(out) :: unitlabel
- integer, parameter :: nu = 7
- real(doub_prec), parameter :: unit_length(nu) = &
-    (/1.d0,    &
-      1.d5,    &
-      6.96d10, &
-      1.496d13,&
-      3.086d18,&
-      3.086d21,&
-      3.086d24/)
 
- character(len=*), parameter :: unit_labels(nu) = &
-    (/' [cm]     ',&
-      ' [km]     ',&
-      ' [R_{Sun}]',&
-      ' [au]     ',&
-      ' [pc]     ',&
-      ' [kpc]    ',&
-      ' [Mpc]    '/)
-
-
- call get_nearest_unit(nu,unit_length,unit_labels,udist,unit,unitlabel)
+ call get_nearest_unit(nx,unit_length,unit_labels_length,udist,unit,unitlabel)
 
 end subroutine get_nearest_length_unit
 
@@ -95,26 +114,8 @@ subroutine get_nearest_time_unit(utime,unit,unitlabel)
  real(doub_prec),  intent(in)  :: utime
  real(doub_prec),  intent(out) :: unit
  character(len=*), intent(out) :: unitlabel
- integer, parameter :: nu = 7
- real(doub_prec), parameter :: units_time(nu) = &
-    (/1.d-3,        &
-      1.d0,         &
-      3.6d3,        &
-      8.64d4,       &
-      3.15568926d7, &
-      3.15568926d13,&
-      3.15568926d16/)
 
- character(len=*), parameter :: unit_labels(nu) = &
-    (/' ms  ',&
-      ' s   ',&
-      ' hrs ',&
-      ' days',&
-      ' yrs ',&
-      ' Myr ',&
-      ' Gyr '/)
-
- call get_nearest_unit(nu,units_time,unit_labels,utime,unit,unitlabel)
+ call get_nearest_unit(nt,unit_time,unit_labels_time,utime,unit,unitlabel)
 
 end subroutine get_nearest_time_unit
 
@@ -151,14 +152,18 @@ end subroutine get_nearest_unit
 !
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
-  use prompting, only:prompt
-  use labels, only:label,ix,ih,iamvec,labelvec
-  use settings_data, only:ndim,ndimV
+  use prompting,     only:prompt
+  use labels,        only:label,ix,ih,iamvec,labelvec,headertags
+  use settings_data, only:ndim,ndimV,ivegotdata
+  use particle_data, only:headervals
+  use asciiutils,    only:match_tag
+  use filenames,     only:ifileopen
   implicit none
   integer, intent(in) :: ncolumns,numplot
   logical, intent(out) :: UnitsHaveChanged
-  integer :: icol
-  real :: unitsprev,dunits
+  integer :: icol,i,ihdr
+  real    :: unitsprev,dunits
+  real(doub_prec) :: udist,utime
   logical :: applytoall
 
   icol = 1
@@ -172,8 +177,24 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            print "(a)",' this means that units set here will be re-scalings of these physical values'
         endif
         if (icol.eq.0) then
+           ! give hints for possible time units, if utime is read from data file
+           ihdr = match_tag(headertags,'utime')
+           if (ihdr > 0 .and. ifileopen > 0 .and. ivegotdata) then
+              utime = headervals(ihdr,ifileopen)
+              do i=1,nt
+                 print "(a,' = ',1pg10.3)",unit_labels_time(i),utime/unit_time(i)
+              enddo
+           endif
            call prompt('enter time units (new=old*units)',units(icol))
         else
+           ! give hints for possible length units, if utime is read from data file
+           ihdr = match_tag(headertags,'udist')
+           if (any(ix==icol) .and. ihdr > 0 .and. ifileopen > 0 .and. ivegotdata) then
+              udist = headervals(ihdr,ifileopen)
+              do i=1,nx
+                 print "(a,' = ',1pg10.3)",unit_labels_length(i),udist/unit_length(i)
+              enddo
+           endif
            call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
         endif
         if (abs(units(icol)).gt.tiny(units)) then
@@ -308,7 +329,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   character(len=2*len(unitslabel)+40) :: line
   integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
   logical :: ierrzunits,iexist,verbose
-  
+
   if (present(iverbose)) then
      verbose= (iverbose.gt.0)
   else

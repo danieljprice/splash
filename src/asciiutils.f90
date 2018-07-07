@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -39,6 +39,7 @@ module asciiutils
  public :: get_line_containing
  public :: enumerate,isdigit,split
  public :: get_column_labels
+ public :: match_tag
 
  private
 
@@ -896,5 +897,23 @@ logical function is_sensible_label(string)
  if (ierr==0) is_sensible_label = .false.
 
 end function is_sensible_label
+
+!------------------------------------------
+! match tag against a list of string_sub
+!------------------------------------------
+integer function match_tag(tags,tag)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer :: i
+
+ match_tag = 0 ! default if not found
+ do i=1,size(tags)
+    if (trim(tags(i))==trim(adjustl(tag))) then
+       match_tag = i
+       exit  ! only match first occurrence
+    endif
+ enddo
+
+end function match_tag
 
 end module asciiutils
