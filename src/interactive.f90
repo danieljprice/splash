@@ -2423,9 +2423,11 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
  if (mixedtypes) then
     do i=1,np
        itype = int(iamtype(i))
-       if (iusetype(itype) .and. icolourpart(i).gt.0) then
-          xmin = min(xmin,xarr(i))
-          xmax = max(xmax,xarr(i))
+       if (itype > 0 .and. itype <= np) then
+          if (iusetype(itype) .and. icolourpart(i).gt.0) then
+             xmin = min(xmin,xarr(i))
+             xmax = max(xmax,xarr(i))
+          endif
        endif
     enddo
  else
