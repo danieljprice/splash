@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -80,7 +80,6 @@ contains
 !
 !---------------------------------------------------------------
 subroutine defaults_set_units
- implicit none
 
  units(:) = 1.0
  unitzintegration = 1.0
@@ -155,10 +154,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   use prompting,     only:prompt
   use labels,        only:label,ix,ih,iamvec,labelvec,headertags
   use settings_data, only:ndim,ndimV,ivegotdata
-  use particle_data, only:headervals
+  use particle_data, only:headervals,maxstep
   use asciiutils,    only:match_tag
-  use filenames,     only:ifileopen
-  implicit none
   integer, intent(in) :: ncolumns,numplot
   logical, intent(out) :: UnitsHaveChanged
   integer :: icol,i,ihdr
@@ -179,8 +176,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
         if (icol.eq.0) then
            ! give hints for possible time units, if utime is read from data file
            ihdr = match_tag(headertags,'utime')
-           if (ihdr > 0 .and. ifileopen > 0 .and. ivegotdata) then
-              utime = headervals(ihdr,ifileopen)
+           if (ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
+              utime = headervals(ihdr,1) ! retrieve from first file in memory
               do i=1,nt
                  print "(a,' = ',1pg10.3)",unit_labels_time(i),utime/unit_time(i)
               enddo
@@ -189,8 +186,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
         else
            ! give hints for possible length units, if utime is read from data file
            ihdr = match_tag(headertags,'udist')
-           if (any(ix==icol) .and. ihdr > 0 .and. ifileopen > 0 .and. ivegotdata) then
-              udist = headervals(ihdr,ifileopen)
+           if (any(ix==icol) .and. ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
+              udist = headervals(ihdr,1) ! retrieve from first file in memory
               do i=1,nx
                  print "(a,' = ',1pg10.3)",unit_labels_length(i),udist/unit_length(i)
               enddo
@@ -287,7 +284,6 @@ end subroutine set_units
 !
 !-------------------------------------------------------
 subroutine write_unitsfile(unitsfile,ncolumns)
-  implicit none
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer :: i,ierr
@@ -321,7 +317,6 @@ end subroutine write_unitsfile
 !-------------------------------------------------------
 subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   use settings_data, only:ndim
-  implicit none
   character(len=*), intent(in) :: unitsfile
   integer, intent(in) :: ncolumns
   integer, intent(out) :: ierr
