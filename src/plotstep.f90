@@ -81,7 +81,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,  &
                                idustfrac,idustfracsum,ideltav,    &
                                ideltavsum,get_z_dir
-  use limits,             only:lim,rangeset
+  use limits,             only:lim,rangeset,limits_are_equal
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
   use prompting,          only:prompt
@@ -110,7 +110,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
   integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,ntries
-  logical             :: iadapting,icoordplot,iallrendered,ians
+  logical             :: iadapting,icoordplot,iallrendered,ians,iall_coord_plots,isamelimits
   real                :: hav,pmassav,dzsuggest
   integer, dimension(:), allocatable :: ifirstinrow
   character(len=1)    :: char
@@ -216,8 +216,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !
   icoordplot = is_coord(iploty,ndim) .and. is_coord(iplotx,ndim)
   iallrendered = iamrendering
+  isamelimits  = .true.
+  iall_coord_plots = icoordplot
   iplotz = 0
   if (imulti) then
+     iall_coord_plots = .true.
      do i=1,nyplotmulti
         if (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim)) then
            icoordplot = .true.
@@ -233,8 +236,11 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
               !  (only effect is on default values for slice thickness etc below)
               if (iplotzprev.gt.0) iplotz = iplotzprev
            endif
+        else
+           iall_coord_plots = .false.
         endif
      enddo
+     if (iall_coord_plots) isamelimits = limits_are_equal(nyplotmulti,multiplotx,multiploty)
   elseif (icoordplot) then
      !!--work out coordinate that is not being plotted
      if (ndim.ge.3) then
@@ -257,11 +263,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      iadapting = iadapt
   endif
   tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
-                      .or. isamexaxis.and.nacross.eq.1) .and. (nacross*ndown.gt.1)
+                      .or. isamexaxis.and.nacross.eq.1 &
+                      .or. (iall_coord_plots .and. isamelimits)) .and. (nacross*ndown.gt.1)
   !--do not tile if limits are adaptive
   if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt .and. iColourbarStyle.gt.0))) then
      print "(a)",'WARNING: cannot tile plots because limits are set to adaptive'
      tile_plots = .false.
+  elseif (.not. tile_plots .and. iall_coord_plots .and. nacross*ndown.gt.1 .and. .not.isamelimits) then
+     print "(a)",'WARNING: cannot tile plots because x-y limits are different'
   endif
 
   !--( a further constraint on plot tiling is required in the case of

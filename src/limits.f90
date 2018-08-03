@@ -32,7 +32,7 @@ module limits
  implicit none
  real, dimension(maxplot,2) :: lim,range,lim2
  private :: warn_minmax
- 
+
  public
 
 contains
@@ -385,7 +385,7 @@ subroutine assert_range(x,min,max)
  real, intent(inout) :: x
  real, intent(in), optional :: min,max
  real :: xmin,xmax
- 
+
  xmin = -0.5*huge(xmin)  ! for limits need xmax - xmin to
  xmax = 0.5*huge(xmax)   ! be less than huge(x)
  if (present(min)) xmin = min
@@ -407,7 +407,7 @@ subroutine assert_sensible_limits(xmin,xmax)
 
  call assert_range(xmin)
  call assert_range(xmax)
- 
+
  if (xmax < xmin) then
     xtmp = xmin
     xmin = xmax
@@ -437,5 +437,27 @@ subroutine fix_equal_limits(xmin,xmax)
 
  return
 end subroutine fix_equal_limits
+
+!----------------------------------------------------------
+! checks whether all the min and max limits in a
+! range of columns are the same
+!----------------------------------------------------------
+logical function limits_are_equal(n,iplotx,iploty)
+ integer, intent(in) :: n
+ integer, intent(in), dimension(n) :: iplotx,iploty
+ real :: xlim(2), ylim(2)
+ integer :: j
+
+ limits_are_equal = .true.
+ if (n > 0) then
+    xlim = lim(iplotx(1),:)
+    ylim = lim(iploty(1),:)
+ endif
+ do j=1,2
+    if (any((lim(iplotx(1:n),j) - xlim(j)) > epsilon(0.))) limits_are_equal = .false.
+    if (any((lim(iploty(1:n),j) - ylim(j)) > epsilon(0.))) limits_are_equal = .false.
+ enddo
+
+end function limits_are_equal
 
 end module limits
