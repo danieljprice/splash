@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -239,7 +239,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
     call plot_sah(2,0.0,1.0)
  endif
  call plot_qch(charheight)
- call plot_sch(0.3)          ! size of arrow head
+ call plot_sch(0.3*charheight)          ! size of arrow head
 
  if (iallarrowssamelength) then
     !!if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
