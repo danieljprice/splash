@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 39
+ integer, parameter :: ncolourschemes = 40
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -67,7 +67,8 @@ module colours
       'viridis          ', &
       'ocean            ', &
       'casa blue        ', &
-      'green-brown      '/)
+      'green-brown      ', &
+      'Doppler shift    '/)
   integer, parameter :: icustom = 100 ! number 100 is custom colour table
 !
 !--rgb colours of the colour table are stored in the array below
@@ -509,6 +510,13 @@ subroutine colour_set(icolourscheme)
      redarr(1:nset) =   (/0.0,0.66,0.5/)
      greenarr(1:nset) = (/0.83,0.66,0.33/)
      bluearr(1:nset) =  (/0.33,0.66,0.17/)
+     case(40)
+     !--Red-Blue
+     nset = 11
+     lumarr(1:nset)  = (/0.00,0.10,0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1.00/)
+     redarr(1:nset)  = (/0.40,0.69,0.84,0.95,0.99,0.97,0.82,0.58,0.27,0.14,0.02/)
+     greenarr(1:nset)= (/0.00,0.09,0.38,0.63,0.86,0.96,0.90,0.77,0.58,0.41,0.20/)
+     bluearr(1:nset) = (/0.12,0.16,0.30,0.49,0.78,0.96,0.94,0.87,0.77,0.68,0.39/)
      end select
 
      if (debugmode) print*,'DEBUG: setting colour table'
