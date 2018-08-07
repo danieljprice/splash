@@ -519,7 +519,8 @@ subroutine print_example_quantities(verbose,ncalc)
     ilen = len_trim(string)
     if (ndimV.gt.1) then
        write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
-            (' + '//trim(shortlabel(label(i),unitslabel(i)))//'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
+            (' + '//trim(shortlabel(label(i),unitslabel(i))) &
+            //'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
     else
        write(string(ilen+1:),"(a)",iostat=ierr) ')'
     endif
