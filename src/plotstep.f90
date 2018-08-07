@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -63,7 +63,7 @@ module timestep_plotting
   logical, private :: inewpage, tile_plots, lastplot
   logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
   logical, private :: interactivereplot,ihavesetcolours,vectordevice,gotcontours
-  logical, private :: OneColourBarPerRow
+  logical, private :: OneColourBarPerRow,OneColourBarPerColumn
 
   public :: initialise_plotting, plotstep
   private
@@ -77,6 +77,7 @@ contains
 subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot)
   use params
   use colours,            only:colour_set
+  use colourbar,          only:barisvertical
   use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens, &
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,ivx,  &
                                idustfrac,idustfracsum,ideltav,    &
@@ -93,7 +94,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                iPageColours,iadapt,iadaptcoords,linewidth,linepalette,device,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
   use pagecolours,        only:set_pagecolours,set_linecolours
-  use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep,linestyle,iexact,iplotpartoftype
+  use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep, &
+                               linestyle,iexact,iplotpartoftype
   use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
   use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec,irotate, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
@@ -109,10 +111,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   implicit none
   real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
-  integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,ntries
+  integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,icolumn,ntries
   logical             :: iadapting,icoordplot,iallrendered,ians,iall_coord_plots,isamelimits
   real                :: hav,pmassav,dzsuggest
-  integer, dimension(:), allocatable :: ifirstinrow
+  integer, dimension(:), allocatable :: ifirstinrow,ifirstincolumn
   character(len=1)    :: char
   character(len=20)   :: devstring
 
@@ -275,7 +277,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
   !--( a further constraint on plot tiling is required in the case of
   !    multiple renderings which would involve different colour bars )
-  OneColourBarPerRow = .false.
+  OneColourBarPerRow    = .false.
+  OneColourBarPerColumn = .true.
   if (iamrendering .and. icolours.ne.0 .and. iColourbarStyle.gt.0) then
      !--this option means that a margin is set aside for a colour bar on tiled plots
      iAllowspaceforcolourbar = .true.
@@ -293,22 +296,32 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         !--this means colour bars are not the same, but we can still tile if
         !  all the colour bars in each row are the same
         if (.not.tile_plots .and. mod(nacross*ndown,nyplots).eq.0) then
-           OneColourBarPerRow = .true.
-           allocate(ifirstinrow(ndown))
+           ! only allow a single colour bar at end of row if the
+           ! is colour bar is plotted in the correct orientation
+           OneColourBarPerRow    = barisvertical(iColourBarStyle)
+           OneColourBarPerColumn = .not.barisvertical(iColourBarStyle)
+           allocate(ifirstinrow(ndown),ifirstincolumn(nacross))
            ifirstinrow(:) = 0
+           ifirstincolumn(:) = 0
            do i=1,nyplots
               if (usecolumnorder) then
                  irow = (i-1)/nacross + 1
+                 icolumn = i - ((i-1)/nacross)*nacross
               else
                  irow = i - ((i-1)/ndown)*ndown
+                 icolumn = (i-1)/ndown + 1
               endif
-              if (ifirstinrow(irow).eq.0) ifirstinrow(irow) = i
+              if (ifirstinrow(irow).eq.0)       ifirstinrow(irow) = i
+              if (ifirstincolumn(icolumn).eq.0) ifirstincolumn(icolumn) = i
               if (irendermulti(i).ne.irendermulti(ifirstinrow(irow))) then
                  OneColourBarPerRow = .false.
               endif
+              if (irendermulti(i).ne.irendermulti(ifirstincolumn(icolumn))) then
+                 OneColourBarPerColumn = .false.
+              endif
            enddo
-           deallocate(ifirstinrow)
-           if (OneColourBarPerRow) tile_plots = .true.
+           deallocate(ifirstinrow,ifirstincolumn)
+           if (OneColourBarPerRow .or. OneColourBarPerColumn) tile_plots = .true.
         endif
         if (.not.tile_plots) print "(a)",'WARNING: cannot tile plots because of multiple colour bars'
      endif
@@ -3163,7 +3176,8 @@ contains
     if (irender.gt.0) then
        !--only plot colour bar at the end of first row on tiled plots
        if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot .or. &
-           (OneColourBarPerRow.and.icolumn.eq.nacross))) iPlotColourBar = .false.
+           (OneColourBarPerRow.and.icolumn.eq.nacross) .or. &
+           (OneColourBarPerColumn .and. irow.eq.ndown))) iPlotColourBar = .false.
 
        if (iPlotColourBar) then
           xlabeloffsettemp = xlabeloffset + 1.0
@@ -3171,7 +3185,7 @@ contains
 
           !--for tiled plots only on last plot in first row,
           !  and use full viewport size in the y direction
-          if (tile_plots .and. .not.OneColourBarPerRow) then
+          if (tile_plots .and. .not.(OneColourBarPerRow .or. OneColourBarPerColumn)) then
              if (double_rendering .and. gotcontours) then
                 call plotcolourbar(iColourBarStyle,icolours,contmin,contmax, &
                      trim(labelcont),.false.,xlabeloffsettemp, &
@@ -3183,7 +3197,8 @@ contains
                      minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
                      minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
              endif
-          elseif (.not.tile_plots .or. (OneColourBarPerRow .and. icolumn.eq.nacross)) then
+          elseif (.not.tile_plots .or. (OneColourBarPerRow .and. icolumn.eq.nacross) &
+                                  .or. (OneColourBarPerColumn .and. irow.eq.ndown)) then
              !!--plot colour bar
              if (double_rendering .and. gotcontours) then
                 !--for double rendering, plot the colour bar in the 2nd quantity
