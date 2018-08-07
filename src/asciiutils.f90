@@ -53,6 +53,10 @@ module asciiutils
                     read_asciifile_real_string, read_asciifile_realarr
  end interface read_asciifile
 
+ interface string_delete
+   module procedure string_delete1,string_delete_array
+ end interface string_delete
+
 contains
 
 !---------------------------------------------------------------------------
@@ -618,7 +622,7 @@ end subroutine string_sub
 ! subroutine to delete all matching occurrences of key from string
 !
 !---------------------------------------------------------------------------
-pure subroutine string_delete(string,skey)
+pure subroutine string_delete1(string,skey)
  implicit none
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey
@@ -631,8 +635,23 @@ pure subroutine string_delete(string,skey)
     ipos = index(trim(string),skey)
  enddo
 
-end subroutine string_delete
+end subroutine string_delete1
 
+!---------------------------------------------------------------------------
+!
+! alternate version of above for arrays of keys
+!
+!---------------------------------------------------------------------------
+pure subroutine string_delete_array(string,skeys)
+ character(len=*), intent(inout) :: string
+ character(len=*), intent(in)    :: skeys(:)
+ integer :: i
+
+ do i=1,size(skeys)
+    call string_delete(string,skeys(i))
+ enddo
+
+end subroutine string_delete_array
 !---------------------------------------------------------------------------
 !
 ! function version of string_delete

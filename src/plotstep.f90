@@ -727,6 +727,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use geometry,              only:coord_is_length
   use geomutils,             only:changecoords,changeveccoords
   use legends,               only:ipanelselect
+  use asciiutils,            only:string_delete
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
                                   plot_line,plot_pt1,plotlib_is_pgplot,plotlib_supports_alpha
   implicit none
@@ -765,7 +766,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   real :: pixwidth,pixwidthy,pixwidthvec,pixwidthvecy,dxfreq
 
   character(len=lenlabel+lenunitslabel) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
-  character(len=lenunitslabel) :: labeltimeunits
+  character(len=lenunitslabel) :: labeltimeunits,labelvecunits
   character(len=12) :: string
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
@@ -2042,10 +2043,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            ! vector maps (can be on top of particle plots and renderings)
            !--------------------------------------------------------------
            if (ivecx.gt.0 .and. ivecy.gt.0 .and. ivectorplot.gt.0) then
+              labelvecplot = trim(labelvec(ivectorplot))
+              labelvecunits = ''
               if (iRescale) then
-                 labelvecplot = trim(labelvec(ivectorplot))//trim(unitslabel(ivectorplot))
-              else
-                 labelvecplot = trim(labelvec(ivectorplot))
+                 labelvecunits = trim(unitslabel(ivectorplot))
+                 call string_delete(labelvecunits,(/'[',']'/))
               endif
               !!--set label for projection plots (2268 or 2412 for integral sign)
               if (ndim.eq.3 .and..not. x_sec) then
@@ -2069,7 +2071,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings))
               endif
 
-              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,pixwidthvecy,vecmax,labelvecplot,got_h)
+              call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,&
+                   pixwidthvecy,vecmax,labelvecplot,labelvecunits,got_h)
 
               !--vecmax is returned with the adaptive value if sent in -ve
               !  store this for use in interactive_multi
@@ -3381,7 +3384,8 @@ contains
 ! interface to vector plotting routines
 ! so that pixel arrays are allocated appropriately
 !-------------------------------------------------------------------
-  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,pixwidthvecy,vmax,label,got_h)
+  subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
+             pixwidthvecy,vmax,label,labelunit,got_h)
    use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow,iVecplotLegend,iVecLegendOnPanel
@@ -3398,7 +3402,7 @@ contains
    integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
    real,             intent(in) :: pixwidthvec,pixwidthvecy
    real,          intent(inout) :: vmax
-   character(len=*), intent(in) :: label
+   character(len=*), intent(in) :: label,labelunit
    logical,          intent(in) :: got_h
    real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
    real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
@@ -3643,8 +3647,8 @@ contains
          endif
 
          plotlegend = iVecplotLegend .and. ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
-         call render_vec(vecpixx,vecpixy,vmax, &
-              numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,trim(label),' ',plotlegend)
+         call render_vec(vecpixx,vecpixy,vmax,numpixx,numpixy,xmin,ymin,&
+              pixwidthvec,pixwidthvecy,trim(label),trim(labelunit),plotlegend)
 
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels
