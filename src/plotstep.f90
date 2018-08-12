@@ -669,19 +669,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use params,             only:int1,maxparttypes,doub_prec,maxhdr
   use colours,            only:colour_set
   use filenames,          only:nsteps,rootname,ifileopen,tagline
-  use exact,              only:exact_solution,atstar,ctstar,sigma,iPlotExactOnlyOnPanel
+  use exact,              only:exact_solution,atstar,ctstar,&
+                               sigma,iPlotExactOnlyOnPanel
   use toystar1D,          only:exact_toystar_ACplane
   use toystar2D,          only:exact_toystar_ACplane2D
-  use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel,lenunitslabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,ispsound,iutherm,ipdf,icolpixmap,is_coord,labeltype,&
-                               labelzintegration,unitslabel,integrate_label,get_sink_type,get_unitlabel_coldens
+  use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel, &
+                               lenunitslabel,ih,irho,ipmass,ix,iacplane, &
+                               ipowerspec,isurfdens,itoomre,ispsound,iutherm, &
+                               ipdf,icolpixmap,is_coord,labeltype, &
+                               labelzintegration,unitslabel,integrate_label, &
+                               get_sink_type,get_unitlabel_coldens
   use limits,             only:lim,get_particle_subset,lim2,lim2set
-  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti,itrans, &
-                               icontourmulti,x_secmulti,xsecposmulti,iusealltypesmulti,iplotpartoftypemulti
+  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti, &
+                               itrans,icontourmulti,x_secmulti,xsecposmulti,&
+                               iusealltypesmulti,iplotpartoftypemulti
   use particle_data,      only:maxpart,maxcol,icolourme
-  use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,nfreq,iRescale, &
-                               iendatstep,ntypes,UseTypeInRenderings,itracktype,itrackoffset,&
-                               required,ipartialread,xorigin,lowmemorymode,debugmode,iverbose
+  use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,&
+                               nfreq,iRescale,iendatstep,ntypes,&
+                               UseTypeInRenderings,itracktype,itrackoffset,&
+                               required,ipartialread,xorigin,lowmemorymode,&
+                               debugmode,iverbose
   use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
@@ -692,8 +699,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                inormalise_interpolations,ifastrender,ilabelcont,double_rendering,&
                                projlabelformat,iapplyprojformat
   use settings_vecplot,   only:npixvec,iplotpartvec
-  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate,flythru,use3Dperspective, &
-                               use3Dopacityrendering,writeppm,anglex,angley,anglez,zobserver,&
+  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
+                               flythru,use3Dperspective,use3Dopacityrendering,&
+                               writeppm,anglex,angley,anglez,zobserver,&
                                dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
@@ -704,17 +712,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 !--subroutines called from this routine
 !
   use colourparts
-  use transforms,            only:transform,transform_limits,transform_label,transform_inverse,islogged
+  use transforms,            only:transform,transform_limits,transform_label, &
+                                  transform_inverse,islogged
   use interactive_routines
-  use part_utils,            only:get_tracked_particle,locate_first_two_of_type,get_binary
+  use part_utils,            only:get_tracked_particle,locate_first_two_of_type,&
+                                  get_binary
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
-  use interpolations2D,      only:interpolate2D, interpolate2D_xsec, interpolate2D_pixels
+  use interpolations2D,      only:interpolate2D,interpolate2D_xsec,&
+                                  interpolate2D_pixels
   use interpolations3D,      only:interpolate3D
   use projections3D,         only:interpolate3D_projection
   use projections3Dgeom,     only:interpolate3D_proj_geom,interpolate3D_xsec_geom
-  use interpolate3D_opacity, only:interp3D_proj_opacity !,interp3D_proj_opacity_writeppm
+  use interpolate3D_opacity, only:interp3D_proj_opacity
   use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
   use render,                only:render_pix
   use pagesetup,             only:redraw_axes
@@ -728,9 +739,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use geomutils,             only:changecoords,changeveccoords
   use legends,               only:ipanelselect
   use asciiutils,            only:string_delete
-  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,plot_sls, &
-                                  plot_line,plot_pt1,plotlib_is_pgplot,plotlib_supports_alpha
-  implicit none
+  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
+                                  plot_sls,plot_line,plot_pt1,plotlib_is_pgplot,&
+                                  plotlib_supports_alpha
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
   integer(kind=int1), dimension(:), intent(in) :: iamtype
