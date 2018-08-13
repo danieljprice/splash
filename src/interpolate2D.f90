@@ -27,12 +27,13 @@
 !----------------------------------------------------------------------
 
 module interpolations2D
- use kernels, only:radkernel2,radkernel,cnormk2D,wfunc
+ use kernels, only:radkernel2,radkernel,cnormk2D,wfunc,pint
+ use timing,  only:wall_time,print_time
  implicit none
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
  public :: interpolate_part, interpolate_part1
  public :: interpolate2D_pixels
- 
+
  private
 
 contains
@@ -66,29 +67,37 @@ contains
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
 !     Written by Daniel Price 2003-2012
+!     Exact rendering implemented by Maya Petkova and Daniel Price 2018
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,&
-     normalise,periodicx,periodicy)
+     normalise,exact,periodicx,periodicy)
 
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: datsmooth
-  logical, intent(in) :: normalise,periodicx,periodicy
+  logical, intent(in) :: normalise,exact,periodicx,periodicy
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   integer :: ipixi,jpixi
   real :: hi,hi1,radkern,q2,wab,const
   real :: term,termnorm,dx,dy,xpix,ypix
+  real :: t_start,t_end,t_used
+
+! Maya
+  real :: pixint,d1,d2,r0
+
+  call wall_time(t_start)
 
   datsmooth = 0.
   datnorm = 0.
-  if (normalise) then
+  if (exact) then
+     print "(1x,a)",'interpolating from particles to 2D grid (exact)...'
+  elseif (normalise) then
      print "(1x,a)",'interpolating from particles to 2D grid (normalised)...'
   else
      print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
@@ -148,7 +157,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         jpixi = jpix
         if (periodicy) then
            if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
         endif
         ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
@@ -159,12 +168,41 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
            endif
            xpix = xmin + (ipix-0.5)*pixwidthx
-           dx = xpix - x(i)         
+           dx = xpix - x(i)
            q2 = (dx*dx + dy*dy)*hi1*hi1
            !
            !--SPH kernel
            !
-           wab = wfunc(q2)
+           if (exact) then
+           !
+           !--Kernel integral
+           !
+              pixint = 0.
+
+              r0 = ypix + 0.5*pixwidthy - y(i)
+              d1 = x(i) - xpix + 0.5*pixwidthx
+              d2 = xpix + 0.5*pixwidthx - x(i)
+              pixint = pixint + pint(r0, d1, d2, hi1)
+
+              r0 = y(i) - ypix + 0.5*pixwidthy
+              d1 = xpix + 0.5*pixwidthx - x(i)
+              d2 = x(i) - xpix + 0.5*pixwidthx
+              pixint = pixint + pint(r0, d1, d2, hi1)
+
+              r0 = xpix + 0.5*pixwidthx - x(i)
+              d1 = ypix + 0.5*pixwidthy - y(i)
+              d2 = y(i) - ypix + 0.5*pixwidthy
+              pixint = pixint + pint(r0, d1, d2, hi1)
+
+              r0 = x(i) - xpix + 0.5*pixwidthx
+              d1 = y(i) - ypix + 0.5*pixwidthy
+              d2 = ypix + 0.5*pixwidthy - y(i)
+              pixint = pixint + pint(r0, d1, d2, hi1)
+
+              wab = pixint/(pixwidthx*pixwidthy*const)*hi**2
+           else
+              wab = wfunc(q2)
+           endif
            !
            !--calculate data value at this pixel using the summation interpolant
            !
@@ -175,6 +213,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      enddo
 
   enddo over_parts
+  if (exact) then
+     print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy)
+     print*, 'max of datpix = ', maxval(datsmooth)
+     print*, 'min of datpix = ', minval(datsmooth)
+  endif
   !
   !--normalise dat array
   !
@@ -184,8 +227,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      end where
   endif
 
-  return
+  call wall_time(t_end)
+  t_used = t_end - t_start
+  if (t_used.gt.10. .or. .true.) call print_time(t_used)
 
+  return
 end subroutine interpolate2D
 
 !--------------------------------------------------------------------------
@@ -202,11 +248,12 @@ end subroutine interpolate2D
 !                                      : vecsmoothy (npixx,npixy)
 !
 !     Daniel Price, University of Exeter, March 2005
+!     Exact rendering implemented by Maya Petkova and Daniel Price 2018å
 !--------------------------------------------------------------------------
 
 subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,&
-     normalise,periodicx,periodicy)
+     normalise,exact,periodicx,periodicy)
 
   implicit none
   integer, intent(in) :: npart,npixx,npixy
@@ -214,7 +261,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
   real, intent(out), dimension(npixx,npixy) :: vecsmoothx,vecsmoothy
-  logical, intent(in) :: normalise,periodicx,periodicy
+  logical, intent(in) :: normalise,exact,periodicx,periodicy
   real, dimension(npixx,npixy) :: datnorm
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -273,7 +320,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
 
      if (.not.periodicx) then
         if (ipixmin.lt.1)     ipixmin = 1
-        if (ipixmax.gt.npixx) ipixmax = npixx  
+        if (ipixmax.gt.npixx) ipixmax = npixx
      endif
      if (.not.periodicy) then
         if (jpixmin.lt.1)     jpixmin = 1
@@ -286,7 +333,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
         jpixi = jpix
         if (periodicy) then
            if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
         endif
         ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
@@ -656,7 +703,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
 
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,its,itsmax
   real :: hi,hi1,radkernx,radkerny,q2,wab,const
-  real :: term,termnorm,dx,dy,xpix,ypix,ddx,ddy
+  real :: term,termnorm,dy,xpix,ypix,ddx,ddy
   real :: xi,yi,pixwidthx,pixwidthy,dy2
   real :: t1,t2
 
@@ -683,7 +730,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
   !
   ddx = npixx/(xmax - xmin)
   ddy = npixy/(ymax - ymin)
-  
+
   pixwidthx = 1. !/npixx
   pixwidthy = 1. !/npixy
   if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
@@ -703,14 +750,14 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      !--skip particles with itype < 0
      !
      if (itype(i).lt.0) cycle over_parts
-     
+
      !
      !--scale particle positions into viewport coordinates
      !
      xi = (x(i) - xmin)*ddx
      yi = (y(i) - ymin)*ddy
      hi = 1.0*pixwidthx  ! in units of pixel spacing
-     
+
      ipix = int(xi)
      jpix = int(yi)
      if (its > 1 .and. ipix.ge.1 .and. ipix.le.npixx.and. jpix.ge.1 .and. jpix.le.npixy) then
@@ -778,7 +825,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
 
   enddo over_parts
   !$omp end parallel do
-  
+
   if (present(dat)) then
      datold = datnorm
   else
@@ -794,7 +841,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
   endif
 
   enddo iterations
-  
+
   if (present(datpix2)) datpix2 = datnorm
   call wall_time(t2)
   if (t2-t1 > 1.) call print_time(t2-t1)

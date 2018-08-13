@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -37,7 +37,7 @@ module kernels
       'Wendland C4       (2h)  ', &
       'Wendland C6       (2h)  '/)
 
- real, parameter :: pi = 3.14159236
+ real, parameter :: pi = 4.*atan(1.)
  integer, public :: ikernel = 0
  real, public  :: radkernel = 2.
  real, public  :: radkernel2 = 4.
@@ -45,16 +45,17 @@ module kernels
  real, public  :: cnormk2D = 10./(7.*pi)
  real, public  :: cnormk3D = 1./pi
  procedure(k_func), pointer, public :: wfunc
- 
+
  abstract interface
   pure function k_func(q)
    real, intent(in) :: q
    real :: k_func
   end function k_func
  end interface
- 
+
  public :: select_kernel, select_kernel_by_name
- 
+ public :: pint
+
  private
 
 contains
@@ -70,7 +71,7 @@ subroutine select_kernel(j)
 
  if (j.ge.1 .and. j.le.nkernels) then
     !--print only if NOT using the default kernel
-    print "(a,/)",' Using '//trim(kernelname(j))//' kernel' 
+    print "(a,/)",' Using '//trim(kernelname(j))//' kernel'
  endif
 
  select case(j)
@@ -134,7 +135,7 @@ subroutine select_kernel_by_name(string)
  use asciiutils, only:lcase
  character(len=*), intent(in) :: string
  integer :: i,jkern
- 
+
  jkern = 0
  !
  !--check if string exactly matches a kernel name
@@ -288,5 +289,132 @@ pure real function w_wendlandc6(q2)
  endif
 
 end function w_wendlandc6
+
+!---------------------------------------
+!
+!  Integrals of the kernel, used
+!  when performing exact interpolation
+!  See Petkova, Laibe & Bonnell (2018)
+!
+!---------------------------------------
+pure real function pint(r0, d1, d2, hi1)
+ real, intent(in) :: r0, d1, d2, hi1
+ real :: ar0
+
+ if (abs(r0) < tiny(0.)) then
+    pint = 0.
+    return
+ elseif (r0 > 0.) then
+    pint = 1.
+    ar0 = r0
+ else
+    pint = -1.
+    ar0 = -r0
+ endif
+
+ if (d1*d2 >= 0.) then
+    pint = pint*(full_2d_mod(atan(abs(d1)/ar0), ar0*hi1) + full_2d_mod(atan(abs(d2)/ar0), ar0*hi1))
+ else
+    if (abs(d1) < abs(d2)) then
+       pint = pint*(full_2d_mod(atan(abs(d2)/ar0), ar0*hi1) - full_2d_mod(atan(abs(d1)/ar0), ar0*hi1))
+    else
+       pint = pint*(full_2d_mod(atan(abs(d1)/ar0), ar0*hi1) - full_2d_mod(atan(abs(d2)/ar0), ar0*hi1))
+    endif
+ endif
+
+end function pint
+
+!---------------------------------------
+!
+! Helper functions for kernel integrals
+! See Petkova, Laibe & Bonnell (2018)
+!
+!---------------------------------------
+pure real function full_2d_mod(phi, q0)
+ real, intent(in) :: phi, q0
+ real :: q, phi1, phi2
+
+ q = q0/cos(phi)
+
+ if (q0 <= 1.0) then
+    phi1 = acos(q0)
+    phi2 = acos(q0/2.)
+
+    if (q <= 1.0) then
+       full_2d_mod = F1_2d(phi, q0)
+    elseif (q <= 2.0) then
+       full_2d_mod = F2_2d(phi, q0) - F2_2d(phi1, q0) + F1_2d(phi1, q0)
+    else
+       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2, q0) - F2_2d(phi1, q0) + F1_2d(phi1, q0)
+    endif
+ elseif (q0 <= 2.0) then
+    phi2 = acos(q0/2.)
+
+    if (q <= 2.0) then
+       full_2d_mod = F2_2d(phi, q0)
+    else
+       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2, q0)
+    endif
+ else ! q0 > 2
+    full_2d_mod = F3_2d(phi)
+ endif
+
+end function full_2d_mod
+
+pure real function F1_2d(phi, q0)
+ real, intent(in) :: phi, q0
+ real :: I2, I4, I5, logs, tphi, cphi, cphi2, q02, q03
+
+ tphi = tan(phi)
+ cphi = cos(phi)
+ cphi2 = cphi*cphi
+
+ q02 = q0*q0
+ q03 = q02*q0
+
+ logs = log(tan(phi/2.+pi/4.))
+
+ I2 = tan(phi)
+ I4 = 1./3. * tphi*(2. + 1./cphi2)
+
+ I5 = 1./16. * (0.5*(11.*sin(phi) + 3.*sin(3.*phi))/cphi2/cphi2 + 6.*logs)
+
+ F1_2d =  5./7.*q02/pi  * (I2 - 3./4.*q02 *I4 + 0.3*q03 *I5)
+
+end function F1_2d
+
+pure real function F2_2d(phi, q0)
+ real, intent(in) :: phi, q0
+ real :: I0, I2, I3, I4, I5, logs, tphi, cphi, cphi2, q02, q03
+
+ tphi = tan(phi)
+ cphi = cos(phi)
+ cphi2 = cphi*cphi
+
+ q02 = q0*q0
+ q03 = q02*q0
+
+ logs = log(tan(phi/2.+pi/4.))
+
+ I0 = phi
+ I2 = tphi
+ I4 = 1./3. * tphi*(2. + 1./(cphi2))
+
+ I3 = 1./2.  * (tphi/cphi + logs)
+ I5 = 1./16. * (0.5*(11.*sin(phi) + 3.*sin(3.*phi))/cphi2/cphi2 + 6.*logs)
+
+ F2_2d =  5./7.*q02/pi  * (2.*I2 - 2.*q0 *I3 + 3./4.*q02 *I4 - 1./10.*q03 *I5 &
+                           - 1./10./q02 *I0)
+
+end function F2_2d
+
+pure real function F3_2d(phi)
+ real, intent(in) :: phi
+ real :: I0
+
+ I0 = phi
+ F3_2d = 0.5/pi  *I0
+
+end function F3_2d
 
 end module kernels

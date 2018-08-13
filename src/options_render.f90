@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -34,7 +34,7 @@ module settings_render
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
- logical :: double_rendering
+ logical :: double_rendering,exact_rendering
  character(len=lenlabel+20) :: projlabelformat
  integer :: iapplyprojformat
  character(len=120) :: rgbfile
@@ -44,7 +44,7 @@ module settings_render
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
    double_rendering,ikernel,ColourBarPosx,ColourBarPosy,ColourBarLen,&
-   ColourBarFmtStr,ColourBarWidth,iColourBarPos,rgbfile
+   ColourBarFmtStr,ColourBarWidth,iColourBarPos,rgbfile,exact_rendering
 
 contains
 
@@ -77,6 +77,7 @@ subroutine defaults_set_render
   ColourBarFmtStr = 'BCMSTV'
   iColourBarPos = 3
   rgbfile = 'colours.ctb'
+  exact_rendering = .false.
 
   return
 end subroutine defaults_set_render
@@ -137,7 +138,7 @@ subroutine submenu_render(ichoose)
           ' 2) change colour scheme               (',i2,' )',/,    &
           ' 3) 2nd render/contour prompt          ( ',a,' )',/, &
           ' 4) change number of contours          (',i3,' )',/, &
-          ' 5) colour bar options                 ( ',i2,' )',/,&
+          ' 5) change colour bar style            ( ',i2,' )',/,&
           ' 6) use particle colours not pixels    ( ',a,' )',/,&
           ' 7) normalise interpolations           ( ',a,' )',/,&
           ' 8) use accelerated rendering          ( ',a,' )',/,&
@@ -267,9 +268,14 @@ subroutine submenu_render(ichoose)
                    //trim(print_logical(icolour_particles))
 !------------------------------------------------------------------------
     case(7)
-       inormalise_interpolations = .not.inormalise_interpolations
+       call prompt('Use normalised interpolations?',inormalise_interpolations)
        print "(a)",' Normalisation of interpolations is ' &
                    //trim(print_logical(inormalise_interpolations))
+       if (.not.inormalise_interpolations) then
+          call prompt('Use exact rendering? (slower but more accurate)',exact_rendering)
+          print "(a)",' Exact rendering is ' &
+                   //trim(print_logical(exact_rendering))
+       endif
 !------------------------------------------------------------------------
     case(8)
        ifastrender = .not.ifastrender

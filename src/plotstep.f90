@@ -697,7 +697,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
                                inormalise_interpolations,ifastrender,ilabelcont,double_rendering,&
-                               projlabelformat,iapplyprojformat
+                               projlabelformat,iapplyprojformat,exact_rendering
   use settings_vecplot,   only:npixvec,iplotpartvec
   use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
                                flythru,use3Dperspective,use3Dopacityrendering,&
@@ -1349,7 +1349,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
-                         pixwidth,pixwidthy,inormalise,isperiodicx,isperiodicy)
+                         pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy)
                     !--also get contour plot data
                     if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
                        if (.not.isameweights) & ! set contouring weights as necessary
@@ -1358,7 +1358,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
-                            pixwidth,pixwidthy,inormalise,isperiodicx,isperiodicy)
+                            pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy)
                        gotcontours = .true.
 
                        if (.not.isameweights) & ! reset weights
@@ -3567,13 +3567,13 @@ contains
                  hh(1:ninterp),weight(1:ninterp),vecplot(1,1:ninterp), &
                  vecplot(2,1:ninterp),icolourme(1:ninterp),ninterp,xmin,ymin, &
                  vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
-                 isperiodicx,isperiodicy)
+                 exact_rendering,isperiodicx,isperiodicy)
             else
                call interpolate2D_vec(xplot(1:ninterp),yplot(1:ninterp), &
                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ivecx), &
                  dat(1:ninterp,ivecy),icolourme(1:ninterp),ninterp,xmin,ymin, &
                  vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,inormalise,&
-                 isperiodicx,isperiodicy)
+                 exact_rendering,isperiodicx,isperiodicy)
             endif
          else
             ! don't have smoothing length, use averaging
