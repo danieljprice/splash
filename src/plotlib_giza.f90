@@ -172,12 +172,11 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
     id = giza_open_device(devicein,'splash')
  endif
  ! id<0 should return an error, but +ve id is OK
- select case(id)
- case(:-1)
+ if (id < 0) then
     ierr = id
- case default
+ else
     ierr = 0
- end select
+ endif
 
  if(ierr.eq.0) then
     call giza_stop_prompting
@@ -207,7 +206,7 @@ subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
   integer, intent(in), optional :: iextend
 
   call convert_tr_to_affine(tr,affine)
-  
+
   if (present(iextend)) then
      call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
   else
@@ -223,7 +222,7 @@ subroutine plot_imag_alpha(dat, alpha, idim, jdim, i1, i2, j1, j2, a1, a2, tr, i
   integer, intent(in), optional :: iextend
 
   call convert_tr_to_affine(tr,affine)
-  
+
   if (present(iextend)) then
      call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
   else
@@ -461,7 +460,7 @@ subroutine plot_pap(widthin,aspect,paperunits)
   integer, intent(in), optional :: paperunits
   integer :: units
   real    :: width
-  
+
   width = widthin
   units = giza_units_inches
 
@@ -476,8 +475,8 @@ subroutine plot_pap(widthin,aspect,paperunits)
         width = 0.1*width
      end select
   endif
-  
-  call giza_set_paper_size(units,width,width*aspect)  
+
+  call giza_set_paper_size(units,width,width*aspect)
 
 end subroutine plot_pap
 
@@ -534,4 +533,3 @@ subroutine convert_tr_to_affine(tr,affine)
 end subroutine convert_tr_to_affine
 
 end module plotlib
-
