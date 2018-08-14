@@ -334,11 +334,10 @@ pure real function full_2d_mod(phi, q0)
  real, intent(in) :: phi, q0
  real :: q, phi1, phi2
 
- q = q0/cos(phi)
-
  if (q0 <= 1.0) then
     phi1 = acos(q0)
-    phi2 = acos(q0/2.)
+    phi2 = acos(0.5*q0)
+    q = q0/cos(phi)
 
     if (q <= 1.0) then
        full_2d_mod = F1_2d(phi, q0)
@@ -348,7 +347,8 @@ pure real function full_2d_mod(phi, q0)
        full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2, q0) - F2_2d(phi1, q0) + F1_2d(phi1, q0)
     endif
  elseif (q0 <= 2.0) then
-    phi2 = acos(q0/2.)
+    phi2 = acos(0.5*q0)
+    q = q0/cos(phi)
 
     if (q <= 2.0) then
        full_2d_mod = F2_2d(phi, q0)
@@ -374,7 +374,7 @@ pure real function F1_2d(phi, q0)
 
  logs = log(tan(phi/2.+pi/4.))
 
- I2 = tan(phi)
+ I2 = tphi
  I4 = 1./3. * tphi*(2. + 1./cphi2)
 
  I5 = 1./16. * (0.5*(11.*sin(phi) + 3.*sin(3.*phi))/cphi2/cphi2 + 6.*logs)
