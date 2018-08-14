@@ -42,7 +42,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use settings_units,       only:units,unit_interp
  use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin
  use settings_part,        only:iplotpartoftype
- use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation
+ use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation,exact_rendering
  use params,               only:int1
  use interpolation,        only:set_interpolation_weights
  use interpolations3D,     only:interpolate3D,interpolate3D_vec
@@ -321,7 +321,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
          dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
          xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-         pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2))
+         pixwidth,pixwidth,inormalise,exact_rendering,isperiodic(1),isperiodic(2))
     !
     !--set minimum density on the grid
     !
@@ -424,7 +424,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                      dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                      xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-                     pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+                     pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2))
              endif
           endif
 
@@ -511,7 +511,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                       call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                            xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-                           pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+                           pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2))
                    endif
                 endif
 
@@ -556,7 +556,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                    call interpolate2D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc),dat(1:ninterp,iloc+1), &
                         icolourme,ninterp,xmin(1),xmin(2),datgridvec2D(1,:,:),datgridvec2D(2,:,:), &
-                        npixels(1),npixels(2),pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2))
+                        npixels(1),npixels(2),pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2))
                 endif
              endif
 
