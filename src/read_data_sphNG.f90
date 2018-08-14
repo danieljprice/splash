@@ -2017,8 +2017,6 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                       iamtype(i,j) = itypemap_unknown_phantom
                    endif
                 endif
-             case(itypemap_unknown_phantom)
-                nunknown = nunknown + 1
             end select
           enddo
       else
