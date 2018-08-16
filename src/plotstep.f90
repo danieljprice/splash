@@ -3406,7 +3406,7 @@ contains
    use render,           only:render_vec
    use fieldlines,       only:streamlines,vecplot3D_proj
    use labels,           only:iutherm,is_coord
-   use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw
+   use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw,plot_set_opacity
    use system_utils,     only:lenvironment
    use legends,          only:ipanelselect
    implicit none
@@ -3436,6 +3436,7 @@ contains
       !--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) then
          call plot_sci(0)
+         call plot_set_opacity(1.)
       else
          call plot_sci(1)
       endif
