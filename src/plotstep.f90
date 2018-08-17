@@ -278,7 +278,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !--( a further constraint on plot tiling is required in the case of
   !    multiple renderings which would involve different colour bars )
   OneColourBarPerRow    = .false.
-  OneColourBarPerColumn = .true.
+  OneColourBarPerColumn = .false.
   if (iamrendering .and. icolours.ne.0 .and. iColourbarStyle.gt.0) then
      !--this option means that a margin is set aside for a colour bar on tiled plots
      iAllowspaceforcolourbar = .true.
@@ -297,7 +297,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         !  all the colour bars in each row are the same
         if (.not.tile_plots .and. mod(nacross*ndown,nyplots).eq.0) then
            ! only allow a single colour bar at end of row if the
-           ! is colour bar is plotted in the correct orientation
+           ! colour bar is plotted in the correct orientation
            OneColourBarPerRow    = barisvertical(iColourBarStyle)
            OneColourBarPerColumn = .not.barisvertical(iColourBarStyle)
            allocate(ifirstinrow(ndown),ifirstincolumn(nacross))
