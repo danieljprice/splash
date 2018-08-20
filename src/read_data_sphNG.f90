@@ -420,49 +420,6 @@ contains
 
  end subroutine fake_header_tags
 
-!------------------------------
-! Append a number to a string
-! e.g. string,2 -> string2
-!------------------------------
- subroutine append_number(string,j)
-  character(len=*), intent(inout) :: string
-  integer,          intent(in)    :: j
-  character(len=12) :: strj
-
-  write(strj,"(i12)") j
-  string = trim(string)//trim(adjustl(strj))
-
- end subroutine append_number
-
-!----------------------------------------------------------------------
-! Append numbers to header tags to make them unique so they can
-! be used in splash calculated quantities
-! e.g. massoftype1, massoftype2, massoftype3, etc.
-!----------------------------------------------------------------------
- subroutine make_header_tags_unique(nreals,tagsreal)
-  integer, intent(in) :: nreals
-  character(len=lentag), dimension(nreals), intent(inout) :: tagsreal
-  character(len=lentag) :: tagprev
-  integer :: i,j
-
-  j = 0
-  tagprev = tagsreal(1)
-  do i=2,nreals
-     if (tagsreal(i)==tagprev) then
-        j = j + 1
-        if (j==1) then
-           call append_number(tagsreal(i-1),j)
-           j = j + 1
-        endif
-        call append_number(tagsreal(i),j)
-     else
-        tagprev = tagsreal(i)
-        j = 0
-     endif
-  enddo
-
- end subroutine make_header_tags_unique
-
  !----------------------------------------------------------------------
  ! Routine to read the header of sphNG dump files and extract relevant
  ! information
@@ -1162,6 +1119,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   use system_utils,   only:lenvironment,renvironment
   use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags
   use calcquantities, only:calc_quantities
+  use asciiutils,     only:make_tags_unique
   use sphNGread
   implicit none
   integer, intent(in)  :: indexstart,iposn
@@ -1514,7 +1472,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       nhdr = min(nreals,maxhdr)
       headervals(1:nhdr,j) = dummyreal(1:nhdr)
       headertags(1:nhdr)   = tagsreal(1:nhdr)
-      call make_header_tags_unique(nhdr,headertags)
+      call make_tags_unique(nhdr,headertags)
 
       nstepsread = nstepsread + 1
       !
@@ -2246,21 +2204,21 @@ end subroutine read_data
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum,itstop,igrainsize,igraindens, &
+              idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel
   use params
   use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread
-  use asciiutils,      only:lcase
+  use asciiutils,      only:lcase,make_tags_unique,match_tag
   use system_commands, only:get_environment
   use system_utils,    only:lenvironment
   implicit none
   integer :: i,j
   real(doub_prec)   :: unitx
   character(len=20) :: string,unitlabelx
-  character(len=20) :: dustfrac_string,deltav_string,tstop_string
+  character(len=20) :: deltav_string
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -2282,7 +2240,6 @@ subroutine set_labels
      ih = 4       !  smoothing length
   endif
   irho = ih + 1     !  density
-  itstop = 0
   iutherm = 0
   idustfrac = 0
 
@@ -2321,10 +2278,6 @@ subroutine set_labels
            label(i) = '\psi'
         case('dustfracsum')
            idustfracsum = i
-        case('dustfrac')
-           idustfrac = i
-        case('tstop')
-           itstop = i
         case('deltavsumx')
            ideltavsum = i
         case('deltavx')
@@ -2396,22 +2349,6 @@ subroutine set_labels
      iamvec(icurlvxcol:icurlvzcol) = icurlvxcol
      labelvec(icurlvxcol:icurlvzcol) = 'curl v'
   endif
-  if (idustfracsum.gt.0) then
-     ! Make N dustfrac labels
-     do i = idustfracsum+1,idustfrac
-        write(dustfrac_string,'(I10)') i-idustfracsum
-        write(dustfrac_string,'(A)') 'dustfrac'//trim(adjustl(dustfrac_string))
-        label(i) = dustfrac_string
-     enddo
-  endif
-  if (itstop.gt.0) then
-     ! Make N tstop labels
-     do i = itstop-(ndusttypes-1),itstop
-        write(tstop_string,'(I10)') i-(itstop-ndusttypes)
-        write(tstop_string,'(A)') 'tstop'//trim(adjustl(tstop_string))
-        label(i) = tstop_string
-     enddo
-  endif
   if (ideltavsum.gt.0) then
      ! Modify the deltavsum labels to have vector subscripts
      do j=1,ndimV
@@ -2450,6 +2387,14 @@ subroutine set_labels
         label(iJfirst+i-1) = trim(labelvec(iJfirst))//'_'//labelcoord(i,1)
      enddo
   endif
+  !
+  !--ensure labels are unique by appending numbers where necessary
+  !
+  call make_tags_unique(ncolumns,label)
+  !
+  !--identify dust fraction in the case where there is only one species
+  !
+  idustfrac = match_tag(label,'dustfrac')
   !
   !--set units for plot data
   !
