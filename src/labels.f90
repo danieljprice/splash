@@ -26,7 +26,8 @@
 !
 !-----------------------------------------------------------
 module labels
- use params, only:maxplot,maxparttypes,maxhdr,ltag
+ use params,     only:maxplot,maxparttypes,maxhdr,ltag
+ use asciiutils, only:count_non_blank
  implicit none
  integer, parameter :: lenlabel = 80
  integer, parameter :: lenunitslabel = 40  ! length of units label
@@ -341,22 +342,5 @@ subroutine print_types(noftype,ltype)
  write(*,*)
 
 end subroutine print_types
-
-!-----------------------------------------------------------------
-!
-!  utility to count number of non-blank strings in a list
-!
-!-----------------------------------------------------------------
-integer function count_non_blank(string)
- character(len=*), dimension(:), intent(in) :: string
- integer :: i
-
- count_non_blank = 0
- do i=1,size(string)
-    if (len_trim(string(i))<=0) exit
-    count_non_blank = count_non_blank + 1
- enddo
-
-end function count_non_blank
 
 end module labels

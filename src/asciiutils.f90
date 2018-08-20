@@ -40,6 +40,7 @@ module asciiutils
  public :: enumerate,isdigit,split
  public :: get_column_labels
  public :: match_tag,append_number,make_tags_unique
+ public :: count_non_blank
 
  private
 
@@ -977,5 +978,22 @@ subroutine make_tags_unique(ntags,tags)
  enddo
 
 end subroutine make_tags_unique
+
+!-----------------------------------------------------------------
+!
+!  utility to count number of non-blank strings in a list
+!
+!-----------------------------------------------------------------
+integer function count_non_blank(string)
+ character(len=*), dimension(:), intent(in) :: string
+ integer :: i
+
+ count_non_blank = 0
+ do i=1,size(string)
+    if (len_trim(string(i))<=0) exit
+    count_non_blank = count_non_blank + 1
+ enddo
+
+end function count_non_blank
 
 end module asciiutils
