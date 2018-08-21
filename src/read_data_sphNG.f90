@@ -474,6 +474,10 @@ contains
         if (phantomdump) then
            call extract('ntypes',ntypes,intarr,tags,nints,ierr)
            if (ierr /= 0) return
+           if (ntypes > maxparttypes) then
+              print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
+              ntypes = maxparttypes
+           endif
            call extract('npartoftype',npartoftypei(1:ntypes),intarr,tags,nints,ierr)
            if (ierr /= 0) return
         endif
@@ -519,11 +523,6 @@ contains
            if (iverbose.ge.1) print *,'npart = ',npart,' MPI blocks = ',nblocks
         endif
      endif
-  endif
-
-  if (ntypes > maxparttypes) then
-     print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
-     ntypes = maxparttypes
   endif
 
 !--int*1, int*2, int*4, int*8
