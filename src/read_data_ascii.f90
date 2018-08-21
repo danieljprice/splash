@@ -87,6 +87,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   integer :: noftype(maxparttypes),iverbose_was
   logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
+  real, allocatable :: dattemp(:)
   character(len=len(rootname)+4) :: dumpfile
   character(len=2048)  :: line
   character(len=lenlabel), dimension(size(label)) :: tmplabel
@@ -186,7 +187,6 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   if (j.gt.maxstep) then
      call alloc(maxpart,j+1,maxcol,mixedtypes=(icoltype > 0))
   endif
-
 !
 !--can set either set the time and gamma explicitly
 !  using environment variables (fixed for all files)
@@ -251,6 +251,10 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
   enddo
 !
+! allocate temporary array to read each line
+!
+  allocate(dattemp(ncolstep))
+!
 !--now read the timestep data in the dumpfile
 !
   i = 0
@@ -264,7 +268,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         npart_max = 10*npart_max
         call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
      endif
-     read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolstep)
+     read(iunit,*,iostat=ierr) dattemp(1:ncolstep)
+     dat(i,1:ncolstep,j) = dattemp(1:ncolstep)
      if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0 .and. (size(iamtype(:,j)) > 1)) then
         !--set particle type from type column
         itype = nint(dat(i,icoltype,j))
@@ -283,6 +288,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         i = i - 1 ! ignore lines with errors
      endif
   enddo overparts
+  if (allocated(dattemp)) deallocate(dattemp)
 
   nprint = i - 1
   nstepsread = nstepsread + 1
