@@ -40,7 +40,7 @@ module asciiutils
  public :: enumerate,isdigit,split
  public :: get_column_labels
  public :: match_tag,append_number,make_tags_unique
- public :: count_non_blank
+ public :: count_non_blank,find_repeated_tags
 
  private
 
@@ -66,7 +66,6 @@ contains
 ! up to a maximum corresponding to the size of the array
 !---------------------------------------------------------------------------
 subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
- implicit none
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  character(len=*), dimension(:), intent(out) :: charline
@@ -129,7 +128,6 @@ end subroutine read_asciifile_char
 ! up to a maximum corresponding to the size of the array
 !---------------------------------------------------------------------------
 subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
- implicit none
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  real, dimension(:), intent(out) :: realarr
@@ -193,7 +191,6 @@ end subroutine read_asciifile_real
 ! returns 2D array of real numbers (i.e. tabulated data)
 !---------------------------------------------------------------------------
 subroutine read_asciifile_realarr(filename,nlinesread,realarr,ierror)
- implicit none
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  real, dimension(:,:), intent(out) :: realarr
@@ -244,7 +241,6 @@ end subroutine read_asciifile_realarr
 ! up to a maximum corresponding to the size of the array
 !---------------------------------------------------------------------------
 subroutine read_asciifile_real_string(filename,nlinesread,realarr,charline,ierror)
- implicit none
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  real, dimension(:), intent(out) :: realarr
@@ -317,7 +313,6 @@ end subroutine read_asciifile_real_string
 ! slightly ad-hoc but its the best way I could think of!
 !---------------------------------------------------------------------------
 subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
- implicit none
  integer, intent(in) :: lunit
  integer, intent(out) :: ncolumns,nheaderlines
  integer, intent(in), optional :: maxheaderlines
@@ -375,7 +370,6 @@ end subroutine get_ncolumns
 ! utility to work out number of rows in file
 !---------------------------------------------------------------------------
 subroutine get_nrows(lunit,nheaderlines,nlines)
- implicit none
  integer, intent(in)  :: lunit,nheaderlines
  integer, intent(out) :: nlines
  integer :: ierr,i
@@ -399,7 +393,6 @@ end subroutine get_nrows
 !
 !---------------------------------------------------------------------------
 integer function ncolumnsline(line)
- implicit none
  character(len=*), intent(in) :: line
  real :: dummyreal(1000)
  integer :: ierr,i
@@ -457,7 +450,6 @@ end function nheaderlines
 !
 !---------------------------------------------------------------------------
 function safename(string)
- implicit none
  character(len=*), intent(in) :: string
  character(len=len(string)) :: safename
  integer :: ipos
@@ -501,7 +493,6 @@ end function safename
 !
 !---------------------------------------------------------------------------
 function add_escape_chars(string)
- implicit none
  character(len=*), intent(in) :: string
  character(len=len(string)) :: add_escape_chars
 
@@ -517,7 +508,6 @@ end function add_escape_chars
 !
 !---------------------------------------------------------------------------
 function basename(string)
- implicit none
  character(len=*), intent(in) :: string
  character(len=len(string)) :: basename
  integer :: i,iposmax
@@ -542,7 +532,6 @@ end function basename
 !
 !---------------------------------------------------------------------------
 function cstring(string)
- implicit none
  character(len=*), intent(in) :: string
  character(len=len(string)+1) :: cstring
 
@@ -558,7 +547,6 @@ end function cstring
 !---------------------------------------------------------------------------
 function fstring(array)
  use, intrinsic :: iso_c_binding, only:c_char
- implicit none
  character(kind=c_char), dimension(:), intent(in) :: array
  character(len=size(array)-1) :: fstring
  integer :: i
@@ -578,7 +566,6 @@ end function fstring
 !
 !---------------------------------------------------------------------------
 subroutine string_replace(string,skey,sreplacewith)
- implicit none
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey,sreplacewith
  character(len=len(string)) :: remstring
@@ -603,7 +590,6 @@ end subroutine string_replace
 !
 !---------------------------------------------------------------------------
 subroutine string_sub(string,i1,i2,sreplacewith)
- implicit none
  character(len=*), intent(inout) :: string
  integer, intent(in)             :: i1,i2
  character(len=*), intent(in)    :: sreplacewith
@@ -624,7 +610,6 @@ end subroutine string_sub
 !
 !---------------------------------------------------------------------------
 pure subroutine string_delete1(string,skey)
- implicit none
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey
  integer :: ipos,lensub
@@ -995,5 +980,46 @@ integer function count_non_blank(string)
  enddo
 
 end function count_non_blank
+
+!---------------------------------------------------------------------
+!  utility to identify repeated tags in a list, written
+!  for use when labels were made by "make_tags_unique"
+!
+!  IN:
+!    tag - string to match, e.g. "massoftype"
+!    ntags - length of array to search
+!    tags  - sequence of character strings to search
+!
+!  the routine then searches for consecutive entries matching
+!  the tag, e.g. massoftype1, massoftype2 etc and returns:
+!
+!  OUT:
+!    istartlist - start of list (e.g. location of massoftype1)
+!    nlist - number of tags matching string (i.e. N in massoftypeN)
+!----------------------------------------------------------------------
+subroutine find_repeated_tags(tag,ntags,tags,istartlist,nlist)
+ character(len=*), intent(in)  :: tag
+ integer,          intent(in)  :: ntags
+ character(len=*), intent(in)  :: tags(ntags)
+ integer,          intent(out) :: istartlist,nlist
+ integer :: i
+ logical :: consecutive
+
+ istartlist = 0
+ nlist = 0
+ consecutive = .false.
+ do i=1,ntags
+    if (index(tags(i),tag) > 0) then
+       if (nlist==0) then
+          istartlist = i
+          consecutive = .true.
+       endif
+       if (consecutive) nlist = nlist + 1
+    else
+       consecutive = .false.
+    endif
+ enddo
+
+end subroutine find_repeated_tags
 
 end module asciiutils

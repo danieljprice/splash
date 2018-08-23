@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -306,16 +306,16 @@ end subroutine splitstring
 subroutine print_example_quantities(verbose,ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
-                         idustfracsum,ideltav,ivx
- use settings_data, only:ncolumns,ndim,icoordsnew,ndimV,ndusttypes,idustfrac_plot
+                         ideltav,ivx
+ use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use geometry,      only:labelcoord
+ use asciiutils,    only:append_number,find_repeated_tags
  implicit none
  logical :: verbose
  integer, intent(inout), optional :: ncalc
  logical :: prefill
- character(len=lenlabel) :: string,temp,labelprev
- character(len=lenlabel) :: ldfrac,ldfake,ldfracsum,idust_string
- integer :: i,j,ivecstart,ierr,ilen
+ character(len=lenlabel) :: string,labelprev,ldfracsum
+ integer :: i,j,ivecstart,ierr,ilen,idustfrac1,ndusttypes
  logical :: gotpmag,gotpressure
 
  gotpmag = .false.
@@ -328,17 +328,6 @@ subroutine print_example_quantities(verbose,ncalc)
        print "(/,a)",' Prefilling list with useful quantities from current data...'
     else
        print "(/,a)",' Examples based on current data: '
-    endif
- endif
-
- if (idustfrac > 0) then
-    if (idustfracsum == 0) then
-       !--one dust phase
-       ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
-    else
-       !--multiple dust phases
-       if (verbose) print*,' Warning! Density refers to total density: rhogas+rhodust'
-       ldfracsum = shortlabel(label(idustfracsum),unitslabel(idustfracsum))
     endif
  endif
 
@@ -387,11 +376,32 @@ subroutine print_example_quantities(verbose,ncalc)
        print "(11x,a)",trim(string)
     endif
  endif
-
+ !
+ !--total dust fraction if multiple dust phases
+ !
+ ldfracsum = ' '
+ if (idustfrac == 0) then
+    call find_repeated_tags('dustfrac',ncolumns,label,idustfrac1,ndusttypes)
+    if (ndusttypes > 1) then
+       string = 'dustfrac = '//trim(shortlabel(label(idustfrac1),unitslabel(idustfrac1)))
+       do i=idustfrac1+1,idustfrac1+ndusttypes-1
+          string = trim(string)//'+'//(trim(shortlabel(label(i),unitslabel(i))))
+       enddo
+       ldfracsum = 'dustfrac'
+       if (prefill) then
+          ncalc = ncalc + 1
+          call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+       else
+          print "(11x,a)",trim(string)
+       endif
+    endif
+ else
+    ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
+ endif
  !
  !--one-fluid dust stuff
  !
- if (idustfrac.gt.0 .and. irho.gt.0) then
+ if (len_trim(ldfracsum) > 0 .and. irho.gt.0) then
     string = ' '
     !--gas density
     write(string,"(a)",iostat=ierr) '\rho_{g} = ' &
@@ -404,30 +414,34 @@ subroutine print_example_quantities(verbose,ncalc)
        calcunitslabel(ncalc) = unitslabel(irho)
     else
        print "(11x,a)",trim(string)
-       call splitstring(string,labelprev,temp)
     endif
-    !--dust density
-    do i = 1,ndusttypes
-       if (ndusttypes>1) then
-          write(idust_string,"(I10)") i
-          write(idust_string,"(a)") '{d,'//trim(adjustl(idust_string))//'}'
-          ldfrac = shortlabel(label(idustfracsum+i),unitslabel(idustfracsum+i))
-          ldfake = shortlabel(label(idustfrac_plot),unitslabel(idustfrac))
-       else
-          write(idust_string,"(a)") '{d}'
-          ldfrac = shortlabel(label(idustfrac),unitslabel(idustfrac))
-          ldfake = '1'
-       endif
-       write(string,"(a)",iostat=ierr) '\rho_'//trim(adjustl(idust_string))//' = ' &
-                       //trim(ldfrac)//'*'//trim(shortlabel(label(irho),unitslabel(irho)))
-       if (prefill) then
-          ncalc = ncalc + 1
-          call splitstring(string,calclabel(ncalc),calcstring(ncalc))
-          calcunitslabel(ncalc) = unitslabel(irho)
-       else
-          print "(11x,a)",trim(string)
-       endif
-    enddo
+    !--(total) dust density
+    write(string,"(a)",iostat=ierr) '\rho_{d} = ' &
+                    //trim(shortlabel(label(irho),unitslabel(irho))) &
+                    //'*'//trim(ldfracsum)
+    if (prefill) then
+       ncalc = ncalc + 1
+       call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+       calcunitslabel(ncalc) = unitslabel(irho)
+    else
+       print "(11x,a)",trim(string)
+    endif
+    !--densities of each individual dust phase
+    if (ndusttypes > 1) then
+       do i = idustfrac1,idustfrac1+ndusttypes-1
+          string = '\rho_{d,'
+          call append_number(string,i-idustfrac1+1)
+          string = trim(string)//'} = ' &
+               //trim(shortlabel(label(irho),unitslabel(irho)))//'*'//trim(label(i))
+          if (prefill) then
+             ncalc = ncalc + 1
+             call splitstring(string,calclabel(ncalc),calcstring(ncalc))
+             calcunitslabel(ncalc) = unitslabel(irho)
+          else
+             print "(11x,a)",trim(string)
+          endif
+       enddo
+    endif
     !--dust-to-gas ratio
     write(string,"(a)",iostat=ierr) 'dust-to-gas ratio = ' &
                     //trim(ldfracsum)//'/(1. - '//trim(ldfracsum)//')'
@@ -719,11 +733,10 @@ end subroutine get_calc_data_dependencies
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
-                           irho,idustfracsum,count_non_blank,headertags
+                           count_non_blank,headertags
   use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
   use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset,ndusttypes, &
-                           idustfrac_plot
+                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
   use mem_allocation, only:alloc
   use settings_units, only:units
   use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -735,7 +748,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
   integer, intent(in) :: ifromstep, itostep
   logical, intent(in), optional :: dontcalculate
   integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
-  integer :: ndust,icolumn,nhdr
+  integer :: ndust,nhdr
   logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
@@ -865,33 +878,15 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                  !
                  do j=1,ntoti
                     vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
+                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,&
+                                       ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
                     !--evaluate function with transformed values
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                  enddo
               else
-                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns,ndusttypes,iamtype,idustfracsum,idustfrac_plot)
+                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns)
                  do j=1,ntoti
-                    do icolumn = 1,ncolumns+icalc-1
-                       if (ndusttypes>1 .and. icolumn==irho) then
-                          !
-                          !--reverse the fake data calculations if needed in order to make
-                          !  the input equations in the calculated extra quantities consistent
-                          !  with the physical equations
-                          !
-                          select case(iamtype(j,i))
-                          case(1) !--gas
-                             vals(icolumn) = dat(j,icolumn,i)/(1.-dat(j,idustfracsum,i))
-                          case(2) !--dust
-                             vals(icolumn) = dat(j,icolumn,i)/dat(j,idustfrac_plot,i)
-                          case default !--other stuff
-                             vals(icolumn) = dat(j,icolumn,i)
-                          endselect
-                       else
-                          vals(icolumn) = dat(j,icolumn,i)
-                       endif
-                    enddo
-                    !vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
                     dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                  enddo
                  !!$omp end parallel do
