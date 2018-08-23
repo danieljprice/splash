@@ -1136,7 +1136,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
   integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
   integer, dimension(maxparttypes) :: npartoftypei
   real,    dimension(maxparttypes) :: massoftypei
-  real    :: pmassi,hi,rhoi,hrlim,rad2d
+  real    :: pmassi,hi,rhoi
   logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
 
   character(len=len(rootname)+10) :: dumpfile
@@ -1906,27 +1906,6 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
     if (allocated(dat) .and. n1.GT.0 .and. n1 <= size(dat(:,1,1)) &
        .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
-    endif
- !
- !--remove particles at large H/R is "SSPLASH_REMOVE_LARGE_HR" is set
- !
-    if (lenvironment('SSPLASH_REMOVE_LARGE_HR')) then
-       hrlim = renvironment('SSPLASH_HR_LIMIT')
-       print "(a)", 'SSPLASH_REMOVE_LARGE_HR set:'
-       print "(a)", 'Removing particles at large H/R values'
-       print "(a,F7.4)", 'H/R limit set to ',hrlim
-
-       nremoved = 0
-       do i = 1,npart
-          if (int(iphase(i)) == 0) then
-             rad2d = sqrt(dat(i,1,j)**2 + dat(i,2,j)**2)
-             if (abs(dat(i,3,j) / rad2d) >= hrlim) then
-                iphase(i) = -1
-                nremoved  = nremoved + 1
-             endif
-          endif
-       enddo
-       print "(I5,a)", nremoved, ' particles removed at large H/R'
     endif
  !
  !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
