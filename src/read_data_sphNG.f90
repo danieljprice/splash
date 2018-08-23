@@ -1838,9 +1838,13 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                         rhoi = massoftypei(1)*(hfact/hi)**3
                      elseif (hi.lt.0.) then
                         rhoi = massoftypei(1)*(hfact/abs(hi))**3
+                        npartoftype(1,j) = npartoftype(1,j) - 1
+                        npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
                         iphase(k) = -1
                      else ! if h = 0.
                         rhoi = 0.
+                        npartoftype(1,j) = npartoftype(1,j) - 1
+                        npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
                         iphase(k) = -2
                      endif
                      if (required(irho)) dat(k,irho,j) = rhoi
