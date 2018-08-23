@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -299,7 +299,7 @@ end function w_wendlandc6
 !---------------------------------------
 pure real function pint(r0, d1, d2, hi1)
  real, intent(in) :: r0, d1, d2, hi1
- real :: ar0
+ real :: ar0,q0,tphi1,tphi2,phi1,phi2
 
  if (abs(r0) < tiny(0.)) then
     pint = 0.
@@ -311,14 +311,19 @@ pure real function pint(r0, d1, d2, hi1)
     pint = -1.
     ar0 = -r0
  endif
+ q0 = ar0*hi1
+ tphi1 = abs(d1)/ar0
+ tphi2 = abs(d2)/ar0
+ phi1 = atan(tphi1)
+ phi2 = atan(tphi2)
 
  if (d1*d2 >= 0.) then
-    pint = pint*(full_2d_mod(atan(abs(d1)/ar0), ar0*hi1) + full_2d_mod(atan(abs(d2)/ar0), ar0*hi1))
+    pint = pint*(full_2d_mod(phi1,tphi1,q0) + full_2d_mod(phi2,tphi2,q0))
  else
     if (abs(d1) < abs(d2)) then
-       pint = pint*(full_2d_mod(atan(abs(d2)/ar0), ar0*hi1) - full_2d_mod(atan(abs(d1)/ar0), ar0*hi1))
+       pint = pint*(full_2d_mod(phi2,tphi2,q0) - full_2d_mod(phi1,tphi1,q0))
     else
-       pint = pint*(full_2d_mod(atan(abs(d1)/ar0), ar0*hi1) - full_2d_mod(atan(abs(d2)/ar0), ar0*hi1))
+       pint = pint*(full_2d_mod(phi1,tphi1,q0) - full_2d_mod(phi2,tphi2,q0))
     endif
  endif
 
@@ -330,30 +335,44 @@ end function pint
 ! See Petkova, Laibe & Bonnell (2018)
 !
 !---------------------------------------
-pure real function full_2d_mod(phi, q0)
- real, intent(in) :: phi, q0
- real :: q, phi1, phi2
+pure real function full_2d_mod(phi,tphi,q0)
+ real, intent(in) :: phi,tphi,q0
+ real :: q, phi1, phi2, tphi1, tphi2, cphi, cphi1, cphi2
 
  if (q0 <= 1.0) then
-    phi1 = acos(q0)
-    phi2 = acos(0.5*q0)
-    q = q0/cos(phi)
+    cphi = cos(phi)
+    q = q0/cphi
 
     if (q <= 1.0) then
-       full_2d_mod = F1_2d(phi, q0)
+       full_2d_mod = F1_2d(phi,tphi,cphi,q0)
     elseif (q <= 2.0) then
-       full_2d_mod = F2_2d(phi, q0) - F2_2d(phi1, q0) + F1_2d(phi1, q0)
+       cphi1 = q0
+       phi1 = acos(q0)
+       tphi1 = tan(phi1)
+       full_2d_mod = F2_2d(phi,tphi,cphi,q0) - F2_2d(phi1,tphi1,cphi1,q0) &
+                   + F1_2d(phi1,tphi1,cphi1,q0)
     else
-       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2, q0) - F2_2d(phi1, q0) + F1_2d(phi1, q0)
+       cphi1 = q0
+       phi1 = acos(q0)
+       cphi2 = 0.5*q0
+       phi2 = acos(0.5*q0)
+       tphi1 = tan(phi1)
+       tphi2 = tan(phi2)
+       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2,tphi2,cphi2,q0) &
+                                - F2_2d(phi1,tphi1,cphi1,q0) &
+                                + F1_2d(phi1,tphi1,cphi1,q0)
     endif
  elseif (q0 <= 2.0) then
-    phi2 = acos(0.5*q0)
-    q = q0/cos(phi)
+    cphi = cos(phi)
+    q = q0/cphi
 
     if (q <= 2.0) then
-       full_2d_mod = F2_2d(phi, q0)
+       full_2d_mod = F2_2d(phi,tphi,cphi,q0)
     else
-       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2, q0)
+       cphi2 = 0.5*q0
+       phi2 = acos(0.5*q0)
+       tphi2 = tan(phi2)
+       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2,tphi2,cphi2,q0)
     endif
  else ! q0 > 2
     full_2d_mod = F3_2d(phi)
@@ -361,12 +380,12 @@ pure real function full_2d_mod(phi, q0)
 
 end function full_2d_mod
 
-pure real function F1_2d(phi, q0)
- real, intent(in) :: phi, q0
- real :: I2, I4, I5, logs, tphi, cphi, cphi2, q02, q03
+pure real function F1_2d(phi,tphi,cphi,q0)
+ real, intent(in) :: phi,tphi,cphi,q0
+ real :: I2, I4, I5, logs, cphi2, q02, q03
 
- tphi = tan(phi)
- cphi = cos(phi)
+ !tphi = tan(phi)
+ !cphi = cos(phi)
  cphi2 = cphi*cphi
 
  q02 = q0*q0
@@ -383,12 +402,12 @@ pure real function F1_2d(phi, q0)
 
 end function F1_2d
 
-pure real function F2_2d(phi, q0)
- real, intent(in) :: phi, q0
- real :: I0, I2, I3, I4, I5, logs, tphi, cphi, cphi2, q02, q03
+pure real function F2_2d(phi, tphi, cphi, q0)
+ real, intent(in) :: phi, tphi, cphi, q0
+ real :: I0, I2, I3, I4, I5, logs, cphi2, q02, q03
 
- tphi = tan(phi)
- cphi = cos(phi)
+! tphi = tan(phi)
+! cphi = cos(phi)
  cphi2 = cphi*cphi
 
  q02 = q0*q0
