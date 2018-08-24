@@ -321,7 +321,7 @@ end subroutine read_data
 !
 !-------------------------------------------------------------------
 subroutine set_labels
-  use asciiutils,      only:lcase
+  use asciiutils,      only:lcase,match_taglist,find_repeated_tags
   use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel, &
                             make_vector_label
@@ -387,6 +387,14 @@ subroutine set_labels
      close(unit=51)
   endif
 
+!
+!--first, look for 'x','y','z' as consecutive labels
+!  to determine the number of dimensions
+!
+  call match_taglist((/'x','y','z'/),label(1:ncolumns),ix(1),ndim)
+  do i=2,ndim
+     ix(i) = ix(1)+i-1
+  enddo
   do i=1,ncolumns
 !
 !--compare all strings in lower case, trimmed and with no preceding spaces
@@ -395,7 +403,7 @@ subroutine set_labels
 !
 !--guess positions of various quantities from the column labels
 !
-     if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. labeli(1:1).eq.'r')) then
+     if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
         ndim = 1
         ix(1) = i
      endif
@@ -425,30 +433,17 @@ subroutine set_labels
      elseif (labeli(1:2).eq.'pr' .or. trim(labeli).eq.'p' .or. &
             (index(labeli,'pressure').ne.0 .and. ipr==0)) then
         ipr = i
-     elseif (ivx.eq.0 .and. labeli(1:1).eq.'v') then
-        ivx = i
-        ndimV = 1
      elseif (icoltype==0 .and. index(labeli,'type').ne.0) then
         icoltype = i
      endif
-     !--set ndimV as number of columns with v as label
-     if (ivx.gt.0 .and. i.gt.ivx .and. i.le.ivx+2) then
-        if (labeli(1:1).eq.'v') ndimV = i - ivx + 1
-     endif
-     if (iBfirst.eq.0 .and. (labeli(1:2).eq.'bx')) then
-        iBfirst = i
-     endif
-     !--set ndimV as number of columns with v as label
-     if (iBfirst.gt.0 .and. i.gt.iBfirst .and. i.le.iBfirst+2) then
-        if (labeli(1:1).eq.'b') then
-           ndimVtemp = i - iBfirst + 1
-           if (ndimV.gt.0 .and. ndimVtemp.gt.ndimV) then
-              if (iverbose > 0) print "(a)",' WARNING: possible confusion with vector dimensions'
-              ndimV = ndimVtemp
-           endif
-        endif
-     endif
   enddo
+!
+!--try to find vectors by looking for multiple entries starting with 'v'
+!
+  if (ndim > 0) call find_repeated_tags('v',ncolumns,label,ivx,ndimV)
+  if (ndim > 0) call find_repeated_tags('b',ncolumns,label,iBfirst,ndimVtemp)
+  if (ndimVtemp.gt.ndimV .and. iverbose > 0) &
+     print "(a)",' WARNING: possible confusion with vector dimensions'
 
   if (ndim.lt.1) ndimV = 0
   if (iverbose > 0) then

@@ -39,7 +39,7 @@ module asciiutils
  public :: get_line_containing
  public :: enumerate,isdigit,split
  public :: get_column_labels
- public :: match_tag,append_number,make_tags_unique
+ public :: match_tag,match_taglist,append_number,make_tags_unique
  public :: count_non_blank,find_repeated_tags
 
  private
@@ -920,6 +920,33 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!-----------------------------------------------
+! match multiple tags against a list of strings
+! e.g. find 'x','y','z' in list of labels
+!-----------------------------------------------
+subroutine match_taglist(taglist,tags,istartmatch,nmatch)
+ character(len=*), intent(in)  :: taglist(:)
+ character(len=*), intent(in)  :: tags(:)
+ integer,          intent(out) :: istartmatch,nmatch
+ integer :: i,j
+
+ istartmatch = 0
+ nmatch = 0
+ if (size(taglist) < 1) return
+ do i=1,size(tags)
+    if (nmatch <= 1 .and. trim(tags(i))==trim(taglist(1))) then
+       nmatch = 1
+       istartmatch = i
+       do j=2,size(taglist)
+          if (trim(tags(i))==trim(taglist(j))) then
+             nmatch = nmatch + 1
+          endif
+       enddo
+    endif
+ enddo
+
+end subroutine match_taglist
 
 !------------------------------
 ! Append a number to a string
