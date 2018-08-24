@@ -33,14 +33,14 @@ contains
 !
 !----------------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils,  only:renvironment,envlist,ienvironment,lenvironment
- use labels,        only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
- use settings_data, only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,fakedust
- use particle_data, only:dat,npartoftype,iamtype
- use geometry,      only:labelcoord
- use filenames,     only:ifileopen,nstepsinfile
- use part_utils,    only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary
- implicit none
+ use system_utils,    only:renvironment,envlist,ienvironment,lenvironment
+ use labels,          only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
+ use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,fakedust
+ use particle_data,   only:dat,npartoftype,iamtype
+ use geometry,        only:labelcoord
+ use filenames,       only:ifileopen,nstepsinfile
+ use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary
+ use settings_render, only:ifastrender
  real :: hmin,dphi
  real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
@@ -62,6 +62,8 @@ subroutine adjust_data_codeunits
        where (dat(:,ih,:) < hmin .and. dat(:,ih,:).gt.0.)
           dat(:,ih,:) = hmin
        end where
+       print "(a)",' >> Switching accelerated rendering ON'
+       ifastrender = .true.
     endif
  endif
 
@@ -144,7 +146,7 @@ subroutine adjust_data_codeunits
           else
              if (iverbose.ge.1) print*
              if (isink.lt.10) then
-                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'          
+                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
              else
                 print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
              endif
@@ -237,7 +239,7 @@ pure subroutine shift_particles(dat,np,ndim,ndimV,ncol,x0,v0)
 
  call shift_positions(dat,np,ndim,x0)
  call shift_velocities(dat,np,ndimV,ncol,v0)
- 
+
 end subroutine shift_particles
 
 !------------------------------------------------------
@@ -254,7 +256,7 @@ pure subroutine shift_positions(dat,np,ndim,x0)
  do icol=1,ndim
     dat(1:np,ix(icol)) = dat(1:np,ix(icol)) - x0(icol)
  enddo
- 
+
 end subroutine shift_positions
 
 !------------------------------------------------------
@@ -288,7 +290,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
                           irho,ix,ih,ipmass,ivx,ideltav,ideltavsum
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
- use settings_data,  only:iverbose,required,ndusttypes,idustfrac_plot,ideltav_plot
+ use settings_data,  only:iverbose,ndusttypes,idustfrac_plot,ideltav_plot
  integer,                       intent(in)    :: istart,iend,ndim,ndimV
  real,    dimension(:,:,:),     intent(inout), allocatable :: dat
  integer, dimension(:,:),       intent(inout), allocatable :: npartoftype
