@@ -343,4 +343,29 @@ subroutine print_types(noftype,ltype)
 
 end subroutine print_types
 
+!-----------------------------------------------------------------
+!
+!  utility to make labels for vector quantities
+!  these change depending on the coordinate system
+!  e.g. v_x, v_y, v_z; B_x, B_y, B_z
+!
+!-----------------------------------------------------------------
+subroutine make_vector_label(lvec,ivec,nvec,iamveci,labelveci,labeli,labelx)
+ character(len=*), intent(in)    :: lvec
+ integer,          intent(in)    :: ivec,nvec
+ integer,          intent(inout) :: iamveci(:)
+ character(len=*), intent(inout) :: labelveci(:),labeli(:)
+ character(len=*), intent(in)    :: labelx(3)
+ integer :: i
+
+ if (ivec > 0 .and. ivec+nvec <= size(labeli)) then
+    iamveci(ivec:ivec+nvec-1)   = ivec
+    labelveci(ivec:ivec+nvec-1) = lvec
+    do i=1,nvec
+       labeli(ivec+i-1) = trim(lvec)//'_'//labelx(i)
+    enddo
+ endif
+
+end subroutine make_vector_label
+
 end module labels

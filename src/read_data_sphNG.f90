@@ -2328,8 +2328,7 @@ subroutine set_labels
   if (icurlvycol.gt.0) label(icurlvycol) = 'curl v_y'
   if (icurlvzcol.gt.0) label(icurlvzcol) = 'curl v_z'
   if (icurlvxcol.gt.0 .and. icurlvycol.gt.0 .and. icurlvzcol.gt.0) then
-     iamvec(icurlvxcol:icurlvzcol) = icurlvxcol
-     labelvec(icurlvxcol:icurlvzcol) = 'curl v'
+     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   endif
   if (ideltavsum.gt.0) then
      ! Modify the deltavsum labels to have vector subscripts
@@ -2348,27 +2347,9 @@ subroutine set_labels
   !
   !--set labels for vector quantities
   !
-  if (ivx.gt.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = trim(labelvec(ivx))//'_'//labelcoord(i,1)
-     enddo
-  endif
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'_'//labelcoord(i,1)
-     enddo
-  endif
-  if (iJfirst.gt.0) then
-     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
-     labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
-     do i=1,ndimV
-        label(iJfirst+i-1) = trim(labelvec(iJfirst))//'_'//labelcoord(i,1)
-     enddo
-  endif
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('J',iJfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--ensure labels are unique by appending numbers where necessary
   !
@@ -2380,14 +2361,11 @@ subroutine set_labels
   !
   !--set units for plot data
   !
-!   npower = int(log10(udist))
-!   udist = udist/10.**npower
-!   udistAU = udist/1.495979e13
-   call get_nearest_length_unit(udist,unitx,unitlabelx)
-   if (ndim.ge.3) then
-      units(1:3) = unitx
-      unitslabel(1:3) = unitlabelx
-   endif
+  call get_nearest_length_unit(udist,unitx,unitlabelx)
+  if (ndim.ge.3) then
+     units(1:3) = unitx
+     unitslabel(1:3) = unitlabelx
+  endif
 !   do i=1,3
 !      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
 !   enddo

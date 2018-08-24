@@ -83,7 +83,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   integer, intent(out)         :: nstepsread
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
-  integer :: nprint,npart_max,nstep_max,icol,nheaderlines,nheaderenv,itype,nlabels
+  integer :: nprint,npart_max,nstep_max,nheaderlines,nheaderenv,itype,nlabels
   integer :: noftype(maxparttypes),iverbose_was
   logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
@@ -310,23 +310,21 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   close(iunit)
 
-return
 end subroutine read_data
 
-!!-------------------------------------------------------------------
-!! set labels for each column of data
-!!
-!! read these from a file called 'columns' in the current directory
-!! then take sensible guesses as to which quantities are which
-!! from the column labels
-!!
-!!-------------------------------------------------------------------
-
+!-------------------------------------------------------------------
+! set labels for each column of data
+!
+! read these from a file called 'columns' in the current directory
+! then take sensible guesses as to which quantities are which
+! from the column labels
+!
+!-------------------------------------------------------------------
 subroutine set_labels
   use asciiutils,      only:lcase
   use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
-                            ipr,ivx,iBfirst,iamvec,labelvec,lenlabel
-  !use params,          only:maxparttypes
+                            ipr,ivx,iBfirst,iamvec,labelvec,lenlabel, &
+                            make_vector_label
   use settings_data,   only:ncolumns,ndim,ndimV,UseTypeInRenderings,iverbose
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
@@ -456,7 +454,6 @@ subroutine set_labels
   if (iverbose > 0) then
      if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
      if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
-
      if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
      if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
      if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
@@ -480,28 +477,12 @@ subroutine set_labels
      endif
   endif
 
-  if (ivx.gt.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-     enddo
-  endif
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-       label(iBfirst+i-1) = 'B\d'//labelcoord(i,1)
-     enddo
-  endif
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !
-  !ntypes = 1 !!maxparttypes
   labeltype(1) = 'gas'
   UseTypeInRenderings(1) = .true.
 
-!-----------------------------------------------------------
-
-  return
 end subroutine set_labels
