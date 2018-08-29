@@ -122,7 +122,7 @@ subroutine write_coloursfile(filename,nc,linecolours)
  real,    intent(in) :: linecolours(3,nc)
  integer :: i,ierr
  integer, parameter :: lu = 37
- 
+
  open(unit=lu,file=trim(filename),status='replace',iostat=ierr)
  do i=1,nc
     write(lu,"(3(f8.3,1x))") linecolours(:,i)
@@ -141,7 +141,7 @@ subroutine read_coloursfile(filename,maxc,linecolours,nc,ierr)
  integer, intent(out) :: nc,ierr
  integer :: i
  integer, parameter :: lu = 38
- 
+
  ierr = 0
  nc = 0
  open(unit=lu,file=trim(filename),status='old',iostat=ierr)
@@ -150,8 +150,9 @@ subroutine read_coloursfile(filename,maxc,linecolours,nc,ierr)
     read(lu,*,iostat=ierr) linecolours(:,i)
     if (ierr==0) nc = nc + 1
  enddo
+ if (nc > 0) ierr = 0 ! this is successful
  close(lu)
- 
+
 end subroutine read_coloursfile
 
 !----------------------------------------------------------
@@ -166,13 +167,13 @@ subroutine set_linecolours(linepalette,filename,maxc,linecolours)
 
  if (linepalette > 0 .and. linepalette <= plotlib_maxpalette) then
     call plot_set_palette(linepalette)
- elseif (linepalette < 0) then 
+ elseif (linepalette < 0) then
     call read_coloursfile(filename,maxc,linecolours,nc,ierr)
     do i=1,nc
        call plot_scr(i+1,linecolours(1,i),linecolours(2,i),linecolours(3,i))
     enddo
  endif
- 
+
 end subroutine set_linecolours
 
 end module pagecolours
