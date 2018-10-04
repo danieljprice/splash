@@ -2472,7 +2472,7 @@ subroutine set_labels
      labeltype(5) = 'star'
      labeltype(6) = 'unknown/dead'
      UseTypeInRenderings(1) = .true.
-     UseTypeInRenderings(2) = .false.
+     UseTypeInRenderings(2) = .true.
      UseTypeInRenderings(3) = .true.
      UseTypeInRenderings(4) = .false.
      UseTypeInRenderings(5) = .true.
