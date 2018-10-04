@@ -290,7 +290,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
                           irho,ix,ih,ipmass,ivx,ideltav,ideltavsum
  use mem_allocation, only:alloc
  use particle_data,  only:maxpart,maxstep,maxcol
- use settings_data,  only:iverbose,ndusttypes,idustfrac_plot,ideltav_plot
+ use settings_data,  only:iverbose,ndustsmall,idustfrac_plot,ideltav_plot
  integer,                       intent(in)    :: istart,iend,ndim,ndimV
  real,    dimension(:,:,:),     intent(inout), allocatable :: dat
  integer, dimension(:,:),       intent(inout), allocatable :: npartoftype
@@ -306,7 +306,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
     !--determine which dust fraction is being used to create the fake dust particles
     !
     !if (iverbose >= 0) print*,' got dustfrac in column ',idustfrac
-    if (ndusttypes>1) then
+    if (ndustsmall>1) then
        if (idustfrac_plot == 0 ) then
           idustfrac_temp = idustfracsum
           idustfrac_plot = idustfracsum
@@ -367,12 +367,12 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
                 endif
              else
                 !--copy the dustfracion
-                dat(jdust,idustfracsum:idustfracsum+ndusttypes,i) = &
-                    dat(j,idustfracsum:idustfracsum+ndusttypes,i)
+                dat(jdust,idustfracsum:idustfracsum+ndustsmall,i) = &
+                    dat(j,idustfracsum:idustfracsum+ndustsmall,i)
                 !--copy the deltav's
                 if (ideltavsum /= 0) then
-                   dat(jdust,ideltavsum:ideltavsum+ndimV*(ndusttypes+1)-1,i) = &
-                              dat(j,ideltavsum:ideltavsum+ndimV*(ndusttypes+1)-1,i)
+                   dat(jdust,ideltavsum:ideltavsum+ndimV*(ndustsmall+1)-1,i) = &
+                              dat(j,ideltavsum:ideltavsum+ndimV*(ndustsmall+1)-1,i)
                 endif
              endif
              iamtype(ntoti + ndust,i) = 2
@@ -390,7 +390,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              if (use_vels) then
                 veli(:)      = dat(j,ivx:ivx+ndimV-1,i)
                 deltav(:)    = dat(j,ideltav_temp:ideltav_temp+ndimV-1,i)
-                if (ndusttypes>1 .and. idustfrac_temp/=idustfracsum) then
+                if (ndustsmall>1 .and. idustfrac_temp/=idustfracsum) then
                    deltavsum(:) = dat(j,ideltavsum:ideltavsum+ndimV-1,i)
                    vgas(:)      = veli(:) - (1. - gasfraci)*deltavsum(:)
                    vdust(:)     = veli(:) + deltav(:) - (1. - gasfraci)*deltavsum(:)

@@ -128,7 +128,7 @@ module settings_data
  integer :: numplot,ncalc,ncolumns,nextra
  integer :: ndataplots
  integer :: ndim, ndimv
- integer :: ndusttypes
+ integer :: ndustsmall
  integer :: idustfrac_plot = 0
  integer :: ideltav_plot = 0
  integer :: icoords,icoordsnew,iformat,ntypes,iexact

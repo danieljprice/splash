@@ -315,7 +315,7 @@ subroutine print_example_quantities(verbose,ncalc)
  integer, intent(inout), optional :: ncalc
  logical :: prefill
  character(len=lenlabel) :: string,labelprev,ldfracsum
- integer :: i,j,ivecstart,ierr,ilen,idustfrac1,ndusttypes
+ integer :: i,j,ivecstart,ierr,ilen,idustfrac1,ndustsmall
  logical :: gotpmag,gotpressure
 
  gotpmag = .false.
@@ -359,7 +359,7 @@ subroutine print_example_quantities(verbose,ncalc)
  string = ' '
  if (irho.gt.0 .and. iutherm.gt.0) then
     gotpressure = .true.
-    if (idustfrac>0 .and. ndusttypes>1) then
+    if (idustfrac>0 .and. ndustsmall>1) then
        write(string,"(a)",iostat=ierr) &
             'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
             //trim(shortlabel(label(irho),unitslabel(irho)))//  &
@@ -381,10 +381,10 @@ subroutine print_example_quantities(verbose,ncalc)
  !
  ldfracsum = ' '
  if (idustfrac == 0) then
-    call find_repeated_tags('dustfrac',ncolumns,label,idustfrac1,ndusttypes)
-    if (ndusttypes > 1) then
+    call find_repeated_tags('dustfrac',ncolumns,label,idustfrac1,ndustsmall)
+    if (ndustsmall > 1) then
        string = 'dustfrac = '//trim(shortlabel(label(idustfrac1),unitslabel(idustfrac1)))
-       do i=idustfrac1+1,idustfrac1+ndusttypes-1
+       do i=idustfrac1+1,idustfrac1+ndustsmall-1
           string = trim(string)//'+'//(trim(shortlabel(label(i),unitslabel(i))))
        enddo
        ldfracsum = 'dustfrac'
@@ -427,8 +427,8 @@ subroutine print_example_quantities(verbose,ncalc)
        print "(11x,a)",trim(string)
     endif
     !--densities of each individual dust phase
-    if (ndusttypes > 1) then
-       do i = idustfrac1,idustfrac1+ndusttypes-1
+    if (ndustsmall > 1) then
+       do i = idustfrac1,idustfrac1+ndustsmall-1
           string = '\rho_{d,'
           call append_number(string,i-idustfrac1+1)
           string = trim(string)//'} = ' &
@@ -453,7 +453,7 @@ subroutine print_example_quantities(verbose,ncalc)
     endif
 
     if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
-       if (ndusttypes==1) then
+       if (ndustsmall==1) then
           !--gas velocities
           do i=1,ndimV
              write(string,"(a)",iostat=ierr) trim(labelvec(ivx))//'_{gas,'//trim(labelcoord(i,icoordsnew))//'} = ' &

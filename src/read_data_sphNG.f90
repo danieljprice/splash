@@ -427,7 +427,7 @@ contains
  subroutine read_header(iunit,iverbose,debug,doubleprec,&
                         npart,npartoftypei,n1,ntypes,nblocks,&
                         narrsizes,realarr,tagsreal,nreals,ierr)
-  use settings_data,  only:ndusttypes
+  use settings_data,  only:ndustsmall
   integer, intent(in)  :: iunit,iverbose
   logical, intent(in)  :: debug,doubleprec
   integer, intent(out) :: npart,npartoftypei(:),n1,ntypes,nblocks,narrsizes,nreals,ierr
@@ -603,7 +603,7 @@ contains
         print "(a)",' *** error reading units'
      endif
      ! extract the number of dust arrays are in the file
-     if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
+     if (onefluid_dust) ndustsmall = extract_ndustsmall(tags,tagsreal,intarr,nints)
 !
 !--append real*8s to realarr so they can be used in
 !  legends and calculated quantities
@@ -1074,34 +1074,38 @@ contains
 !---------------------------------------------------------------
 ! function to extract the number of dust arrays
 !---------------------------------------------------------------
- integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttypes)
+ integer function extract_ndustsmall(tags,tagsreal,intarr,nints) result(ndustsmall)
   character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
   integer, intent(in) :: intarr(:),nints
   integer :: i,idust,ierr
-  logical :: igotndusttypes = .false.
+  logical :: igotndustsmall = .false.
 
-  ! Look for ndusttypes in the header
+  ! Look for ndustsmall in the header
   do i = 1,maxinblock
+     if (trim(tags(i))=='ndustsmall') then
+         igotndustsmall = .true.
+     endif
+     !--for backwards compatibility look for ndusttypes
      if (trim(tags(i))=='ndusttypes') then
-         igotndusttypes = .true.
+         igotndustsmall = .true.
      endif
   enddo
 
-  ! Retreive/guess the value of ndusttypes
-  if (igotndusttypes) then
-     call extract('ndusttypes',idust,intarr,tags,nints,ierr)
+  ! Retreive/guess the value of ndustsmall
+  if (igotndustsmall) then
+     call extract('ndustsmall',idust,intarr,tags,nints,ierr)
   else
-     ! For older files where ndusttypes is not output to the header
+     ! For older files where ndustsmall is not output to the header
      idust = 0
      do i = 1,maxinblock
         if (tagsreal(i)=='grainsize') idust = idust + 1
      enddo
-     write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
-     write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+     write(*,"(a)")    ' Warning! Could not find ndustsmall in header'
+     write(*,"(a,I4)") '          ...counting grainsize arrays...ndustsmall =',idust
   endif
-  ndusttypes = idust
+  ndustsmall = idust
 
- end function extract_ndusttypes
+ end function extract_ndustsmall
 
 end module sphNGread
 
@@ -1113,7 +1117,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                       iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
   !use params,         only:int1,int8
   use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
-                      lowmemorymode,ntypes,iverbose,ndusttypes
+                      lowmemorymode,ntypes,iverbose,ndustsmall
   use mem_allocation, only:alloc
   use system_utils,   only:lenvironment,renvironment
   use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags
@@ -1392,8 +1396,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          print "(a)",' ERROR: x,y,z or h missing in phantom read'
       endif
       if (onefluid_dust) then
-         if (ndusttypes>1) then
-            ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
+         if (ndustsmall>1) then
+            ndustarrays = ndustsmall + 1      !--the extra column is for dustfracsum
          else
             ndustarrays = 1
          endif
@@ -2189,7 +2193,7 @@ subroutine set_labels
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label
   use params
-  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
+  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndustsmall
   use geometry,        only:labelcoord
   use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
   use sphNGread

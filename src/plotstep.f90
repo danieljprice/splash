@@ -89,7 +89,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use titles,             only:read_titles,read_steplegend
   use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
-                               ndusttypes,idustfrac_plot,ideltav_plot,fakedust
+                               ndustsmall,idustfrac_plot,ideltav_plot,fakedust
   use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                                iPageColours,iadapt,iadaptcoords,linewidth,linepalette,device,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
@@ -546,7 +546,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         !--dependencies for density
         !
         if (required(irho)) then
-           if (ndusttypes>1) then
+           if (ndustsmall>1) then
               required(idustfracsum) = .true.
               required(idustfrac_plot) = .true.
            else
@@ -557,7 +557,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         !--dependencies for velocity
         !
         if (any(required(ivx:ivx+ndimV-1))) then
-           if (ndusttypes>1) then
+           if (ndustsmall>1) then
               required(irho) = .true.
               required(idustfracsum) = .true.
               required(idustfrac_plot) = .true.

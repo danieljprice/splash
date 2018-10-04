@@ -119,7 +119,7 @@ subroutine submenu_particleplots(ichoose)
   use labels,          only:labeltype,ih,label,idustfracsum,ideltavsum
   use limits,          only:lim
   use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
-                            ndataplots,ndusttypes,idustfrac_plot,ideltav_plot,ncalc
+                            ndataplots,ndustsmall,idustfrac_plot,ideltav_plot,ncalc
   use settings_render, only:iplotcont_nomulti
   use particle_data,   only:npartoftype,iamtype
   use prompting,       only:prompt,print_logical
@@ -218,7 +218,7 @@ subroutine submenu_particleplots(ichoose)
         elseif (.not.iplotpartoftype(itype)) then
            PlotonRenderings(itype) = .false.
         endif
-        if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
+        if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndustsmall>1) then
            !--if idustfrac_plot hasn't been defined...
            if (idustfrac_plot == 0 ) then
               idustfrac_plot = idustfracsum
@@ -228,7 +228,7 @@ subroutine submenu_particleplots(ichoose)
            write(idustfracsum_string,'(I3)') idustfracsum
            call prompt('Which dust phase would you like to render? ('          &
                        //trim(adjustl(idustfracsum_string))//'=summed)',  &
-                       idustfrac_plot,idustfracsum,idustfracsum+ndusttypes)
+                       idustfrac_plot,idustfracsum,idustfracsum+ndustsmall)
            !--update which set of deltav's will be used
            ideltav_plot = ideltavsum + ndimV*(idustfrac_plot - idustfracsum)
            if (idustfrac_prev /= idustfrac_plot) then
