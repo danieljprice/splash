@@ -152,15 +152,15 @@ contains
  ! find location of metric and extrinsic curvature in columns
  !
  subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
-      irho,ialp,ivel0,ivel1,ivel2,gotrho)
+      irho,ialp,ivel0,ivel1,ivel2,gotrho,gotalp)
   integer,          intent(in) :: ncols
   character(len=*), intent(in) :: labelcol(ncols)
   integer, intent(out) :: igxx,igxy,igxz,igyy,igyz,igzz
   integer, intent(out) :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
   integer, intent(out) :: irho,ialp,ivel0,ivel1,ivel2
   integer :: i, idens
-  logical, intent(out) :: gotrho
-  gotrho = .False.
+  logical, intent(out) :: gotrho, gotalp
+  gotrho = .False.; gotalp = .False.
 
   igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
   ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
@@ -198,6 +198,7 @@ contains
         idens = i
      case('alp')
         ialp = i
+        gotalp = .True.
      case('vel[0]')
         ivel0 = i
      case('vel[1]')
@@ -220,11 +221,11 @@ contains
   integer :: igxx,igxy,igxz,igyy,igyz,igzz
   integer :: ikxx,ikxy,ikxz,ikyy,ikyz,ikzz
   integer :: irho,ialp,ivel0,ivel1,ivel2
-  logical :: gotrho
+  logical :: gotrho,gotalp
 
   nextra = 0
   call find_metric(ncols,blocklabel,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ikxz,ikyy,ikyz,ikzz,&
-       irho,ialp,ivel0,ivel1,ivel2,gotrho)
+       irho,ialp,ivel0,ivel1,ivel2,gotrho,gotalp)
   n = size(dat(:,1))
   if (igxx > 0 .and. igxy > 0 .and. igxz > 0 .and. igyy > 0 .and. igyz > 0 .and. igzz > 0 .and. &
       ikxx > 0 .and. ikxy > 0 .and. ikxz > 0 .and. ikyy > 0 .and. ikyz > 0 .and. ikzz > 0) then
