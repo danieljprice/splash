@@ -78,7 +78,7 @@ module sphNGread
  character(len=lentag) :: tagarr(maxplot)
  integer, parameter :: itypemap_sink_phantom = 3
  integer, parameter :: itypemap_dust_phantom = 2
- integer, parameter :: itypemap_unknown_phantom = 8
+ integer, parameter :: itypemap_unknown_phantom = 9
 
  !------------------------------------------
  ! generic interface to utilities for tagged
