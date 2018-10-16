@@ -381,6 +381,8 @@ subroutine print_example_quantities(verbose,ncalc)
  !
  ldfracsum = ' '
  if (idustfrac == 0) then
+    ! find number of dust species from how many times the label "dustfrac"
+    ! is repeated. For gas-only calculations, this will give ndusttypes=0
     call find_repeated_tags('dustfrac',ncolumns,label,idustfrac1,ndusttypes)
     if (ndusttypes > 1) then
        string = 'dustfrac = '//trim(shortlabel(label(idustfrac1),unitslabel(idustfrac1)))
@@ -396,6 +398,7 @@ subroutine print_example_quantities(verbose,ncalc)
        endif
     endif
  else
+    ndusttypes = 1
     ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
  endif
  !
