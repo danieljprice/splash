@@ -78,7 +78,7 @@ module sphNGread
  character(len=lentag) :: tagarr(maxplot)
  integer, parameter :: itypemap_sink_phantom = 3
  integer, parameter :: itypemap_dust_phantom = 2
- integer, parameter :: itypemap_unknown_phantom = 8
+ integer, parameter :: itypemap_unknown_phantom = 9
 
  !------------------------------------------
  ! generic interface to utilities for tagged
@@ -121,7 +121,7 @@ contains
   select case(int(iphase))
   case(1:2)
     itypemap_phantom = iphase
-  case(3:6) ! put sinks as type 3, everything else shifted by one
+  case(3:7) ! put sinks as type 3, everything else shifted by one
     itypemap_phantom = iphase + 1
   case(-3) ! sink particles, either from external_binary or read from dump
     itypemap_phantom = itypemap_sink_phantom
@@ -2445,13 +2445,14 @@ subroutine set_labels
   if (phantomdump) then  ! phantom
      ntypes = itypemap_unknown_phantom
      labeltype(1) = 'gas'
-     labeltype(2) = 'dust'
+     labeltype(2) = 'dust (old)'
      labeltype(3) = 'sink'
      labeltype(4) = 'ghost'
      labeltype(5) = 'star'
      labeltype(6) = 'dark matter'
      labeltype(7) = 'bulge'
-     labeltype(8) = 'unknown/dead'
+     labeltype(8) = 'dust'
+     labeltype(9) = 'unknown/dead'
      UseTypeInRenderings(:) = .true.
      UseTypeInRenderings(3) = .false.
      if (lenvironment('SSPLASH_PLOT_DUST')) then
