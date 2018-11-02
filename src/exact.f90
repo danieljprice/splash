@@ -91,7 +91,7 @@ module exact
   !--C-shock
   real :: machs,macha
   !--planet-disc interaction
-  real :: HonR,rplanet
+  real :: HonR,rplanet,q_index
   real :: spiral_params(7,maxexact)
   integer :: ispiral,narms
   !--bondi flow
@@ -116,7 +116,8 @@ module exact
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
-       HonR,rplanet,relativistic,geodesic_flow,is_wind,const1,const2,ispiral,narms,spiral_params
+       HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
+       const1,const2,ispiral,narms,spiral_params
 
   public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
   public :: exact_solution
@@ -201,6 +202,7 @@ contains
 !   planet-disc interaction
     HonR = 0.05
     rplanet = 1.
+    q_index = 0.25
     ispiral = 1
     narms = 1
     spiral_params = 0.
@@ -540,8 +542,9 @@ contains
              call prompt('enter a4 in r = \sum a_i phi^i',spiral_params(7,i))
           enddo
        case default
-          call prompt('enter disc aspect ratio (H/R)',HonR,0.,1.)
-          !call prompt('enter planet orbital radius ',rplanet,0.)
+          call prompt('enter disc aspect ratio at planet location (H/R)',HonR,0.,1.)
+          call prompt('enter planet orbital radius ',rplanet,0.)
+          call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
        end select
     case(18)
        prompt_for_gamma = .true.
@@ -1361,7 +1364,8 @@ contains
        endif
     case(17) ! planet-disc interaction
        if (ndim.ge.2 .and. iplotx.eq.ix(1) .and. iploty.eq.ix(2)) then
-          call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,narms,spiral_params,xexact,yexact,ierr)
+          call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,q_index,narms,&
+                                spiral_params,xexact,yexact,ierr)
        endif
     case(18)
        if (iplotx.eq.irad .or. (igeom.eq.3 .and. iplotx.eq.ix(1))) then
