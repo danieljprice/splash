@@ -65,7 +65,9 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module asciiread
+ use labels, only:lenlabel,label
  integer :: icoltype
+ character(len=lenlabel), dimension(size(label)) :: label_orig
 
 end module asciiread
 
@@ -76,7 +78,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   use mem_allocation, only:alloc
   use asciiutils,     only:get_ncolumns,get_column_labels,isdigit
   use system_utils,   only:ienvironment,renvironment
-  use asciiread,      only:icoltype
+  use asciiread,      only:icoltype,label_orig
   use labels,         only:lenlabel,labeltype,print_types,label
   implicit none
   integer, intent(in)          :: indexstart,ipos
@@ -120,7 +122,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   nstepsread = 0
   icoltype = 0       ! no particle type defined by default
   got_labels = .false.
-
+  label_orig = ''
   !
   !--open the file and read the number of particles
   !
@@ -156,7 +158,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            ! use labels if > ncolumns, but replace if we match exact number on subsequent line
            if ((got_labels .and. nlabels == ncolstep) .or. &
                (.not.got_labels .and. nlabels >= ncolstep)) then
-              label(1:ncolstep) = tmplabel(1:ncolstep)
+              label_orig(1:ncolstep) = tmplabel(1:ncolstep)
               got_labels = .true.
            endif
         endif
@@ -329,7 +331,7 @@ subroutine set_labels
   use geometry,        only:labelcoord
   use system_commands, only:get_environment
   use filenames,       only:fileprefix
-  use asciiread,       only:icoltype
+  use asciiread,       only:icoltype,label_orig
   implicit none
   integer                 :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
@@ -375,7 +377,7 @@ subroutine set_labels
      endif
   else
      overcols: do i=1,ncolumns
-        read(51,"(a)",iostat=ierr) label(i)
+        read(51,"(a)",iostat=ierr) label_orig(i)
         if (ierr < 0) then
            if (iverbose > 0) print "(a,i3)",' end of file in columns file: read to column ',i-1
            exit overcols
@@ -386,7 +388,14 @@ subroutine set_labels
      enddo overcols
      close(unit=51)
   endif
-
+!
+!--re-copy the labels from their originals
+!  this is to avoid trying to match tags on labels
+!  which have already been modified by splash (e.g. vectors)
+!
+  do i=1,ncolumns
+     if (len_trim(label_orig(i)) > 0) label(i) = trim(label_orig(i))
+  enddo
 !
 !--first, look for 'x','y','z' as consecutive labels
 !  to determine the number of dimensions
@@ -395,6 +404,10 @@ subroutine set_labels
   do i=2,ndim
      ix(i) = ix(1)+i-1
   enddo
+  call match_taglist((/'vx','vy','vz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+  call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
+  if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+
   do i=1,ncolumns
 !
 !--compare all strings in lower case, trimmed and with no preceding spaces
@@ -440,12 +453,21 @@ subroutine set_labels
 !
 !--try to find vectors by looking for multiple entries starting with 'v'
 !
-  if (ndim > 0) call find_repeated_tags('v',ncolumns,label,ivx,ndimV)
-  if (ndim > 0) call find_repeated_tags('b',ncolumns,label,iBfirst,ndimVtemp)
+  if (ndim > 0 .and. ivx==0) call find_repeated_tags('v_',ncolumns,label,ivx,ndimV)
   if (ndimVtemp.gt.ndimV .and. iverbose > 0) &
      print "(a)",' WARNING: possible confusion with vector dimensions'
-
-  if (ndim.lt.1) ndimV = 0
+!
+!--ignore label identifications if no spatial coordinates found
+!
+  if (ndim.lt.1) then
+     ndimV = 0
+     irho = 0
+     ipmass = 0
+     ih = 0
+     iutherm = 0
+     ipr = 0
+     ivx = 0
+  endif
   if (iverbose > 0) then
      if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
      if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
