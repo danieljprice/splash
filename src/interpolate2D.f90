@@ -150,67 +150,183 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         if (jpixmin.lt.1)     jpixmin = 1
         if (jpixmax.gt.npixy) jpixmax = npixy
      endif
-     !
-     !--loop over pixels, adding the contribution from this particle
-     !
-     do jpix = jpixmin,jpixmax
-        jpixi = jpix
-        if (periodicy) then
-           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-        endif
-        ypix = ymin + (jpix-0.5)*pixwidthy
-        dy = ypix - y(i)
-        do ipix = ipixmin,ipixmax
+
+     if (exact) then
+        !
+        !--loop over pixels boundaries, adding the contribution from this particle
+        !
+        !--first pixel row
+        !
+        if(jpixmax.ge.jpixmin) then
+           jpix = jpixmin
+           jpixi = jpix
+           if (periodicy) then
+              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+           endif
+           ypix = ymin + (jpix-0.5)*pixwidthy
+           dy = ypix - y(i)
+
+           do ipix = ipixmin,ipixmax
+              ipixi = ipix
+              if (periodicx) then
+                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+              endif
+              xpix = xmin + (ipix-0.5)*pixwidthx
+              dx = xpix - x(i)         
+
+              !--top boundary
+              r0 = 0.5*pixwidthy - dy
+              d1 = 0.5*pixwidthx + dx
+              d2 = 0.5*pixwidthx - dx
+              pixint = pint(r0, d1, d2, hi1)
+
+              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+              if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+           enddo
+        end if
+
+        !
+        !--first pixel column
+        !
+        if(ipixmax.ge.ipixmin) then
+           ipix = ipixmin
            ipixi = ipix
            if (periodicx) then
               if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
               if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
            endif
            xpix = xmin + (ipix-0.5)*pixwidthx
-           dx = xpix - x(i)
-           q2 = (dx*dx + dy*dy)*hi1*hi1
-           !
-           !--SPH kernel
-           !
-           if (exact) then
-           !
-           !--Kernel integral
-           !
-              pixint = 0.
+           dx = xpix - x(i)         
 
-              r0 = ypix + 0.5*pixwidthy - y(i)
-              d1 = x(i) - xpix + 0.5*pixwidthx
-              d2 = xpix + 0.5*pixwidthx - x(i)
-              pixint = pixint + pint(r0, d1, d2, hi1)
+           do jpix = jpixmin,jpixmax
+              jpixi = jpix
+              if (periodicy) then
+                 if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+                 if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+              endif
+              ypix = ymin + (jpix-0.5)*pixwidthy
+              dy = ypix - y(i)
 
-              r0 = y(i) - ypix + 0.5*pixwidthy
-              d1 = xpix + 0.5*pixwidthx - x(i)
-              d2 = x(i) - xpix + 0.5*pixwidthx
-              pixint = pixint + pint(r0, d1, d2, hi1)
+              !--left boundary
+              r0 = 0.5*pixwidthx - dx
+              d1 = 0.5*pixwidthy - dy
+              d2 = 0.5*pixwidthy + dy
+              pixint = pint(r0, d1, d2, hi1)
 
-              r0 = xpix + 0.5*pixwidthx - x(i)
-              d1 = ypix + 0.5*pixwidthy - y(i)
-              d2 = y(i) - ypix + 0.5*pixwidthy
-              pixint = pixint + pint(r0, d1, d2, hi1)
+              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+              if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+           enddo
+        end if
 
-              r0 = x(i) - xpix + 0.5*pixwidthx
-              d1 = y(i) - ypix + 0.5*pixwidthy
-              d2 = ypix + 0.5*pixwidthy - y(i)
-              pixint = pixint + pint(r0, d1, d2, hi1)
-
-              wab = pixint/(pixwidthx*pixwidthy*const)*hi**2
-           else
-              wab = wfunc(q2)
+        !
+        !--other pixels
+        !
+        do jpix = jpixmin,jpixmax
+           jpixi = jpix
+           if (periodicy) then
+              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
            endif
-           !
-           !--calculate data value at this pixel using the summation interpolant
-           !
-           datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-           if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+           ypix = ymin + (jpix-0.5)*pixwidthy
+           dy = ypix - y(i)
 
+           do ipix = ipixmin,ipixmax
+              ipixi = ipix
+              if (periodicx) then
+                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+              endif
+              xpix = xmin + (ipix-0.5)*pixwidthx
+              dx = xpix - x(i)         
+              !
+              !--Kernel integral
+              !
+              !--bottom boundary
+              r0 = 0.5*pixwidthy + dy
+              d1 = 0.5*pixwidthx - dx
+              d2 = 0.5*pixwidthx + dx
+              pixint = pint(r0, d1, d2, hi1)
+
+              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+              if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+
+              if(jpix < jpixmax) then
+                 jpixi = jpix+1
+                 if (periodicy) then
+                    if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+                 endif
+
+                 datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
+                 if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+
+                 jpixi = jpix
+                 if (periodicy) then
+                    if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+                 endif
+              end if
+
+              !--right boundary
+              r0 = 0.5*pixwidthx + dx
+              d1 = 0.5*pixwidthy + dy
+              d2 = 0.5*pixwidthy - dy
+              pixint = pint(r0, d1, d2, hi1)
+
+              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+              if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+
+              if(ipix < ipixmax) then
+                 ipixi = ipix+1
+                 if (periodicx) then
+                    if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                    if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+                 endif
+
+                 datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
+                 if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+              end if
+           enddo
         enddo
-     enddo
+     else
+        !
+        !--loop over pixels, adding the contribution from this particle
+        !
+        do jpix = jpixmin,jpixmax
+           jpixi = jpix
+           if (periodicy) then
+              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
+           endif
+           ypix = ymin + (jpix-0.5)*pixwidthy
+           dy = ypix - y(i)
+           do ipix = ipixmin,ipixmax
+              ipixi = ipix
+              if (periodicx) then
+                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
+                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
+              endif
+              xpix = xmin + (ipix-0.5)*pixwidthx
+              dx = xpix - x(i)
+              q2 = (dx*dx + dy*dy)*hi1*hi1
+              !
+              !--SPH kernel
+              !
+              wab = wfunc(q2)
+              !
+              !--calculate data value at this pixel using the summation interpolant
+              !
+              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
+              if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+           enddo
+        enddo
+     end if
 
   enddo over_parts
   if (exact) then
