@@ -1393,7 +1393,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       endif
       if (onefluid_dust) then
          if (ndusttypes>1) then
-            ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
+            ndustarrays = 0
+            !ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
          else
             ndustarrays = 1
          endif
