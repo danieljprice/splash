@@ -939,7 +939,7 @@ subroutine match_taglist(taglist,tags,istartmatch,nmatch)
        nmatch = 1
        istartmatch = i
        do j=2,size(taglist)
-          if (trim(tags(i))==trim(taglist(j))) then
+          if (trim(tags(i+j-1))==trim(taglist(j))) then
              nmatch = nmatch + 1
           endif
        enddo
@@ -1036,7 +1036,7 @@ subroutine find_repeated_tags(tag,ntags,tags,istartlist,nlist)
  nlist = 0
  consecutive = .false.
  do i=1,ntags
-    if (index(tags(i),tag) > 0) then
+    if (trim(tag)==tags(i)(1:len_trim(tag))) then
        if (nlist==0) then
           istartlist = i
           consecutive = .true.

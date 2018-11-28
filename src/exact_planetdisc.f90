@@ -34,33 +34,44 @@ module planetdisc
   integer, parameter :: maxspirals = 2
   integer, parameter :: maxcoeff = 5
   character(len=*), dimension(maxspirals), parameter, public :: labelspiral = &
-    (/'Ogilvie-Lubow (2002) planet-disc interaction            ',&
-      'Spiral arm fitting formula r(phi) = sum(a_i*phi^i,i=1,4)'/)
+    (/'Planet-disc interaction (Rafikov 2002; Ogilvie & Lubow 2002)',&
+      'Spiral arm fitting formula r(phi) = sum(a_i*phi^i,i=1,4)    '/)
 
 contains
 
-subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,narms,params,rplot,yplot,ierr)
+subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot,yplot,ierr)
   use plotlib, only:plot_line
   implicit none
   integer, intent(in)  :: iplot,ispiral,narms
   integer, intent(out) :: ierr
-  real,    intent(in)  :: time, HonR, rplanet, params(:,:)
+  real,    intent(in)  :: time, HonR, rplanet, q, params(:,:)
   real, dimension(:),           intent(inout) :: rplot
   real, dimension(size(rplot)), intent(out)   :: yplot
   integer :: npts,iend,istart
   integer :: i,j,norbits,iarm
-  real :: r,phase,dr,phi,rmin,rmax,phimin,phimax,dphi,coeff(maxcoeff)
+  logical :: use_ogilvie
+  real :: r,rr,phase,dr,phi,rmin,rmax,phimin,phimax,dphi,coeff(maxcoeff)
   real, parameter :: pi = 4.*atan(1.)
+
+  real :: p
+  p =1.5
 
   ierr = 0
   npts = size(rplot)
   norbits = int(time/(2.*pi))
-  phase   = time - (2.*pi*norbits)
+  phase   = 0. !time - (2.*pi*norbits)
+  use_ogilvie = .false.
   select case(ispiral)
   case(2)
      print "(a,i2)",' Spiral arm fitting formula r = sum(a_i*phi^i,i=1,4) narms =',narms
   case default
-     print "(a,f6.2,a,f8.1,a)",' Ogilvie-Lubow planet-disc interaction: H/R=',HonR,' at ',time/(2.*pi),' orbits)'
+     print "(a,f6.2,a,f8.1,a)",' Planet-disc interaction: H/R=',HonR,' at ',time/(2.*pi),' orbits)'
+     use_ogilvie = (abs(q - 0.5) < epsilon(q))
+     if (use_ogilvie) then
+        print "(a)",' Using Ogilvie & Lubow (2002) exact solution'
+     else
+        print "(a)",' Using Rafikov (2002) exact solution for power-law disc'
+     endif
   end select
 
   select case(iplot)
@@ -69,10 +80,22 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,narms,params,rplot,y
      istart = 1
      do i=1,npts
         r = rplot(i)
-        if (r > rplanet) then
-           yplot(i) = phase - 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)
+        if (use_ogilvie) then
+           !
+           ! Ogilvie & Lubow (2002)
+           !
+           if (r > rplanet) then
+              yplot(i) = phase - 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)
+           else
+              yplot(i) = phase + 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)
+           endif
         else
-           yplot(i) = phase + 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)
+           !
+           ! Rafikov (2002)
+           !
+           rr = r/rplanet
+           yplot(i) = phase - sign(1.,r-rplanet)*(1./(HonR))* &
+                      ((rr**(q-0.5))/(q-0.5) - (rr**(q+1.))/(q+1.) - 3./((2.*q-1.)*(q+1.)))
         endif
         if (yplot(i) > pi) then
            phase = phase - 2.*pi
@@ -119,19 +142,31 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,narms,params,rplot,y
               do j=1,maxcoeff
                  r = r + coeff(j)*((phi-phimin)*pi/180.)**(j-1)
               enddo
+              phi = phi*pi/180. ! convert to radians
            case default
-              !
-              ! Ogilvie & Lubow (2002)
-              !
-              r = rmin + (i-1)*dr
-              if (r > rplanet) then
-                 phi = phase - 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)
+              r = rmax - (i-1)*dr
+              rr = r/rplanet
+              if (use_ogilvie) then
+                 !
+                 ! Ogilvie & Lubow (2002)
+                 !
+                 if (r > rplanet) then
+                    phi = phase - 2./(3.*HonR)*(sqrt(rr**3) - 1.5*log(rr) - 1.)
+                 else
+                    phi = phase + 2./(3.*HonR)*(sqrt(rr**3) - 1.5*log(rr) - 1.)
+                 endif
               else
-                 phi = phase + 2./(3.*HonR)*(sqrt(r**3) - 1.5*log(r) - 1.)        
+                 !
+                 ! Rafikov (2002)
+                 !
+                 phi = phase + sign(1.,r-rplanet)*(1./(HonR))* &
+                      ((rr**(q-0.5))/(q-0.5) - (rr**(q+1.))/(q+1.) - 3./((2.*q-1.)*(q+1.)))
+!                 phi = phase-sign(1.,r-rplanet)*(1./(HonR))*(((r/rplanet)**(1.+q)) &
+!                      *(1./(1.+q)-(1./(1.-p+q))*(r/rplanet)**(-p))-1./(1.+q)+1./(1.-p+q))
               endif
+              rplot(i) = r*cos(phi)
+              yplot(i) = r*sin(phi)
            end select
-           rplot(i) = r*cos(phi*pi/180.)
-           yplot(i) = r*sin(phi*pi/180.)
            !print*,'r, phi = ',r,phi,' : x, y = ',rplot(i),yplot(i)
         enddo
         call plot_line(npts,rplot,yplot)
