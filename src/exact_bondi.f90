@@ -28,7 +28,7 @@ module bondi
 
  public :: exact_bondi
 
- real, private, parameter :: pi = 3.1415926536
+ real, private, parameter :: pi = 4.*atan(1.)
 
  ! Constants from user input
  real, private :: rcrit, rhocrit     ! for non-rel

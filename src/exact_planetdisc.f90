@@ -94,7 +94,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
            ! Rafikov (2002)
            !
            rr = r/rplanet
-           yplot(i) = phase - sign(1.,r-rplanet)*(1./(HonR))* &
+           yplot(i) = phase + sign(1.,r-rplanet)*(1./(HonR))* &
                       ((rr**(q-0.5))/(q-0.5) - (rr**(q+1.))/(q+1.) - 3./((2.*q-1.)*(q+1.)))
         endif
         if (yplot(i) > pi) then
