@@ -17,7 +17,7 @@ contains
 subroutine c_interpolate3d_projection(                                         &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, npixy, &
   pixwidthx, pixwidthy, normalise, zobserver, dscreen, useaccelerate           &
-  ) bind(c)
+  ) bind(c, name='interpolate3d_projection')
 
   real(c_float),   intent(in)  :: x(npart),      &
                                   y(npart),      &
@@ -56,7 +56,7 @@ subroutine c_interpolate3d_proj_vec(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, vecsmoothx, &
   vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise, zobserver,  &
   dscreen                                                                &
-  ) bind(c)
+  ) bind(c, name='interpolate3d_proj_vec')
 
   integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
@@ -93,7 +93,7 @@ end subroutine c_interpolate3d_proj_vec
 subroutine c_interpolate3d_fastxsec(                                     &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth, &
   npixx, npixy, pixwidthx, pixwidthy, normalise                          &
-  ) bind(c)
+  ) bind(c, name='interpolate3d_fastxsec')
 
   integer(c_int),   intent(in) :: npart,         &
                                   npixx,         &
@@ -126,7 +126,7 @@ end subroutine c_interpolate3d_fastxsec
 subroutine c_interpolate3d_xsec_vec(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, zslice,     &
   vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise  &
-  ) bind(c)
+  ) bind(c, name='interpolate3d_xsec_vec')
 
   integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
@@ -162,7 +162,7 @@ subroutine c_interp3d_proj_opacity(                                         &
   x, y, z, pmass, npmass, hh, weight, dat, zorig, itype, npart, xmin, ymin, &
   datsmooth, brightness, npixx, npixy, pixwidth, zobserver,                 &
   dscreenfromobserver, rkappa, zcut                                         &
-  ) bind(c)
+  ) bind(c, name='interp3d_proj_opacity')
 
   integer(c_int), intent(in)  :: npart,                  &
                                  npixx,                  &
