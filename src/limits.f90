@@ -152,7 +152,7 @@ subroutine read_limits(limitsfile,ierr)
 
   inquire(file=limitsfile,exist=iexist)
   if (.not.iexist) then
-     print "(1x,a)",trim(limitsfile)//' not found'
+     !print "(1x,a)",trim(limitsfile)//' not found'
      ierr = 1
      return
   endif

@@ -322,26 +322,26 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   integer, intent(out) :: ierr
   integer, intent(in), optional :: iverbose
   character(len=2*len(unitslabel)+40) :: line
-  integer :: i,itemp,isemicolon,isemicolon2,isemicolon3
+  integer :: i,itemp,isemicolon,isemicolon2,isemicolon3,isverbose
   logical :: ierrzunits,iexist,verbose
 
   if (present(iverbose)) then
-     verbose= (iverbose.gt.0)
+     isverbose= iverbose
   else
-     verbose = .true.
+     isverbose = 1
   endif
 
   ierr = 0
   ierrzunits = .false.
   inquire(file=unitsfile,exist=iexist)
   if (.not.iexist) then
-     if (verbose) print "(1x,a)",trim(unitsfile)//' not found'
+     if (isverbose > 1) print "(1x,a)",trim(unitsfile)//' not found'
      ierr = 1
      return
   endif
 
   open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
-  if (verbose) print "(a)",' read '//trim(unitsfile)
+  if (isverbose > 0) print "(a)",' read '//trim(unitsfile)
   do i=0,maxplot  ! read all units possibly present in file
 !
 !    read a line from the file
@@ -398,7 +398,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   return
 
 997 continue
-  if (verbose) print*,trim(unitsfile),' not found'
+  if (isverbose > 0) print*,trim(unitsfile),' not found'
   ierr = 1
   return
 998 continue

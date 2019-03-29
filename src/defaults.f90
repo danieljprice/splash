@@ -73,7 +73,7 @@ subroutine defaults_set_initial
   labeltype(1) = 'gas'
   do i=2,size(labeltype)
      if (i > 9) then
-        write(labeltype(i),"(a,1x,i2)") 'type',i     
+        write(labeltype(i),"(a,1x,i2)") 'type',i
      else
         write(labeltype(i),"(a,1x,i1)") 'type',i
      endif
@@ -128,7 +128,7 @@ subroutine defaults_set(use_evdefaults)
 !--if using evsplash, override some default options
 !
   if (use_evdefaults) then
-     print "(a)",'setting evsplash defaults'
+     print "(a)",' ** ev mode: using default settings for .ev files **'
      call defaults_set_page_ev
      call defaults_set_part_ev
   endif
@@ -322,7 +322,7 @@ subroutine defaults_read(filename)
 
 88 continue
  print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
- 
+
  return
 end subroutine defaults_read
 
