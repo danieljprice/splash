@@ -221,7 +221,7 @@ subroutine submenu_page(ichoose)
  select case(iaction)
 !------------------------------------------------------------------------
   case(1)
-     call prompt('Enter number of timesteps per panel ',nstepsperpage,0)
+     call prompt('Enter number of timesteps per panel ',nstepsperpage,1)
      print*,'Plotting up to ',nstepsperpage,' timesteps per panel'
      if (nstepsperpage.gt.1) then
         if (iadapt .or. iadaptcoords) then
