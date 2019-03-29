@@ -336,7 +336,7 @@ subroutine set_labels
   integer                 :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
   character(len=lenlabel) :: labeli
-  logical                 :: iexist
+  logical                 :: iexist,got_time
 !
 !--read column labels from the columns file if it exists
 !
@@ -370,8 +370,9 @@ subroutine set_labels
 
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
   if (ierr /=0) then
-     if (iverbose > 0) then
-        print "(3(/,a))",' WARNING: columns file not found: using default labels',&
+!     print*,'HERE ',label(1)
+     if (iverbose > 0 .and. len_trim(label_orig(1))==0) then
+        print "(3(/,a))",' WARNING: column labels not found in file header:',&
                          ' To change the labels, create a file called ''columns'' ',&
                          '  in the current directory with one label per line'
      endif
@@ -408,25 +409,29 @@ subroutine set_labels
   call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
   if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
 
+  got_time = .false.
   do i=1,ncolumns
 !
 !--compare all strings in lower case, trimmed and with no preceding spaces
 !
      labeli = trim(adjustl(lcase(label(i))))
+     if (trim(labeli)=='t' .or. trim(labeli)=='time') got_time = .true.
 !
 !--guess positions of various quantities from the column labels
 !
-     if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
-        ndim = 1
-        ix(1) = i
-     endif
-     if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
-        ndim = 2
-        ix(2) = i
-     endif
-     if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
-        ndim = 3
-        ix(3) = i
+     if (.not.got_time) then
+        if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
+           ndim = 1
+           ix(1) = i
+        endif
+        if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
+           ndim = 2
+           ix(2) = i
+        endif
+        if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
+           ndim = 3
+           ix(3) = i
+        endif
      endif
      if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr' .or. &
          (index(labeli,'density').ne.0 .and. irho==0)) then
@@ -487,10 +492,10 @@ subroutine set_labels
      if (icoltype.gt.0) print "(a,i2)",' Assuming particle type in column ',icoltype
 
      if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
-        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
+        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled until', &
                     '  until positions of density, smoothing length and particle', &
-                    '  mass are known (for the ascii read the simplest way is to ', &
-                    '  label the relevant columns appropriately in the columns file)'
+                    '  mass are known (i.e. label the relevant columns ', &
+                    '  appropriately in file header or columns file)'
      endif
   endif
 
