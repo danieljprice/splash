@@ -102,7 +102,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   dumpfile = trim(rootname)
 
-  if (iverbose.gt.0) print "(1x,a)",'reading ascii format'
+  if (iverbose.gt.1) print "(1x,a)",'reading ascii format'
   print "(26('>'),1x,a,1x,26('<'))",trim(dumpfile)
   !
   !--check if first data file exists
@@ -474,8 +474,7 @@ subroutine set_labels
      ivx = 0
   endif
   if (iverbose > 0) then
-     if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
-     if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
+     if (ndim.gt.0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
      if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
      if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
      if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
@@ -491,11 +490,9 @@ subroutine set_labels
      endif
      if (icoltype.gt.0) print "(a,i2)",' Assuming particle type in column ',icoltype
 
-     if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
-        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled until', &
-                    '  until positions of density, smoothing length and particle', &
-                    '  mass are known (i.e. label the relevant columns ', &
-                    '  appropriately in file header or columns file)'
+     if (ndim.gt.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
+        print "(2(/,a))",' NOTE: Rendering disabled until density, h and mass columns known', &
+                    ' (i.e. label relevant columns in file header or columns file)'
      endif
   endif
 
