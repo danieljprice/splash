@@ -45,11 +45,11 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use labels,        only:label,ix
   use geometry,      only:coord_transform_limits
   use particle_data, only:npartoftype,dat,maxcol
-  use settings_data, only:ndim,icoords,icoordsnew
+  use settings_data, only:ndim,icoords,icoordsnew,iverbose
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti,itocoli
 
-  print 100,ifromstep,itostep,ifromcol,itocol
+  if (iverbose > 1) print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   if (ifromcol.gt.maxcol .or. maxcol.eq.0) then
      print "(a)",' *** error: set_limits: column > array size ***'

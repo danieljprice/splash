@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2018 Daniel Price
+!     Copyright (C) 2005-2019 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,6 +48,16 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.9.0  : (xx/xx/19)
+!             general header quantities are read and available in function parser;
+!             more robust label detection and parsing during ascii data read;
+!             splash to grid works in non-cartesian geometries; added flared and
+!             log-flared coordinate systems; Doppler shift colour bar; can customise
+!             line style and colour with multiple exact solutions; seg faults fixed;
+!             better plot tiling decisions; disappearing arrows bug fix; Rafikov disc-
+!             planet exact solution added; atan2 implemented in function parser;
+!             various multigrain phantom read fixes (incl. seg faults); exact rendering
+!             implemented in 2D; libsplash implemented for use as Python splash backend
 !     2.8.0  : (06/04/18)
 !             360/4pi video mode added; automatically read labels from ascii file headers;
 !             nearest sensible unit (e.g. au or pc) used by default; cactus hdf5 data read;
@@ -388,7 +398,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.8.1beta [18th May 2018]'
+  character(len=*), parameter :: version = 'v2.9.0beta [29th Mar 2019]'
 
   !
   ! initialise some basic code variables
