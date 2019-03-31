@@ -885,7 +885,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case(',')
         if (rotation) then
-           print*,'changing z rotation angle by -15 degrees...'
+           !print*,'changing z rotation angle by -15 degrees...'
            anglez = anglez - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -894,7 +894,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('<')
         if (rotation) then
-           print*,'changing z rotation angle by -30 degrees...'
+           !print*,'changing z rotation angle by -30 degrees...'
            anglez = anglez - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -903,7 +903,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('.')
         if (rotation) then
-           print*,'changing z rotation angle by 15 degrees...'
+           !print*,'changing z rotation angle by 15 degrees...'
            anglez = anglez + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -912,7 +912,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('>')
         if (rotation) then
-           print*,'changing z rotation angle by 30 degrees...'
+           !print*,'changing z rotation angle by 30 degrees...'
            anglez = anglez + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -921,7 +921,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('/')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by -15 degrees...'
+           !print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -930,7 +930,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('?')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by -30 degrees...'
+           !print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -939,7 +939,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('\')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by 15 degrees...'
+           !print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -948,7 +948,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('|')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by 30 degrees...'
+           !print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -957,7 +957,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('[')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by -15 degrees...'
+           !print*,'changing x rotation angle by -15 degrees...'
            anglex = anglex - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -966,7 +966,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('{')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by -30 degrees...'
+           !print*,'changing x rotation angle by -30 degrees...'
            anglex = anglex - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -975,7 +975,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case(']')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by 15 degrees...'
+           !print*,'changing x rotation angle by 15 degrees...'
            anglex = anglex + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -984,7 +984,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('}')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by 30 degrees...'
+           !print*,'changing x rotation angle by 30 degrees...'
            anglex = anglex + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -1238,7 +1238,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case('q','Q',achar(27),achar(3))
         iadvance = -666
-        print*,'quitting...'
+        !print*,'quitting...'
         iexit = .true.
      case('b','B',plot_scroll_left) ! right click -> go back
         iadvance = -abs(iadvance)

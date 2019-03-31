@@ -2933,7 +2933,7 @@ contains
     !--------------------------------------------------------------
     if (((interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) &
         .or. (iadapt .and. (istepsonpage.eq.nstepsperpage .or. lastplot))) .and. .not.dum) then
-       if (plot_qcur()) then
+       if (plot_qcur() .and. .not.interactivereplot) then
           print*,trim(labelx),' min, max = ',xmin,xmax
           print*,trim(labely),' min, max = ',ymin,ymax
           if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
