@@ -372,7 +372,7 @@ subroutine set_labels
   if (ierr /=0) then
 !     print*,'HERE ',label(1)
      if (iverbose > 0 .and. len_trim(label_orig(1))==0) then
-        print "(3(/,a))",' WARNING: column labels not found in file header:',&
+        print "(3(/,a),/)",' WARNING: column labels not found in file header:',&
                          ' To change the labels, create a file called ''columns'' ',&
                          '  in the current directory with one label per line'
      endif

@@ -202,6 +202,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      else
         dylength = 0.
      endif
+     itype = 1
      over_npart: do i=1,npart
         if (ntypes.gt.1) then
            if (mixedtypes) then
@@ -524,8 +525,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               yptmax = max(ypt,ypt2)
            endif
            if (.not.(iselectcircle.or.iselectpoly) .or. char2==plot_left_click) then ! rectangle selection
-              print*,'xrange = ',xptmin,'->',xptmax
-              print*,'yrange = ',yptmin,'->',yptmax
+              !print*,'xrange = ',xptmin,'->',xptmax
+              !print*,'yrange = ',yptmin,'->',yptmax
               if (iplotz.ne.0 .and. x_sec) then
                  print*,'(zrange = ',zptmin,'->',zptmax,')'
               endif
@@ -2453,7 +2454,7 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
  endif
  call assert_sensible_limits(xmin,xmax)
 
- print "(1x,a)",' resetting '//trim(labeli)//' limits'
+ !print "(1x,a)",' resetting '//trim(labeli)//' limits'
 
 end subroutine adapt_limits_interactive
 
