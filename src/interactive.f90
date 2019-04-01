@@ -448,13 +448,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                  if (double_rendering) then
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
                                          xmin,xmax,ymin,ymax,contmin,contmax)
-                    print*,'setting doublerender min = ',contmin
-                    print*,'setting doublerender max = ',contmax
+                    !print*,'setting doublerender min = ',contmin
+                    !print*,'setting doublerender max = ',contmax
                  else
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
                                          xmin,xmax,ymin,ymax,rendermin,rendermax)
-                    print*,'setting render min = ',rendermin
-                    print*,'setting render max = ',rendermax
+                    !print*,'setting render min = ',rendermin
+                    !print*,'setting render max = ',rendermax
                  endif
                  iadvance = 0
                  interactivereplot = .true.
