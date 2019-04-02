@@ -706,13 +706,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               contmin = renderpt - 0.5*contlength
               contmax = renderpt + 0.5*contlength
               call assert_sensible_limits(contmin,contmax)
-              print*,'zooming on colour bar: min, max = ',contmin,contmax
+              !print*,'zooming on colour bar: min, max = ',contmin,contmax
            else
               renderpt = 0.5*(rendermin + rendermax)
               rendermin = renderpt - 0.5*renderlength
               rendermax = renderpt + 0.5*renderlength
               call assert_sensible_limits(rendermin,rendermax)
-              print*,'zooming on colour bar: min, max = ',rendermin,rendermax
+              !print*,'zooming on colour bar: min, max = ',rendermin,rendermax
            endif
            iadvance = 0
            interactivereplot = .true.
@@ -722,7 +722,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               xmin = xcen - 0.5*xlength
               xmax = xcen + 0.5*xlength
               call assert_sensible_limits(xmin,xmax)
-              print*,'zooming on x axis: min, max = ',xmin,xmax
+              !print*,'zooming on x axis: min, max = ',xmin,xmax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -732,7 +732,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               ymin = ycen - 0.5*ylength
               ymax = ycen + 0.5*ylength
               call assert_sensible_limits(ymin,ymax)
-              print*,'zooming on y axis: min, max = ',ymin,ymax
+              !print*,'zooming on y axis: min, max = ',ymin,ymax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -780,7 +780,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case('v')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'decreasing vector arrow size'
+           !print*,'decreasing vector arrow size'
            vecmax = 1.2*zoomfac*vecmax
            iadvance = 0
            interactivereplot = .true.
@@ -788,7 +788,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('V')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'increasing vector arrow size'
+           !print*,'increasing vector arrow size'
            vecmax = vecmax/(1.2*zoomfac)
            iadvance = 0
            interactivereplot = .true.
@@ -796,7 +796,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('w','W')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'adapting vector arrow size'
+           !print*,'adapting vector arrow size'
            vecmax = -1.0
            iadvance = 0
            interactivereplot = .true.
@@ -1995,7 +1995,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      case('v')
         if (ivecarr(ipanel).gt.0) then
-           print*,'decreasing vector arrow size'
+           !print*,'decreasing vector arrow size'
            xmax(ivecarr(ipanel)) = 1.2*zoomfac*xmax(ivecarr(ipanel))
            istep = istepnew
            interactivereplot = .true.
@@ -2003,7 +2003,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         endif
      case('V')
         if (ivecarr(ipanel).gt.0) then
-           print*,'increasing vector arrow size'
+           !print*,'increasing vector arrow size'
            xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(1.2*zoomfac)
            istep = istepnew
            interactivereplot = .true.
@@ -2011,7 +2011,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         endif
      case('w','W')
         if (ivecarr(ipanel).gt.0) then
-           print*,'adapting vector arrow size'
+           !print*,'adapting vector arrow size'
            xmax(ivecarr(ipanel)) = -1.0
            istep = istepnew
            interactivereplot = .true.
