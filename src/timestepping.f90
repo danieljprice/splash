@@ -134,16 +134,15 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      !
      !--write timestepping log
      !
-     if (.not.time_was_read(time(ilocindat))) then
-        print 32, istep
-     elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
-        print 33, time(ilocindat),istep
-     else
-        print 34, time(ilocindat),istep
+     if (iadvance.ne.0) then
+        if (.not.time_was_read(time(ilocindat))) then
+           print "(5('-'),' t = (not read), dump #',i5,1x,18('-'))", istep
+        elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
+           print "(5('-'),' t = ',es9.2,', dump #',i5,1x,18('-'))", time(ilocindat),istep
+        else
+           print "(5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))", time(ilocindat),istep
+        endif
      endif
-32   format (5('-'),' t = (not read), dump #',i5,1x,18('-'))
-33   format (5('-'),' t = ',es9.2,', dump #',i5,1x,18('-'))
-34   format (5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))
 
      istepsonpage = istepsonpage + 1
 !     if ((nstepsperpage.gt.1 .and. istepsonpage > 1 .and. istepsonpage.le.nstepsperpage).or.nstepsperpage.eq.0) then

@@ -98,7 +98,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      if (maxpart.ne.npartin) reallocate_part = .true.
      if (maxstep.ne.nstep) reallocate_step = .true.
 
-     print 10,'> reallocating memory:',npartin,nstep,ncolumns
+     if (npartin > 1000000) print 10,'> reallocating memory:',npartin,nstep,ncolumns
 10   format (a,' parts = ',i10,' steps = ',i6,' cols = ',i4)
      allocate(dattemp(maxpartold,maxcolold,maxstepold), stat=ierr)
      if (ierr /= 0) stop 'error allocating memory (dattemp)'
@@ -152,7 +152,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
      endif
 
   else
-     print 10,'> allocating memory:',npartin,nstep,ncolumns
+     if (npartin > 1000000) print 10,'> allocating memory:',npartin,nstep,ncolumns
      maxpart = npartin
      maxstep = nstep
      maxcol = ncolumns

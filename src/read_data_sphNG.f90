@@ -1077,7 +1077,7 @@ contains
  integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttypes)
   character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
   integer, intent(in) :: intarr(:),nints
-  integer :: i,idust,ierr
+  integer :: i,idust,ierr,ndustsmall,ndustlarge
   logical :: igotndusttypes = .false.
 
   ! Look for ndusttypes in the header
@@ -1091,13 +1091,18 @@ contains
   if (igotndusttypes) then
      call extract('ndusttypes',idust,intarr,tags,nints,ierr)
   else
+     call extract('ndustsmall',ndustsmall,intarr,tags,nints,ierr)
+     call extract('ndustlarge',ndustlarge,intarr,tags,nints,ierr)
+     idust = ndustsmall+ndustlarge
      ! For older files where ndusttypes is not output to the header
-     idust = 0
-     do i = 1,maxinblock
-        if (tagsreal(i)=='grainsize') idust = idust + 1
-     enddo
-     write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
-     write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+     if (ierr /= 0) then
+        idust = 0
+        do i = 1,maxinblock
+           if (tagsreal(i)=='grainsize') idust = idust + 1
+        enddo
+        write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
+        write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+     endif
   endif
   ndusttypes = idust
 
@@ -1393,7 +1398,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       endif
       if (onefluid_dust) then
          if (ndusttypes>1) then
-            ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
+            ndustarrays = 0
+            !ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
          else
             ndustarrays = 1
          endif

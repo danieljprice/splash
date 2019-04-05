@@ -86,13 +86,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
   integer :: nprint,npart_max,nstep_max,nheaderlines,nheaderenv,itype,nlabels
-  integer :: noftype(maxparttypes),iverbose_was
+  integer :: noftype(maxparttypes),iverbose_was,imethod
   logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
   real, allocatable :: dattemp(:)
   character(len=len(rootname)+4) :: dumpfile
   character(len=2048)  :: line
   character(len=lenlabel), dimension(size(label)) :: tmplabel
+  character(len=10)  :: str,strc
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -102,7 +103,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   dumpfile = trim(rootname)
 
-  if (iverbose.gt.0) print "(1x,a)",'reading ascii format'
+  if (iverbose.gt.1) print "(1x,a)",'reading ascii format'
   print "(26('>'),1x,a,1x,26('<'))",trim(dumpfile)
   !
   !--check if first data file exists
@@ -154,10 +155,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         read(iunit,"(a)",iostat=ierr) line
         !--if we get nlabels > ncolumns, use them, but keep trying for a better match
         if ((.not.got_labels .or. nlabels /= ncolstep) .and. ncolstep > 1 ) then
-           call get_column_labels(trim(line),nlabels,tmplabel)
+           call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
            ! use labels if > ncolumns, but replace if we match exact number on subsequent line
            if ((got_labels .and. nlabels == ncolstep) .or. &
-               (.not.got_labels .and. nlabels >= ncolstep)) then
+               (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
+                .and. (.not.(imethod>=4).or.nlabels==ncolstep))) then
               label_orig(1:ncolstep) = tmplabel(1:ncolstep)
               got_labels = .true.
            endif
@@ -211,7 +213,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--read header lines, try to use it to set time
 !
-  if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
+  !if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
   do i=1,nheaderlines
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
@@ -298,8 +300,20 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   if (nerr > 10) then
      print "(a,i8,a)",' *** WARNING: errors whilst reading file on ',nerr,' lines: skipped these ***'
   endif
-  if (ierr < 0) then
-     print "(2(a,i10))",' read npts = ',nprint,' ncolumns = ',ncolstep
+  if (ierr < 0 .and. (icoltype <=0 .or. icoltype > ncolstep)) then
+     write(str,"(i10)") nprint
+     str = adjustl(str)
+     write(strc,"(i10)") ncolstep
+     strc = adjustl(strc)
+     if (nheaderlines.gt.0 .and. iverbose.gt.0) then
+        if (nheaderlines > 10) then
+           print "(a,i3,a)",' npts = '//trim(str)//', ncols = '//trim(strc)//', skipped ',nheaderlines,' header lines'
+        else
+           print "(a,i1,a)",' npts = '//trim(str)//', ncols = '//trim(strc)//', skipped ',nheaderlines,' header lines'
+        endif
+     else
+        print "(a)",' npts = '//trim(str)//', ncols = '//trim(strc)
+     endif
   endif
 
   npartoftype(:,j) = 0
@@ -336,7 +350,7 @@ subroutine set_labels
   integer                 :: i,ierr,ndimVtemp
   character(len=120)      :: columnfile
   character(len=lenlabel) :: labeli
-  logical                 :: iexist
+  logical                 :: iexist,got_time
 !
 !--read column labels from the columns file if it exists
 !
@@ -370,8 +384,9 @@ subroutine set_labels
 
   open(unit=51,file=trim(columnfile),status='old',iostat=ierr)
   if (ierr /=0) then
-     if (iverbose > 0) then
-        print "(3(/,a))",' WARNING: columns file not found: using default labels',&
+!     print*,'HERE ',label(1)
+     if (iverbose > 0 .and. len_trim(label_orig(1))==0) then
+        print "(3(/,a))",' WARNING: column labels not found in file header:',&
                          ' To change the labels, create a file called ''columns'' ',&
                          '  in the current directory with one label per line'
      endif
@@ -408,25 +423,29 @@ subroutine set_labels
   call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
   if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
 
+  got_time = .false.
   do i=1,ncolumns
 !
 !--compare all strings in lower case, trimmed and with no preceding spaces
 !
      labeli = trim(adjustl(lcase(label(i))))
+     if (trim(labeli)=='t' .or. trim(labeli)=='time') got_time = .true.
 !
 !--guess positions of various quantities from the column labels
 !
-     if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
-        ndim = 1
-        ix(1) = i
-     endif
-     if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
-        ndim = 2
-        ix(2) = i
-     endif
-     if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
-        ndim = 3
-        ix(3) = i
+     if (.not.got_time) then
+        if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
+           ndim = 1
+           ix(1) = i
+        endif
+        if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
+           ndim = 2
+           ix(2) = i
+        endif
+        if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
+           ndim = 3
+           ix(3) = i
+        endif
      endif
      if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr' .or. &
          (index(labeli,'density').ne.0 .and. irho==0)) then
@@ -469,28 +488,33 @@ subroutine set_labels
      ivx = 0
   endif
   if (iverbose > 0) then
-     if (ndim.gt.0) print "(a,i1)",' Assuming number of dimensions = ',ndim
-     if (ndim.gt.0) print "(a,i2,a,i2)",' Assuming positions in columns ',ix(1),' to ',ix(ndim)
-     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+     if (ndim.gt.0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
+     !if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (ndim > 0 .and. (irho > 0 .or. ipmass>0 .or. ih > 0)) write(*,"(a)",advance='no') ' Assuming'
+     if (irho.gt.0) write(*,"(a,i2)",advance='no') ' density in column ',irho
+     if (ipmass.gt.0) write(*,"(a,i2)",advance='no') ', mass in ',ipmass
+     if (ih.gt.0) write(*,"(a,i2)",advance='no') ', h in ',ih
+     if (iutherm.gt.0) write(*,"(/,a,i2)") ' Assuming thermal energy in ',iutherm
+     if (iutherm==0 .and. ipr > 0) write(*,"(/,a)",advance='no') ' Assuming'
+     if (ipr.gt.0) write(*,"(a,i2)",advance='no') ' pressure in column ',ipr
      if (ivx.gt.0) then
+        if (ipr==0 .and. iutherm==0) write(*,*)
         if (ndimV.gt.1) then
-           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
+           print "(a,i2,a,i2)",' Assuming velocity in cols ',ivx,' to ',ivx+ndimV-1
         else
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
-     if (icoltype.gt.0) print "(a,i2)",' Assuming particle type in column ',icoltype
+     if (icoltype.gt.0) then
+        if (ipr==0 .and. iutherm==0 .and. ivx==0) write(*,*)
+        write(*,"(a,i2)") ' Assuming particle type in column ',icoltype
+     endif
+     if ((irho > 0 .or. ih > 0 .or. ipmass > 0) &
+        .and. ipr==0 .and. iutherm==0 .and. ivx==0 .and. icoltype==0) write(*,*)
 
-     if (ndim.eq.0 .or. irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0) then
-        print "(4(/,a))",' NOTE: Rendering capabilities cannot be enabled', &
-                    '  until positions of density, smoothing length and particle', &
-                    '  mass are known (for the ascii read the simplest way is to ', &
-                    '  label the relevant columns appropriately in the columns file)'
+     if (ndim.gt.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
+        print "(2(/,a))",' NOTE: Rendering disabled until density, h and mass columns known', &
+                    ' (i.e. label relevant columns in file header or columns file)'
      endif
   endif
 

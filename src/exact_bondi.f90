@@ -28,7 +28,7 @@ module bondi
 
  public :: exact_bondi
 
- real, private, parameter :: pi = 3.1415926536
+ real, private, parameter :: pi = 4.*atan(1.)
 
  ! Constants from user input
  real, private :: rcrit, rhocrit     ! for non-rel
@@ -173,7 +173,7 @@ subroutine get_bondi_geodesic(rho,v,u,r,m,gamma)
  real :: sqrtg,alpha,dfunc,efunc
 
  dfunc = den0/(r**2*sqrt(2.*m/r*(1.- 2.*m/r)))
- efunc = en0/((sqrt(2.*m/r)*r**2)**gamma * (1.- 2.*m/r)**((gamma + 1.)/4.))
+ efunc = en0/((sqrt(2.*m/r)*r**2)**gamma * sqrt(1.- 2.*m/r))
 
  sqrtg = 1.
  alpha = sqrt(1. - 2.*m/r)

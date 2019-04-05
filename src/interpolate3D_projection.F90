@@ -47,11 +47,14 @@ subroutine setup_integratedkernel
 !     tabulates the integral through the cubic spline kernel
 !     tabulated in (r/h)**2 so that sqrt is not necessary
 !-------------------------------------------------------------
- use kernels, only:wfunc,radkernel2,cnormk3D
+ use kernels, only:wfunc,radkernel2,cnormk3D,select_kernel
  implicit none
  integer :: i,j
  real :: rxy2,deltaz,dz,z,q2,wkern,coldens
  integer, parameter :: npts = 100
+
+ ! force cubic kernel if not already set
+ if (.not.associated(wfunc)) call select_kernel(0)
 
  !print "(1x,a)",'setting up integrated kernel table...'
  dq2table = radkernel2/maxcoltable

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -332,7 +332,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
        ndust = 0
        !--zero the properties of newly created dust particles
        dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
-       if (idustfrac_temp > size(dat(1,:,1))) then
+       if (idustfrac_temp > size(dat(1,:,1)) .or. idustfrac_temp <= 0) then
           print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
           return
        endif

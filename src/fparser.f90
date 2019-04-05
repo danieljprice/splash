@@ -35,6 +35,8 @@ MODULE fparser
   !
   ! 19th Oct 2016: added Fortran 2008 intrinsic functions
   !                added optional iErrType argument for error message printing
+  !
+  !  5th Mar 2019: added atan2 function (and parsing of functions with two arguments)
 
   IMPLICIT NONE
 !--modification here by D.Price: define type parameters here rather than in a separate module
@@ -78,16 +80,17 @@ MODULE fparser
                                                          cTan     = 18,         &
                                                          cAsin    = 19,         &
                                                          cAcos    = 20,         &
-                                                         cAtan    = 21,         &
-                                                         cBesj0   = 22,         &
-                                                         cBesj1   = 23,         &
-                                                         cBesy0   = 24,         &
-                                                         cBesy1   = 25,         &
-                                                         cerfcs   = 26,         &
-                                                         cerfc    = 27,         &
-                                                         cerf     = 28,         &
-                                                         cgamma   = 29,         &
-                                                         VarBegin = 30
+                                                         cAtan2   = 21,         &
+                                                         cAtan    = 22,         &
+                                                         cBesj0   = 23,         &
+                                                         cBesj1   = 24,         &
+                                                         cBesy0   = 25,         &
+                                                         cBesy1   = 26,         &
+                                                         cerfcs   = 27,         &
+                                                         cerfc    = 28,         &
+                                                         cerf     = 29,         &
+                                                         cgamma   = 30,         &
+                                                         VarBegin = 31
   CHARACTER (LEN=1), DIMENSION(cAdd:cPow),  PARAMETER :: Ops      = (/ '+',     &
                                                                        '-',     &
                                                                        '*',     &
@@ -106,6 +109,7 @@ MODULE fparser
                                                                       'tan  ', &
                                                                       'asin ', &
                                                                       'acos ', &
+                                                                      'atan2', &
                                                                       'atan ', &
                                                                       'besj0', &
                                                                       'besj1', &
@@ -281,6 +285,7 @@ CONTAINS
        CASE  (cAcos); IF ((Comp(i)%Stack(SP)<-1._rn).OR.(Comp(i)%Stack(SP)>1._rn)) THEN
                       EvalErrType=4; res=zero; RETURN; ENDIF
                       Comp(i)%Stack(SP)=ACOS(Comp(i)%Stack(SP))
+       CASE  (cAtan2); Comp(i)%Stack(SP-1)=ATAN2(Comp(i)%Stack(SP-1),Comp(i)%Stack(SP)); SP=SP-1
        CASE  (cAtan); Comp(i)%Stack(SP)=ATAN(Comp(i)%Stack(SP))
        CASE  (cBesj0); Comp(i)%Stack(SP)=bessel_j0(Comp(i)%Stack(SP))
        CASE  (cBesj1); Comp(i)%Stack(SP)=bessel_j1(Comp(i)%Stack(SP))
@@ -335,7 +340,7 @@ CONTAINS
              EXIT
           ENDIF
           c = Func(j:j)
-          IF (ANY(c == Ops)) THEN
+          IF (ANY(c == Ops) .or. c == ',') THEN
              CALL ParseErrMsg (j, FuncStr, 'Multiple operators')
              EXIT
           ENDIF
@@ -351,6 +356,17 @@ CONTAINS
           IF (c /= '(') THEN
              CALL ParseErrMsg (j, FuncStr, 'Missing opening parenthesis')
              EXIT
+          ENDIF
+          IF (n == cAtan2) THEN                              ! Check #args for function with two arguments
+             IF (CountArgs(Func(j:)) /= 2) THEN
+                CALL ParseErrMsg (j, FuncStr, 'Function expects two arguments')
+                EXIT
+             ENDIF
+          ELSE
+             IF (CountArgs(Func(j:)) > 1) THEN
+                CALL ParseErrMsg (j, FuncStr, 'Too many function arguments')
+                EXIT
+             ENDIF
           ENDIF
        END IF
        IF (c == '(') THEN                                    ! Check for opening parenthesis
@@ -396,7 +412,7 @@ CONTAINS
        ! Now, we have a legal operand: A legal operator or end of string must follow
        !-- -------- --------- --------- --------- --------- --------- --------- -------
        IF (j > lFunc) EXIT
-       IF (ANY(c == Ops)) THEN                               ! Check for multiple operators
+       IF (ANY(c == Ops) .or. c == ',') THEN                               ! Check for multiple operators
           IF (j+1 > lFunc) CALL ParseErrMsg (j, FuncStr)
           IF (ANY(Func(j+1:j+1) == Ops)) CALL ParseErrMsg (j+1, FuncStr, 'Multiple operators')
        ELSE                                                  ! Check for next operand
@@ -532,7 +548,7 @@ CONTAINS
           IF (str(ib:ib) /= ' ') EXIT                        ! When lstr>0 at least 1 char in str
        END DO
        DO in=ib,lstr                                         ! Search for name terminators
-          IF (SCAN(str(in:in),'+-*/^) ') > 0) EXIT
+          IF (SCAN(str(in:in),'+-*/^,) ') > 0) EXIT
        END DO
        DO j=1,SIZE(Var,kind=is)
           IF (str(ib:in-1) == Var(j)) THEN
@@ -588,6 +604,18 @@ CONTAINS
        IF (str(j:j+lca-1) == ca) str(j:j+lca-1) = cb
     END DO
   END SUBROUTINE Replace
+  !
+  FUNCTION CountArgs(str) RESULT(n)
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    ! Count number of arguments in a function string
+    !----- -------- --------- --------- --------- --------- --------- --------- -------
+    CHARACTER (LEN=*), INTENT(in) :: str
+    INTEGER                       :: n,j
+    n = 1
+    DO j=1,len_trim(str)
+       if (str(j:j) == ',') n = n + 1
+    ENDDO
+  END FUNCTION CountArgs
   !
   SUBROUTINE Compile (i, F, Var)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -715,6 +743,25 @@ CONTAINS
        IF (k == 0) res=.true.                                ! All opened parenthesis closed
     END IF
   END FUNCTION CompletelyEnclosed
+
+  FUNCTION TwoArgs (F, b, e, m) RESULT (res)
+   !----- -------- --------- --------- --------- --------- --------- --------- -------
+   ! Check if function substring F(b:e) has two arguments i.e. f(a,b)
+   !----- -------- --------- --------- --------- --------- --------- --------- -------
+   IMPLICIT NONE
+   CHARACTER (LEN=*), INTENT(in) :: F                       ! Function substring
+   INTEGER,           INTENT(in) :: b,e                     ! First and last pos. of substring
+   INTEGER,           INTENT(out) :: m
+   LOGICAL                       :: res
+
+   res = .false.
+   m = INDEX(F(b:e),',')
+   IF (m > 0) THEN
+      res = .true.
+      m = b + m - 1
+   ENDIF
+
+  END FUNCTION TwoArgs
   !
   RECURSIVE SUBROUTINE CompileSubstr (i, F, b, e, Var)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -726,12 +773,13 @@ CONTAINS
     INTEGER,                         INTENT(in) :: b,e       ! Begin and end position substring
     CHARACTER (LEN=*), DIMENSION(:), INTENT(in) :: Var       ! Array with variable names
     INTEGER(is)                                 :: n
-    INTEGER                                     :: b2,j,k,io
+    INTEGER                                     :: b2,j,k,io,m
     CHARACTER (LEN=*),                PARAMETER :: calpha = 'abcdefghijklmnopqrstuvwxyz'// &
                                                             'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Check for special cases of substring
     !----- -------- --------- --------- --------- --------- --------- --------- -------
+!      WRITE(*,*) 'PARSING F(b:e) = '//F(b:e)
     IF     (F(b:b) == '+') THEN                              ! Case 1: F(b:e) = '+...'
 !      WRITE(*,*)'1. F(b:e) = "+..."'
        CALL CompileSubstr (i, F, b+1, e, Var)
@@ -746,7 +794,13 @@ CONTAINS
           b2 = b+INDEX(F(b:e),'(')-1
           IF (CompletelyEnclosed(F, b2, e)) THEN             ! Case 3: F(b:e) = 'fcn(...)'
 !            WRITE(*,*)'3. F(b:e) = "fcn(...)"'
-             CALL CompileSubstr(i, F, b2+1, e-1, Var)
+             IF (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) THEN
+!                print*,' SPLITTING ',b,m,e,' F(b:e)=',F(b2+1:e-1)
+                CALL CompileSubstr (i, F, b2+1, m-1, Var)
+                CALL CompileSubstr (i, F, m+1, e-1, Var)
+             ELSE
+                CALL CompileSubstr(i, F, b2+1, e-1, Var)
+             ENDIF
              CALL AddCompiledByte (i, n)
              RETURN
           END IF
@@ -763,14 +817,20 @@ CONTAINS
              b2 = b+INDEX(F(b+1:e),'(')
              IF (CompletelyEnclosed(F, b2, e)) THEN          ! Case 5: F(b:e) = '-fcn(...)'
 !               WRITE(*,*)'5. F(b:e) = "-fcn(...)"'
-                CALL CompileSubstr(i, F, b2+1, e-1, Var)
+                IF (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) THEN
+                   CALL CompileSubstr (i, F, b2+1, m-1, Var)
+                   CALL CompileSubstr (i, F, m+1, e-1, Var)
+                ELSE
+                   CALL CompileSubstr(i, F, b2+1, e-1, Var)
+                ENDIF
                 CALL AddCompiledByte (i, n)
                 CALL AddCompiledByte (i, cNeg)
                 RETURN
              END IF
           END IF
        ENDIF
-    END IF
+    ENDIF
+!   WRITE(*,*) 'PROCEED TO OPERATORS',TwoArgs(F,b,e,m),F(b:e)
     !----- -------- --------- --------- --------- --------- --------- --------- -------
     ! Check for operator in substring: check only base level (k=0), exclude expr. in ()
     !----- -------- --------- --------- --------- --------- --------- --------- -------
