@@ -93,6 +93,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   character(len=len(rootname)+4) :: dumpfile
   character(len=2048)  :: line
   character(len=lenlabel), dimension(size(label)) :: tmplabel
+  character(len=10)  :: str,strc
   integer, parameter :: notset = -66
 
   nstepsread = 0
@@ -211,7 +212,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--read header lines, try to use it to set time
 !
-  if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
+  !if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
   do i=1,nheaderlines
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
@@ -298,8 +299,20 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   if (nerr > 10) then
      print "(a,i8,a)",' *** WARNING: errors whilst reading file on ',nerr,' lines: skipped these ***'
   endif
-  if (ierr < 0) then
-     print "(2(a,i10))",' read npts = ',nprint,' ncolumns = ',ncolstep
+  if (ierr < 0 .and. (icoltype <=0 .or. icoltype > ncolstep)) then
+     write(str,"(i10)") nprint
+     str = adjustl(str)
+     write(strc,"(i10)") ncolstep
+     strc = adjustl(strc)
+     if (nheaderlines.gt.0 .and. iverbose.gt.0) then
+        if (nheaderlines > 10) then
+           print "(a,i3,a)",' npts = '//trim(str)//', ncols = '//trim(strc)//', skipped ',nheaderlines,' header lines'
+        else
+           print "(a,i1,a)",' npts = '//trim(str)//', ncols = '//trim(strc)//', skipped ',nheaderlines,' header lines'
+        endif
+     else
+        print "(a)",' npts = '//trim(str)//', ncols = '//trim(strc)
+     endif
   endif
 
   npartoftype(:,j) = 0
@@ -372,7 +385,7 @@ subroutine set_labels
   if (ierr /=0) then
 !     print*,'HERE ',label(1)
      if (iverbose > 0 .and. len_trim(label_orig(1))==0) then
-        print "(3(/,a),/)",' WARNING: column labels not found in file header:',&
+        print "(3(/,a))",' WARNING: column labels not found in file header:',&
                          ' To change the labels, create a file called ''columns'' ',&
                          '  in the current directory with one label per line'
      endif
@@ -475,20 +488,27 @@ subroutine set_labels
   endif
   if (iverbose > 0) then
      if (ndim.gt.0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
-     if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-     if (irho.gt.0) print "(a,i2)",' Assuming density in column ',irho
-     if (ipmass.gt.0) print "(a,i2)",' Assuming particle mass in column ',ipmass
-     if (ih.gt.0) print "(a,i2)",' Assuming smoothing length in column ',ih
-     if (iutherm.gt.0) print "(a,i2)",' Assuming thermal energy in column ',iutherm
-     if (ipr.gt.0) print "(a,i2)",' Assuming pressure in column ',ipr
+     !if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (ndim > 0 .or. irho > 0) write(*,"(a)",advance='no') ' Assuming'
+     if (irho.gt.0) write(*,"(a,i2)",advance='no') ' density in column ',irho
+     if (ipmass.gt.0) write(*,"(a,i2)",advance='no') ', mass in ',ipmass
+     if (ih.gt.0) write(*,"(a,i2)",advance='no') ', h in ',ih
+     if (iutherm.gt.0) write(*,"(/,a,i2)") ' Assuming thermal energy in ',iutherm
+     if (iutherm==0 .and. ipr > 0) write(*,"(/,a)",advance='no') ' Assuming'
+     if (ipr.gt.0) write(*,"(a,i2)",advance='no') ' pressure in column ',ipr
      if (ivx.gt.0) then
+        if (ipr==0 .and. iutherm==0) write(*,*)
         if (ndimV.gt.1) then
-           print "(a,i2,a,i2)",' Assuming velocity in columns ',ivx,' to ',ivx+ndimV-1
+           print "(a,i2,a,i2)",' Assuming velocity in cols ',ivx,' to ',ivx+ndimV-1
         else
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
-     if (icoltype.gt.0) print "(a,i2)",' Assuming particle type in column ',icoltype
+     if (icoltype.gt.0) then
+        if (ipr==0 .and. iutherm==0 .and. ivx==0) write(*,*)
+        write(*,"(a,i2)") ' Assuming particle type in column ',icoltype
+     endif
+     if (ipr==0 .and. iutherm==0 .and. ivx==0 .and. icoltype==0) write(*,*)
 
      if (ndim.gt.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
         print "(2(/,a))",' NOTE: Rendering disabled until density, h and mass columns known', &
