@@ -48,12 +48,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.9.0  : (xx/xx/19)
+!     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;
 !             splash to grid works in non-cartesian geometries; added flared and
 !             log-flared coordinate systems; Doppler shift colour bar; can customise
-!             line style and colour with multiple exact solutions; seg faults fixed;
+!             line style and colour when plotting multiple exact solutions; seg faults fixed;
 !             better plot tiling decisions; disappearing arrows bug fix; Rafikov disc-
 !             planet exact solution added; atan2 implemented in function parser;
 !             various multigrain phantom read fixes (incl. seg faults); exact rendering
@@ -398,7 +398,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.9.0beta [29th Mar 2019]'
+  character(len=*), parameter :: version = 'v2.9.0 [5th Apr 2019]'
 
   !
   ! initialise some basic code variables
