@@ -86,7 +86,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   character(len=*), intent(in) :: rootname
   integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
   integer :: nprint,npart_max,nstep_max,nheaderlines,nheaderenv,itype,nlabels
-  integer :: noftype(maxparttypes),iverbose_was
+  integer :: noftype(maxparttypes),iverbose_was,imethod
   logical :: iexist,timeset,gammaset,got_labels
   real    :: dummyreal
   real, allocatable :: dattemp(:)
@@ -155,10 +155,10 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         read(iunit,"(a)",iostat=ierr) line
         !--if we get nlabels > ncolumns, use them, but keep trying for a better match
         if ((.not.got_labels .or. nlabels /= ncolstep) .and. ncolstep > 1 ) then
-           call get_column_labels(trim(line),nlabels,tmplabel)
+           call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
            ! use labels if > ncolumns, but replace if we match exact number on subsequent line
            if ((got_labels .and. nlabels == ncolstep) .or. &
-               (.not.got_labels .and. nlabels >= ncolstep)) then
+               (.not.got_labels .and. nlabels >= ncolstep .and. .not.(imethod>=4))) then
               label_orig(1:ncolstep) = tmplabel(1:ncolstep)
               got_labels = .true.
            endif
@@ -489,7 +489,7 @@ subroutine set_labels
   if (iverbose > 0) then
      if (ndim.gt.0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
      !if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
-     if (ndim > 0 .or. irho > 0) write(*,"(a)",advance='no') ' Assuming'
+     if (ndim > 0 .and. (irho > 0 .or. ipmass>0 .or. ih > 0)) write(*,"(a)",advance='no') ' Assuming'
      if (irho.gt.0) write(*,"(a,i2)",advance='no') ' density in column ',irho
      if (ipmass.gt.0) write(*,"(a,i2)",advance='no') ', mass in ',ipmass
      if (ih.gt.0) write(*,"(a,i2)",advance='no') ', h in ',ih
@@ -508,7 +508,8 @@ subroutine set_labels
         if (ipr==0 .and. iutherm==0 .and. ivx==0) write(*,*)
         write(*,"(a,i2)") ' Assuming particle type in column ',icoltype
      endif
-     if (ipr==0 .and. iutherm==0 .and. ivx==0 .and. icoltype==0) write(*,*)
+     if ((irho > 0 .or. ih > 0 .or. ipmass > 0) &
+        .and. ipr==0 .and. iutherm==0 .and. ivx==0 .and. icoltype==0) write(*,*)
 
      if (ndim.gt.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
         print "(2(/,a))",' NOTE: Rendering disabled until density, h and mass columns known', &

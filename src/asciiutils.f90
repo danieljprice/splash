@@ -812,10 +812,11 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,nlabels,labels)
+subroutine get_column_labels(line,nlabels,labels,method)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
+ integer,          intent(out), optional :: method
  integer :: i1,i2,i,nlabelstmp,istyle
  character(len=1) :: leadingchar
 
@@ -867,6 +868,7 @@ subroutine get_column_labels(line,nlabels,labels)
        nlabels = count_sensible_labels(nlabelstmp,labels)
     endif
  endif
+ if (present(method)) method = istyle
  !
  ! clean up
  !
