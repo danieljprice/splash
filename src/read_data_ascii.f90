@@ -158,7 +158,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
            ! use labels if > ncolumns, but replace if we match exact number on subsequent line
            if ((got_labels .and. nlabels == ncolstep) .or. &
-               (.not.got_labels .and. nlabels >= ncolstep .and. .not.(imethod>=4))) then
+               (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
+                .and. (.not.(imethod>=4).or.nlabels==ncolstep))) then
               label_orig(1:ncolstep) = tmplabel(1:ncolstep)
               got_labels = .true.
            endif
