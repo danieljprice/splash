@@ -77,6 +77,7 @@ module colours
   integer :: ifirstcolour, ncolours,ncoltable
   real, dimension(3,ncolourmax) :: rgbtable
   real, dimension(ncolourmax)   :: ltable
+  integer, private :: icolourscheme_prev = 0
 
 contains
 
@@ -85,9 +86,8 @@ contains
 !      ** add your own here **
 ! ------------------------------------------------------------------------
 subroutine colour_set(icolourscheme)
-  use plotlib, only:plot_qcol,plot_qcir,plot_scir,plot_ctab,plot_scr,plot_qcr
+  use plotlib,       only:plot_qcol,plot_qcir,plot_scir,plot_ctab,plot_scr,plot_qcr
   use settings_data, only:debugmode
-  implicit none
   integer, intent(in) :: icolourscheme
   integer :: i,icolmin,icolmax,ncolmax,nset,index
   real :: brightness,contrast
@@ -557,81 +557,20 @@ subroutine colour_set(icolourscheme)
         call plot_qcr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
      enddo
 
-     if (icolourscheme.lt.0) then
-        print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
-     else
-        print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))
+     if (icolourscheme /= icolourscheme_prev) then ! silent if not changed
+        if (icolourscheme.lt.0) then
+           print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
+        else
+           print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))
+        endif
      endif
+     icolourscheme_prev = icolourscheme
   else
      print "(1x,a)",'warning: unknown colour scheme - uses default greyscale'
 
   endif
   if (debugmode) print*,'DEBUG: finished colour_set'
 
-  return
-
 end subroutine colour_set
-
-!------------------------------------------------
-! demonstration plot of all the colour schemes
-!------------------------------------------------
-subroutine colour_demo
-  implicit none
-!  integer :: i,j,nc
-  !
-  !--npixx should be >= ncolours in setcolours.f
-  !
-!  integer, parameter :: npixx = ncolourmax
-!  integer, parameter :: npixy = npixx/10
-!  real, dimension(npixx,npixy) :: sample
-!  real :: xmin,xmax,ymin,ymax,dx,dy,trans(6)
-!  character(len=10) :: string
-
-!  call pgbegin(0,'?',1,ncolourschemes)
-!!  call pgpaper(6.0,8.0) !!!0.25/sqrt(2.))
-
-!  xmin = 0.0
-!  xmax = 1.0
-!  ymin = 0.0
-!  ymax = 0.1
-!  dx = (xmax-xmin)/float(npixx)
-!  dy = (ymax-ymin)/float(npixy)
-!  trans(1) = xmin - 0.5*dx
-!  trans(2) = dx
-!  trans(3) = 0.0
-!  trans(4) = ymin - 0.5*dy
-!  trans(5) = 0.0
-!  trans(6) = dy
-
-!  do j=1,npixy
-!     do i=1,npixx
-!        sample(i,j) = (i-1)*dx
-!     enddo
-!  enddo
-!!  call pgsch(2.0)
-!!  call pgenv(xmin,xmax,ymin,ymax,0,-1)
-!!  call pgsch(1.0)
-!!  call pggray(sample,npixx,npixy,1,npixx,1,npixy, &
-!!              minval(sample),maxval(sample),trans)
-!!  call pgnumb(1,0,0,string,nc)
-!!  call pgsch(7.0)
-!!  call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(1)))
-
-!  do i=1,ncolourschemes
-!     call pgsch(2.0)
-!     call pgenv(xmin,xmax,ymin,ymax,0,-1)
-!     call pgsch(7.0)
-!     call pgnumb(i,0,0,string,nc)
-!     call pgmtxt('t',0.5,0.5,0.5,string(1:nc)//': '//trim(schemename(i)))
-!     call colour_set(i)
-!     call pgimag(sample,npixx,npixy,1,npixx,1,npixy, &
-!                 minval(sample),maxval(sample),trans)
-!  enddo
-
-!  call pgsch(1.0)
-!  call pgend
-
-end subroutine colour_demo
-
 
 end module colours

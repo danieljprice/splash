@@ -57,6 +57,8 @@ module timestep_plotting
   real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
   real, private :: contminadapt,contmaxadapt
+  real, private :: xminwas = 0.,xmaxwas = 0.,yminwas = 0.,ymaxwas = 0.
+  real, private :: renderminwas = 0.,rendermaxwas = 0.,contminwas = 0.,contmaxwas = 0.
   real, parameter, private :: pi = 3.1415926536
 
   logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
@@ -701,7 +703,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_vecplot,   only:npixvec,iplotpartvec
   use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
                                flythru,use3Dperspective,use3Dopacityrendering,&
-                               writeppm,anglex,angley,anglez,zobserver,&
+                               anglex,angley,anglez,zobserver,&
                                dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
@@ -732,7 +734,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use disc,                  only:disccalc,discplot
   use exactfromfile,         only:exact_fromfile
   use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec
-  use write_pixmap,          only:iwritepixmap,writepixmap,write_pixmap_ppm,readpixmap
+  use write_pixmap,          only:iwritepixmap,writepixmap,readpixmap
   use pdfs,                  only:pdf_calc,pdf_write
   use plotutils,             only:plotline
   use geometry,              only:coord_is_length
@@ -740,8 +742,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use legends,               only:ipanelselect
   use asciiutils,            only:string_delete
   use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
-                                  plot_sls,plot_line,plot_pt1,plotlib_is_pgplot,&
-                                  plotlib_supports_alpha
+                                  plot_sls,plot_line,plot_pt1,plotlib_is_pgplot
   integer, intent(inout) :: ipos, istepsonpage
   integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
   integer(kind=int1), dimension(:), intent(in) :: iamtype
@@ -1714,7 +1715,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  xminadapt(irenderplot) = min(ymin,xminadapt(irenderplot))
                  xmaxadapt(irenderplot) = max(ymax,xmaxadapt(irenderplot))
                  if (iadapt) then
-                    print*,' adapting y limits'
+                    if (iverbose > 1) print*,' adapting y limits'
                  else
                     !!--or use fixed limits and apply transformations
                     ymin = lim(irenderplot,1)
@@ -1806,7 +1807,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                     if (.not.interactivereplot .and. .not.isetrenderlimits) then
                        if (iadapt) then
-                          !print*,'adapting render limits'
+                          if (iverbose > 1) print*,'adapting render limits'
                           rendermin = renderminadapt
                           rendermax = rendermaxadapt
                        else
@@ -1817,7 +1818,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        endif
                        if (gotcontours) then
                           if (iadapt) then
-                             print*,'adapting contour limits'
+                             if (iverbose > 1) print*,'adapting contour limits'
                              contmin = contminadapt
                              contmax = contmaxadapt
                           elseif (icontourplot.eq.irenderplot .and. lim2set(icontourplot)) then
@@ -1955,15 +1956,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       npixx,npixy,xmin,ymin,pixwidth,pixwidthy, &
                       1,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
                  else
-                    if (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm) then
-                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax,alpha=brightness)
-                    else
-                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                         icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
-                    endif
+                    call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                      icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
                  endif
 
                  !!--contour/2nd render plot of different quantity on top of 1st rendering
@@ -1985,22 +1980,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     PlotOnRender_tmp(isinktype) = .false.
                  endif
 
-                 !!--write ppm if interpolate3D_opacity
-                 if ((.not. plotlib_supports_alpha) .and. &
-                     (use3Dperspective .and. use3Dopacityrendering .and. ndim.eq.3 .and. writeppm)) then
-                    !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
-                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
-                      zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
-                      icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
-                      (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax,brightness)
-
-                    call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax, &
-                                       trim(labelrender),((istep-1)*nframesloop + iframe),brightness)
                  !!--dump pixmap to file if option set
-                 elseif (iwritepixmap) then
-
-                    !!--plot non-gas particle types (e.g. sink particles) on top (and to ppm)
+                 if (iwritepixmap) then
+                    !!--plot non-gas particle types (e.g. sink particles) on top (and to pixmap)
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
@@ -2009,7 +1991,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                     call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,labelrender,&
                                      unitslabel(irenderplot),((istep-1)*nframesloop + iframe),x_sec,rootname(ifileopen))
-                 !!--no ppm write
                  else
                     !!--plot non-gas particle types (e.g. sink particles) on top
                     call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
@@ -2461,7 +2442,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               endif
            endif
            if (iadapt .and. .not.interactivereplot) then
-              print "(1x,a)",'adapting '//trim(labely)//' limits'
+              if (iverbose > 1) print "(1x,a)",'adapting '//trim(labely)//' limits'
               ymin = yminadapti
               ymax = ymaxadapti
            endif
@@ -2954,15 +2935,15 @@ contains
     !--------------------------------------------------------------
     if (((interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) &
         .or. (iadapt .and. (istepsonpage.eq.nstepsperpage .or. lastplot))) .and. .not.dum) then
-       if (plot_qcur()) then
-          print*,trim(labelx),' min, max = ',xmin,xmax
-          print*,trim(labely),' min, max = ',ymin,ymax
-          if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
-             print*,trim(labelrender),' min, max = ',rendermin,rendermax
-             if (gotcontours) then
-                print*,trim(labelcont),' min, max = ',contmin,contmax
-             endif
-          endif
+       if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
+          print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelx),xmin,xmax
+       if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
+          print "(1x,a,' min, max = ',g0,2x,g0)",trim(labely),ymin,ymax
+       if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
+          if (.not.same_limits(rendermin,rendermax,renderminwas,rendermaxwas)) &
+             print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelrender),rendermin,rendermax
+          if (gotcontours .and. .not.same_limits(contmin,contmax,contminwas,contmaxwas)) &
+             print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelcont),contmin,contmax
        endif
     endif
     !--------------------------------------------------------------
@@ -3716,7 +3697,7 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
   use labels,          only:is_coord
   use limits,          only:assert_sensible_limits
   use settings_limits, only:scalemax,iadapt,iadaptcoords
-  use settings_data,   only:debugmode,ndim
+  use settings_data,   only:debugmode,ndim,iverbose
   use settings_part,   only:iplotline
   implicit none
   integer,            intent(in)    :: iplot
@@ -3766,13 +3747,26 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
   if (.not.interactivereplot) then
      if (((is_coord(iplot,ndim) .and. iadaptcoords) &
      .or.(.not.is_coord(iplot,ndim) .and. iadapt)) .and. ipagechange) then
-        print "(1x,a)",'adapting '//trim(labeli)//' limits'
+        if (iverbose > 1) print "(1x,a)",'adapting '//trim(labeli)//' limits'
         xmini = xminadaptive
         xmaxi = xmaxadaptive
      endif
   endif
 
 end subroutine adapt_limits
+
+!-------------------------------------------------------------------
+! check if limits were the same as previous time printout occurred
+!-------------------------------------------------------------------
+logical function same_limits(min,max,minwas,maxwas)
+ real, intent(in)    :: min,max
+ real, intent(inout) :: minwas,maxwas
+
+ same_limits = (abs(min-minwas) < tiny(min) .and. abs(max-maxwas) < tiny(max))
+ minwas = min
+ maxwas = max
+
+end function same_limits
 
 !-------------------------------------------------------------------
 ! interface to log, inverse transformations:

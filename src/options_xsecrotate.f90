@@ -31,7 +31,7 @@ module settings_xsecrot
  integer, public :: nframes,nseq
  integer, public :: nxsec,irotateaxes
  logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
- logical, public :: writeppm, rendersinks
+ logical, public :: rendersinks
  real, public    :: anglex, angley, anglez, zobserver, dzscreenfromobserver
  real, public    :: taupartdepth,xsecwidth
  real, public    :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
@@ -60,7 +60,7 @@ module settings_xsecrot
           irotate,irotateaxes,anglex, angley, anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,writeppm,xsecwidth,rendersinks
+          taupartdepth,xsecwidth,rendersinks
 
  public :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
@@ -71,7 +71,7 @@ module settings_xsecrot
  !--public procedure names
  public :: defaults_set_xsecrotate,submenu_xsecrotate,getsequencepos,insidesequence
  public :: setsequenceend
- 
+
  procedure(add_sequence), pointer :: addseq => null()
  procedure(delete_sequence), pointer :: delseq => null()
  procedure(check_sequences), pointer :: checkseq => null()
@@ -84,7 +84,6 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_xsecrotate
-  implicit none
 
   xsec_nomulti = .false.    ! take cross section of data / particles
   xsecpos_nomulti = 0.      ! position of cross section
@@ -106,7 +105,6 @@ subroutine defaults_set_xsecrotate
   zobserver = 0.
   dzscreenfromobserver = 0.
   taupartdepth = 2.
-  writeppm = .true.
 
   !--defaults for animation sequences
   nseq = 0
@@ -130,7 +128,6 @@ subroutine defaults_set_xsecrotate
   ihavesetsequence = .false.
   rendersinks = .false.
 
-  return
 end subroutine defaults_set_xsecrotate
 
 !----------------------------------------------------------------------
@@ -144,8 +141,6 @@ subroutine submenu_xsecrotate(ichoose)
  use promptlist,     only:prompt_list
  use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered,ntypes
  use calcquantities, only:calc_quantities
- use plotlib,        only:plotlib_supports_alpha
- implicit none
  integer, intent(in) :: ichoose
  integer :: ians,i
  logical :: ichangedorigin
@@ -240,16 +235,6 @@ subroutine submenu_xsecrotate(ichoose)
        print "(a)",' also turning on 3D perspective (which must be set for this to work)'
        use3Dperspective = .true.
     endif
-    if (use3Dopacityrendering) then
-       if (.not.plotlib_supports_alpha) then
-          print "(/,a)",' Warning: 3D opacity rendering sends only an approximate version '
-          print "(a,/)",' to the PGPLOT device (not corrected for brightness) '
-          call prompt(' Do you want to write a ppm file in addition to PGPLOT output?',writeppm)
-       else
-          writeppm = .false.
-          !call prompt(' Do you want to apply the brightness correction?',writeppm)
-       endif
-    endif
     if (use3Dopacityrendering .and. get_sink_type(ntypes) > 0) then
        call prompt('Include sinks in opacity rendering (no=plot on top)?',rendersinks)
     endif
@@ -298,7 +283,6 @@ end subroutine submenu_animseq
 ! print the current list of shapes
 !-----------------------------------
 subroutine check_sequences(n)
- implicit none
  integer, intent(in) :: n
  integer :: iseq
 
@@ -314,11 +298,10 @@ subroutine check_sequences(n)
 end subroutine check_sequences
 
 subroutine delete_sequence(iseq,n)
- implicit none
  integer, intent(in)    :: iseq
  integer, intent(inout) :: n
  integer :: i
- 
+
  if (iseq.gt.0 .and. n.gt.0 .and. iseq.le.maxseq) then
     if (iseqtype(iseq).gt.0 .and. iseqtype(iseq).le.maxseq) then
        print "(a,i1,': ',a)",' deleting sequence ',iseq,trim(labelseqtype(iseqtype(iseq)))
@@ -338,7 +321,6 @@ subroutine add_sequence(istart,iend,n)
  use labels,        only:ix,irho
  use settings_data, only:ndim,istartatstep,iendatstep,numplot
  use filenames,     only:nsteps
- implicit none
  integer, intent(in)    :: istart,iend
  integer, intent(inout) :: n
  integer :: i,j,ierr
@@ -505,7 +487,6 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  use multiplot,     only:itrans
  use settings_data, only:ndim,numplot
  use transforms,    only:transform_limits,transform_limits_inverse,transform_label
- implicit none
  integer, intent(in) :: ipos,iplotx,iploty,irender
  real, intent(in)    :: anglexi,angleyi,anglezi,zobserveri,taupartdepthi,xsecposi
  real, intent(in)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
@@ -625,7 +606,6 @@ end subroutine setsequenceend
 !  utility function for comparing real numbers
 !----------------------------------------------------------------------
 logical function notequal(r1,r2)
- implicit none
  real, intent(in) :: r1,r2
 
  if (abs(r1-r2).gt.epsilon(r1)) then
@@ -642,7 +622,6 @@ end function notequal
 ! (and thus whether or not to generate extra frames)
 !----------------------------------------------------------------------
 logical function insidesequence(ipos)
- implicit none
  integer, intent(in) :: ipos
  integer :: i
 
@@ -667,7 +646,6 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
  use limits,     only:lim
  use multiplot,  only:itrans
  use transforms, only:transform_limits
- implicit none
  integer, intent(in)  :: ipos,iframe,iplotx,iploty,irender
  real, intent(out)    :: anglexi,angleyi,anglezi,zobserveri,dzscreen,taupartdepthi,xsecposi
  real, intent(out)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
@@ -766,7 +744,6 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
     endif
  enddo
 
- return
 end subroutine getsequencepos
 
 end module settings_xsecrot

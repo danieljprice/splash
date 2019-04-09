@@ -52,7 +52,6 @@ subroutine menu
   use getdata,          only:get_data
   use geomutils,        only:set_coordlabels
   use timestepping
-  implicit none
   integer            :: i,icol,ihalf,iadjust,indexi,ierr
   integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
   integer            :: iamvecprev, ivecplottemp,ichoose
@@ -453,7 +452,6 @@ subroutine menu
    use labels,          only:is_coord,labeltype
    use params,          only:maxparttypes
    use settings_data,   only:ntypes
-   implicit none
    integer :: ifac,ierr,itype,nvalues
    logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
    integer, dimension(maxparttypes)   :: itypelist
@@ -660,7 +658,6 @@ logical function allowrendering(iplotx,iploty,xsec)
  use settings_data,   only:ndim,ndataplots,icoords,icoordsnew
  use settings_render, only:icolour_particles
  use geometry,        only:coord_is_length
- implicit none
  integer, intent(in) :: iplotx,iploty
  logical, intent(in), optional :: xsec
  integer :: itransx,itransy,iz
@@ -707,7 +704,6 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use settings_part, only:iexact
  use system_utils,  only:lenvironment
  use write_pixmap,  only:ireadpixmap
- implicit none
  integer, intent(in)    :: ncolumns
  integer, intent(inout) :: ncalc
  integer, intent(out)   :: nextra,numplot,ndataplots
@@ -790,7 +786,7 @@ end subroutine set_extracols
 ! instant multiplot setup from main menu
 !----------------------------------------
 subroutine set_instant_multiplot(string,ipicky,ipickx,numplot,nmulti,multiplotx,multiploty,nx,ny)
- use params, only:maxplot
+ use params,    only:maxplot
  use prompting, only:prompt
  character(len=*), intent(in) :: string
  integer, intent(in) :: numplot
@@ -841,6 +837,13 @@ subroutine print_header
  integer, parameter :: a(49) = (/32,83,101,103,109,101,110,116,97,116,105,111,110,32,&
                       102,97,117,108,116,46,32,80,108,101,97,115,101,32,114,101,98,111,&
                       111,116,32,121,111,117,114,32,99,111,109,112,117,116,101,114,46/)
+integer, parameter :: s(48)=(/64,138,228,228,222,228,116,64,230,224,216,194,230,208,64,&
+                      200,210,202,200,92,64,160,216,202,194,230,202,64,228,202,196,222,&
+                      222,232,64,242,222,234,228,64,198,222,218,224,234,232,202,228/)
+integer, parameter :: p(53)=(/12,7,10,13,10,14,18,11,15,14,12,14,17,18,16,18,12,11,12,&
+                      17,13,15,11,15,13,12,12,17,12,11,16,18,14,9,11,17,17,13,10,18,16,10,15,&
+                      18,12,18,18,12,16,14,10,9,14/)
+
  call date_and_time(values=v)
  if (v(2)==m(1)/4 .and. v(3)==v(2)-2) then
     print "(/,48(a))",(achar(m(i)),i=1,48)
@@ -852,6 +855,10 @@ subroutine print_header
     print "(/,45(a))",(achar(l(i)/2),i=1,45)
  elseif (v(2)==a(14)/8 .and. v(3)==int(1.3) .and. v(5) < (l(1)-16)/4) then
     print "(/,49(a))",(achar(a(i)),i=1,49)
+ elseif (v(2)==(s(5)+78)/100+1 .and. v(3)==nint(sqrt(1.5)) .and. v(5) < s(1)/5.3) then
+    print "(/,48(a))",(achar(s(i)/2),i=1,48)
+ elseif ((v(2)==int(0.25*p(1)) .and. v(3)==p(6)) .or. (abs(v(3)/real(v(2))-4.*atan(1.)) < 1.3e-3)) then
+    print "(/,1x,53(a))",(achar(p(i)+39),i=1,53)
  else
     print "(/a)",' You may choose from a delectable sample of plots'
  endif

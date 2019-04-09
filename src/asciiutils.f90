@@ -504,6 +504,20 @@ end function add_escape_chars
 
 !---------------------------------------------------------------------------
 !
+! function to strip spaces out of a string
+!
+!---------------------------------------------------------------------------
+function nospaces(string)
+ character(len=*), intent(in) :: string
+ character(len=len(string)) :: nospaces
+
+ nospaces = string
+ call string_delete(nospaces,' ')
+
+end function nospaces
+
+!---------------------------------------------------------------------------
+!
 ! function stripping the directory off a filename
 !
 !---------------------------------------------------------------------------
@@ -798,15 +812,17 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,nlabels,labels)
+subroutine get_column_labels(line,nlabels,labels,method)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
- integer :: i1,i2,i,nlabelstmp
+ integer,          intent(out), optional :: method
+ integer :: i1,i2,i,nlabelstmp,istyle
  character(len=1) :: leadingchar
 
  nlabels = 0
  i1 = 1
+ istyle = 0
  !
  ! strip leading comment character ('#')
  !
@@ -818,28 +834,41 @@ subroutine get_column_labels(line,nlabels,labels)
  i1 = max(i1,index(line,'=')+1)
  i2 = i1
 
- if (index(line,']') > 0) then
+ if (index(nospaces(line),'][') > 0) then
  !
  ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
  !
+    istyle = 1
     call split(line(i1:),']',labels,nlabels)
  elseif (index(line,',') > 1) then
  !
  ! format style 2: mylabel1,mylabel2,mylabel3
  !
+    istyle = 2
     call split(line(i1:),',',labels,nlabelstmp)
     nlabels = count_sensible_labels(nlabelstmp,labels)
  else
  !
  ! format style 3: #     mylabel1     mylabel2     mylabel3
  !
+    istyle = 3
     call split(line(i1:),'  ',labels,nlabelstmp)
  !
  ! this style is dangerous, so perform sanity checks
  ! on the labels to ensure they are sensible
  !
     nlabels = count_sensible_labels(nlabelstmp,labels)
+    if (nlabels <= 1) then
+       !
+       ! format style 4: x y z vx vy vz
+       ! (this style is also dangerous)
+       !
+       istyle = 4
+       call split(line(i1:),' ',labels,nlabelstmp)
+       nlabels = count_sensible_labels(nlabelstmp,labels)
+    endif
  endif
+ if (present(method)) method = istyle
  !
  ! clean up
  !
@@ -847,15 +876,19 @@ subroutine get_column_labels(line,nlabels,labels)
     ! delete brackets
     if (nlabels <= size(labels)) then
        call string_delete(labels(i),',')
-       call string_delete(labels(i),'[')
-       call string_delete(labels(i),']')
-       labels(i) = trim(adjustl(labels(i)))
-       ! delete leading numbers
-       i1 = 1
-       do while (isdigit(labels(i)(i1:i1)))
-          labels(i)(i1:i1) = ' '
-          i1 = i1 + 1
-       enddo
+       if (istyle==1) then
+          call string_delete(labels(i),'[')
+          call string_delete(labels(i),']')
+       endif
+       if (istyle==1 .or. istyle==2) then
+          labels(i) = trim(adjustl(labels(i)))
+          ! delete leading numbers
+          i1 = 1
+          do while (isdigit(labels(i)(i1:i1)))
+             labels(i)(i1:i1) = ' '
+             i1 = i1 + 1
+          enddo
+       endif
        labels(i) = trim(adjustl(labels(i)))
     endif
  enddo

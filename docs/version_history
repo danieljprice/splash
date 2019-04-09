@@ -1,3 +1,6 @@
+2.9.0:
+general header quantities are read and available in function parser; more robust label detection and parsing during ascii data read; splash to grid works in non-cartesian geometries; added flared and log-flared coordinate systems; Doppler shift colour bar; can customise line style and colour when plotting multiple exact solutions; seg faults fixed; better plot tiling decisions; disappearing arrows bug fix; Rafikov disc-planet exact solution added; atan2 implemented in function parser; various multigrain phantom read fixes (incl. seg faults); exact rendering implemented in 2D; libsplash implemented for use as Python splash backend
+ 
 2.8.0:
 360/4pi video mode added; automatically read labels from ascii file headers; nearest sensible unit (e.g. au or pc) used by default; cactus hdf5 data read; kernel-smoothed particle plots of arbitrary quantities; Viridis, Ocean and Inferno colour schemes; can customise line colours; Bondi flow exact solution; option for ticks but no labels; correct units in surface density plots; colour bar on top or left; support for multi-grain dust in Phantom; bug fix with NaNs in ascii files
  

@@ -73,7 +73,7 @@ subroutine defaults_set_initial
   labeltype(1) = 'gas'
   do i=2,size(labeltype)
      if (i > 9) then
-        write(labeltype(i),"(a,1x,i2)") 'type',i     
+        write(labeltype(i),"(a,1x,i2)") 'type',i
      else
         write(labeltype(i),"(a,1x,i1)") 'type',i
      endif
@@ -128,7 +128,7 @@ subroutine defaults_set(use_evdefaults)
 !--if using evsplash, override some default options
 !
   if (use_evdefaults) then
-     print "(a)",'setting evsplash defaults'
+     print "(a)",' ** ev mode: using default settings for .ev files **'
      call defaults_set_page_ev
      call defaults_set_part_ev
   endif
@@ -246,64 +246,65 @@ subroutine defaults_read(filename)
  implicit none
  character(len=*), intent(in) :: filename
  logical :: iexist
- integer :: ierr,i
+ integer :: ierr,i,nerr
  integer, parameter :: iunit = 1
 
+ nerr = 0
  inquire (exist=iexist, file=filename)
  if (iexist) then
     open(unit=iunit,file=filename,status='old',form='formatted',delim='apostrophe',err=88)
 
     ierr = 0
     read(iunit,NML=dataopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading data options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=plotopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading plot options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=pageopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading page options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=renderopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading render options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=vectoropts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading vector plot options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=xsecrotopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading xsec/rotation options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=powerspecopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading power spectrum options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=exactopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=exactparams,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading exact solution parameters from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=multi,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading multiplot options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=shapeopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading shape options from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=calcopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading calculated quantity settings from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
     read(iunit,NML=animopts,iostat=ierr)
-    if (ierr /= 0) print "(a)",'error reading animation sequence settings from '//trim(filename)
+    if (ierr /= 0) nerr = nerr + 1
 
     if (len_trim(rootname(1)).eq.0) then
        do i=1,maxfile
@@ -313,7 +314,11 @@ subroutine defaults_read(filename)
 66  continue
 
     close(unit=iunit)
-    print*,'read '//trim(filename)
+    if (nerr > 0) then
+       print "(a)",' WARNING: '//trim(filename)//' incomplete (from old code version)'
+    else
+       print*,'read '//trim(filename)
+    endif
     return
  else
     print*,trim(filename)//' not found: using default settings'
@@ -322,7 +327,7 @@ subroutine defaults_read(filename)
 
 88 continue
  print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
- 
+
  return
 end subroutine defaults_read
 

@@ -134,7 +134,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
            ncolumnsfirst = ncolumns
         elseif (nstepsinfile(i).gt.0 .and. ncolumns.ne.ncolumnsfirst) then
            print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
-           ' columns, which differs from ',ncolumnsfirst,' read previously'
+           ' columns (',ncolumnsfirst,' previously)'
            ncolumns = max(ncolumns,ncolumnsfirst)
         endif
      enddo
@@ -240,14 +240,16 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
      !--override ncolumns from file and warn if different to first file
      if (ncolumnsfirst.gt.0 .and. nstepsinfile(ireadfile).gt.0) then
         if (ncolumns.ne.ncolumnsfirst) then
-           print "(1x,a,i2,a,i2,a)",'WARNING: file contains ',ncolumns, &
-           ' columns, which differs from ',ncolumnsfirst,' read previously'
+           write(*,"(1x,a,i2,a,i2,a)",advance='NO') 'WARNING: file has ',ncolumns, &
+           ' columns (',ncolumnsfirst,' previously)'
            if (ncolumns.lt.ncolumnsfirst) then
-              print "(10x,a,i2,/)",'setting data = 0 for columns > ',ncolumns
+              write(*,"(a,i2,/)") ', data=0 for columns > ',ncolumns
               dat(:,ncolumns+1:min(ncolumnsfirst,maxcol),1:nstepsinfile(ireadfile)) = 0.
            elseif (ncolumns.gt.ncolumnsfirst) then
-              print "(10x,a,i2,a)",'extra data beyond column ',ncolumnsfirst,' will be ignored'
+              write(*,"(a,i2,a)") ', columns > ',ncolumnsfirst,' ignored'
               print "(10x,a,/)",'(read this file first to use this data)'
+           else
+              write (*,*)
            endif
            ncolumns = ncolumnsfirst
         endif
@@ -282,7 +284,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
            endif
         enddo
         do i=1,nsteps_read
-           if (time(i).gt.-0.5*huge(0.)) time(i) = time(i)*units(0)        
+           if (time(i).gt.-0.5*huge(0.)) time(i) = time(i)*units(0)
         enddo
      endif
      !

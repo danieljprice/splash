@@ -202,6 +202,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      else
         dylength = 0.
      endif
+     itype = 1
      over_npart: do i=1,npart
         if (ntypes.gt.1) then
            if (mixedtypes) then
@@ -447,13 +448,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                  if (double_rendering) then
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
                                          xmin,xmax,ymin,ymax,contmin,contmax)
-                    print*,'setting doublerender min = ',contmin
-                    print*,'setting doublerender max = ',contmax
+                    !print*,'setting doublerender min = ',contmin
+                    !print*,'setting doublerender max = ',contmax
                  else
                     call adjustcolourbar(iColourBarStyle,xpt,ypt,xpt2,ypt2,&
                                          xmin,xmax,ymin,ymax,rendermin,rendermax)
-                    print*,'setting render min = ',rendermin
-                    print*,'setting render max = ',rendermax
+                    !print*,'setting render min = ',rendermin
+                    !print*,'setting render max = ',rendermax
                  endif
                  iadvance = 0
                  interactivereplot = .true.
@@ -524,8 +525,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               yptmax = max(ypt,ypt2)
            endif
            if (.not.(iselectcircle.or.iselectpoly) .or. char2==plot_left_click) then ! rectangle selection
-              print*,'xrange = ',xptmin,'->',xptmax
-              print*,'yrange = ',yptmin,'->',yptmax
+              !print*,'xrange = ',xptmin,'->',xptmax
+              !print*,'yrange = ',yptmin,'->',yptmax
               if (iplotz.ne.0 .and. x_sec) then
                  print*,'(zrange = ',zptmin,'->',zptmax,')'
               endif
@@ -705,13 +706,13 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               contmin = renderpt - 0.5*contlength
               contmax = renderpt + 0.5*contlength
               call assert_sensible_limits(contmin,contmax)
-              print*,'zooming on colour bar: min, max = ',contmin,contmax
+              !print*,'zooming on colour bar: min, max = ',contmin,contmax
            else
               renderpt = 0.5*(rendermin + rendermax)
               rendermin = renderpt - 0.5*renderlength
               rendermax = renderpt + 0.5*renderlength
               call assert_sensible_limits(rendermin,rendermax)
-              print*,'zooming on colour bar: min, max = ',rendermin,rendermax
+              !print*,'zooming on colour bar: min, max = ',rendermin,rendermax
            endif
            iadvance = 0
            interactivereplot = .true.
@@ -721,7 +722,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               xmin = xcen - 0.5*xlength
               xmax = xcen + 0.5*xlength
               call assert_sensible_limits(xmin,xmax)
-              print*,'zooming on x axis: min, max = ',xmin,xmax
+              !print*,'zooming on x axis: min, max = ',xmin,xmax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -731,7 +732,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               ymin = ycen - 0.5*ylength
               ymax = ycen + 0.5*ylength
               call assert_sensible_limits(ymin,ymax)
-              print*,'zooming on y axis: min, max = ',ymin,ymax
+              !print*,'zooming on y axis: min, max = ',ymin,ymax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -779,7 +780,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case('v')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'decreasing vector arrow size'
+           !print*,'decreasing vector arrow size'
            vecmax = 1.2*zoomfac*vecmax
            iadvance = 0
            interactivereplot = .true.
@@ -787,7 +788,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('V')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'increasing vector arrow size'
+           !print*,'increasing vector arrow size'
            vecmax = vecmax/(1.2*zoomfac)
            iadvance = 0
            interactivereplot = .true.
@@ -795,7 +796,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('w','W')
         if (ivecx.gt.0 .and. ivecy.gt.0) then
-           print*,'adapting vector arrow size'
+           !print*,'adapting vector arrow size'
            vecmax = -1.0
            iadvance = 0
            interactivereplot = .true.
@@ -885,7 +886,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case(',')
         if (rotation) then
-           print*,'changing z rotation angle by -15 degrees...'
+           !print*,'changing z rotation angle by -15 degrees...'
            anglez = anglez - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -894,7 +895,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('<')
         if (rotation) then
-           print*,'changing z rotation angle by -30 degrees...'
+           !print*,'changing z rotation angle by -30 degrees...'
            anglez = anglez - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -903,7 +904,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('.')
         if (rotation) then
-           print*,'changing z rotation angle by 15 degrees...'
+           !print*,'changing z rotation angle by 15 degrees...'
            anglez = anglez + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -912,7 +913,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('>')
         if (rotation) then
-           print*,'changing z rotation angle by 30 degrees...'
+           !print*,'changing z rotation angle by 30 degrees...'
            anglez = anglez + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -921,7 +922,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('/')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by -15 degrees...'
+           !print*,'changing y rotation angle by -15 degrees...'
            angley = angley - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -930,7 +931,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('?')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by -30 degrees...'
+           !print*,'changing y rotation angle by -30 degrees...'
            angley = angley - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -939,7 +940,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('\')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by 15 degrees...'
+           !print*,'changing y rotation angle by 15 degrees...'
            angley = angley + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -948,7 +949,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('|')
         if (rotation .and. ndim.ge.2) then
-           print*,'changing y rotation angle by 30 degrees...'
+           !print*,'changing y rotation angle by 30 degrees...'
            angley = angley + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -957,7 +958,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('[')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by -15 degrees...'
+           !print*,'changing x rotation angle by -15 degrees...'
            anglex = anglex - 15.
            iadvance = 0
            interactivereplot = .true.
@@ -966,7 +967,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('{')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by -30 degrees...'
+           !print*,'changing x rotation angle by -30 degrees...'
            anglex = anglex - 30.
            iadvance = 0
            interactivereplot = .true.
@@ -975,7 +976,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case(']')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by 15 degrees...'
+           !print*,'changing x rotation angle by 15 degrees...'
            anglex = anglex + 15.
            iadvance = 0
            interactivereplot = .true.
@@ -984,7 +985,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         endif
      case('}')
         if (rotation .and. ndim.ge.3) then
-           print*,'changing x rotation angle by 30 degrees...'
+           !print*,'changing x rotation angle by 30 degrees...'
            anglex = anglex + 30.
            iadvance = 0
            interactivereplot = .true.
@@ -1238,7 +1239,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
      !
      case('q','Q',achar(27),achar(3))
         iadvance = -666
-        print*,'quitting...'
+        !print*,'quitting...'
         iexit = .true.
      case('b','B',plot_scroll_left) ! right click -> go back
         iadvance = -abs(iadvance)
@@ -1994,7 +1995,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      case('v')
         if (ivecarr(ipanel).gt.0) then
-           print*,'decreasing vector arrow size'
+           !print*,'decreasing vector arrow size'
            xmax(ivecarr(ipanel)) = 1.2*zoomfac*xmax(ivecarr(ipanel))
            istep = istepnew
            interactivereplot = .true.
@@ -2002,7 +2003,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         endif
      case('V')
         if (ivecarr(ipanel).gt.0) then
-           print*,'increasing vector arrow size'
+           !print*,'increasing vector arrow size'
            xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(1.2*zoomfac)
            istep = istepnew
            interactivereplot = .true.
@@ -2010,7 +2011,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         endif
      case('w','W')
         if (ivecarr(ipanel).gt.0) then
-           print*,'adapting vector arrow size'
+           !print*,'adapting vector arrow size'
            xmax(ivecarr(ipanel)) = -1.0
            istep = istepnew
            interactivereplot = .true.
@@ -2453,7 +2454,7 @@ subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype
  endif
  call assert_sensible_limits(xmin,xmax)
 
- print "(1x,a)",' resetting '//trim(labeli)//' limits'
+ !print "(1x,a)",' resetting '//trim(labeli)//' limits'
 
 end subroutine adapt_limits_interactive
 

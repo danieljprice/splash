@@ -657,6 +657,14 @@ OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 globaldata.f90 \
+		labels.f90 interpolation.f90 interpolate3D_projection.F90 \
+		interpolate3D_opacity.f90 interpolate3D_xsec.f90 libsplash.f90
+OBJLIB1= ${SRCLIB:.f90=.o}
+OBJLIB= $(OBJLIB1:.F90=.o)
+
+lib: $(OBJLIB)
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) ${OBJLIB} -o libsplash.so
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
