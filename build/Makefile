@@ -175,7 +175,7 @@ ifeq ($(SYSTEM),ifort)
    FC= ifort
 #   FFLAGS= -O3 -nbs -i_dynamic
    FFLAGS= -O3 -nbs
-   OMPFLAGS= -openmp
+   OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
    SYSTEMFILE= system_f2003.f90
