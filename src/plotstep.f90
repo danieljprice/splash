@@ -437,40 +437,42 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        endif
      endif
 
-     if (iplotz.gt.0 .and. use3Dperspective) then
+     if (iplotz.gt.0) then
 !
 !--initialise 3D perspective
 !
-       !--set default values if none set
-       if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
-       if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
-       call prompt('enter z coordinate of observer ',zobserver)
-       dzscreenfromobserver = zobserver
+        if (use3Dperspective) then
+           !--set default values if none set
+           if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
+           if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
+           call prompt('enter z coordinate of observer ',zobserver)
+           dzscreenfromobserver = zobserver
+        endif
 !       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
 !
 !--initialise opacity for 3D opacity rendering
 !
-       if (use3Dopacityrendering .and. (iamrendering .or. idoingvecplot)) then
-          hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
-          if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
-          if (ipmass.gt.0) then
-             pmassav = lim(ipmass,1)
-             if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
-          else  ! handle case where mass is not a data column
-             pmassav = maxval(masstype)
-             do i=1,ntypes
-                if (iplotpartoftype(i) .and. usetypeinrenderings(i) &
-                    .and. any(masstype(i,:).gt.0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
-             enddo
-          endif
-          print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
-          print*,'min h = ',hav,' min particle mass = ',pmassav
-          print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
-          call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth,0.)
-          rkappafac = pi*hav*hav/(pmassav*coltable(0))
-          print*,'kappa (particle cross section per unit mass) = ',rkappafac/taupartdepth
-       endif
-    endif
+        if (use3Dopacityrendering .and. (iamrendering .or. idoingvecplot)) then
+           hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
+           if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
+           if (ipmass.gt.0) then
+              pmassav = lim(ipmass,1)
+              if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
+           else  ! handle case where mass is not a data column
+              pmassav = maxval(masstype)
+              do i=1,ntypes
+                 if (iplotpartoftype(i) .and. usetypeinrenderings(i) &
+                     .and. any(masstype(i,:).gt.0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
+              enddo
+           endif
+           print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
+           print*,'min h = ',hav,' min particle mass = ',pmassav
+           print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
+           call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth,0.)
+           rkappafac = pi*hav*hav/(pmassav*coltable(0))
+           print*,'kappa (particle cross section per unit mass) = ',rkappafac/taupartdepth
+        endif
+     endif
 
   endif
 
@@ -1133,14 +1135,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            angletempx = anglex
            angletempy = angley
            angletempz = anglez
-           if (ndim.eq.3 .and. use3Dperspective) then
-              dzscreentemp = dzscreenfromobserver
-              zobservertemp = zobserver
-              taupartdepthtemp = taupartdepth
-           else
-              dzscreentemp = 0.
-              zobservertemp = 0.
-              taupartdepthtemp = 0.
+           dzscreentemp = 0.
+           zobservertemp = 0.
+           taupartdepthtemp = 0.
+           if (ndim.eq.3) then
+              if (use3Dperspective) then
+                 dzscreentemp = dzscreenfromobserver
+                 zobservertemp = zobserver
+              endif
+              if (use3Dopacityrendering) taupartdepthtemp = taupartdepth
            endif
         else
            if (ndim.eq.3 .and. use3Dperspective) dzscreentemp = zobservertemp
@@ -1194,9 +1197,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
         endif
         !--for 3D perspective, do not plot particles behind the observer
-        if (ndim.eq.3.and.use3Dperspective) then
-           dzscreenfromobserver = zobserver
-           zslicemax = zobservertemp
+        if (ndim.eq.3) then
+           if (use3Dperspective) then
+              dzscreenfromobserver = zobserver
+              zslicemax = zobservertemp
+           endif
            if (use3Dopacityrendering) rkappa = rkappafac/taupartdepthtemp
         endif
 
@@ -1321,7 +1326,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
                     deallocate(datpix)
                     allocate (datpix(npixx,npixy))
-                    if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
+                    if (ndim.eq.3 .and. use3Dopacityrendering) then
                        if (allocated(brightness)) deallocate(brightness)
                        allocate(brightness(npixx,npixy))
                     endif
@@ -1332,7 +1337,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  endif
               else
                  allocate (datpix(npixx,npixy))
-                 if (ndim.eq.3 .and. use3Dperspective .and. use3Dopacityrendering) then
+                 if (ndim.eq.3 .and. use3Dopacityrendering) then
                     if (allocated(brightness)) deallocate(brightness)
                     allocate(brightness(npixx,npixy))
                  endif
@@ -1478,7 +1483,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  !--only rerender if absolutely necessary
                  if (.not.interactivereplot .or. irerender) then
                     if (x_sec) then
-                       if (use3Dperspective .and. use3Dopacityrendering) then
+                       if (use3Dopacityrendering) then
                           !!--do surface-rendered cross-section with opacity
                           if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : opacity-rendered cross section', xmin,ymin
@@ -1576,7 +1581,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           endif
                        endif
                     else
-                       if (use3Dperspective .and. use3Dopacityrendering) then
+                       if (use3Dopacityrendering) then
                           !!--do fast projection with opacity
                           if (ipmass.gt.0) then
                              !--contour plot first
@@ -1764,7 +1769,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (gotcontours) labelcont = label(icontourplot)
 
                  !!--set label for column density (projection) plots
-                 if (ndim.eq.3 .and..not. x_sec .and..not.(use3Dperspective.and.use3Dopacityrendering)) then
+                 if (ndim.eq.3 .and..not. x_sec .and..not.use3Dopacityrendering) then
                     labelrender = integrate_label(labelrender,irender,iz,inormalise,iRescale,&
                                                   labelzintegration,projlabelformat,iapplyprojformat)
                     if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inormalise,&
@@ -1976,7 +1981,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  PlotOnRender_tmp(:) = PlotOnRenderings(:)
                  isinktype = get_sink_type(ntypes)
-                 if (use3Dperspective .and. use3Dopacityrendering .and. rendersinks .and. isinktype > 0) then
+                 if (use3Dopacityrendering .and. rendersinks .and. isinktype > 0) then
                     PlotOnRender_tmp(isinktype) = .false.
                  endif
 

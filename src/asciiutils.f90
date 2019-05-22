@@ -921,6 +921,7 @@ logical function is_sensible_label(string)
  character(len=*), intent(in) :: string
  real    :: dum
  integer :: ierr
+ real, parameter :: dum_prev =  -66666666.
 
  is_sensible_label = .true.
 
@@ -930,9 +931,10 @@ logical function is_sensible_label(string)
  ! should not contain equals sign
  !if (index(string,'=') > 0) is_sensible_label = .false.
 
+ dum = dum_prev
  ! should not be able to read it as a real number
  read(string,*,iostat=ierr) dum
- if (ierr==0) is_sensible_label = .false.
+ if (ierr==0 .and. abs(dum-dum_prev) > tiny(dum)) is_sensible_label = .false.
 
 end function is_sensible_label
 
