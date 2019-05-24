@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -218,28 +218,6 @@ subroutine submenu_particleplots(ichoose)
         elseif (.not.iplotpartoftype(itype)) then
            PlotonRenderings(itype) = .false.
         endif
-        if (trim(labeltype(itype))=='dust'.and. iplotpartoftype(itype) .and. ndusttypes>1) then
-           !--if idustfrac_plot hasn't been defined...
-           if (idustfrac_plot == 0 ) then
-              idustfrac_plot = idustfracsum
-           endif
-           !--save to compare after user input
-           idustfrac_prev = idustfrac_plot
-           write(idustfracsum_string,'(I3)') idustfracsum
-           call prompt('Which dust phase would you like to render? ('          &
-                       //trim(adjustl(idustfracsum_string))//'=summed)',  &
-                       idustfrac_plot,idustfracsum,idustfracsum+ndusttypes)
-           !--update which set of deltav's will be used
-           ideltav_plot = ideltavsum + ndimV*(idustfrac_plot - idustfracsum)
-           if (idustfrac_prev /= idustfrac_plot) then
-              !--Modify calculated data for fake dust particles if necessary
-              if (ncalc /= 0) then
-                 print*,'...recalibrating calculated quantities...'
-                 call setup_calculated_quantities(ncalc,quiet=.true.)
-                 print*,'...done!'
-              endif
-           endif
-        endif
      enddo
      return
 !------------------------------------------------------------------------
@@ -377,12 +355,10 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(7)
-     print 20,icoords
+     print "(' 0) reset (=',i2,')')",icoords
      do i=1,maxcoordsys
-        print 30,i,labelcoordsys(i)
+        print "(1x,i1,')',1x,a)",i,labelcoordsys(i)
      enddo
-20   format(' 0) reset (=',i2,')')
-30   format(1x,i1,')',1x,a)
      icoordsprev = icoordsnew
      call prompt(' Enter coordinate system to plot in:', &
                  icoordsnew,0,maxcoordsys)

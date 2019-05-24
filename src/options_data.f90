@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -91,6 +91,7 @@ subroutine submenu_data(ichoose)
  integer, intent(in) :: ichoose
  integer             :: ians, i
  character(len=30)   :: fmtstring
+ character(len=1)    :: charp
  logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
 
  ians = ichoose
@@ -111,12 +112,10 @@ subroutine submenu_data(ichoose)
            ' 1) read new data /re-read data',/,      &
            ' 2) change number of timesteps used        ( ',i5, ' )',/, &
            ' 3) plot selected steps only               (  ',a,' )',/, &
-           ' 4) buffering of data on/off               (  ',a,' )',/, &
-           ' 5) turn calculate extra quantities on/off (  ',a,' )',/, &
-           ' 6) edit list of calculated quantities               ',/, &
-           ' 7) use physical units                     (  ',a,' )',/,&
-           ' 8) change physical unit settings ')
-    call prompt('enter option',ians,0,8)
+           ' 4) buffer snapshots into memory           (  ',a,' )',/, &
+           ' 5) calculate extra quantities             (  ',a,' )',/, &
+           ' 6) use physical units                     (  ',a,' )')
+    call prompt('enter option',ians,0,6)
  endif
 !
 !--options
@@ -160,72 +159,61 @@ subroutine submenu_data(ichoose)
        endif
     endif
 !------------------------------------------------------------------------
- case(5,6)
-    if (ians.eq.5) iCalcQuantities = .not.iCalcQuantities
+ case(5)
+    call setup_calculated_quantities(ncalc)
 
-    if (iCalcQuantities .or. ians.eq.6) then
-       call setup_calculated_quantities(ncalc)
-
-       if (ians.eq.6 .and. .not.iCalcQuantities) then
-          if (ncalc.gt.0) iCalcQuantities = .true.
-       endif
-       if (iCalcQuantities) then
-          if (DataIsBuffered) then
-             call calc_quantities(1,nsteps)
-             call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
-          else
-             if (ifileopen.gt.0) then
-                call calc_quantities(1,nstepsinfile(ifileopen))
-                call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
-             endif
+    iCalcQuantities = (ncalc > 0)
+    if (iCalcQuantities) then
+       if (DataIsBuffered) then
+          call calc_quantities(1,nsteps)
+          call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
+       else
+          if (ifileopen.gt.0) then
+             call calc_quantities(1,nstepsinfile(ifileopen))
+             call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
           endif
        endif
     else
        print "(/a)",' Calculation of extra quantities is '//print_logical(iCalcQuantities)
     endif
 !------------------------------------------------------------------------
- case(7)
-    print "(a)",'current settings for conversion to physical units are:'
+ case(6)
+    print "(/,a)",' Current settings for physical units:'
     call get_labels ! reset labels for printing
+    print "(2x,a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
+    print "('  0) ',a,a3,a,a3,es9.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
     do i=1,ncolumns
-       print "(a,a3,a,a3,es10.3)",trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
+       print "(i3,') ',a,a3,a,a3,es10.3)",i,trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
     enddo
-    print "(a,a3,a,a3,es9.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
-    print "(a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
+    print "(a)"
 
-    iRescaleprev = iRescale
-    iRescale = .not.iRescale
-    call prompt('Use physical units?',iRescale)
-
-    if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale)) then
-       if (buffer_data) then
-          call get_data(-1,.true.)
-       else
-          call get_data(1,.true.,firsttime=.true.)
-       endif
-    endif
-!------------------------------------------------------------------------
- case(8)
     UnitsHaveChanged = .false.
-    call set_units(ncolumns,numplot,UnitsHaveChanged)
+    iRescaleprev = iRescale
+    charp='y'
+    if (iRescale) charp = 'n'
+    call prompt('Use physical units? y)es, n)o, e)dit',charp,&
+                list=(/'y','Y','n','N','e','E'/),noblank=.true.)
+    select case(charp(1:1))
+    case('y','Y')
+       iRescale = .true.
+    case('e','E')
+       call set_units(ncolumns,numplot,UnitsHaveChanged)
+       iwriteunitsfile = .true.
+       call prompt(' save units to file? ',iwriteunitsfile)
+       if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
+       if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
+       if (.not.UnitsHaveChanged) call get_labels
+    case default
+       iRescale = .false.
+    end select
 
-    iwriteunitsfile = .true.
-    call prompt(' save units to file? ',iwriteunitsfile)
-    if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
-
-    if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
-
-    !
-    !--re-read/rescale data if units have changed
-    !
-    if (UnitsHaveChanged) then
+    if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale) &
+        .or. UnitsHaveChanged) then
        if (buffer_data) then
           call get_data(-1,.true.)
        else
           call get_data(1,.true.,firsttime=.true.)
        endif
-    else
-       call get_labels
     endif
 !------------------------------------------------------------------------
  end select
