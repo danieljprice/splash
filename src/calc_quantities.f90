@@ -375,7 +375,7 @@ subroutine print_example_quantities(verbose,ncalc)
        ldfracsum = 'dustfrac'
        call print_or_prefill(prefill,string,nc)
     endif
- else
+ elseif (idustfrac > 0) then
     ndusttypes = 1
     ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
  endif
@@ -419,9 +419,6 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-!                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-!                             //' - r_{dust}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
-!                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
              call print_or_prefill(prefill,string,nc)
           enddo
           !--dust velocities
@@ -430,9 +427,6 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' + (1 - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //')*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-!                             //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
-!                             //' + r_{gas}/'//trim(shortlabel(label(irho),unitslabel(irho))) &
-!                             //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
              call print_or_prefill(prefill,string,nc)
           enddo
        else
@@ -523,6 +517,12 @@ subroutine print_example_quantities(verbose,ncalc)
 
 end subroutine print_example_quantities
 
+!-----------------------------------------------------------------
+!
+!  utility (private) to either print the example quantity or
+!  add it to a prefilled list of calculated quantities
+!
+!-----------------------------------------------------------------
 subroutine print_or_prefill(prefill,string,nc,comment,ulab)
  logical, intent(in) :: prefill
  character(len=*), intent(in) :: string
