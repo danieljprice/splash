@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -92,7 +92,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=68)  :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2018 Daniel Price'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2019 Daniel Price'
 
  public
 

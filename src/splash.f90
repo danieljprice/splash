@@ -48,6 +48,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.9.1  : (xx/xx/19)
+!             cleaner menu options for units and calculated quantities;
+!             surface rendering allowed with 3D perspective turned off
 !     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;
@@ -398,7 +401,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.9.0 [5th Apr 2019]'
+  character(len=*), parameter :: version = 'v2.9.1beta [27th May 2019]'
 
   !
   ! initialise some basic code variables
@@ -763,20 +766,18 @@ subroutine print_header
    "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _ (_)  _    ",/, &
    "      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   ",/, &
    "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)      ")
- print 20
-20 format(/,  &
-   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
+ print "(/,  &
+   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)"
 
  print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2019 )'
- print 30
-30 format(/,    &
+ print "(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENCE file for details). *',/,/, &
-   ' Updates/userguide: http://users.monash.edu.au/~dprice/splash ',/, &
-   ' Email: daniel.price@monash.edu or splash-users@googlegroups.com',/, &
+   ' http://users.monash.edu.au/~dprice/splash ',/, &
+   ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
-   ' use SPLASH in print and don''t forget to send pics for the gallery.',/)
+   ' use SPLASH in print and don''t forget to send pics for the gallery',/)"
 
 end subroutine print_header
 
