@@ -272,6 +272,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
         print "(/a)",' resetting all units to unity...'
         units = 1.0
         unitslabel = ' '
+        unitzintegration = 1.0
+        labelzintegration = ' '
      endif
      print*
   enddo
@@ -323,7 +325,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
   integer, intent(in), optional :: iverbose
   character(len=2*len(unitslabel)+40) :: line
   integer :: i,itemp,isemicolon,isemicolon2,isemicolon3,isverbose
-  logical :: ierrzunits,iexist,verbose
+  logical :: ierrzunits,iexist
 
   if (present(iverbose)) then
      isverbose= iverbose
