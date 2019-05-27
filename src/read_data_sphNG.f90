@@ -186,7 +186,7 @@ contains
      endif
   enddo over_tags
   if (matched) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_real8
 
@@ -216,7 +216,7 @@ contains
      endif
   enddo over_tags
   if (matched) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_real4
 
@@ -599,9 +599,7 @@ contains
      call extract('umass',umass,real8arr,tags,nreal8s,ierrs(2))
      call extract('utime',utime,real8arr,tags,nreal8s,ierrs(3))
      call extract('umagfd',umagfd,real8arr,tags,nreal8s,ierrs(4))
-     if (any(ierrs /= 0)) then
-        print "(a)",' *** error reading units'
-     endif
+
      ! extract the number of dust arrays are in the file
      if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
 !
@@ -702,7 +700,7 @@ contains
   integer, intent(inout) :: npart,ntotal
   logical, intent(in)  :: debug
   logical, intent(out) :: gotbinary
-  real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax,tolh
+  real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax
   real :: massoftypei(ntypes)
   integer :: i,ierrs(10)
   integer :: itype
@@ -783,10 +781,8 @@ contains
   hfact = 1.2
   if (phantomdump) then
      call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
-     call extract('tolh',tolh,realarr,tags,nreals,ierrs(2))
-     print "(a,es12.4,a,f6.3,a,f5.2,a,es8.1)", &
-           ' time = ',time,' gamma = ',gamma, &
-           ' hfact = ',hfact,' tolh = ',tolh
+     print "(a,es12.4,a,f6.3,a,f5.2)", &
+           ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
   elseif (batcode) then
      call extract('radL1',radL1,realarr,tags,nreals,ierrs(1))
      call extract('PhiL1',PhiL1,realarr,tags,nreals,ierrs(2))
