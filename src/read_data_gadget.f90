@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -777,7 +777,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
                     if (nfiles.gt.1) then
                        read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
                     else
-                       read (iunit,iostat=ierr) dat(i1:i2,icol,i)
+                       if (.not. allocated(dattemp1) .or. size(dattemp1) < i2-i1) then
+                          if (allocated(dattemp1)) deallocate(dattemp1)
+                          allocate(dattemp1(i2-i1+1))
+                       endif
+                       read (iunit,iostat=ierr) dattemp1(1:1+i2-i1)
+                       dat(i1:i2,icol,i) = real(dattemp1(1:1+i2-i1)) ! convert to real*8 if compiled in double prec
                     endif
                  endif
               endif
@@ -790,6 +795,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            endif
         endif
      enddo gas_properties
+     if (allocated(dattemp1)) deallocate(dattemp1)
 
      !if (nextraveccols.gt.0) then
      !   print*,'chemical species ',index2
@@ -936,7 +942,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
               dat(:,ih,i) = 0.
            end where
            print "(a,i10,a,f5.2,a)", &
-            ' SMOOTHING LENGTHS SET for ',j-1-index1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
+            ' SMOOTHING LENGTHS SET for ',index2-index1+1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
         endif
         hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
      endif
