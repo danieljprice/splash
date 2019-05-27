@@ -37,7 +37,11 @@ module write_data_phantom
  private
 
 contains
-
+!--------------------------------------------------------------------
+!+
+!  write header tag for tagged format
+!+
+!--------------------------------------------------------------------
 function tag(string)
  character(len=lentag) :: tag
  character(len=*), intent(in) :: string
@@ -46,6 +50,11 @@ function tag(string)
 
 end function tag
 
+!--------------------------------------------------------------------
+!+
+!  write output data file that is readable by phantom
+!+
+!--------------------------------------------------------------------
 subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, &
                                   masstype,ncolumns,udist,umass,utime,umagfd,labeltype,&
                                   label_dat,ix,ih,ivx,iBfirst,ipmass,iutherm,filename,hsoft_sink)
@@ -146,8 +155,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
        rheader_tags(3+i) = 'massoftype'
        if (npartoftype(i) > 0) then
           if (any(dat(index1:index1+npartoftype(i)-1,ipmass).ne.dat(index1,ipmass))) then
-             print*,' WARNING: unequal mass particles detected but PHANTOM only accepts equal mass, skipping...'
-             return
+             print "(a)",' WARNING: unequal mass particles detected but PHANTOM only accepts equal mass...'
           endif
           index1 = index1 + npartoftype(i) - 1
        endif
@@ -195,7 +203,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  number = 2 + ntypesi
  write (idump, err=100) number
  write (idump, err=100) tag('nparttot'),tag('ntypes'),(tag('npartoftype'),i=1,ntypesi)
- write (idump, err=100) nparttot,int(ntypesi,kind=8),npartoftypetot(1:ntypesi)
+ write (idump, err=100) nparttot,int(ntypesi,kind=int8),npartoftypetot(1:ntypesi)
 
 !--default real
  write (idump, err=100) maxrhead
@@ -292,7 +300,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 !
 !--sink particle arrays
 !
- if (nptmass > 0) then
+ if (nptmass > 0 .and. allocated(ilocsink)) then
     do j = 1, 3
        write (idump, err=100) tag(label_dat(ix(j)))
        write (idump, err=100) (dat(ilocsink(i),ix(j)),i=1,nptmass)
@@ -303,6 +311,10 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
     write (idump, err=100) (dat(ilocsink(i),ih),i=1,nptmass)
 
     ! extra sink information
+    macc = 0.
+    spinx = 0.
+    spiny = 0.
+    spinz = 0.
     write (idump, err=100) tag('hsoft')
     write (idump, err=100) (hsoft_sink,i=1,nptmass)
     write (idump, err=100) tag('maccreted')
@@ -318,6 +330,8 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
        write (idump, err=100) (dat(ilocsink(i),ivx+j-1),i=1,nptmass)
     enddo
  endif
+
+ if (allocated(ilocsink)) deallocate(ilocsink)
 
  if (mhd) then
     do j=1,3
@@ -341,7 +355,6 @@ end subroutine write_sphdata_phantom
 !+
 !--------------------------------------------------------------------
 character(len=100) function fileident(firstchar,codestring,mhd)
- implicit none
  character(len=1), intent(in) :: firstchar
  character(len=*), intent(in), optional :: codestring
  logical,          intent(in), optional :: mhd
@@ -380,10 +393,10 @@ end function fileident
 !+
 !--------------------------------------------------------------------
 subroutine extract_sink_particles_from_data(ntypes,npartoftype,labeltype,np,noftype,nptmass,ntypesi,ilocsink)
- integer, intent(in) :: ntypes,npartoftype(ntypes)
- character(len=*), intent(in) :: labeltype(ntypes)
- integer, intent(out) :: np,nptmass,ntypesi
- integer(kind=int8), intent(out) :: noftype(ntypes)
+ integer,              intent(in)  :: ntypes,npartoftype(ntypes)
+ character(len=*),     intent(in)  :: labeltype(ntypes)
+ integer,              intent(out) :: np,nptmass,ntypesi
+ integer(kind=int8),   intent(out) :: noftype(ntypes)
  integer, allocatable, intent(out) :: ilocsink(:)
  integer :: i,j
 
@@ -391,7 +404,7 @@ subroutine extract_sink_particles_from_data(ntypes,npartoftype,labeltype,np,noft
  ntypesi = ntypes
  noftype(:) = int(npartoftype(:),kind=8)
  over_types: do i=1,ntypes
-    if (trim(labeltype(i))=='sink' .or. trim(labeltype(i))=='dark matter') then
+    if (trim(labeltype(i))=='sink' .or. (trim(labeltype(i))=='dark matter' .and. npartoftype(i) <= 1000)) then
        nptmass = npartoftype(i)
        noftype(i) = 0
        allocate(ilocsink(nptmass))
