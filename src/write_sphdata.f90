@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -69,7 +69,7 @@ logical function issphformat(string)
 end function issphformat
 
 subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
- use labels,         only:labeltype,label,unitslabel,irho,ipmass,ix
+ use labels,         only:labeltype,label,unitslabel,irho,ipmass,ix,iBfirst,ih,iutherm,ivx
  use settings_units, only:units
  use settings_data,  only:ndim,icoords,icoordsnew,xorigin
  use params,         only:int1,maxplot,doub_prec
@@ -90,6 +90,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  integer            :: ierr,i,idim,i1,i2
  character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
  real(kind=doub_prec), dimension(maxplot) :: vals
+ real(kind=doub_prec) :: udist,umass,utime,umagfd
  real, dimension(3) :: x0,v0
  logical :: change_coordsys
 
@@ -271,8 +272,21 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     close(unit=iunit)
 
  case('phantom','PHANTOM')
-    call write_sphdata_phantom(time,gamma,dat,npart,1,npartoftype(1:1),&
-                               masstype,ncolumns,filename)
+    udist = 0.d0
+    umagfd = 0.d0
+    if (ix(1) > 0) udist = units(ix(1))
+    utime = units(0)
+    if (ipmass > 0) then
+       umass = units(ipmass)
+    else
+       print "(a)",' WARNING: units for mass unknown, written as 1.0'
+       umass = 1.0d0
+    endif
+    if (iBfirst > 0) umagfd = units(iBfirst)
+    call write_sphdata_phantom(time,gamma,dat,ndim,npart,ntypes,npartoftype,&
+                               masstype,ncolumns,udist,utime,umass,umagfd,&
+                               labeltype,label,ix,ih,ivx,iBfirst,&
+                               ipmass,iutherm,filename,0.)
  case('gadget','GADGET')
      call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
