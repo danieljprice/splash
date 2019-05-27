@@ -89,7 +89,7 @@ subroutine submenu_data(ichoose)
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  implicit none
  integer, intent(in) :: ichoose
- integer             :: ians, i
+ integer             :: ians, i, ncalcwas
  character(len=30)   :: fmtstring
  character(len=1)    :: charp
  logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
@@ -160,17 +160,18 @@ subroutine submenu_data(ichoose)
     endif
 !------------------------------------------------------------------------
  case(5)
+    ncalcwas = ncalc
     call setup_calculated_quantities(ncalc)
 
     iCalcQuantities = (ncalc > 0)
     if (iCalcQuantities) then
        if (DataIsBuffered) then
           call calc_quantities(1,nsteps)
-          call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
+          call set_limits(1,nsteps,ncolumns+ncalcwas+1,ncolumns+ncalc)
        else
           if (ifileopen.gt.0) then
              call calc_quantities(1,nstepsinfile(ifileopen))
-             call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+             call set_limits(1,nstepsinfile(ifileopen),ncolumns+ncalcwas+1,ncolumns+ncalc)
           endif
        endif
     else

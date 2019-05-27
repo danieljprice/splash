@@ -45,26 +45,18 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   use labels,        only:label,ix
   use geometry,      only:coord_transform_limits
   use particle_data, only:npartoftype,dat,maxcol
-  use settings_data, only:ndim,icoords,icoordsnew,iverbose
+  use settings_data, only:ndim,icoords,icoordsnew,iverbose,debugmode
   integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
   integer :: i,j,k,ntoti,itocoli
 
-  if (iverbose > 1) print 100,ifromstep,itostep,ifromcol,itocol
+  if (iverbose > 1 .or. debugmode) print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
-  if (ifromcol.gt.maxcol .or. maxcol.eq.0) then
-     print "(a)",' *** error: set_limits: column > array size ***'
-     return
-  endif
-  if (ifromcol.gt.itocol) then
-     print "(a)",' *** error in call to set_limits: begin column > end column'
-     return
-  endif
-  itocoli = itocol
-  if (itocol.gt.maxcol) then
-     print "(a,i3,a)",' *** warning: set_limits: only setting limits up to column ',maxcol,' ***'
-     itocoli = maxcol
-  endif
-  !!--find limits of particle properties
+  !--avoid tripping over array bounds (but these are valid do-nothing calls)
+  if (ifromcol.gt.maxcol .or. maxcol.eq.0) return
+  if (ifromcol.gt.itocol) return
+  itocoli = min(itocol,maxcol)
+
+  !--find limits of particle properties
   lim(ifromcol:itocol,1) = huge(lim)
   lim(ifromcol:itocol,2) = -huge(lim)
   do i=ifromstep,itostep
@@ -82,7 +74,6 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   do j=ifromcol,itocol
      call warn_minmax(label(j),lim(j,1),lim(j,2))
   enddo
-  !print "(a/)",' plot limits set'
 
   lim2(ifromcol:itocol,:) = 0.
 
@@ -423,7 +414,6 @@ end subroutine assert_sensible_limits
 !----------------------------------------------------------
 subroutine fix_equal_limits(xmin,xmax)
  real, intent(inout) :: xmin,xmax
- real :: xtmp
 
  call assert_sensible_limits(xmin,xmax)
  if (abs(xmax - xmin) < tiny(xmin)) then
