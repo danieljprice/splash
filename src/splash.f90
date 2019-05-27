@@ -766,18 +766,20 @@ subroutine print_header
    "  (_)  _ (_)  \__ \ |_) | | (_| \__ \ | | |  _ (_)  _    ",/, &
    "      (_)  _  |___/ .__/|_|\__,_|___/_| |_| (_)  _ (_)   ",/, &
    "          (_)  (_)|_| (_) (_)  (_)(_) (_)(_) (_)(_)      ")
- print "(/,  &
-   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)"
+ print 20
+20 format(/,  &
+   '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
  print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2019 )'
- print "(/,    &
+ print 30
+30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
    '   This is free software; and you are welcome to redistribute it ',/, &
    '   under certain conditions (see LICENCE file for details). *',/,/, &
    ' http://users.monash.edu.au/~dprice/splash ',/, &
    ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
-   ' use SPLASH in print and don''t forget to send pics for the gallery',/)"
+   ' use SPLASH in print and don''t forget to send pics for the gallery',/)
 
 end subroutine print_header
 
