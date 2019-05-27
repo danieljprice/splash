@@ -199,10 +199,10 @@ subroutine submenu_data(ichoose)
        iRescale = .true.
     case('e','E')
        call set_units(ncolumns,numplot,UnitsHaveChanged)
-       iwriteunitsfile = .true.
-       call prompt(' save units to file? ',iwriteunitsfile)
+       iwriteunitsfile = UnitsHaveChanged
+       !call prompt(' save units to file? ',iwriteunitsfile)
        if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
-       if (.not.iRescale .and. UnitsHaveChanged) call prompt('Apply physical units to data?',iRescale)
+       if (.not.iRescale .and. UnitsHaveChanged) iRescale = .true.
        if (.not.UnitsHaveChanged) call get_labels
     case default
        iRescale = .false.
