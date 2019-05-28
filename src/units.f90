@@ -33,9 +33,10 @@ module settings_units
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
 
- integer, parameter :: nx = 7
+ integer, parameter :: nx = 8
  real(doub_prec), parameter :: unit_length(nx) = &
     (/1.d0,    &
+      2.01168d4, &
       1.d5,    &
       6.96d10, &
       1.496d13,&
@@ -45,6 +46,7 @@ module settings_units
 
  character(len=*), parameter :: unit_labels_length(nx) = &
     (/' [cm]     ',&
+      ' [furlong]',&
       ' [km]     ',&
       ' [R_{Sun}]',&
       ' [au]     ',&
@@ -159,11 +161,13 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   integer, intent(in) :: ncolumns,numplot
   logical, intent(out) :: UnitsHaveChanged
   integer :: icol,i,ihdr
-  real    :: unitsprev,dunits
+  real :: unitsprev,dunits
   real(doub_prec) :: udist,utime
   logical :: applytoall
 
   icol = 1
+  utime = 0.d0
+  udist = 0.d0
   do while(icol.ge.0)
      icol = -1
      call prompt('enter column to change units (-2=reset all,-1=quit,0=time)',icol,-2,numplot)
@@ -179,20 +183,24 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
            if (ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
               utime = headervals(ihdr,1) ! retrieve from first file in memory
               do i=1,nt
-                 print "(a,' = ',1pg10.3)",unit_labels_time(i),utime/unit_time(i)
+                 print "(a,' = ',1pg11.4)",unit_labels_time(i),utime/unit_time(i)
               enddo
            endif
            call prompt('enter time units (new=old*units)',units(icol))
+           if (utime > 0.d0) call suggest_label(unitsprev,units(icol),utime,&
+                                unit_time,unit_labels_time,unitslabel(icol))
         else
            ! give hints for possible length units, if utime is read from data file
            ihdr = match_tag(headertags,'udist')
            if (any(ix==icol) .and. ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
               udist = headervals(ihdr,1) ! retrieve from first file in memory
               do i=1,nx
-                 print "(a,' = ',1pg10.3)",unit_labels_length(i),udist/unit_length(i)
+                 print "(a,' = ',1pg11.4)",unit_labels_length(i),udist/unit_length(i)
               enddo
            endif
            call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
+           if (udist > 0.d0) call suggest_label(unitsprev,units(icol),udist,&
+                                unit_length,unit_labels_length,unitslabel(icol))
         endif
         if (abs(units(icol)).gt.tiny(units)) then
            if (abs(units(icol) - unitsprev).gt.tiny(units)) UnitsHaveChanged = .true.
@@ -279,6 +287,29 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   enddo
 
 end subroutine set_units
+
+!-------------------------------------------------------
+!
+!  save units for all columns to a file
+!
+!-------------------------------------------------------
+subroutine suggest_label(unitsprev,unit,ucode,unit_suggest,unit_label_suggest,unitlabel)
+ real, intent(in) :: unitsprev,unit
+ real(doub_prec), intent(in) :: ucode,unit_suggest(:)
+ character(len=*), intent(in) :: unit_label_suggest(:)
+ character(len=*), intent(inout) :: unitlabel
+ integer :: i
+
+ ! do nothing if unit has not changed
+ if (abs(unit - unitsprev) < epsilon(0.)) return
+
+ ! suggest corresponding label to the unit chosen from list
+ do i=1,size(unit_suggest)
+    if (abs(unit/(ucode/unit_suggest(i)) - 1.) < 0.01) unitlabel = unit_label_suggest(i)
+ enddo
+ !print*,' suggested unit label = ',unitlabel
+
+end subroutine suggest_label
 
 !-------------------------------------------------------
 !

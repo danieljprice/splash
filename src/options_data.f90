@@ -202,7 +202,7 @@ subroutine submenu_data(ichoose)
     case('e','E')
        call set_units(ncolumns,numplot,UnitsHaveChanged)
        iwriteunitsfile = UnitsHaveChanged
-       !call prompt(' save units to file? ',iwriteunitsfile)
+       call prompt(' save units to file? ',iwriteunitsfile)
        if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
        if (.not.iRescale .and. UnitsHaveChanged) iRescale = .true.
        if (.not.UnitsHaveChanged) call get_labels
