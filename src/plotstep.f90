@@ -3361,18 +3361,21 @@ contains
     use interpolation,    only:set_interpolation_weights
     use settings_units,   only:unit_interp
     use settings_xsecrot, only:rendersinks,use3Dopacityrendering
+    use labels,           only:get_sink_type
     implicit none
     real, dimension(:), intent(out) :: weighti
     real, dimension(:,:), intent(in) :: dati
     integer(kind=int1), dimension(:), intent(in) :: iamtypei
     logical, dimension(:), intent(in) :: usetype
+    integer :: get_sink_type
 
+    isinktype = get_sink_type(ntypes)
     ihavesetweights = .true.
     inormalise = inormalise_interpolations
     call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
          ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,&
          iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required,&
-         (use3Dopacityrendering .and. rendersinks))
+         (use3Dopacityrendering .and. rendersinks),isinktype)
 
     return
  end subroutine set_weights

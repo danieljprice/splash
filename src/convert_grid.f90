@@ -37,7 +37,7 @@ contains
 !-----------------------------------------------------------------
 subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
                            outformat,interpolateall)
- use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst
+ use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst,get_sink_type
  use limits,               only:lim,get_particle_subset
  use settings_units,       only:units,unit_interp
  use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin
@@ -64,7 +64,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  logical, intent(in)                          :: interpolateall
  integer, parameter :: iunit = 89
  integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
- integer            :: npixx,ntoti,ninterp
+ integer            :: npixx,ntoti,ninterp,isinktype
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
@@ -158,9 +158,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
  inormalise = inormalise_interpolations
+ isinktype = get_sink_type(ntypes)
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
-      idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.)
+      idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.,isinktype)
  !
  !--set colours (just in case)
  !

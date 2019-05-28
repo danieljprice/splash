@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -162,7 +162,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
            jpixi = jpix
            if (periodicy) then
               if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
            ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
@@ -174,7 +174,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
                  if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
               endif
               xpix = xmin + (ipix-0.5)*pixwidthx
-              dx = xpix - x(i)         
+              dx = xpix - x(i)
 
               !--top boundary
               r0 = 0.5*pixwidthy - dy
@@ -199,13 +199,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
            endif
            xpix = xmin + (ipix-0.5)*pixwidthx
-           dx = xpix - x(i)         
+           dx = xpix - x(i)
 
            do jpix = jpixmin,jpixmax
               jpixi = jpix
               if (periodicy) then
                  if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                 if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+                 if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
               endif
               ypix = ymin + (jpix-0.5)*pixwidthy
               dy = ypix - y(i)
@@ -229,7 +229,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
            jpixi = jpix
            if (periodicy) then
               if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
            ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
@@ -241,7 +241,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
                  if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
               endif
               xpix = xmin + (ipix-0.5)*pixwidthx
-              dx = xpix - x(i)         
+              dx = xpix - x(i)
               !
               !--Kernel integral
               !
@@ -259,7 +259,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
                  jpixi = jpix+1
                  if (periodicy) then
                     if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
                  endif
 
                  datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
@@ -268,7 +268,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
                  jpixi = jpix
                  if (periodicy) then
                     if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1        
+                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
                  endif
               end if
 
@@ -371,7 +371,6 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,&
      normalise,exact,periodicx,periodicy)
 
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
@@ -517,7 +516,6 @@ end subroutine interpolate2D_vec
 subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      x1,y1,x2,y2,datsmooth,npixx,normalise)
 
-  implicit none
   integer, intent(in) :: npart,npixx
   real, intent(in), dimension(npart) :: x,y,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
@@ -684,7 +682,6 @@ end subroutine interpolate2D_xsec
 !     Written by Daniel Price 21/7/2008
 !--------------------------------------------------------------------------
 subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,hh
   real, intent(in) :: xmin,ymin,pixwidth,datval
@@ -721,7 +718,6 @@ end subroutine interpolate_part
 !     Written by Daniel Price 21/7/2008
 !--------------------------------------------------------------------------
 subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
-  implicit none
   real, intent(in) :: xi,yi,hi,xmin,ymin,pixwidth,datval
   integer, intent(in) :: npixx,npixy
   real, intent(inout), dimension(npixx,npixy) :: datsmooth
@@ -804,7 +800,6 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      normalise,adaptive,dat,datpix2)
 
   use timing, only:wall_time,print_time
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y
   integer, intent(in), dimension(npart) :: itype
@@ -971,7 +966,6 @@ end subroutine interpolate2D_pixels
 !-----------------------------------------------------------
 real function wkernel(q2)
  use kernels, only:wfunc
- implicit none
  real, intent(in) :: q2
 
  wkernel = wfunc(q2)

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -52,24 +52,22 @@ contains
 subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim, &
            iRescale,idensityweighted,inormalise,units,unit_interp,required, &
-           rendersinks)
+           rendersinks,isinktype)
   use params, only:doub_prec,int1,maxplot
-  use labels, only:get_sink_type
-  implicit none
   real, dimension(:), intent(out)              :: weighti
   real, dimension(:,:), intent(in)             :: dati
   integer(kind=int1), dimension(:), intent(in) :: iamtypei
   logical, dimension(:), intent(in)            :: usetype
   logical, dimension(0:maxplot), intent(in)    :: required
   integer, intent(in)                          :: ih,irho,ipmass,ndim
-  integer, intent(in)                          :: ninterp,ntypes,ndataplots
+  integer, intent(in)                          :: ninterp,ntypes,ndataplots,isinktype
   integer, dimension(:), intent(in)            :: npartoftype
   real,    dimension(:), intent(in)            :: masstype
   logical, intent(in)                          :: iRescale,idensityweighted,rendersinks
   logical, intent(inout)                       :: inormalise
   real, dimension(0:maxplot), intent(in)       :: units
   real(doub_prec), intent(in)                  :: unit_interp
-  integer         :: i2,i1,itype,ipart,isinktype
+  integer         :: i2,i1,itype,ipart
   real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
 
   !
@@ -87,8 +85,6 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
      if (irho.gt.0)   dunitsrho   = 1.d0/units(irho)
   endif
   dunitspmass = dunitspmass * unit_interp
-  
-  isinktype = get_sink_type(ntypes)
 
   if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
       irho.gt.0 .and. irho.le.ndataplots .and. &
@@ -189,7 +185,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            itype = iamtypei(ipart)
            if (.not.usetype(itype)) then
               if (rendersinks .and. itype.eq.isinktype) then
-                 weighti(ipart) = weight_sink              
+                 weighti(ipart) = weight_sink
               else
                  weighti(ipart) = 0.
               endif

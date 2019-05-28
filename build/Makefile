@@ -658,13 +658,19 @@ grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 globaldata.f90 \
-		labels.f90 interpolation.f90 interpolate3D_projection.F90 \
-		interpolate3D_opacity.f90 interpolate3D_xsec.f90 libsplash.f90
-OBJLIB1= ${SRCLIB:.f90=.o}
-OBJLIB= $(OBJLIB1:.F90=.o)
+		geometry.f90 interpolation.f90 \
+      interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
+      interpolate3D_geom.F90 interpolate3D_projection.F90 \
+      interpolate3D_proj_geom.F90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
+      libsplash.f90
+OBJLIB1=${SRCLIB:.f90=.o}
+OBJLIB=${OBJLIB1:.F90=.o}
+
+.PHONY: libsplash
+libsplash: lib
 
 lib: $(OBJLIB)
-	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) ${OBJLIB} -o libsplash.so
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIB) -o libsplash.so
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
@@ -899,7 +905,7 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 include .depends
 
 clean:
-	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash
+	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash libsplash.so
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall
