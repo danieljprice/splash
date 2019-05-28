@@ -1,3 +1,29 @@
+!-----------------------------------------------------------------
+!
+!  This file is (or was) part of SPLASH, a visualisation tool
+!  for Smoothed Particle Hydrodynamics written by Daniel Price:
+!
+!  http://users.monash.edu.au/~dprice/splash
+!
+!  SPLASH comes with ABSOLUTELY NO WARRANTY.
+!  This is free software; and you are welcome to redistribute
+!  it under the terms of the GNU General Public License
+!  (see LICENSE file for details) and the provision that
+!  this notice remains intact. If you modify this file, please
+!  note section 2a) of the GPLv2 states that:
+!
+!  a) You must cause the modified files to carry prominent notices
+!     stating that you changed the files and the date of any change.
+!
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
+!
+!-----------------------------------------------------------------
+
+!-------------------------------------------------------------------------
+! module providing library version of splash interpolation routines
+! specifies c interfaces to corresponding Fortran subroutines
+!-------------------------------------------------------------------------
 module libsplash
 
   use projections3D,         only: interpolate3d_projection, &
@@ -13,7 +39,9 @@ module libsplash
   implicit none
 
 contains
-
+!-------------------------------------------------------------------------
+! 3D projection (column density)
+!-------------------------------------------------------------------------
 subroutine c_interpolate3d_projection(                                         &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, npixy, &
   pixwidthx, pixwidthy, normalise, zobserver, dscreen, useaccelerate           &
@@ -52,6 +80,9 @@ subroutine c_interpolate3d_projection(                                         &
 
 end subroutine c_interpolate3d_projection
 
+!-------------------------------------------------------------------------
+! 3D projection of vectors
+!-------------------------------------------------------------------------
 subroutine c_interpolate3d_proj_vec(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, vecsmoothx, &
   vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise, zobserver,  &
@@ -90,6 +121,9 @@ subroutine c_interpolate3d_proj_vec(                                     &
 
 end subroutine c_interpolate3d_proj_vec
 
+!-------------------------------------------------------------------------
+! cross sections of 3D data
+!-------------------------------------------------------------------------
 subroutine c_interpolate3d_fastxsec(                                     &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth, &
   npixx, npixy, pixwidthx, pixwidthy, normalise                          &
@@ -123,6 +157,9 @@ subroutine c_interpolate3d_fastxsec(                                     &
 
 end subroutine c_interpolate3d_fastxsec
 
+!-------------------------------------------------------------------------
+! cross sections of 3D vector data
+!-------------------------------------------------------------------------
 subroutine c_interpolate3d_xsec_vec(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, zslice,     &
   vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise  &
@@ -158,6 +195,9 @@ subroutine c_interpolate3d_xsec_vec(                                     &
 
 end subroutine c_interpolate3d_xsec_vec
 
+!-------------------------------------------------------------------------
+! opacity rendering of 3D data
+!-------------------------------------------------------------------------
 subroutine c_interp3d_proj_opacity(                                         &
   x, y, z, pmass, npmass, hh, weight, dat, zorig, itype, npart, xmin, ymin, &
   datsmooth, brightness, npixx, npixy, pixwidth, zobserver,                 &

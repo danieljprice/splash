@@ -657,8 +657,7 @@ OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 globaldata.f90 \
-		geometry.f90 interpolation.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
       interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
       interpolate3D_geom.F90 interpolate3D_projection.F90 \
       interpolate3D_proj_geom.F90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \

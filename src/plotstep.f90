@@ -3367,7 +3367,7 @@ contains
     real, dimension(:,:), intent(in) :: dati
     integer(kind=int1), dimension(:), intent(in) :: iamtypei
     logical, dimension(:), intent(in) :: usetype
-    integer :: get_sink_type
+    integer :: isinktype
 
     isinktype = get_sink_type(ntypes)
     ihavesetweights = .true.
