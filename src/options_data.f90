@@ -85,13 +85,14 @@ subroutine submenu_data(ichoose)
                           DataIsBuffered,numplot,ncalc,ncolumns
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
- use labels,         only:label,unitslabel,labelzintegration
+ use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  implicit none
  integer, intent(in) :: ichoose
  integer             :: ians, i, ncalcwas
  character(len=30)   :: fmtstring
  character(len=1)    :: charp
+ character(len=lenlabel) :: labeli
  logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
 
  ians = ichoose
@@ -184,7 +185,8 @@ subroutine submenu_data(ichoose)
     print "(2x,a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
     print "('  0) ',a,a3,a,a3,es9.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
     do i=1,ncolumns
-       print "(i3,') ',a,a3,a,a3,es10.3)",i,trim(label(i))//trim(unitslabel(i)),' = ',trim(label(i)),' x ',units(i)
+       labeli = shortstring(label(i),unitslabel(i))
+       print "(i3,') ',a,a3,a,a3,es10.3)",i,trim(labeli)//trim(unitslabel(i)),' = ',trim(labeli),' x ',units(i)
     enddo
     print "(a)"
 
