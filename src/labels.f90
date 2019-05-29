@@ -259,10 +259,16 @@ function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
         integrate_label = '< '//trim(labelin)//' >'
      else
         if (iRescale) then
-           integrate_label = '\(2268) '//trim(labelin)//' d'// &
-              trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
+           ! use composite units label e.g. \int rho_d [g/cm^3 pc]
+           integrate_label = '\int '// &
+             trim(labelin(1:index(labelin,unitslabel(iplot))-1))//' d'// &
+             trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))// &
+             get_unitlabel_coldens(iRescale,labelzint,unitslabel(iplot))
+           ! use mix of units labels \int rho_d [g/cm^3] dz [pc]
+           !integrate_label = '\int '//trim(labelin)//' d'// &
+           !  trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
         else
-           integrate_label = '\(2268) '//trim(labelin)//' d'//trim(label(izcol))
+           integrate_label = '\int '//trim(labelin)//' d'//trim(label(izcol))
         endif
         if (iplot.eq.irho .and. (index(labelin,'density').ne.0 .or. index(labelin,'rho').ne.0)) then
            integrate_label = 'column density'
@@ -279,13 +285,18 @@ end function integrate_label
 !
 !-----------------------------------------------------------------
 function get_unitlabel_coldens(iRescale,labelzint,unitlabel)
+ use asciiutils, only:string_delete,string_replace
  logical, intent(in) :: iRescale
  character(len=*), intent(in) :: labelzint,unitlabel
  character(len=lenunitslabel) :: get_unitlabel_coldens
 
- if (iRescale .and. index(labelzint,'cm').gt.0  &
-     .and. trim(adjustl(unitlabel)).eq.'[g/cm\u3\d]') then
-    get_unitlabel_coldens = ' [ g/cm\u2\d]'
+ if (iRescale) then
+    get_unitlabel_coldens = trim(unitlabel)//trim(labelzint)
+    call string_delete(get_unitlabel_coldens,']')
+    call string_delete(get_unitlabel_coldens,'[')
+    get_unitlabel_coldens = ' ['//trim(adjustl(get_unitlabel_coldens))//']'
+    call string_replace(get_unitlabel_coldens,'/cm\u3\d cm','/cm^2')
+    call string_replace(get_unitlabel_coldens,'/cm^3 cm','/cm^2')
  else
     get_unitlabel_coldens = ' '
  endif
