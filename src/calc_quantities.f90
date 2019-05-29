@@ -40,11 +40,10 @@ module calcquantities
  integer, parameter, private :: nextravars = 5
  character(len=lenvars), dimension(nextravars), parameter, private :: &
           extravars=(/'t    ','gamma','x0   ','y0   ','z0   '/)
- logical, save :: firstcall = .true.
 
  namelist /calcopts/ calcstring,calclabel,calcunitslabel
 
- public :: calcopts,calcstring,calclabel,calcunitslabel,firstcall
+ public :: calcopts,calcstring,calclabel,calcunitslabel
  private
 
 contains
@@ -72,8 +71,7 @@ subroutine setup_calculated_quantities(ncalc)
 !--on the first call to setup, prefill the list of calculated
 !  quantities with ALL of the valid examples.
 !
- if (ncalc.eq.0 .and. firstcall) call print_example_quantities(.true.,ncalc)
- firstcall = .false.
+ if (ncalc.eq.0) call print_example_quantities(.true.,ncalc)
  charp = 'a'
  calcmenu: do while (.not.done)
     call check_calculated_quantities(ncalc,ncalctot,incolumn,verbose=.true.)
@@ -297,10 +295,12 @@ end subroutine splitstring
 subroutine print_example_quantities(verbose,ncalc)
  use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
-                         ideltav,ivx
+                         ideltav,ivx,headertags
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
  use geometry,      only:labelcoord
  use asciiutils,    only:append_number,find_repeated_tags
+ use particle_data, only:headervals
+ use filenames,     only:ifileopen
  logical :: verbose
  integer, intent(inout), optional :: ncalc
  logical :: prefill
@@ -400,7 +400,8 @@ subroutine print_example_quantities(verbose,ncalc)
     if (ndusttypes > 1) then
        do i = idustfrac1,idustfrac1+ndusttypes-1
           string = '\rho_{d,'
-          call append_number(string,i-idustfrac1+1)
+          if (ifileopen > 0) call append_grain_size_label(string,i-idustfrac1+1,headertags,headervals(:,ifileopen),ierr)
+          if (ierr /= 0) call append_number(string,i-idustfrac1+1)
           string = trim(string)//'} = ' &
                //trim(shortlabel(label(irho),unitslabel(irho)))//'*'//trim(label(i))
           call print_or_prefill(prefill,string,nc,ulab=unitslabel(irho))
@@ -516,6 +517,35 @@ subroutine print_example_quantities(verbose,ncalc)
  if (.not.prefill) print "(a)"
 
 end subroutine print_example_quantities
+
+!-----------------------------------------------------------------
+!
+!  utility (private) to append enumerated grainsize as a label
+!
+!-----------------------------------------------------------------
+subroutine append_grain_size_label(string,idust,tags,vals,ierr)
+ use labels, only:get_label_grain_size,count_non_blank
+ character(len=*), intent(inout) :: string
+ integer, intent(in)  :: idust
+ character(len=*), intent(in) :: tags(:)
+ real,    intent(in) :: vals(:)
+ integer, intent(out) :: ierr
+ integer :: ntags,nd,i
+
+ ntags = count_non_blank(tags)
+ nd = 0
+ ierr = 1
+ do i=1,ntags
+    if (index(tags(i),'grainsize') > 0) then
+       nd = nd + 1
+       if (nd==idust) then
+          ierr = 0
+          string = trim(string)//get_label_grain_size(vals(i))
+       endif
+    endif
+ enddo
+
+end subroutine append_grain_size_label
 
 !-----------------------------------------------------------------
 !
