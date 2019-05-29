@@ -628,7 +628,7 @@ pure subroutine string_delete1(string,skey)
  character(len=*), intent(in)    :: skey
  integer :: ipos,lensub
 
- ipos = index(trim(string),skey)
+ ipos = index(string,skey)
  lensub = len(skey)
  do while(ipos.gt.0)
     string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
