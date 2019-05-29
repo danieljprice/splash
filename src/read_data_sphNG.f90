@@ -156,7 +156,7 @@ contains
      endif
   enddo over_tags
   if (matched) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_int
 
@@ -243,7 +243,7 @@ contains
      endif
   enddo over_tags
   if (nmatched==size(ival)) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_intarr
 
@@ -271,7 +271,7 @@ contains
      endif
   enddo over_tags
   if (nmatched==size(rval)) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_real8arr
 
@@ -299,7 +299,7 @@ contains
      endif
   enddo over_tags
   if (nmatched==size(rval)) ierr = 0
-  if (ierr /= 0) print "(a)",' ERROR: could not find '//trim(adjustl(tag))//' in header'
+  if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
  end subroutine extract_real4arr
 
@@ -423,32 +423,37 @@ contains
  !----------------------------------------------------------------------
  ! print information about dust grain sizes found in header
  !----------------------------------------------------------------------
- subroutine print_dustgrid_info(ntags,tags,vals)
+ subroutine print_dustgrid_info(ntags,tags,vals,mgas)
   use asciiutils,     only:match_tag
   use settings_units, only:get_nearest_length_unit
   integer, intent(in) :: ntags
   character(len=*), intent(in) :: tags(ntags)
-  real, intent(in) :: vals(ntags)
-  real :: udist
-  integer :: i,nd
+  real, intent(in) :: vals(ntags),mgas
+  integer :: i,j,nd
 
-  i = match_tag(tags,'udist')
   nd = 0
-  if (i > 0) then
-     udist = vals(i)
-     if (match_tag(tags,'grainsize1') > 0) print "(/,a)",' Dust grid:'
-     do i=1,ntags
-        if (index(tags(i),'grainsize') > 0) then
-           nd = nd + 1
-           if (vals(i)*udist*1.e4 > 1000.) then
-              print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*udist*1.e1,'mm'
-           elseif (vals(i) > 0.) then
-              print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*udist*1.e4,'micron'
-           endif
-        endif
-     enddo
-     if (nd > 0) print "(a)"
-  endif
+  if (match_tag(tags,'grainsize1') > 0) print "(/,a)",' Dust grid:'
+  do i=1,ntags
+     if (index(tags(i),'grainsize') > 0) then
+       nd = nd + 1
+       if (vals(i)*1.e4 > 1000.) then
+          print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e1,'mm'
+       elseif (vals(i) > 0.) then
+          print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e4,'micron'
+       endif
+    endif
+  enddo
+  if (nd > 0) print "(a)"
+
+  ! nd = 0
+  ! print *,' mgas = ',mgas/(2d33/umass)
+  ! do i=1,ntags
+  !    if (index(tags(i),'mdust_in') > 0) then
+  !       nd = nd + 1
+  !       if (vals(i) > 0.) print "(i3,a,1pg10.3,a,1pg10.3)",nd,': mass = ',vals(i)/(2d33/umass),&
+  !                ' Msun; d/g = ',vals(i)/mgas
+  !    endif
+  ! enddo
 
  end subroutine print_dustgrid_info
 
@@ -1505,8 +1510,12 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       nhdr = min(nreals,maxhdr)
       headervals(1:nhdr,j) = dummyreal(1:nhdr)
       headertags(1:nhdr)   = tagsreal(1:nhdr)
+      ! convert grain sizes to cm
+      do i=1,nhdr
+         if (index(headertags(i),'grainsize') > 0) headervals(i,j) = headervals(i,j)*udist
+      enddo
       call make_tags_unique(nhdr,headertags)
-      if (iverbose > 0) call print_dustgrid_info(nhdr,headertags,headervals)
+      if (iverbose > 0) call print_dustgrid_info(nhdr,headertags,headervals,masstype(1,j)*npartoftype(1,j))
 
       nstepsread = nstepsread + 1
       !
