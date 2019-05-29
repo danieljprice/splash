@@ -421,6 +421,38 @@ contains
  end subroutine fake_header_tags
 
  !----------------------------------------------------------------------
+ ! print information about dust grain sizes found in header
+ !----------------------------------------------------------------------
+ subroutine print_dustgrid_info(ntags,tags,vals)
+  use asciiutils,     only:match_tag
+  use settings_units, only:get_nearest_length_unit
+  integer, intent(in) :: ntags
+  character(len=*), intent(in) :: tags(ntags)
+  real, intent(in) :: vals(ntags)
+  real :: udist
+  integer :: i,nd
+
+  i = match_tag(tags,'udist')
+  nd = 0
+  if (i > 0) then
+     udist = vals(i)
+     if (match_tag(tags,'grainsize1') > 0) print "(/,a)",' Dust grid:'
+     do i=1,ntags
+        if (index(tags(i),'grainsize') > 0) then
+           nd = nd + 1
+           if (vals(i)*udist*1.e4 > 1000.) then
+              print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*udist*1.e1,'mm'
+           elseif (vals(i) > 0.) then
+              print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*udist*1.e4,'micron'
+           endif
+        endif
+     enddo
+     if (nd > 0) print "(a)"
+  endif
+
+ end subroutine print_dustgrid_info
+
+ !----------------------------------------------------------------------
  ! Routine to read the header of sphNG dump files and extract relevant
  ! information
  !----------------------------------------------------------------------
@@ -1474,6 +1506,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       headervals(1:nhdr,j) = dummyreal(1:nhdr)
       headertags(1:nhdr)   = tagsreal(1:nhdr)
       call make_tags_unique(nhdr,headertags)
+      if (iverbose > 0) call print_dustgrid_info(nhdr,headertags,headervals)
 
       nstepsread = nstepsread + 1
       !
