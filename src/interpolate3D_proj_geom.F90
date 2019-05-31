@@ -97,7 +97,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
   integer :: ixcoord,iycoord,izcoord,ierr,ncpus
-  integer :: iprintinterval, iprintnext, itmin
+  integer :: iprintinterval, iprintnext
 #ifdef _OPENMP
   integer :: omp_get_num_threads,i
 #else
@@ -109,7 +109,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   real :: hi,hi1,hi21,radkern,wab,q2,xminpix,yminpix
   real :: term,termnorm,dx,dx2,dy,dy2,dz
   real :: xmax,ymax,hmin,horigi
-  real :: t_start,t_end,t_used,tsec
+  real :: t_start,t_end,t_used
   logical :: iprintprogress,islengthx,islengthy,islengthz
   character(len=64) :: string
 
@@ -257,14 +257,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
         xcoord(izcoord) = 0. ! use phi=0 so get x = r cos(phi) = r
      endif
      do jpix = jpixmin,jpixmax
-        jp = jpix
-        if (jp < 1)     jp = jp + npixy
-        if (jp > npixy) jp = jp - npixy
+        jp = iroll(jpix,npixy)
         xcoord(iycoord) = yminpix + jp*pixwidthy
+
         do ipix = ipixmin,ipixmax
-           ip = ipix
-           if (ip < 1)     ip = ip + npixx
-           if (ip > npixx) ip = ip - npixx
+           ip = iroll(ipix,npixx)
            xcoord(ixcoord) = xminpix + ip*pixwidthx
 
            !--now transform to get location of pixel in cartesians
@@ -452,14 +449,11 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
         !--loop over pixels, adding the contribution from this particle
         !
         do jpix = jpixmin,jpixmax
-           jp = jpix
-           if (jp < 1)     jp = jp + npixy
-           if (jp > npixy) jp = jp - npixy
+           jp = iroll(jpix,npixy)
            xcoord(iycoord) = yminpix + jp*pixwidthy
+
            do ipix = ipixmin,ipixmax
-              ip = ipix
-              if (ip < 1)     ip = ip + npixx
-              if (ip > npixx) ip = ip - npixx
+              ip = iroll(ipix,npixx)
               xcoord(ixcoord) = xminpix + ip*pixwidthx
 
               !--now transform to get location of pixel in cartesians
@@ -592,5 +586,24 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   endif
 
 end subroutine get_pixel_limits
+
+!--------------------------------------------------------------------------
+!
+!  utility to wrap pixel index around periodic domain
+!  indices that roll beyond the last position are re-introduced at the first
+!
+!--------------------------------------------------------------------------
+pure integer function iroll(i,n)
+ integer, intent(in) :: i,n
+
+ if (i > n) then
+    iroll = mod(i-1,n) + 1
+ elseif (i < 1) then
+    iroll = n + mod(i,n) ! mod is negative
+ else
+    iroll = i
+ endif
+
+end function iroll
 
 end module projections3Dgeom
