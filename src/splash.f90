@@ -50,7 +50,9 @@ program splash
 !     Version history/ Changelog:
 !     2.9.1  : (xx/xx/19)
 !             cleaner menu options for units and calculated quantities;
-!             surface rendering allowed with 3D perspective turned off
+!             surface rendering allowed with 3D perspective turned off;
+!             automatic labelling of grain sizes in density and column density plots;
+!             adaptive limits on log colour bars show 3 dex range by default
 !     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;

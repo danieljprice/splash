@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -750,8 +750,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               contmax = contmaxadapt
               call assert_sensible_limits(contmin,contmax)
            else
-              rendermin = renderminadapt
               rendermax = rendermaxadapt
+              if (itrans(irender)==1 .and. renderminadapt < rendermaxadapt-4.) then ! if logged
+                 if (abs(rendermin-(rendermaxadapt-3.)) > epsilon(0.)) then
+                    rendermin = rendermaxadapt - 3. ! if logged, do not give 20 orders of mag
+                    print "(a)",' *** MIN SET 3 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
+                 else
+                    rendermin = renderminadapt
+                 endif
+              else
+                 rendermin = renderminadapt
+              endif
               call assert_sensible_limits(rendermin,rendermax)
            endif
            iadvance = 0              ! that it should change the render limits
@@ -1953,14 +1962,24 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case('a') ! adapt plot limits
         if (iamincolourbar .and. irenderarr(ipanel).gt.0) then
            if (double_render) then
-              print*,'adapting double-render limits ',xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel))
+              !print*,'adapting double-render limits ',xminadapt(icontourarr(ipanel)),xmaxadapt(icontourarr(ipanel))
               xmin(icontourarr(ipanel)) = xminadapt(icontourarr(ipanel))
               xmax(icontourarr(ipanel)) = xmaxadapt(icontourarr(ipanel))
               call assert_sensible_limits(xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
            else
-              print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
-              xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
+              !print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
               xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
+              if (itrans(irenderarr(ipanel))==1 .and. &
+                 xminadapt(irenderarr(ipanel)) < xmaxadapt(irenderarr(ipanel))-4.) then ! if logged
+                 if (abs(xmin(irenderarr(ipanel))-(xmaxadapt(irenderarr(ipanel)) - 3.)) > epsilon(0.)) then
+                    xmin(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel)) - 3.
+                    print "(a)",' *** MIN SET 3 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
+                 else
+                    xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
+                 endif
+              else
+                 xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
+              endif
               call assert_sensible_limits(xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
            endif
            istep = istepnew
@@ -2817,6 +2836,7 @@ subroutine change_itrans(iplot,xmin,xmax)
        itrans(iplot) = 1
        !!--transform the plot limits
        call transform_limits(xmin,xmax,itrans(iplot))
+       xmin = max(xmax-3.,xmin) ! no more than 3 dex by default
     endif
  endif
 
@@ -2841,6 +2861,7 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
        !!--transform the plot limits
        call transform_limits(xmin,xmax,itrans(iplot))
        call transform_limits(xmina,xmaxa,itrans(iplot))
+       xmin = max(xmax-3.,xmin) ! no more than 3 dex by default
     endif
  endif
 
