@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -77,7 +77,6 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
   use asciiutils, only:string_delete
-  implicit none
   integer, intent(in) :: iplotin,nx,ny,just,axis,itransy
   real, intent(inout) :: xmin, xmax, ymin, ymax
   real, intent(in)    :: colourbarwidth, titleoffset
@@ -128,7 +127,11 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
      call plot_qvsz(3,x1,x2,y1,y2)
      devaspectratio = (x2-x1)/(y2-y1)
-     aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
+     if (.not.adjustlimits) then
+        aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
+     else
+        aspectratio = 1.0
+     endif
   else
      aspectratio = 1.0
   endif
@@ -199,19 +202,21 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      vptsizeeffx = 1.0 - vmarginright - vmarginleft
      vptsizeeffy = 1.0 - vmargintop - vmarginbottom
      !     reduce x or y size if just=1 to get right aspect ratio
-     if (aspectratio.le.1.0 .and. just.eq.1) then
-        if (aspectratio*vptsizeeffy.lt.vptsizeeffx) then
-           vptsizeeffx = aspectratio*vptsizeeffy
-        !  but this could still be bigger than the margins allow...
-        else
-           vptsizeeffy = vptsizeeffx/aspectratio
-        endif
-     elseif (aspectratio.gt.1.0 .and. just.eq.1) then
-        if (vptsizeeffx/aspectratio.lt.vptsizeeffy) then
-           vptsizeeffy = vptsizeeffx/aspectratio
-        !  but this could still be bigger than the margins allow...
-        else
-           vptsizeeffx = vptsizeeffy*aspectratio
+     if (.not.adjustlimits) then
+        if (aspectratio.le.1.0 .and. just.eq.1) then
+           if (aspectratio*vptsizeeffy.lt.vptsizeeffx) then
+              vptsizeeffx = aspectratio*vptsizeeffy
+           !  but this could still be bigger than the margins allow...
+           else
+              vptsizeeffy = vptsizeeffx/aspectratio
+           endif
+        elseif (aspectratio.gt.1.0 .and. just.eq.1) then
+           if (vptsizeeffx/aspectratio.lt.vptsizeeffy) then
+              vptsizeeffy = vptsizeeffx/aspectratio
+           !  but this could still be bigger than the margins allow...
+           else
+              vptsizeeffx = vptsizeeffy*aspectratio
+           endif
         endif
      endif
 
@@ -256,23 +261,23 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 ! set axes
 !
  if (just.eq.1) then
-    if (nx*ny.eq.1 .and. adjustlimits) then
+    if (adjustlimits) then
        !--query viewport aspect ratio
        call plot_qvp(3,x1,x2,y1,y2)
        devaspectratio = (x2-x1)/(y2-y1)
-       
+
        !--adjust limits to match viewport aspect ratio
-       dx = xmax - xmin
-       dy = ymax - ymin
+       dx = (xmax - xmin)/nx
+       dy = (ymax - ymin)/ny
        if (devaspectratio*dy/dx.ge.1.) then
           xcen = 0.5*(xmin + xmax)
-          xmin = xcen - 0.5*devaspectratio*dy
-          xmax = xcen + 0.5*devaspectratio*dy
+          xmin = xcen - 0.5*devaspectratio*dy*ny
+          xmax = xcen + 0.5*devaspectratio*dy*ny
           !print*,' auto-adjusting xmin = ',xmin,' xmax = ',xmax
        else
           ycen = 0.5*(ymin + ymax)
-          ymin = ycen - 0.5*dx/devaspectratio
-          ymax = ycen + 0.5*dx/devaspectratio
+          ymin = ycen - 0.5*dx*nx/devaspectratio
+          ymax = ycen + 0.5*dx*nx/devaspectratio
           !print*,' auto-adjusting ymin = ',ymin,' ymax = ',ymax
        endif
     endif
@@ -326,7 +331,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     xopts = 'BCNST'
   end select
   if (yopts.eq.'*') yopts = xopts
-  
+
   if (plot_alt_y_axis) call string_delete(yopts,'C')
 !
 ! label plot
@@ -402,7 +407,6 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
-  return
 end subroutine
 
 !
@@ -415,7 +419,6 @@ end subroutine
 
 subroutine redraw_axes(iaxis,just,yscale,itransy)
   use plotlib, only:plot_box
-  implicit none
   integer, intent(in) :: iaxis,just,itransy
   character(len=10) :: xopts, yopts
   real, intent(in)  :: yscale
@@ -463,14 +466,12 @@ subroutine redraw_axes(iaxis,just,yscale,itransy)
   if (iaxis.eq.4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
-  return
 end subroutine redraw_axes
 
 subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,labely)
  use plotlib,    only:plot_box,plot_annotate,plot_qwin,plot_swin,plot_wnad
  use asciiutils, only:string_delete
  use transforms, only:transform,transform_inverse,transform_label
- implicit none
  character(len=*), intent(in) :: yopts
  real,             intent(in) :: yscale
  real,             intent(in), optional :: ylabeloffset
@@ -479,7 +480,7 @@ subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,label
  character(len=10)  :: yoptsi
  character(len=120) :: labelyalt
  real :: xmin,xmax,ymin,ymax,yminalt,ymaxalt
- 
+
  yoptsi = yopts
  call string_delete(yoptsi,'B')
  call string_delete(yoptsi,'N')
@@ -494,13 +495,13 @@ subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,label
  yminalt = yminalt*yscale
  ymaxalt = ymaxalt*yscale
  if (itransy.gt.0) call transform(yminalt,ymaxalt,itransy)
- 
+
  !--set plot window to new scaled y axis
  call plot_swin(xmin,xmax,yminalt,ymaxalt)
 
  !--draw axes and label on right hand side of box
  if (iaxis.eq.3) then
-    call plot_box(' ',0.0,0,'1MC'//trim(yoptsi),0.0,0) 
+    call plot_box(' ',0.0,0,'1MC'//trim(yoptsi),0.0,0)
  else
     call plot_box(' ',0.0,0,'1VMC'//trim(yoptsi),0.0,0)
  endif
