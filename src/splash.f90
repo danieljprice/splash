@@ -52,7 +52,9 @@ program splash
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
 !             automatic labelling of grain sizes in density and column density plots;
-!             adaptive limits on log colour bars show 3 dex range by default
+!             adaptive limits on log colour bars show 3 dex range by default;
+!             auto-adjust limits to device aspect ratio works with multiple panels;
+!             bug fixes with r-z rendering
 !     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;
@@ -397,6 +399,7 @@ program splash
   use settings_page,      only:interactive,device,nomenu
   use settings_part,      only:initialise_coord_transforms
   use settings_render,    only:icolours,rgbfile
+  use settings_xsecrot,   only:xsec_nomulti
   use colours,            only:rgbtable,ncoltable,icustom
   implicit none
   integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
@@ -701,7 +704,7 @@ program splash
               stop
            endif
            if (irender.gt.0) then
-              if (.not.allowrendering(ipicky,ipickx)) then
+              if (.not.allowrendering(ipicky,ipickx,xsec_nomulti)) then
                  print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
                  stop
               endif

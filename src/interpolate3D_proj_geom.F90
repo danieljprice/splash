@@ -82,7 +82,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      iplotx,iploty,iplotz,ix,xorigin)
 
   use timing, only:wall_time,print_time
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real,    intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
@@ -114,11 +113,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   character(len=64) :: string
 
   datsmooth = 0.
+  datnorm = 0.
   term = 0.
   string = 'projecting'
   if (normalise) then
      string = trim(string)//' (normalised, non-cartesian)'
-     datnorm = 0.
   else
      string = trim(string)//' (non-cartesian)'
   endif
@@ -152,7 +151,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   !--if z coordinate is not a length, use normalised interpolation
   !  (e.g. azimuthally averaged density)
   !
-  if (.not.islengthz) normalise = .true.
+  !if (.not.islengthz) normalise = .true.
   !
   !--check column density table has actually been setup
   !
@@ -242,7 +241,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      if (islengthz) then
         termnorm = weight(i)*horigi
      elseif (igeom.eq.igeom_cylindrical) then
-        termnorm = weight(i)*atan(radkern/xi(ixcoord))/pi
+        termnorm = weight(i) !*atan(radkern/xi(ixcoord))/pi !*horigi/xi(ixcoord)
      else
         termnorm = weight(i)
      endif
@@ -342,7 +341,6 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
      iplotx,iploty,iplotz,ix,xorigin)
 
   use kernels, only:cnormk3D,wfunc
-  implicit none
   integer, intent(in) :: npart,npixx,npixy
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype

@@ -784,7 +784,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   character(len=12) :: string
 
   logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
-  logical :: dumxsec, isetrenderlimits, iscoordplot
+  logical :: dumxsec, isetrenderlimits, iscoordplot, inorm_label
   logical :: ichangesize, initx, inity, initz, isameweights, volweightedpdf, got_h
   logical, parameter :: isperiodicx = .false. ! feature not implemented
   logical, parameter :: isperiodicy = .false. ! feature not implemented
@@ -1671,7 +1671,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                           endif
                           !!--adjust the units of the z-integrated quantity
-                          if (iRescale .and. units(ih).gt.0. .and. .not.inormalise) then
+                          if (iRescale .and. units(ih).gt.0. .and. .not.inormalise &
+                              .and. coord_is_length(iplotz,icoordsnew)) then
                              datpix = datpix*(unitzintegration/units(ih))
                              if (gotcontours) then
                                 datpixcont = datpixcont*(unitzintegration/units(ih))
@@ -1770,7 +1771,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!--set label for column density (projection) plots
                  if (ndim.eq.3 .and..not. x_sec .and..not.use3Dopacityrendering) then
-                    labelrender = integrate_label(labelrender,irender,iz,inormalise,iRescale,&
+                    inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
+                    labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
                                                   labelzintegration,projlabelformat,iapplyprojformat)
                     if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inormalise,&
                                                  iRescale,labelzintegration,projlabelformat,iapplyprojformat)
@@ -2049,10 +2051,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !!--set label for projection plots (2268 or 2412 for integral sign)
               if (ndim.eq.3 .and..not. x_sec) then
                  if (iRescale) then
-                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'// &
+                    labelvecplot = '\int '//trim(labelvecplot)//' d'// &
                       trim(label(iz)(1:index(label(iz),unitslabel(iz))-1))//' [code units]'
                  else
-                    labelvecplot = '\(2268) '//trim(labelvecplot)//' d'//trim(label(iz))
+                    labelvecplot = '\int '//trim(labelvecplot)//' d'//trim(label(iz))
                  endif
               endif
               pixwidthvec  = (xmax-xmin)/real(npixvec)
