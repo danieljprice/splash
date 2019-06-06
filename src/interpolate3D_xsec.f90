@@ -28,7 +28,7 @@
 !----------------------------------------------------------------------
 
 module xsections3D
- use kernels, only:cnormk3D,radkernel,radkernel2,wfunc
+ use kernels, only:cnormk3D,radkernel,radkernel2,wfunc,select_kernel
  implicit none
  public :: interpolate3D_fastxsec, interpolate3D_xsec_vec
 
@@ -71,6 +71,9 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
   real :: hi,hi1,radkern,q2,wab,const,xi,yi,hi21
   real :: termnorm,term,dy,dy2,dz,dz2,ypix,rescalefac
   real, dimension(npixx) :: dx2i
+
+  ! force cubic kernel if not already set
+  if (.not.associated(wfunc)) call select_kernel(0)
 
   datsmooth = 0.
   datnorm = 0.
@@ -236,6 +239,9 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
   real :: hi,hi1,radkern,q2,wab,const
   real :: termx,termy,termnorm,dx,dy,dz,dz2,xpix,ypix
+
+  ! force cubic kernel if not already set
+  if (.not.associated(wfunc)) call select_kernel(0)
 
   vecsmoothx = 0.
   vecsmoothy = 0.
