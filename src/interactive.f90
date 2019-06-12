@@ -1639,6 +1639,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !--translate vpt co-ords to x,y in current panel
      call getxy(vptxi,vptyi,xpti,ypti,ipanel)
 
+     !--set the viewport to correspond to selected panel
+     call set_panel(ipanel)
+
      !print*,'vptx,y = ',xpti,ypti,vptxi,vptyi,ipanel
      !--query the position of the colour bar
      if (ipanel.gt.0) then
@@ -1684,7 +1687,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      case('g')   ! draw a line between two points
         xline(2) = xpti
         yline(2) = ypti
-        call set_panel(ipanel)
         !--mark first point
         call plot_pt1(xpti,ypti,4)
         !--select second point
@@ -2255,7 +2257,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    ! and the viewport limits for each panel.
    !--------
    integer function getpanel(vptx,vpty)
-    implicit none
     real, intent(in) :: vptx,vpty
     real :: vptxmini,vptxmaxi,vptymini,vptymaxi
     integer :: i,icol
@@ -2316,7 +2317,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
    !--------
 
     subroutine getxy(vptx,vpty,x,y,ipanel)
-     implicit none
      real, intent(in) :: vptx,vpty
      real, intent(out) :: x,y
      integer, intent(in) :: ipanel
@@ -2362,7 +2362,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 
     subroutine set_panel(ipanel)
      use plotlib, only:plot_svp,plot_swin
-     implicit none
      integer, intent(in) :: ipanel
 
      if (ipanel.gt.0) then
@@ -2377,7 +2376,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
 
     subroutine reset_panel
      use plotlib, only:plot_swin
-     implicit none
 
      call plot_swin(xmini,xmaxi,ymini,ymaxi)
 

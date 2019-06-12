@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -71,7 +71,7 @@ module shapes
 !      'pixels             '/)
 
  procedure(check_shapes), pointer, private :: checkshapes => null()
- procedure(add_shape), pointer, private :: addshape => null()
+ procedure(add_shape),    pointer, private :: addshape => null()
  procedure(delete_shape), pointer, private :: delshape => null()
 
  real, parameter, private :: pi = 4.*atan(1.)
@@ -81,7 +81,6 @@ contains
 ! shape default settings
 !-----------------------------------------------------------------
 subroutine defaults_set_shapes
- implicit none
 
  nshapes = 0
  shape(:)%itype = 0
@@ -100,7 +99,6 @@ subroutine defaults_set_shapes
  shape(:)%fjust = 0.
  shape(:)%opacity = 1.
 
- return
 end subroutine defaults_set_shapes
 
 !-----------------------------------------------------------------
@@ -108,20 +106,18 @@ end subroutine defaults_set_shapes
 !-----------------------------------------------------------------
 subroutine submenu_shapes()
  use promptlist, only:prompt_list
- implicit none
- 
+
  checkshapes => check_shapes
  addshape => add_shape
  delshape => delete_shape
  call prompt_list(nshapes,maxshapes,'shape',checkshapes,addshape,delshape)
- 
+
 end subroutine submenu_shapes
 
 !-----------------------------------
 ! print the current list of shapes
 !-----------------------------------
 subroutine check_shapes(nshape)
- implicit none
  integer, intent(in) :: nshape
  integer :: ishape
 
@@ -140,7 +136,6 @@ end subroutine check_shapes
 ! pretty-print information about a shape
 !----------------------------------------
 subroutine print_shapeinfo(inum,itype,shapein)
- implicit none
  integer, intent(in) :: inum,itype
  type(shapedef), intent(in), optional :: shapein
  character(len=20), parameter :: fmtstring = "('Shape ',i2,': ',a)"
@@ -231,7 +226,6 @@ subroutine add_shape(istart,iend,nshape)
  use prompting,     only:prompt
  use exactfunction, only:check_function
  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour,plotlib_maxfillstyle,plotlib_supports_alpha
- implicit none
  integer, intent(in) :: istart,iend
  integer, intent(inout) :: nshape
  integer            :: i,ishape,itype,indexi,iunits,ierr,itry
@@ -260,7 +254,7 @@ subroutine add_shape(istart,iend,nshape)
  enddo
  print "(/,a)",trim(string)
  !print "(i2,a)",(i,') '//trim(labelshapetype(i)),i=1,maxshapetype)
- 
+
  over_shapes: do while(ishape.le.iend .and. i.le.maxshapes)
     if (istart.eq.0 .or. shape(ishape)%itype.le.0 .or. shape(ishape)%itype.gt.maxshapetype) then
        call prompt('choose an object type (0=none) ',shape(ishape)%itype,0,maxshapetype)
@@ -385,7 +379,6 @@ end subroutine add_shape
 ! utility routine to delete a shape object
 !------------------------------------------
 subroutine delete_shape(ishape,nshape)
- implicit none
  integer, intent(in)    :: ishape
  integer, intent(inout) :: nshape
  integer :: i
@@ -425,7 +418,6 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
       plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb,&
       plotlib_supports_alpha,plot_set_opacity,plot_pt1,plot_sch,plot_qch
- implicit none
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
  real,    intent(in) :: time
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
@@ -566,7 +558,6 @@ end subroutine plot_shapes
 !------------------------------------------------------------
 integer function inshape(xpt,ypt,itransx,itransy)
  use plotlib, only:plot_qwin,plot_qtxt
- implicit none
  real, intent(in) :: xpt,ypt
  integer, intent(in) :: itransx,itransy
  integer :: i
@@ -609,7 +600,6 @@ end function inshape
 !---------------------------------------
 subroutine edit_shape(i,xpt,ypt,itransx,itransy)
  use plotlib, only:plot_qwin
- implicit none
  integer, intent(in) :: i,itransx,itransy
  real, intent(in)    :: xpt,ypt
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,xlen,ylen
@@ -636,7 +626,6 @@ end subroutine edit_shape
 !--------------------------------------------------------
 subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
  use plotlib, only:plot_qwin
- implicit none
  real, intent(in)     :: xpt,ypt
  integer, intent(in)  :: itransx,itransy,ipanel
  integer, intent(out) :: ierr
@@ -720,8 +709,7 @@ end subroutine convert_units
 ! utility routine to edit a text object interactively
 !--------------------------------------------------------
 subroutine edit_textbox(xpt,ypt,angle,string)
-use plotlib, only:plot_stbg,plot_ptxt,plot_curs
- implicit none
+ use plotlib, only:plot_stbg,plot_ptxt,plot_curs
  real, intent(in) :: xpt,ypt,angle
  character(len=1) :: mychar
  real :: xpt2,ypt2
