@@ -74,6 +74,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   real                :: dx1,dy1,dxpix
   logical             :: mixedtypes
   real, allocatable   :: xerrb(:), yerrb(:), herr(:)
+  integer, allocatable :: iorder(:)
 
   !--query current character height and colour
   call plot_qci(icolourstart)
@@ -148,7 +149,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !
         !--if particle cross section, plot particles only in a defined (z) coordinate range
         !
-        nplotted = 0        
+        nplotted = 0
         overj: do j=1,ntot
            if (mixedtypes) then
               itype = min(max(int(iamtype(j)),1),maxparttypes)
@@ -203,7 +204,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                   trim(labeltype(itype))//' particles with ', trim(labelz),' < ',zmax
               else
                  print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
-                  trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax                 
+                  trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax
               endif
            endif
         enddo
@@ -282,7 +283,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                     !  (two here because particles can have different colours)
                        if (nincell(icellx,icelly,itype).le.0) then
                           nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
-                          
+
                           call plot_sci(icolourpart(j))
                           call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
@@ -352,8 +353,14 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin).lt.0.5*huge(0.))) then
      call plot_qls(oldlinestyle)
      call plot_sls(linestylethisstep)
-     call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
-
+     if (ndim <= 1) then ! sort particles by x in 1D
+        allocate(iorder(noftype(1)))
+        call indexx(noftype(1),x(1:noftype(1)),iorder)
+        call plot_line(noftype(1),x(iorder),y(iorder))
+        deallocate(iorder)
+     else
+        call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
+     endif
      if (noftype(2).gt.0 .and. iplot_type(2)) then
         call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
         call plot_line(noftype(2),x(noftype(1)+1:sum(noftype(1:2))),y(noftype(1)+1:sum(noftype(1:2))))
@@ -600,7 +607,7 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
 
  if (iverbose >= 1) then
     if (npts < 10000) then
-       print "(a,i4,a)",' plotting ',npts,' error bars y axis' 
+       print "(a,i4,a)",' plotting ',npts,' error bars y axis'
     else
        print "(a,i10,a)",' plotting ',npts,' error bars y axis'
     endif
