@@ -441,6 +441,10 @@ all: mhutch ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
+allhdf5: phantom_hdf5 amuse_hdf5 cactus_hdf5 falcON_hdf5 gadget_hdf5 # flash_hdf5 <-- is broken?
+	@echo; echo ' SPLASH successfully compiled (with HDF5)! ';
+	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
 ascii: checksystem $(OBJECTS) read_data_ascii.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/asplash $(OBJECTS) read_data_ascii.o $(LDFLAGS)
 	cp $(BINDIR)/asplash $(BINDIR)/splash
@@ -648,6 +652,14 @@ steve: foulkes
 sigfried: vanaverbeke
 
 gasoline: tipsy
+
+hdf5_utils.o: hdf5_utils.f90
+	$(FC) $(FFLAGS) $(HDF5INCLUDE) -c $< -o $@
+
+phantomhdf5: phantom_hdf5
+
+phantom_hdf5: checksystem checkhdf5 $(OBJECTS) hdf5_utils.o read_data_phantom_hdf5.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/hsplash $(OBJECTS) hdf5_utils.o read_data_phantom_hdf5.o $(LDFLAGS) -lhdf5_fortran
 
 myall: mhutch ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
