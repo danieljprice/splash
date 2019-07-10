@@ -247,8 +247,9 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
   integer,          intent(in)  :: ifile,ipos
   integer,          intent(out) :: nstepsread
   character(len=*), intent(in)  :: dumpfile
-  real,               allocatable :: array_1d(:),array_2d(:,:),array_3d(:,:,:)
-  integer(kind=1),    allocatable :: itype(:)
+  real,             allocatable  :: array_1d(:),array_2d(:,:),array_3d(:,:,:)
+  integer(kind=1),  allocatable  :: itype(:)
+  character(len=7), dimension(5) :: abundance_labels
   integer(HID_T) :: file_id,group_id
   integer        :: i,icol,nptmass,ndustsmall,npart,ndustlarge,error,ncolstep,npartoftypei(100)
   logical        :: got
@@ -602,13 +603,14 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
   deallocate(array_2d)
 
   !-- Read abundance array
-  ! TODO: add labels
   allocate(array_2d(5,npart))
   call read_from_hdf5(array_2d,'abundance',group_id,got,error)
   if (got) then
+  abundance_labels = (/'h2ratio','abHIq  ','abhpq  ','abeq   ','abco   '/)
     do i=1,5
       icol = icol + 1
       dat(1:npart,icol,ifile) = array_2d(i,:)
+      label(icol) = trim(abundance_labels(i))
     enddo
   endif
   deallocate(array_2d)
@@ -632,7 +634,6 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
   call close_hdf5group(group_id,error)
 
   !-- Try to read every possible sink array
-  ! TODO: add sinks to dat array
   call open_hdf5group(file_id,'sinks',group_id,error)
 
   allocate(array_1d(nptmass))
