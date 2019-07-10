@@ -637,7 +637,13 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
 
   allocate(array_1d(nptmass))
   call read_from_hdf5(array_1d,'m',group_id,got,error)
+  if (got) then
+    dat(npart+1:npart+nptmass,ipmass,ifile) = array_1d(:)
+  endif
   call read_from_hdf5(array_1d,'h',group_id,got,error)
+  if (got) then
+    dat(npart+1:npart+nptmass,ih,ifile) = array_1d(:)
+  endif
   call read_from_hdf5(array_1d,'hsoft',group_id,got,error)
   call read_from_hdf5(array_1d,'maccreted',group_id,got,error)
   call read_from_hdf5(array_1d,'tlast',group_id,got,error)
@@ -645,8 +651,18 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
 
   allocate(array_2d(3,nptmass))
   call read_from_hdf5(array_2d,'xyz',group_id,got,error)
+  if (got) then
+    dat(npart+1:npart+nptmass,ix(1),ifile) = array_2d(1,:)
+    dat(npart+1:npart+nptmass,ix(2),ifile) = array_2d(2,:)
+    dat(npart+1:npart+nptmass,ix(3),ifile) = array_2d(3,:)
+  endif
   call read_from_hdf5(array_2d,'spinxyz',group_id,got,error)
   call read_from_hdf5(array_2d,'vxyz',group_id,got,error)
+  if (got) then
+    dat(npart+1:npart+nptmass,ivx  ,ifile) = array_2d(1,:)
+    dat(npart+1:npart+nptmass,ivx+1,ifile) = array_2d(2,:)
+    dat(npart+1:npart+nptmass,ivx+2,ifile) = array_2d(3,:)
+  endif
   deallocate(array_2d)
 
   call close_hdf5group(group_id,error)
