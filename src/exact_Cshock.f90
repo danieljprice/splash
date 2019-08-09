@@ -47,7 +47,7 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  real :: sintheta,costheta,vx2,vx,vy,rhon,dvx,vxin
  integer :: npts,i
  logical printout
- 
+
  printout = .false.
  npts = size(xpts)
  theta = pi/4.
@@ -72,9 +72,9 @@ subroutine exact_Cshock(iplot,time,gamma,machs,macha,xmin,xmax,xpts,ypts,ierr)
  print "(4(a,es10.3))",' shock length L = ',shockL,' shock is at x = ',xshock
 
  call integrate(xmin,xmax,xshock,xpts,macha,machs,theta,shockl,D,npts)
- 
+
  !
- !  compute velocity jump across shock: See Mac-Low et al. (1995). This is the difference 
+ !  compute velocity jump across shock: See Mac-Low et al. (1995). This is the difference
  !  in the velocity across the shock front since we assume that the
  !  post-shock gas is at rest
  !
@@ -148,16 +148,16 @@ end subroutine exact_Cshock
 real function rhs(D,macha,machs,theta,shockl)
  real, intent(in) :: D,macha,machs,theta,shockl
  real :: term,sintheta,costheta2,b0,b
- 
+
  term = (1./D**2 - 1./machs**2)*shockl
- 
+
  sintheta = sin(theta)
  costheta2 = cos(theta)**2
  b0 = sintheta
  b = get_b(b0,macha,machs,D)
- 
+
  rhs = b/macha*(b - D*((b - b0)/macha**2*costheta2 + sintheta))/(b**2 + costheta2)/term
- 
+
 end function rhs
 
 real function get_b(b0,macha,machs,D)

@@ -406,9 +406,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          fparser.f90 parsetext.f90 \
          exact_function.f90 exact_dustywaves.f90 exact_planetdisc.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
-         exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
+         exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.F90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
-         exact_toystar1D.f90 exact_toystar2D.f90 \
+         exact_toystar1D.F90 exact_toystar2D.F90 \
          exact_densityprofiles.f90 exact_torus.f90 exact_bondi.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
@@ -671,6 +671,21 @@ libsplash: lib
 lib: $(OBJLIB)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIB) -o libsplash.so
 
+SRCLIBEXACT= exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 exact_polytrope.f90 \
+	exact_toystar1D.F90 exact_toystar2D.F90 exact_gresho.f90 exact_mhdshock.f90 \
+	exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 exact_ringspread.f90 \
+	cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.F90 exact_Cshock.f90 \
+	exact_planetdisc.f90 exact_bondi.f90 \
+	libexact.f90
+OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
+OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
+FPPFLAGS=-DNOPLOT
+
+.PHONY: libexact
+libexact: libexactcmd
+libexactcmd: checksystem $(OBJLIBEXACTALL)
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
 	@echo ""
@@ -904,7 +919,7 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 include .depends
 
 clean:
-	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash libsplash.so
+	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash libsplash.so libexact.so
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall

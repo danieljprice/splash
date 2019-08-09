@@ -423,7 +423,9 @@ end subroutine param_derivs
 !
 !----------------------------------------------------------------------
 subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
+#ifndef NOPLOT
   use plotlib, only:plot_swin,plot_box,plot_label,plot_line
+#endif
   implicit none
   real, intent(in) :: astart,bstart,sigmain,gamma
   integer, parameter :: npts = 2000
@@ -466,9 +468,11 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
   ymax = 2.0
   ymin = -2.0
 
+#ifndef NOPLOT
   call plot_swin(xstart-extra,xend+extra,ymin,ymax)
   call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)
   call plot_label ('beta','alpha',' ')
+#endif
 
   do i=1,npts
      xi = xstart + (i-1)*npts
@@ -480,7 +484,10 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
         yplot(i) = sqrt(term)
      endif
   enddo
+
+#ifndef NOPLOT
   call plot_line(npts,xplot,yplot)
+#endif
 
   return
 

@@ -44,7 +44,9 @@ contains
 !   ierr : error condition to splash indicating plotting was done here
 !-----------------------------------------------------------------------
 subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
+#ifndef NOPLOT
  use plotlib, only:plot_line
+#endif
  real, intent(in) :: x1,y1,x2,y2,m1,m2
  real, dimension(:), intent(inout) :: xplot,yplot
  integer, intent(out) :: ierr
@@ -55,7 +57,7 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
 
  npts = (size(xplot)-1)/2
  if (npts < 1) return
- 
+
  sep = sqrt((x2 - x1)**2 + (y2 - y1)**2)
  print "(4(a,es10.3))",' plotting Roche potential, m1 = ',m1,' m2 = ',m2,' sep = ',sep
 
@@ -92,7 +94,7 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  if (m1 < m2) then
     xplot(:) = 1. - xplot(:)
  endif
- 
+
  ! scale to actual separation
  xplot = xplot*sep
  yplot = yplot*sep
@@ -103,14 +105,15 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  angle = -atan2(dy,dx)
  cosangle = cos(angle)
  sinangle = sin(angle)
- 
+
+#ifndef NOPLOT
  ! lobes are computed assuming primary is at the origin, so shift to xprim,yprim
  ! unrotated, this is just plot_line(xplot,yplot) and plot_line(xplot,-yplot)
  call plot_line(2*npts+1,xplot*cosangle + yplot*sinangle + x1,-xplot*sinangle + yplot*cosangle + y1)
  call plot_line(2*npts+1,xplot*cosangle - yplot*sinangle + x1,-xplot*sinangle - yplot*cosangle + y1)
-
  !--return non-zero ierr value as we do the plotting here
  ierr = 1
+#endif
 
 end subroutine exact_rochelobe
 !

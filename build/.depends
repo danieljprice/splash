@@ -22,8 +22,8 @@ exact_sedov.o sedov.mod: exact_sedov.f90
 exact_shock.o shock.mod: exact_shock.f90
 exact_shock_sr.o shock_sr.mod: exact_shock_sr.f90
 exact_wave.o wave.mod: exact_wave.f90
-exact_toystar1D.o toystar1d.mod: exact_toystar1D.f90
-exact_toystar2D.o toystar2d.mod: exact_toystar2D.f90
+exact_toystar1D.o toystar1d.mod: exact_toystar1D.F90
+exact_toystar2D.o toystar2d.mod: exact_toystar2D.F90
 exact_densityprofiles.o densityprofiles.mod: exact_densityprofiles.f90
 exact_torus.o torus.mod: exact_torus.f90
 exact_ringspread.o ringspread.mod: exact_ringspread.f90

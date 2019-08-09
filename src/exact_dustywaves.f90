@@ -103,7 +103,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
   case(2)
      print*,'(dust velocity)'
   case default
-     print*,'(gas velocity)'  
+     print*,'(gas velocity)'
   end select
 
 
