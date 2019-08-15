@@ -109,7 +109,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   datsmooth = 0.
   term = 0.
   brightness = 0.
-  print "(1x,a)",'ray tracing from particles to pixels...'
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
      return
@@ -148,18 +147,18 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--average particle mass
   pmassav = sum(pmass(1:npmass))/real(npmass)
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
-  print*,'average h = ',hav,' average mass = ',pmassav
-  print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
+  print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/rkappa,' smoothing lengths'
+  !print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
+  iprintprogress = (npart .ge. 1000000) .or. (npixx*npixy .gt.500000)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart.ge.1e7) iprintinterval = 10
   iprintnext = iprintinterval
 !
 !--get starting CPU time
@@ -205,7 +204,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      !
 !#ifndef _OPENMP
      if (iprintprogress) then
-        iprogress = 100*(ipart/npart)
+        iprogress = 100*(ipart/real(npart))
         if (iprogress.ge.iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,ipart
            iprintnext = iprintnext + iprintinterval
@@ -350,7 +349,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      itmin = int(t_used/60.)
      tsec = t_used - (itmin*60.)
      print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,'s'
-  else
+  elseif (t_used > 10.) then
      print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
   endif
   if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
