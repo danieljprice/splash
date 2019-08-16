@@ -1543,25 +1543,25 @@ end subroutine interactive_step
 subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,ifirstframeonpage,nframes, &
                              lastpanel,iplotxarr,iplotyarr,irenderarr,icontourarr,ivecarr,&
                              use_double_rendering,xmin,xmax,vptxmin,vptxmax,vptymin,vptymax, &
-                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icolourscheme, &
+                             barwmulti,xminadapt,xmaxadapt,nacross,ndim,xorigin,icoloursarr, &
                              iColourBarStyle,interactivereplot)
  use labels,    only:is_coord,iamvec
  use limits,    only:assert_sensible_limits
- use multiplot, only:itrans
+ use multiplot, only:itrans,nyplotmulti
  use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
- integer, intent(inout) :: icolourscheme
+ integer, intent(inout), dimension(:) :: icoloursarr
  integer, intent(in), dimension(:) :: iplotxarr,iplotyarr,irenderarr,icontourarr,ivecarr
  real, dimension(:), intent(in) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
  real, dimension(:), intent(inout) :: xmin,xmax,xminadapt,xmaxadapt
  real, intent(in), dimension(ndim) :: xorigin
  logical, intent(in)  :: use_double_rendering
  logical, intent(out) :: interactivereplot
- integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
+ integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape,imultipanel
  integer :: istepjumpnew,ivecx,ivecy
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,contlength,zoomfac
@@ -1612,6 +1612,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   istepsonpage = abs(istep - ifirststeponpage)/iadvance + 1
   istepjump = 1
   istepjumpset = .false.
+
 !  print*,'istep = ',istepnew
 !  print*,'steps on page = ',istepsonpage
 
@@ -1634,6 +1635,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
      !
      call get_vptxy(xpt,ypt,vptxi,vptyi)
      ipanel = getpanel(vptxi,vptyi)
+     imultipanel = mod(ipanel-1, nyplotmulti) + 1
      !print*,'xpt,ypt = ',xpt,ypt,vptxi,vptyi,ipanel
 
      !--translate vpt co-ords to x,y in current panel
@@ -2113,18 +2115,18 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            endif
         endif
      case('m') ! change colour map (next scheme)
-        call change_colourmap(icolourscheme,1)
+        call change_colourmap(icoloursarr(imultipanel),1)
         istep = istepnew
         interactivereplot = .true.
         iexit = .true.
      case('M') ! change colour map (previous scheme)
-        call change_colourmap(icolourscheme,-1)
+        call change_colourmap(icoloursarr(imultipanel),-1)
         istep = istepnew
         interactivereplot = .true.
         iexit = .true.
      case('i') ! invert colour map
-        icolourscheme = -icolourscheme
-        call change_colourmap(icolourscheme,0)
+        icoloursarr(imultipanel) = -icoloursarr(imultipanel)
+        call change_colourmap(icoloursarr(imultipanel),0)
         istep = istepnew
         interactivereplot = .true.
         iexit = .true.

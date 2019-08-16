@@ -148,6 +148,7 @@ subroutine defaults_set(use_evdefaults)
   x_secmulti(:) = .false.    ! take cross section?
   xsecposmulti(:) = 0.0      ! position of cross section
   icontourmulti(:) = 0       ! contour plot
+  icoloursmulti(:) = 2       ! colour schemes
   iplotpartoftypemulti(:,:) = .false.
   do i=1,size(iplotpartoftypemulti(:,1))
      iplotpartoftypemulti(i,i) = .true.
