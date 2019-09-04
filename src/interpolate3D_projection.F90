@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -85,7 +85,7 @@ subroutine setup_integratedkernel
     coltable(i)=2.0*coldens*cnormk3D
  end do
  coltable(maxcoltable) = 0.
- 
+
  return
 end subroutine setup_integratedkernel
 !
@@ -125,7 +125,7 @@ end function wfromtable
 !     that is, we compute the smoothed array according to
 !
 !     datsmooth(pixel) = sum_b weight_b dat_b W(r-r_b, h_b)
-! 
+!
 !     where _b is the quantity at the neighbouring particle b and
 !     W is the smoothing kernel, for which we use the usual cubic spline
 !
@@ -186,7 +186,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   real :: t_start,t_end,t_used
   logical :: iprintprogress,use3Dperspective,accelerate
   character(len=32) :: string
-  
+
   datsmooth = 0.
   term = 0.
   string = 'projecting'
@@ -253,7 +253,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   !dhmin3 = 1./(hmin*hmin*hmin)
 !
 !--store x value for each pixel (for optimisation)
-!  
+!
   do ipix=1,npixx
      xpix(ipix) = xminpix + ipix*pixwidthx
   enddo
@@ -304,7 +304,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
-     
+
      radkern = radkernel*hi ! radius of the smoothing kernel
 
      !--cycle as soon as we know the particle does not contribute
@@ -363,7 +363,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  .and. npixpartx.gt.5 .and. npixparty.gt.5 &
                  .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
                  .and. jpixmin.ge.1 .and. jpixmax.le.npixy
-     
+
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
         xi = xminpix + ipixi*pixwidthx
@@ -404,7 +404,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
            enddo
            if (jpix.ne.jpixi) then
               jpixcopy = jpixi - (jpix-jpixi)
-              !--copy top right -> bottom left 
+              !--copy top right -> bottom left
               do ipix=ipixmin,ipixi-1
                  !$omp atomic
                  datsmooth(ipix,jpixcopy) = datsmooth(ipix,jpixcopy) + row(ipixmax-(ipix-ipixmin))
@@ -416,7 +416,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
               enddo
            endif
         enddo
-          
+
      else
         ipixmin = int((xi - radkern - xmin)/pixwidthx)
         ipixmax = int((xi + radkern - xmin)/pixwidthx)
@@ -454,7 +454,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
                  !
                  !$omp atomic
                  datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-   
+
                  if (normalise) then
                     !$omp atomic
                     datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
@@ -491,7 +491,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   call wall_time(t_end)
   t_used = t_end - t_start
   if (t_used.gt.10.) call print_time(t_used)
-  
+
   return
 
 end subroutine interpolate3D_projection
@@ -542,7 +542,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      endif
      datnorm = 0.
   else
-     print "(1x,a)",'projecting vector from particles to pixels...'  
+     print "(1x,a)",'projecting vector from particles to pixels...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
      print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
@@ -550,7 +550,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   endif
   !
   !--loop over particles
-  !      
+  !
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,vecx,vecy,itype,vecsmoothx,vecsmoothy,npart) &
 !$omp shared(xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen,datnorm) &
@@ -586,13 +586,13 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      radkern = radkernel*hsmooth    ! radius of the smoothing kernel
      hi1 = 1./hsmooth
      hi21 = hi1*hi1
-        
+
      termx = const*vecx(i)
      termy = const*vecy(i)
      termnorm = const
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
      jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
      ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
@@ -625,10 +625,16 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
-              !  
+              !
+              !$omp atomic
               vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
+              !$omp atomic
               vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
-              if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+
+              if (normalise) then
+                 !$omp atomic
+                 datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+              endif
            endif
 
         enddo
@@ -701,7 +707,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   real :: termx,termy,term,dy,dy2,ypix,xi,yi,zi
   real :: crdens,emissivity,Bperp,angle,pintrinsic,rcyl
   real, dimension(npixx) :: dx2i
-  
+
   if (getIonly) then
      stokesI = 0.
   else
@@ -724,14 +730,14 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   if (present(utherm) .and. present(uthermcutoff)) then
      print*,' using only particles with utherm > ',uthermcutoff
   endif
-  
+
   if (pixwidth.le.0.) then
      print "(a)",'interpolate3D_proj_vec_synchrotron: error: pixel width <= 0'
      return
   endif
   !
   !--loop over particles
-  !      
+  !
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,vecx,vecy,itype,stokesq,stokesu,stokesi,npart) &
 !$omp shared(xmin,ymin,pixwidth,rcrit,zcrit,alpha,radkernel,radkernel2) &
@@ -771,16 +777,16 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      radkern = radkernel*hsmooth    ! radius of the smoothing kernel
      xi = x(i)
      yi = y(i)
-     
+
      !--assumed distribution of cosmic ray electrons in galaxy
      !  (should use UNROTATED x,y if rotation added)
      rcyl = sqrt(xi**2 + yi**2)
      crdens = exp(-rcyl/rcrit - abs(zi)/zcrit)
-     
+
      !--calculate synchrotron emissivity based on Bperp and a spectral index alpha
      Bperp = sqrt(vecx(i)**2 + vecy(i)**2)
      emissivity = crdens*Bperp**(1. + alpha)
-     
+
      if (getIonly) then
         term = emissivity*const
         termx = 0.
@@ -788,13 +794,13 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      else
         term = 0.
         !--faraday rotation would change angle here
-        angle = atan2(vecy(i),vecx(i))     
+        angle = atan2(vecy(i),vecx(i))
         termx = pintrinsic*emissivity*const*COS(angle)
         termy = pintrinsic*emissivity*const*SIN(angle)
      endif
      !
      !--for each particle work out which pixels it contributes to
-     !               
+     !
      ipixmin = int((xi - radkern - xmin)/pixwidth)
      jpixmin = int((yi - radkern - ymin)/pixwidth)
      ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
@@ -835,9 +841,12 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
               !--calculate data value at this pixel using the summation interpolant
               !
               if (getIonly) then
-                 stokesI(ipix,jpix) = stokesI(ipix,jpix) + term*wab           
+                 !$omp atomic
+                 stokesI(ipix,jpix) = stokesI(ipix,jpix) + term*wab
               else
+                 !$omp atomic
                  stokesQ(ipix,jpix) = stokesQ(ipix,jpix) + termx*wab
+                 !$omp atomic
                  stokesU(ipix,jpix) = stokesU(ipix,jpix) + termy*wab
               endif
            endif
