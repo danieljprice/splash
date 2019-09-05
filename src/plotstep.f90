@@ -1645,7 +1645,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,iverbose)
                           endif
                           !!--same but for contour plot
                           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
@@ -1663,7 +1663,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender)
+                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,iverbose)
                              endif
                              gotcontours = .true.
 

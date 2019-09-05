@@ -155,7 +155,7 @@ end function wfromtable
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
-     useaccelerate)
+     useaccelerate,iverbose)
 
   use kernels, only:radkernel,radkernel2
   use timing,  only:wall_time,print_time
@@ -168,6 +168,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   logical, intent(in) :: normalise
   real, dimension(npixx,npixy) :: datnorm
   logical, intent(in) :: useaccelerate
+  integer, intent(in) :: iverbose
   real :: row(npixx)
 
   integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpartx,npixparty
@@ -204,14 +205,14 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   !$omp end master
   !$omp end parallel
 
-  if (ncpus > 0) then
+  if (ncpus > 0 .and. iverbose >= 0) then
      write (*,"(1x,a,': ',i4,' x ',i4,' on ',i3,' cpus')") trim(string),npixx,npixy,ncpus
-  else
+  elseif (iverbose >= 0) then
      write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
 
   if (pixwidthx.le.0. .or. pixwidthy.le.0) then
-     print "(1x,a)",'ERROR: pixel width <= 0'
+     if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
      return
   endif
   !nout = count(hh(1:npart).le.0.)
@@ -228,7 +229,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
+  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000) .and. iverbose >= 0
   !
   !--loop over particles
   !
@@ -481,16 +482,16 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
   if (nsubgrid.gt.1) then
      nfull = int((xmax-xmin)/(hminall)) + 1
-     if (nsubgrid.gt.0.1*nok) &
-     print "(a,i9,a,/,a,i6,a)",' Warning: pixel size > 2h for ',nsubgrid,' particles', &
-                               '          need',nfull,' pixels for full resolution'
+     if (nsubgrid.gt.0.1*nok .and. iverbose >= -1) print "(a,i9,a,/,a,i6,a)",&
+      ' Warning: pixel size > 2h for ',nsubgrid,' particles', &
+      '          need',nfull,' pixels for full resolution'
   endif
 !
 !--get/print timings
 !
   call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.10.) call print_time(t_used)
+  if (t_used.gt.10. .and. iverbose >= 0) call print_time(t_used)
 
   return
 
