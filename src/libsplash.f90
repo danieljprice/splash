@@ -42,9 +42,9 @@ contains
 !-------------------------------------------------------------------------
 ! 3D projection (column density)
 !-------------------------------------------------------------------------
-subroutine interpolate3d_projection(                                           &
+subroutine interpolate3d_projection_c(                                         &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, npixy, &
-  pixwidthx, pixwidthy, normalise, zobserver, dscreen, useaccelerate           &
+  pixwidthx, pixwidthy, normalise, zobserver, dscreen, useaccelerate, iverbose &
   ) bind(c)
 
   real(c_float),   intent(in)  :: x(npart),      &
@@ -62,7 +62,8 @@ subroutine interpolate3d_projection(                                           &
   integer(c_int),  intent(in)  :: npart,         &
                                   npixx,         &
                                   npixy,         &
-                                  itype(npart)
+                                  itype(npart),  &
+                                  iverbose
   logical(c_bool), intent(in)  :: normalise,     &
                                   useaccelerate
   real(c_float),   intent(out) :: datsmooth(npixx,npixy)
@@ -76,23 +77,24 @@ subroutine interpolate3d_projection(                                           &
   call interpolate3d_projection_f(                                        &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, &
     npixy, pixwidthx, pixwidthy, normalise_f, zobserver, dscreen,         &
-    useaccelerate_f)
+    useaccelerate_f, iverbose)
 
-end subroutine interpolate3d_projection
+end subroutine interpolate3d_projection_c
 
 !-------------------------------------------------------------------------
 ! 3D projection of vectors
 !-------------------------------------------------------------------------
-subroutine interpolate3d_proj_vec(                                       &
+subroutine interpolate3d_proj_vec_c(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, vecsmoothx, &
   vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise, zobserver,  &
-  dscreen                                                                &
+  dscreen, iverbose                                                      &
   ) bind(c)
 
   integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
                                   npixy,                   &
-                                  itype(npart)
+                                  itype(npart),            &
+                                  iverbose
   real(c_float),   intent(in)  :: x(npart),                &
                                   y(npart),                &
                                   z(npart),                &
@@ -117,22 +119,23 @@ subroutine interpolate3d_proj_vec(                                       &
   call interpolate3d_proj_vec_f(                                            &
     x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, vecsmoothx,  &
     vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise_f, zobserver, &
-    dscreen)
+    dscreen, iverbose)
 
-end subroutine interpolate3d_proj_vec
+end subroutine interpolate3d_proj_vec_c
 
 !-------------------------------------------------------------------------
 ! cross sections of 3D data
 !-------------------------------------------------------------------------
-subroutine interpolate3d_fastxsec(                                       &
+subroutine interpolate3d_fastxsec_c(                                     &
   x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth, &
-  npixx, npixy, pixwidthx, pixwidthy, normalise                          &
+  npixx, npixy, pixwidthx, pixwidthy, normalise, iverbose                &
   ) bind(c)
 
   integer(c_int),   intent(in) :: npart,         &
                                   npixx,         &
                                   npixy,         &
-                                  itype(npart)
+                                  itype(npart),  &
+                                  iverbose
   real(c_float),   intent(in)  :: x(npart),      &
                                   y(npart),      &
                                   z(npart),      &
@@ -153,22 +156,23 @@ subroutine interpolate3d_fastxsec(                                       &
 
   call interpolate3d_fastxsec_f(                                           &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth, &
-    npixx, npixy, pixwidthx, pixwidthy, normalise_f)
+    npixx, npixy, pixwidthx, pixwidthy, normalise_f, iverbose)
 
-end subroutine interpolate3d_fastxsec
+end subroutine interpolate3d_fastxsec_c
 
 !-------------------------------------------------------------------------
 ! cross sections of 3D vector data
 !-------------------------------------------------------------------------
-subroutine interpolate3d_xsec_vec(                                       &
+subroutine interpolate3d_xsec_vec_c(                                     &
   x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, zslice,     &
-  vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise  &
-  ) bind(c)
+  vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise, &
+  iverbose) bind(c)
 
   integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
                                   npixy,                   &
-                                  itype(npart)
+                                  itype(npart),            &
+                                  iverbose
   real(c_float),   intent(in)  :: x(npart),                &
                                   y(npart),                &
                                   z(npart),                &
@@ -191,24 +195,26 @@ subroutine interpolate3d_xsec_vec(                                       &
 
   call interpolate3d_xsec_vec_f(                                             &
     x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, zslice,       &
-    vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise_f)
+    vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise_f, &
+    iverbose)
 
-end subroutine interpolate3d_xsec_vec
+end subroutine interpolate3d_xsec_vec_c
 
 !-------------------------------------------------------------------------
 ! opacity rendering of 3D data
 !-------------------------------------------------------------------------
-subroutine interp3d_proj_opacity(                                           &
+subroutine interp3d_proj_opacity_c(                                         &
   x, y, z, pmass, npmass, hh, weight, dat, zorig, itype, npart, xmin, ymin, &
   datsmooth, brightness, npixx, npixy, pixwidth, zobserver,                 &
-  dscreenfromobserver, rkappa, zcut                                         &
+  dscreenfromobserver, rkappa, zcut, iverbose                               &
   ) bind(c)
 
   integer(c_int), intent(in)  :: npart,                  &
                                  npixx,                  &
                                  npixy,                  &
                                  npmass,                 &
-                                 itype(npart)
+                                 itype(npart),           &
+                                 iverbose
   real(c_float),  intent(in)  :: x(npart),               &
                                  y(npart),               &
                                  z(npart),               &
@@ -229,8 +235,8 @@ subroutine interp3d_proj_opacity(                                           &
 
   call interp3d_proj_opacity_f(x, y, z, pmass, npmass, hh, weight, dat, zorig, &
     itype, npart, xmin, ymin, datsmooth, brightness, npixx, npixy, pixwidth,   &
-    zobserver, dscreenfromobserver, rkappa, zcut)
+    zobserver, dscreenfromobserver, rkappa, zcut, iverbose)
 
-end subroutine interp3d_proj_opacity
+end subroutine interp3d_proj_opacity_c
 
 end module libsplash
