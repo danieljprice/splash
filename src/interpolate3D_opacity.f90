@@ -77,11 +77,11 @@ contains
 
 subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidth,zobserver,dscreenfromobserver, &
-     rkappa,zcut)
+     rkappa,zcut,iverbose)
 
   implicit none
   real, parameter :: pi=3.1415926536
-  integer, intent(in) :: npart,npixx,npixy,npmass
+  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig
   real, intent(in), dimension(npmass) :: pmass
   integer, intent(in), dimension(npart) :: itype
@@ -110,20 +110,20 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   term = 0.
   brightness = 0.
   if (pixwidth.le.0.) then
-     print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
+     if (iverbose >= -1) print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
   endif
   !--check that npmass is sensible
   if (npmass.lt.1 .or. npmass.gt.npart) then
-     print*,'interpolate3D_opacity: ERROR in input number of particle masses '
+     if (iverbose >= -1) print*,'interpolate3D_opacity: ERROR in input number of particle masses '
      return
   endif
   !--these values for npmass are not sensible but the routine will still work
   if (npmass.ne.1 .and. npmass.ne.npart) then
-     print*,'WARNING: interpolate3D_opacity: number of particle masses input =',npmass
+     if (iverbose >= -1) print*,'WARNING: interpolate3D_opacity: number of particle masses input =',npmass
   endif
 
   if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
@@ -147,13 +147,13 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--average particle mass
   pmassav = sum(pmass(1:npmass))/real(npmass)
   rkappatemp = pi*hav*hav/(pmassav*coltable(0))
-  print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/rkappa,' smoothing lengths'
+  if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/rkappa,' smoothing lengths'
   !print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 1000000) .or. (npixx*npixy .gt.500000)
+  iprintprogress = ((npart .ge. 1000000) .or. (npixx*npixy .gt.500000)) .and. (iverbose >= 0)
   !
   !--loop over particles
   !
@@ -339,20 +339,20 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--get ending CPU time
 !
   if (nsink > 99) then
-     print*,'rendered ',nsink,' sink particles'
+     if (iverbose >= 0) print*,'rendered ',nsink,' sink particles'
   elseif (nsink > 0) then
-     print "(1x,a,i2,a)",'rendered ',nsink,' sink particles'
+     if (iverbose >= 0) print "(1x,a,i2,a)",'rendered ',nsink,' sink particles'
   endif
   call cpu_time(t_end)
   t_used = t_end - t_start
   if (t_used.gt.60.) then
      itmin = int(t_used/60.)
      tsec = t_used - (itmin*60.)
-     print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,'s'
+     if (iverbose >= 0) print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,'s'
   elseif (t_used > 10.) then
-     print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
+     if (iverbose >= 0) print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
   endif
-  if (zcut.lt.huge(zcut)) print*,'slice contains ',nused,' of ',npart,' particles'
+  if (zcut.lt.huge(zcut) .and. iverbose >= 0) print*,'slice contains ',nused,' of ',npart,' particles'
 
   return
 

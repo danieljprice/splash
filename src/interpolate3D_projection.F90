@@ -514,11 +514,12 @@ end subroutine interpolate3D_projection
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen)
+     xmin,ymin,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,&
+     zobserver,dscreen,iverbose)
 
   use kernels, only:radkernel,radkernel2
   implicit none
-  integer, intent(in) :: npart,npixx,npixy
+  integer, intent(in) :: npart,npixx,npixy,iverbose
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen
@@ -535,18 +536,18 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   termx = 0.
   termy = 0.
   if (normalise) then
-     print "(1x,a)",'projecting vector (normalised) from particles to pixels...'
+     if (iverbose >= 0) print "(1x,a)",'projecting vector (normalised) from particles to pixels...'
      allocate(datnorm(npixx,npixy),stat=ierr)
      if (ierr /= 0) then
-        print "(a)",'interpolate3D_proj_vec: error allocating memory'
+        if (iverbose >= -1) print "(a)",'interpolate3D_proj_vec: error allocating memory'
         return
      endif
      datnorm = 0.
   else
-     print "(1x,a)",'projecting vector from particles to pixels...'
+     if (iverbose >= 0) print "(1x,a)",'projecting vector from particles to pixels...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
-     print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
+     if (iverbose >= -1) print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
      return
   endif
   !

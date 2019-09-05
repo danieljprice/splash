@@ -56,10 +56,10 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
-     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise)
+     xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
   implicit none
-  integer, intent(in) :: npart,npixx,npixy
+  integer, intent(in) :: npart,npixx,npixy,iverbose
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
@@ -77,19 +77,21 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
 
   datsmooth = 0.
   datnorm = 0.
-  if (normalise) then
-     print*,'taking fast cross section (normalised)...',zslice
-  else
-     print*,'taking fast cross section (non-normalised)...',zslice
+  if (iverbose >= 0) then
+     if (normalise) then
+        print*,'taking fast cross section (normalised)...',zslice
+     else
+        print*,'taking fast cross section (non-normalised)...',zslice
+     endif
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0. .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
-  elseif (npart.le.0) then
+  elseif (npart.le.0 .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: error: npart = 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
   endif
   const = cnormk3D
@@ -225,10 +227,10 @@ end subroutine interpolate3D_fastxsec
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
-     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise)
+     xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
   implicit none
-  integer, intent(in) :: npart,npixx,npixy
+  integer, intent(in) :: npart,npixx,npixy,iverbose
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
@@ -246,16 +248,18 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   vecsmoothx = 0.
   vecsmoothy = 0.
   datnorm = 0.
-  if (normalise) then
-     print*,'taking fast cross section (normalised)...',zslice
-  else
-     print*,'taking fast cross section (non-normalised)...',zslice
+  if (iverbose >= 0) then
+     if (normalise) then
+        print*,'taking fast cross section (normalised)...',zslice
+     else
+        print*,'taking fast cross section (non-normalised)...',zslice
+     endif
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0. .and. iverbose >= -1) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
   endif
   const = cnormk3D ! normalisation constant (3D)
