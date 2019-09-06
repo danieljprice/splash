@@ -93,7 +93,7 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
   cs_R = sqrt(gamma*p_R/rho_R)
   if (rdust_to_gas .gt.epsilon(rdust_to_gas)) then
      cs_L = cs_L*sqrt(1./(1.+rdust_to_gas))
-     cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))   
+     cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))
   endif
   gamfac = (gamma-1.)/(gamma + 1.)
 

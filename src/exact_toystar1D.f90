@@ -125,7 +125,6 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      else                        ! plot normal exact solution line
         ierr = 0
      endif
-
 !---------------------------------------------------------------------------
 !  non-linear solution for the fundamental (n=1) mode
 !
@@ -385,7 +384,6 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
   xcentre = 0.5*(xstart + xend)
   ymax = 1.5*func(xcentre)
   ymin = 1.5*func2(xcentre)
-
   call plot_swin(xstart-extra,xend+extra,ymin,ymax)
   call plot_box('bcnst',0.0,0,'1bvcnst',0.0,0)
   call plot_funx(func,10000,xstart,xend,1)

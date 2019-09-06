@@ -480,8 +480,8 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
         yplot(i) = sqrt(term)
      endif
   enddo
-  call plot_line(npts,xplot,yplot)
 
+  call plot_line(npts,xplot,yplot)
   return
 
 end subroutine exact_toystar_ACplane2D
