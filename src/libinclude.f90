@@ -44,6 +44,6 @@ elseif (v(2)==(s(5)+78)/100+1 .and. v(3)==nint(sqrt(1.5)) .and. v(5) < s(1)/5.3)
 elseif ((v(2)==int(0.25*p(1)) .and. v(3)==p(6)) .or. (abs(v(3)/real(v(2))-4.*atan(1.)) < 1.3e-3)) then
    print "(/,1x,53(a))",(achar(p(i)+39),i=1,53),achar(10)
 else
-    print *,' You may choose from a delectable sample of plots'
-    print *
+    print *,' This library is a part of SPLASH, a visualisation tool'
+    print *,' for Smoothed Particle Hydrodynamics written by Daniel Price'
 endif

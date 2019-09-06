@@ -40,9 +40,7 @@ module planetdisc
 contains
 
 subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot,yplot,ierr)
-#ifndef NOPLOT
   use plotlib, only:plot_line
-#endif
   implicit none
   integer, intent(in)  :: iplot,ispiral,narms
   integer, intent(out) :: ierr
@@ -99,7 +97,6 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
            yplot(i) = phase + sign(1.,r-rplanet)*(1./(HonR))* &
                       ((rr**(q-0.5))/(q-0.5) - (rr**(q+1.))/(q+1.) - 3./((2.*q-1.)*(q+1.)))
         endif
-#ifndef NOPLOT
         if (yplot(i) > pi) then
            phase = phase - 2.*pi
            if (i > 1) then
@@ -117,11 +114,8 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
               istart = i+1
            endif
         endif
-#endif
      enddo
-#ifndef NOPLOT
      ierr = 1 ! do not plot outside this routine
-#endif
      return
   case default ! in x-y plane
      ! define npts outside planet orbit
@@ -175,13 +169,9 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
            end select
            !print*,'r, phi = ',r,phi,' : x, y = ',rplot(i),yplot(i)
         enddo
-#ifndef NOPLOT
         call plot_line(npts,rplot,yplot)
-#endif
      enddo
-#ifndef NOPLOT
      ierr = 1 ! do not plot outside this routine
-#endif
   end select
 
 end subroutine exact_planetdisc

@@ -27,8 +27,9 @@ def prerun():
         print("Please compile with `make libexact` first.")
         exit(1)
     else:
-        print("\n  ТШТШТ      BEHOLD THE POWER OF SPLASH      ТШТШТ")
-        return cdll.LoadLibrary(str(libexactpath))
+        lib = cdll.LoadLibrary(str(libexactpath))
+        lib.check_argcv_f()
+        return lib
 
 def checkfmt(str):
     return str.lower().replace(' ', '_').replace('-', '_').replace('/', '_')

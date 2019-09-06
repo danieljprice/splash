@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 !-------------------------------------------------------------------------
-! module providing library version of splash interpolation routines
+! Module providing library version of splash exact routines
 ! specifies c interfaces to corresponding Fortran subroutines
 !-------------------------------------------------------------------------
 module libexact
@@ -51,14 +51,13 @@ module libexact
   public
 
 contains
-  subroutine check_argcv_f()
+  subroutine check_argcv_f() bind(c)
     include 'libinclude.f90'
   end subroutine check_argcv_f
 
   subroutine shock_(&
     iplot,npart,time,gamma,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,&
     rdust_to_gas,xplot,yplot,ierr) bind(c)
-
     integer(c_int), intent(in)  :: iplot, npart
     integer(c_int), intent(out) :: ierr
     real(c_float),  intent(in)  :: time,gamma,xshock
@@ -66,14 +65,12 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call shock_f(iplot,time,gamma,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,&
     rdust_to_gas,xplot,yplot,ierr)
   end subroutine shock_
 
   subroutine shock_sr_(&
     iplot,npart,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr) bind(c)
-
     integer(c_int), intent(in)    :: iplot, npart
     integer(c_int), intent(out)   :: ierr
     real(c_float),  intent(in)    :: time,gamma
@@ -81,7 +78,6 @@ contains
     real(c_float),  intent(inout) :: xplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call shock_sr_f(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
   end subroutine shock_sr_
 
@@ -94,7 +90,6 @@ contains
     real(c_float),  intent(inout) :: rplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call sedov_f(iplot,time,gamma,rhozero,energy,rmax,rplot,yplot,ierr)
   end subroutine sedov_
 
@@ -106,7 +101,6 @@ contains
     real(c_float),  intent(inout) :: rplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call polytrope_f(gamma,polyk,totmass,rplot,yplot,npartout,ierr)
   end subroutine polytrope_
 
@@ -118,7 +112,6 @@ contains
     real(c_float),  intent(inout) :: xplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call toystar1D_f(&
       iplot,time,gamma,H0,A0,C0,sigma,&
       norder,xplot,yplot,npart,ierr)
@@ -128,7 +121,6 @@ contains
     iplot,npart,time,gamma,polyk,totmass, &
     ampl,denscentre,C0,jorder,morder, &
     V11,V22,V12,V21,xplot,yplot,ierr) bind(c)
-
     integer(c_int), intent(in)   :: iplot,npart,jorder,morder
     integer(c_int), intent(out)  :: ierr
     real(c_float),  intent(in)   :: time,gamma,polyk,totmass,&
@@ -137,7 +129,6 @@ contains
     real(c_float), intent(inout) :: xplot(npart)
     real(c_float), intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call toystar2D_f(iplot,time,gamma,polyk,totmass, &
       ampl,denscentre,C0,jorder,morder, &
       V11,V22,V12,V21,xplot,yplot,ierr)
@@ -150,7 +141,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call gresho_f(iplot,xplot,yplot,ierr)
   end subroutine gresho_
 
@@ -162,7 +152,6 @@ contains
     real(c_float),  intent(inout) :: xplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call mhdshock_f(iplot,ishk,time,gamma,xmin,xmax,xshock,xplot,yplot,npts,ierr)
   end subroutine mhdshock_
 
@@ -174,7 +163,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call rhoh_f(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
  end subroutine rhoh_
 
@@ -186,7 +174,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call densityprofiles_f(iplot,iprofile,[Mspherex,Mspherey],&
       [rsoftx,rsofty],xplot,yplot,ierr)
  end subroutine densityprofiles_
@@ -199,7 +186,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call torus_f(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot,ierr)
   end subroutine torus_
 
@@ -211,7 +197,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call ringspread_f(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
   end subroutine ringspread_
 
@@ -223,7 +208,6 @@ contains
     real(c_float),  intent(in)  :: xplot(npart)
     real(c_float),  intent(out) :: yplot(npart)
 
-    call check_argcv_f()
     call dustywave_f(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplot,yplot,ierr)
   end subroutine dustywave_
 
@@ -234,8 +218,8 @@ contains
     real(c_float),  intent(in)    :: x1,y1,x2,y2,m1,m2
     real(c_float),  intent(inout) :: xplot(npart),yplot(npart)
 
-    call check_argcv_f()
     call rochelobe_f(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
+    ierr = 0
   end subroutine rochelobe_
 
   subroutine cshock_(&
@@ -246,7 +230,6 @@ contains
     real(c_float),  intent(inout) :: xplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call cshock_f(iplot,time,gamma,machs,macha,xmin,xmax,xplot,yplot,ierr)
   end subroutine cshock_
 
@@ -258,9 +241,9 @@ contains
     real(c_float),  intent(inout) :: rplot(npart)
     real(c_float),  intent(out)   :: yplot(npart)
 
-    call check_argcv_f()
     call planetdisc_f(&
       iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot,yplot,ierr)
+    ierr = 0
     end subroutine planetdisc_
 
     subroutine bondi_(&
@@ -279,7 +262,6 @@ contains
      geodesic_flow_f = geodesic_flow
      is_wind_f       = is_wind
 
-     call check_argcv_f()
      call bondi_f(&
        iplot,time,gamma,const1,const2,m,relativistic_f,&
        geodesic_flow_f,is_wind_f,xplot,yplot,ierr)

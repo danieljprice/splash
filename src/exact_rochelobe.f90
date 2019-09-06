@@ -44,9 +44,7 @@ contains
 !   ierr : error condition to splash indicating plotting was done here
 !-----------------------------------------------------------------------
 subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
-#ifndef NOPLOT
  use plotlib, only:plot_line
-#endif
  real, intent(in) :: x1,y1,x2,y2,m1,m2
  real, dimension(:), intent(inout) :: xplot,yplot
  integer, intent(out) :: ierr
@@ -106,14 +104,12 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  cosangle = cos(angle)
  sinangle = sin(angle)
 
-#ifndef NOPLOT
  ! lobes are computed assuming primary is at the origin, so shift to xprim,yprim
  ! unrotated, this is just plot_line(xplot,yplot) and plot_line(xplot,-yplot)
  call plot_line(2*npts+1,xplot*cosangle + yplot*sinangle + x1,-xplot*sinangle + yplot*cosangle + y1)
  call plot_line(2*npts+1,xplot*cosangle - yplot*sinangle + x1,-xplot*sinangle - yplot*cosangle + y1)
  !--return non-zero ierr value as we do the plotting here
  ierr = 1
-#endif
 
 end subroutine exact_rochelobe
 !
