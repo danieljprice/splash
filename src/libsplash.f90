@@ -29,10 +29,13 @@ module libsplash
   use projections3D,         only: interpolate3d_projection_f => interpolate3d_projection, &
                                    interpolate3d_proj_vec_f => interpolate3d_proj_vec
 
-  use xsections3D,           only: interpolate3d_fastxsec_f => interpolate3d_fastxsec,   &
+  use xsections3D,           only: interpolate3d_fastxsec_f => interpolate3d_fastxsec, &
                                    interpolate3d_xsec_vec_f => interpolate3d_xsec_vec
 
   use interpolate3D_opacity, only: interp3d_proj_opacity_f => interp3d_proj_opacity
+
+  use projections3Dgeom,     only: interpolate3D_proj_geom_f => interpolate3D_proj_geom, &
+                                   interpolate3D_xsec_geom_f => interpolate3D_xsec_geom
 
   use iso_c_binding,         only: c_float, c_int, c_bool
 
@@ -233,10 +236,90 @@ subroutine interp3d_proj_opacity_c(                                         &
   real(c_float),  intent(out) :: datsmooth(npixx,npixy), &
                                  brightness(npixx,npixy)
 
-  call interp3d_proj_opacity_f(x, y, z, pmass, npmass, hh, weight, dat, zorig, &
-    itype, npart, xmin, ymin, datsmooth, brightness, npixx, npixy, pixwidth,   &
-    zobserver, dscreenfromobserver, rkappa, zcut, iverbose)
+  call interp3d_proj_opacity_f(                                               &
+    x, y, z, pmass, npmass, hh, weight, dat, zorig, itype, npart, xmin, ymin, &
+    datsmooth, brightness, npixx, npixy, pixwidth, zobserver,                 &
+    dscreenfromobserver, rkappa, zcut, iverbose)
 
 end subroutine interp3d_proj_opacity_c
+
+subroutine interpolate3D_proj_geom_c(                                          &
+  x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, npixy, &
+  pixwidthx, pixwidthy, normalise, igeom, iplotx, iploty, iplotz, ix, xorigin  &
+  ) bind(c)
+
+  integer(c_int),  intent(in)    :: npart,         &
+                                    npixx,         &
+                                    npixy,         &
+                                    itype(npart),  &
+                                    igeom,         &
+                                    iplotx,        &
+                                    iploty,        &
+                                    iplotz,        &
+                                    ix(3)
+  real(c_float),   intent(in)    :: x(npart),      &
+                                    y(npart),      &
+                                    z(npart),      &
+                                    hh(npart),     &
+                                    weight(npart), &
+                                    dat(npart),    &
+                                    xmin,          &
+                                    ymin,          &
+                                    pixwidthx,     &
+                                    pixwidthy,     &
+                                    xorigin(3)
+  real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
+  logical(c_bool), intent(inout) :: normalise
+
+  logical :: normalise_f
+
+  normalise_f = normalise
+
+  call interpolate3D_proj_geom_f(                                            &
+    x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx,    &
+    npixy, pixwidthx, pixwidthy, normalise_f, igeom, iplotx, iploty, iplotz, &
+    ix, xorigin)
+
+end subroutine interpolate3D_proj_geom_c
+
+subroutine interpolate3D_xsec_geom_c(                                          &
+  x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth,       &
+  npixx, npixy, pixwidthx, pixwidthy, normalise, igeom, iplotx, iploty,        &
+  iplotz, ix, xorigin) bind(c)
+
+  integer(c_int),  intent(in)    :: npart,         &
+                                    npixx,         &
+                                    npixy,         &
+                                    itype(npart),  &
+                                    igeom,         &
+                                    iplotx,        &
+                                    iploty,        &
+                                    iplotz,        &
+                                    ix(3)
+  real(c_float),   intent(in)    :: x(npart),      &
+                                    y(npart),      &
+                                    z(npart),      &
+                                    hh(npart),     &
+                                    weight(npart), &
+                                    dat(npart),    &
+                                    xmin,          &
+                                    ymin,          &
+                                    zslice,        &
+                                    pixwidthx,     &
+                                    pixwidthy,     &
+                                    xorigin(3)
+  real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
+  logical(c_bool), intent(inout) :: normalise
+
+  logical :: normalise_f
+
+  normalise_f = normalise
+
+  call interpolate3D_xsec_geom_f(                                           &
+    x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth,  &
+    npixx, npixy, pixwidthx, pixwidthy, normalise_f, igeom, iplotx, iploty, &
+    iplotz, ix, xorigin)
+
+end subroutine interpolate3D_xsec_geom_c
 
 end module libsplash
