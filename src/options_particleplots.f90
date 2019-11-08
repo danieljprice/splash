@@ -35,13 +35,13 @@ module settings_part
  integer :: ncircpart,ismooth_particle_plots
  integer :: linestyle, linecolour,linestylethisstep,linecolourthisstep,ErrorBarType
  logical :: iplotline,ilabelpart,ifastparticleplot,iploterrbars
- real    :: hfacmarkers,rref,betaflare
+ real    :: hfacmarkers,rref,betaflare,mstari
 
  namelist /plotopts/ iplotline,linestyle,linecolour, &
    imarktype,iplotpartoftype,PlotOnRenderings, &
    iexact,icoordsnew,ifastparticleplot,idefaultcolourtype,&
    itypeorder,UseTypeInContours,iploterrbars,ilocerrbars,hfacmarkers,&
-   ErrorBarType,ismooth_particle_plots,rref,betaflare
+   ErrorBarType,ismooth_particle_plots,rref,betaflare,mstari
 
 contains
 
@@ -84,6 +84,7 @@ subroutine defaults_set_part
   ismooth_particle_plots = 0
   rref = 1.
   betaflare = 1.25
+  mstari = 1.  ! used in Toomre Q calculation
 
   return
 end subroutine defaults_set_part

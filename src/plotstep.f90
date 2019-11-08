@@ -164,11 +164,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   contminadapt   = huge(contminadapt)
   contmaxadapt   = -huge(contmaxadapt)
 
-  !xminpagemargin = renvironment('SPLASH_MARGIN_XMIN')
-  !xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX')
-  !yminpagemargin = renvironment('SPLASH_MARGIN_YMIN')
-  !ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX')
-
   if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
 
@@ -696,7 +691,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use settings_limits,    only:iadapt
   use settings_part,      only:iexact,iplotpartoftype,imarktype,PlotOnRenderings,UseTypeInContours, &
                                iplotline,linecolourthisstep,linestylethisstep,ifastparticleplot, &
-                               iploterrbars,ilocerrbars,ismooth_particle_plots
+                               iploterrbars,ilocerrbars,ismooth_particle_plots,mstari
   use settings_page,      only:nacross,ndown,interactive,iaxis,usesquarexy,yscalealt,labelyalt, &
                                charheight,iPlotTitles,vpostitle,hpostitle,fjusttitle,nstepsperpage
   use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
@@ -720,7 +715,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   transform_inverse,islogged
   use interactive_routines
   use part_utils,            only:get_tracked_particle,locate_first_two_of_type,&
-                                  get_binary
+                                  get_binary,locate_nth_particle_of_type
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
   use powerspectrums,        only:powerspectrum,powerspec3D_sph
   use interpolations1D,      only:interpolate1D
@@ -2386,27 +2381,41 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     if (icol > 0)  unit_u = units(icol)
                     unit_dz = unitzintegration
                  endif
+                 !
+                 ! use mass of first sink particle for Toomre Q calculation
+                 !
+                 !isinktype = get_sink_type(ntypes)
+                 !call locate_nth_particle_of_type(1,isink1,isinktype,iamtype,npartoftype,ntoti)
+                 !mstari = 1.d0
+
                  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                    !if (isink1 > 0) mstari = dat(isink1,ipmass)
                     if (iRescale) unit_mass = units(ipmass)
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r,unit_dz, &
-                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
+                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
+                            iusetype,npartoftype,gammai,mstari,&
+                            unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),unit_mass,unit_r,unit_dz, &
-                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
+                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
+                            iusetype,npartoftype,gammai,mstari)
                     endif
                  else
                     if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
                     if (icol.gt.0) then
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r,unit_dz, &
-                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty), &
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai,unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
+                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
+                            iusetype,npartoftype,gammai,mstari,&
+                            unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
                     else
-                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),unit_mass,unit_r,unit_dz, &
-                            xmin,xmax,yminadapti,ymaxadapti,itrans(iplotx),itrans(iploty),&
-                            icolourme(1:ntoti),iamtype,iusetype,npartoftype,gammai)
+                       call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
+                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
+                            iusetype,npartoftype,gammai,mstari)
                     endif
                  endif
               elseif (iploty.eq.ipdf) then

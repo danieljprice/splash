@@ -38,7 +38,8 @@ module disc
 contains
 
 subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
-                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,unit_u,u,u_is_spsound)
+                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,mstar,&
+                    unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes,doub_prec
  use part_utils, only:igettype
@@ -47,7 +48,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
  real(doub_prec),                  intent(in)  :: unit_mass,unit_r,unit_dz
- real,                             intent(in)  :: rminin,rmaxin,gamma
+ real,                             intent(in)  :: rminin,rmaxin,gamma,mstar
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
  integer(kind=int1), dimension(:), intent(in)  :: iamtype
@@ -89,7 +90,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
     print "(a,i4,a)",' calculating disc surface density profile using',nbins,' bins'
  case(2)
     if (present(u)) then
-       print "(a)",' calculating Toomre Q parameter (assuming Mstar=1 and a Keplerian rotation profile)'
+       print "(a,es10.3,a)",' calculating Toomre Q parameter (assuming Mstar=',mstar,' and Keplerian rotation)'
        if (.not.gotspsound) then
           if (gamma.lt.1.00001) then
              print "(a)",' isothermal equation of state: using cs^2 = 2/3*utherm'
@@ -130,7 +131,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !
  np = 0
 !$omp parallel do default(none) &
-!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins) &
+!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins,mstar) &
 !$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound,unit_cs2) &
 !$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
 !$omp reduction(+:np)
@@ -196,7 +197,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !--for Toomre Q need the epicyclic frequency
 !  in a Keplerian disc kappa = Omega
 !
-       Omegai = sqrt(1./(radius(ibin)/unit_r)**3)
+       Omegai = sqrt(mstar/(radius(ibin)/unit_r)**3)
        epicyclic = Omegai
 !
 !--spsound is RMS sound speed for all particles in the annulus

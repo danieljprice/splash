@@ -39,7 +39,7 @@ subroutine menu
   use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                              buffer_data,ncolumns,icoords,icoordsnew,iRescale
   use settings_limits,  only:submenu_limits,iadapt
-  use settings_part,    only:submenu_particleplots
+  use settings_part,    only:submenu_particleplots,mstari
   use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
   use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
   use settings_vecplot, only:submenu_vecplot,iplotpartvec
@@ -294,6 +294,7 @@ subroutine menu
         elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
             if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
             if (ipicky==itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
+            call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
             ipickx = 1
             irender = 0
             ivecplot = 0
