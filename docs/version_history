@@ -1,3 +1,6 @@
+2.9.1:
+cleaner menu options for units and calculated quantities; surface rendering allowed with 3D perspective turned off; automatic labelling of grain sizes in density and column density plots; adaptive limits on log colour bars show 3 dex range by default; auto-adjust limits to device aspect ratio works with multiple panels; bug fixes with r-z rendering; Toomre Q prompts for mass
+ 
 2.9.0:
 general header quantities are read and available in function parser; more robust label detection and parsing during ascii data read; splash to grid works in non-cartesian geometries; added flared and log-flared coordinate systems; Doppler shift colour bar; can customise line style and colour when plotting multiple exact solutions; seg faults fixed; better plot tiling decisions; disappearing arrows bug fix; Rafikov disc-planet exact solution added; atan2 implemented in function parser; various multigrain phantom read fixes (incl. seg faults); exact rendering implemented in 2D; libsplash implemented for use as Python splash backend
  
