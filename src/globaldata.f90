@@ -161,7 +161,7 @@ module multiplot
  implicit none
  integer :: nyplotmulti
  integer, dimension(maxplot) :: multiplotx,multiploty
- integer, dimension(maxplot) :: irendermulti,ivecplotmulti
+ integer, dimension(maxplot) :: irendermulti,ivecplotmulti,icoloursmulti
  integer, dimension(maxplot) :: itrans,icontourmulti
  logical, dimension(maxplot) :: x_secmulti
  real, dimension(maxplot) :: xsecposmulti
@@ -173,7 +173,7 @@ module multiplot
  namelist /multi/ nyplotmulti,                           &
     itrans,multiplotx,multiploty,irendermulti,           &
     ivecplotmulti,icontourmulti,x_secmulti,xsecposmulti, &
-    iusealltypesmulti,iplotpartoftypemulti
+    iusealltypesmulti,iplotpartoftypemulti,icoloursmulti
 
  public
 

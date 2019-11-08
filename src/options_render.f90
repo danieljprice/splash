@@ -108,6 +108,8 @@ subroutine submenu_render(ichoose)
   use kernels,   only:select_kernel,kernelname,nkernels
   use projections3D, only:setup_integratedkernel
   use asciiutils,    only:read_asciifile
+  use multiplot, only:icoloursmulti,nyplotmulti
+  use settings_page, only:nacross,ndown
   implicit none
   integer, intent(in) :: ichoose
   character(len=5)    :: string
@@ -167,24 +169,29 @@ subroutine submenu_render(ichoose)
        write(*,"(i3,a,1x)") icustom,': custom'
        print "(a)",'(-ve = inverse, 0 = contours only)'
        promptloop: do while (ierr /= 0)
-          call prompt('enter colour scheme for rendering ',icolours,&
-                      -ncolourschemes+1,ncolourschemes+1,icustom,icustom)
-          !
-          ! custom colour map from file !demonstration plot of all colour schemes
-          !
-          ierr = 0
-          if (icolours==ncolourschemes+1)    icolours=icustom
-          if (icolours==-(ncolourschemes+1)) icolours=-icustom
-          if (abs(icolours).eq.icustom) then
-             call prompt('enter filename for rgb table',rgbfile,noblank=.true.)
-             call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
-             if (ierr /= 0 .or. ncoltable <= 0) then
-                print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
-             else
-                print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+          do i=1,min(nacross*ndown,nyplotmulti)
+             call prompt('enter colour scheme for rendering ',icoloursmulti(i),&
+                         -ncolourschemes+1,ncolourschemes+1,icustom,icustom)
+             ierr = 0
+             if (i==1) then
+                icolours = icoloursmulti(i)
+                !
+                ! custom colour map from file !demonstration plot of all colour schemes
+                !
+                if (icolours==ncolourschemes+1)    icolours=icustom
+                if (icolours==-(ncolourschemes+1)) icolours=-icustom
+                if (abs(icolours).eq.icustom) then
+                   call prompt('enter filename for rgb table',rgbfile,noblank=.true.)
+                   call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
+                   if (ierr /= 0 .or. ncoltable <= 0) then
+                      print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
+                   else
+                      print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+                   endif
+                   if (ierr /= 0) icolours = icolourprev
+                endif
              endif
-             if (ierr /= 0) icolours = icolourprev
-          endif
+          enddo
        enddo promptloop
 !------------------------------------------------------------------------
     case(3)

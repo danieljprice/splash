@@ -52,7 +52,8 @@ module timestep_plotting
   real, private :: dxgrid,xmingrid,xmaxgrid
   real, private :: angletempx, angletempy, angletempz
   !--buffer for interactive mode on multiplots
-  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp,icontourtemp,ivecplottemp
+  integer, dimension(maxplot) :: iplotxtemp,iplotytemp,irendertemp
+  integer, dimension(maxplot) :: icontourtemp,ivecplottemp,icolourstemp
   real,    dimension(maxplot) :: xminmulti,xmaxmulti,xminadapt,xmaxadapt
   real,    dimension(maxplot) :: vptxmin,vptxmax,vptymin,vptymax,barwmulti
   real, private :: xminadapti,xmaxadapti,yminadapti,ymaxadapti,renderminadapt,rendermaxadapt
@@ -86,7 +87,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                ideltavsum,get_z_dir
   use limits,             only:lim,rangeset,limits_are_equal
   use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
-                               nyplotmulti,x_secmulti,ivecplotmulti
+                               nyplotmulti,x_secmulti,ivecplotmulti,icoloursmulti
   use prompting,          only:prompt
   use titles,             only:read_titles,read_steplegend
   use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
@@ -681,7 +682,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use limits,             only:lim,get_particle_subset,lim2,lim2set
   use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti, &
                                itrans,icontourmulti,x_secmulti,xsecposmulti,&
-                               iusealltypesmulti,iplotpartoftypemulti
+                               iusealltypesmulti,iplotpartoftypemulti,icoloursmulti
   use particle_data,      only:maxpart,maxcol,icolourme
   use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,&
                                nfreq,iRescale,iendatstep,ntypes,&
@@ -981,6 +982,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         irender = irendermulti(nyplot)
         ivectorplot = ivecplotmulti(nyplot)
         icontourplot = icontourmulti(nyplot)
+        icolours = icoloursmulti(nyplot)
+        call colour_set(icolours)
         iplotcont = .false. !iplotcontmulti(nyplot)
         x_sec = x_secmulti(nyplot)
         zslicepos = xsecposmulti(nyplot)
@@ -994,6 +997,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
         endif
      else
+        if (nacross*ndown .gt. 1) icolours=icoloursmulti(nyplot)
         if (.not.interactivereplot) irender = irender_nomulti
         ivectorplot = ivecplot
         icontourplot = icontour_nomulti
@@ -2153,7 +2157,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                       icontourtemp(1:nplots),ivecplottemp(1:nplots),double_rendering,xminmulti(:),xmaxmulti(:),&
                       vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                      xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
+                      xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolourstemp(1:nplots),iColourBarStyle, &
+                      interactivereplot)
+                 icoloursmulti(1:nplots) = icolourstemp(1:nplots)
                  if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
               endif
            endif
@@ -2321,7 +2327,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icoloursmulti(1:nplots),iColourBarStyle, &
+                   interactivereplot)
+                   icoloursmulti(1:nplots) = icolourstemp(1:nplots)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
         endif
@@ -2511,7 +2519,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    nframesloop,ipanel,iplotxtemp(1:nplots),iplotytemp(1:nplots),irendertemp(1:nplots),&
                    icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
-                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
+                   xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icoloursmulti(1:nplots),iColourBarStyle, &
+                   interactivereplot)
+                   icoloursmulti(1:nplots) = icolourstemp(1:nplots)
               if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
            endif
            cycle over_plots
@@ -3097,6 +3107,7 @@ contains
     irendertemp(ipanel) = irender
     icontourtemp(ipanel) = icontourplot
     ivecplottemp(ipanel) = ivectorplot
+    icolourstemp(ipanel) = icolours
     xminmulti(iplotx) = xmin
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
