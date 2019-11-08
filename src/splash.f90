@@ -48,13 +48,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.9.1  : (xx/xx/19)
+!     2.9.1  : (08/11/19)
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
 !             automatic labelling of grain sizes in density and column density plots;
 !             adaptive limits on log colour bars show 3 dex range by default;
 !             auto-adjust limits to device aspect ratio works with multiple panels;
-!             bug fixes with r-z rendering
+!             bug fixes with r-z rendering; Toomre Q prompts for mass
 !     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;
@@ -406,7 +406,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.9.1beta [27th May 2019]'
+  character(len=*), parameter :: version = 'v2.9.1 [8th Nov 2019]'
 
   !
   ! initialise some basic code variables
