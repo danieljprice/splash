@@ -2229,7 +2229,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
-              ix,ipmass,irho,ih,iutherm,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
+              ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label
   use params
@@ -2284,10 +2284,20 @@ subroutine set_labels
            irho = i
         case('vx')
            ivx = i
+        case('pressure')
+           ipr = i
         case('u')
            iutherm = i
         case('divv')
            idivvcol = i
+           units(i) = 1./utime
+           unitslabel(i) = ' [1/s]'
+        case('poten')
+           units(i) = (udist/utime)**2
+           unitslabel(i) = ' [erg/g]'
+        case('dt')
+           units(i) = utime
+           unitslabel(i) = ' [s]'
         case('curlvx')
            icurlvxcol = i
         case('curlvy')
@@ -2302,6 +2312,11 @@ subroutine set_labels
            iJfirst = i
         case('psi')
            label(i) = '\psi'
+           units(i) = umagfd*udist/utime
+           unitslabel(i) = ' [G cm/s]'
+        case('psi/c_h')
+           units(i) = umagfd
+           unitslabel(i) = ' [G]'
         case('dustfracsum')
            idustfracsum = i
         case('deltavsumx')
@@ -2323,16 +2338,19 @@ subroutine set_labels
         case('Erad')
            iradenergy = i
            label(i) = 'radiation energy'
-           units(iradenergy) = (udist/utime)**2
+           unitslabel(i) = ' [erg/g]'
+           units(i) = (udist/utime)**2
         case('opacity')
            label(i) = 'opacity'
+           unitslabel(i) = ' [cm^2/g]'
            units(i) = udist**2/umass
         case('EddingtonFactor')
            label(i) = 'Eddington Factor'
         case('Cv')
            label(i) = 'u/T'
            icv = i
-           units(icv) = (udist/utime)**2
+           units(i) = (udist/utime)**2
+           unitslabel(i) = ' [erg/(g K)]'
         case('h2ratio')
            label(i) = 'H_2 ratio'
         case('abH1q','abHIq')
@@ -2343,6 +2361,9 @@ subroutine set_labels
            label(i) = 'e^- abundance'
         case('abco')
            label(i) = 'CO abundance'
+        case('eta_{OR}')
+           units(i:i+2) = udist/utime**2
+           unitslabel(i:i+2) = ' [cm^2/s]'
         case('grainsize')
            igrainsize = i
         case('graindens')
@@ -2435,6 +2456,10 @@ subroutine set_labels
       units(iutherm) = (udist/utime)**2
       unitslabel(iutherm) = ' [erg/g]'
    endif
+   if (ipr.gt.0) then
+      units(ipr) = umass/(udist*utime**2)
+      unitslabel(ipr) = ' [g / (cm s^2)]'
+   endif
    units(irho) = umass/udist**3
    unitslabel(irho) = ' [g/cm\u3\d]'
    if (iBfirst.gt.0) then
@@ -2452,6 +2477,10 @@ subroutine set_labels
    if (ivrel.gt.0) then
       units(ivrel) = udist/utime/100
       unitslabel(ivrel) = ' [m/s]'
+   endif
+   if (idivB.gt.0) then
+      units(idivB:idivB+3) = umagfd/unitx
+      unitslabel(idivB:idivB+3) = ' [G/'//trim(unitlabelx(3:))
    endif
 
    !--use the following two lines for time in years

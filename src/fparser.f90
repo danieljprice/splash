@@ -57,6 +57,8 @@ MODULE fparser
   INTEGER, PRIVATE           :: ParseErrType ! =0: no error occured, >0: parse error
 !--modification by D. Price: add verboseness internal variable (used in checkf)
   LOGICAL, PRIVATE           :: PrintErrors = .true. ! =0: no error occured, >0: parse error
+!--modification by J. Wurster: added cgs and code versions of mu0
+  REAL, PUBLIC               :: mu0=1.0_rn   ! =1 for code units, 4pi for cgs
   !------- -------- --------- --------- --------- --------- --------- --------- -------
   PRIVATE
   SAVE
@@ -1014,6 +1016,9 @@ CONTAINS
     ELSE
        IF (str(1:2)=='pi') THEN
           res = 3.14159265358979323846_rn
+          in = 3
+       ELSEIF (str(1:2)=='mu') THEN
+          res = mu0
           in = 3
        ELSE
           res = 0.0_rn

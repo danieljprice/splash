@@ -87,6 +87,7 @@ subroutine submenu_data(ichoose)
  use limits,         only:set_limits
  use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
+ use fparser,        only:rn,mu0
  implicit none
  integer, intent(in) :: ichoose
  integer             :: ians, i, ncalcwas
@@ -212,6 +213,11 @@ subroutine submenu_data(ichoose)
 
     if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale) &
         .or. UnitsHaveChanged) then
+       if (iRescale) then
+          mu0 = 12.566370614359_rn
+       else
+          mu0 = 1.0_rn
+       endif
        if (buffer_data) then
           call get_data(-1,.true.)
        else

@@ -293,7 +293,7 @@ end subroutine splitstring
 !
 !---------------------------------------------------------------------
 subroutine print_example_quantities(verbose,ncalc)
- use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,iBfirst,&
+ use labels,        only:label,unitslabel,shortlabel,lenlabel,irho,iutherm,ipr,iBfirst,&
                          ix,icv,idivB,ih,iradenergy,iamvec,labelvec,idustfrac,&
                          ideltav,ivx,headertags
  use settings_data, only:ncolumns,ndim,icoordsnew,ndimV
@@ -464,12 +464,12 @@ subroutine print_example_quantities(verbose,ncalc)
  if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. icoordsnew.eq.1) then
     gotpmag = .true.
     write(string,"(a)",iostat=ierr) &
-        'P_{mag} = 0.5*('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
+        'P_{mag} = ('//trim(shortlabel(label(iBfirst),unitslabel(iBfirst)))//'**2'
     ilen = len_trim(string)
     if (ndimV.gt.1) then
        write(string(ilen+1:),"(a,a,a)",iostat=ierr) &
             (' + '//trim(shortlabel(label(i),unitslabel(i))) &
-            //'**2',i=iBfirst+1,iBfirst+ndimV-1),')'
+            //'**2',i=iBfirst+1,iBfirst+ndimV-1),')/(2*mu)'
     else
        write(string(ilen+1:),"(a)",iostat=ierr) ')'
     endif
@@ -492,7 +492,7 @@ subroutine print_example_quantities(verbose,ncalc)
     call print_or_prefill(prefill,string,nc)
  endif
  !--Plasma beta
- if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. gotpressure) then
+ if (ndim.gt.0 .and. ndimV.gt.0 .and. iBfirst.gt.0 .and. gotpmag .and. (gotpressure .or. ipr.gt.0)) then
     write(string,"(a)",iostat=ierr) 'plasma \beta = pressure/P_mag'
     call print_or_prefill(prefill,string,nc,&
          comment='[ assuming pressure and Pmag calculated ]')
@@ -883,7 +883,6 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
      call wall_time(t2)
      if (t2-t1.gt.1.) call print_time(t2-t1)
   endif
-
   !
   !--override units of calculated quantities if necessary
   !

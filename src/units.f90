@@ -154,13 +154,13 @@ end subroutine get_nearest_unit
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
   use prompting,     only:prompt
-  use labels,        only:label,ix,ih,iamvec,labelvec,headertags
+  use labels,        only:label,ix,ih,idivB,iamvec,labelvec,headertags
   use settings_data, only:ndim,ndimV,ivegotdata
   use particle_data, only:headervals,maxstep
   use asciiutils,    only:match_tag
   integer, intent(in) :: ncolumns,numplot
   logical, intent(out) :: UnitsHaveChanged
-  integer :: icol,i,ihdr
+  integer :: icol,i,ihdr,ibs,ibc
   real :: unitsprev,dunits
   real(doub_prec) :: udist,utime
   logical :: applytoall
@@ -243,6 +243,10 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
                  units(ix(1:ndim)) = units(icol)
                  unitslabel(ix(1:ndim)) = unitslabel(icol)
                  if (ih.gt.0) then
+                    ibs = index(unitslabel(idivB),'/')
+                    ibc = index(unitslabel(icol),'[')
+                    units(idivB:idivB+3) = units(idivB:idivB+3)*units(ih)/units(icol)
+                    unitslabel(idivB:idivB+3) = unitslabel(idivB)(1:ibs)//unitslabel(icol)(ibc+1:)
                     units(ih) = units(icol)
                     unitslabel(ih) = unitslabel(icol)
                  endif
