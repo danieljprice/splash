@@ -243,10 +243,13 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
                  units(ix(1:ndim)) = units(icol)
                  unitslabel(ix(1:ndim)) = unitslabel(icol)
                  if (ih.gt.0) then
-                    ibs = index(unitslabel(idivB),'/')
-                    ibc = index(unitslabel(icol),'[')
-                    units(idivB:idivB+3) = units(idivB:idivB+3)*units(ih)/units(icol)
-                    unitslabel(idivB:idivB+3) = unitslabel(idivB)(1:ibs)//unitslabel(icol)(ibc+1:)
+                    if (idivb.gt.0) then
+                       ! amend units of div B and curl B
+                       ibs = index(unitslabel(idivB),'/')
+                       ibc = index(unitslabel(icol),'[')
+                       units(idivB:idivB+3) = units(idivB:idivB+3)*units(ih)/units(icol)
+                       unitslabel(idivB:idivB+3) = unitslabel(idivB)(1:ibs)//unitslabel(icol)(ibc+1:)
+                    endif
                     units(ih) = units(icol)
                     unitslabel(ih) = unitslabel(icol)
                  endif
