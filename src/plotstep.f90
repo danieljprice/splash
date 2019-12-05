@@ -1377,7 +1377,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                          dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
-                         ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,pixwidth,dz, &
+                         ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,&
+                         pixwidth,pixwidth,dz, &
                          inormalise,isperiodicx,isperiodicy,isperiodicz)
 
                     if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
@@ -1392,7 +1393,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                        call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                             zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
                             dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
-                            ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,pixwidth,dz, &
+                            ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,&
+                            pixwidth,pixwidth,dz, &
                             inormalise,isperiodicx,isperiodicy,isperiodicz)
                        gotcontours = .true.
 

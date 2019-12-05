@@ -64,13 +64,13 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
-     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,&
+     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidthx,pixwidthy,pixwidthz,&
      normalise,periodicx,periodicy,periodicz)
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
+  real, intent(in) :: xmin,ymin,zmin,pixwidthx,pixwidthy,pixwidthz
   real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
   logical, intent(in) :: normalise,periodicx,periodicy,periodicz
   real, dimension(npixx,npixy,npixz) :: datnorm
@@ -104,7 +104,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   else
      print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0 .or. pixwidthz <= 0) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
@@ -130,14 +130,14 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
   usedpart = 0
 
-  xminpix = xmin - 0.5*pixwidth
-  yminpix = ymin - 0.5*pixwidth
-  zminpix = zmin - 0.5*zpixwidth
+  xminpix = xmin - 0.5*pixwidthx
+  yminpix = ymin - 0.5*pixwidthy
+  zminpix = zmin - 0.5*pixwidthz
   !
   !--use a minimum smoothing length on the grid to make
   !  sure that particles contribute to at least one pixel
   !
-  hmin = 0.5*pixwidth
+  hmin = 0.5*max(pixwidthx,pixwidthy,pixwidthz)
   !dhmin3 = 1./(hmin*hmin*hmin)
 
   const = cnormk3D  ! normalisation constant (3D)
@@ -148,7 +148,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$omp shared(xmin,ymin,zmin,radkernel,radkernel2) &
-!$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
+!$omp shared(xminpix,yminpix,zminpix,pixwidthx,pixwidthy,pixwidthz) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp shared(hmin) & !,dhmin3) &
@@ -214,12 +214,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !
      !--for each particle work out which pixels it contributes to
      !
-     ipixmin = int((xi - radkern - xmin)/pixwidth)
-     jpixmin = int((yi - radkern - ymin)/pixwidth)
-     kpixmin = int((zi - radkern - zmin)/zpixwidth)
-     ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
-     kpixmax = int((zi + radkern - zmin)/zpixwidth) + 1
+     ipixmin = int((xi - radkern - xmin)/pixwidthx)
+     jpixmin = int((yi - radkern - ymin)/pixwidthy)
+     kpixmin = int((zi - radkern - zmin)/pixwidthz)
+     ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
+     jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
+     kpixmax = int((zi + radkern - zmin)/pixwidthz) + 1
 
      if (.not.periodicx) then
         if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
@@ -247,7 +247,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
            if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
         endif
-        xpixi = xminpix + ipix*pixwidth
+        xpixi = xminpix + ipix*pixwidthx
         !--watch out for errors with perioic wrapping...
         if (nxpix.le.size(dx2i)) then
            dx2i(nxpix) = ((xpixi - xi)**2)*hi21
@@ -270,7 +270,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
            if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
            if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
         endif
-        zpix = zminpix + kpix*zpixwidth
+        zpix = zminpix + kpix*pixwidthz
         dz = zpix - zi
         dz2 = dz*dz*hi21
 
@@ -280,7 +280,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
               if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
-           ypix = yminpix + jpix*pixwidth
+           ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dyz2 = dy*dy*hi21 + dz2
 
@@ -299,31 +299,31 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
 
               if (exact_rendering .eqv. .true.) then
-                 xpixi = xminpix + ipix*pixwidth
+                 xpixi = xminpix + ipix*pixwidthx
 
                  ! Contribution of the cell walls in the xy-plane
                  pixint = 0.0
-                 wint = wallint(zpix-zi+0.5*zpixwidth, xi,yi,xpixi,ypix,pixwidth,pixwidth,hi)
+                 wint = wallint(zpix-zi+0.5*pixwidthz, xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
                  pixint = pixint + wint
 
-                 wint = wallint(zi-zpix+0.5*zpixwidth, xi,yi,xpixi,ypix,pixwidth,pixwidth,hi)
+                 wint = wallint(zi-zpix+0.5*pixwidthz, xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
                  pixint = pixint + wint
 
                  ! Contribution of the cell walls in the xz-plane
-                 wint = wallint(ypix-yi+0.5*pixwidth, xi,zi,xpixi,zpix,pixwidth,zpixwidth,hi)
+                 wint = wallint(ypix-yi+0.5*pixwidthy, xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
                  pixint = pixint + wint
 
-                 wint = wallint(yi-ypix+0.5*pixwidth, xi,zi,xpixi,zpix,pixwidth,zpixwidth,hi)
+                 wint = wallint(yi-ypix+0.5*pixwidthy, xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
                  pixint = pixint + wint
 
                  ! Contribution of the cell walls in the yz-plane
-                 wint = wallint(xpixi-xi+0.5*pixwidth, zi,yi,zpix,ypix,zpixwidth,pixwidth,hi)
+                 wint = wallint(xpixi-xi+0.5*pixwidthx, zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
                  pixint = pixint + wint
 
-                 wint = wallint(xi-xpixi+0.5*pixwidth, zi,yi,zpix,ypix,zpixwidth,pixwidth,hi)
+                 wint = wallint(xi-xpixi+0.5*pixwidthx, zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
                  pixint = pixint + wint
 
-                 wab = pixint /pixwidth/pixwidth/zpixwidth /const*hi**3
+                 wab = pixint /pixwidthx/pixwidthy/pixwidthz /const*hi**3
 
                  if(pixint < -0.01d0) then
                     print*, "Error: (",ipixi,jpixi,kpixi,") -> ", pixint, term*wab
@@ -364,7 +364,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp end parallel
 
   !Maya
-  print*, "pixwidth: ",pixwidth
+  print*, "pixwidth: ",pixwidthx,pixwidthy,pixwidthz
 
   if (exact_rendering .eqv. .true.) then
      print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy*npixz)
@@ -392,14 +392,14 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 end subroutine interpolate3D
 
 subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
-     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidth,zpixwidth,&
+     xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidthx,pixwidthy,pixwidthz,&
      normalise,periodicx,periodicy,periodicz)
   implicit none
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart)    :: x,y,z,hh,weight
   real, intent(in), dimension(npart,3)  :: datvec
   integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,zmin,pixwidth,zpixwidth
+  real, intent(in) :: xmin,ymin,zmin,pixwidthx,pixwidthy,pixwidthz
   real, intent(out), dimension(3,npixx,npixy,npixz) :: datsmooth
   logical, intent(in) :: normalise,periodicx,periodicy,periodicz
   real, dimension(npixx,npixy,npixz) :: datnorm
@@ -428,7 +428,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   else
      print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidthx.le.0. .or. pixwidthy.le.0. .or. pixwidthz.le.0.) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
@@ -452,9 +452,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   !
   !call cpu_time(t_start)
 
-  xminpix = xmin - 0.5*pixwidth
-  yminpix = ymin - 0.5*pixwidth
-  zminpix = zmin - 0.5*zpixwidth
+  xminpix = xmin - 0.5*pixwidthx
+  yminpix = ymin - 0.5*pixwidthy
+  zminpix = zmin - 0.5*pixwidthz
 !  xmax = xmin + npixx*pixwidth
 !  ymax = ymin + npixy*pixwidth
 
@@ -464,7 +464,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,datvec,itype,datsmooth,npart) &
 !$omp shared(xmin,ymin,zmin,radkernel,radkernel2) &
-!$omp shared(xminpix,yminpix,zminpix,pixwidth,zpixwidth) &
+!$omp shared(xminpix,yminpix,zminpix,pixwidthx,pixwidthy,pixwidthz) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
@@ -518,12 +518,12 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      !
      !--for each particle work out which pixels it contributes to
      !
-     ipixmin = int((xi - radkern - xmin)/pixwidth)
-     jpixmin = int((yi - radkern - ymin)/pixwidth)
-     kpixmin = int((zi - radkern - zmin)/zpixwidth)
-     ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
-     jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
-     kpixmax = int((zi + radkern - zmin)/zpixwidth) + 1
+     ipixmin = int((xi - radkern - xmin)/pixwidthx)
+     jpixmin = int((yi - radkern - ymin)/pixwidthy)
+     kpixmin = int((zi - radkern - zmin)/pixwidthz)
+     ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
+     jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
+     kpixmax = int((zi + radkern - zmin)/pixwidthz) + 1
 
      if (.not.periodicx) then
         if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
@@ -548,7 +548,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
            if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
            if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
         endif
-        xpixi = xminpix + ipix*pixwidth
+        xpixi = xminpix + ipix*pixwidthx
         !--watch out for errors with perioic wrapping...
         if (nxpix.le.size(dx2i)) then
            dx2i(nxpix) = ((xpixi - xi)**2)*hi21
@@ -571,7 +571,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
            if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
            if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
         endif
-        zpix = zminpix + kpix*zpixwidth
+        zpix = zminpix + kpix*pixwidthz
         dz = zpix - zi
         dz2 = dz*dz*hi21
 
@@ -581,7 +581,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
               if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
               if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
            endif
-           ypix = yminpix + jpix*pixwidth
+           ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dyz2 = dy*dy*hi21 + dz2
 

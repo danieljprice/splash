@@ -234,7 +234,7 @@ subroutine powerspec3D_sph(x,y,z,dat,hh,weight,icolours,npart, &
  periodicy = .false.
  periodicz = .false.
  call interpolate3D(x,y,z,hh,weight,dat,icolours,npart, &
-      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,normalise,&
+      xmin,xmin,xmin,dat3D,ngrid,ngrid,ngrid,dx,dx,dx,normalise,&
       periodicx,periodicy,periodicz)
 !
 !--setup grid of frequencies for plotting

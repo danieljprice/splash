@@ -311,7 +311,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
             xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-            pixwidth,pixwidth,inormalise,isperiodic(1),isperiodic(2),isperiodic(3))
+            pixwidthx(1),pixwidthx(2),pixwidthx(3),inormalise,&
+            isperiodic(1),isperiodic(2),isperiodic(3))
     endif
     !
     !--set minimum density on the grid
@@ -418,7 +419,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                    call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                         xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                        pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                        pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
                 endif
              else
                 call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
@@ -505,7 +506,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                          call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                               dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                               xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
-                              pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                              pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
                       endif
                    else
                       call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
@@ -550,7 +551,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                       call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
                         xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
-                        pixwidth,pixwidth,.true.,isperiodic(1),isperiodic(2),isperiodic(3))
+                        pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
                    endif
                 else
                    call interpolate2D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
