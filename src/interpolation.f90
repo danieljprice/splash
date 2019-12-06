@@ -25,11 +25,31 @@
 !-----------------------------------------------------------------
 module interpolation
  implicit none
- public :: set_interpolation_weights
+ public :: iroll, set_interpolation_weights
  real, parameter, public :: weight_sink = -1.
  private
 
 contains
+
+!--------------------------------------------------------------------------
+!
+!  utility to wrap pixel index around periodic domain
+!  indices that roll beyond the last position are re-introduced at the first
+!
+!--------------------------------------------------------------------------
+pure integer function iroll(i,n)
+ integer, intent(in) :: i,n
+
+ if (i > n) then
+    iroll = mod(i-1,n) + 1
+ elseif (i < 1) then
+    iroll = n + mod(i,n) ! mod is negative
+ else
+    iroll = i
+ endif
+
+end function iroll
+
 !-------------------------------------------------------------------
 ! Set interpolation weights for the particles. The weights are
 ! calculated using:

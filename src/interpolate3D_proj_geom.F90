@@ -28,6 +28,7 @@
 !----------------------------------------------------------------------
 
 module projections3Dgeom
+ use interpolation, only:iroll
  use projections3D, only:setup_integratedkernel,wfromtable,coltable
  use kernels,       only:radkernel,radkernel2
  use geometry,      only:igeom_cartesian,coord_transform,coord_is_length, &
@@ -584,24 +585,5 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   endif
 
 end subroutine get_pixel_limits
-
-!--------------------------------------------------------------------------
-!
-!  utility to wrap pixel index around periodic domain
-!  indices that roll beyond the last position are re-introduced at the first
-!
-!--------------------------------------------------------------------------
-pure integer function iroll(i,n)
- integer, intent(in) :: i,n
-
- if (i > n) then
-    iroll = mod(i-1,n) + 1
- elseif (i < 1) then
-    iroll = n + mod(i,n) ! mod is negative
- else
-    iroll = i
- endif
-
-end function iroll
 
 end module projections3Dgeom

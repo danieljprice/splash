@@ -28,7 +28,8 @@
 !----------------------------------------------------------------------
 
 module interpolations3D
- use kernels, only:radkernel2,radkernel,cnormk3D
+ use kernels,       only:radkernel2,radkernel,cnormk3D
+ use interpolation, only:iroll
  implicit none
  integer, parameter :: doub_prec = kind(0.d0)
  public :: interpolate3D,interpolate3D_vec
@@ -66,7 +67,7 @@ contains
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidthx,pixwidthy,pixwidthz,&
      normalise,periodicx,periodicy,periodicz)
-  implicit none
+
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
@@ -82,13 +83,13 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real :: xminpix,yminpix,zminpix,hmin !,dhmin3
   real, dimension(npixx) :: dx2i
   real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
-  real :: term,termnorm,dy,dz,ypix,zpix,xpixi
+  real :: term,termnorm,dy,dz,ypix,zpix,xpixi,pixwidthmax,dfac
   !real :: t_start,t_end
   logical :: iprintprogress
 
 ! Exact rendering
   real :: pixint, wint
-  logical :: exact_rendering = .false.   ! use exact rendering y/n
+  logical, parameter :: exact_rendering = .true.   ! use exact rendering y/n
   integer :: usedpart, negflag
 
 #ifdef _OPENMP
@@ -99,10 +100,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
   datsmooth = 0.
   datnorm = 0.
-  if (normalise) then
-     print "(1x,a)",'interpolating from particles to 3D grid (normalised) ...'
+  if (exact_rendering) then
+     print "(1x,a)",'interpolating to 3D grid (exact/Petkova+2018 on subgrid) ...'
+  elseif (normalise) then
+     print "(1x,a)",'interpolating to 3D grid (normalised) ...'
   else
-     print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
+     print "(1x,a)",'interpolating to 3D grid (non-normalised) ...'
   endif
   if (pixwidthx <= 0. .or. pixwidthy <= 0 .or. pixwidthz <= 0) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
@@ -133,11 +136,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   xminpix = xmin - 0.5*pixwidthx
   yminpix = ymin - 0.5*pixwidthy
   zminpix = zmin - 0.5*pixwidthz
+  pixwidthmax = max(pixwidthx,pixwidthy,pixwidthz)
   !
   !--use a minimum smoothing length on the grid to make
   !  sure that particles contribute to at least one pixel
   !
-  hmin = 0.5*max(pixwidthx,pixwidthy,pixwidthz)
+  hmin = 0.5*pixwidthmax
   !dhmin3 = 1./(hmin*hmin*hmin)
 
   const = cnormk3D  ! normalisation constant (3D)
@@ -151,19 +155,16 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(xminpix,yminpix,zminpix,pixwidthx,pixwidthy,pixwidthz) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
-!$omp shared(hmin) & !,dhmin3) &
+!$omp shared(hmin,pixwidthmax) & !,dhmin3) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
 !$omp private(term,termnorm,xpixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
-!$omp private(pixint,wint,negflag) &
-!$omp shared(usedpart,exact_rendering) &
-!$omp reduction(+:nwarn)
+!$omp private(pixint,wint,negflag,dfac) &
+!$omp reduction(+:nwarn,usedpart)
 !$omp master
-#ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-#endif
+!$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
 
 !$omp do schedule (guided, 2)
@@ -194,7 +195,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !  (get better results *without* adjusting weights)
      !
         termnorm = const*weight(i) !*(hi*hi*hi)*dhmin3
-        if(exact_rendering .eqv. .false.) hi = hmin
+        if (.not.exact_rendering) hi = hmin
      else
         termnorm = const*weight(i)
      endif
@@ -211,6 +212,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      radkern = radkernel*hi   ! radius of the smoothing kernel
      !termnorm = const*weight(i)
      term = termnorm*dat(i)
+     dfac = hi**3/(pixwidthx*pixwidthy*pixwidthz*const)
      !
      !--for each particle work out which pixels it contributes to
      !
@@ -243,12 +245,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      do ipix=ipixmin,ipixmax
         nxpix = nxpix + 1
         ipixi = ipix
-        if (periodicx) then
-           if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-           if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-        endif
+        if (periodicx) ipixi = iroll(ipix,npixx)
         xpixi = xminpix + ipix*pixwidthx
-        !--watch out for errors with perioic wrapping...
+        !--watch out for errors with periodic wrapping...
         if (nxpix.le.size(dx2i)) then
            dx2i(nxpix) = ((xpixi - xi)**2)*hi21
         endif
@@ -266,79 +265,74 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !
      do kpix = kpixmin,kpixmax
         kpixi = kpix
-        if (periodicz) then
-           if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
-           if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
-        endif
+        if (periodicz) kpixi = iroll(kpix,npixz)
+
         zpix = zminpix + kpix*pixwidthz
         dz = zpix - zi
         dz2 = dz*dz*hi21
 
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodicy) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-           endif
+           if (periodicy) jpixi = iroll(jpix,npixy)
+
            ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dyz2 = dy*dy*hi21 + dz2
 
            nxpix = 0
            do ipix = ipixmin,ipixmax
-              if((kpix.eq.kpixmin).and.(jpix.eq.jpixmin).and.(ipix.eq.ipixmin)) then
+              if ((kpix.eq.kpixmin).and.(jpix.eq.jpixmin).and.(ipix.eq.ipixmin)) then
                  usedpart = usedpart + 1
-              end if
+              endif
 
               nxpix = nxpix + 1
               ipixi = ipix
-              if (periodicx) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-              endif
+              if (periodicx) ipixi = iroll(ipix,npixx)
+
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
 
-              if (exact_rendering .eqv. .true.) then
-                 xpixi = xminpix + ipix*pixwidthx
+              if (exact_rendering .and. ipixmax-ipixmin <= 4) then
+                 if (q2 < radkernel2 + 3.*pixwidthmax**2*hi21) then
+                    xpixi = xminpix + ipix*pixwidthx
 
-                 ! Contribution of the cell walls in the xy-plane
-                 pixint = 0.0
-                 wint = wallint(zpix-zi+0.5*pixwidthz, xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
-                 pixint = pixint + wint
+                    ! Contribution of the cell walls in the xy-plane
+                    pixint = 0.0
+                    wint = wallint(zpix-zi+0.5*pixwidthz,xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
+                    pixint = pixint + wint
 
-                 wint = wallint(zi-zpix+0.5*pixwidthz, xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
-                 pixint = pixint + wint
+                    wint = wallint(zi-zpix+0.5*pixwidthz,xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
+                    pixint = pixint + wint
 
-                 ! Contribution of the cell walls in the xz-plane
-                 wint = wallint(ypix-yi+0.5*pixwidthy, xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
-                 pixint = pixint + wint
+                    ! Contribution of the cell walls in the xz-plane
+                    wint = wallint(ypix-yi+0.5*pixwidthy,xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
+                    pixint = pixint + wint
 
-                 wint = wallint(yi-ypix+0.5*pixwidthy, xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
-                 pixint = pixint + wint
+                    wint = wallint(yi-ypix+0.5*pixwidthy,xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
+                    pixint = pixint + wint
 
-                 ! Contribution of the cell walls in the yz-plane
-                 wint = wallint(xpixi-xi+0.5*pixwidthx, zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
-                 pixint = pixint + wint
+                    ! Contribution of the cell walls in the yz-plane
+                    wint = wallint(xpixi-xi+0.5*pixwidthx,zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
+                    pixint = pixint + wint
 
-                 wint = wallint(xi-xpixi+0.5*pixwidthx, zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
-                 pixint = pixint + wint
+                    wint = wallint(xi-xpixi+0.5*pixwidthx,zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
+                    pixint = pixint + wint
 
-                 wab = pixint /pixwidthx/pixwidthy/pixwidthz /const*hi**3
+                    wab = pixint*dfac ! /(pixwidthx*pixwidthy*pixwidthz*const)*hi**3
 
-                 if(pixint < -0.01d0) then
-                    print*, "Error: (",ipixi,jpixi,kpixi,") -> ", pixint, term*wab
-                 end if
+                    if (pixint < -0.01d0) then
+                       print*, "Error: (",ipixi,jpixi,kpixi,") -> ", pixint, term*wab
+                    endif
 
-                 !
-                 !--calculate data value at this pixel using the summation interpolant
-                 !
-                 !$omp atomic
-                 datsmooth(ipixi,jpixi,kpixi) = datsmooth(ipixi,jpixi,kpixi) + term*wab
-                 if (normalise) then
+                    !
+                    !--calculate data value at this pixel using the summation interpolant
+                    !
                     !$omp atomic
-                    datnorm(ipixi,jpixi,kpixi) = datnorm(ipixi,jpixi,kpixi) + termnorm*wab
+                    datsmooth(ipixi,jpixi,kpixi) = datsmooth(ipixi,jpixi,kpixi) + term*wab
+                    if (normalise) then
+                       !$omp atomic
+                       datnorm(ipixi,jpixi,kpixi) = datnorm(ipixi,jpixi,kpixi) + termnorm*wab
+                    endif
                  endif
-
               else
                  if (q2.lt.radkernel2) then
                     !
@@ -363,15 +357,6 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp end do
 !$omp end parallel
 
-  !Maya
-  print*, "pixwidth: ",pixwidthx,pixwidthy,pixwidthz
-
-  if (exact_rendering .eqv. .true.) then
-     print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy*npixz)
-     print*, 'max of datpix = ', maxval(datsmooth)
-     print*, 'min of datpix = ', minval(datsmooth)
-  endif
-
   if (nwarn.gt.0) then
      print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
                            '                that wrap periodic boundaries more than once'
@@ -394,7 +379,7 @@ end subroutine interpolate3D
 subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      xmin,ymin,zmin,datsmooth,npixx,npixy,npixz,pixwidthx,pixwidthy,pixwidthz,&
      normalise,periodicx,periodicy,periodicz)
-  implicit none
+
   integer, intent(in) :: npart,npixx,npixy,npixz
   real, intent(in), dimension(npart)    :: x,y,z,hh,weight
   real, intent(in), dimension(npart,3)  :: datvec
@@ -474,9 +459,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
 !$omp reduction(+:nwarn)
 !$omp master
-#ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-#endif
+!$  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
   !
   !--loop over particles
@@ -701,21 +684,21 @@ real function pint(r0, R_0, d1, d2, hi)
 
   real(doub_prec), intent(in) :: R_0, d1, d2, hi
   real, intent(in) :: r0
-  real(doub_prec) :: ar0, aR_0, phi1, phi2
+  real(doub_prec) :: ar0, aR_0, phi1, phi2, tanphi1, tanphi2
   real(doub_prec) :: int1, int2
   integer :: fflag = 0
 
   if (abs(r0) < tiny(0.)) then
-    pint = 0.d0
-    return
+     pint = 0.d0
+     return
   endif
 
   if (r0 .gt. 0.d0) then
-    pint = 1.d0
-    ar0 = r0
+     pint = 1.d0
+     ar0 = r0
   else
-    pint = -1.d0
-    ar0 = -r0
+     pint = -1.d0
+     ar0 = -r0
   endif
 
   if (R_0 .gt. 0.d0) then
@@ -725,11 +708,13 @@ real function pint(r0, R_0, d1, d2, hi)
     aR_0 = -R_0
   endif
 
-  phi1 = atan(abs(d1)/aR_0)
-  phi2 = atan(abs(d2)/aR_0)
+  tanphi1 = abs(d1)/aR_0
+  tanphi2 = abs(d2)/aR_0
+  phi1 = atan(tanphi1)
+  phi2 = atan(tanphi2)
 
-  int1 = full_integral_3D(phi1, ar0, aR_0, hi)
-  int2 = full_integral_3D(phi2, ar0, aR_0, hi)
+  int1 = full_integral_3D(phi1, tanphi1, ar0, aR_0, hi)
+  int2 = full_integral_3D(phi2, tanphi2, ar0, aR_0, hi)
 
   if(int1 < 0.d0) int1 = 0.d0
   if(int2 < 0.d0) int2 = 0.d0
@@ -747,69 +732,66 @@ real function pint(r0, R_0, d1, d2, hi)
 
 end function pint
 
-real(doub_prec) function full_integral_3D(phi, r0, R_0, h)
+real(doub_prec) function full_integral_3D(phi, tanphi, r0, R_0, h)
 
-  real(doub_prec), intent(in) :: phi, r0, R_0, h
-  real(doub_prec) :: B1, B2, B3, mu, a, logs, u, u2
-  real(doub_prec) :: pi
-  real(doub_prec) :: a2, cosp, cosp2, mu2, mu2_1, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
-  real(doub_prec) :: r, R_, linedist, phi1, phi2
+  real(doub_prec), intent(in) :: phi, tanphi, r0, R_0, h
+  real(doub_prec) :: B1, B2, B3, a, logs, u, u2, h2
+  real(doub_prec), parameter :: pi = 4.*atan(1.)
+  real(doub_prec) :: a2, cosp, cosp2, mu2, mu2_1, r0h, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
+  real(doub_prec) :: r2, R_, linedist2, phi1, phi2, cosphi, sinphi
   real(doub_prec) :: I0, I1, I_1, I_2, I_3, I_4, I_5
   real(doub_prec) :: J_1, J_2, J_3, J_4, J_5
   real(doub_prec) :: D1, D2, D3
 
-
-  if(abs(r0/h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
+  if (abs(r0/h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
      full_integral_3D = 0.0
      return
   end if
 
+  h2 = h*h
+  r0h = r0/h
   r03 = r0*r0*r0
-  r0h2 = r0/h*r0/h
-  r0h3 = r0h2*r0/h
-  r0h_2 = h/r0*h/r0
-  r0h_3 = r0h_2*h/r0
+  r0h2 = r0h*r0h
+  r0h3 = r0h2*r0h
+  r0h_2 = 1./r0h2
+  r0h_3 = 1./r0h3
 
-
-  if(r0 >= 2.0*h) then
-     B3 = h*h*h /4.
-  elseif(r0 > h) then
-     B3 = r03/4. *(-4./3. + (r0/h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3+ 8./5.*r0h_2)
-     B2 = r03/4. *(-4./3. + (r0/h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3)
+  if (r0 >= 2.0*h) then
+     B3 = 0.25*h2*h
+  elseif (r0 > h) then
+     B3 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3+ 8./5.*r0h_2)
+     B2 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3)
   else
-     B3 = r03/4. *(-2./3. + 0.3*r0h2 - 0.1*r0h3 + 7./5.*r0h_2)
-     B2 = r03/4. *(-2./3. + 0.3*r0h2 - 0.1*r0h3 - 1./5.*r0h_2)
-     B1 = r03/4. *(-2./3. + 0.3*r0h2 - 0.1*r0h3)
+     B3 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 + 7./5.*r0h_2)
+     B2 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 - 1./5.*r0h_2)
+     B1 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3)
   end if
-
 
   a = R_0/r0
   a2 = a*a
 
-  linedist = sqrt(r0*r0 + R_0*R_0)
-  R_ = R_0/cos(phi)
-  r = sqrt(r0*r0 + R_*R_)
-
+  linedist2 = (r0*r0 + R_0*R_0)
+  cosphi = cos(phi)
+  R_ = R_0/cosphi
+  r2 = (r0*r0 + R_*R_)
 
   D2 = 0.0
   D3 = 0.0
 
-  if(linedist < 1.0*h) then
+  if (linedist2 < h2) then
      !////// phi1 business /////
-     cosp = R_0/sqrt(h*h-r0*r0)
+     cosp = R_0/sqrt(h2-r0*r0)
      phi1 = acos(cosp)
 
      cosp2 = cosp*cosp
      mu2_1 = 1. / (1. + cosp2/a2)
      mu2 = cosp2/a2 / (1. + cosp2/a2)
-     mu = sqrt(mu2)
-     if(mu > 1.0d0) then
-        if(mu-1.0d0 < 1.d-5) then
-           mu = 1.0d0
+     if(mu2 > 1.0d0) then
+        if (mu2-1.0d0 < 1.d-10) then
            mu2 = 1.0d0
         else
            print *, "Error: mu-1.0d0 > 1.d-5"
-        end if
+        endif
      end if
 
      tanp = tan(phi1)
@@ -824,28 +806,59 @@ real(doub_prec) function full_integral_3D(phi, r0, R_0, h)
      I1 = atan(u/a)
 
      I_1 = a/2.*logs + I1
-     I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
+     I_3 = I_1 + a*0.25*(1.+a2)*(2.*u/(1.-u2) + logs)
      I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
 
-     D2 = -1./6.*I_2 + 0.25*(r0/h) *I_3 - 0.15*r0h2 *I_4 + 1./30.*r0h3 *I_5 - 1./60. *r0h_3 *I1 + (B1-B2)/r03 *I0
+     D2 = -1./6.*I_2 + 0.25*(r0h) *I_3 - 0.15*r0h2 *I_4 + 1./30.*r0h3 *I_5 - 1./60. *r0h_3 *I1 + (B1-B2)/r03 *I0
 
 
      !////// phi2 business /////
-     cosp = R_0/sqrt(4.0*h*h-r0*r0)
+     cosp = R_0/sqrt(4.0*h2-r0*r0)
      phi2 = acos(cosp)
 
      cosp2 = cosp*cosp
      mu2_1 = 1. / (1. + cosp2/a2)
      mu2 = cosp2/a2 / (1. + cosp2/a2)
-     mu = sqrt(mu2)
-     if(mu > 1.0d0) then
-        if(mu-1.0d0 < 1.d-5) then
-           mu = 1.0d0
+     if(mu2 > 1.0d0) then
+        if(mu2-1.0d0 < 1.d-10) then
            mu2 = 1.0d0
         else
            print *, "Error: mu-1.0d0 > 1.d-5"
         end if
      end if
+
+     tanp = tan(phi2)
+
+     I0  = phi2
+     I_2 = phi2 +    a2 * tanp
+     I_4 = phi2 + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
+
+     u2 = (1.-cosp2)*mu2_1
+     u = sqrt(u2)
+     logs = log((1.+u)/(1.-u))
+     I1 = atan(u/a)
+
+     I_1 = 0.5*a*logs + I1
+     I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
+     I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
+
+     D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
+
+  elseif (linedist2 < 4.*h2) then
+     !////// phi2 business /////
+     cosp = R_0/sqrt(4.0*h2-r0*r0)
+     phi2 = acos(cosp)
+
+     cosp2 = cosp*cosp
+     mu2_1 = 1. / (1. + cosp2/a2)
+     mu2 = cosp2/a2 / (1. + cosp2/a2)
+     if(mu2 > 1.0d0) then
+        if(mu2-1.0d0 < 1.d-10) then
+           mu2 = 1.0d0
+        else
+           print *, "Error: mu-1.0d0 > 1.d-5"
+        end if
+     endif
 
      tanp = tan(phi2)
 
@@ -862,63 +875,25 @@ real(doub_prec) function full_integral_3D(phi, r0, R_0, h)
      I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
      I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
 
-     D3 = 1./3.*I_2 - 0.25*(r0/h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
-
-  elseif(linedist < 2.0*h) then
-     !////// phi2 business /////
-     cosp = R_0/sqrt(4.0*h*h-r0*r0)
-     phi2 = acos(cosp)
-
-     cosp2 = cosp*cosp
-     mu2_1 = 1. / (1. + cosp2/a2)
-     mu2 = cosp2/a2 / (1. + cosp2/a2)
-     mu = sqrt(mu2)
-     if(mu > 1.0d0) then
-        if(mu-1.0d0 < 1.d-5) then
-           mu = 1.0d0
-           mu2 = 1.0d0
-        else
-           print *, "Error: mu-1.0d0 > 1.d-5"
-        end if
-     end if
-
-     tanp = tan(phi2)
-
-     I0  = phi2
-     I_2 = phi2 +    a2 * tanp
-     I_4 = phi2 + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-     u2 = (1.-cosp2)*mu2_1
-     u = sqrt(u2)
-     logs = log((1.+u)/(1.-u))
-     I1 = atan(u/a)
-
-     I_1 = a/2.*logs + I1
-     I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
-     I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
-
-     D3 = 1./3.*I_2 - 0.25*(r0/h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
-  end if
-
+     D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
+  endif
 
   !//////////////////////////////
 
-
-  cosp = cos(phi)
+  cosp = cosphi !cos(phi)
   cosp2 = cosp*cosp
+
   mu2_1 = 1. / (1. + cosp2/a2)
-  mu2 = cosp2/a2 / (1. + cosp2/a2)
-  mu = sqrt(mu2)
-  if(mu > 1.0d0) then
-     if(mu-1.0d0 < 1.d-5) then
-        mu = 1.0d0
+  mu2 = cosp2/a2 * mu2_1 !/ (1. + cosp2/a2)
+  if (mu2 > 1.0d0) then
+     if (mu2-1.0d0 < 1.d-10) then
         mu2 = 1.0d0
      else
         print *, "Error: mu-1.0d0 > 1.d-5"
      end if
   end if
 
-  tanp = tan(phi)
+  tanp = tanphi !tan(phi)
 
   I0  = phi
   I_2 = phi +   a2 * tanp
@@ -927,30 +902,28 @@ real(doub_prec) function full_integral_3D(phi, r0, R_0, h)
   J_2 = a2 * tanp
   J_4 = 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
 
-  u2 = sin(phi)*sin(phi)*mu2_1
+  sinphi = tanphi*cosphi ! sin(phi)
+  u2 = sinphi**2*mu2_1
   u = sqrt(u2)
   logs = log((1.+u)/(1.-u))
   I1 = atan2(u,a)
 
-  I_1 = a/2.*logs + I1
-  I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
-  I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
-
-  J_1 = a/2.*logs
-  J_3 = a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
+  J_1 = 0.5*a*logs
+  J_3 = 0.25*a*(1.+a2) *(2.*u/(1.-u2) + logs)
   J_5 = a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
 
+  I_1 = J_1 + I1
+  I_3 = I_1 + J_3
+  I_5 = I_3 + J_5
 
-  pi = 4.*atan(1.)
-
-  if(r < 1.0*h) then
+  if (r2 < h2) then
      full_integral_3D = r0h3/pi  * (1./6. *I_2 - 3./40.*r0h2 *I_4 + 1./40.*r0h3 *I_5 + B1/r03 *I0)
-  elseif(r < 2.0*h) then
+  elseif (r2 < 4.*h2) then
      full_integral_3D=  r0h3/pi  * (0.25 * (4./3. *I_2 - (r0/h) *I_3 + 0.3*r0h2 *I_4 - &
           &   1./30.*r0h3 *I_5 + 1./15. *r0h_3 *I1) + B2/r03 *I0 + D2)
   else
      full_integral_3D = r0h3/pi  * (-0.25*r0h_3 *I1 + B3/r03 *I0 + D3)
-  end if
+  endif
 
 end function full_integral_3D
 

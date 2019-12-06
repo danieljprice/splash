@@ -54,6 +54,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use params,               only:int8
  use geometry,             only:coord_is_length,igeom_cartesian,labelcoord,labelcoordsys
  use asciiutils,           only:strip
+ use timing,               only:wall_time,print_time
  integer, intent(in)                          :: ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
@@ -81,6 +82,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer, dimension(12) :: icoltogrid
  integer :: ncolstogrid,igeom
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
+ real    :: mtot,mtotgrid,err,t2,t1
  logical :: inormalise,lowmem
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
@@ -302,7 +304,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  print fmtstring1,trim(label(irho))
  print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
+ if (ipmass > 0.) then
+    mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0.))
+    print "(9x,a23,1x,es10.4,/)",'total mass on parts:',mtot
+ endif
+
  if (ndim.eq.3) then
+    call wall_time(t1)
     if (igeom /= igeom_cartesian) then
        call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
@@ -313,7 +321,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
             xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
             pixwidthx(1),pixwidthx(2),pixwidthx(3),inormalise,&
             isperiodic(1),isperiodic(2),isperiodic(3))
+       mtotgrid = sum(datgrid)*product(pixwidthx)
     endif
+    call wall_time(t2)
+    if (t2 - t1 > 1.) call print_time(t2-t1)
     !
     !--set minimum density on the grid
     !
@@ -327,10 +338,21 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     !--set minimum density on the grid
     !
     call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,nonzero=.true.)
+    mtot = sum(datgrid2D)*pixwidth**2*npixels(1)*npixels(2)
  endif
 
  print fmtstring1,trim(label(irho))
  print fmtstring,' on grid :',gridmin,gridmax,gridmean
+ !
+ !--print error if mass is not conserved
+ !
+ if (mtotgrid > 0.) then
+    print "(9x,a23,1x,es10.4,/)",'total mass on grid:',mtotgrid
+    err = 100.*(mtotgrid - mtot)/mtot
+    if (abs(err) > 1) print "(/,a,f5.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
+    '% BY INTERPOLATION'
+    if (abs(err) > 1) print "(a,/)", '** please compile splash with DOUBLEPRECISION=yes **'
+ endif
 
  rhomin = gridmin
  rhominset = renvironment('SPLASH_TO_GRID_RHOMIN',errval=-1.)

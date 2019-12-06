@@ -74,7 +74,7 @@ subroutine write_gridlimits(ndim,xmin,xmax,labelx)
  character(len=*), intent(in) :: labelx(ndim)
  integer :: i
 
- print "(a)",' grid dimensions:'
+ print "(a)",' grid dimensions (edit .limits file to change):'
  do i=1,ndim
     if (maxval(abs(xmax)).lt.1.e7) then
        print "(1x,a,': ',f14.6,' -> ',f14.6)",trim(labelx(i)),xmin(i),xmax(i)
