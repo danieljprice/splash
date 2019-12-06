@@ -59,6 +59,8 @@ logical function isgridformat(string)
      isgridformat = .true.
  case('gridbinary','gridbin')
      isgridformat = .true.
+ case('gridbytestream','gridstream','gridbinary2','gridbenoit')
+     isgridformat = .true.
  case('gridascii2')
      isgridformat = .true.
  end select
@@ -101,6 +103,8 @@ subroutine print_gridformats
  print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+ print "(a)",'           to gridstream   : grid data in byte-stream binary format (e.g. for python):'
+ print "(a)",'                                nx,ny,nz,ncolumns,time,rho     [ 4,4,4,4,8*nx*ny*nz ]'
  print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
  print "(a)",'        allto gridascii    : as above, with ascii output'
  print "(a)",'        allto gridbinary   : as above, with binary output'
@@ -140,6 +144,25 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
     print "(/,a,i2)",'----> WRITING TO '//trim(filename)//' on unit ',iunit
     print "(a)",     '      (using unformatted binary format)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR opening '//trim(filename)//' for output!'
+       return
+    endif
+
+    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
+    if (ierr /= 0) then
+       print "(a)",' ERROR writing header to file!'
+       return
+    endif
+
+ case('gridbytestream','gridstream','gridbinary2','gridbenoit')
+ !
+ !--byte stream binary format
+ !
+    filename = trim(filenamein)//'.gridstream'
+    print "(/,a,i2)",'----> WRITING TO '//trim(filename)//' on unit ',iunit
+    print "(a)",     '      (using stream binary format)'
+    open(unit=iunit,file=trim(filename),form='unformatted',status='replace',access='stream',iostat=ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR opening '//trim(filename)//' for output!'
        return
@@ -201,6 +224,22 @@ subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ie
        print "(a)",' ERROR reading header to file!'
        return
     endif
+
+ case('gridbytestream','gridstream','gridbinary2','gridbenoit')
+    print "(/,a,i2)",'----> READING '//trim(filename)//' on unit ',iunit
+    print "(a)",     '      (using unformatted bytestream binary format)'
+    open(unit=iunit,file=trim(filename),form='unformatted',status='old',access='stream',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR opening '//trim(filename)//' for reading!'
+       return
+    endif
+
+    read(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
+    if (ierr /= 0) then
+       print "(a)",' ERROR reading header to file!'
+       return
+    endif
+
  case default
     ! return error if bad format
     print "(a)",' ERROR: cannot read grid format '''//trim(informat)//''' in open_gridfile_r'
@@ -316,10 +355,10 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
     close(unit=iunit)
     return
 
- case('gridbinary','gridbin')
+ case('gridbinary','gridbin','gridbytestream','gridstream','gridbinary2','gridbenoit')
     print "(a)",'-----> WRITING '//trim(ucase(label))
     if (present(dat)) then
-       write(iunit,iostat=ierr) (((dat(i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3))
+       write(iunit,iostat=ierr) ((dat(1:npixels(1),j,k),j=1,npixels(2)),k=1,npixels(3))
     elseif (present(dat3D)) then
        write(iunit,iostat=ierr) ((((dat3D(n,i,j,k),i=1,npixels(1)),j=1,npixels(2)),k=1,npixels(3)),n=1,ncolgrid)
     elseif (present(dat2D)) then
