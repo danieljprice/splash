@@ -62,6 +62,7 @@ contains
 !
 !     Daniel Price, Institute of Astronomy, Cambridge 16/7/03
 !     Revised for "splash to grid", Monash University 02/11/09
+!     Maya Petkova contributed exact subgrid interpolation, April 2019
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&

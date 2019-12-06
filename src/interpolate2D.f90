@@ -27,8 +27,9 @@
 !----------------------------------------------------------------------
 
 module interpolations2D
- use kernels, only:radkernel2,radkernel,cnormk2D,wfunc,pint
- use timing,  only:wall_time,print_time
+ use kernels,       only:radkernel2,radkernel,cnormk2D,wfunc,pint
+ use timing,        only:wall_time,print_time
+ use interpolation, only:iroll
  implicit none
  public :: interpolate2D, interpolate2D_xsec, interpolate2D_vec
  public :: interpolate_part, interpolate_part1
@@ -160,19 +161,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         if(jpixmax.ge.jpixmin) then
            jpix = jpixmin
            jpixi = jpix
-           if (periodicy) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-           endif
+           if (periodicy) jpixi = iroll(jpix,npixy)
            ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
 
            do ipix = ipixmin,ipixmax
               ipixi = ipix
-              if (periodicx) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-              endif
+              if (periodicx) ipixi = iroll(ipix,npixx)
               xpix = xmin + (ipix-0.5)*pixwidthx
               dx = xpix - x(i)
 
@@ -194,19 +189,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         if(ipixmax.ge.ipixmin) then
            ipix = ipixmin
            ipixi = ipix
-           if (periodicx) then
-              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-           endif
+           if (periodicx) ipixi = iroll(ipix,npixx)
            xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
 
            do jpix = jpixmin,jpixmax
               jpixi = jpix
-              if (periodicy) then
-                 if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                 if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-              endif
+              if (periodicy) jpixi = iroll(jpixi,npixy)
               ypix = ymin + (jpix-0.5)*pixwidthy
               dy = ypix - y(i)
 
@@ -227,19 +216,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         !
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodicy) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-           endif
+           if (periodicy) jpixi = iroll(jpix,npixy)
            ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
 
            do ipix = ipixmin,ipixmax
               ipixi = ipix
-              if (periodicx) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-              endif
+              if (periodicx) ipixi = iroll(ipix,npixx)
               xpix = xmin + (ipix-0.5)*pixwidthx
               dx = xpix - x(i)
               !
@@ -255,21 +238,15 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
               if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
 
-              if(jpix < jpixmax) then
+              if (jpix < jpixmax) then
                  jpixi = jpix+1
-                 if (periodicy) then
-                    if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-                 endif
+                 if (periodicy) jpixi = iroll(jpixi,npixy)
 
                  datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
                  if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
 
                  jpixi = jpix
-                 if (periodicy) then
-                    if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-                    if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-                 endif
+                 if (periodicy) jpixi = iroll(jpix,npixy)
               end if
 
               !--right boundary
@@ -282,12 +259,9 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
               if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
 
-              if(ipix < ipixmax) then
+              if (ipix < ipixmax) then
                  ipixi = ipix+1
-                 if (periodicx) then
-                    if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                    if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-                 endif
+                 if (periodicx) ipixi = iroll(ipixi,npixx)
 
                  datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
                  if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
@@ -300,18 +274,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         !
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodicy) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-           endif
+           if (periodicy) jpixi = iroll(jpix,npixy)
            ypix = ymin + (jpix-0.5)*pixwidthy
            dy = ypix - y(i)
            do ipix = ipixmin,ipixmax
               ipixi = ipix
-              if (periodicx) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-              endif
+              if (periodicx) ipixi = iroll(ipix,npixx)
               xpix = xmin + (ipix-0.5)*pixwidthx
               dx = xpix - x(i)
               q2 = (dx*dx + dy*dy)*hi1*hi1
@@ -446,18 +414,12 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      !
      do jpix = jpixmin,jpixmax
         jpixi = jpix
-        if (periodicy) then
-           if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-           if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-        endif
+        if (periodicy) jpixi = iroll(jpix,npixy)
         ypix = ymin + (jpix-0.5)*pixwidthy
         dy = ypix - y(i)
         do ipix = ipixmin,ipixmax
            ipixi = ipix
-           if (periodicx) then
-              if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-              if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-           endif
+           if (periodicx) ipixi = iroll(ipix,npixx)
            xpix = xmin + (ipix-0.5)*pixwidthx
            dx = xpix - x(i)
            q2 = (dx*dx + dy*dy)*hi1*hi1
