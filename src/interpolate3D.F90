@@ -371,9 +371,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      end where
   endif
 
-  print*, 'Number of particles in the volume box: ', usedpart
-
-  return
+  print*, 'Number of particles in the volume: ', usedpart
 
 end subroutine interpolate3D
 
@@ -410,9 +408,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   datsmooth = 0.
   datnorm = 0.
   if (normalise) then
-     print "(1x,a)",'interpolating from particles to 3D grid (normalised) ...'
+     print "(1x,a)",'interpolating to 3D grid (normalised) ...'
   else
-     print "(1x,a)",'interpolating from particles to 3D grid (non-normalised) ...'
+     print "(1x,a)",'interpolating to 3D grid (non-normalised) ...'
   endif
   if (pixwidthx.le.0. .or. pixwidthy.le.0. .or. pixwidthz.le.0.) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
@@ -674,7 +672,7 @@ real function pint(r0, R_0, d1, d2, hi)
 
   real(doub_prec), intent(in) :: R_0, d1, d2, hi
   real, intent(in) :: r0
-  real(doub_prec) :: ar0, aR_0, phi1, phi2, tanphi1, tanphi2
+  real(doub_prec) :: ar0, aR_0
   real(doub_prec) :: int1, int2
   integer :: fflag = 0
 
@@ -698,21 +696,16 @@ real function pint(r0, R_0, d1, d2, hi)
     aR_0 = -R_0
   endif
 
-  tanphi1 = abs(d1)/aR_0
-  tanphi2 = abs(d2)/aR_0
-  phi1 = atan(tanphi1)
-  phi2 = atan(tanphi2)
+  int1 = full_integral_3D(d1, ar0, aR_0, hi)
+  int2 = full_integral_3D(d2, ar0, aR_0, hi)
 
-  int1 = full_integral_3D(phi1, tanphi1, ar0, aR_0, hi)
-  int2 = full_integral_3D(phi2, tanphi2, ar0, aR_0, hi)
+  if (int1 < 0.d0) int1 = 0.d0
+  if (int2 < 0.d0) int2 = 0.d0
 
-  if(int1 < 0.d0) int1 = 0.d0
-  if(int2 < 0.d0) int2 = 0.d0
-
-  if(d1*d2 .ge. 0) then
+  if (d1*d2 .ge. 0) then
      pint = pint*(int1 + int2)
      if(int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
-  elseif(abs(d1) .lt. abs(d2)) then
+  elseif (abs(d1) .lt. abs(d2)) then
      pint = pint*(int2 - int1)
      if(int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
   else
@@ -722,24 +715,27 @@ real function pint(r0, R_0, d1, d2, hi)
 
 end function pint
 
-real(doub_prec) function full_integral_3D(phi, tanphi, r0, R_0, h)
+real(doub_prec) function full_integral_3D(d, r0, R_0, h)
 
-  real(doub_prec), intent(in) :: phi, tanphi, r0, R_0, h
+  real(doub_prec), intent(in) :: d, r0, R_0, h
   real(doub_prec) :: B1, B2, B3, a, logs, u, u2, h2
   real(doub_prec), parameter :: pi = 4.*atan(1.)
-  real(doub_prec) :: a2, cosp, cosp2, mu2, mu2_1, r0h, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
+  real(doub_prec) :: tanphi, phi, a2, cosp, cosp2, mu2, mu2_1, r0h, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
   real(doub_prec) :: r2, R_, linedist2, phi1, phi2, cosphi, sinphi
   real(doub_prec) :: I0, I1, I_1, I_2, I_3, I_4, I_5
   real(doub_prec) :: J_1, J_2, J_3, J_4, J_5
   real(doub_prec) :: D1, D2, D3
 
-  if (abs(r0/h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
+  r0h = r0/h
+  tanphi = abs(d)/R_0
+  phi = atan(tanphi)
+
+  if (abs(r0h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
      full_integral_3D = 0.0
      return
   end if
 
   h2 = h*h
-  r0h = r0/h
   r03 = r0*r0*r0
   r0h2 = r0h*r0h
   r0h3 = r0h2*r0h
@@ -771,140 +767,20 @@ real(doub_prec) function full_integral_3D(phi, tanphi, r0, R_0, h)
   if (linedist2 < h2) then
      !////// phi1 business /////
      cosp = R_0/sqrt(h2-r0*r0)
-     phi1 = acos(cosp)
-
-     cosp2 = cosp*cosp
-     mu2_1 = 1. / (1. + cosp2/a2)
-     mu2 = cosp2/a2 / (1. + cosp2/a2)
-     if(mu2 > 1.0d0) then
-        if (mu2-1.0d0 < 1.d-10) then
-           mu2 = 1.0d0
-        else
-           print *, "Error: mu-1.0d0 > 1.d-5"
-        endif
-     end if
-
-     tanp = tan(phi1)
-
-     I0  = phi1
-     I_2 = phi1 +    a2 * tanp
-     I_4 = phi1 + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-     u2 = (1.-cosp2)*mu2_1
-     u = sqrt(u2)
-     logs = log((1.+u)/(1.-u))
-     I1 = atan(u/a)
-
-     I_1 = a/2.*logs + I1
-     I_3 = I_1 + a*0.25*(1.+a2)*(2.*u/(1.-u2) + logs)
-     I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
+     call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
 
      D2 = -1./6.*I_2 + 0.25*(r0h) *I_3 - 0.15*r0h2 *I_4 + 1./30.*r0h3 *I_5 - 1./60. *r0h_3 *I1 + (B1-B2)/r03 *I0
-
-
+  endif
+  if (linedist2 < 4.*h2) then
      !////// phi2 business /////
      cosp = R_0/sqrt(4.0*h2-r0*r0)
-     phi2 = acos(cosp)
-
-     cosp2 = cosp*cosp
-     mu2_1 = 1. / (1. + cosp2/a2)
-     mu2 = cosp2/a2 / (1. + cosp2/a2)
-     if(mu2 > 1.0d0) then
-        if(mu2-1.0d0 < 1.d-10) then
-           mu2 = 1.0d0
-        else
-           print *, "Error: mu-1.0d0 > 1.d-5"
-        end if
-     end if
-
-     tanp = tan(phi2)
-
-     I0  = phi2
-     I_2 = phi2 +    a2 * tanp
-     I_4 = phi2 + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-     u2 = (1.-cosp2)*mu2_1
-     u = sqrt(u2)
-     logs = log((1.+u)/(1.-u))
-     I1 = atan(u/a)
-
-     I_1 = 0.5*a*logs + I1
-     I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
-     I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
-
-     D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
-
-  elseif (linedist2 < 4.*h2) then
-     !////// phi2 business /////
-     cosp = R_0/sqrt(4.0*h2-r0*r0)
-     phi2 = acos(cosp)
-
-     cosp2 = cosp*cosp
-     mu2_1 = 1. / (1. + cosp2/a2)
-     mu2 = cosp2/a2 / (1. + cosp2/a2)
-     if(mu2 > 1.0d0) then
-        if(mu2-1.0d0 < 1.d-10) then
-           mu2 = 1.0d0
-        else
-           print *, "Error: mu-1.0d0 > 1.d-5"
-        end if
-     endif
-
-     tanp = tan(phi2)
-
-     I0  = phi2
-     I_2 = phi2 +    a2 * tanp
-     I_4 = phi2 + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-     u2 = (1.-cosp2)*mu2_1
-     u = sqrt(u2)
-     logs = log((1.+u)/(1.-u))
-     I1 = atan2(u,a)
-
-     I_1 = a/2.*logs + I1
-     I_3 = I_1 + a*(1.+a2)/4. *(2.*u/(1.-u2) + logs)
-     I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
+     call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
 
      D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
   endif
 
   !//////////////////////////////
-
-  cosp = cosphi !cos(phi)
-  cosp2 = cosp*cosp
-
-  mu2_1 = 1. / (1. + cosp2/a2)
-  mu2 = cosp2/a2 * mu2_1 !/ (1. + cosp2/a2)
-  if (mu2 > 1.0d0) then
-     if (mu2-1.0d0 < 1.d-10) then
-        mu2 = 1.0d0
-     else
-        print *, "Error: mu-1.0d0 > 1.d-5"
-     end if
-  end if
-
-  tanp = tanphi !tan(phi)
-
-  I0  = phi
-  I_2 = phi +   a2 * tanp
-  I_4 = phi + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-  J_2 = a2 * tanp
-  J_4 = 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
-  sinphi = tanphi*cosphi ! sin(phi)
-  u2 = sinphi**2*mu2_1
-  u = sqrt(u2)
-  logs = log((1.+u)/(1.-u))
-  I1 = atan2(u,a)
-
-  J_1 = 0.5*a*logs
-  J_3 = 0.25*a*(1.+a2) *(2.*u/(1.-u2) + logs)
-  J_5 = a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)/(1.-u2)/(1.-u2) + 3.*logs)
-
-  I_1 = J_1 + I1
-  I_3 = I_1 + J_3
-  I_5 = I_3 + J_5
+  call get_I_terms(cosphi,a2,a,I0,I1,I_2,I_3,I_4,I_5)
 
   if (r2 < h2) then
      full_integral_3D = r0h3/pi  * (1./6. *I_2 - 3./40.*r0h2 *I_4 + 1./40.*r0h3 *I_5 + B1/r03 *I0)
@@ -916,5 +792,39 @@ real(doub_prec) function full_integral_3D(phi, tanphi, r0, R_0, h)
   endif
 
 end function full_integral_3D
+
+subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
+ real(doub_prec), intent(in) :: cosp,a2,a
+ real(doub_prec), intent(out) :: I0,I1,I_2,I_3,I_4,I_5
+ real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,mu2,fac
+
+ p = acos(cosp)
+ cosp2 = cosp*cosp
+ mu2_1 = 1. / (1. + cosp2/a2)
+ mu2 = cosp2/a2 * mu2_1
+ if(mu2 > 1.0d0) then
+   if (mu2-1.0d0 < 1.d-10) then
+      mu2 = 1.0d0
+   else
+      !print *, "Error: mu-1.0d0 > 1.d-5"
+   endif
+ endif
+ tanp = tan(p)
+
+ I0  = p
+ I_2 = p +    a2 * tanp
+ I_4 = p + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
+
+ u2 = (1.-cosp2)*mu2_1
+ u = sqrt(u2)
+ logs = log((1.+u)/(1.-u))
+ I1 = atan2(u,a)
+
+ fac = 1./(1.-u2)
+ I_1 = 0.5*a*logs + I1
+ I_3 = I_1 + a*0.25*(1.+a2)*(2.*u*fac + logs)
+ I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)*fac*fac + 3.*logs)
+
+end subroutine get_I_terms
 
 end module interpolations3D
