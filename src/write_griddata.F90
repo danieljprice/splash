@@ -25,6 +25,7 @@
 ! 3D gridded data in various output formats
 !-----------------------------------------------------------------
 module readwrite_griddata
+ use params, only:doub_prec
  implicit none
 
  public :: isgridformat,print_gridformats
@@ -48,7 +49,6 @@ contains
 !-----------------------------------------------------------------
 logical function isgridformat(string)
  use asciiutils, only:lcase
- implicit none
  character(len=*), intent(in) :: string
 
  isgridformat = .false.
@@ -89,7 +89,6 @@ end subroutine write_gridlimits
 ! print usage if format selection not valid
 !-----------------------------------------------------------------
 subroutine print_gridformats
- implicit none
 
  print "(/,a)",' Grid conversion mode ("splash to X dumpfiles"): '
  print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
@@ -98,10 +97,10 @@ subroutine print_gridformats
  print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
  print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
  print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]'
- print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
- print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
- print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
- print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 4 bytes each ]'
+ print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+ print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+ print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+ print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
  print "(a)",'        allto gridascii    : as above, with ascii output'
  print "(a)",'        allto gridbinary   : as above, with binary output'
@@ -114,7 +113,6 @@ end subroutine print_gridformats
 !------------------------------------------------------
 subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time,ierr)
  use asciiutils, only:lcase
- implicit none
  integer, intent(in)               :: iunit
  character(len=*), intent(in)      :: filenamein,outformat
  character(len=len(filenamein)+10) :: filename
@@ -174,7 +172,6 @@ end subroutine open_gridfile_w
 !------------------------------------------------------
 subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ierr)
  use asciiutils, only:lcase
- implicit none
  integer, intent(in)                :: iunit,ndim
  character(len=*), intent(in)       :: filename
  character(len=*), intent(inout)    :: informat
@@ -231,8 +228,8 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
  real, dimension(3), intent(in)       :: xmin
  integer, intent(out)                 :: ierr
  character(len=len(filenamein)+20)    :: filename
- real, dimension(:,:,:),   intent(in), optional :: dat
- real, dimension(:,:,:,:), intent(in), optional :: dat3D
+ real(doub_prec), dimension(:,:,:),   intent(in), optional :: dat
+ real(doub_prec), dimension(:,:,:,:), intent(in), optional :: dat3D
  real, dimension(:,:),     intent(in), optional :: dat2D
  character(len=*), intent(in), optional :: label3D(ncolgrid)
  integer :: i,j,k,n
@@ -436,7 +433,6 @@ end subroutine write_grid
 ! read a particular column from the grid output file into 3D array
 !------------------------------------------------------------------
 subroutine read_gridcolumn3D(iunit,dat,npixels,ierr)
- implicit none
  integer, intent(in)                 :: iunit
  real, dimension(:,:,:), intent(out) :: dat
  integer, dimension(3), intent(in)   :: npixels
@@ -452,7 +448,6 @@ end subroutine read_gridcolumn3D
 ! read a particular column from the grid output file into 1D array
 !------------------------------------------------------------------
 subroutine read_gridcolumn1D(iunit,dat,ngrid,ierr)
- implicit none
  integer, intent(in)                 :: iunit
  real, dimension(:), intent(out)     :: dat
  integer, intent(in)                 :: ngrid

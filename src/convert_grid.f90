@@ -25,6 +25,7 @@
 !  files to 3D gridded data.
 !-----------------------------------------------------------------
 module convert_grid
+ use params, only:doub_prec
  implicit none
  private
  public :: convert_to_grid
@@ -69,9 +70,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
- real, dimension(:,:,:), allocatable   :: datgrid
+ real(doub_prec), dimension(:,:,:), allocatable   :: datgrid
  real, dimension(:,:),   allocatable   :: datgrid2D
- real, dimension(:,:,:,:), allocatable :: datgridvec
+ real(doub_prec), dimension(:,:,:,:), allocatable :: datgridvec
  real, dimension(:,:,:),   allocatable :: datgridvec2D
  real, dimension(:), allocatable       :: weight
  real, dimension(3)    :: xmin,xmax
@@ -351,7 +352,6 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     err = 100.*(mtotgrid - mtot)/mtot
     if (abs(err) > 1) print "(/,a,f5.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
     '% BY INTERPOLATION'
-    if (abs(err) > 1) print "(a,/)", '** please compile splash with DOUBLEPRECISION=yes **'
  endif
 
  rhomin = gridmin
@@ -701,7 +701,7 @@ end subroutine
 ! calculate max and min and mean values on grid
 !-----------------------------------------------
 subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
- real, dimension(:,:,:), intent(in) :: datgrid
+ real(doub_prec), dimension(:,:,:), intent(in) :: datgrid
  integer, dimension(3), intent(in)  :: npixels
  real, intent(out)                  :: gridmin,gridmax,gridmean
  logical, intent(in)                :: nonzero
@@ -774,7 +774,7 @@ end subroutine minmaxmean_grid2D
 ! (for vector quantities)
 !-----------------------------------------------
 subroutine minmaxmean_gridvec(datgridvec,npixels,jlen,gridmin,gridmax,gridmean)
- real, dimension(:,:,:,:), intent(in) :: datgridvec
+ real(doub_prec), dimension(:,:,:,:), intent(in) :: datgridvec
  integer, dimension(3), intent(in)    :: npixels
  integer, intent(in)                  :: jlen
  real, dimension(jlen), intent(out)   :: gridmin,gridmax,gridmean

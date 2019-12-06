@@ -72,9 +72,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,zmin,pixwidthx,pixwidthy,pixwidthz
-  real, intent(out), dimension(npixx,npixy,npixz) :: datsmooth
+  real(doub_prec), intent(out), dimension(npixx,npixy,npixz) :: datsmooth
   logical, intent(in) :: normalise,periodicx,periodicy,periodicz
-  real, dimension(npixx,npixy,npixz) :: datnorm
+  real(doub_prec), dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
   integer :: iprintinterval,iprintnext
@@ -385,9 +385,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   real, intent(in), dimension(npart,3)  :: datvec
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin,ymin,zmin,pixwidthx,pixwidthy,pixwidthz
-  real, intent(out), dimension(3,npixx,npixy,npixz) :: datsmooth
+  real(doub_prec), intent(out), dimension(3,npixx,npixy,npixz) :: datsmooth
   logical, intent(in) :: normalise,periodicx,periodicy,periodicz
-  real, dimension(npixx,npixy,npixz) :: datnorm
+  real(doub_prec), dimension(npixx,npixy,npixz) :: datnorm
 
   integer :: i,ipix,jpix,kpix
   integer :: iprintinterval,iprintnext
@@ -440,8 +440,6 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   xminpix = xmin - 0.5*pixwidthx
   yminpix = ymin - 0.5*pixwidthy
   zminpix = zmin - 0.5*pixwidthz
-!  xmax = xmin + npixx*pixwidth
-!  ymax = ymin + npixy*pixwidth
 
   const = cnormk3D  ! normalisation constant (3D)
   nwarn = 0
@@ -527,10 +525,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      do ipix=ipixmin,ipixmax
         nxpix = nxpix + 1
         ipixi = ipix
-        if (periodicx) then
-           if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-           if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-        endif
+        if (periodicx) ipixi = iroll(ipix,npixx)
         xpixi = xminpix + ipix*pixwidthx
         !--watch out for errors with perioic wrapping...
         if (nxpix.le.size(dx2i)) then
@@ -550,20 +545,14 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      !
      do kpix = kpixmin,kpixmax
         kpixi = kpix
-        if (periodicz) then
-           if (kpixi.lt.1)     kpixi = mod(kpixi,npixz) + npixz
-           if (kpixi.gt.npixz) kpixi = mod(kpixi-1,npixz) + 1
-        endif
+        if (periodicz) kpixi = iroll(kpix,npixz)
         zpix = zminpix + kpix*pixwidthz
         dz = zpix - zi
         dz2 = dz*dz*hi21
 
         do jpix = jpixmin,jpixmax
            jpixi = jpix
-           if (periodicy) then
-              if (jpixi.lt.1)     jpixi = mod(jpixi,npixy) + npixy
-              if (jpixi.gt.npixy) jpixi = mod(jpixi-1,npixy) + 1
-           endif
+           if (periodicy) jpixi = iroll(jpix,npixy)
            ypix = yminpix + jpix*pixwidthy
            dy = ypix - yi
            dyz2 = dy*dy*hi21 + dz2
@@ -571,10 +560,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
            nxpix = 0
            do ipix = ipixmin,ipixmax
               ipixi = ipix
-              if (periodicx) then
-                 if (ipixi.lt.1)     ipixi = mod(ipixi,npixx) + npixx
-                 if (ipixi.gt.npixx) ipixi = mod(ipixi-1,npixx) + 1
-              endif
+              if (periodicx) ipixi = iroll(ipix,npixx)
               nxpix = nxpix + 1
               q2 = dx2i(nxpix) + dyz2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
               !
@@ -644,7 +630,10 @@ real function wkernel(q2)
 
 end function wkernel
 
-
+!------------------------------------------------------------
+! functions to evaluate exact overlap of kernel with wall boundaries
+! see Petkova, Laibe & Bonnell (2018), J. Comp. Phys
+!------------------------------------------------------------
 real function wallint(r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi)
  real, intent(in) :: r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi
  real(doub_prec) :: R_0, d1, d2, dx, dy, h

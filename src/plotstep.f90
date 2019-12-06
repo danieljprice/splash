@@ -30,7 +30,7 @@
 !
 !------------------------------------------------------------------------
 module timestep_plotting
-  use params, only:maxplot
+  use params, only:maxplot,doub_prec
   implicit none
 
   integer, private :: ninterp
@@ -45,7 +45,7 @@ module timestep_plotting
 
   real, dimension(:),     allocatable, private :: datpix1D, xgrid
   real, dimension(:,:),   allocatable, private :: datpix,datpixcont,brightness
-  real, dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
+  real(doub_prec), dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
   real, private :: xmin,xmax,ymin,ymax,zmin
   real, private :: rendermin,rendermax,vecmax,contmin,contmax
   real, private :: dz,zslicepos,zobservertemp,dzscreentemp,taupartdepthtemp,rkappafac
@@ -717,7 +717,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   use part_utils,            only:get_tracked_particle,locate_first_two_of_type,&
                                   get_binary,locate_nth_particle_of_type
   use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
-  use powerspectrums,        only:powerspectrum,powerspec3D_sph
+  use powerspectrums,        only:powerspectrum
   use interpolations1D,      only:interpolate1D
   use interpolations2D,      only:interpolate2D,interpolate2D_xsec,&
                                   interpolate2D_pixels
@@ -2548,11 +2548,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (.not.ihavesetweights) then
                  call set_weights(weight,dat,iamtype,iusetype)
               endif
+              yplot = 0.
 
-              call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), &
-                   ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
-                   yplot(1:nfreqspec),inormalise)
+              !call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
+               !    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), &
+               !    ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
+            !       yplot(1:nfreqspec),inormalise)
               xmin = max(minval(xplot(1:nfreqspec)),1.0)
               xmax = maxval(xplot(1:nfreqspec))
               nfreqpts = nfreqspec

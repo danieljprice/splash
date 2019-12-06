@@ -26,7 +26,8 @@
 module interpolation
  implicit none
  public :: iroll, set_interpolation_weights
- real, parameter, public :: weight_sink = -1.
+ real, parameter,    public :: weight_sink = -1.
+ integer, parameter, public :: doub_prec = kind(0.d0)
  private
 
 contains

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -28,8 +28,9 @@
 !----------------------------------------------------------------------
 
 module interpolations3Dgeom
- use kernels,  only:radkernel2,radkernel,cnormk3D
- use geometry, only:labelcoordsys,coord_is_length,igeom_cartesian,coord_transform
+ use kernels,       only:radkernel2,radkernel,cnormk3D
+ use geometry,      only:labelcoordsys,coord_is_length,igeom_cartesian,coord_transform
+ use interpolation, only:doub_prec,iroll
  implicit none
  public :: interpolate3Dgeom,interpolate3Dgeom_vec
 
@@ -70,7 +71,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
   real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin(3),pixwidth(3),xorigin(3)
-  real, intent(out), dimension(npix(1),npix(2),npix(3)) :: datsmooth
+  real(doub_prec), intent(out), dimension(npix(1),npix(2),npix(3)) :: datsmooth
   logical, intent(in) :: normalise,periodic(3)
   real, dimension(npix(1),npix(2),npix(3)) :: datnorm
 
@@ -149,9 +150,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx,q2,wab)
 !$omp master
-#ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-#endif
+!$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
 
 !$omp do schedule (guided, 2)
@@ -208,26 +207,17 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
      !
      do kpix = ipixmin(3),ipixmax(3)
         kpixi = kpix
-        if (periodic(3)) then
-           if (kpixi.lt.1)       kpixi = mod(kpixi,npix(3)) + npix(3)
-           if (kpixi.gt.npix(3)) kpixi = mod(kpixi-1,npix(3)) + 1
-        endif
+        if (periodic(3)) kpixi = iroll(kpix,npix(3))
         xcoord(3) = xminpix(3) + kpix*pixwidth(3)
 
         do jpix = ipixmin(2),ipixmax(2)
            jpixi = jpix
-           if (periodic(2)) then
-              if (jpixi.lt.1)       jpixi = mod(jpixi,npix(2)) + npix(2)
-              if (jpixi.gt.npix(2)) jpixi = mod(jpixi-1,npix(2)) + 1
-           endif
+           if (periodic(2)) jpixi = iroll(jpix,npix(2))
            xcoord(2) = xminpix(2) + jpix*pixwidth(2)
 
            do ipix = ipixmin(1),ipixmax(1)
               ipixi = ipix
-              if (periodic(1)) then
-                 if (ipixi.lt.1)       ipixi = mod(ipixi,npix(1)) + npix(1)
-                 if (ipixi.gt.npix(1)) ipixi = mod(ipixi-1,npix(1)) + 1
-              endif
+              if (periodic(1)) ipixi = iroll(ipix,npix(1))
               xcoord(1) = xminpix(1) + ipix*pixwidth(1)
 
               !--now transform to get location of pixel in cartesians
@@ -278,9 +268,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
   real, intent(in), dimension(npart,3)  :: datvec
   integer, intent(in), dimension(npart) :: itype
   real, intent(in) :: xmin(3),pixwidth(3),xorigin(3)
-  real, intent(out), dimension(3,npix(1),npix(2),npix(3)) :: datsmooth
+  real(doub_prec), intent(out), dimension(3,npix(1),npix(2),npix(3)) :: datsmooth
   logical, intent(in) :: normalise,periodic(3)
-  real, dimension(npix(1),npix(2),npix(3)) :: datnorm
+  real(doub_prec), dimension(npix(1),npix(2),npix(3)) :: datnorm
 
   integer :: i,ipix,jpix,kpix,ierr
   integer :: iprintinterval,iprintnext
@@ -300,9 +290,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
   datsmooth = 0.
   datnorm = 0.
   if (normalise) then
-     print "(1x,a)",'interpolating from particles to 3D '//trim(labelcoordsys(igeom))//' grid (normalised) ...'
+     print "(1x,a)",'interpolating to 3D '//trim(labelcoordsys(igeom))//' grid (normalised) ...'
   else
-     print "(1x,a)",'interpolating from particles to 3D '//trim(labelcoordsys(igeom))//' grid (non-normalised) ...'
+     print "(1x,a)",'interpolating to 3D '//trim(labelcoordsys(igeom))//' grid (non-normalised) ...'
   endif
   if (any(pixwidth <= 0.)) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
@@ -355,9 +345,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx,q2,wab)
 !$omp master
-#ifdef _OPENMP
-  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-#endif
+!$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
 
 !$omp do schedule (guided, 2)
@@ -404,9 +392,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      xci(2) = y(i) + xorigin(2)
      xci(3) = z(i) + xorigin(3)
      call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,npix,pixwidth,xmin,periodic,igeom,ierr)
-     !print*,' got particle ',i,' x,y,z = ',xci,' r,phi,z = ',xi,' R=',radkern,' pixel limits = ',&
-     !    (ipixmin(ipix),ipixmax(ipix),ipix=1,3)
-     !read*
+
      if (ierr /= 0) cycle over_parts
 
      !
@@ -414,26 +400,17 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      !
      do kpix = ipixmin(3),ipixmax(3)
         kpixi = kpix
-        if (periodic(3)) then
-           if (kpixi.lt.1)       kpixi = mod(kpixi,npix(3)) + npix(3)
-           if (kpixi.gt.npix(3)) kpixi = mod(kpixi-1,npix(3)) + 1
-        endif
+        if (periodic(3)) kpixi = iroll(kpix,npix(3))
         xcoord(3) = xminpix(3) + kpix*pixwidth(3)
 
         do jpix = ipixmin(2),ipixmax(2)
            jpixi = jpix
-           if (periodic(2)) then
-              if (jpixi.lt.1)       jpixi = mod(jpixi,npix(2)) + npix(2)
-              if (jpixi.gt.npix(2)) jpixi = mod(jpixi-1,npix(2)) + 1
-           endif
+           if (periodic(2)) jpixi = iroll(jpix,npix(2))
            xcoord(2) = xminpix(2) + jpix*pixwidth(2)
 
            do ipix = ipixmin(1),ipixmax(1)
               ipixi = ipix
-              if (periodic(1)) then
-                 if (ipixi.lt.1)       ipixi = mod(ipixi,npix(1)) + npix(1)
-                 if (ipixi.gt.npix(1)) ipixi = mod(ipixi-1,npix(1)) + 1
-              endif
+              if (periodic(1)) ipixi = iroll(ipix,npix(1))
               xcoord(1) = xminpix(1) + ipix*pixwidth(1)
 
               !--now transform to get location of pixel in cartesians
@@ -490,8 +467,6 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      !$omp end parallel do
   endif
 
-  return
-
 end subroutine interpolate3Dgeom_vec
 
 !------------------------------------------------------------
@@ -499,7 +474,6 @@ end subroutine interpolate3Dgeom_vec
 !-----------------------------------------------------------
 real function wkernel(q2)
  use kernels, only:wfunc
- implicit none
  real, intent(in) :: q2
 
  wkernel = wfunc(q2)
