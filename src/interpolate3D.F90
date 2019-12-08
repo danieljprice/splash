@@ -796,19 +796,11 @@ end function full_integral_3D
 subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
  real(doub_prec), intent(in) :: cosp,a2,a
  real(doub_prec), intent(out) :: I0,I1,I_2,I_3,I_4,I_5
- real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,mu2,fac
+ real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,fac
 
  p = acos(cosp)
  cosp2 = cosp*cosp
  mu2_1 = 1. / (1. + cosp2/a2)
- mu2 = cosp2/a2 * mu2_1
- if(mu2 > 1.0d0) then
-   if (mu2-1.0d0 < 1.d-10) then
-      mu2 = 1.0d0
-   else
-      !print *, "Error: mu-1.0d0 > 1.d-5"
-   endif
- endif
  tanp = tan(p)
 
  I0  = p
