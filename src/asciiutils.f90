@@ -136,6 +136,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  integer :: ierr,i,maxlines
  logical :: iexist
 
+ i = 0
  nlinesread = 0
  if (present(ierror)) ierror = 0
 
