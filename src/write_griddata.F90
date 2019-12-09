@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -25,8 +25,8 @@
 ! 3D gridded data in various output formats
 !-----------------------------------------------------------------
 module readwrite_griddata
- use params, only:doub_prec
  implicit none
+ integer, parameter :: doub_prec = kind(0.d0)
 
  public :: isgridformat,print_gridformats
  public :: open_gridfile_w,open_gridfile_r
@@ -98,13 +98,13 @@ subroutine print_gridformats
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
  print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
  print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
- print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4 bytes each ]'
+ print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4,4,4,4,8 bytes ]'
  print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'           to gridstream   : grid data in byte-stream binary format (e.g. for python):'
- print "(a)",'                                nx,ny,nz,ncolumns,time,rho     [ 4,4,4,4,8*nx*ny*nz ]'
+ print "(a)",'                                nx,ny,nz,ncolumns,time,rho     [ 4,4,4,4,8,8*nx*ny*nz ]'
  print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
  print "(a)",'        allto gridascii    : as above, with ascii output'
  print "(a)",'        allto gridbinary   : as above, with binary output'
@@ -122,7 +122,7 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
  character(len=len(filenamein)+10) :: filename
  integer, intent(in)                  :: ndim,ncolumns
  integer, dimension(ndim), intent(in) :: npixels
- real, intent(in)                     :: time
+ real(doub_prec), intent(in)          :: time
  integer, intent(out)                 :: ierr
 !
 !--Only have to do something here for formats
@@ -141,17 +141,16 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
  !--simple unformatted binary format
  !
     filename = trim(filenamein)//'.grid'
-    print "(/,a,i2)",'----> WRITING TO '//trim(filename)//' on unit ',iunit
-    print "(a)",     '      (using unformatted binary format)'
+    print "(/,a,i2,a)",'----> WRITING TO '//trim(filename)//' on unit ',iunit,' (unformatted binary)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',iostat=ierr)
     if (ierr /= 0) then
-       print "(a)",' ERROR opening '//trim(filename)//' for output!'
+       print "(a)",' ERROR opening '//trim(filename)//' for output'
        return
     endif
 
     write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
-       print "(a)",' ERROR writing header to file!'
+       print "(a)",' ERROR writing header to file'
        return
     endif
 
@@ -160,17 +159,16 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
  !--byte stream binary format
  !
     filename = trim(filenamein)//'.gridstream'
-    print "(/,a,i2)",'----> WRITING TO '//trim(filename)//' on unit ',iunit
-    print "(a)",     '      (using stream binary format)'
+    print "(/,a,i2,a)",'----> WRITING TO '//trim(filename)//' on unit ',iunit,' (unformatted binary stream)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',access='stream',iostat=ierr)
     if (ierr /= 0) then
-       print "(a)",' ERROR opening '//trim(filename)//' for output!'
+       print "(a)",' ERROR opening '//trim(filename)//' for output'
        return
     endif
 
     write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
-       print "(a)",' ERROR writing header to file!'
+       print "(a)",' ERROR writing header to file'
        return
     endif
 
@@ -197,10 +195,10 @@ subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ie
  use asciiutils, only:lcase
  integer, intent(in)                :: iunit,ndim
  character(len=*), intent(in)       :: filename
- character(len=*), intent(inout)    :: informat
+ character(len=*), intent(in)       :: informat
  integer, intent(out)               :: ncolumns
  integer, dimension(ndim), intent(out) :: npixels
- real, intent(out)                     :: time
+ real(doub_prec), intent(out)          :: time
  integer, intent(out)                  :: ierr
 !
 !--read only implemented for binary grid format at present
@@ -211,32 +209,30 @@ subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ie
  !
  !--simple unformatted binary format
  !
-    print "(/,a,i2)",'----> READING '//trim(filename)//' on unit ',iunit
-    print "(a)",     '      (using unformatted binary format)'
+    print "(/,a,i2,a)",'----> READING '//trim(filename)//' on unit ',iunit,' (unformatted binary)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='old',iostat=ierr)
     if (ierr /= 0) then
-       print "(a)",' ERROR opening '//trim(filename)//' for reading!'
+       print "(a)",' ERROR opening '//trim(filename)//' for read'
        return
     endif
 
     read(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
-       print "(a)",' ERROR reading header to file!'
+       print "(a)",' ERROR reading header'
        return
     endif
 
  case('gridbytestream','gridstream','gridbinary2','gridbenoit')
-    print "(/,a,i2)",'----> READING '//trim(filename)//' on unit ',iunit
-    print "(a)",     '      (using unformatted bytestream binary format)'
+    print "(/,a,i2,a)",'----> READING '//trim(filename)//' on unit ',iunit,' (unformatted bytestream)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='old',access='stream',iostat=ierr)
     if (ierr /= 0) then
-       print "(a)",' ERROR opening '//trim(filename)//' for reading!'
+       print "(a)",' ERROR opening '//trim(filename)//' for reading'
        return
     endif
 
     read(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
     if (ierr /= 0) then
-       print "(a)",' ERROR reading header to file!'
+       print "(a)",' ERROR reading header'
        return
     endif
 
@@ -253,9 +249,8 @@ end subroutine open_gridfile_r
 ! write a particular column to the grid output file
 !------------------------------------------------------
 subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
-                      labelcoordsys,xlab,time,pixwidth,xmin,ierr,dat,dat3D,dat2D,label3D)
+                      labelcoordsys,xlab,time,pixwidth,xmin,ierr,dat,dat3D,dat2D,label3D,tagline,origin)
  use asciiutils, only:ucase,lcase,safename
- use filenames,  only:tagline
  implicit none
  integer, intent(in)                  :: iunit
  character(len=*), intent(in)         :: filenamein,outformat
@@ -263,14 +258,14 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
  integer, dimension(ndim), intent(in) :: npixels
  character(len=*), intent(in)         :: label,labelcoordsys
  character(len=*), dimension(3), intent(in) :: xlab
- real, intent(in)                     :: time,pixwidth(3)
- real, dimension(3), intent(in)       :: xmin
+ real(doub_prec), intent(in)          :: time
+ real, dimension(3), intent(in)       :: xmin,pixwidth
  integer, intent(out)                 :: ierr
  character(len=len(filenamein)+20)    :: filename
  real(doub_prec), dimension(:,:,:),   intent(in), optional :: dat
  real(doub_prec), dimension(:,:,:,:), intent(in), optional :: dat3D
  real, dimension(:,:),     intent(in), optional :: dat2D
- character(len=*), intent(in), optional :: label3D(ncolgrid)
+ character(len=*), intent(in), optional :: label3D(ncolgrid),tagline,origin
  integer :: i,j,k,n
  real    :: xi,yi,zi
 
@@ -304,10 +299,17 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
        print "(a)",' ERROR OPENING FILE FOR WRITING'
        return
     endif
-    write(iunit,"(a)",err=100) '# '//trim(tagline)
-    write(iunit,"(a)",err=100) &
-      '# '//trim(filename)//' produced using "splash to '//trim(outformat)// &
-      '" on file '//trim(filenamein)
+    if (present(tagline)) then
+       write(iunit,"(a)",err=100) '# '//trim(tagline)
+    else
+       write(iunit,"(a)",err=100) '# gridded data file'
+    endif
+    if (present(origin)) then
+       write(iunit,"(a)",err=100) &
+         '# '//trim(filename)//' produced using '//trim(origin)
+    else
+       write(iunit,"(a)",err=100) '# '//trim(filename)
+    endif
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# time:'
     write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
@@ -472,10 +474,10 @@ end subroutine write_grid
 ! read a particular column from the grid output file into 3D array
 !------------------------------------------------------------------
 subroutine read_gridcolumn3D(iunit,dat,npixels,ierr)
- integer, intent(in)                 :: iunit
- real, dimension(:,:,:), intent(out) :: dat
- integer, dimension(3), intent(in)   :: npixels
- integer, intent(out)                :: ierr
+ integer, intent(in)                :: iunit
+ real(doub_prec),       intent(out) :: dat(:,:,:)
+ integer, dimension(3), intent(in)  :: npixels
+ integer, intent(out)               :: ierr
  integer :: i,j,k
 
  print "(a,i4,'x',i4,'x',i4,a)",'-----> READING ',npixels(:),' data points'
@@ -487,10 +489,10 @@ end subroutine read_gridcolumn3D
 ! read a particular column from the grid output file into 1D array
 !------------------------------------------------------------------
 subroutine read_gridcolumn1D(iunit,dat,ngrid,ierr)
- integer, intent(in)                 :: iunit
- real, dimension(:), intent(out)     :: dat
- integer, intent(in)                 :: ngrid
- integer, intent(out)                :: ierr
+ integer, intent(in)          :: iunit
+ real(doub_prec), intent(out) :: dat(:)
+ integer, intent(in)          :: ngrid
+ integer, intent(out)         :: ierr
  integer :: i
 
  print "(a,i10,a)",'-----> READING ',ngrid,' data points'
