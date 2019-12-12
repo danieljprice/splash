@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -250,7 +250,7 @@ subroutine set_coordlabels(numplot)
                    trim(labelvec(iamvec(i)))//' in column ',i,' iamvec = ',iamvec(i)
           endif
           if (iRescale) then
-             label(i) = trim(label(i))//'\u'//trim(unitslabel(i))
+             label(i) = trim(label(i))//trim(unitslabel(i))
           endif
        endif
     enddo
