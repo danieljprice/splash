@@ -111,7 +111,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
   real :: xptmin,xptmax,yptmin,yptmax,zptmin,zptmax,rptmax2
   real :: rmin,rminsink,rr,gradient,yint,dx,dy,dr,anglerad
-  real :: xlength,ylength,renderlength,renderpt,zoomfac
+  real :: xlength,ylength,renderlength,renderpt,zoomfac,scalefac
   real :: dxlength,dylength,xmaxin,ymaxin,contlength
   real, dimension(4)      :: xline,yline
   real, dimension(maxpts) :: xpts,ypts
@@ -150,6 +150,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   xmaxin = xmax
   ymaxin = ymax
   zoomfac = 1.0
+  scalefac = 1.1
   ncircpart = 0
   itrackparttemp = itrackpart
   iexit = .false.
@@ -653,20 +654,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
         contlength = contmax - contmin
         select case(char)
         case('-')
-           xlength = 1.1*zoomfac*xlength
-           ylength = 1.1*zoomfac*ylength
-           renderlength = 1.1*zoomfac*renderlength
-           contlength = 1.1*zoomfac*contlength
+           xlength = zoomfac*scalefac*xlength
+           ylength = zoomfac*scalefac*ylength
+           renderlength = zoomfac*scalefac*renderlength
+           contlength = zoomfac*scalefac*contlength
         case('_')
-           xlength = 1.2*zoomfac*xlength
-           ylength = 1.2*zoomfac*ylength
-           renderlength = 1.2*zoomfac*renderlength
-           contlength = 1.2*zoomfac*contlength
+           xlength = 1.2*zoomfac*scalefac*xlength
+           ylength = 1.2*zoomfac*scalefac*ylength
+           renderlength = 1.2*zoomfac*scalefac*renderlength
+           contlength = 1.2*zoomfac*scalefac*contlength
         case('+')
-           xlength = xlength/(1.1*zoomfac)
-           ylength = ylength/(1.1*zoomfac)
-           renderlength = renderlength/(1.1*zoomfac)
-           contlength = contlength/(1.1*zoomfac)
+           xlength = xlength/(zoomfac*scalefac)
+           ylength = ylength/(zoomfac*scalefac)
+           renderlength = renderlength/(zoomfac*scalefac)
+           contlength = contlength/(zoomfac*scalefac)
         case('o')
            if (itrackpart.gt.0) then
                print*,'centreing limits on tracked particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
@@ -722,7 +723,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               xmin = xcen - 0.5*xlength
               xmax = xcen + 0.5*xlength
               call assert_sensible_limits(xmin,xmax)
-              !print*,'zooming on x axis: min, max = ',xmin,xmax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -732,7 +732,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               ymin = ycen - 0.5*ylength
               ymax = ycen + 0.5*ylength
               call assert_sensible_limits(ymin,ymax)
-              !print*,'zooming on y axis: min, max = ',ymin,ymax
               iadvance = 0
               interactivereplot = .true.
               irerender = .true.
@@ -751,10 +750,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
               call assert_sensible_limits(contmin,contmax)
            else
               rendermax = rendermaxadapt
-              if (itrans(irender)==1 .and. renderminadapt < rendermaxadapt-4.) then ! if logged
-                 if (abs(rendermin-(rendermaxadapt-3.)) > epsilon(0.)) then
-                    rendermin = rendermaxadapt - 3. ! if logged, do not give 20 orders of mag
-                    print "(a)",' *** MIN SET 3 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
+              if (itrans(irender)==1 .and. renderminadapt < rendermaxadapt-5.) then ! if logged
+                 if (abs(rendermin-(rendermaxadapt-4.)) > epsilon(0.)) then
+                    rendermin = rendermaxadapt - 4. ! if logged, do not give 20 orders of mag
+                    print "(a)",' *** MIN SET 4 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
                  else
                     rendermin = renderminadapt
                  endif
@@ -1276,8 +1275,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
            iadvance = iadvancenew
         endif
         iadvance = int(zoomfac*iadvance)
-        print*,' setting timestep jump = ',iadvance
+        print*,' setting timestep jump / zoom factor = ',iadvance
         iadvanceset = .true.
+        scalefac = iadvance
      case(')')
         iadvance = int(zoomfac*10)
         print*,' setting timestep jump = ',iadvance
@@ -1564,7 +1564,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
  integer :: istepjumpnew,ivecx,ivecy
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
- real :: xlength,ylength,renderlength,contlength,zoomfac
+ real :: xlength,ylength,renderlength,contlength,zoomfac,scalefac
  real :: vptxi,vptyi,vptx2i,vpty2i,vptxceni,vptyceni
  real :: xmini,xmaxi,ymini,ymaxi,xcen,ycen,gradient,dr,yint,xmaxin
  real, dimension(4) :: xline,yline
@@ -1580,6 +1580,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
   endif
   char = 'A'
   zoomfac = 1.0
+  scalefac = 1.1
   xpt2 = 0.
   ypt2 = 0.
   verticalbar = barisvertical(iColourBarStyle)
@@ -1888,20 +1889,20 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
         endif
         select case(char)
         case('-')
-           xlength = 1.1*zoomfac*xlength
-           ylength = 1.1*zoomfac*ylength
-           renderlength = 1.1*zoomfac*renderlength
-           contlength = 1.1*zoomfac*contlength
+           xlength = zoomfac**scalefac*xlength
+           ylength = zoomfac*scalefac*ylength
+           renderlength = zoomfac*scalefac*renderlength
+           contlength = zoomfac*scalefac*contlength
         case('_')
-           xlength = 1.2*zoomfac*xlength
-           ylength = 1.2*zoomfac*ylength
-           renderlength = 1.2*zoomfac*renderlength
-           contlength = 1.2*zoomfac*contlength
+           xlength = 1.2*zoomfac*scalefac*xlength
+           ylength = 1.2*zoomfac*scalefac*ylength
+           renderlength = 1.2*zoomfac*scalefac*renderlength
+           contlength = 1.2*zoomfac*scalefac*contlength
         case('+')
-           xlength = xlength/(1.1*zoomfac)
-           ylength = ylength/(1.1*zoomfac)
-           renderlength = renderlength/(1.1*zoomfac)
-           contlength = contlength/(1.1*zoomfac)
+           xlength = xlength/(zoomfac*scalefac)
+           ylength = ylength/(zoomfac*scalefac)
+           renderlength = renderlength/(zoomfac*scalefac)
+           contlength = contlength/(zoomfac*scalefac)
         case('o')
            if (is_coord(iplotxarr(ipanel),ndim)) then
               xcen = xorigin(iplotxarr(ipanel))
@@ -1926,14 +1927,14 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               xmin(icontourarr(ipanel)) = renderpt - 0.5*contlength
               xmax(icontourarr(ipanel)) = renderpt + 0.5*contlength
               call assert_sensible_limits(xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel)))
-              print*,'zooming on colour bar: min, max = ',xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel))
+              !print*,'zooming on colour bar: min, max = ',xmin(icontourarr(ipanel)),xmax(icontourarr(ipanel))
            else
               !--rendering zoom does not allow pan - renderpt is always centre of axis
               renderpt = 0.5*(xmin(irenderarr(ipanel)) + xmax(irenderarr(ipanel)))
               xmin(irenderarr(ipanel)) = renderpt - 0.5*renderlength
               xmax(irenderarr(ipanel)) = renderpt + 0.5*renderlength
               call assert_sensible_limits(xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel)))
-              print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
+              !print*,'zooming on colour bar: min, max = ',xmin(irenderarr(ipanel)),xmax(irenderarr(ipanel))
            endif
            istep = istepnew
            interactivereplot = .true.
@@ -1943,7 +1944,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               xmin(iplotxarr(ipanel)) = xcen - 0.5*xlength
               xmax(iplotxarr(ipanel)) = xcen + 0.5*xlength
               call assert_sensible_limits(xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)))
-              print*,'zooming on x axis: min, max = ',xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel))
+              !print*,'zooming on x axis: min, max = ',xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1952,7 +1953,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               xmin(iplotyarr(ipanel)) = ycen - 0.5*ylength
               xmax(iplotyarr(ipanel)) = ycen + 0.5*ylength
               call assert_sensible_limits(xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
-              print*,'zooming on y axis: min, max = ',xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel))
+              !print*,'zooming on y axis: min, max = ',xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel))
               istep = istepnew
               interactivereplot = .true.
               iexit = .true.
@@ -1970,10 +1971,10 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
               !print*,'adapting render limits ',xminadapt(irenderarr(ipanel)),xmaxadapt(irenderarr(ipanel))
               xmax(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel))
               if (itrans(irenderarr(ipanel))==1 .and. &
-                 xminadapt(irenderarr(ipanel)) < xmaxadapt(irenderarr(ipanel))-4.) then ! if logged
-                 if (abs(xmin(irenderarr(ipanel))-(xmaxadapt(irenderarr(ipanel)) - 3.)) > epsilon(0.)) then
-                    xmin(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel)) - 3.
-                    print "(a)",' *** MIN SET 3 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
+                 xminadapt(irenderarr(ipanel)) < xmaxadapt(irenderarr(ipanel))-5.) then ! if logged
+                 if (abs(xmin(irenderarr(ipanel))-(xmaxadapt(irenderarr(ipanel)) - 4.)) > epsilon(0.)) then
+                    xmin(irenderarr(ipanel)) = xmaxadapt(irenderarr(ipanel)) - 4.
+                    print "(a)",' *** MIN SET 4 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
                  else
                     xmin(irenderarr(ipanel)) = xminadapt(irenderarr(ipanel))
                  endif
@@ -2195,8 +2196,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
            istepjump = istepjumpnew
         endif
         istepjump = int(zoomfac*istepjump)
-        print*,' setting timestep jump = ',istepjump
+        print*,' setting timestep jump / zoom factor = ',istepjump
         istepjumpset = .true.
+        scalefac = istepjump
      case(')')
         istepjump = int(zoomfac*10)
         print*,' setting timestep jump = ',istepjump
@@ -2837,7 +2839,7 @@ subroutine change_itrans(iplot,xmin,xmax)
        itrans(iplot) = 1
        !!--transform the plot limits
        call transform_limits(xmin,xmax,itrans(iplot))
-       xmin = max(xmax-3.,xmin) ! no more than 3 dex by default
+       xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
 
@@ -2862,7 +2864,7 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
        !!--transform the plot limits
        call transform_limits(xmin,xmax,itrans(iplot))
        call transform_limits(xmina,xmaxa,itrans(iplot))
-       xmin = max(xmax-3.,xmin) ! no more than 3 dex by default
+       xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
 
