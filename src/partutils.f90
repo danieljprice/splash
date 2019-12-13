@@ -90,7 +90,7 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer, dimension(:), intent(in) :: noftype
  integer :: i,nfound
- 
+
  !--locate first two sink particles in the data
  ntot = sum(noftype)
  if (size(iamtype(:)).eq.1) then
@@ -192,7 +192,7 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iv
  !--work out angle needed to rotate into corotating frame
  dx   = x0 - x1
  angle = -atan2(dx(2),dx(1))
- 
+
  !--get velocities
  if (ivx > 0 .and. ivx + ndimV <= ncolumns) then
     v1 = dat(i1,ivx:ivx+ndimV-1)

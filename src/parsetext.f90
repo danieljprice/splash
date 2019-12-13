@@ -217,7 +217,7 @@ real function parse_formula(string,vars,vals,ierr)
  character(len=*), dimension(:), intent(in) :: vars
  real(kind=rn),    dimension(:), intent(in) :: vals
  integer, intent(out) :: ierr
- 
+
  call initf(1)
  ierr = checkf(string,vars,verbose=.false.)
  if (ierr.eq.0) then

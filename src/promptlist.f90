@@ -31,14 +31,14 @@ module promptlist
    integer, intent(in) :: nobj
   end subroutine
  end interface
- 
+
  interface
   subroutine add_obj(istart,iend,nobj)
    integer, intent(in) :: istart,iend
    integer, intent(inout) :: nobj
   end subroutine add_obj
  end interface
- 
+
  interface
   subroutine delete_obj(iobj,nobj)
    integer, intent(in) :: iobj,nobj
@@ -57,7 +57,7 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
  character(len=1) :: charp
  logical          :: done,first
  integer          :: istart,iend,ipick
- 
+
  ipick = nobj + 1
  done  = .false.
  first = .true.
@@ -85,7 +85,7 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
                 istart = 0
                 iend = 1
                 first = .false.
-                cycle objmenu             
+                cycle objmenu
              endif
           else
              istart = 0

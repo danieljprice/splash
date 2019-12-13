@@ -472,10 +472,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
              vi(1:ndimV) = dat(i,ivx:ivx+ndimV-1)
 
              ekin = ekin + pmassi*dot_product(vi,vi)
-             
+
              !--linear momentum
              xmom = xmom + pmassi*vi
-             
+
              !--angular momentum
              if (ndim.ge.1 .and. all(ix(1:ndim).gt.0)) then
                 ri(:) = 0.
@@ -707,7 +707,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        endif
     enddo
     if (nused.gt.0) then
-       coltemp(:) = coltemp(:)/real(nused)       
+       coltemp(:) = coltemp(:)/real(nused)
     else
        coltemp(:) = 0.
     endif
@@ -742,7 +742,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        endif
     enddo
     if (nused.gt.0) then
-       coltemp(:) = sqrt(coltemp(:)/real(nused))  
+       coltemp(:) = sqrt(coltemp(:)/real(nused))
     else
        coltemp(:) = 0.
     endif
@@ -790,7 +790,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           else
              voli = 0.
           endif
-          
+
           do i=1,ncolumns
              rmsval(i) = rmsval(i) + voli*vals(i)**2
           enddo
@@ -953,7 +953,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(iunit,fmtstring) timei,rhomeanvw,rhomeanmw,rhovarvw,rhovarmw,sqrt(rhovarvw),sqrt(rhovarmw),&
                            rmsvali,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
  case('kh')
- 
+
     if (irho.le.0 .or. irho.gt.ncolumns) then
        print "(a)",' ERROR in kh calculation!'// &
                    ' density not present / not labelled in dump file, skipping...'
@@ -1144,7 +1144,7 @@ subroutine cross_product3D(veca,vecb,vecc)
  implicit none
  real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
  real(kind=doub_prec), dimension(3), intent(out) :: vecc
- 
+
  vecc(1) = veca(2)*vecb(3) - veca(3)*vecb(2)
  vecc(2) = veca(3)*vecb(1) - veca(1)*vecb(3)
  vecc(3) = veca(1)*vecb(2) - veca(2)*vecb(1)

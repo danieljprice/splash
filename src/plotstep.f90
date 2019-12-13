@@ -3258,7 +3258,7 @@ contains
        !--change to background colour index for overlaid text and axes
        if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
        !
-       !--use filenames in legend if none set
+       !--use filenames in legendif none set
        !
        if (nstepsperpage.ge.1 .and. nsteplegendlines.ge.nstepsperpage*nacross*ndown) then
           steplegendtext = steplegend(istepsonpage + (ipanel-1)*nstepsperpage)
@@ -3951,7 +3951,7 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
         if (ndim.ge.3) vecploti(3,j) = veci(iposz)
      endif
   enddo
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   return

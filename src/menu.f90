@@ -493,7 +493,7 @@ subroutine menu
          elseif (multiploty(i).eq.icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
             multiplotx(i) = 1
-         elseif(.not.isamex) then
+         elseif (.not.isamex) then
             multiplotx(i) = multiploty(i)
          endif
       endif
@@ -632,7 +632,7 @@ subroutine menu
       ifac = nyplotmulti/2
       do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
          ifac = ifac - 1
-      end do
+      enddo
       if (ifac.le.1) then
          nacross = nyplotmulti/2
       else

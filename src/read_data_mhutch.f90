@@ -101,18 +101,18 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   endif
 !
 !--read first header line
-! 
+!
   read(iunit,iostat=ierr,end=80) ihead1,ihead2,ihead3,ncolstep,np
-  
+
   allocate(head1(ihead1))
   allocate(head2(ihead2))
   allocate(head3(ihead3))
-  
+
   read(iunit,iostat=ierr,end=80) head1(1:ihead1)
   read(iunit,iostat=ierr,end=80) head2(1:ihead2)
   read(iunit,iostat=ierr,end=80) head3(1:ihead3)
 
-  ! Header one variables 
+  ! Header one variables
   norigin = head1(1)
   ncr     = head1(2)
   istart  = head1(3)
@@ -121,7 +121,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   index   = head1(6)
   ratio   = head1(7)
   itrace  = head1(8)
- 
+
   ! Header two variables
   ndim       = abs(head2(1))
   fluidsw    = head2(2)
@@ -151,14 +151,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   ! Header three variables
   dt        = head3(1)
-  timei     = head3(2) 
+  timei     = head3(2)
   sopt0     = head3(3)
   gammai    = head3(4)
-  
+
   deallocate(head1)
   deallocate(head2)
   deallocate(head3)
-  
+
   ncolstep  = ncolstep-2  ! minus 2 because iwas and iam read individually
   ndimV     = 3  ! always have 3 velocity components written to file
 
@@ -212,7 +212,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
      nstep_max = nstepsinfile !max(nstep_max,nfiles,maxstep,indexstart)
      npart_max = max(np,maxpart,norigin)
-     
+
      if (.not.allocated(dat) .or. np > maxpart  &
           .or. nstep_max > maxstep .or. ncol_max > maxcol) then
         call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
@@ -238,7 +238,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
      ncolumns = ncolstep
      nstepsread = nstepsread + 1
-     
+
      !
      !--read data for this timestep
      !
@@ -250,14 +250,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
                iwas(j) = j
           enddo
      endif
-     
+
      npartoftype(:,i) = 0
      allocate(iam(norigin))
 
      iam(:) = 3
-    
+
      read(iunit,iostat=ierr,end=80) iam(iwas(:))
-     
+
      do j=1,norigin
         select case(iam(j))
         case(1)       ! GAS
@@ -272,13 +272,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         end select
      enddo
      deallocate(iam)
-    
+
      if (kind(dat).ne.kind(dattemp)) then
         if (debugmode) print*,' converting kind from ',kind(dattemp),' to ',kind(dat)
         allocate(dattemp(norigin))
-        
+
         !dattemp(:) = 0D0
-        
+
         !--convert precision
         !do icol=1,ncolstep-1 ! all columns except h
         do icol=1,ncolstep ! all columns with h
@@ -293,7 +293,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
             read(iunit,iostat=ierr,end=80) dat(iwas(:),icol,i)
         enddo
      endif
-     
+
      deallocate(iwas)
    enddo over_steps
 
@@ -315,7 +315,7 @@ endif
 if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
 return
-  
+
 80 continue
 print*,' *** data file empty : no timesteps ***'
 return
@@ -354,12 +354,12 @@ subroutine fake_twofluids
  !ify       = 13           ! force in y direction
  !ifz       = 14           ! force in z direction
  ir_grain  = 15            ! grain size
- !ics       = 16           ! sound speed    
+ !ics       = 16           ! sound speed
  !ih        = 17           ! smoothing length
  !idhdt     = 18           ! time derivative of h
  !idustfrac = 19           ! dust fraction
  !idepsdt   = 20           ! time derivative of dust fraction
- 
+
 
  if (idustfrac.gt.0 .and. irho.gt.0) then
     do i=indexstart,indexstart+nstepsread-1
@@ -431,8 +431,8 @@ subroutine fake_twofluids
  endif
 
 end subroutine fake_twofluids
-!-------------------------------------------- 
-!-------------------------------------------- 
+!--------------------------------------------
+!--------------------------------------------
 end subroutine read_data
 
 
@@ -450,7 +450,7 @@ subroutine set_labels
  use geometry, only:labelcoord
  implicit none
  integer :: i
- 
+
  integer :: idendt,itemp
  integer :: ifx,ify,ifz
  integer :: ir_grain
@@ -486,19 +486,19 @@ subroutine set_labels
  ify        = 13           ! force in y direction
  ifz        = 14           ! force in z direction
  ir_grain   = 15           ! grain size
- ics        = 16           ! sound speed    
+ ics        = 16           ! sound speed
  ih         = 17           ! smoothing length
  idhdt      = 18           ! time derivative of h
  idustfrac  = 19           ! dust fraction
  idepsdt    = 20           ! time derivative of dust fraction
- 
+
  ideltav    = 21
  iddeltavdt = 24
 
  itcour     = 27
  itstop     = 28
  itdiff     = 29
- 
+
 
 !!TESTING
 ! itemp     = 10           ! temperature
@@ -506,16 +506,16 @@ subroutine set_labels
 ! ify       = 12           ! force in y direction
 ! ifz       = 13           ! force in z direction
 ! ir_grain  = 14           ! grain size
-! ics       = 15           ! sound speed    
+! ics       = 15           ! sound speed
 ! ih        = 16           ! smoothing length
 ! idhdt     = 17           ! time derivative of h
 ! idustfrac = 18           ! dust fraction
 ! idepsdt   = 19           ! time derivative of dust fraction
-!              
+!
 ! ideltav   = 20
 !!TESTING
- 
- 
+
+
  iamvec(ifx:ifz) = ifx
  iamvec(ivx:ivx+ndimV-1)   = ivx
  labelvec(ivx:ivx+ndimV-1) = 'v'
@@ -541,7 +541,7 @@ subroutine set_labels
  label(iddeltavdt)         = 'd\Delta v_x/dt'
  label(iddeltavdt+1)       = 'd\Delta v_y/dt'
  label(iddeltavdt+2)       = 'd\Delta v_z/dt'
- 
+
  label(itcour)             = 't_{cour}'
  label(itstop)             = 't_{stop}'
  label(itdiff)             = 't_{diff}'

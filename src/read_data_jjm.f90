@@ -135,7 +135,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            do i=1,nprint
               read(15,*,end=55,iostat=ierr) (dat(i,icol,j),icol = 1,ncolumns)
            enddo
-           masstype(1,j) = 1. 
+           masstype(1,j) = 1.
 
            if (ierr /= 0) then
               print "(a)",'|*** ERROR READING TIMESTEP ***'

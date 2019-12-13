@@ -313,13 +313,13 @@ program splash
 !     allocate           : allocates memory for main arrays
 !     calc_quantities    : calculates additional quantities from particle data
 !     colours            : colour schemes for rendering
-!     colourparts	 : colours particles
+!     colourparts         : colours particles
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
 !     exact_mhdshock     : some tabulated solutions for mhd shocks
 !     exact_polytrope    : exact solution for a polytrope
-!     exact_rhoh	 : exact relation between density and smoothing length
+!     exact_rhoh         : exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_shock        : exact solution for hydrodynamic shocks
 !     exact_wave         : exact solution for a propagating sine wave
@@ -330,11 +330,11 @@ program splash
 !     geometry           : module handling different coordinate systems
 !     globaldata         : various modules containing "global" variables
 !     interactive        : drives interactive mode
-!     interpolate1D	 : interpolation of 1D SPH data to grid using kernel
-!     interpolate2D	 : interpolation of 2D SPH data to grid
+!     interpolate1D         : interpolation of 1D SPH data to grid using kernel
+!     interpolate2D         : interpolation of 2D SPH data to grid
 !     interpolate3D_xsec : 3D cross section interpolations
-!     interpolate3D_projection	 : 3D interpolation integrated through domain
-!     legends		       : plots (time) legend on plot
+!     interpolate3D_projection         : 3D interpolation integrated through domain
+!     legends                       : plots (time) legend on plot
 !     limits                   : sets initial plot limits and writes to/reads from limits file
 !     menu               : main menu
 !     options_data       : sets options relating to current data
@@ -342,21 +342,21 @@ program splash
 !     options_page       : sets options relating to page setup
 !     options_particleplots : sets options relating to particle plots
 !     options_powerspec  : sets options for power spectrum plotting
-!     options_render	 : sets options for render plots
-!     options_vector	 : sets options for vector plots
+!     options_render         : sets options for render plots
+!     options_vector         : sets options for vector plots
 !     options_xsecrotate : sets options for cross sections and rotation
 !     particleplot       : subroutines for particle plotting
 !     plotstep           : main subroutines which drive plotting of a single timestep
 !     powerspectrums     : calculates power spectrum of 1D data (2 methods)
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mbate    : reads data from matthew bate's format of data files
-!     render	 	 : takes array of pixels and plots render map/contours etc
+!     render                  : takes array of pixels and plots render map/contours etc
 !     rotate             : subroutines controlling rotation of particles
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     splash             : main program, drives menu loop
 !     timestepping       : controls stepping through timesteps
 !     titles             : reads a list of titles to be used to label each timestep
-!     transform	 	 : applies various transformations to data (log10, 1/x, etc)
+!     transform                  : applies various transformations to data (log10, 1/x, etc)
 !
 !     File format is specified in the subroutine read_data
 !

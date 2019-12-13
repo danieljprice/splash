@@ -40,7 +40,7 @@ subroutine exact_gresho(iplot,xplot,yplot,ierr)
 ! check for errors
 !
   ierr = 0
-  select case(iplot)  
+  select case(iplot)
   case(2) ! pressure
      where (xplot < 0.2)
         yplot = 5. + 12.5*xplot**2

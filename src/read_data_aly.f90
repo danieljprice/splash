@@ -160,7 +160,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   time(i)  = timein
   gamma(i) = 5./3.
   npartoftype(1,i) = np
-  
+
   do j=1,np
      read(iunit,iostat=ierr,end=67) idum,(dat(j,kk,i),kk=1,2),dum
   enddo
@@ -191,7 +191,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   call set_labels
   do iblock=1,1
-  
+
      read(iunit,iostat=ierr,end=67) nblock
      read(iunit,iostat=ierr,end=67) idum
 

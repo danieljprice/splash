@@ -120,7 +120,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
-     !--append .silo on the end if not already present
+     !--append .silo on the endif not already present
      !
      datfile=trim(rootname)//'.pbob'
      inquire(file=datfile,exist=iexist)
@@ -129,7 +129,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         return
      endif
   endif
-! 
+!
 !--read data from snapshots
 !
   i = istepstart
@@ -186,7 +186,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--read particle data
   !
   got_particles: if (ntoti > 0) then
-     
+
      do while(ierr == 0 .and. i <= nstep_max)
         if (i.gt.maxstep .and. i.ne.1) then
            nstep_max = i + max(10,INT(0.1*nstep_max))
@@ -217,7 +217,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            nstepsread = nstepsread + 1
            call print_types(npartoftype(:,i),labeltype)
         endif
-        
+
      enddo
   endif got_particles
 !
@@ -232,7 +232,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
- 
+
   return
 end subroutine read_data
 
@@ -262,7 +262,7 @@ subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
      print "(a,i2,a)",' ERROR: step = ',istep,' out of range in read_pbob_data_fromc'
      return
   endif
-  
+
   blocklabel(icol) = trim(fstring(tag))
 
   ! ensure no array overflows

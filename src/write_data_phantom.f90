@@ -198,7 +198,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  number = 0
  do i = 1, 3
     write (idump, err=100) number
- end do
+ enddo
 !--int*8
  number = 2 + ntypesi
  write (idump, err=100) number
@@ -281,12 +281,12 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  do j = 1, 3
     write (idump, err=100) tag(label_dat(ix(j)))
     write (idump, err=100) (dat(i,ix(j)), i=1, np)
- end do
+ enddo
 
  do j = 1, 3
     write (idump, err=100) tag(label_dat(ivx+j-1))
     write (idump, err=100) (dat(i,ivx+j-1), i=1, np)
- end do
+ enddo
 
  if (iutherm.gt.0) then
     write (idump, err=100) tag(label_dat(iutherm))

@@ -349,13 +349,13 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
                        !$omp atomic
                        datnorm(ipixi,jpixi,kpixi) = datnorm(ipixi,jpixi,kpixi) + termnorm*wab
                     endif
-                 end if
+                 endif
               endif
            enddo
         enddo
      enddo
   enddo over_parts
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   if (nwarn.gt.0) then
@@ -585,7 +585,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
         enddo
      enddo
   enddo over_parts
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   if (nwarn.gt.0) then
@@ -704,13 +704,13 @@ real function pint(r0, R_0, d1, d2, hi)
 
   if (d1*d2 .ge. 0) then
      pint = pint*(int1 + int2)
-     if(int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
+     if (int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
   elseif (abs(d1) .lt. abs(d2)) then
      pint = pint*(int2 - int1)
-     if(int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
+     if (int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
   else
      pint = pint*(int1 - int2)
-     if(int1 - int2 < 0.d0) print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
+     if (int1 - int2 < 0.d0) print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
   endif
 
 end function pint
@@ -733,7 +733,7 @@ real(doub_prec) function full_integral_3D(d, r0, R_0, h)
   if (abs(r0h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
      full_integral_3D = 0.0
      return
-  end if
+  endif
 
   h2 = h*h
   r03 = r0*r0*r0
@@ -751,7 +751,7 @@ real(doub_prec) function full_integral_3D(d, r0, R_0, h)
      B3 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 + 7./5.*r0h_2)
      B2 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 - 1./5.*r0h_2)
      B1 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3)
-  end if
+  endif
 
   a = R_0/r0
   a2 = a*a

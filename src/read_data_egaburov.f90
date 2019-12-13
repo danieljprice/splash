@@ -214,7 +214,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
              v1, v2, v3, v4
 !        if (pres > 10) then
 !           print *, posx, posy, posz
-!        end if
+!        endif
         if (ierr /= 0) then
            print *, '*** ERROR READING PARTICLE', i, 'PROC:', myproc
            STOP
@@ -259,7 +259,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         dat(j + nread, 29, i) = v4;
         dat(j + nread, 30, i) = idx;
 
-     end do
+     enddo
      nread = nread + local_n;
 
      if (proc < nproc) then
@@ -271,15 +271,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            print *, '*** ERROR READING TIMESTEP HEADER ***, proc=', proc
            STOP
         endif
-     end if
-  end do
+     endif
+  enddo
 
   if (nread .ne. global_n) then
      print *, 'nread=     ', nread
      print *, 'global_n=  ', global_n
      print "(a)", ' *** SOMETHING WENT WRONG ***'
      STOP
-  end if
+  endif
 
 !!!!!!!!!!!!!!!!!!!!!
   gamma = gamma_gas

@@ -45,7 +45,7 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
-! Columns with the 'required' flag set to false are not read 
+! Columns with the 'required' flag set to false are not read
 !-------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------
@@ -92,7 +92,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
-     !--append .h5 on the end if not already present
+     !--append .h5 on the endif not already present
      !
      datfile=trim(rootname)//'.h5'
      inquire(file=datfile,exist=iexist)
@@ -104,7 +104,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      call close_cactus_hdf5_file(ierr)
      file_is_open = .false.
   endif
-  
+
   if (.not.iexist) then
      print "(a)",' *** error: '//trim(rootname)//': file not found ***'
      return
@@ -118,7 +118,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   ignoretl = 0
   if (ignore_time_levels) ignoretl = 1
   nextra = 0
-! 
+!
 !--read data from snapshots
 !
   i = istepstart
@@ -147,7 +147,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   ncolumns = ncolstep + nextra
   if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
 
-  istep = 1 
+  istep = 1
   over_snapshots: do istep=1,nstep_max
   !
   !--now read data
@@ -219,7 +219,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--call set labels to identify location of smoothing length
 !
   call set_labels
-  
+
   enddo over_snapshots
 
   if (nstepsread.gt.0) then
@@ -247,10 +247,10 @@ subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
   icolput = icol
   i1 = ntot-np+1
   i2 = ntot
-  
+
   if (debugmode) print "(a,i2,a,i8,a,i8)",&
   'DEBUG: reading column ',icol,' -> '//trim(label(icolput))//' parts ',i1,' to ',i2
-  
+
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
@@ -360,7 +360,7 @@ subroutine set_labels
   labeltype(2) = 'ghost'
   UseTypeInRenderings(:) = .true.
   UseTypeInRenderings(2) = .false.
-  
+
 
 !-----------------------------------------------------------
   return

@@ -1,6 +1,6 @@
 !-----------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool 
+!  This file is (or was) part of SPLASH, a visualisation tool
 !  for Smoothed Particle Hydrodynamics written by Daniel Price:
 !
 !  http://users.monash.edu.au/~dprice/splash
@@ -46,9 +46,9 @@
 ! npartoftype(1:6,maxstep) : number of particles of each type in each timestep
 !
 ! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
+! gamma(maxstep)      : gamma at each step
 !
-! most of these values are stored in global arrays 
+! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
@@ -75,49 +75,49 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   nstepsread = 0
   nstep_max = 0
   npart_max = maxpart
-  dumpfile = trim(rootname)   
+  dumpfile = trim(rootname)
   !
   !--check if first data file exists
   !
   inquire(file=dumpfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
      return
   endif
 
   nstep_max = max(nstep_max,indexstart,1)
   j = indexstart
   nstepsread = 0
-  
+
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
   !
   !--determine whether file is binary or ascii and open it
   !
   inquire(file=dumpfile,form=fmt)
   !print*,'fmt = ',fmt
-  
+
   select case(trim(adjustl(fmt)))
   case('UNFORMATTED')
      iambinaryfile = 1
 #ifdef __INTEL_COMPILER
 #if __INTEL_COMPILER<1010
      !--this is how stream access is implemented for ifort 9 and lower
-     open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+     open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)
 #else
      open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
 #endif
 #else
-     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
 #endif
   case('FORMATTED')
      iambinaryfile = 0
-     open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)  
+     open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)
   case default
      !--if compiler cannot distinguish the two, try ascii first, then binary
      iambinaryfile = -1
-     open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)  
+     open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)
   end select
-  
+
   if (ierr /= 0) then
      print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
      return
@@ -136,7 +136,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         if (ierr.eq.0) then
            !--if successful ascii header read, file is ascii
            iambinaryfile = 0
-           print "(a)",' reading ascii tipsy format '   
+           print "(a)",' reading ascii tipsy format '
         else
            !--otherwise, close ascii file, and assume file is binary
            close(unit=iunit)
@@ -144,12 +144,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 #ifdef __INTEL_COMPILER
 #if __INTEL_COMPILER<1010
      !--this is how stream access is implemented for ifort 9 and lower
-          open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)  
+          open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)
 #else
           open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
 #endif
 #else
-           open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)  
+           open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
 #endif
            print "(a)",' reading binary tipsy format '
            call read_tipsyheader_binary(iunit,ierr)
@@ -230,7 +230,7 @@ subroutine read_tipsyheader_ascii(iunit,ierr,iwarn)
  implicit none
  integer, intent(in) :: iunit,iwarn
  integer, intent(out) :: ierr
- 
+
  read(iunit,*,end=55,iostat=ierr) nprint,ngas,nptmass
  read(iunit,*,end=55,iostat=ierr) ndim
  read(iunit,*,end=55,iostat=ierr) timei
@@ -241,14 +241,14 @@ subroutine read_tipsyheader_ascii(iunit,ierr,iwarn)
     ierr = 2
     return
  endif
- 
+
  return
 
 55 continue
  if (iwarn.ge.0) print "(a)",' ERROR: end of file in ascii header read '
  ierr = -1
  return
-     
+
 end subroutine read_tipsyheader_ascii
 
 !----------------------------------------------------
@@ -274,7 +274,7 @@ subroutine read_tipsyheader_binary(iunitb,ierr)
     ierr = 2
  endif
  if (ndim.eq.0) ndim = 3
- 
+
  return
 
 55 continue
@@ -292,7 +292,7 @@ subroutine read_tipsybody_ascii(iunit,ierr,nread)
  integer, intent(in) :: iunit
  integer, intent(out) :: ierr, nread
  integer :: i,ic,icol,nerr
- 
+
  !--pmass,x,y,z,vx,vy,vz
  do ic=1,2*ndim+1
     nerr = 0
@@ -357,7 +357,7 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
  integer, intent(out) :: ierr,nread
  integer :: i,nerr
  real :: dummy
- 
+
  !--gas particles
  nerr = 0
  do i=1,ngas
@@ -395,7 +395,7 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
 
  ierr = 0
  return
- 
+
 44 continue
  ierr = -1
 
@@ -415,7 +415,7 @@ subroutine set_labels
   !use settings_units, only:units,unitslabel
   implicit none
   integer :: i
-  
+
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
@@ -424,7 +424,7 @@ subroutine set_labels
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
-    
+
   do i=1,ndim
      ix(i) = i
   enddo
@@ -434,7 +434,7 @@ subroutine set_labels
   !iutherm = irho + 1
   label(irho+1) = 'temperature'
   ih = irho + 2
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
   !if (iutherm.gt.0) label(iutherm) = 'temperature'
@@ -458,8 +458,8 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
   UseTypeInRenderings(3) = .false.
- 
+
 !-----------------------------------------------------------
 
-  return 
+  return
 end subroutine set_labels

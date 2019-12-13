@@ -551,11 +551,11 @@ contains
        call prompt('is it a wind (instead of accretion)?',is_wind)
        call prompt('enter mass of central object',Mstar,0.)
        call prompt('do you want a relativistic solution?',relativistic)
-       if(.not.relativistic) then
+       if (.not.relativistic) then
           prompt_for_gamma = .false.
           call prompt('enter Parker/Bondi critical radius (rcrit)',const1)
           call prompt('enter density at critical radius (rhocrit)',const2)
-       elseif(relativistic) then
+       elseif (relativistic) then
           call prompt('is it the geodesic flow?',geodesic_flow)
           if (geodesic_flow) then
              const1 = 1.

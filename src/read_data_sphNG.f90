@@ -2202,7 +2202,7 @@ contains
      xy(ip,1) = r*COS(phinew)
      xy(ip,2) = r*SIN(phinew)
   enddo
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   return

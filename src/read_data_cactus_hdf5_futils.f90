@@ -43,7 +43,7 @@ contains
 
 !-------------------------------------------------------------------------
 !
-!  The following routines are callback routines called by the c 
+!  The following routines are callback routines called by the c
 !  utilities
 !
 !-------------------------------------------------------------------------
@@ -147,7 +147,7 @@ contains
    B(:,:) = B(:,:)/det
 
  end subroutine inv3x3
- 
+
  !
  ! find location of metric and extrinsic curvature in columns
  !
@@ -206,11 +206,11 @@ contains
      case('vel[2]')
         ivel2 = i
      end select
-  enddo  
-  
+  enddo
+
   ! if we didn't find 'rho' in cols, use dens instead
   if (gotrho .eqv. .False.) irho = idens
-  
+
  end subroutine find_metric
 
  subroutine compute_extra_columns(ncols,nextra,dat)

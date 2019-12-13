@@ -83,7 +83,7 @@ subroutine setup_integratedkernel
        endif
     enddo
     coltable(i)=2.0*coldens*cnormk3D
- end do
+ enddo
  coltable(maxcoltable) = 0.
 
  return
@@ -466,7 +466,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      endif
 
   enddo over_particles
-!$omp end do
+!$omp enddo
 !$omp end parallel
 !
 !--normalise dat array
@@ -643,7 +643,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      enddo
 
   enddo over_particles
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   if (normalise .and. allocated(datnorm)) then
@@ -857,7 +857,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      enddo
 
   enddo over_particles
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   return

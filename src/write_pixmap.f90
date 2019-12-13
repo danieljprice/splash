@@ -444,7 +444,7 @@ subroutine check_for_pixmap_files(filename,dumpfile,label,ext,istep,xsec,iexist)
        endif
     endif
  enddo
- 
+
 end subroutine check_for_pixmap_files
 
 end module write_pixmap

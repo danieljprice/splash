@@ -1321,7 +1321,7 @@ subroutine set_labels
   call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   call make_vector_label('B_{pol}',iBpol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   call make_vector_label('B_{tor}',iBtor,ndimV,iamvec,labelvec,label,labelcoord(:,1))
- 
+
   !--set labels for each particle type
   !
   ntypes = 6

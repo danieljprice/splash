@@ -104,7 +104,7 @@ contains
      else
         iday = iday + 31
      endif
-  end do
+  enddo
   t = iday*86400. + ihour*3600. + imin*60. + isec + imsec*0.001 - starttime
 
   return

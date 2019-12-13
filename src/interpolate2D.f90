@@ -158,7 +158,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         !
         !--first pixel row
         !
-        if(jpixmax.ge.jpixmin) then
+        if (jpixmax.ge.jpixmin) then
            jpix = jpixmin
            jpixi = jpix
            if (periodicy) jpixi = iroll(jpix,npixy)
@@ -181,12 +181,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
               if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
            enddo
-        end if
+        endif
 
         !
         !--first pixel column
         !
-        if(ipixmax.ge.ipixmin) then
+        if (ipixmax.ge.ipixmin) then
            ipix = ipixmin
            ipixi = ipix
            if (periodicx) ipixi = iroll(ipix,npixx)
@@ -209,7 +209,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
               if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
            enddo
-        end if
+        endif
 
         !
         !--other pixels
@@ -247,7 +247,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
                  jpixi = jpix
                  if (periodicy) jpixi = iroll(jpix,npixy)
-              end if
+              endif
 
               !--right boundary
               r0 = 0.5*pixwidthx + dx
@@ -265,7 +265,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
                  datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
                  if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
-              end if
+              endif
            enddo
         enddo
      else
@@ -294,7 +294,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
               if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
            enddo
         enddo
-     end if
+     endif
 
   enddo over_parts
   if (exact) then

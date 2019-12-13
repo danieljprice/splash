@@ -47,7 +47,7 @@ subroutine exact_polytrope(gamma,polyk,totmass,rplot,denplot,npts,ierr)
   real, dimension(size(rplot)) :: r,v,den
   real :: dr,an,rhs,rstar,totmassf
   real :: rhocentre,fac,rfac,G
-  
+
   ierr = 0
   print*,' gamma           :',gamma
   dr = 0.001
@@ -94,7 +94,7 @@ subroutine exact_polytrope(gamma,polyk,totmass,rplot,denplot,npts,ierr)
   fac = (gamma*polyk)/(4.*pi*G*(gamma - 1.))
   rhocentre = ((totmass/totmassf)/fac**1.5)**(2./(3.*gamma - 4.))
   rfac = sqrt(fac*rhocentre**(gamma - 2.))
-  
+
   print*,' Rstar = ',rstar*rfac
   print*,' central density :',rhocentre
   print*,' total mass      :',totmass

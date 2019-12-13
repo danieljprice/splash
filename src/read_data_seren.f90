@@ -194,10 +194,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      if (trim(adjustl(format_id)) /= "SERENASCIIDUMPV2") then
         print "(a)",'*** ERROR OPENING '//trim(datfile)//' AS ASCII - WRONG FILE FORMAT ***'
         return
-     end if
+     endif
   else
      iambinaryfile = 1
-  end if
+  endif
 
   if (iambinaryfile==1) then
      print "(a)",' reading binary seren v2 format '
@@ -211,31 +211,31 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      read (iunit,*) NDIMtemp
      read (iunit,*) VDIMtemp
      read (iunit,*) BDIMtemp
-  end if
+  endif
 
   if (iambinaryfile==0) then
      ! Don't care about precision
      doubleprec = .FALSE.
-  else if (PR == 8 .OR. PR == 2) then
+  elseif (PR == 8 .OR. PR == 2) then
      ! Double precision file
      print "(a)",' Double precision file'
      doubleprec = .TRUE.
-  else if (PR == 4 .OR. PR == 1) then
+  elseif (PR == 4 .OR. PR == 1) then
      ! Single precision file
      print "(a)",' Single precision file'
      doubleprec = .FALSE.
   else
      print "(a)",'*** WARNING OPENING '//trim(datfile)//' - ASSUMING SINGLE PRECISION ***'
      doubleprec = .FALSE.
-  end if
+  endif
 
   typedata = 0
 
   if (iambinaryfile.eq.1) then
      call read_serenheader_binary(iunit)
-  else if (iambinaryfile.eq.0) then
+  elseif (iambinaryfile.eq.0) then
      call read_serenheader_ascii(iunit)
-  end if
+  endif
   !
   !--get values of quantities from the header
   !
@@ -398,32 +398,32 @@ subroutine read_serenheader_ascii(iunita)
 
    do i=1,size(idata)
       read (iunita,*,end=55) idata(i)
-   end do
+   enddo
 
    do i=1,size(ilpdata)
       read (iunita,*,end=55) ilpdata(i)
-   end do
+   enddo
 
    do i=1,size(rdata)
       read (iunita,*,end=55) rdata(i)
-   end do
+   enddo
 
    do i=1,size(dpdata)
       read (iunita,*,end=55) dpdata(i)
-   end do
+   enddo
 
    ndata = idata(21)
    nunits = idata(20)
 
    do i=1,nunits
       read (iunita,'(A)') unit_data(i)
-   end do
+   enddo
    do i=1,ndata
       read (iunita,'(A)') data_id(i)
-   end do
+   enddo
    do i=1,ndata
       read (iunita,*) typedata(1:5,i)
-   end do
+   enddo
 
    return
 
@@ -488,7 +488,7 @@ end subroutine read_serenheader_ascii
         allocate(sink_dat_array(1:stot,1:ncolumns,1))
         sink_dat_array = 0.
         write (sink_format_string,'(A,I0,A)') "(", sink_data_length, "E18.10)"
-     end if
+     endif
 
      ierr_out = 0
 
@@ -514,7 +514,7 @@ end subroutine read_serenheader_ascii
            write (6,'(A)',ADVANCE="NO") trim(data_id(i))
         else
            write (6,'(A,A)',ADVANCE="NO") ", ", trim(data_id(i))
-        end if
+        endif
         select case (trim(data_id(i)))
            case ("porig")
               ! Original particle number
@@ -526,19 +526,19 @@ end subroutine read_serenheader_ascii
                  do k=pfirst,plast
                     read(iunit,fmt=*,end=55,iostat=ierr1) dummy_int(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               if (ierr /= 0) then
                  print*,' WARNING: errors reading through porig '
                  ierr_out = -1
-              end if
+              endif
               do k=pfirst,plast
                  dat(k,iporig,step) = real(dummy_int(k))
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading unknown data type ', trim(data_id(i))
                  ierr_out = -1
-              end if
+              endif
            case ("r")
               ! Position
               if (doubleprec) allocate(dummy_dp(1:NDIMtemp,1:ptot),stat=ierr)
@@ -550,20 +550,20 @@ end subroutine read_serenheader_ascii
                     dummy(1:NDIMtemp,pfirst:plast) = real(dummy_dp(1:NDIMtemp,pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy(1:NDIMtemp,pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy(1:NDIMtemp,k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,ix(1):ix(1)+NDIMtemp-1,step) = dummy(1:NDIMtemp,k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading positions '
                  ierr_out = -1
-              end if
+              endif
               deallocate(dummy)
               if (doubleprec) deallocate(dummy_dp)
            case ("h")
@@ -575,20 +575,20 @@ end subroutine read_serenheader_ascii
                     dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,ih,step) = dummy_scalar(k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading smoothing lengths'
                  ierr_out = -1
-              end if
+              endif
            case ("m")
               ! Mass
               pfirst = typedata(2,i); plast = typedata(3,i)
@@ -598,20 +598,20 @@ end subroutine read_serenheader_ascii
                     dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,ipmass,step) = dummy_scalar(k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading masses'
                  ierr_out = -1
-              end if
+              endif
            case ("v")
               ! Velocities
               if (doubleprec) allocate(dummy_dp(1:VDIMtemp,1:ptot),stat=ierr)
@@ -623,20 +623,20 @@ end subroutine read_serenheader_ascii
                     dummy(1:VDIMtemp,pfirst:plast) = real(dummy_dp(1:VDIMtemp,pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy(1:VDIMtemp,pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy(1:VDIMtemp,k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,ivx:ivx+VDIMtemp-1,step) = dummy(1:VDIMtemp,k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading velocities '
                  ierr_out = -1
-              end if
+              endif
               deallocate(dummy)
               if (doubleprec) deallocate(dummy_dp)
            case ("rho")
@@ -648,20 +648,20 @@ end subroutine read_serenheader_ascii
                     dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,irho,step) = dummy_scalar(k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading densities'
                  ierr_out = -1
-              end if
+              endif
            case ("temp")
               ! Temperatures
               pfirst = typedata(2,i); plast = typedata(3,i)
@@ -671,20 +671,20 @@ end subroutine read_serenheader_ascii
                     dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,itemp,step) = dummy_scalar(k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading temperatures'
                  ierr_out = -1
-              end if
+              endif
            case ("u")
               ! Internal energy
               pfirst = typedata(2,i); plast = typedata(3,i)
@@ -694,20 +694,20 @@ end subroutine read_serenheader_ascii
                     dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,iutherm,step) = dummy_scalar(k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading internal energy'
                  ierr_out = -1
-              end if
+              endif
            case ("B")
               ! Magnetic fields
               if (doubleprec) allocate(dummy_dp(1:BDIMtemp,1:ptot),stat=ierr)
@@ -719,20 +719,20 @@ end subroutine read_serenheader_ascii
                     dummy(1:BDIMtemp,pfirst:plast) = real(dummy_dp(1:BDIMtemp,pfirst:plast))
                  else
                     read(iunit,end=55,iostat=ierr) dummy(1:BDIMtemp,pfirst:plast)
-                 end if
+                 endif
               else
                  do k=pfirst,plast
                     read(iunit,*,end=55,iostat=ierr1) dummy(1:BDIMtemp,k)
                     if (ierr1 /= 0) ierr = ierr1
-                 end do
-              end if
+                 enddo
+              endif
               do k=pfirst,plast
                  dat(k,iBfirst:iBfirst+BDIMtemp-1,step) = dummy(1:BDIMtemp,k)
               enddo
               if (ierr /= 0) then
                  print*,' WARNING: errors reading magnetic fields'
                  ierr_out = -1
-              end if
+              endif
               deallocate(dummy)
               if (doubleprec) deallocate(dummy_dp)
            case ("sink_v1")
@@ -742,7 +742,7 @@ end subroutine read_serenheader_ascii
                  read(iunit,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
               else
                  read(iunit,fmt=*,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
-              end if
+              endif
               do s=pfirst,plast
                  if (iambinaryfile==1) then
                     read(iunit,end=55,iostat=ierr) ldummy
@@ -752,18 +752,18 @@ end subroutine read_serenheader_ascii
                        raux = real(raux_dp)
                     else
                        read(iunit,end=55,iostat=ierr) raux
-                    end if
+                    endif
                  else
                     read(iunit,'(2L1)',end=55,iostat=ierr) ldummy
                     read(iunit,fmt=*,end=55,iostat=ierr) idummy2
                     read(iunit,sink_format_string) raux(1:sink_data_length)
-                 end if
+                 endif
                  if (ix(1)/=0) sink_dat_array(s,ix(1):ix(NDIMtemp),1) = raux(2:NDIMtemp+1)
                  if (ivx/=0) sink_dat_array(s,ivx:ivx+VDIMtemp-1,1) = raux(NDIMtemp+2:NDIMtemp+VDIMtemp+1)
                  if (ipmass/=0) sink_dat_array(s,ipmass,1) = raux(NDIMtemp+VDIMtemp+2)
                  if (ih/=0) sink_dat_array(s,ih,1) = raux(NDIMtemp+VDIMtemp+3)
                  if (itemp/=0) sink_dat_array(s,itemp,1) = raux(NDIMtemp+VDIMtemp+11)
-              end do
+              enddo
            case default
               !print*,' WARNING: unknown data type ', trim(data_id(i))
               ! Assume this is an unknown data type
@@ -778,7 +778,7 @@ end subroutine read_serenheader_ascii
                     read(iunit,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
                  else
                     read(iunit,fmt=*,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
-                 end if
+                 endif
                  if (nchar > 0) stop "Fail! character data :("
                  if (nl > 0) allocate(l_data_st(1:nl))
                  if (ni > 0) allocate(i_data_st(1:ni))
@@ -786,7 +786,7 @@ end subroutine read_serenheader_ascii
                  if (npr > 0) then
                     allocate(sp_data_st(1:npr))
                     if (doubleprec) allocate(dp_data_st(1:npr))
-                 end if
+                 endif
                  if (ndp > 0) allocate(dp_data_st2(1:ndp))
                  if (iambinaryfile==1) then
                     do j=pfirst, plast
@@ -798,49 +798,49 @@ end subroutine read_serenheader_ascii
                              read(iunit,end=55,iostat=ierr) dp_data_st
                           else
                              read(iunit,end=55,iostat=ierr) sp_data_st
-                          end if
-                       end if
+                          endif
+                       endif
                        if (ndp > 0) read(iunit,end=55,iostat=ierr) dp_data_st2
-                    end do
+                    enddo
                  else
                     do j=pfirst, plast
                        if (nl > 0) then
                           write (format_string,'(A,I0,A)') "(",nl,"L1)"
                           read(iunit,end=55,iostat=ierr,fmt=format_string) l_data_st
-                       end if
+                       endif
                        if (ni > 0) then
                           read(iunit,end=55,iostat=ierr,fmt=*) i_data_st
-                       end if
+                       endif
                        if (nli > 0) then
                           read(iunit,end=55,iostat=ierr,fmt=*) ilp_data_st
-                       end if
+                       endif
                        if (npr > 0) then
                           if (doubleprec) then
                              read(iunit,end=55,iostat=ierr,fmt=*) dp_data_st
                           else
                              read(iunit,end=55,iostat=ierr,fmt=*) sp_data_st
-                          end if
-                       end if
+                          endif
+                       endif
                        if (ndp > 0) then
                           read(iunit,end=55,iostat=ierr,fmt=*) dp_data_st2
-                       end if
-                    end do
-                 end if
+                       endif
+                    enddo
+                 endif
                  if (ierr /= 0) then
                     print*,' WARNING: errors reading unknown data structure ', trim(data_id(i))
                     ierr_out = -1
-                 end if
+                 endif
                  if (allocated(i_data_st)) deallocate(i_data_st)
                  if (allocated(ilp_data_st)) deallocate(ilp_data_st)
                  if (allocated(sp_data_st)) deallocate(sp_data_st)
                  if (allocated(dp_data_st)) deallocate(dp_data_st)
                  if (allocated(dp_data_st2)) deallocate(dp_data_st2)
-              else if (typecode == 6) then
+              elseif (typecode == 6) then
                  ! Character data; read and skip
                  stop "Fail! character data :("
                  ! I have realised this was a silly idea
                  ! If we work out how this should work, I can put it in
-              else if (typecode >= 1 .AND. typecode <= 5) then
+              elseif (typecode >= 1 .AND. typecode <= 5) then
                  ! 1 = logical, 2 = integer, 3 = long integer, 4 = PR, 5 = DP
                  ! Normal data set; either scalar or vector
                  if (width == 1) then
@@ -855,15 +855,15 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,'(L1)',end=55,iostat=ierr1) dummy_logical(k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        where (dummy_logical)
                           dummy_scalar=1.d0
                        elsewhere
                           dummy_scalar=0.d0
                        end where
                        deallocate(dummy_logical)
-                    else if (typecode==2) then
+                    elseif (typecode==2) then
                        ! Integer data array
                        dummy_int = 0
                        if (iambinaryfile==1) then
@@ -872,10 +872,10 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_int(k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        dummy_scalar(pfirst:plast) = real(dummy_int(pfirst:plast))
-                    else if (typecode==3) then
+                    elseif (typecode==3) then
                        ! Long integer data array
                        allocate(dummy_ilp_int(1:ptot))
                        dummy_ilp_int = 0
@@ -885,11 +885,11 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_ilp_int(k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        dummy_scalar(pfirst:plast) = real(dummy_ilp_int(pfirst:plast))
                        deallocate(dummy_ilp_int)
-                    else if (typecode==4) then
+                    elseif (typecode==4) then
                        ! PR data array
                        if (iambinaryfile==1) then
                           if (doubleprec) then
@@ -897,14 +897,14 @@ end subroutine read_serenheader_ascii
                              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
                           else
                              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
-                          end if
+                          endif
                        else
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
-                    else if (typecode==5) then
+                          enddo
+                       endif
+                    elseif (typecode==5) then
                        ! DP data array
                        if (iambinaryfile==1) then
                           if (.NOT.doubleprec) allocate(dummy_dp_scalar(pfirst:plast))
@@ -915,16 +915,16 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_scalar(k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
-                    end if
+                          enddo
+                       endif
+                    endif
                     do k=pfirst,plast
                        dat(k,iunknown(unknown),step) = dummy_scalar(k)
                     enddo
                     if (ierr /= 0) then
                        print*,' WARNING: errors reading unknown data type ', trim(data_id(i))
                        ierr_out = -1
-                    end if
+                    endif
                  else
                     ! Vector data
                     allocate(dummy(1:width,1:ptot),stat=ierr)
@@ -939,15 +939,15 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,fmt=format_string,end=55,iostat=ierr1) dummy_logical_2D(1:width,k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        where (dummy_logical_2D)
                           dummy=1.d0
                        elsewhere
                           dummy=0.d0
                        end where
                        deallocate(dummy_logical_2D)
-                    else if (typecode == 2) then
+                    elseif (typecode == 2) then
                        ! Integer data array
                        allocate(dummy_int_2D(1:width,1:ptot))
                        dummy_int_2D = 0
@@ -957,11 +957,11 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_int_2D(1:width,k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        dummy(1:width,pfirst:plast) = real(dummy_int_2D(1:width,pfirst:plast))
                        deallocate(dummy_int_2D)
-                    else if (typecode == 3) then
+                    elseif (typecode == 3) then
                        ! Long integer data array
                        allocate(dummy_ilp_int_2D(1:width,1:ptot))
                        dummy_ilp_int_2D = 0
@@ -971,11 +971,11 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy_ilp_int_2D(1:width,k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        dummy(1:width,pfirst:plast) = real(dummy_ilp_int_2D(1:width,pfirst:plast))
                        deallocate(dummy_ilp_int_2D)
-                    else if (typecode == 4) then
+                    elseif (typecode == 4) then
                        ! PR data array
                        if (doubleprec) allocate(dummy_dp(1:width,1:ptot),stat=ierr)
                        if (iambinaryfile==1) then
@@ -984,15 +984,15 @@ end subroutine read_serenheader_ascii
                              dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast))
                           else
                              read(iunit,end=55,iostat=ierr) dummy(1:width,pfirst:plast)
-                          end if
+                          endif
                        else
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy(1:width,k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
+                          enddo
+                       endif
                        if (doubleprec) deallocate(dummy_dp)
-                    else if (typecode == 5) then
+                    elseif (typecode == 5) then
                        ! DP data array
                        if (iambinaryfile==1) then
                           allocate(dummy_dp(1:width,1:ptot),stat=ierr)
@@ -1003,28 +1003,28 @@ end subroutine read_serenheader_ascii
                           do k=pfirst,plast
                              read(iunit,*,end=55,iostat=ierr1) dummy(1:width,k)
                              if (ierr1 /= 0) ierr = ierr1
-                          end do
-                       end if
-                    end if
+                          enddo
+                       endif
+                    endif
                     do k=pfirst,plast
                        dat(k,iunknown(unknown):iunknown(unknown)+width-1,step) = dummy(1:width,k)
                     enddo
                     if (ierr /= 0) then
                        print*,' WARNING: errors reading unknown data type ', trim(data_id(i))
                        ierr_out = -1
-                    end if
+                    endif
                     deallocate(dummy)
-                 end if
-              end if
+                 endif
+              endif
 
         end select
-     end do
+     enddo
      write (6,*)
 
      if (stot>0) then
         ! Load sink stuff into end of dat array
         dat(ptot+1:ptot+stot,1:ncolumns,step) = sink_dat_array(1:stot,1:ncolumns,1)
-     end if
+     endif
 
      return
 
@@ -1069,8 +1069,8 @@ subroutine set_types(itypei,ntotal,noftype)
        print*,' *** ERROR: not enough particle types for SEREN data read ***'
        print*,' *** you need to edit splash parameters and recompile ***'
        stop
-    end if
- end do
+    endif
+ enddo
 
  noftype(1:seren_maxparttypes) = noftype_temp(1:seren_maxparttypes)
 
@@ -1126,12 +1126,12 @@ subroutine set_labels
      unit_string = ""
      if (unit_no < 0 .OR. unit_no > nunits) then
         print*,'*** ERROR: unit_no = ',unit_no,' in set_labels ***'
-     else if (unit_no /= 0) then
+     elseif (unit_no /= 0) then
         unit_base = trim(adjustl(unit_data(unit_no)))
         unit_string = unit_base
         call translate_unit_names(unit_string)
         unit_string = ' ['//trim(adjustl(unit_string))//']'
-     end if
+     endif
      !write (6,*) "unit_base, unit_string = ", unit_base, unit_string
      select case (trim(data_id(i)))
         case ("porig")
@@ -1143,7 +1143,7 @@ subroutine set_labels
               ix(j) = ncolumns + j
               units(ix(j)) = unit_coeff(ix(j))
               unitslabel(ix(j)) = unit_string
-           end do
+           enddo
 !            unitzintegration = units(ix(1))
 !            labelzintegration = ' ['//trim(adjustl(unit_string))//']'
            label(ix(1:ndim)) = labelcoord(1:ndim,1)
@@ -1220,28 +1220,28 @@ subroutine set_labels
               label(iunknown(nunknown)) = trim(data_id(i))
               units(iunknown(nunknown)) = unit_coeff(iunknown(nunknown))
               unitslabel(iunknown(nunknown)) = unit_string
-           else if (width <= NDIMtemp) then
+           elseif (width <= NDIMtemp) then
               do j=1,width
                  label(iunknown(nunknown)+j-1) = trim(data_id(i))//'\d'//labelcoord(j,1)
                  units(iunknown(nunknown)+j-1) = unit_coeff(iunknown(nunknown))
                  unitslabel(iunknown(nunknown)+j-1) = unit_string
-              end do
+              enddo
            else
               do j=1,width
                  write(label(iunknown(nunknown)+j-1),'(A,A,I0)') trim(data_id(i)),'\d',j
                  units(iunknown(nunknown)+j-1) = unit_coeff(iunknown(nunknown))
                  unitslabel(iunknown(nunknown)+j-1) = unit_string
-              end do
-           end if
+              enddo
+           endif
            ncolumns = ncolumns + width ! Add width of data to ncolumns
      end select
-  end do
+  enddo
   if (iporig == -1) then
      ! If there is porig, add as last column
      iporig = ncolumns + 1 ! NOT A PROPER SPLASH i_quantity
      label(ncolumns + 1) = 'particle id'
      ncolumns = ncolumns + 1
-  end if
+  endif
 
   !--set labels for each particle type
   !
@@ -1279,110 +1279,110 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       print*,'No masses or no mass units!'
       print*,'Cannot create dimensionless weight (unnormalised rendered plots may be incorrect)'
       do_dimweight = .FALSE.
-   end if
+   endif
    if (h_unit=="") then
       print*,'No smoothing lengths or no smoothing length units!'
       print*,'Cannot create dimensionless weight (unnormalised rendered plots may be incorrect)'
       do_dimweight = .FALSE.
-   end if
+   endif
    if (rho_unit=="") then
       print*,'No densities or no density units!'
       print*,'Cannot create dimensionless weight (unnormalised rendered plots may be incorrect)'
       do_dimweight = .FALSE.
       print*,'Cannot set unitzintegration (column density plots may be incorrect)'
       do_zintegration = .FALSE.
-   end if
+   endif
    if (r_unit=="") then
       print*,'No positions or no position units!'
       print*,'Cannot set unitzintegration (column density plots may be incorrect)'
       do_zintegration = .FALSE.
-   end if
+   endif
 
 
 ! Length unit in S.I. units (m)
    if (r_unit=="pc") then
       dr_unit = r_pc
-   else if (r_unit=="au") then
+   elseif (r_unit=="au") then
       dr_unit = r_au
-   else if (r_unit=="r_sun") then
+   elseif (r_unit=="r_sun") then
       dr_unit = r_sun
-   else if (r_unit=="r_earth") then
+   elseif (r_unit=="r_earth") then
       dr_unit = r_earth
-   else if (r_unit=="km") then
+   elseif (r_unit=="km") then
       dr_unit = 1000.0_DP
-   else if (r_unit=="m") then
+   elseif (r_unit=="m") then
       dr_unit = 1.0_DP
-   else if (r_unit=="cm") then
+   elseif (r_unit=="cm") then
       dr_unit = 0.01_DP
    else
       print*,'Unknown position unit ', r_unit, '!'
       print*,'Cannot set unitzintegration (column density plots may be incorrect)'
       do_zintegration = .FALSE.
       dr_unit = 1.0_DP
-   end if
+   endif
 
 ! Length unit in S.I. units (m)
    if (h_unit=="pc") then
       dh_unit = r_pc
-   else if (h_unit=="au") then
+   elseif (h_unit=="au") then
       dh_unit = r_au
-   else if (h_unit=="r_sun") then
+   elseif (h_unit=="r_sun") then
       dh_unit = r_sun
-   else if (h_unit=="r_earth") then
+   elseif (h_unit=="r_earth") then
       dh_unit = r_earth
-   else if (h_unit=="km") then
+   elseif (h_unit=="km") then
       dh_unit = 1000.0_DP
-   else if (h_unit=="m") then
+   elseif (h_unit=="m") then
       dh_unit = 1.0_DP
-   else if (h_unit=="cm") then
+   elseif (h_unit=="cm") then
       dh_unit = 0.01_DP
    else
       print*,'Unknown smoothing length unit ', h_unit, '!'
       print*,'Cannot create dimensionless weight (unnormalised rendered plots may be incorrect)'
       do_dimweight = .FALSE.
       dh_unit = 1.0_DP
-   end if
+   endif
 
 ! Mass units in S.I. units (kg)
    if (m_unit=="m_sun") then
       dm_unit = m_sun
-   else if (m_unit=="m_jup") then
+   elseif (m_unit=="m_jup") then
       dm_unit = m_jup
-   else if (m_unit=="m_earth") then
+   elseif (m_unit=="m_earth") then
       dm_unit = m_earth
-   else if (m_unit=="kg") then
+   elseif (m_unit=="kg") then
       dm_unit = 1._DP
-   else if (m_unit=="g") then
+   elseif (m_unit=="g") then
       dm_unit = 1.0E-3_DP
    else
       print*,'Unknown mass unit ', m_unit, '!'
       print*,'Cannot create dimensionless weight (unnormalised rendered plots may be incorrect)'
       do_dimweight = .FALSE.
       dm_unit = 1._DP
-   end if
+   endif
 
  ! Density units in S.I. units (i.e. kg/m^3)
    if (rho_unit=="m_sun_pc3") then
       drho_unit = m_sun / (r_pc**3)
       rho_length = r_pc
       rho_length_label = "pc"
-   else if (rho_unit=="m_sun_pc2") then
+   elseif (rho_unit=="m_sun_pc2") then
       drho_unit = m_sun / (r_pc**2)
       rho_length = r_pc
       rho_length_label = "pc"
-   else if (rho_unit=="kg_m3") then
+   elseif (rho_unit=="kg_m3") then
       drho_unit = 1.0_DP
       rho_length = 1.0_DP
       rho_length_label = "m"
-   else if (rho_unit=="kg_m2") then
+   elseif (rho_unit=="kg_m2") then
       drho_unit = 1.0_DP
       rho_length = 1.0_DP
       rho_length_label = "m"
-   else if (rho_unit=="g_cm3") then
+   elseif (rho_unit=="g_cm3") then
       drho_unit = 1.0E3_DP
       rho_length = 0.01_DP
       rho_length_label = "cm"
-   else if (rho_unit=="g_cm2") then
+   elseif (rho_unit=="g_cm2") then
       drho_unit = 10.0_DP
       rho_length = 0.01_DP
       rho_length_label = "cm"
@@ -1393,16 +1393,16 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       print*,'Cannot set unitzintegration (column density plots may be incorrect)'
       do_zintegration = .FALSE.
       rho_length = 1.0_DP
-   end if
+   endif
 
    if (do_dimweight) then
       out_unit_interp = dm_unit/(drho_unit*dh_unit**NDIMtemp)
-   end if
+   endif
 
    if (do_zintegration) then
       out_unitzintegration = dr_unit / rho_length
       out_labelzintegration = rho_length_label
-   end if
+   endif
 
    return
 end subroutine find_weights

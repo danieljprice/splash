@@ -127,7 +127,7 @@ interface plot_slw
    subroutine PGSLW (LW)
      integer,intent(in) :: lw
    end subroutine PGSLW
-   
+
    module procedure plot_slw_float
 end interface
 
@@ -186,7 +186,7 @@ interface plot_scr
      integer, intent(in) :: CI
      real, intent(in)    :: CR, CG, CB
    end subroutine pgscr
-   
+
    module procedure pgscra
 end interface
 
@@ -255,7 +255,7 @@ interface plot_rect
    subroutine pgrect(x1,x2,y1,y2)
      real,intent(in) :: x1,x2,y1,y2
    end subroutine pgrect
-   
+
    module procedure plot_rect_rounded
 end interface
 
@@ -562,7 +562,7 @@ end subroutine plot_set_opacity
 subroutine pgscra (CI, CR, CG, CB, CA)
   integer, intent(in) :: CI
   real, intent(in)    :: CR, CG, CB, CA
-  
+
   !--just throw away the alpha value
   call PGSCR(CI,CR,CG,CB)
 
@@ -572,9 +572,9 @@ end subroutine pgscra
 !  (not implemented in PGPLOT)
 subroutine plot_slw_float (LW)
   real,intent(in) :: lw
-  
+
   call PGSLW(nint(lw))
-  
+
 end subroutine plot_slw_float
 
 subroutine plot_rgb_from_table(frac,r,g,b)
@@ -600,11 +600,11 @@ logical function plot_qcur()
   integer           :: nc
   call pgqinf('CURSOR',string,nc)
 
-  if(string(1:nc).eq.'YES') then
+  if (string(1:nc).eq.'YES') then
      plot_qcur = .true.
   else
      plot_qcur = .false.
-  end if
+  endif
 
 end function plot_qcur
 
@@ -670,7 +670,7 @@ subroutine plot_clcur(maxpt, npt, x, y, ch)
 
  call pglcur (maxpt, npt, x, y)
  ch = 'A'
- 
+
 end subroutine plot_clcur
 
 !--rounded rectangle plotting
@@ -695,7 +695,7 @@ function pgband_sub(mode, posn, xref, yref, x, y, ch)
 
   ierr = pgband(mode,posn,xref,yref,x,y,ch)
 
-  if(ierr.eq.1) then
+  if (ierr.eq.1) then
     pgband_sub = 0
   else
     pgband_sub = 1

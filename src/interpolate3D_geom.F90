@@ -245,7 +245,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
         enddo
      enddo
   enddo over_parts
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   !
@@ -442,7 +442,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
         enddo
      enddo
   enddo over_parts
-!$omp end do
+!$omp enddo
 !$omp end parallel
 
   !

@@ -107,7 +107,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
     write(*,*) 'error: can''t create new dumpfile ',trim(outfile)
     return
  endif
- 
+
  massoftype(:)  = 0.
  nall(:)        = 0
  noftype(:)     = 0
@@ -118,7 +118,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  boxsize   = abs(lim(ix(1),2) - lim(ix(1),1))
  unused(:) = 0
  dtime     = time
- 
+
  write(idump,err=100) noftype(1:6),massoftype(1:6),dtime,dumz, &
                       iflagsfr,iflagfeedback,nall(1:6),iflagcool,nfiles,boxsize, &
                       dumz,dumz,dumz,iflagsfr,iflagsfr,ncrap(1:6),iflagsfr,unused(:)
@@ -134,7 +134,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  print*,'nmasses = ',nmasses
  ngas = npartoftype(1)
  print*,'ngas = ',ngas
- 
+
  if (ntotal > ngas .and. (size(iamtype).gt.1)) then
  !--must print the particles ordered by type
     allocate(iorder(ntotal),stat=ierr)
@@ -152,7 +152,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
     if (j.lt.ntotal) then
        print*,' ERROR: too many particle types in conversion to gadget format'
        do i=j+1,ntotal
-          iorder(i) = i     
+          iorder(i) = i
        enddo
     endif
     write(idump,err=100) ((dat(iorder(i),ix(j)),j=1,3),i=1,ntotal)
@@ -172,7 +172,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
     write(idump,err=100) (dat(i,irho),   i=1,ngas)
     write(idump,err=100) (2.*dat(i,ih),  i=1,ngas)
  endif
- 
+
  print*,'finished writing file -- OK'
 
  close(unit=idump)

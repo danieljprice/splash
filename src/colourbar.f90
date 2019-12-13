@@ -381,7 +381,7 @@ logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
        incolourbar = .true.
     endif
  case(9)  ! colour bar on left
-    if (xpt.lt.xmin) incolourbar = .true. 
+    if (xpt.lt.xmin) incolourbar = .true.
  case(10) ! colour bar on top
     if (ypt.gt.ymax) incolourbar = .true.
  case(2,4,6)
@@ -446,7 +446,7 @@ subroutine barlimits(barmin,barmax,posmin,posmax,pos,barlen)
  real, intent(out) :: barmin,barmax
  real, intent(in)  :: posmin,posmax,pos,barlen
  real :: dpos
- 
+
  dpos = (posmax - posmin) ! in case posmin and barmin are same variable
  barmin = posmin +    pos*dpos
  barmax = barmin + barlen*dpos
@@ -555,7 +555,7 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
  if (istyle.eq.7 .or. istyle.eq.11) then
     !--floating vertical bar
     yminbar = ymin    + ColourBarPosy*(ymax - ymin)
-    ymaxbar = yminbar + ColourBarLen*(ymax - ymin) 
+    ymaxbar = yminbar + ColourBarLen*(ymax - ymin)
  else
     yminbar = ymin
     ymaxbar = ymax
@@ -576,7 +576,7 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
        dbar = 0.
     endif
     barmax = barmin + (max(xpt1,xpt2)-xminbar)*dbar
-    barmin = barmin + (min(xpt1,xpt2)-xminbar)*dbar  
+    barmin = barmin + (min(xpt1,xpt2)-xminbar)*dbar
  endif
 
 end subroutine adjustcolourbar

@@ -45,7 +45,7 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
-! Columns with the 'required' flag set to false are not read 
+! Columns with the 'required' flag set to false are not read
 !-------------------------------------------------------------------------
 !
 !  The module below contains interface routines to c functions
@@ -68,7 +68,7 @@ module falcONhdf5read
     character(c_char), intent(in)  :: filename(*)
     integer(c_int),    intent(out) :: ierr
    end subroutine open_falcON_file
-   
+
    ! queries whether a file is open
    function falcON_file_is_open() bind(c,name="falcON_file_is_open")
     import
@@ -79,7 +79,7 @@ module falcONhdf5read
    subroutine close_falcON_file() bind(c,name="close_falcON_file")
     ! no arguments
    end subroutine close_falcON_file
-   
+
    ! queries if there is another snapshot present the currently open file
    function num_falcON_snapshots(ierr) bind(c,name="num_falcON_snapshots")
     import
@@ -101,11 +101,11 @@ module falcONhdf5read
     integer(c_int), intent(out) :: npart(*)
     real(c_double), intent(out) :: time,hper(3)
    end subroutine open_falcON_snapshot
-   
+
    ! read falcON data
    subroutine read_falcON_snapshot(ierr) bind(c,name="read_falcON_snapshot")
     import
-    integer(c_int), intent(out) :: ierr   
+    integer(c_int), intent(out) :: ierr
    end subroutine read_falcON_snapshot
  end interface
 
@@ -127,7 +127,7 @@ contains
   case default
      itypemap_falcON = 5 ! unknown
   end select
- 
+
  end function itypemap_falcON
 
  ! get starting position in particle array
@@ -135,12 +135,12 @@ contains
   integer, intent(in) :: itype
   integer, intent(in) :: npartoftype(:)
   integer :: i
-  
+
   ioffset = 0
   do i=1,size(npartoftype)
      if (i < itype) ioffset = ioffset + npartoftype(i)
   enddo
- 
+
  end function ioffset
 
 end module falcONhdf5read
@@ -189,7 +189,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
-     !--append .h5 on the end if not already present
+     !--append .h5 on the endif not already present
      !
      datfile=trim(rootname)//'.h5'
      inquire(file=datfile,exist=iexist)
@@ -204,7 +204,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   ndim  = 3
   ndimV = 3
   debug = (debugmode .or. lenvironment('FSPLASH_DEBUG'))
-  ! 
+  !
   ! read data from snapshots
   !
   i = istepstart
@@ -219,21 +219,21 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      print "(a)", '*** ERROR OPENING FALCON FILE ***'
      return
   endif
-  
+
   if (falcON_file_is_open() /= 1) then
      print "(a)", '*** ERROR: falcON_file_is_open /= 1 after opening ***'
      return
   endif
 
   if (debug) call set_falcON_debugging_level(3);
-  
+
   nstep_max = num_falcON_snapshots(ierr);
   if (debug) print*,'got ',nstep_max,' falcON snapshots in file'
   if (nstep_max <= 0) then
      print "(a)",'*** ERROR: no falcON snapshots found in file ***'
      return
   endif
-  
+
   ntotall = 0
   if (buffer_steps_in_file) then
      nsteps_to_read = nstep_max
@@ -274,7 +274,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   if (iverbose >= 1 .and. buffer_steps_in_file .or. istep.eq.ipos) then
      !print "(2(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep
-     !print "(a,i2)",' ntypes: ',ntypes,' 
+     !print "(a,i2)",' ntypes: ',ntypes,'
      !print*,' npartoftype = ',(npartoftypei(itypemap_falcON(j)),j=1,ntypes)
      !print*,' ncolstep = ',ncolstep,' ndim = ',ndim,ndimV
      print*,' time = ',timetemp !,' hper = ',hperiodic(:)
@@ -338,7 +338,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      dat(:,:,i) = 0.
 
   endif got_particles
-  
+
   enddo over_snapshots
   !
   ! now memory has been allocated, set arrays which are constant for all time
@@ -373,13 +373,13 @@ subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
   real(kind=c_double), intent(in) :: temparr(*)
   integer(kind=c_int) :: icolput
   integer :: istart,iend,nmax,itype,i
-  
+
   itype = itypec + 1 ! convert from c to Fortran indexing
 
   icolput = icol + 1
   if (debugmode) print "(3(a,i2),a,i8)",'DEBUG: Step ',i_current_step,' column ',icol,&
     ' type ',itypemap_falcON(itype),' -> '//trim(label(icolput))
-  
+
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
@@ -393,7 +393,7 @@ subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
 
   ! copy data into main splash array
   if (debugmode) print*,'DEBUG: COPYING TO ',istart,iend,' total = ',1,nmax
-  
+
   ! this should never happen
   if (i_current_step < 1 .or. i_current_step > size(dat(1,1,:))) then
      print*,'INTERNAL ERROR in indexing during falcON read'

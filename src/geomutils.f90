@@ -26,12 +26,12 @@
 !-----------------------------------------------------------------
 module geomutils
  implicit none
- 
+
  public :: change_coords, changecoords, changeveccoords
  public :: set_coordlabels
- 
+
  private
- 
+
 contains
 
 !-----------------------------------------------------------------
@@ -59,10 +59,10 @@ subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0,v0)
  !--transform all vector quantities to new coord system
  iamvecprev = 0
  do icol=1,ncols - ndim + 1
-    if (iamvec(icol).gt.0 .and. iamvec(icol).ne.iamvecprev) then                          
+    if (iamvec(icol).gt.0 .and. iamvec(icol).ne.iamvecprev) then
        iamvecprev = iamvec(icol)
        if (icol.eq.ivx) then
-          vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1) - v0(1:ndim)       
+          vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1) - v0(1:ndim)
        else
           vec(1:ndim) = vals(iamvec(icol):iamvec(icol)+ndim-1)
        endif
@@ -70,7 +70,7 @@ subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0,v0)
        vals(iamvec(icol):iamvec(icol)+ndim-1) = vecnew(1:ndim)
     endif
  enddo
- 
+
 end subroutine change_coords
 
 !-------------------------------------------------------------------

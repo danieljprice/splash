@@ -164,7 +164,7 @@ subroutine submenu_limits(ichoose)
     itracktypeprev   = itracktype
     print "(a,/,a,/)",'To track particle 4923, enter 4923', &
                       'To track the 43rd particle of type 3, enter 3:43'
-    
+
     call prompt('Enter particle to track: ',pstring,noblank=.true.)
     call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
     do while (ierr.ne.0 .or. itracktype.lt.0 .or. itracktype.gt.ntypes .or. itrackoffset.lt.0)
@@ -311,7 +311,7 @@ subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
     if (itrackpart.eq.0) itracktype = 0
  else
     itracktype = 0
-    read(string,*,iostat=ierr) itrackpart 
+    read(string,*,iostat=ierr) itrackpart
  endif
 
 end subroutine get_itrackpart

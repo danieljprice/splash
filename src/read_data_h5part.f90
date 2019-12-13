@@ -475,7 +475,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   ierr = h5pt_close(ifile)
 
-return 
+return
 end subroutine read_data
 
 !!-------------------------------------------------------------------

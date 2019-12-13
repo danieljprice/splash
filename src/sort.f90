@@ -56,10 +56,10 @@ subroutine indexx(n, arr, indx)
         do i = j - 1, 1, -1
            if (arr(indx(i)).le.a) goto 2
            indx(i + 1) = indx(i)
-        end do
+        enddo
         i = 0
 2       indx(i + 1) = indxt
-     end do
+     enddo
      if (jstack.eq.0) return
      ir = istack(jstack)
      l = istack(jstack - 1)
@@ -156,10 +156,10 @@ subroutine indexxi(n, arr, indx)
         do i = j - 1, 1, -1
            if (arr(indx(i)).le.a) goto 2
            indx(i + 1) = indx(i)
-        end do
+        enddo
         i = 0
 2       indx(i + 1) = indxt
-     end do
+     enddo
      if (jstack.eq.0) return
      ir = istack(jstack)
      l = istack(jstack - 1)

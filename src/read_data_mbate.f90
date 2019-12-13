@@ -164,10 +164,10 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
      if (j.gt.maxstep) then
         !if (nstepsread.gt.2) then
-	!   nstepsalloc = j + 2*nstepsread
-	!else
-	!   nstepsalloc = j
-	!endif
+        !   nstepsalloc = j + 2*nstepsread
+        !else
+        !   nstepsalloc = j
+        !endif
         call alloc(maxpart,nstepsalloc,maxcol)
      endif
 !

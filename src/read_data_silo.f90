@@ -45,7 +45,7 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !
-! Columns with the 'required' flag set to false are not read 
+! Columns with the 'required' flag set to false are not read
 !-------------------------------------------------------------------------
 !
 !  The module below contains interface routines to c functions
@@ -133,7 +133,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      !
-     !--append .silo on the end if not already present
+     !--append .silo on the endif not already present
      !
      datfile=trim(rootname)//'.silo'
      inquire(file=datfile,exist=iexist)
@@ -147,7 +147,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
   ndim  = 3
   ndimV = 3
-! 
+!
 !--read data from snapshots
 !
   i = istepstart
@@ -203,10 +203,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--read particle data
   !
   got_particles: if (ntoti > 0) then
-     
+
      isrequired(:) = 0
      where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
-     
+
      call read_silo_data(cstring(datfile),ntypes,npartoftype(:,i),ncolumns,isrequired,ierr)
 
      nstepsread = 1
@@ -252,7 +252,7 @@ subroutine read_silo_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
 
   icolput = icol
   if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))
-  
+
   ! check column is within array limits
   if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'

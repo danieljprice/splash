@@ -298,7 +298,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      enddo
 
   enddo over_particles
-!$omp end do
+!$omp enddo
 !$omp end parallel
 !
 !--normalise dat array

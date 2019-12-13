@@ -295,7 +295,7 @@ end subroutine exact_shock_sr
     x1 = x0 + vshockl*t
     x2 = x1
 
-  end if
+  endif
 
   x3 = x0 + vels*t
 
@@ -309,7 +309,7 @@ end subroutine exact_shock_sr
     x4 = x0 + vshockr*t
     x5 = x4
 
-  end if
+  endif
 
 ! ----------
 ! solution on the mesh
@@ -330,28 +330,28 @@ end subroutine exact_shock_sr
       vela(i) = vell
       ua(i)   = ul
 
-    else if (rad(i).le.x2) then
+    elseif (rad(i).le.x2) then
 
       xi = (rad(i) - x0)/t
 
       call raref(xi, rhol,  csl,  vell,  'l', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
-    else if (rad(i).le.x3) then
+    elseif (rad(i).le.x3) then
 
       pa(i)   = ps
       rhoa(i) = rhols
       vela(i) = vels
       ua(i)   = uls
 
-    else if (rad(i).le.x4) then
+    elseif (rad(i).le.x4) then
 
       pa(i)   = ps
       rhoa(i) = rhors
       vela(i) = vels
       ua(i)   = urs
 
-    else if (rad(i).le.x5) then
+    elseif (rad(i).le.x5) then
 
       xi = (rad(i) - x0)/t
 
@@ -365,7 +365,7 @@ end subroutine exact_shock_sr
       vela(i) = velr
       ua(i)   = ur
 
-    end if
+    endif
 
    enddo
 
@@ -499,7 +499,7 @@ end subroutine exact_shock_sr
   eps  = 1.d0
 10    eps  = eps/2.d0
   tol1 = 1.d0 + eps
-  if( tol1 .gt. 1.d0 ) go to 10
+  if ( tol1 .gt. 1.d0 ) go to 10
 
 ! -------
 ! initialization
@@ -518,7 +518,7 @@ end subroutine exact_shock_sr
   fc = fa
   d  = b - a
   e  = d
-30    if( dabs(fc) .ge. dabs(fb) )go to 40
+30    if ( dabs(fc) .ge. dabs(fb) )go to 40
   a  = b
   b  = c
   c  = a
@@ -532,21 +532,21 @@ end subroutine exact_shock_sr
 
 40    tol1 = 2.d0*eps*dabs(b) + 0.5d0*tol
   xm   = 0.5d0*(c - b)
-  if( dabs(xm) .le. tol1 ) go to 90
-  if( fb .eq. 0.d0 ) go to 90
+  if ( dabs(xm) .le. tol1 ) go to 90
+  if ( fb .eq. 0.d0 ) go to 90
 
 ! ------------
 ! is bisection necessary?
 ! ------------
 
-  if( dabs(e) .lt. tol1 ) go to 70
-  if( dabs(fa) .le. dabs(fb) ) go to 70
+  if ( dabs(e) .lt. tol1 ) go to 70
+  if ( dabs(fa) .le. dabs(fb) ) go to 70
 
 ! ------------------
 ! is quadratic interpolation possible?
 ! ------------------
 
-  if( a .ne. c ) go to 50
+  if ( a .ne. c ) go to 50
 
 ! ----------
 ! linear interpolation
@@ -571,15 +571,15 @@ end subroutine exact_shock_sr
 ! adjust signs
 ! ------
 
-60 if( p .gt. 0.d0 ) q = -q
+60 if ( p .gt. 0.d0 ) q = -q
   p = dabs(p)
 
 ! --------------
 ! is interpolation acceptable?
 ! --------------
 
-  if( (2.d0*p) .ge. (3.d0*xm*q-dabs(tol1*q)) ) go to 70
-  if( p .ge. dabs(0.5d0*e*q) ) go to 70
+  if ( (2.d0*p) .ge. (3.d0*xm*q-dabs(tol1*q)) ) go to 70
+  if ( p .ge. dabs(0.5d0*e*q) ) go to 70
   e = d
   d = p/q
   go to 80
@@ -597,10 +597,10 @@ end subroutine exact_shock_sr
 
 80 a  = b
   fa = fb
-  if( dabs(d) .gt. tol1 ) b = b+d
-  if( dabs(d) .le. tol1 ) b = b+dsign(tol1,xm)
+  if ( dabs(d) .gt. tol1 ) b = b+d
+  if ( dabs(d) .le. tol1 ) b = b+dsign(tol1,xm)
   call getdvel(b,fb)
-  if( (fb*(fc/dabs(fc))) .gt. 0.d0) go to 20
+  if ( (fb*(fc/dabs(fc))) .gt. 0.d0) go to 20
   go to 30
 
 ! --
@@ -782,7 +782,7 @@ end subroutine exact_shock_sr
 
     vel = (a-1.d0)/(a+1.d0)
 
-  end if
+  endif
 
   end subroutine getvel
 
@@ -854,10 +854,10 @@ end subroutine exact_shock_sr
 
   cs2 = ocs2 - fcs2/dfdcs2
 
-  if (abs(cs2 - ocs2)/ocs2.gt.5.e-7)then
+  if (abs(cs2 - ocs2)/ocs2.gt.5.e-7) then
     ocs2 = cs2
     goto 25
-  end if
+  endif
 
   vel = (xi + sign*cs2)/(1.d0 + sign*xi*cs2)
 

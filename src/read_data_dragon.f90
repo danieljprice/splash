@@ -175,7 +175,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   if (iambinaryfile.eq.1) then
      print "(a)",' reading binary dragon format '
      call read_dragonheader_binary(iunit,ierr)
-  else if (iambinaryfile.eq.0) then
+  elseif (iambinaryfile.eq.0) then
      print "(a)",' reading ascii dragon format '
      call read_dragonheader_ascii(iunit,ierr,iambinaryfile)
   else
@@ -207,8 +207,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
               ndim = 0
               ncolumns = 0
               return
-           end if
-        end if
+           endif
+        endif
      endif
   endif
   !
@@ -247,7 +247,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
     gammatemp = rdata(26)
     sinksoft = rdata(27)
     sinkrad = rdata(38)
-  end if
+  endif
 
   !--assume first that the file is single precision, check values are sensible, if not try double
 !   if (iambinaryfile.eq.1) then
@@ -782,27 +782,27 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       print*,'  pc, au, r_sun, r_earth, km, m, cm or 1 (dimensionless)'
       do_zintegration = .FALSE.
       dr_unit = 1._DP
-   else if (r_unit=="pc") then
+   elseif (r_unit=="pc") then
       dr_unit = r_pc
-   else if (r_unit=="au") then
+   elseif (r_unit=="au") then
       dr_unit = r_au
-   else if (r_unit=="r_sun") then
+   elseif (r_unit=="r_sun") then
       dr_unit = r_sun
-   else if (r_unit=="r_earth") then
+   elseif (r_unit=="r_earth") then
       dr_unit = r_earth
-   else if (r_unit=="km") then
+   elseif (r_unit=="km") then
       dr_unit = 1000.0_DP
-   else if (r_unit=="m") then
+   elseif (r_unit=="m") then
       dr_unit = 1.0_DP
-   else if (r_unit=="cm") then
+   elseif (r_unit=="cm") then
       dr_unit = 0.01_DP
-   else if (r_unit=="1") then
+   elseif (r_unit=="1") then
       dr_unit = 1._DP
    else
       print*,'Unknown position unit ', r_unit, '!'
       do_zintegration = .FALSE.
       dr_unit = 1._DP
-   end if
+   endif
 
 ! Length unit in S.I. units (m)
    if (h_unit=="") then
@@ -811,27 +811,27 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       print*,'  pc, au, r_sun, r_earth, km, m, cm or 1 (dimensionless)'
       do_dimweight = .FALSE.
       dh_unit = 1._DP
-   else if (h_unit=="pc") then
+   elseif (h_unit=="pc") then
       dh_unit = r_pc
-   else if (h_unit=="au") then
+   elseif (h_unit=="au") then
       dh_unit = r_au
-   else if (h_unit=="r_sun") then
+   elseif (h_unit=="r_sun") then
       dh_unit = r_sun
-   else if (h_unit=="r_earth") then
+   elseif (h_unit=="r_earth") then
       dh_unit = r_earth
-   else if (h_unit=="km") then
+   elseif (h_unit=="km") then
       dh_unit = 1000.0_DP
-   else if (h_unit=="m") then
+   elseif (h_unit=="m") then
       dh_unit = 1.0_DP
-   else if (h_unit=="cm") then
+   elseif (h_unit=="cm") then
       dh_unit = 0.01_DP
-   else if (h_unit=="1") then
+   elseif (h_unit=="1") then
       dh_unit = 1._DP
    else
       print*,'Unknown smoothing length unit ', h_unit, '!'
       do_dimweight = .FALSE.
       dh_unit = 1._DP
-   end if
+   endif
 
 ! Mass units in S.I. units (kg)
    if (m_unit=="") then
@@ -840,23 +840,23 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       print*,'  m_sun, m_jup, m_earth, kg, g or 1 (dimensionless)'
       do_dimweight = .FALSE.
       dm_unit = 1._DP
-   else if (m_unit=="m_sun") then
+   elseif (m_unit=="m_sun") then
       dm_unit = m_sun
-   else if (m_unit=="m_jup") then
+   elseif (m_unit=="m_jup") then
       dm_unit = m_jup
-   else if (m_unit=="m_earth") then
+   elseif (m_unit=="m_earth") then
       dm_unit = m_earth
-   else if (m_unit=="kg") then
+   elseif (m_unit=="kg") then
       dm_unit = 1._DP
-   else if (m_unit=="g") then
+   elseif (m_unit=="g") then
       dm_unit = 1.0E-3_DP
-   else if (m_unit=="1") then
+   elseif (m_unit=="1") then
       dm_unit = 1._DP
    else
       print*,'Unknown mass unit ', m_unit, '!'
       do_dimweight = .FALSE.
       dm_unit = 1._DP
-   end if
+   endif
 
  ! Density units in S.I. units (i.e. kg/m^3)
    if (rho_unit=="") then
@@ -868,31 +868,31 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       do_dimweight = .FALSE.
       do_zintegration = .FALSE.
       rho_length = 1._DP
-   else if (rho_unit=="m_sun_pc3") then
+   elseif (rho_unit=="m_sun_pc3") then
       drho_unit = m_sun / (r_pc**3)
       rho_length = r_pc
       rho_length_label = "pc"
-   else if (rho_unit=="m_sun_pc2") then
+   elseif (rho_unit=="m_sun_pc2") then
       drho_unit = m_sun / (r_pc**2)
       rho_length = r_pc
       rho_length_label = "pc"
-   else if (rho_unit=="kg_m3") then
+   elseif (rho_unit=="kg_m3") then
       drho_unit = 1.0_DP
       rho_length = 1.0_DP
       rho_length_label = "m"
-   else if (rho_unit=="kg_m2") then
+   elseif (rho_unit=="kg_m2") then
       drho_unit = 1.0_DP
       rho_length = 1.0_DP
       rho_length_label = "m"
-   else if (rho_unit=="g_cm3") then
+   elseif (rho_unit=="g_cm3") then
       drho_unit = 1.0E3_DP
       rho_length = 0.01_DP
       rho_length_label = "cm"
-   else if (rho_unit=="g_cm2") then
+   elseif (rho_unit=="g_cm2") then
       drho_unit = 10.0_DP
       rho_length = 0.01_DP
       rho_length_label = "cm"
-   else if (rho_unit=="1") then
+   elseif (rho_unit=="1") then
       drho_unit = 1._DP
       rho_length = 1._DP
       rho_length_label = ""
@@ -901,14 +901,14 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
       do_dimweight = .FALSE.
       do_zintegration = .FALSE.
       rho_length = 1._DP
-   end if
+   endif
 
    if (do_dimweight) then
       out_unit_interp = dm_unit/(drho_unit*dh_unit**ndim)
    else
       print*,'Cannot create dimensionless weight'
       print*,'(unnormalised rendered plots may be incorrect)'
-   end if
+   endif
 
    if (do_zintegration) then
       out_unitzintegration = dr_unit / rho_length
@@ -916,7 +916,7 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
    else
       print*,'Cannot set unitzintegration'
       print*,'(column density plots may be incorrect)'
-   end if
+   endif
 
    return
 end subroutine find_weights

@@ -346,7 +346,7 @@ end subroutine interpolate_pt
 !
 !   For details of the lighting algorithm, see e.g.
 !   Stalling, Zoeckler and Hege, 1997, IEEE Trans. Viz. Comp. Graphics, 3, 118-128
-!   
+!
 !   Added by D. Price, Dec 2011
 !--------------------------------------------------------------------------
 subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
@@ -383,9 +383,9 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  else
     vmax = vecmax
  endif
- 
+
  use3Dperspective = abs(dscreen).gt.tiny(dscreen)
- 
+
  !
  !--work out whether or not we have a white or black
  !  background colour
@@ -397,7 +397,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  !--specify the parameters in the lighting algorithm
  !  these should differ depending on whether we are drawing
  !  on a white or black background
- ! 
+ !
  if (white_bg) then
     fambient = 0.
     fdiff = 0.1
@@ -411,11 +411,11 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  nspec = 12
  !
  !--specify the viewing and lighting angles
- ! 
+ !
  viewangle = (/0.,0.,1./)
  !lighting = (/0.3,0.3,1./)
  lighting = (/0.,0.,1./)
- 
+
  !--make sure these are normalised
  !lighting = lighting/sqrt(dot_product(lighting,lighting))
 
@@ -440,12 +440,12 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
        endif
        !if (mod(ipart,10)/=0) cycle over_particles
 !       lw = min(zfrac,2.5)
-       
+
        vxi = vx(i)
        vyi = vy(i)
        vzi = vz(i)
        !
-       !--we draw lines on each particle with an 
+       !--we draw lines on each particle with an
        !  opacity proportional to the field strength
        !
        vmag = sqrt(vxi**2 + vyi**2 + vzi**2)
@@ -461,7 +461,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
           xpts(2) = x(i) + vxi*term
           ypts(1) = y(i) - vyi*term
           ypts(2) = y(i) + vyi*term
-          
+
           !--draw "halo" in background colour with
           !  twice the thickness, same opacity
           call plot_slw(2.*lw)

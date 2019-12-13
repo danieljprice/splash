@@ -64,7 +64,7 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
   !--read data from file
   do i=1,size(xexact)
      if (ixcolfile.gt.iycolfile) then
-        read(lu,*,end=10,err=20) (dum,j=1,iycolfile-1),yexact(i),(dum,j=iycolfile+1,ixcolfile-1),xexact(i)     
+        read(lu,*,end=10,err=20) (dum,j=1,iycolfile-1),yexact(i),(dum,j=iycolfile+1,ixcolfile-1),xexact(i)
      elseif (ixcolfile.eq.iycolfile) then
         read(lu,*,end=10,err=20) (dum,j=1,ixcolfile-1),xexact(i)
         yexact(i) = xexact(i)

@@ -362,7 +362,7 @@ subroutine add_sequence(istart,iend,n)
           enddo
           if (ierr.eq.2) print "(/,a)",' Error: can only have one sequence of each type '
        endif
-    end do
+    enddo
     select case(iseqtype(i))
     case(1)
        print "(a)",'Note: zoom sequence starts using current fixed x,y plot limits'
