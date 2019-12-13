@@ -48,6 +48,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.10.x  : (xx/xx/20)
+!             much improved splash to grid: uses Petkova (2018) method for sub-pixel rendering,
+!             bug fix when changing pixel number, added bytestream output format,
+!             round off error issue fixed; plasma beta correct in both code and physical units;
+!             can press number and -/+ to zoom out/in by that factor in interactive mode
 !     2.9.1  : (08/11/19)
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
@@ -406,7 +411,7 @@ program splash
   logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
   character(len=120) :: string
   character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.9.1 [8th Nov 2019]'
+  character(len=*), parameter :: version = 'v2.10.x [13th Dec 2019]'
 
   !
   ! initialise some basic code variables
@@ -775,7 +780,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2019 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2020 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &

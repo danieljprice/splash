@@ -844,6 +844,7 @@ contains
              iutherm,idivB,iJfirst,iradenergy,icv,udist,utime,units,&
              unitslabel)
   use geometry, only:labelcoord
+  use labels,   only:make_vector_label
   integer, intent(in) :: ncolumns,istartmhd,istart_extra_real4
   integer, intent(in) :: nmhd,nhydroreal4,ndimV,irho
   integer, intent(out) :: iBfirst,ivx,iutherm,idivB,iJfirst,iradenergy,icv
@@ -865,15 +866,11 @@ contains
            if (phantomdump) then
               !--phantom MHD full dumps
               if (nmhd.ge.4) then
-                 iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
-                 labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
-                 do i=1,ndimV
-                    label(istartmhd+i-1) = trim(labelvec(istartmhd))//'\d'//labelcoord(i,1)
-                 enddo
+                 call make_vector_label('A',istartmhd,ndimV,iamvec,labelvec,label,labelcoord(:,1))
                  if (nmhd.ge.7) then
-                    label(istartmhd+3) = 'Euler beta\dx'
-                    label(istartmhd+4) = 'Euler beta\dy'
-                    label(istartmhd+5) = 'Euler beta\dz'
+                    label(istartmhd+3) = 'Euler beta_{x}'
+                    label(istartmhd+4) = 'Euler beta_{x}'
+                    label(istartmhd+5) = 'Euler beta_{y}'
                     idivB = istartmhd+2*ndimV
                  else
                     idivB = istartmhd+ndimV
@@ -890,7 +887,7 @@ contains
               endif
               iJfirst = 0
               if (ncolumns.ge.idivB+1) then
-                 label(idivB+1) = 'alpha\dB\u'
+                 label(idivB+1) = 'alpha_{B}'
               endif
 
            else
@@ -899,11 +896,7 @@ contains
               label(iutherm+2) = 'grad soft'
               label(iutherm+3) = 'alpha'
               if (nmhd.ge.7 .and. usingvecp) then
-                 iamvec(istartmhd:istartmhd+ndimV-1) = istartmhd
-                 labelvec(istartmhd:istartmhd+ndimV-1) = 'A'
-                 do i=1,ndimV
-                    label(istartmhd+i-1) = trim(labelvec(16))//'\d'//labelcoord(i,1)
-                 enddo
+                 call make_vector_label('A',istartmhd,ndimV,iamvec,labelvec,label,labelcoord(:,1))
                  idivB = istartmhd+ndimV
               elseif (nmhd.ge.6 .and. usingeulr) then
                  label(istartmhd) = 'Euler alpha'
@@ -916,26 +909,20 @@ contains
                     label(istartmhd+2+ndimV+1) = '\eta_{real}'
                     label(istartmhd+2+ndimV+2) = '\eta_{art}'
                     units(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = udist*udist/utime
-                    unitslabel(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = ' [cm\u2\d/s]'
+                    unitslabel(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = ' [cm^2/s]'
                  endif
                  if (nmhd.ge.14) then
-                    label(istartmhd+2+ndimV+3) = 'fsym\dx'
-                    label(istartmhd+2+ndimV+4) = 'fsym\dy'
-                    label(istartmhd+2+ndimV+5) = 'fsym\dz'
-                    labelvec(istartmhd+ndimV+5:istartmhd+ndimV+7) = 'fsym'
-                    iamvec(istartmhd+ndimV+5:istartmhd+ndimV+7) = istartmhd+ndimV+5
-                    label(istartmhd+2+ndimV+6) = 'faniso\dx'
-                    label(istartmhd+2+ndimV+7) = 'faniso\dy'
-                    label(istartmhd+2+ndimV+8) = 'faniso\dz'
-                    labelvec(istartmhd+ndimV+8:istartmhd+ndimV+10) = 'faniso'
-                    iamvec(istartmhd+ndimV+8:istartmhd+ndimV+10) = istartmhd+ndimV+8
+                    call make_vector_label('fsym',istartmhd+2+ndimV+3,ndimV,&
+                         iamvec,labelvec,label,labelcoord(:,1))
+                    call make_vector_label('faniso',istartmhd+2+ndimV+6,ndimV,&
+                         iamvec,labelvec,label,labelcoord(:,1))
                  endif
               elseif (nmhd.ge.1) then
                  idivB = istartmhd
               endif
               iJfirst = idivB + 1
               if (ncolumns.ge.iJfirst+ndimV) then
-                 label(iJfirst+ndimV) = 'alpha\dB\u'
+                 label(iJfirst+ndimV) = 'alpha_{B}'
               endif
            endif
         else ! mhd small dump
@@ -2389,9 +2376,6 @@ subroutine set_labels
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
   if (idivB.gt.0) label(idivB) = 'div B'
   if (idivvcol.gt.0) label(idivvcol) = 'div v'
-  if (icurlvxcol.gt.0) label(icurlvxcol) = 'curl v_x'
-  if (icurlvycol.gt.0) label(icurlvycol) = 'curl v_y'
-  if (icurlvzcol.gt.0) label(icurlvzcol) = 'curl v_z'
   if (icurlvxcol.gt.0 .and. icurlvycol.gt.0 .and. icurlvzcol.gt.0) then
      call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   endif
@@ -2431,9 +2415,6 @@ subroutine set_labels
      units(1:3) = unitx
      unitslabel(1:3) = unitlabelx
   endif
-!   do i=1,3
-!      write(unitslabel(i),"('[ 10\u',i2,'\d cm]')") npower
-!   enddo
    if (ipmass.gt.0) then
       units(ipmass) = umass
       unitslabel(ipmass) = ' [g]'
@@ -2461,7 +2442,7 @@ subroutine set_labels
       unitslabel(ipr) = ' [g / (cm s^2)]'
    endif
    units(irho) = umass/udist**3
-   unitslabel(irho) = ' [g/cm\u3\d]'
+   unitslabel(irho) = ' [g/cm^3]'
    if (iBfirst.gt.0) then
       units(iBfirst:iBfirst+ndimV-1) = umagfd
       unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
@@ -2472,7 +2453,7 @@ subroutine set_labels
    endif
    if (igraindens.gt.0) then
        units(igraindens) = umass/udist**3
-       unitslabel(igraindens) = ' [g/cm\u3\d]'
+       unitslabel(igraindens) = ' [g/cm^3]'
    endif
    if (ivrel.gt.0) then
       units(ivrel) = udist/utime/100

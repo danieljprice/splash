@@ -302,24 +302,13 @@ subroutine set_labels
   if (ncolumns.gt.11) then
      label(12) = 'dgrav'
   endif
-
+)
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
-  label(irho) = 'density (g/cm\u3\d)'
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  label(irho) = 'density (g/cm^3)'
   label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'
-
-    !
-  !--set labels for vector quantities
-  !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
   !
   !--set labels for each particle type
   !

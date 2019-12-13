@@ -446,30 +446,22 @@ subroutine set_labels
  !
  !--label vector quantities (e.g. velocity) appropriately
  !
- iamvec(ivx:ivx+ndimV-1) = ivx
- labelvec(ivx:ivx+ndimV-1) = 'v'
- do i=1,ndimV
-    label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
- enddo
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  label(irho) = '\gr'
  label(iutherm) = 'u'
  label(ih) = 'h       '
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
- label(ndim + ndimV+6) = '\ga\du'
+ label(ndim + ndimV+6) = '\ga_{u}'
  if (iformat.eq.2) then
 
     !
     !--mag field (vector)
     !
-    label(ndim + ndimV+7) = '\ga\dB'
+    label(ndim + ndimV+7) = '\ga_{B}'
     iBfirst = ndim + ndimV+7+1        ! location of Bx
-    iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-    labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-    do i=1,ndimV
-       label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1) !' (x10\u-3\d)' !//'/rho'
-    enddo
+    call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
     !
     !--more scalars
     !
@@ -486,37 +478,30 @@ subroutine set_labels
     !
     iJfirst = ndim+2*ndimV+11+1
     iamvec(iJfirst:iJfirst+ndimV-1) = iJfirst
-    labelvec(iJfirst:iJfirst+ndimV-1) = 'J'
-    do i=1,ndimV
-       label(iJfirst+i-1) = trim(labelvec(iJfirst))//labelcoord(i,1)
-    enddo
+    call make_vector_label('J',iJfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  else
     ipr = ndim + ndimV + 7 !  pressure
     label(ipr) = 'P'
     label(ndim+ndimV+8) = 'grad h'
     label(ndim+ndimV+9) = 'grad soft'
     label(ndim+ndimV+10) = 'phi'
-    label(ndim+ndimV+11) = 'f_grav'
+    label(ndim+ndimV+11) = 'f_{grav}'
 !    label(ndim+ndimV+8) = 'div v'
 !    label(ndim+ndimV+9) = 'grad h'
     if (iformat.eq.3) then
        !!!irho = ndim+ndimV+9
        label(ndim+ndimV+9) = 'rho*'
        label(ndim+ndimV+10) = 'sqrt g'
-       iamvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = ndim+ndimV+11
-       labelvec(ndim+ndimV+11:ndim+ndimV+10+ndimV) = 'pmom'
-       do i=1,ndimV
-          label(ndim+ndimV+10+i) = labelvec(ndim+ndimV+11)//labelcoord(i,1)
-       enddo
+       call make_vector_label('pmom',ndim+ndimV+11,ndimV,iamvec,labelvec,label,labelcoord(:,1))
     endif
     iBfirst = 0
  endif
 
  if (ncolumns.gt.ndim+3*ndimV+11) then
-    label(ndim+3*ndimV+12) = 'f_visc_x'
-    label(ndim+3*ndimV+13) = 'f_visc_y'
-    label(ndim+3*ndimV+14) = 'f_x'
-    label(ndim+3*ndimV+15) = 'f_y'
+    label(ndim+3*ndimV+12) = 'f_{visc,x}'
+    label(ndim+3*ndimV+13) = 'f_{visc,y}'
+    label(ndim+3*ndimV+14) = 'f_{x}'
+    label(ndim+3*ndimV+15) = 'f_{y}'
  endif
 !
 !--these are here for backwards compatibility -- could be removed
@@ -536,7 +521,4 @@ subroutine set_labels
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .true.
 
-!-----------------------------------------------------------
-
- return
 end subroutine set_labels

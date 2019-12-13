@@ -205,7 +205,7 @@ end subroutine read_data
 !!-------------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec
+  use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec,make_vector_label
   use params
   use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings
   use geometry, only:labelcoord
@@ -220,7 +220,7 @@ subroutine set_labels
   ifx = ipmass+1
   irho = ifx+ndimV
   label(irho+1) = 'du/dt'
-  label(irho+2) = 'C\d\s\u'
+  label(irho+2) = 'C_{s}'
   label(irho+3) = 'alpha'
   ih = irho+4
   label(irho+5) = 'kpc'
@@ -237,21 +237,8 @@ subroutine set_labels
   if (irho.gt.0) label(irho) = 'density'
   if (ih.gt.0) label(ih) = 'smoothing length'
   if (ipmass.gt.0) label(ipmass) = 'particle mass'
-
-  if (ivx.gt.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-       label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-     enddo
-  endif
-  if (ifx.gt.0) then
-     iamvec(ifx:ifx+ndimV-1) = ifx
-     labelvec(ifx:ifx+ndimV-1) = 'f'
-     do i=1,ndimV
-       label(ifx+i-1) = 'f\d'//labelcoord(i,1)
-     enddo
-  endif
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('f',ifx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !
@@ -261,7 +248,4 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
 
-!-----------------------------------------------------------
-
-  return
 end subroutine set_labels

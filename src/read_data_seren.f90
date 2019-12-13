@@ -1093,7 +1093,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,iamvec,labelvec,labeltype,unitslabel,&
-     &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel
+     &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel,make_vector_label
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
@@ -1168,10 +1168,8 @@ subroutine set_labels
         case ("v")
            ! Velocities
            ivx = ncolumns + 1
-           iamvec(ivx:ivx+VDIMtemp-1) = ivx
-           labelvec(ivx:ivx+VDIMtemp-1) = 'v'
+           call make_vector_label('v',ivx,VDIMtemp,iamvec,labelvec,label,labelcoord(:,1))
            do j=1,VDIMtemp
-              label(ivx+j-1) = 'v\d'//labelcoord(j,1)
               units(ivx+j-1) = unit_coeff(ivx+j-1)
               unitslabel(ivx+j-1) = unit_string
            enddo
@@ -1201,10 +1199,8 @@ subroutine set_labels
         case ("B")
            ! Magnetic fields
            iBfirst = ncolumns + 1
-           iamvec(iBfirst:iBfirst+BDIMtemp-1) = iBfirst
-           labelvec(iBfirst:iBfirst+BDIMtemp-1) = 'B'
+           call make_vector_label('B',iBfirst,BDIMtemp,iamvec,labelvec,label,labelcoord(:,1))
            do j=1,BDIMtemp
-              label(iBfirst+j-1) = 'B\d'//labelcoord(j,1)
               units(iBfirst+j-1) = unit_coeff(iBfirst+j-1)
               unitslabel(iBfirst+j-1) = unit_string
            enddo
@@ -1256,8 +1252,6 @@ subroutine set_labels
   labeltype(1:ntypes) = type_names(1:ntypes)
   UseTypeInRenderings(1:ntypes) = type_use_render(1:ntypes)
 
-!-----------------------------------------------------------
-  return
 end subroutine set_labels
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
@@ -1419,97 +1413,97 @@ subroutine translate_unit_names(unit_name)
 
    select case (trim(unit_name))
       case ("r_sun")
-         unit_name = "r\dSun\u"
+         unit_name = "r_{Sun}"
       case ("au")
          unit_name = "AU"
       case ("r_earth")
-         unit_name = "r\dEarth\u"
+         unit_name = "r_{Earth}"
       case ("m_sun")
-         unit_name = "M\d\(2281)\u"
+         unit_name = "M_{\(2281)}"
       case ("m_jup")
-         unit_name = "M\dJupiter\u"
+         unit_name = "M_{Jupiter}"
       case ("m_earth")
-         unit_name = "M\dEarth\u"
+         unit_name = "M_{Earth}"
       case ("myr")
          unit_name = "Myrs"
       case ("km_s")
-         unit_name = "km s\u-1\d"
+         unit_name = "km s^{-1}"
       case ("au_yr")
          unit_name = "AU / yr"
       case ("m_s")
-         unit_name = "m s\u-1\d"
+         unit_name = "m s^{-1}"
       case ("cm_s")
-         unit_name = "cm s\u-1\d"
+         unit_name = "cm s^{-1}"
       case ("km_s2")
-         unit_name = "km \u-2\d"
+         unit_name = "km s^{-2}"
       case ("au_yr2")
-         unit_name = "AU yr\u-2\d"
+         unit_name = "AU yr^{-2}"
       case ("m_s2")
-         unit_name = "m s\u-2\d"
+         unit_name = "m s^{-2}"
       case ("cm_s2")
-         unit_name = "cm s\u-2\d"
+         unit_name = "cm s^{-2}"
       case ("m_sun_pc3")
-         unit_name = "M\d\(2281)\u pc\u-3\d"
+         unit_name = "M_{\(2281)} pc^{-3}"
       case ("kg_m_3")
-         unit_name = "kg m\u-3\d"
+         unit_name = "kg m^{-3}"
       case ("g_cm_3")
-         unit_name = "g cm\u-3\d"
+         unit_name = "g cm^{-3}"
       case ("m_sun_pc2")
-         unit_name = "M\d\(2281)\u pc\u-2\d"
+         unit_name = "M_{\(2281)} pc^{-2}"
       case ("kg_m_2")
-         unit_name = "kg m\u-2\d"
+         unit_name = "kg m^{-2}"
       case ("g_cm_2")
-         unit_name = "g cm\u-2\d"
+         unit_name = "g cm^{-2}"
       case ("g_cms2")
-         unit_name = "g cm\u-2\d"
+         unit_name = "g cm^{-2}"
       case ("10^40erg")
-         unit_name = "\x 10\u40\d ergs"
+         unit_name = "\x 10^{40} ergs"
       case ("m_sunkm_s")
-         unit_name = "M\d\(2281)\u km s\u-1\d"
+         unit_name = "M_{\(2281)} km s^{-1}"
       case ("m_sunau_yr")
-         unit_name = "M\d\(2281)\u AU yr\u-1\d"
+         unit_name = "M_{\(2281)} AU yr^{-1}"
       case ("kgm_s")
-         unit_name = "kg m s\u-1\d"
+         unit_name = "kg m s^{-1}"
       case ("gcm_s")
-         unit_name = "g cm s\u-1\d"
+         unit_name = "g cm s^{-1}"
       case ("m_sunkm2_s")
-         unit_name = "M\d\(2281)\u km\u2\d s\u-1\d"
+         unit_name = "M_{\(2281)} km^{2} s^{-1}"
       case ("m_sunau2_yr")
-         unit_name = "M\d\(2281)\u AU\u2\d yr\u-1\d"
+         unit_name = "M_{\(2281)} AU^{2} yr^{-1}"
       case ("kgm2_s")
-         unit_name = "kg m\u2\d s\u-1\d"
+         unit_name = "kg m^{2} s^{-1}"
       case ("gcm2_s")
-         unit_name = "g cm\u2\d s\u-1\d"
+         unit_name = "g cm^{2} s^{-1}"
       case ("rad_s")
-         unit_name = "radians s\u-1\d"
+         unit_name = "radians s^{-1}"
       case ("m_sun_myr")
-         unit_name = "M\d\(2281)\u Myr\u-1\d"
+         unit_name = "M_{\(2281)} Myr^{-1}"
       case ("m_sun_yr")
-         unit_name = "M\d\(2281)\u yr\u-1\d"
+         unit_name = "M_{\(2281)} yr^{-1}"
       case ("kg_s")
-         unit_name = "kg s\u-1\d"
+         unit_name = "kg s^{-1}"
       case ("g_s")
-         unit_name = "g s\u-1\d"
+         unit_name = "g s^{-1}"
       case ("L_sun")
-         unit_name = "Ld\(2281)\u"
+         unit_name = "L_{\(2281)}"
       case ("J_s")
-         unit_name = "J s\u-1\d"
+         unit_name = "J s^{-1}"
       case ("ergs_s")
-         unit_name = "ergs s\u-1\d"
+         unit_name = "ergs s^{-1}"
       case ("m2_kg")
-         unit_name = "m\u2\d kg\u-1\d"
+         unit_name = "m^{2} kg^{-1}"
       case ("cm2_g")
-         unit_name = "cm\u2\d g\u-1\d"
+         unit_name = "cm^{2} g^{-1}"
       case ("tesla")
          unit_name = "Tesla"
       case ("gauss")
          unit_name = "Gauss"
       case ("C_s_m2")
-         unit_name = "C s\u-1\d m\u-2\d"
+         unit_name = "C s^{-1} m^{-2}"
       case ("J_kg")
-         unit_name = "J kg\u-1\d"
+         unit_name = "J kg^{-1}"
       case ("erg_g")
-         unit_name = "ergs g\u-1\d"
+         unit_name = "ergs g^{-1}"
       case default
          unit_name = unit_name ! this could be improved
    end select

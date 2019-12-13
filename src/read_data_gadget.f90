@@ -1117,7 +1117,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax
+                          ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry,      only:labelcoord
@@ -1163,19 +1163,19 @@ subroutine set_labels
         case('RHO ')
            irho = icol
         case('NE  ')
-           label(icol) = 'N\de\u'
+           label(icol) = 'N_{e}'
         case('NH  ')
-           label(icol) = 'N\dH\u'
+           label(icol) = 'N_{H}'
         case('HSML')
            ih = icol
         case('NHP ')
-           label(icol) = 'N\dH+\u'
+           label(icol) = 'N_{H+}'
         case('NHE ')
-           label(icol) = 'N\dHe\u'
+           label(icol) = 'N_{He}'
         case('NHEP')
-           label(icol) = 'N\dHe+\u'
+           label(icol) = 'N_{He+}'
         case('elec')
-           label(icol) = 'N\de\u'
+           label(icol) = 'N_{e}'
         case('HI  ')
            label(icol) = 'HI'
         case('HII ')
@@ -1185,9 +1185,9 @@ subroutine set_labels
         case('HeII')
            label(icol) = 'HeII'
         case('H2I ')
-           label(icol) = 'H\d2\uI'
+           label(icol) = 'H_{2}I'
         case('H2II')
-           label(icol) = 'H\d2\uII'
+           label(icol) = 'H_{2}II'
         case('HM  ')
            label(icol) = 'HM'
         case('SFR ')
@@ -1218,9 +1218,9 @@ subroutine set_labels
            label(icol) = 'div B'
            idivB = icol
         case('ABVC')
-           label(icol) = 'alpha\dvisc\u'
+           label(icol) = 'alpha_{visc}'
         case('AMDC')
-           label(icol) = 'alpha\dresist\u'
+           label(icol) = 'alpha_{resist}'
         case('PHI ')
            label(icol) = 'div B cleaning function'
         case('COOR')
@@ -1228,7 +1228,7 @@ subroutine set_labels
         case('CONR')
            label(icol) = 'Conduction Rate'
         case('BFSM')
-           label(icol) = 'B\dsmooth\u'
+           label(icol) = 'B_{smooth}'
         case('DENN')
            label(icol) = 'Denn'
         case('CRC0')
@@ -1256,7 +1256,7 @@ subroutine set_labels
         case('PSEN')
            label(icol) = 'Pre-shock energy'
         case('PSXC')
-           label(icol) = 'Pre-shock X\d\u'
+           label(icol) = 'Pre-shock X'
         case('DJMP')
            label(icol) = 'Density jump'
         case('EJMP')
@@ -1316,46 +1316,12 @@ subroutine set_labels
   !
   !--set labels for vector quantities
   !
-  if (ivx.gt.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-
-  if (iax.gt.0) then
-     iamvec(iax:iax+ndimV-1) = iax
-     labelvec(iax:iax+ndimV-1) = 'a'
-     do i=1,ndimV
-        label(iax+i-1) = trim(labelvec(iax))//'\d'//labelcoord(i,1)
-     enddo
-   endif
-
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-
-  if (iBpol.gt.0) then
-     iamvec(iBpol:iBpol+ndimV-1) = iBpol
-     labelvec(iBpol:iBpol+ndimV-1) = 'B\dpol'
-     do i=1,ndimV
-        label(iBpol+i-1) = trim(labelvec(iBpol))//'\d'//labelcoord(i,1)
-     enddo
-   endif
-
-  if (iBtor.gt.0) then
-     iamvec(iBtor:iBtor+ndimV-1) = iBtor
-     labelvec(iBtor:iBtor+ndimV-1) = 'B\dtor'
-     do i=1,ndimV
-        label(iBtor+i-1) = trim(labelvec(iBtor))//'\d'//labelcoord(i,1)
-     enddo
-   endif
-
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B_{pol}',iBpol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B_{tor}',iBtor,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ 
   !--set labels for each particle type
   !
   ntypes = 6
@@ -1377,6 +1343,4 @@ subroutine set_labels
   endif
   UseTypeInRenderings(3:6) = .false.
 
-!-----------------------------------------------------------
-  return
 end subroutine set_labels

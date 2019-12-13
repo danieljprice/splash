@@ -238,7 +238,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      units(9) = umassi
      unitslabel(9) = ' [g]'
      units(10) = umassi/udisti**3
-     unitslabel(10) = ' [g/cm\u3\d]'
+     unitslabel(10) = ' [g/cm^3]'
 !
 !--convert to single precision and separate pt masses from normal particles
 !

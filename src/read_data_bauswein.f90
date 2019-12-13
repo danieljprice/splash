@@ -205,7 +205,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels, only:label,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,iutherm,ipmass
+              ix,ivx,ih,irho,iutherm,ipmass,make_vector_label
   use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry, only:labelcoord
   !use settings_units, only:units,unitslabel
@@ -234,32 +234,19 @@ subroutine set_labels
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
   if (iutherm.gt.0) label(iutherm) = 'u'
-  label(12) = 'psi\dpot\u'
-  label(13) = 'alpha\dpot\u'
+  label(12) = 'psi_{pot}'
+  label(13) = 'alpha_{pot}'
   label(ipmass) = 'particle mass'
   label(15) = '\gr'
   label(16) = 'P\deff'
   label(irho) = '\gr*'
   label(18) = 'tau'
-  label(19) = '\ga\dvisc'
+  label(19) = '\ga_{visc}'
   label(20) = 'Ye'
   label(21) = 'temperature'
 
-  if (ivx.ne.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = labelvec(ivx)//'\d'//labelcoord(i,1)
-     enddo
-  endif
-
-  if (ipmom.ne.0) then
-     iamvec(ipmom:ipmom+ndimV-1) = ipmom
-     labelvec(ipmom:ipmom+ndimV-1) = 'momentum'
-     do i=1,ndimV
-        label(ipmom+i-1) = labelvec(ipmom)//'\d'//labelcoord(i,1)
-     enddo
-  endif
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('momentum',ipmom,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !

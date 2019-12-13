@@ -611,7 +611,7 @@ end subroutine read_data
 subroutine set_labels
   use filenames, only:rootname
   use labels, only:label,unitslabel,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB
+              ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB,make_vector_label
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
   use geometry, only:labelcoord
   use settings_units, only:units
@@ -665,7 +665,7 @@ subroutine set_labels
      units(ipmass) = umass
      unitslabel(ipmass) = ' [g]'
      units(irho) = umass/udistcm**3
-     unitslabel(irho) = ' [g/cm\u3\d]'
+     unitslabel(irho) = ' [g/cm^3]'
      if (iBfirst.gt.0) then
         units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
         unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
@@ -680,17 +680,14 @@ subroutine set_labels
      ipmass = 9
      irho = 10
      label(11) = 'temperature [ MeV ]'
-     label(12) = 'electron fraction (y\de\u)'
+     label(12) = 'electron fraction (y_{e})'
 
      if (iformat.eq.2) then ! MHD full dump
         iBfirst = 13
         label(16) = 'psi'
         idivB = 17
-        iamvec(18:20) = 18
-        labelvec(18:20) = 'force'
-        do i=1,ndimV
-           label(18+i-1) = trim(labelvec(18))//'\d'//labelcoord(i,1)
-        enddo
+        call make_vector_label('force',18,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+
         label(21) = 'Euler alpha'
         label(22) = 'Euler beta'
         label(23) = 'Bevol\dz'
@@ -722,17 +719,13 @@ subroutine set_labels
         units(9) = umass
         unitslabel(9) = ' [g]'
         units(10) = umass/udistcm**3
-        unitslabel(10) = ' [g/cm\u3\d]'
+        unitslabel(10) = ' [g/cm^3]'
 
      else
-        iamvec(13:15) = 13
-        labelvec(13:15) = 'force'
-        do i=1,ndimV
-           label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
-        enddo
+        call make_vector_label('force',13,ndimV,iamvec,labelvec,label,labelcoord(:,1))
         label(16) = 'dgrav'
         if (ncolumns.gt.16) then
-           label(11) = 'temperature [ 10\u6\dK ]'
+           label(11) = 'temperature [ 10^6 K ]'
            do i=17,ncolumns
               write(label(i),"('species ',i2)") i-16
            enddo
@@ -755,7 +748,7 @@ subroutine set_labels
         uvelkms = (udistcm/utime)/1e5
 
         units(1:3) = 1.0 !!udistcm
-        unitslabel(1:3) = ' [10\u9\d cm]'
+        unitslabel(1:3) = ' [10^9 cm]'
         units(4:6) = uvelkms
         unitslabel(4:6) = ' [km/s]'
         units(ih) = units(1)
@@ -765,7 +758,7 @@ subroutine set_labels
         units(9) = umass
         unitslabel(9) = ' [g]'
         units(10) = umass/udistcm**3
-        unitslabel(10) = ' [g/cm\u3\d]'
+        unitslabel(10) = ' [g/cm^3]'
      endif
 
   endif
@@ -773,22 +766,9 @@ subroutine set_labels
   units(0) = utime*1000.
   unitslabel(0) = ' ms'
 
-  if (ivx.ne.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-
-  if (iBfirst.ne.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-     enddo
-     label(idivB) = 'div B'
-  endif
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  if (iBfirst.ne.0) label(idivB) = 'div B'
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = '\gr'
@@ -804,7 +784,4 @@ subroutine set_labels
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
 
-!-----------------------------------------------------------
-
-  return
 end subroutine set_labels

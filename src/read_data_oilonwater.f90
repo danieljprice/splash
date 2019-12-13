@@ -377,7 +377,7 @@ subroutine set_labels
   !--set transformation factors between code units/real units
   !
   units(1:3) = udisti/solarrcgs
-  unitslabel(1:3) = ' [R\d\(2281)\u]'
+  unitslabel(1:3) = ' [R_{\(2281)}]'
   units(4:6) = udisti/utimei
   unitslabel(4:6) = ' [cm/s]'
   units(ih) = units(1)
@@ -385,9 +385,9 @@ subroutine set_labels
   units(iutherm) = (udisti/utimei)**2
   unitslabel(iutherm) = ' [erg/g]'
   units(ipmass) = umassi/solarmcgs
-  unitslabel(ipmass) = ' [M\d\(2281)\u]'
+  unitslabel(ipmass) = ' [M_{\(2281)}]'
   units(irho) = umassi/udisti**3
-  unitslabel(irho) = ' [g/cm\u3\d]'
+  unitslabel(irho) = ' [g/cm^3]'
 
   !--unit for z integration - leave this as cm to get g/cm^2 in column density
   unitzintegration = udisti
@@ -410,7 +410,4 @@ subroutine set_labels
   UseTypeInRenderings(3) = .false.
   UseTypeInRenderings(4) = .true.
 
-!-----------------------------------------------------------
-
-  return
 end subroutine set_labels

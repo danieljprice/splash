@@ -257,7 +257,7 @@ end subroutine read_data
 
 subroutine set_labels
   use labels,        only:label,labelvec,labeltype,iamvec,&
-                           ix,ivx,ih,irho,iutherm,ipmass
+                           ix,ivx,ih,irho,iutherm,ipmass,make_vector_label
   use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry,      only:labelcoord
   !use settings_units, only:units,unitslabel
@@ -287,17 +287,10 @@ subroutine set_labels
   label(ih)     = 'h'
   label(irho)   = 'density'
   if (iutherm.gt.0) label(iutherm) = 'u'
-  label(11)     = 't\ddust\u'
-  label(12)     = 'N\dcol\u'
-  label(13)     = 'N\dloc\u'
-
-  if (ivx.ne.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-     enddo
-  endif
+  label(11)     = 't_{dust}'
+  label(12)     = 'N_{col}'
+  label(13)     = 'N_{loc}'
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !

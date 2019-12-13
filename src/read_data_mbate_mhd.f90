@@ -298,9 +298,7 @@ subroutine set_labels
   ipmass = 17   !  particle mass
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  do i=1,ndimV
-     label(ivx+i-1) = 'v\d'//labelcoord(i,1)
-  enddo
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   label(irho) = '\gr'
   label(iutherm) = 'u'
   label(ih) = 'h       '
@@ -311,40 +309,16 @@ subroutine set_labels
   label(ndim + ndimV+5) = '\ga'
   if (ncolumns.gt.11) then
      iBfirst = 9    ! location of Bx
-     do i=1,ndimV
-        label(iBfirst + i-1) = 'B\d'//labelcoord(i,1) !' (x10\u-3\d)'	!//'/rho'
-     enddo
      idivB = 12
      label(idivB) = 'div B'
-     do i=1,ndimV
-        label(13 + i-1) = 'J'//labelcoord(i,1)
-     enddo
   else
      iBfirst = 0
   endif
   !
   !--set labels for vector quantities
   !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
-  !--mag field
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-  !--current density
-  iamvec(13:13+ndimV-1) = 13
-  labelvec(13:13+ndimV-1) = 'J'
-  do i=1,ndimV
-     label(13+i-1) = trim(labelvec(13))//'\d'//labelcoord(i,1)
-  enddo
-
+  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+  call make_vector_label('J',13,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !
@@ -356,7 +330,4 @@ subroutine set_labels
   UseTypeInRenderings(2) = .true.
   UseTypeInRenderings(3) = .true.
 
-!-----------------------------------------------------------
-
-  return
 end subroutine set_labels
