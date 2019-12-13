@@ -607,7 +607,7 @@ function transform_label(label,itrans)
         case(4)
            temp_label = 'sqrt('//trim(temp_label)//')'
         case(5)
-           temp_label = trim(temp_label)//'\u2\d'
+           temp_label = trim(temp_label)//'^2'
         case(6)
            temp_label = 'ln '//trim(temp_label)
         case default
