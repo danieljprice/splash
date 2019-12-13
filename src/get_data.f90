@@ -41,318 +41,318 @@ module getdata
 contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
-  use asciiutils,     only:ucase
-  use exact,          only:read_exactparams
-  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,iposopen
-  use limits,         only:set_limits
-  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
+ use asciiutils,     only:ucase
+ use exact,          only:read_exactparams
+ use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,iposopen
+ use limits,         only:set_limits
+ use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
                       DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
-  use settings_data,  only:iexact,buffer_steps_in_file
-  use particle_data,  only:dat,time,npartoftype,maxcol
-  use prompting,      only:prompt
-  use labels,         only:labeltype
-  use calcquantities, only:calc_quantities
-  use settings_units, only:units
-  use timing,         only:wall_time,print_time
-  use settings_part,  only:iplotpartoftype
-  use geomutils,      only:set_coordlabels
-  use adjustdata,     only:adjust_data_codeunits
-  implicit none
-  integer, intent(in) :: ireadfile
-  logical, intent(in) :: gotfilenames
-  logical, intent(in), optional :: firsttime
-  integer, intent(in), optional :: iposinfile
-  logical :: setlimits,isfirsttime
-  logical, parameter  :: dotiming = .true.
-  integer :: i,istart,ierr,itype,nplot,ipos,nsteps_read
-  real    :: t1,t2
+ use settings_data,  only:iexact,buffer_steps_in_file
+ use particle_data,  only:dat,time,npartoftype,maxcol
+ use prompting,      only:prompt
+ use labels,         only:labeltype
+ use calcquantities, only:calc_quantities
+ use settings_units, only:units
+ use timing,         only:wall_time,print_time
+ use settings_part,  only:iplotpartoftype
+ use geomutils,      only:set_coordlabels
+ use adjustdata,     only:adjust_data_codeunits
+ implicit none
+ integer, intent(in) :: ireadfile
+ logical, intent(in) :: gotfilenames
+ logical, intent(in), optional :: firsttime
+ integer, intent(in), optional :: iposinfile
+ logical :: setlimits,isfirsttime
+ logical, parameter  :: dotiming = .true.
+ integer :: i,istart,ierr,itype,nplot,ipos,nsteps_read
+ real    :: t1,t2
 
-  if (.not.gotfilenames) then
-     if (nfiles <= 0 .or. nfiles > maxfile) nfiles = 1
-     call prompt('Enter number of files to read ',nfiles,1,maxfile)
-     do i=1,nfiles
-        call prompt('Enter filename to read',rootname(i),noblank=.true.)
-     enddo
-  endif
-  !
-  !--set everything to zero initially
-  !
-  ncolumns = 0
-  ncalc = 0
-  nsteps = 0
-  istart = 1
-  ivegotdata = .false.
-  ifileopen = ireadfile
-  DataIsBuffered = .false.
-  ipartialread = .false.
-  isfirsttime = .false.
-  if (present(firsttime)) isfirsttime = firsttime
-  if (isfirsttime) then
-     iverbose = 1
-  else
-     iverbose = 0
-  endif
+ if (.not.gotfilenames) then
+    if (nfiles <= 0 .or. nfiles > maxfile) nfiles = 1
+    call prompt('Enter number of files to read ',nfiles,1,maxfile)
+    do i=1,nfiles
+       call prompt('Enter filename to read',rootname(i),noblank=.true.)
+    enddo
+ endif
+ !
+ !--set everything to zero initially
+ !
+ ncolumns = 0
+ ncalc = 0
+ nsteps = 0
+ istart = 1
+ ivegotdata = .false.
+ ifileopen = ireadfile
+ DataIsBuffered = .false.
+ ipartialread = .false.
+ isfirsttime = .false.
+ if (present(firsttime)) isfirsttime = firsttime
+ if (isfirsttime) then
+    iverbose = 1
+ else
+    iverbose = 0
+ endif
 
-  ! ipos is the offset for *which* timestep to read from files containing multiple steps
-  ipos = 1
-  if (present(iposinfile)) then
-     if (iposinfile > 0) ipos = iposinfile
-  endif
-  iposopen = 0
-  !
-  !--nstepsinfile is initialised to negative
-  !  this is set progressively as files are read
-  !  for non-buffered data file 1 is read and the rest are assumed to be the same
-  !  then these files are corrected as they are read. By initialising nstepsinfile
-  !  to negative, this means that if we get dud files (with nstepsinfile=0) we
-  !  know that this is really the file contents (not just an initialised value of nstepsinfile)
-  !  and can skip the file on the second encounter (see timestepping.f90)
-  !
-  if (isfirsttime) then
-     nstepsinfile(:) = -1
-     ncolumnsfirst = 0
-     required = .true.
-     if (lowmemorymode) required = .false.
-     call endian_info()
-  endif
+ ! ipos is the offset for *which* timestep to read from files containing multiple steps
+ ipos = 1
+ if (present(iposinfile)) then
+    if (iposinfile > 0) ipos = iposinfile
+ endif
+ iposopen = 0
+ !
+ !--nstepsinfile is initialised to negative
+ !  this is set progressively as files are read
+ !  for non-buffered data file 1 is read and the rest are assumed to be the same
+ !  then these files are corrected as they are read. By initialising nstepsinfile
+ !  to negative, this means that if we get dud files (with nstepsinfile=0) we
+ !  know that this is really the file contents (not just an initialised value of nstepsinfile)
+ !  and can skip the file on the second encounter (see timestepping.f90)
+ !
+ if (isfirsttime) then
+    nstepsinfile(:) = -1
+    ncolumnsfirst = 0
+    required = .true.
+    if (lowmemorymode) required = .false.
+    call endian_info()
+ endif
 
-  if (ireadfile <= 0) then
-     !
-     !--read all steps from the data file
-     !
-     nstepsinfile(1:nfiles) = 0
-     required = .true.
-     print "(/a)",' reading ALL dumpfiles into memory'
-     !call endian_info()
+ if (ireadfile <= 0) then
+    !
+    !--read all steps from the data file
+    !
+    nstepsinfile(1:nfiles) = 0
+    required = .true.
+    print "(/a)",' reading ALL dumpfiles into memory'
+    !call endian_info()
 
-     do i=1,nfiles
-        call read_data(rootname(i),istart,ipos,nstepsinfile(i))
+    do i=1,nfiles
+       call read_data(rootname(i),istart,ipos,nstepsinfile(i))
 
-        istart = istart + nstepsinfile(i) ! number of next step in data array
-        if (nstepsinfile(i) > 0 .and. ncolumnsfirst==0 .and. ncolumns > 0) then
-           ncolumnsfirst = ncolumns
-        elseif (nstepsinfile(i) > 0 .and. ncolumns /= ncolumnsfirst) then
-           print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
+       istart = istart + nstepsinfile(i) ! number of next step in data array
+       if (nstepsinfile(i) > 0 .and. ncolumnsfirst==0 .and. ncolumns > 0) then
+          ncolumnsfirst = ncolumns
+       elseif (nstepsinfile(i) > 0 .and. ncolumns /= ncolumnsfirst) then
+          print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
            ' columns (',ncolumnsfirst,' previously)'
-           ncolumns = max(ncolumns,ncolumnsfirst)
-        endif
-     enddo
-     nsteps = istart - 1
-     if (nsteps > 0) then
-        ivegotdata = .true.
-        DataIsBuffered = .true.
-     else
-        ncolumns = 0
-     endif
-     print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
+          ncolumns = max(ncolumns,ncolumnsfirst)
+       endif
+    enddo
+    nsteps = istart - 1
+    if (nsteps > 0) then
+       ivegotdata = .true.
+       DataIsBuffered = .true.
+    else
+       ncolumns = 0
+    endif
+    print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
 
-     !
-     !--set labels (and units) for each column of data
-     !
-     !print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns > 0) then
-        call get_labels
-        call adjust_data_codeunits
-        !
-        !--do some basic sanity checks
-        !
-        call check_data_read()
-     endif
+    !
+    !--set labels (and units) for each column of data
+    !
+    !print "(/a)",' setting plot labels...'
+    if (ivegotdata .and. ncolumns > 0) then
+       call get_labels
+       call adjust_data_codeunits
+       !
+       !--do some basic sanity checks
+       !
+       call check_data_read()
+    endif
 
-     if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
-        !write(*,"(/a)") ' rescaling data...'
-        do i=1,ncolumns
-           if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
-              dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
-           endif
-        enddo
-        time(1:nsteps) = time(1:nsteps)*units(0)
-     endif
-     !
-     !--reset coordinate and vector labels (depending on coordinate system)
-     !  Need to do this BEFORE calculating quantities
-     !
-     if (ivegotdata) call set_coordlabels(ncolumns)
-     !
-     !--calculate various additional quantities
-     !
-     if (nsteps >= 1 .and. iCalcQuantities) then
-        call calc_quantities(1,nsteps)
-     endif
-     !
-     !--set plot limits
-     !
-     if (ierr > 0 .and. ivegotdata .and. nstepsinfile(1) >= 1) then
-        call set_limits(1,nsteps,1,ncolumns+ncalc)
-     endif
+    if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
+       !write(*,"(/a)") ' rescaling data...'
+       do i=1,ncolumns
+          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
+             dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
+          endif
+       enddo
+       time(1:nsteps) = time(1:nsteps)*units(0)
+    endif
+    !
+    !--reset coordinate and vector labels (depending on coordinate system)
+    !  Need to do this BEFORE calculating quantities
+    !
+    if (ivegotdata) call set_coordlabels(ncolumns)
+    !
+    !--calculate various additional quantities
+    !
+    if (nsteps >= 1 .and. iCalcQuantities) then
+       call calc_quantities(1,nsteps)
+    endif
+    !
+    !--set plot limits
+    !
+    if (ierr > 0 .and. ivegotdata .and. nstepsinfile(1) >= 1) then
+       call set_limits(1,nsteps,1,ncolumns+ncalc)
+    endif
 
-  elseif (ireadfile > 0) then
-     !
-     !--read from a single file only
-     !
-     nstepsinfile(ireadfile) = 0
-     !if (isfirsttime) print "(/a)",' reading single dumpfile'
+ elseif (ireadfile > 0) then
+    !
+    !--read from a single file only
+    !
+    nstepsinfile(ireadfile) = 0
+    !if (isfirsttime) print "(/a)",' reading single dumpfile'
 
-     if (dotiming) call wall_time(t1)
-     call read_data(rootname(ireadfile),istart,ipos,nstepsinfile(ireadfile))
-     !
-     !--do some basic sanity checks
-     !
-     if (debugmode) print "(a,i3)",' DEBUG: ncolumns from data read = ',ncolumns
-     if (debugmode) print "(a,i3)",' DEBUG: nsteps in file   = ',nstepsinfile(ireadfile)
-     if (buffer_steps_in_file) then
-        nsteps_read = nstepsinfile(ireadfile)
-     else
-        nsteps_read = 1
-        iposopen = ipos
-     endif
+    if (dotiming) call wall_time(t1)
+    call read_data(rootname(ireadfile),istart,ipos,nstepsinfile(ireadfile))
+    !
+    !--do some basic sanity checks
+    !
+    if (debugmode) print "(a,i3)",' DEBUG: ncolumns from data read = ',ncolumns
+    if (debugmode) print "(a,i3)",' DEBUG: nsteps in file   = ',nstepsinfile(ireadfile)
+    if (buffer_steps_in_file) then
+       nsteps_read = nstepsinfile(ireadfile)
+    else
+       nsteps_read = 1
+       iposopen = ipos
+    endif
 
 !--try different endian if failed the first time
-     !if (nstepsinfile(ireadfile)==0) then
-     !   print "(a)",' trying different endian'
-     !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))
-     !endif
-     if (dotiming) then
-        call wall_time(t2)
-        if (t2-t1 > 1.) then
-           if (ipartialread) then
-              call print_time(t2-t1,'time for (partial) data read = ')
-              print*
-           else
-              call print_time(t2-t1,'time for data read = ')
-              print*
-           endif
-        endif
+    !if (nstepsinfile(ireadfile)==0) then
+    !   print "(a)",' trying different endian'
+    !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))
+    !endif
+    if (dotiming) then
+       call wall_time(t2)
+       if (t2-t1 > 1.) then
+          if (ipartialread) then
+             call print_time(t2-t1,'time for (partial) data read = ')
+             print*
+          else
+             call print_time(t2-t1,'time for data read = ')
+             print*
+          endif
+       endif
 !        do i=1,ncolumns+ncalc
 !           print*,' required(',i,') = ',required(i)
 !        enddo
-     endif
-     !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
-     if (ANY(nstepsinfile(1:ireadfile) > 0)) ivegotdata = .true.
-     if (.not.ivegotdata) ncolumns = 0
-     !
-     !--set ncolumns on first step only
-     !
-     if (ivegotdata .and. ncolumnsfirst==0 .and. ncolumns > 0) then
-        ncolumnsfirst = ncolumns
-     endif
-     !--override ncolumns from file and warn if different to first file
-     if (ncolumnsfirst > 0 .and. nstepsinfile(ireadfile) > 0) then
-        if (ncolumns /= ncolumnsfirst) then
-           write(*,"(1x,a,i2,a,i2,a)",advance='NO') 'WARNING: file has ',ncolumns, &
+    endif
+    !!print*,'nsteps in file = ',nstepsinfile(ireadfile)
+    if (ANY(nstepsinfile(1:ireadfile) > 0)) ivegotdata = .true.
+    if (.not.ivegotdata) ncolumns = 0
+    !
+    !--set ncolumns on first step only
+    !
+    if (ivegotdata .and. ncolumnsfirst==0 .and. ncolumns > 0) then
+       ncolumnsfirst = ncolumns
+    endif
+    !--override ncolumns from file and warn if different to first file
+    if (ncolumnsfirst > 0 .and. nstepsinfile(ireadfile) > 0) then
+       if (ncolumns /= ncolumnsfirst) then
+          write(*,"(1x,a,i2,a,i2,a)",advance='NO') 'WARNING: file has ',ncolumns, &
            ' columns (',ncolumnsfirst,' previously)'
-           if (ncolumns < ncolumnsfirst) then
-              write(*,"(a,i2,/)") ', data=0 for columns > ',ncolumns
-              dat(:,ncolumns+1:min(ncolumnsfirst,maxcol),1:nstepsinfile(ireadfile)) = 0.
-           elseif (ncolumns > ncolumnsfirst) then
-              write(*,"(a,i2,a)") ', columns > ',ncolumnsfirst,' ignored'
-              print "(10x,a,/)",'(read this file first to use this data)'
-           else
-              write (*,*)
-           endif
-           ncolumns = ncolumnsfirst
-        endif
-     endif
+          if (ncolumns < ncolumnsfirst) then
+             write(*,"(a,i2,/)") ', data=0 for columns > ',ncolumns
+             dat(:,ncolumns+1:min(ncolumnsfirst,maxcol),1:nstepsinfile(ireadfile)) = 0.
+          elseif (ncolumns > ncolumnsfirst) then
+             write(*,"(a,i2,a)") ', columns > ',ncolumnsfirst,' ignored'
+             print "(10x,a,/)",'(read this file first to use this data)'
+          else
+             write (*,*)
+          endif
+          ncolumns = ncolumnsfirst
+       endif
+    endif
 
-     !
-     !--assume there are the same number of steps in the other files
-     !  which have not been read
-     !
-     do i=1,nfiles
-        if (nstepsinfile(i)==-1) then
-           nstepsinfile(i) = nstepsinfile(ireadfile)
-        endif
-     enddo
-     nsteps = sum(nstepsinfile(1:nfiles))
-     !
-     !--set labels (and units) for each column of data
-     !  allow this to be overridden by the presence of a splash.columns file
-     !
-     !!print "(/a)",' setting plot labels...'
-     if (ivegotdata .and. ncolumns > 0) then
-        call get_labels
-        call adjust_data_codeunits
-        call check_data_read()
-     endif
+    !
+    !--assume there are the same number of steps in the other files
+    !  which have not been read
+    !
+    do i=1,nfiles
+       if (nstepsinfile(i)==-1) then
+          nstepsinfile(i) = nstepsinfile(ireadfile)
+       endif
+    enddo
+    nsteps = sum(nstepsinfile(1:nfiles))
+    !
+    !--set labels (and units) for each column of data
+    !  allow this to be overridden by the presence of a splash.columns file
+    !
+    !!print "(/a)",' setting plot labels...'
+    if (ivegotdata .and. ncolumns > 0) then
+       call get_labels
+       call adjust_data_codeunits
+       call check_data_read()
+    endif
 
-     if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
-        if (debugmode) write(*,"(a)") ' rescaling data...'
-        do i=1,min(ncolumns,maxcol)
-           if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
-              dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
-           endif
-        enddo
-        do i=1,nsteps_read
-           if (time(i) > -0.5*huge(0.)) time(i) = time(i)*units(0)
-        enddo
-     endif
-     !
-     !--reset coordinate and vector labels (depending on coordinate system)
-     !  Need to do this BEFORE calculating quantities
-     !
-     if (ivegotdata) call set_coordlabels(ncolumns)
+    if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
+       if (debugmode) write(*,"(a)") ' rescaling data...'
+       do i=1,min(ncolumns,maxcol)
+          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
+             dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
+          endif
+       enddo
+       do i=1,nsteps_read
+          if (time(i) > -0.5*huge(0.)) time(i) = time(i)*units(0)
+       enddo
+    endif
+    !
+    !--reset coordinate and vector labels (depending on coordinate system)
+    !  Need to do this BEFORE calculating quantities
+    !
+    if (ivegotdata) call set_coordlabels(ncolumns)
 
-     !
-     !--calculate various additional quantities
-     !
-     if (nsteps_read > 0 .and. iCalcQuantities) then
-        if (ipartialread .and. .not.any(required(ncolumns+1:))) then
-           !--for partial data reads do a "pretend" call to calc quantities
-           !  just to get ncalc and column labels right
-           call calc_quantities(1,nsteps_read,dontcalculate=.true.)
-        else
-           call calc_quantities(1,nsteps_read)
-        endif
-     endif
-     !
-     !--only set limits if reading the first file for the first time
-     !
-     setlimits = (ireadfile==1 .and. ivegotdata .and. nstepsinfile(1) >= 1)
-     if (.not.present(firsttime)) then
-        setlimits = .false.
-     elseif (.not.firsttime) then
-        setlimits = .false.
-     endif
+    !
+    !--calculate various additional quantities
+    !
+    if (nsteps_read > 0 .and. iCalcQuantities) then
+       if (ipartialread .and. .not.any(required(ncolumns+1:))) then
+          !--for partial data reads do a "pretend" call to calc quantities
+          !  just to get ncalc and column labels right
+          call calc_quantities(1,nsteps_read,dontcalculate=.true.)
+       else
+          call calc_quantities(1,nsteps_read)
+       endif
+    endif
+    !
+    !--only set limits if reading the first file for the first time
+    !
+    setlimits = (ireadfile==1 .and. ivegotdata .and. nstepsinfile(1) >= 1)
+    if (.not.present(firsttime)) then
+       setlimits = .false.
+    elseif (.not.firsttime) then
+       setlimits = .false.
+    endif
 
-     if (setlimits) then
-        call set_limits(1,nsteps_read,1,ncolumns+ncalc)
-        !--also set iendatstep the first time around
-        iendatstep = nsteps
-     endif
-  endif
-  !
-  !--check for errors in data read / print warnings
-  !
-  if (ndim /= 0 .and. ncolumns > 0 .and. nsteps > 0 .and. iverbose==1) then
-     if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0) then
-        print "(a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
-        itype = 0
-        nplot = 0
-        do while (nplot==0 .and. itype < ntypes)
-           itype = itype + 1
-           if (npartoftype(itype,1) > 0) then
-              iplotpartoftype(itype) = .true.
-              nplot = nplot + npartoftype(itype,1)
-              print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
-           endif
-        enddo
-        print*
-     endif
-  endif
+    if (setlimits) then
+       call set_limits(1,nsteps_read,1,ncolumns+ncalc)
+       !--also set iendatstep the first time around
+       iendatstep = nsteps
+    endif
+ endif
+ !
+ !--check for errors in data read / print warnings
+ !
+ if (ndim /= 0 .and. ncolumns > 0 .and. nsteps > 0 .and. iverbose==1) then
+    if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0) then
+       print "(a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
+       itype = 0
+       nplot = 0
+       do while (nplot==0 .and. itype < ntypes)
+          itype = itype + 1
+          if (npartoftype(itype,1) > 0) then
+             iplotpartoftype(itype) = .true.
+             nplot = nplot + npartoftype(itype,1)
+             print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
+          endif
+       enddo
+       print*
+    endif
+ endif
 
-  !
-  !--read exact solution parameters from files if present
-  !
-  if (iexact /= 0) then
-     if (ireadfile < 0) then
-        call read_exactparams(iexact,rootname(1),ierr)
-     else
-        call read_exactparams(iexact,rootname(ireadfile),ierr)
-     endif
-  endif
+ !
+ !--read exact solution parameters from files if present
+ !
+ if (iexact /= 0) then
+    if (ireadfile < 0) then
+       call read_exactparams(iexact,rootname(1),ierr)
+    else
+       call read_exactparams(iexact,rootname(ireadfile),ierr)
+    endif
+ endif
 
-  return
+ return
 end subroutine get_data
 
 !----------------------------------------------------------------------
@@ -527,33 +527,33 @@ subroutine check_data_read
        ivegotdata = .false.
     endif
     !if (debugmode) then
-       !
-       !--for mixed type storage, check that the number of particles
-       !  of each type adds up to npartoftype
-       !
-       ntoti = sum(npartoftype(:,1))
-       noftype(:) = 0
-       nunknown   = 0
-       if (size(iamtype(:,1)) >= ntoti) then
-          do i=1,ntoti
-             itype = iamtype(i,1)
-             if (itype > 0 .and. itype <= ntypes) then
-                noftype(itype) = noftype(itype) + 1
-             else
-                nunknown = nunknown + 1
-             endif
-          enddo
-          do itype=1,ntypes
-             if (npartoftype(itype,1) /= noftype(itype)) then
-                print "(a,i10,a,i10)",' ERROR in data read: got ',noftype(itype),' '//trim(labeltype(itype))// &
-                                      ' particles from iamtype, but npartoftype = ',npartoftype(itype,1)
-             endif
-          enddo
-          if (nunknown > 0) then
-             print "(a,i10,a)",' ERROR in data read: got ',nunknown, &
-                               ' particles of unknown type in iamtype array from data read'
+    !
+    !--for mixed type storage, check that the number of particles
+    !  of each type adds up to npartoftype
+    !
+    ntoti = sum(npartoftype(:,1))
+    noftype(:) = 0
+    nunknown   = 0
+    if (size(iamtype(:,1)) >= ntoti) then
+       do i=1,ntoti
+          itype = iamtype(i,1)
+          if (itype > 0 .and. itype <= ntypes) then
+             noftype(itype) = noftype(itype) + 1
+          else
+             nunknown = nunknown + 1
           endif
+       enddo
+       do itype=1,ntypes
+          if (npartoftype(itype,1) /= noftype(itype)) then
+             print "(a,i10,a,i10)",' ERROR in data read: got ',noftype(itype),' '//trim(labeltype(itype))// &
+                                      ' particles from iamtype, but npartoftype = ',npartoftype(itype,1)
+          endif
+       enddo
+       if (nunknown > 0) then
+          print "(a,i10,a)",' ERROR in data read: got ',nunknown, &
+                               ' particles of unknown type in iamtype array from data read'
        endif
+    endif
     !endif
  endif
 
@@ -574,9 +574,9 @@ subroutine endian_info
 
  if (bigendian) then
     print "(a)",' native byte order on this machine is BIG endian'
- !--we no longer warn for little endian, as this is now most common
- !else
- !   print "(a)",' native byte order on this machine is LITTLE endian'
+    !--we no longer warn for little endian, as this is now most common
+    !else
+    !   print "(a)",' native byte order on this machine is LITTLE endian'
  endif
 
 end subroutine endian_info

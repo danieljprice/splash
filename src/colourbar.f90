@@ -132,66 +132,66 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  disp = dispall
 
  select case(istyle)
- !------------------------
- ! horizontal colour bar
- !------------------------
+    !------------------------
+    ! horizontal colour bar
+    !------------------------
  case(2,4,6,8,10,12)
 
-   if (istyle==4) disp = 0. ! plot-hugging
-   !
-   !--set viewport for the wedge
-   !
-   if (isfloating(istyle)) then
-      vptxminp = vptxmini  ! to
-      vptxmaxp = vptxmaxi  ! avoid
-      vptyminp = vptymini  ! compiler
-      vptymaxp = vptymaxi  ! warnings
-      call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
-      call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
-      vptymaxi = vptymini + width*ych
-   elseif (istyle==10) then
-      ! on top of plot
-      vptymini = vptymaxi + (disp+0.1)*ych
-      vptymaxi = vptymini + width*ych
-   else
-      vptymaxi = vptymini - (disp + xlabeloffset)*ych
-      vptymini = vptymaxi - width*ych
-   endif
-   call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
-   call plot_set_exactpixelboundaries()
-   !--check number of pixels in colour bar
-   call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-   npixwedg = max(min(int(xmaxpix-xminpix),maxpixwedg),2)
-   !
-   !--fill array with all values from datmin to datmax
-   !
+    if (istyle==4) disp = 0. ! plot-hugging
+    !
+    !--set viewport for the wedge
+    !
+    if (isfloating(istyle)) then
+       vptxminp = vptxmini  ! to
+       vptxmaxp = vptxmaxi  ! avoid
+       vptyminp = vptymini  ! compiler
+       vptymaxp = vptymaxi  ! warnings
+       call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
+       call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
+       vptymaxi = vptymini + width*ych
+    elseif (istyle==10) then
+       ! on top of plot
+       vptymini = vptymaxi + (disp+0.1)*ych
+       vptymaxi = vptymini + width*ych
+    else
+       vptymaxi = vptymini - (disp + xlabeloffset)*ych
+       vptymini = vptymaxi - width*ych
+    endif
+    call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+    call plot_set_exactpixelboundaries()
+    !--check number of pixels in colour bar
+    call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+    npixwedg = max(min(int(xmaxpix-xminpix),maxpixwedg),2)
+    !
+    !--fill array with all values from datmin to datmax
+    !
     dx = (datmax-datmin)/real(npixwedg-1)
     do i=1,npixwedg
        samplex(i,:) = datmin + (i-1)*dx
     enddo
-   !
-   !--draw colour bar, by cleverly setting window size
-   !
-   call plot_swin(1.0,real(npixwedg),0.0,1.0)
+    !
+    !--draw colour bar, by cleverly setting window size
+    !
+    call plot_swin(1.0,real(npixwedg),0.0,1.0)
 
-   if (abs(icolours) > 0) then        ! colour
-   !--check if the colour bar will be more than 1024 pixels
+    if (abs(icolours) > 0) then        ! colour
+       !--check if the colour bar will be more than 1024 pixels
        if ((xmaxpix-xminpix) <= 1024 .or. .not.plotlib_is_pgplot) then
-    !
-    !--the standard way is to use the default line below
-    !
+          !
+          !--the standard way is to use the default line below
+          !
           if (icolours==1) then
              call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           else
              call plot_imag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           endif
        else
-    !
-    !--if > 1024 pixels, we instead use the following:
-    !  this is a workaround for a PGPLOT bug with large colour bars
-    !  (> 1024 device pixels long) - plot colour bar in two halves.
-    !  this works up to 2048 pixels, really should divide by n.
-    !
+          !
+          !--if > 1024 pixels, we instead use the following:
+          !  this is a workaround for a PGPLOT bug with large colour bars
+          !  (> 1024 device pixels long) - plot colour bar in two halves.
+          !  this works up to 2048 pixels, really should divide by n.
+          !
           call plot_svp(vptxmini,vptxmaxi-0.5*(vptxmaxi-vptxmini),vptymini,vptymaxi)
           call plot_swin(1.0,real(npixwedg/2),0.0,1.0)
           call plot_set_exactpixelboundaries()
@@ -206,9 +206,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        endif
     endif
     call plot_swin(datmin,datmax,0.0,1.0)
-   !
-   !--draw labelled frame around the wedge
-   !
+    !
+    !--draw labelled frame around the wedge
+    !
     if (istyle==12) then
        call plot_box(ColourBarFmtStr,0.0,0,'BC',0.0,0)
     elseif (istyle==10) then
@@ -219,13 +219,13 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     else
        call plot_box('BCNST',0.0,0,'BC',0.0,0)
     endif
-   !
-   !--write the units label: the position is relative to the bottom of
-   !  the wedge because of the way we have defined the viewport.
-   !  For the horizontal colour bar this never needs to change
-   !  (0.25 space + 1 character height for numeric labels + 0.25 space
-   !   + 1 character height for actual label = 2.5 character heights)
-   !
+    !
+    !--write the units label: the position is relative to the bottom of
+    !  the wedge because of the way we have defined the viewport.
+    !  For the horizontal colour bar this never needs to change
+    !  (0.25 space + 1 character height for numeric labels + 0.25 space
+    !   + 1 character height for actual label = 2.5 character heights)
+    !
     if (len_trim(label) > 0 .and. iplotcolourbarlabel) then
        if (istyle==10) then
           call plot_annotate('T',2.5,0.5,0.5,trim(label))
@@ -234,14 +234,14 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        endif
     endif
 
- !-------------------------------
- ! vertical colour bar (default)
- !-------------------------------
+    !-------------------------------
+    ! vertical colour bar (default)
+    !-------------------------------
  case default
     if (istyle==3) disp = 0. ! plot-hugging
-   !
-   !--set viewport for the wedge
-   !
+    !
+    !--set viewport for the wedge
+    !
     if (isfloating(istyle)) then
        vptxminp = vptxmini  ! to
        vptxmaxp = vptxmaxi  ! avoid
@@ -267,9 +267,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     do i=1,npixwedg
        sampley(:,i) = datmin + (i-1)*dx
     enddo
-   !
-   !--draw colour bar, by cleverly setting window size
-   !
+    !
+    !--draw colour bar, by cleverly setting window size
+    !
     call plot_swin(0.0,1.0,0.0,real(npixwedg))
     if (icolours==1) then        ! greyscale
        call plot_gray(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
@@ -277,9 +277,9 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        call plot_imag(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
     endif
     call plot_swin(0.0,1.0,datmin,datmax)
-   !
-   !--draw labelled frame around the wedge
-   !
+    !
+    !--draw labelled frame around the wedge
+    !
     if (istyle==11) then
        call plot_box('BC',0.0,0,ColourBarFmtStr,0.0,0)
     elseif (istyle==9) then
@@ -290,15 +290,15 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     else
        call plot_box('BC',0.0,0,'BCMSTV',0.0,0)
     endif
-   !
-   !--write the units label: the position is relative to the edge of
-   !  the wedge because of the way we have defined the viewport.
-   !  For the vertical colour bar ColourBarDisp is a set by default to
-   !  the maximum size for the numeric label (written horizontally) -
-   !  this is about 4 character heights for something like "-5 x 10^10"
-   !  We allow the user to adjust this parameter to bring the label
-   !  closer where the numeric labels are smaller (e.g. "-5").
-   !
+    !
+    !--write the units label: the position is relative to the edge of
+    !  the wedge because of the way we have defined the viewport.
+    !  For the vertical colour bar ColourBarDisp is a set by default to
+    !  the maximum size for the numeric label (written horizontally) -
+    !  this is about 4 character heights for something like "-5 x 10^10"
+    !  We allow the user to adjust this parameter to bring the label
+    !  closer where the numeric labels are smaller (e.g. "-5").
+    !
     if (len_trim(label) > 0 .and. iplotcolourbarlabel) then
        if (istyle==9) then
           call plot_annotate('L',ColourBarDisp+0.75,1.0,1.0,trim(label))
@@ -512,9 +512,9 @@ logical function isfloating(istyle)
 
  select case(istyle)
  case(7,8,11,12)
-   isfloating = .true.
+    isfloating = .true.
  case default
-   isfloating = .false.
+    isfloating = .false.
  end select
 
 end function isfloating

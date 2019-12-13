@@ -25,69 +25,69 @@
 ! Uses the function parser module
 !----------------------------------------------------------------------
 module exactfunction
-  implicit none
+ implicit none
 
 contains
 
 subroutine exact_function(string,xplot,yplot,time,ierr)
-  use fparser, only:initf,evalf,endf,EvalErrType,EvalErrMsg,rn
-  implicit none
-  character(len=*), intent(in) :: string
-  real, intent(in), dimension(:) :: xplot
-  real, intent(in)               :: time
-  real, intent(out), dimension(size(xplot)) :: yplot
-  integer, intent(out) :: ierr
-  integer :: i,j,nvars
-  real(kind=rn), dimension(:), allocatable     :: val
+ use fparser, only:initf,evalf,endf,EvalErrType,EvalErrMsg,rn
+ implicit none
+ character(len=*), intent(in) :: string
+ real, intent(in), dimension(:) :: xplot
+ real, intent(in)               :: time
+ real, intent(out), dimension(size(xplot)) :: yplot
+ integer, intent(out) :: ierr
+ integer :: i,j,nvars
+ real(kind=rn), dimension(:), allocatable     :: val
 
-  print "(a)",' Plotting function f(x) = '//trim(string)
-  if (len_trim(string) <= 0) then
-     print "(a)",' *** ERROR: blank function string in exact_function call'
-     ierr = 1
-     return
-  endif
-  ierr = 0
-  !
-  !--work out how many subfunctions the string contains
-  !  and allocate memory for the sub function values appropriately
-  !
-  call get_nvars(string,nvars)
-  allocate(val(nvars),stat=ierr)
-  if (ierr /= 0) then
-     print "(a)",' ERROR allocating memory for ',nvars,' sub-functions in exact_function'
-     if (allocated(val)) deallocate(val)
-     return
-  endif
+ print "(a)",' Plotting function f(x) = '//trim(string)
+ if (len_trim(string) <= 0) then
+    print "(a)",' *** ERROR: blank function string in exact_function call'
+    ierr = 1
+    return
+ endif
+ ierr = 0
+ !
+ !--work out how many subfunctions the string contains
+ !  and allocate memory for the sub function values appropriately
+ !
+ call get_nvars(string,nvars)
+ allocate(val(nvars),stat=ierr)
+ if (ierr /= 0) then
+    print "(a)",' ERROR allocating memory for ',nvars,' sub-functions in exact_function'
+    if (allocated(val)) deallocate(val)
+    return
+ endif
 
-  call initf(nvars)
-  call parse_subfunctions(string,nvars,.false.,ierr)
+ call initf(nvars)
+ call parse_subfunctions(string,nvars,.false.,ierr)
 
-  if (EvalErrType /= 0) then
-     print "(a)",' *** ERROR parsing function: '//trim(EvalerrMsg())//' ***'
-     ierr = EvalErrType
-  else
-     do i=1,size(xplot)
-        val(1) = xplot(i)                 ! type conversion here
-        val(2) = time                     ! type conversion here
+ if (EvalErrType /= 0) then
+    print "(a)",' *** ERROR parsing function: '//trim(EvalerrMsg())//' ***'
+    ierr = EvalErrType
+ else
+    do i=1,size(xplot)
+       val(1) = xplot(i)                 ! type conversion here
+       val(2) = time                     ! type conversion here
 
-        !--evaluate sub-functions in order of dependency
-        do j=3,nvars
-           val(j) = evalf(j,val(1:j-1))
-        enddo
-        yplot(i) = real(evalf(1,val(1:nvars)))  ! type conversion back
-        if (EvalErrType /= 0) ierr = EvalErrType
-     enddo
-     if (ierr /= 0) then
-        print "(a)",' *** ERROR during function evaluation: '//trim(EvalerrMsg(ierr))
-        !--set exit error to zero so we plot the results anyway
-        ierr = 0
-     endif
-  endif
+       !--evaluate sub-functions in order of dependency
+       do j=3,nvars
+          val(j) = evalf(j,val(1:j-1))
+       enddo
+       yplot(i) = real(evalf(1,val(1:nvars)))  ! type conversion back
+       if (EvalErrType /= 0) ierr = EvalErrType
+    enddo
+    if (ierr /= 0) then
+       print "(a)",' *** ERROR during function evaluation: '//trim(EvalerrMsg(ierr))
+       !--set exit error to zero so we plot the results anyway
+       ierr = 0
+    endif
+ endif
 
-  call endf
-  if (allocated(val)) deallocate(val)
+ call endf
+ if (allocated(val)) deallocate(val)
 
-  return
+ return
 end subroutine exact_function
 
 !----------------------------------------------------------------

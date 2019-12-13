@@ -42,15 +42,15 @@ logical function issphformat(string)
  issphformat = .false.
  select case(trim(string))
  case('ascii','ASCII')
-     issphformat = .true.
+    issphformat = .true.
  case('binary','BINARY')
-     issphformat = .true.
+    issphformat = .true.
  case('rsph','RSPH')
-     issphformat = .true.
+    issphformat = .true.
  case('phantom','PHANTOM')
-     issphformat = .true.
+    issphformat = .true.
  case('gadget','GADGET')
-     issphformat = .true.
+    issphformat = .true.
  end select
 
  if (.not.issphformat) then
@@ -111,49 +111,49 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
 
     open(unit=iunit,file=trim(filename)//'.ascii',status='replace',form='formatted',iostat=ierr)
-       if (ierr /= 0) then
-          print "(a)",' ERROR OPENING FILE FOR WRITING'
-          return
-       endif
-       write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
-       write(iunit,"('#')",err=100)
-       write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",err=100) trim(unitslabel(0))
-       write(iunit,"('#',2(1x,1pe15.7))",err=100) time,units(0)
-       write(iunit,"('#')",err=100)
-       write(iunit,"('#',1x,'npart:',6(1x,a12))",err=100) (trim(labeltype(i)),i=1,ntypes)
-       write(iunit,"('#',7x,6(1x,i12))",err=100) npartoftype(1:ntypes)
-       write(iunit,"('# units:')",err=100)
-       write(iunit,"('#'"//fmtstring(2:),err=100) units(1:ncolumns)
-       write(iunit,fmtstringlab,err=100) unitslabel(1:ncolumns)
-       write(iunit,"('#')",err=100)
-       !
-       !--write body
-       !
-       change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
-       x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
-       v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'
+       return
+    endif
+    write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
+    write(iunit,"('#')",err=100)
+    write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",err=100) trim(unitslabel(0))
+    write(iunit,"('#',2(1x,1pe15.7))",err=100) time,units(0)
+    write(iunit,"('#')",err=100)
+    write(iunit,"('#',1x,'npart:',6(1x,a12))",err=100) (trim(labeltype(i)),i=1,ntypes)
+    write(iunit,"('#',7x,6(1x,i12))",err=100) npartoftype(1:ntypes)
+    write(iunit,"('# units:')",err=100)
+    write(iunit,"('#'"//fmtstring(2:),err=100) units(1:ncolumns)
+    write(iunit,fmtstringlab,err=100) unitslabel(1:ncolumns)
+    write(iunit,"('#')",err=100)
+    !
+    !--write body
+    !
+    change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
+    x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
+    v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
-       if (size(itype) > 1) then
-          write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
+    if (size(itype) > 1) then
+       write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
+       do i=1,npart
+          vals(1:ncolumns) = dat(i,1:ncolumns)
+          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+          write(iunit,fmtstring2,err=100) vals(1:ncolumns),itype(i)
+       enddo
+    else
+       write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns)
+       if (change_coordsys) then
           do i=1,npart
              vals(1:ncolumns) = dat(i,1:ncolumns)
-             if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
-             write(iunit,fmtstring2,err=100) vals(1:ncolumns),itype(i)
+             call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+             write(iunit,fmtstring,err=100) vals(1:ncolumns)
           enddo
        else
-          write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns)
-          if (change_coordsys) then
-             do i=1,npart
-                vals(1:ncolumns) = dat(i,1:ncolumns)
-                call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
-                write(iunit,fmtstring,err=100) vals(1:ncolumns)
-             enddo
-          else
-             do i=1,npart
-                write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
-             enddo
-          endif
+          do i=1,npart
+             write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
+          enddo
        endif
+    endif
     close(iunit)
 
     return
@@ -169,26 +169,26 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
 !
     print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binary WITH ',ncolumns,' COLUMNS'
     open(unit=iunit,file=trim(filename)//'.binary',status='replace',form='unformatted',iostat=ierr)
-       if (ierr /= 0) then
-          print "(a)",' ERROR OPENING FILE FOR WRITING'
-          return
-       endif
-       write(iunit,iostat=ierr) time,npart,ncolumns
-       if (ierr /= 0) then
-          print "(a)",' ERROR WRITING HEADER LINE TO BINARY FILE '
-       endif
-       !
-       !--write body
-       !
-       if (size(itype) > 1) then
-          do i=1,npart
-             write(iunit,err=200) dat(i,1:ncolumns),int(itype(i))
-          enddo
-       else
-          do i=1,npart
-             write(iunit,err=200) dat(i,1:ncolumns)
-          enddo
-       endif
+    if (ierr /= 0) then
+       print "(a)",' ERROR OPENING FILE FOR WRITING'
+       return
+    endif
+    write(iunit,iostat=ierr) time,npart,ncolumns
+    if (ierr /= 0) then
+       print "(a)",' ERROR WRITING HEADER LINE TO BINARY FILE '
+    endif
+    !
+    !--write body
+    !
+    if (size(itype) > 1) then
+       do i=1,npart
+          write(iunit,err=200) dat(i,1:ncolumns),int(itype(i))
+       enddo
+    else
+       do i=1,npart
+          write(iunit,err=200) dat(i,1:ncolumns)
+       enddo
+    endif
     close(iunit)
 
     return
@@ -288,7 +288,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
                                labeltype,label,ix,ih,ivx,iBfirst,&
                                ipmass,iutherm,filename,0.)
  case('gadget','GADGET')
-     call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
+    call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'

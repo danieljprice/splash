@@ -36,40 +36,40 @@ contains
 ! (most should be set upon call to read_data)
 !---------------------------------------------
 subroutine defaults_set_data
-  use settings_data
-  use params, only:maxplot
-  implicit none
-  integer :: i
+ use settings_data
+ use params, only:maxplot
+ implicit none
+ integer :: i
 
-  numplot=maxplot   ! reset if read from file
-  ncalc = 0         ! number of columns to calculate(e.g. radius)
-  nextra = 0        ! extra plots aside from particle data
-  ncolumns=maxplot-ncalc        ! number of columns in data file
-  ndataplots = ncolumns
-  ndim = 0          ! number of coordinate dimensions
-  ndimV = ndim      ! default velocity same dim as coords
-  istartatstep = 1        ! timestep to start from
-  iendatstep = 1000      ! timestep to finish on
-  nfreq = 1         ! frequency of timesteps to read
-  icoords = 1       ! coordinate system of simulation
-  iformat = 0       ! file format
-  buffer_data = .false.
-  iUseStepList = .false.
-  do i=1,size(isteplist)
-     isteplist(i) = i
-  enddo
-  iCalcQuantities = .false.
-  DataIsBuffered = .false.
-  iRescale = .false.
-  ivegotdata = .false.
-  ntypes = 1
-  xorigin = 0.
-  itracktype = 0 ! particle tracking limits (none)
-  itrackoffset = 0
-  ipartialread = .false.  ! strictly unnecessary as set in get_data
-  iverbose = 1
+ numplot=maxplot   ! reset if read from file
+ ncalc = 0         ! number of columns to calculate(e.g. radius)
+ nextra = 0        ! extra plots aside from particle data
+ ncolumns=maxplot-ncalc        ! number of columns in data file
+ ndataplots = ncolumns
+ ndim = 0          ! number of coordinate dimensions
+ ndimV = ndim      ! default velocity same dim as coords
+ istartatstep = 1        ! timestep to start from
+ iendatstep = 1000      ! timestep to finish on
+ nfreq = 1         ! frequency of timesteps to read
+ icoords = 1       ! coordinate system of simulation
+ iformat = 0       ! file format
+ buffer_data = .false.
+ iUseStepList = .false.
+ do i=1,size(isteplist)
+    isteplist(i) = i
+ enddo
+ iCalcQuantities = .false.
+ DataIsBuffered = .false.
+ iRescale = .false.
+ ivegotdata = .false.
+ ntypes = 1
+ xorigin = 0.
+ itracktype = 0 ! particle tracking limits (none)
+ itrackoffset = 0
+ ipartialread = .false.  ! strictly unnecessary as set in get_data
+ iverbose = 1
 
-  return
+ return
 end subroutine defaults_set_data
 
 !----------------------------------------------------------------------

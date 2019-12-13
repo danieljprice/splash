@@ -62,16 +62,16 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        nreal = 0
     else
        if (abs(b) < eps) then
-       !--no solutions if a = 0, b = 0, c = 0
+          !--no solutions if a = 0, b = 0, c = 0
           if (abs(c) < eps) then
              nreal = 0
           else
-       !--solve linear equation if a = 0, b = 0
+             !--solve linear equation if a = 0, b = 0
              nreal = 1
              x(1) = -d/c
           endif
        else
-       !--solve quadratic for a = 0
+          !--solve quadratic for a = 0
           nreal = 2
           sqrtdet = sqrt(det)
           x(1) = 0.5*(-c + sqrtdet)/b
@@ -91,7 +91,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
 !--determine number of solutions
 !
     if (det < 0.) then
-    !--3 distinct real roots
+       !--3 distinct real roots
        nreal = 3
        term = sqrt(abs(p)/3.)
        phi = acos(-0.5*q*term**(-3))
@@ -102,7 +102,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        y2 = -2.*term*cos((phi + pi)/3.)
        y3 = -2.*term*cos((phi - pi)/3.)
     else
-    !--1 real, 2 complex roots
+       !--1 real, 2 complex roots
        term = -0.5*q + sqrt(det)
        !--must take cube root of positive quantity, then give sign later
        !  (otherwise gives NaNs)
@@ -111,7 +111,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        v = (abs(term))**(1/3.)*SIGN(1.0,term)
        nreal = 1
        y1 = u + v
-    !--if det=0, 3 real roots, but at least 2 equal, so max of 2 unique roots)
+       !--if det=0, 3 real roots, but at least 2 equal, so max of 2 unique roots)
        if (abs(det) < tiny(det)) then
           nreal = 2
           y2 = -(u + v)/2.
@@ -185,7 +185,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  q2 = q*q
  det = (p*p*p)/27. + 0.25*q2
  if (det < 0) then
- !--3 distinct real roots
+    !--3 distinct real roots
     nroots = 3
     term = sqrt(abs(p)/3.)
     phi = acos(-0.5*q*term**(-3))
@@ -196,7 +196,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
     x(2) = real(-2.d0*term*cos((phi + pi)/3.d0))
     x(3) = real(-2.d0*term*cos((phi - pi)/3.d0))
  else
- !--1 real, two complex
+    !--1 real, two complex
     nroots = 1
     if (abs(det) < tiny(det)) nroots = 2
     term = -0.5*q + sqrt(det)

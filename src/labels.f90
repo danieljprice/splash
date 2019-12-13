@@ -175,7 +175,7 @@ elemental function shortstring(string,unitslab)
  !--strip off the units label
  if (present(unitslab)) then
     if (len_trim(unitslab) > 0) then
-    !--remove units label (only do this once)
+       !--remove units label (only do this once)
        ipos = index(trim(shortstring),trim(unitslab))
        if (ipos /= 0) then
           shortstring = shortstring(1:ipos-1)//&
@@ -238,51 +238,51 @@ end function shortlabel
 !---------------------------------------------------------------
 function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
                          projlabelformat,iapplyprojformat)
-  use asciiutils,      only:string_replace,string_delete
-  implicit none
-  character(len=*), intent(in) :: labelin,labelzint,projlabelformat
-  integer, intent(in) :: iplot,izcol,iapplyprojformat
-  logical, intent(in) :: normalise,iRescale
-  character(len=len(label)+20) :: integrate_label
+ use asciiutils,      only:string_replace,string_delete
+ implicit none
+ character(len=*), intent(in) :: labelin,labelzint,projlabelformat
+ integer, intent(in) :: iplot,izcol,iapplyprojformat
+ logical, intent(in) :: normalise,iRescale
+ character(len=len(label)+20) :: integrate_label
 
-  if (len_trim(projlabelformat) /= 0 .and. (iapplyprojformat==0 .or. iapplyprojformat==iplot)) then
-     integrate_label = projlabelformat
-     call string_replace(integrate_label,'%l',trim(labelin))
-     if (iRescale) then
-        call string_replace(integrate_label,'%z',trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1)))
-        call string_replace(integrate_label,'%uz',trim(unitslabel(izcol)))
-     else
-        call string_replace(integrate_label,'%z',trim(label(izcol)))
-     endif
-  else
-     if (normalise) then
-        integrate_label = '< '//trim(labelin)//' >'
-     else
-        if (iRescale) then
-           ! use composite units label e.g. \int rho_d [g/cm^3 pc]
-           integrate_label = '\int '// &
+ if (len_trim(projlabelformat) /= 0 .and. (iapplyprojformat==0 .or. iapplyprojformat==iplot)) then
+    integrate_label = projlabelformat
+    call string_replace(integrate_label,'%l',trim(labelin))
+    if (iRescale) then
+       call string_replace(integrate_label,'%z',trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1)))
+       call string_replace(integrate_label,'%uz',trim(unitslabel(izcol)))
+    else
+       call string_replace(integrate_label,'%z',trim(label(izcol)))
+    endif
+ else
+    if (normalise) then
+       integrate_label = '< '//trim(labelin)//' >'
+    else
+       if (iRescale) then
+          ! use composite units label e.g. \int rho_d [g/cm^3 pc]
+          integrate_label = '\int '// &
              trim(labelin(1:index(labelin,unitslabel(iplot))-1))//' d'// &
              trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))// &
              get_unitlabel_coldens(iRescale,labelzint,unitslabel(iplot))
-           ! use mix of units labels \int rho_d [g/cm^3] dz [pc]
-           !integrate_label = '\int '//trim(labelin)//' d'// &
-           !  trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
-        else
-           integrate_label = '\int '//trim(labelin)//' d'//trim(label(izcol))
-        endif
-        if (index(labelin,'\rho_{d,') > 0) then
-           integrate_label = labelin(1:index(labelin,unitslabel(iplot))-1)
-           call string_delete(integrate_label,'\rho_{d,')
-           call string_delete(integrate_label,'}')
-           integrate_label = trim(integrate_label)//' dust surface density'
-           integrate_label = trim(integrate_label)//get_unitlabel_coldens(iRescale,labelzint,unitslabel(iplot))
-        endif
-        if (iplot==irho .and. (index(labelin,'density') /= 0 .or. index(labelin,'rho') /= 0)) then
-           integrate_label = 'column density'
-           integrate_label = trim(integrate_label)//get_unitlabel_coldens(iRescale,labelzint,unitslabel(irho))
-        endif
-     endif
-  endif
+          ! use mix of units labels \int rho_d [g/cm^3] dz [pc]
+          !integrate_label = '\int '//trim(labelin)//' d'// &
+          !  trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
+       else
+          integrate_label = '\int '//trim(labelin)//' d'//trim(label(izcol))
+       endif
+       if (index(labelin,'\rho_{d,') > 0) then
+          integrate_label = labelin(1:index(labelin,unitslabel(iplot))-1)
+          call string_delete(integrate_label,'\rho_{d,')
+          call string_delete(integrate_label,'}')
+          integrate_label = trim(integrate_label)//' dust surface density'
+          integrate_label = trim(integrate_label)//get_unitlabel_coldens(iRescale,labelzint,unitslabel(iplot))
+       endif
+       if (iplot==irho .and. (index(labelin,'density') /= 0 .or. index(labelin,'rho') /= 0)) then
+          integrate_label = 'column density'
+          integrate_label = trim(integrate_label)//get_unitlabel_coldens(iRescale,labelzint,unitslabel(irho))
+       endif
+    endif
+ endif
 end function integrate_label
 
 !-----------------------------------------------------------------

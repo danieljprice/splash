@@ -34,27 +34,27 @@ module system_commands
 
 contains
 
- subroutine get_number_arguments(nargs)
-    integer, intent(out) :: nargs
+subroutine get_number_arguments(nargs)
+ integer, intent(out) :: nargs
 
-    nargs = COMMAND_ARGUMENT_COUNT()
+ nargs = COMMAND_ARGUMENT_COUNT()
 
- end subroutine get_number_arguments
+end subroutine get_number_arguments
 
- subroutine get_argument(iarg,argstring)
-    integer, intent(in) :: iarg
-    character(len=*), intent(out) :: argstring
+subroutine get_argument(iarg,argstring)
+ integer, intent(in) :: iarg
+ character(len=*), intent(out) :: argstring
 
-    call GET_COMMAND_ARGUMENT(iarg,argstring)
+ call GET_COMMAND_ARGUMENT(iarg,argstring)
 
- end subroutine get_argument
+end subroutine get_argument
 
- subroutine get_environment(variable,value)
-    character(len=*), intent(in) :: variable
-    character(len=*), intent(out) :: value
+subroutine get_environment(variable,value)
+ character(len=*), intent(in) :: variable
+ character(len=*), intent(out) :: value
 
-    call GET_ENVIRONMENT_VARIABLE(variable,value)
+ call GET_ENVIRONMENT_VARIABLE(variable,value)
 
- end subroutine get_environment
+end subroutine get_environment
 
 end module system_commands

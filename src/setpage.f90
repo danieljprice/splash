@@ -73,68 +73,68 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
                     vmarginleftin,vmarginrightin,vmarginbottomin,vmargintopin, &
                     colourbarwidth,titleoffset,isamexaxis,tile,adjustlimits,lastrow,lastplot,&
                     yscale,labelyalt,itransy)
-  use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
+ use plotlib,only:plot_svp,plot_swin,plot_box,plot_qvsz,plot_annotate, &
                    plot_page,plot_qcs,plot_wnad,plot_set_exactpixelboundaries, &
                    plot_qvp
-  use asciiutils, only:string_delete
-  integer, intent(in) :: iplotin,nx,ny,just,axis,itransy
-  real, intent(inout) :: xmin, xmax, ymin, ymax
-  real, intent(in)    :: colourbarwidth, titleoffset
-  real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
-  real, intent(in)    :: yscale
-  character(len=*), intent(in) :: labelx,labely,title,labelyalt
-  logical, intent(in) :: isamexaxis,tile,adjustlimits,lastrow,lastplot
-  integer iplot,ix,iy
-  real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
-  real vmargintop,vmarginbottom,vmarginleft,vmarginright
-  real vptxmin,vptxmax,vptymin,vptymax
-  real aspectratio,devaspectratio,x1,x2,y1,y2
-  real xch,ych,dx,dy,xcen,ycen
-  character(len=10)  :: xopts, yopts
-  logical, parameter :: useexactpixelboundaries = .true.
-  logical :: plot_alt_y_axis
+ use asciiutils, only:string_delete
+ integer, intent(in) :: iplotin,nx,ny,just,axis,itransy
+ real, intent(inout) :: xmin, xmax, ymin, ymax
+ real, intent(in)    :: colourbarwidth, titleoffset
+ real, intent(in)    :: vmarginleftin,vmarginrightin,vmargintopin,vmarginbottomin
+ real, intent(in)    :: yscale
+ character(len=*), intent(in) :: labelx,labely,title,labelyalt
+ logical, intent(in) :: isamexaxis,tile,adjustlimits,lastrow,lastplot
+ integer iplot,ix,iy
+ real vptsizeeffx,vptsizeeffy,panelsizex,panelsizey
+ real vmargintop,vmarginbottom,vmarginleft,vmarginright
+ real vptxmin,vptxmax,vptymin,vptymax
+ real aspectratio,devaspectratio,x1,x2,y1,y2
+ real xch,ych,dx,dy,xcen,ycen
+ character(len=10)  :: xopts, yopts
+ logical, parameter :: useexactpixelboundaries = .true.
+ logical :: plot_alt_y_axis
 
-  if (axis==4) then
-     plot_alt_y_axis = .true.
-  else
-     plot_alt_y_axis = .false.
-  endif
+ if (axis==4) then
+    plot_alt_y_axis = .true.
+ else
+    plot_alt_y_axis = .false.
+ endif
 !
 ! new page if iplot > number of plots on page
 !
-  if (iplotin > nx*ny) then
-     if (mod(iplotin,nx*ny)==1)  call plot_page
-     iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
-  elseif (iplotin <= 0) then
-     return
-  else
-     iplot = iplotin
-  endif
+ if (iplotin > nx*ny) then
+    if (mod(iplotin,nx*ny)==1)  call plot_page
+    iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
+ elseif (iplotin <= 0) then
+    return
+ else
+    iplot = iplotin
+ endif
 !
 ! check for errors in input
 !
-  if (nx <= 0 .or. ny <= 0) return
+ if (nx <= 0 .or. ny <= 0) return
 !
 ! for tiled plots, adjust effective viewport size if just=1 and graphs are not square
 !
-  if (tile .and. just==1) then
-     if (abs(ymax-ymin) < tiny(ymin)) then
-        print*,'setpage: error tiling plots: ymax=ymin'
-        return
-     endif
+ if (tile .and. just==1) then
+    if (abs(ymax-ymin) < tiny(ymin)) then
+       print*,'setpage: error tiling plots: ymax=ymin'
+       return
+    endif
 !
 ! query the current aspect ratio of the device and set aspect ratio appropriately
 !
-     call plot_qvsz(3,x1,x2,y1,y2)
-     devaspectratio = (x2-x1)/(y2-y1)
-     if (.not.adjustlimits) then
-        aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
-     else
-        aspectratio = 1.0
-     endif
-  else
-     aspectratio = 1.0
-  endif
+    call plot_qvsz(3,x1,x2,y1,y2)
+    devaspectratio = (x2-x1)/(y2-y1)
+    if (.not.adjustlimits) then
+       aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
+    else
+       aspectratio = 1.0
+    endif
+ else
+    aspectratio = 1.0
+ endif
 !
 ! set positions of x and y labels in units of character height from edge
 !
@@ -143,7 +143,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! query the character height as fraction of viewport
 !
-  call plot_qcs(0,xch,ych)
+ call plot_qcs(0,xch,ych)
 !
 ! set margin size in units of viewport dimensions
 ! allow enough room for the plot labels if they are drawn
@@ -153,105 +153,105 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 ! for tiled plots, these margins apply to the whole page
 ! otherwise, these are applied to each panel individually
 !
-  vmargintop = vmargintopin
-  vmarginright = vmarginrightin
-  if (axis >= 0) then
-     !--if we are drawing an axis
-     !  leave a minimum of half a character
-     !  spacing (or 0.7 for antialiasing)
-     !  so that axis numbers are not chopped
-     !  in half at the edges of the viewport
-     vmargintop = max(vmargintop,0.7*ych)
-     vmarginright = max(vmarginright,0.7*xch)
-     !--leave space for labels
-     if (axis /= 3) then
-        vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
-        vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
-     else
-        vmarginleft = vmarginleftin + 2.0*xch
-        vmarginbottom = vmarginbottomin + 1.5*ych
-     endif
-     if (plot_alt_y_axis) vmarginright = vmarginleft
+ vmargintop = vmargintopin
+ vmarginright = vmarginrightin
+ if (axis >= 0) then
+    !--if we are drawing an axis
+    !  leave a minimum of half a character
+    !  spacing (or 0.7 for antialiasing)
+    !  so that axis numbers are not chopped
+    !  in half at the edges of the viewport
+    vmargintop = max(vmargintop,0.7*ych)
+    vmarginright = max(vmarginright,0.7*xch)
+    !--leave space for labels
+    if (axis /= 3) then
+       vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
+       vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
+    else
+       vmarginleft = vmarginleftin + 2.0*xch
+       vmarginbottom = vmarginbottomin + 1.5*ych
+    endif
+    if (plot_alt_y_axis) vmarginright = vmarginleft
 
-     if (.not.tile) then
-        if (ny > 1 .and. .not.isamexaxis) then
-           vmarginbottom = vmarginbottom + 0.5*ych
-        elseif (ny > 1) then
-           vmarginbottom = vmarginbottom + 0.25*ych
-        endif
-     endif
-  else
-     vmarginleft = vmarginleftin
-     vmarginbottom = vmarginbottomin
-  endif
+    if (.not.tile) then
+       if (ny > 1 .and. .not.isamexaxis) then
+          vmarginbottom = vmarginbottom + 0.5*ych
+       elseif (ny > 1) then
+          vmarginbottom = vmarginbottom + 0.25*ych
+       endif
+    endif
+ else
+    vmarginleft = vmarginleftin
+    vmarginbottom = vmarginbottomin
+ endif
 !
 !--set size of each panel
 !
-  ix = iplot - ((iplot-1)/nx)*nx
-  iy = (iplot-1)/nx + 1
+ ix = iplot - ((iplot-1)/nx)*nx
+ iy = (iplot-1)/nx + 1
 
-  if (tile) then
-     !--also leave room for title if necessary
-     if (titleoffset >= 0.) then
-        vmargintop = vmargintop + (titleoffset+1.)*ych
-     endif
+ if (tile) then
+    !--also leave room for title if necessary
+    if (titleoffset >= 0.) then
+       vmargintop = vmargintop + (titleoffset+1.)*ych
+    endif
 
-     !
-     ! effective viewport size = size - margins (only used for tiled
-     !
-     vptsizeeffx = 1.0 - vmarginright - vmarginleft
-     vptsizeeffy = 1.0 - vmargintop - vmarginbottom
-     !     reduce x or y size if just=1 to get right aspect ratio
-     if (.not.adjustlimits) then
-        if (aspectratio <= 1.0 .and. just==1) then
-           if (aspectratio*vptsizeeffy < vptsizeeffx) then
-              vptsizeeffx = aspectratio*vptsizeeffy
-           !  but this could still be bigger than the margins allow...
-           else
-              vptsizeeffy = vptsizeeffx/aspectratio
-           endif
-        elseif (aspectratio > 1.0 .and. just==1) then
-           if (vptsizeeffx/aspectratio < vptsizeeffy) then
-              vptsizeeffy = vptsizeeffx/aspectratio
-           !  but this could still be bigger than the margins allow...
-           else
-              vptsizeeffx = vptsizeeffy*aspectratio
-           endif
-        endif
-     endif
+    !
+    ! effective viewport size = size - margins (only used for tiled
+    !
+    vptsizeeffx = 1.0 - vmarginright - vmarginleft
+    vptsizeeffy = 1.0 - vmargintop - vmarginbottom
+    !     reduce x or y size if just=1 to get right aspect ratio
+    if (.not.adjustlimits) then
+       if (aspectratio <= 1.0 .and. just==1) then
+          if (aspectratio*vptsizeeffy < vptsizeeffx) then
+             vptsizeeffx = aspectratio*vptsizeeffy
+             !  but this could still be bigger than the margins allow...
+          else
+             vptsizeeffy = vptsizeeffx/aspectratio
+          endif
+       elseif (aspectratio > 1.0 .and. just==1) then
+          if (vptsizeeffx/aspectratio < vptsizeeffy) then
+             vptsizeeffy = vptsizeeffx/aspectratio
+             !  but this could still be bigger than the margins allow...
+          else
+             vptsizeeffx = vptsizeeffy*aspectratio
+          endif
+       endif
+    endif
 
-     panelsizex = vptsizeeffx/nx
-     panelsizey = vptsizeeffy/ny
+    panelsizex = vptsizeeffx/nx
+    panelsizey = vptsizeeffy/ny
 !         print*,ix,iy,nx,ny
 !         print*,panelsizex,panelsizey,vptsizeeffx,vptsizeeffy
 
 !     print*,'margins = ',vmarginleft,vmarginright
-     vptxmin = vmarginleft + (ix-1)*panelsizex
-     vptxmax = vptxmin + panelsizex
-     vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
-     vptymin = vptymax - panelsizey
-  else
-     !--use full page for non-tiled plots, then set margins inside each panel
-     panelsizex = 1.0/nx
-     panelsizey = 1.0/ny
-     vptxmin = (ix-1)*panelsizex + vmarginleft
-     vptxmax = ix*panelsizex - vmarginright
-     vptymax = 1.0 - (iy-1)*panelsizey - vmargintop
-     vptymin = 1.0 - iy*panelsizey + vmarginbottom
+    vptxmin = vmarginleft + (ix-1)*panelsizex
+    vptxmax = vptxmin + panelsizex
+    vptymax = (1.0 - vmargintop) - (iy-1)*panelsizey
+    vptymin = vptymax - panelsizey
+ else
+    !--use full page for non-tiled plots, then set margins inside each panel
+    panelsizex = 1.0/nx
+    panelsizey = 1.0/ny
+    vptxmin = (ix-1)*panelsizex + vmarginleft
+    vptxmax = ix*panelsizex - vmarginright
+    vptymax = 1.0 - (iy-1)*panelsizey - vmargintop
+    vptymin = 1.0 - iy*panelsizey + vmarginbottom
 
 
-     !--also leave room for title if necessary
-     if (titleoffset >= 0.) then
-        vptymax = vptymax - (titleoffset+1.)*ych
-     endif
+    !--also leave room for title if necessary
+    if (titleoffset >= 0.) then
+       vptymax = vptymax - (titleoffset+1.)*ych
+    endif
 
-     !--also leave room for colour bar if necessary
-     if (colourbarwidth > 0.) then
-        vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
-     endif
+    !--also leave room for colour bar if necessary
+    if (colourbarwidth > 0.) then
+       vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
+    endif
 
-  endif
-  !    print*,vptxmin,vptxmax,vptymin,vptymax
+ endif
+ !    print*,vptxmin,vptxmax,vptymin,vptymax
 !
 ! set viewport
 !
@@ -292,120 +292,120 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! option to return before actually doing anything
 !
-  if (trim(title)=='NOPGBOX') return
+ if (trim(title)=='NOPGBOX') return
 !
 ! set options for call to pgbox (draws axes) and label axes where appropriate
 ! (options are exactly as in pgenv apart from axis=-3,-4 which i have added)
 !
-  yopts = '*'
-  select case(axis)
-  case(-4)
-     xopts = 'BCT'
-  case(-3)
-     xopts = 'BCST'
-  case(-2)
-     xopts = ' '
-  case(-1)
-    xopts = 'BC'
-  case(0,4)
-    xopts = 'BCST'
-  case(1)
-    xopts = 'ABCST'
-  case(2)
-    xopts = 'ABCGST'
-  case(3)
-    xopts = 'BCST'
-  case(5)
+ yopts = '*'
+ select case(axis)
+ case(-4)
     xopts = 'BCT'
-  case(10)
+ case(-3)
+    xopts = 'BCST'
+ case(-2)
+    xopts = ' '
+ case(-1)
+    xopts = 'BC'
+ case(0,4)
+    xopts = 'BCST'
+ case(1)
+    xopts = 'ABCST'
+ case(2)
+    xopts = 'ABCGST'
+ case(3)
+    xopts = 'BCST'
+ case(5)
+    xopts = 'BCT'
+ case(10)
     xopts = 'BCSTL'
     yopts = 'BCST'
-  case(20)
+ case(20)
     xopts = 'BCST'
     yopts = 'BCSTL'
-  case(30)
+ case(30)
     xopts = 'BCSTL'
     yopts = 'BCSTL'
-  case default
+ case default
     print*,'setpage: illegal axis argument.'
     xopts = 'BCNST'
-  end select
-  if (yopts=='*') yopts = xopts
+ end select
+ if (yopts=='*') yopts = xopts
 
-  if (plot_alt_y_axis) call string_delete(yopts,'C')
+ if (plot_alt_y_axis) call string_delete(yopts,'C')
 !
 ! label plot
 !
-  if (tile) then
-     !
-     ! decide whether to number and label the y axis
-     !
-     if (ix==nx .and. axis >= 0) then
-        !
-        !--apply label to right hand side axis if used
-        !
-        if (plot_alt_y_axis) then
-           call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
-        endif
-     endif
-     if (ix==1 .and. axis >= 0) then
-        !
-        !--label "normal" y axis
-        !
-        if (axis==3) then
-           yopts = '1N'//trim(yopts)
-        else
-           yopts = '1VN'//trim(yopts)
-           call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
-        endif
-     elseif (axis >= 0) then
-        !yopts = trim(yopts)//'N'
-     endif
-     !
-     ! decide whether to number and label the x axis
-     !
-     if ((iy==ny .or. lastplot .or. lastrow) .and. axis >= 0) then
-        xopts = 'N'//trim(xopts)
-        if (axis /= 3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
-     endif
-     !
-     ! plot the title if inside the plot boundaries
-     !
-     if (titleoffset < 0.) call plot_annotate('t',-titleoffset,0.96,1.0,title)
-
-  elseif (axis >= 0) then
-     !
-     !--label x axis only if on last row
-     !  or if x axis quantities are different
-     !
-     if (((ny*nx-iplot) < nx).or.(.not.isamexaxis).or.lastplot) then
+ if (tile) then
+    !
+    ! decide whether to number and label the y axis
+    !
+    if (ix==nx .and. axis >= 0) then
+       !
+       !--apply label to right hand side axis if used
+       !
+       if (plot_alt_y_axis) then
+          call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
+       endif
+    endif
+    if (ix==1 .and. axis >= 0) then
+       !
+       !--label "normal" y axis
+       !
+       if (axis==3) then
+          yopts = '1N'//trim(yopts)
+       else
+          yopts = '1VN'//trim(yopts)
+          call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+       endif
+    elseif (axis >= 0) then
+       !yopts = trim(yopts)//'N'
+    endif
+    !
+    ! decide whether to number and label the x axis
+    !
+    if ((iy==ny .or. lastplot .or. lastrow) .and. axis >= 0) then
+       xopts = 'N'//trim(xopts)
        if (axis /= 3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
-     endif
-     !--always plot numbers
-     xopts = 'N'//trim(xopts)
-     !
-     !--apply label to right hand side axis if used
-     !
-     if (plot_alt_y_axis) then
-        call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
-     endif
-     !
-     !--always label y axis
-     !
-     if (axis==3) then
-        yopts = '1N'//trim(yopts)
-     else
-        yopts = '1VN'//trim(yopts)
-        call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
-     endif
-     !
-     !--always plot title
-     !
-     call plot_annotate('T',-titleoffset,0.5,0.5,title)
+    endif
+    !
+    ! plot the title if inside the plot boundaries
+    !
+    if (titleoffset < 0.) call plot_annotate('t',-titleoffset,0.96,1.0,title)
 
-  endif
+ elseif (axis >= 0) then
+    !
+    !--label x axis only if on last row
+    !  or if x axis quantities are different
+    !
+    if (((ny*nx-iplot) < nx).or.(.not.isamexaxis).or.lastplot) then
+       if (axis /= 3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
+    endif
+    !--always plot numbers
+    xopts = 'N'//trim(xopts)
+    !
+    !--apply label to right hand side axis if used
+    !
+    if (plot_alt_y_axis) then
+       call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
+    endif
+    !
+    !--always label y axis
+    !
+    if (axis==3) then
+       yopts = '1N'//trim(yopts)
+    else
+       yopts = '1VN'//trim(yopts)
+       call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
+    endif
+    !
+    !--always plot title
+    !
+    call plot_annotate('T',-titleoffset,0.5,0.5,title)
 
-  call plot_box(xopts,0.0,0,yopts,0.0,0)
+ endif
+
+ call plot_box(xopts,0.0,0,yopts,0.0,0)
 
 end subroutine
 
@@ -418,53 +418,53 @@ end subroutine
 !
 
 subroutine redraw_axes(iaxis,just,yscale,itransy)
-  use plotlib, only:plot_box
-  integer, intent(in) :: iaxis,just,itransy
-  character(len=10) :: xopts, yopts
-  real, intent(in)  :: yscale
+ use plotlib, only:plot_box
+ integer, intent(in) :: iaxis,just,itransy
+ character(len=10) :: xopts, yopts
+ real, intent(in)  :: yscale
 !
 !--set plot axes (options are exactly as in PGENV, with axis=-4,-3,+3 added)
 !
-  yopts = '*'
-  select case(iaxis)
-  case(-4)
-     xopts = 'BCT'
-  case(-3)
-     xopts = 'BCST'
-  case(-2)
-     xopts = ' '
-  case(-1)
-     xopts = 'BC'
-  case(0)
-     xopts = 'BCST'
-  case(1)
-     xopts = 'ABCST'
-  case(2)
-     xopts = 'ABCGST'
-  case(3)
-     xopts = 'BCST'
-  case(4)
-     xopts = 'BCST'
-     yopts = 'BST'
-  case(5)
-     xopts = 'BCT'
-  case(10)
-     xopts = 'BCSTL'
-     yopts = 'BCST'
-  case(20)
-     xopts = 'BCST'
-     yopts = 'BCSTL'
-  case(30)
-     xopts = 'BCSTL'
-     yopts = 'BCSTL'
-  case default
-     print*,'redraw_axes: illegal AXIS argument.'
-     xopts = 'BCST'
-  end select
-  if (yopts=='*') yopts = xopts
+ yopts = '*'
+ select case(iaxis)
+ case(-4)
+    xopts = 'BCT'
+ case(-3)
+    xopts = 'BCST'
+ case(-2)
+    xopts = ' '
+ case(-1)
+    xopts = 'BC'
+ case(0)
+    xopts = 'BCST'
+ case(1)
+    xopts = 'ABCST'
+ case(2)
+    xopts = 'ABCGST'
+ case(3)
+    xopts = 'BCST'
+ case(4)
+    xopts = 'BCST'
+    yopts = 'BST'
+ case(5)
+    xopts = 'BCT'
+ case(10)
+    xopts = 'BCSTL'
+    yopts = 'BCST'
+ case(20)
+    xopts = 'BCST'
+    yopts = 'BCSTL'
+ case(30)
+    xopts = 'BCSTL'
+    yopts = 'BCSTL'
+ case default
+    print*,'redraw_axes: illegal AXIS argument.'
+    xopts = 'BCST'
+ end select
+ if (yopts=='*') yopts = xopts
 
-  if (iaxis==4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
-  call plot_box(xopts,0.0,0,yopts,0.0,0)
+ if (iaxis==4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
+ call plot_box(xopts,0.0,0,yopts,0.0,0)
 
 end subroutine redraw_axes
 

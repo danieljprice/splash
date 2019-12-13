@@ -100,11 +100,11 @@ subroutine setup_calculated_quantities(ncalc)
           enddo
           iend = istart + 1
        case('c')
-           calcstring(:) = ' '
-           calclabel(:) = ' '
-           calcunitslabel(:) = ' '
-           first = .false.
-           cycle calcmenu
+          calcstring(:) = ' '
+          calclabel(:) = ' '
+          calcunitslabel(:) = ' '
+          first = .false.
+          cycle calcmenu
        case('q','Q','s','S')
           done = .true.
        case default
@@ -339,7 +339,7 @@ subroutine print_example_quantities(verbose,ncalc)
     endif
     call print_or_prefill(prefill,string,nc)
  elseif (ncolumns >= 2 .and. .not.prefill) then
- !--if ndim=0 give random example to give at least one
+    !--if ndim=0 give random example to give at least one
     print "(11x,a)",trim(shortlabel(label(1)))//'*'//trim(shortlabel(label(2)))
  endif
 
@@ -706,202 +706,202 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
-  use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
+ use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
                            count_non_blank,headertags
-  use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
-  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
+ use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
+ use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread,itracktype,itrackoffset
-  use mem_allocation, only:alloc
-  use settings_units, only:units
-  use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
-  use params,         only:maxplot
-  use timing,         only:wall_time,print_time
-  use geomutils,      only:change_coords
-  use part_utils,     only:get_tracked_particle
-  integer, intent(in) :: ifromstep, itostep
-  logical, intent(in), optional :: dontcalculate
-  integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
-  integer :: ndust,nhdr
-  logical :: skip
+ use mem_allocation, only:alloc
+ use settings_units, only:units
+ use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
+ use params,         only:maxplot
+ use timing,         only:wall_time,print_time
+ use geomutils,      only:change_coords
+ use part_utils,     only:get_tracked_particle
+ integer, intent(in) :: ifromstep, itostep
+ logical, intent(in), optional :: dontcalculate
+ integer :: i,j,ncolsnew,ierr,icalc,ntoti,nvars,ncalctot,nused,itrackpart
+ integer :: ndust,nhdr
+ logical :: skip
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
-  real(kind=rn), dimension(maxplot+nextravars+maxhdr)          :: vals
-  character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
-  real, dimension(3) :: x0,v0
-  real :: t1,t2
+ real(kind=rn), dimension(maxplot+nextravars+maxhdr)          :: vals
+ character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
+ real, dimension(3) :: x0,v0
+ real :: t1,t2
 
-  !
-  !--allow dummy call to set labels without actually calculating stuff
-  !
-  if (present(dontcalculate)) then
-     skip = dontcalculate
-  else
-     skip = .false.
-  endif
+ !
+ !--allow dummy call to set labels without actually calculating stuff
+ !
+ if (present(dontcalculate)) then
+    skip = dontcalculate
+ else
+    skip = .false.
+ endif
 
-  ierr = 0
-  ncalc = 0
-  call check_calculated_quantities(ncalc,ncalctot,verbose=(.not.skip .and. iverbose > 0))
+ ierr = 0
+ ncalc = 0
+ call check_calculated_quantities(ncalc,ncalctot,verbose=(.not.skip .and. iverbose > 0))
 
-  if (.not.skip .and. ncalc > 0) then
-     nused = 0
-     if (.not.ipartialread) then
-        !
-        !--need to be careful if data file has been read fully
-        !  as in this case we also assume all calculated quantities
-        !  have been done. So need to make sure that all quantities
-        !  *are* actually calculated in this case.
-        !
-        required(:) = .true.
-     endif
-     do i=1,ncalc
-        if (required(ncolumns+i)) nused = nused + 1
-     enddo
-     if (iverbose > 0) print "(2(a,i2),a,/)",' Calculating ',nused,' of ',ncalctot,' additional quantities...'
-  endif
-  ncolsnew = ncolumns + ncalc
-  if (ncolsnew > maxcol) call alloc(maxpart,maxstep,ncolsnew)
+ if (.not.skip .and. ncalc > 0) then
+    nused = 0
+    if (.not.ipartialread) then
+       !
+       !--need to be careful if data file has been read fully
+       !  as in this case we also assume all calculated quantities
+       !  have been done. So need to make sure that all quantities
+       !  *are* actually calculated in this case.
+       !
+       required(:) = .true.
+    endif
+    do i=1,ncalc
+       if (required(ncolumns+i)) nused = nused + 1
+    enddo
+    if (iverbose > 0) print "(2(a,i2),a,/)",' Calculating ',nused,' of ',ncalctot,' additional quantities...'
+ endif
+ ncolsnew = ncolumns + ncalc
+ if (ncolsnew > maxcol) call alloc(maxpart,maxstep,ncolsnew)
 
-  !
-  !--reset iamvec to zero for calculated columns
-  !
-  iamvec(ncolumns+1:ncolsnew) = 0
-  labelvec(ncolumns+1:ncolsnew) = ' '
+ !
+ !--reset iamvec to zero for calculated columns
+ !
+ iamvec(ncolumns+1:ncolsnew) = 0
+ labelvec(ncolumns+1:ncolsnew) = ' '
 
-  !
-  !--evaluate functions in turn
-  !
-  if (.not.skip .and. ncalc > 0) then
-     call initf(ncalc)
-     !
-     !--compile each function into bytecode
-     !
-     icalc = 1
-     do i=1,maxcalc
-        if (icalc <= ncalc) then
+ !
+ !--evaluate functions in turn
+ !
+ if (.not.skip .and. ncalc > 0) then
+    call initf(ncalc)
+    !
+    !--compile each function into bytecode
+    !
+    icalc = 1
+    do i=1,maxcalc
+       if (icalc <= ncalc) then
 
-           !
-           !--get the list of valid variable names for this column
-           !
-           call get_variables(ncolumns+icalc-1,nvars,vars)
-           !
-           !--now actually parse the function
-           !
-           call parsef(icalc,shortstring(calcstring(i)),vars(1:nvars),err=ierr,Verbose=.false.)
-           if (ierr==0) then
-              icalc = icalc + 1
-           endif
-        endif
-     enddo
-     !
-     !--evaluate functions from particle data
-     !
-     call wall_time(t1)
-     do i=ifromstep,itostep
-        ntoti = SUM(npartoftype(:,i))
-        ndust = npartoftype(2,i)
-        !
-        !--set origin position
-        !
-        v0(:) = 0.
-        itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype(:,i),iamtype(:,i))
-        if (itrackpart > 0 .and. itrackpart <= ntoti) then
-           x0(:) = 0.
-           if (ix(1) > 0 .and. ix(1) <= ncolumns) then
-              x0(1) = dat(itrackpart,ix(1),i)
-           else
-              print*,'** internal error: tracking particle set but cannot locate x coordinate'
-           endif
-           if (ix(2) > 0 .and. ix(2) <= ncolumns) x0(2) = dat(itrackpart,ix(2),i)
-           if (ix(3) > 0 .and. ix(3) <= ncolumns) x0(3) = dat(itrackpart,ix(3),i)
-           if (i==ifromstep) then
-              print "(a,i10)",' using position of tracked particle ',itrackpart
-              print "(a,3(e11.3),/)",' (x0,y0,z0) = ',dat(itrackpart,ix(1:ndim),i)
-           endif
-           if (ivx > 0 .and. ivx+ndim-1 <= ncolumns) then
-              v0(1:ndim) = dat(itrackpart,ivx:ivx+ndim-1,i)
-           endif
-        else
-           x0(:) = xorigin(:)
-        endif
+          !
+          !--get the list of valid variable names for this column
+          !
+          call get_variables(ncolumns+icalc-1,nvars,vars)
+          !
+          !--now actually parse the function
+          !
+          call parsef(icalc,shortstring(calcstring(i)),vars(1:nvars),err=ierr,Verbose=.false.)
+          if (ierr==0) then
+             icalc = icalc + 1
+          endif
+       endif
+    enddo
+    !
+    !--evaluate functions from particle data
+    !
+    call wall_time(t1)
+    do i=ifromstep,itostep
+       ntoti = SUM(npartoftype(:,i))
+       ndust = npartoftype(2,i)
+       !
+       !--set origin position
+       !
+       v0(:) = 0.
+       itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype(:,i),iamtype(:,i))
+       if (itrackpart > 0 .and. itrackpart <= ntoti) then
+          x0(:) = 0.
+          if (ix(1) > 0 .and. ix(1) <= ncolumns) then
+             x0(1) = dat(itrackpart,ix(1),i)
+          else
+             print*,'** internal error: tracking particle set but cannot locate x coordinate'
+          endif
+          if (ix(2) > 0 .and. ix(2) <= ncolumns) x0(2) = dat(itrackpart,ix(2),i)
+          if (ix(3) > 0 .and. ix(3) <= ncolumns) x0(3) = dat(itrackpart,ix(3),i)
+          if (i==ifromstep) then
+             print "(a,i10)",' using position of tracked particle ',itrackpart
+             print "(a,3(e11.3),/)",' (x0,y0,z0) = ',dat(itrackpart,ix(1:ndim),i)
+          endif
+          if (ivx > 0 .and. ivx+ndim-1 <= ncolumns) then
+             v0(1:ndim) = dat(itrackpart,ivx:ivx+ndim-1,i)
+          endif
+       else
+          x0(:) = xorigin(:)
+       endif
 
-        do icalc=1,ncalc
-           if (required(ncolumns+icalc)) then
-              if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
-              !
-              !--additional settings allowed in function evaluations
-              !  i.e., time and gamma from dump file and current origin settings
-              !  make sure the number here aligns with the "nextravars" setting
-              !
-              vals(ncolumns+icalc)   = time(i)
-              vals(ncolumns+icalc+1) = gamma(i)
-              vals(ncolumns+icalc+2) = x0(1)
-              vals(ncolumns+icalc+3) = x0(2)
-              vals(ncolumns+icalc+4) = x0(3)
-              nhdr = count_non_blank(headertags)
-              do j=1,nhdr
-                 vals(ncolumns+icalc+4+j) = headervals(j,i)
-              enddo
-              if (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0)) then
-                 !
-                 !--if alternative coordinate system is in use, then we need to apply
-                 !  the coordinate transformations to the data BEFORE using it
-                 !  to calculate additional quantities
-                 !
-                 do j=1,ntoti
-                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                    call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,&
+       do icalc=1,ncalc
+          if (required(ncolumns+icalc)) then
+             if (debugmode) print*,'DEBUG: ',icalc,' calculating '//trim(label(ncolumns+icalc))
+             !
+             !--additional settings allowed in function evaluations
+             !  i.e., time and gamma from dump file and current origin settings
+             !  make sure the number here aligns with the "nextravars" setting
+             !
+             vals(ncolumns+icalc)   = time(i)
+             vals(ncolumns+icalc+1) = gamma(i)
+             vals(ncolumns+icalc+2) = x0(1)
+             vals(ncolumns+icalc+3) = x0(2)
+             vals(ncolumns+icalc+4) = x0(3)
+             nhdr = count_non_blank(headertags)
+             do j=1,nhdr
+                vals(ncolumns+icalc+4+j) = headervals(j,i)
+             enddo
+             if (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0)) then
+                !
+                !--if alternative coordinate system is in use, then we need to apply
+                !  the coordinate transformations to the data BEFORE using it
+                !  to calculate additional quantities
+                !
+                do j=1,ntoti
+                   vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                   call change_coords(vals(1:ncolumns+icalc-1),ncolumns+icalc-1,&
                                        ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
-                    !--evaluate function with transformed values
-                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
-                 enddo
-              else
-                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns)
-                 do j=1,ntoti
-                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
-                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
-                 enddo
-                 !!$omp end parallel do
-              endif
-              if (EvalErrType /= 0) then
-                 print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
+                   !--evaluate function with transformed values
+                   dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                enddo
+             else
+                !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns)
+                do j=1,ntoti
+                   vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
+                   dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                enddo
+                !!$omp end parallel do
+             endif
+             if (EvalErrType /= 0) then
+                print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
                              //trim(EvalerrMsg())
-              endif
-              !
-              !--identify calculated quantities based on the label
-              !
-              if (i==ifromstep) then
-                 call identify_calculated_quantity(label(ncolumns+icalc),ncolumns,ncolumns+icalc)
-              endif
-           else
-              if (debugmode) print*,'DEBUG: ',icalc,' skipping '//trim(label(ncolumns+icalc))//' (not required)'
-           endif
-        enddo
-     enddo
-     call endf
-     call wall_time(t2)
-     if (t2-t1 > 1.) call print_time(t2-t1)
-  endif
-  !
-  !--override units of calculated quantities if necessary
-  !
-  if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0) > tiny(0.)) &
+             endif
+             !
+             !--identify calculated quantities based on the label
+             !
+             if (i==ifromstep) then
+                call identify_calculated_quantity(label(ncolumns+icalc),ncolumns,ncolumns+icalc)
+             endif
+          else
+             if (debugmode) print*,'DEBUG: ',icalc,' skipping '//trim(label(ncolumns+icalc))//' (not required)'
+          endif
+       enddo
+    enddo
+    call endf
+    call wall_time(t2)
+    if (t2-t1 > 1.) call print_time(t2-t1)
+ endif
+ !
+ !--override units of calculated quantities if necessary
+ !
+ if (iRescale .and. any(abs(units(ncolumns+1:ncolumns+ncalc)-1.0) > tiny(0.)) &
       .and. .not.skip) then
-     !write(*,"(/a)") ' rescaling data...'
-     do i=ncolumns+1,ncolumns+ncalc
-        if (abs(units(i)-1.0) > tiny(0.) .and. abs(units(i)) > tiny(0.)) then
-           dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
-        endif
-        if (index(label(i),trim(unitslabel(i)))==0) label(i) = trim(label(i))//trim(unitslabel(i))
-     enddo
-  elseif (iRescale) then
-     do i=ncolumns+1,ncolumns+ncalc
-        if (index(label(i),trim(unitslabel(i)))==0) label(i) = trim(label(i))//trim(unitslabel(i))
-     enddo
-  endif
+    !write(*,"(/a)") ' rescaling data...'
+    do i=ncolumns+1,ncolumns+ncalc
+       if (abs(units(i)-1.0) > tiny(0.) .and. abs(units(i)) > tiny(0.)) then
+          dat(:,i,ifromstep:itostep) = dat(:,i,ifromstep:itostep)*units(i)
+       endif
+       if (index(label(i),trim(unitslabel(i)))==0) label(i) = trim(label(i))//trim(unitslabel(i))
+    enddo
+ elseif (iRescale) then
+    do i=ncolumns+1,ncolumns+ncalc
+       if (index(label(i),trim(unitslabel(i)))==0) label(i) = trim(label(i))//trim(unitslabel(i))
+    enddo
+ endif
 
-  return
+ return
 end subroutine calc_quantities
 
 !-----------------------------------------------------------------

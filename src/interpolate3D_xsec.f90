@@ -58,139 +58,139 @@ contains
 subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
-  implicit none
-  integer, intent(in) :: npart,npixx,npixy,iverbose
-  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
-  integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
-  real, intent(out), dimension(npixx,npixy) :: datsmooth
-  logical, intent(in) :: normalise
-  real, dimension(npixx,npixy) :: datnorm
+ implicit none
+ integer, intent(in) :: npart,npixx,npixy,iverbose
+ real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+ integer, intent(in), dimension(npart) :: itype
+ real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
+ real, intent(out), dimension(npixx,npixy) :: datsmooth
+ logical, intent(in) :: normalise
+ real, dimension(npixx,npixy) :: datnorm
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,q2,wab,const,xi,yi,hi21
-  real :: termnorm,term,dy,dy2,dz,dz2,ypix,rescalefac
-  real, dimension(npixx) :: dx2i
+ integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+ real :: hi,hi1,radkern,q2,wab,const,xi,yi,hi21
+ real :: termnorm,term,dy,dy2,dz,dz2,ypix,rescalefac
+ real, dimension(npixx) :: dx2i
 
-  ! force cubic kernel if not already set
-  if (.not.associated(wfunc)) call select_kernel(0)
+ ! force cubic kernel if not already set
+ if (.not.associated(wfunc)) call select_kernel(0)
 
-  datsmooth = 0.
-  datnorm = 0.
-  if (iverbose >= 0) then
-     if (normalise) then
-        print*,'taking fast cross section (normalised)...',zslice
-     else
-        print*,'taking fast cross section (non-normalised)...',zslice
-     endif
-  endif
-  if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
-     print*,'interpolate3D_xsec: error: pixel width <= 0'
-     return
-  elseif (npart <= 0 .and. iverbose >= -1) then
-     print*,'interpolate3D_xsec: error: npart = 0'
-     return
-  endif
-  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
-     print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
-  endif
-  const = cnormk3D
-  !
-  !--renormalise dat array by first element to speed things up
-  !
-  if (dat(1) > tiny(dat)) then
-     rescalefac = dat(1)
-  else
-     rescalefac = 1.0
-  endif
-  !
-  !--loop over particles
-  !
-  over_parts: do i=1,npart
-     !
-     !--skip particles with itype < 0
-     !
-     if (itype(i) < 0) cycle over_parts
-     !
-     !--set kernel related quantities
-     !
-     hi = hh(i)
-     if (hi <= 0.) cycle over_parts
-     hi1 = 1./hi
-     hi21 = hi1*hi1
-     radkern = radkernel*hi    ! radius of the smoothing kernel
-     !
-     !--for each particle, work out distance from the cross section slice.
-     !
-     dz = zslice - z(i)
-     dz2 = dz**2*hi21
-     !
-     !--if this is < 2h then add the particle's contribution to the pixels
-     !  otherwise skip all this and start on the next particle
-     !
-     if (dz2  <  radkernel2) then
+ datsmooth = 0.
+ datnorm = 0.
+ if (iverbose >= 0) then
+    if (normalise) then
+       print*,'taking fast cross section (normalised)...',zslice
+    else
+       print*,'taking fast cross section (non-normalised)...',zslice
+    endif
+ endif
+ if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
+    print*,'interpolate3D_xsec: error: pixel width <= 0'
+    return
+ elseif (npart <= 0 .and. iverbose >= -1) then
+    print*,'interpolate3D_xsec: error: npart = 0'
+    return
+ endif
+ if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
+    print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
+ endif
+ const = cnormk3D
+ !
+ !--renormalise dat array by first element to speed things up
+ !
+ if (dat(1) > tiny(dat)) then
+    rescalefac = dat(1)
+ else
+    rescalefac = 1.0
+ endif
+ !
+ !--loop over particles
+ !
+ over_parts: do i=1,npart
+    !
+    !--skip particles with itype < 0
+    !
+    if (itype(i) < 0) cycle over_parts
+    !
+    !--set kernel related quantities
+    !
+    hi = hh(i)
+    if (hi <= 0.) cycle over_parts
+    hi1 = 1./hi
+    hi21 = hi1*hi1
+    radkern = radkernel*hi    ! radius of the smoothing kernel
+    !
+    !--for each particle, work out distance from the cross section slice.
+    !
+    dz = zslice - z(i)
+    dz2 = dz**2*hi21
+    !
+    !--if this is < 2h then add the particle's contribution to the pixels
+    !  otherwise skip all this and start on the next particle
+    !
+    if (dz2  <  radkernel2) then
 
-        xi = x(i)
-        yi = y(i)
-        termnorm = const*weight(i)
-        term = termnorm*dat(i)/rescalefac
-        !
-        !--for each particle work out which pixels it contributes to
-        !
-        ipixmin = int((xi - radkern - xmin)/pixwidthx)
-        jpixmin = int((yi - radkern - ymin)/pixwidthy)
-        ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
-        jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
+       xi = x(i)
+       yi = y(i)
+       termnorm = const*weight(i)
+       term = termnorm*dat(i)/rescalefac
+       !
+       !--for each particle work out which pixels it contributes to
+       !
+       ipixmin = int((xi - radkern - xmin)/pixwidthx)
+       jpixmin = int((yi - radkern - ymin)/pixwidthy)
+       ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
+       jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
 
-        if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
-        if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
-        if (ipixmax > npixx) ipixmax = npixx
-        if (jpixmax > npixy) jpixmax = npixy
-        !
-        !--precalculate an array of dx2 for this particle (optimisation)
-        !
-        do ipix=ipixmin,ipixmax
-           dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidthx - xi)**2)*hi21 + dz2
-        enddo
-        !
-        !--loop over pixels, adding the contribution from this particle
-        !
-        do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix-0.5)*pixwidthy
-           dy = ypix - yi
-           dy2 = dy*dy*hi21
-           do ipix = ipixmin,ipixmax
-              q2 = dx2i(ipix) + dy2
-              !
-              !--SPH kernel - standard cubic spline
-              !
-              if (q2 < radkernel2) then
-                 wab = wfunc(q2)
-                 !
-                 !--calculate data value at this pixel using the summation interpolant
-                 !
-                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+       if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+       if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+       if (ipixmax > npixx) ipixmax = npixx
+       if (jpixmax > npixy) jpixmax = npixy
+       !
+       !--precalculate an array of dx2 for this particle (optimisation)
+       !
+       do ipix=ipixmin,ipixmax
+          dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidthx - xi)**2)*hi21 + dz2
+       enddo
+       !
+       !--loop over pixels, adding the contribution from this particle
+       !
+       do jpix = jpixmin,jpixmax
+          ypix = ymin + (jpix-0.5)*pixwidthy
+          dy = ypix - yi
+          dy2 = dy*dy*hi21
+          do ipix = ipixmin,ipixmax
+             q2 = dx2i(ipix) + dy2
+             !
+             !--SPH kernel - standard cubic spline
+             !
+             if (q2 < radkernel2) then
+                wab = wfunc(q2)
+                !
+                !--calculate data value at this pixel using the summation interpolant
+                !
+                datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+                if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
 
-              endif
+             endif
 
-           enddo
-        enddo
+          enddo
+       enddo
 
-     endif                  ! if particle within 2h of slice
-  enddo over_parts                    ! over particles
-  !
-  !--normalise dat array
-  !
-  if (normalise) then
-     !--normalise everywhere (required if not using SPH weighting)
-     where (datnorm > tiny(datnorm))
-        datsmooth = datsmooth/datnorm
-     end where
-  endif
-  datsmooth = datsmooth*rescalefac
+    endif                  ! if particle within 2h of slice
+ enddo over_parts                    ! over particles
+ !
+ !--normalise dat array
+ !
+ if (normalise) then
+    !--normalise everywhere (required if not using SPH weighting)
+    where (datnorm > tiny(datnorm))
+       datsmooth = datsmooth/datnorm
+    end where
+ endif
+ datsmooth = datsmooth*rescalefac
 
-  return
+ return
 
 end subroutine interpolate3D_fastxsec
 
@@ -229,119 +229,119 @@ end subroutine interpolate3D_fastxsec
 subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
-  implicit none
-  integer, intent(in) :: npart,npixx,npixy,iverbose
-  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
-  integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
-  real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
-  logical, intent(in) :: normalise
-  real, dimension(npixx,npixy) :: datnorm
+ implicit none
+ integer, intent(in) :: npart,npixx,npixy,iverbose
+ real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
+ integer, intent(in), dimension(npart) :: itype
+ real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zslice
+ real, intent(out), dimension(npixx,npixy) :: vecsmoothx, vecsmoothy
+ logical, intent(in) :: normalise
+ real, dimension(npixx,npixy) :: datnorm
 
-  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
-  real :: hi,hi1,radkern,q2,wab,const
-  real :: termx,termy,termnorm,dx,dy,dz,dz2,xpix,ypix
+ integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
+ real :: hi,hi1,radkern,q2,wab,const
+ real :: termx,termy,termnorm,dx,dy,dz,dz2,xpix,ypix
 
-  ! force cubic kernel if not already set
-  if (.not.associated(wfunc)) call select_kernel(0)
+ ! force cubic kernel if not already set
+ if (.not.associated(wfunc)) call select_kernel(0)
 
-  vecsmoothx = 0.
-  vecsmoothy = 0.
-  datnorm = 0.
-  if (iverbose >= 0) then
-     if (normalise) then
-        print*,'taking fast cross section (normalised)...',zslice
-     else
-        print*,'taking fast cross section (non-normalised)...',zslice
-     endif
-  endif
-  if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
-     print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
-     return
-  endif
-  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
-     print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
-  endif
-  const = cnormk3D ! normalisation constant (3D)
-  !
-  !--loop over particles
-  !
-  over_parts: do i=1,npart
-     !
-     !--skip particles with itype < 0
-     !
-     if (itype(i) < 0) cycle over_parts
-     !
-     !--set kernel related quantities
-     !
-     hi = hh(i)
-     if (hi <= 0.) cycle over_parts
-     hi1 = 1./hi
-     radkern = radkernel*hi    ! radius of the smoothing kernel
-     !
-     !--for each particle, work out distance from the cross section slice.
-     !
-     dz = zslice - z(i)
-     dz2 = dz**2
-     !
-     !--if this is < 2h then add the particle's contribution to the pixels
-     !  otherwise skip all this and start on the next particle
-     !
-     if (abs(dz)  <  radkern) then
-        termnorm = const*weight(i)
-        termx = termnorm*vecx(i)
-        termy = termnorm*vecy(i)
-        !
-        !--for each particle work out which pixels it contributes to
-        !
-        ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
-        jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
-        ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
-        jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
+ vecsmoothx = 0.
+ vecsmoothy = 0.
+ datnorm = 0.
+ if (iverbose >= 0) then
+    if (normalise) then
+       print*,'taking fast cross section (normalised)...',zslice
+    else
+       print*,'taking fast cross section (non-normalised)...',zslice
+    endif
+ endif
+ if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
+    print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
+    return
+ endif
+ if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
+    print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
+ endif
+ const = cnormk3D ! normalisation constant (3D)
+ !
+ !--loop over particles
+ !
+ over_parts: do i=1,npart
+    !
+    !--skip particles with itype < 0
+    !
+    if (itype(i) < 0) cycle over_parts
+    !
+    !--set kernel related quantities
+    !
+    hi = hh(i)
+    if (hi <= 0.) cycle over_parts
+    hi1 = 1./hi
+    radkern = radkernel*hi    ! radius of the smoothing kernel
+    !
+    !--for each particle, work out distance from the cross section slice.
+    !
+    dz = zslice - z(i)
+    dz2 = dz**2
+    !
+    !--if this is < 2h then add the particle's contribution to the pixels
+    !  otherwise skip all this and start on the next particle
+    !
+    if (abs(dz)  <  radkern) then
+       termnorm = const*weight(i)
+       termx = termnorm*vecx(i)
+       termy = termnorm*vecy(i)
+       !
+       !--for each particle work out which pixels it contributes to
+       !
+       ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
+       jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
+       ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
+       jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
-        if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
-        if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
-        if (ipixmax > npixx) ipixmax = npixx
-        if (jpixmax > npixy) jpixmax = npixy
-        !
-        !--loop over pixels, adding the contribution from this particle
-        !
-        do jpix = jpixmin,jpixmax
-           ypix = ymin + (jpix-0.5)*pixwidthy
-           dy = ypix - y(i)
-           do ipix = ipixmin,ipixmax
-              xpix = xmin + (ipix-0.5)*pixwidthx
-              dx = xpix - x(i)
-              q2 = (dx*dx + dy*dy + dz2)*hi1*hi1
-              !
-              !--SPH kernel - standard cubic spline
-              !
-              if (q2 < radkernel2) then
-                 wab = wfunc(q2)
-                 !
-                 !--calculate data value at this pixel using the summation interpolant
-                 !
-                 vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
-                 vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
-                 if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
-              endif
+       if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+       if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+       if (ipixmax > npixx) ipixmax = npixx
+       if (jpixmax > npixy) jpixmax = npixy
+       !
+       !--loop over pixels, adding the contribution from this particle
+       !
+       do jpix = jpixmin,jpixmax
+          ypix = ymin + (jpix-0.5)*pixwidthy
+          dy = ypix - y(i)
+          do ipix = ipixmin,ipixmax
+             xpix = xmin + (ipix-0.5)*pixwidthx
+             dx = xpix - x(i)
+             q2 = (dx*dx + dy*dy + dz2)*hi1*hi1
+             !
+             !--SPH kernel - standard cubic spline
+             !
+             if (q2 < radkernel2) then
+                wab = wfunc(q2)
+                !
+                !--calculate data value at this pixel using the summation interpolant
+                !
+                vecsmoothx(ipix,jpix) = vecsmoothx(ipix,jpix) + termx*wab
+                vecsmoothy(ipix,jpix) = vecsmoothy(ipix,jpix) + termy*wab
+                if (normalise) datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+             endif
 
-           enddo
-        enddo
+          enddo
+       enddo
 
-     endif                  ! if particle within 2h of slice
-  enddo over_parts                    ! over particles
-  !
-  !--normalise dat array(s)
-  !
-  if (normalise) then
-     where (datnorm > tiny(datnorm))
-        vecsmoothx = vecsmoothx/datnorm
-        vecsmoothy = vecsmoothy/datnorm
-     end where
-  endif
+    endif                  ! if particle within 2h of slice
+ enddo over_parts                    ! over particles
+ !
+ !--normalise dat array(s)
+ !
+ if (normalise) then
+    where (datnorm > tiny(datnorm))
+       vecsmoothx = vecsmoothx/datnorm
+       vecsmoothy = vecsmoothy/datnorm
+    end where
+ endif
 
-  return
+ return
 
 end subroutine interpolate3D_xsec_vec
 

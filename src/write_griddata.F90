@@ -54,15 +54,15 @@ logical function isgridformat(string)
  isgridformat = .false.
  select case(trim(lcase(string)))
  case('grid')
-     isgridformat = .true.
+    isgridformat = .true.
  case('gridascii')
-     isgridformat = .true.
+    isgridformat = .true.
  case('gridbinary','gridbin')
-     isgridformat = .true.
+    isgridformat = .true.
  case('gridbytestream','gridstream','gridbinary2','gridbenoit')
-     isgridformat = .true.
+    isgridformat = .true.
  case('gridascii2')
-     isgridformat = .true.
+    isgridformat = .true.
  end select
 
 end function isgridformat
@@ -131,15 +131,15 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
  ierr = 0
  select case(trim(lcase(outformat)))
  case('gridascii','grid')
- !
- !--ascii output uses individual files
- !
+    !
+    !--ascii output uses individual files
+    !
     print "(/,a,i2)",'-----> WRITING TO ASCII OUTPUT FILES'
 
  case('gridbinary','gridbin')
- !
- !--simple unformatted binary format
- !
+    !
+    !--simple unformatted binary format
+    !
     filename = trim(filenamein)//'.grid'
     print "(/,a,i2,a)",'----> WRITING TO '//trim(filename)//' on unit ',iunit,' (unformatted binary)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',iostat=ierr)
@@ -155,9 +155,9 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
     endif
 
  case('gridbytestream','gridstream','gridbinary2','gridbenoit')
- !
- !--byte stream binary format
- !
+    !
+    !--byte stream binary format
+    !
     filename = trim(filenamein)//'.gridstream'
     print "(/,a,i2,a)",'----> WRITING TO '//trim(filename)//' on unit ',iunit,' (unformatted binary stream)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='replace',access='stream',iostat=ierr)
@@ -206,9 +206,9 @@ subroutine open_gridfile_r(iunit,filename,informat,ndim,ncolumns,npixels,time,ie
  ierr = 0
  select case(trim(lcase(informat)))
  case('gridbinary','gridbin')
- !
- !--simple unformatted binary format
- !
+    !
+    !--simple unformatted binary format
+    !
     print "(/,a,i2,a)",'----> READING '//trim(filename)//' on unit ',iunit,' (unformatted binary)'
     open(unit=iunit,file=trim(filename),form='unformatted',status='old',iostat=ierr)
     if (ierr /= 0) then
@@ -423,20 +423,20 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
           enddo
        enddo
     elseif (present(dat)) then
-        write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
-        write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
-        write(iunit,"('#',4('[',a13,']'))",err=100) xlab,trim(label)
-        do k=1,npixels(3)
-           write(*,"('.')",ADVANCE='NO')
-           zi = xmin(3) + (k-0.5)*pixwidth(3)
-           do j=1,npixels(2)
-              yi = xmin(2) + (j-0.5)*pixwidth(2)
-              do i=1,npixels(1)
-                 xi = xmin(1) + (i-0.5)*pixwidth(1)
-                 write(iunit,"(64(es14.6,1x))") xi,yi,zi,dat(i,j,k)
-              enddo
-           enddo
-        enddo
+       write(iunit,"(a,3(a,3x))",err=100) '# ',('n'//trim(xlab(i)),i=1,3)
+       write(iunit,"(a,3(i5,1x))",err=100) '# ',npixels(1:3)
+       write(iunit,"('#',4('[',a13,']'))",err=100) xlab,trim(label)
+       do k=1,npixels(3)
+          write(*,"('.')",ADVANCE='NO')
+          zi = xmin(3) + (k-0.5)*pixwidth(3)
+          do j=1,npixels(2)
+             yi = xmin(2) + (j-0.5)*pixwidth(2)
+             do i=1,npixels(1)
+                xi = xmin(1) + (i-0.5)*pixwidth(1)
+                write(iunit,"(64(es14.6,1x))") xi,yi,zi,dat(i,j,k)
+             enddo
+          enddo
+       enddo
     elseif (present(dat2D)) then
        write(iunit,"(a)",err=100) '# nx    ny '
        write(iunit,"(a,2(i5,1x))",err=100) '# ',npixels(1:2)
@@ -464,9 +464,9 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
 !--error handling during write
 !
 100 continue
-    print "(a)",' ERROR writing grid file'
-    close(unit=iunit)
-    return
+ print "(a)",' ERROR writing grid file'
+ close(unit=iunit)
+ return
 
 end subroutine write_grid
 

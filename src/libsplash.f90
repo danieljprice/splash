@@ -26,20 +26,20 @@
 !-------------------------------------------------------------------------
 module libsplash
 
-  use projections3D,         only: interpolate3d_projection_f => interpolate3d_projection, &
+ use projections3D,         only: interpolate3d_projection_f => interpolate3d_projection, &
                                    interpolate3d_proj_vec_f => interpolate3d_proj_vec
 
-  use xsections3D,           only: interpolate3d_fastxsec_f => interpolate3d_fastxsec, &
+ use xsections3D,           only: interpolate3d_fastxsec_f => interpolate3d_fastxsec, &
                                    interpolate3d_xsec_vec_f => interpolate3d_xsec_vec
 
-  use interpolate3D_opacity, only: interp3d_proj_opacity_f => interp3d_proj_opacity
+ use interpolate3D_opacity, only: interp3d_proj_opacity_f => interp3d_proj_opacity
 
-  use projections3Dgeom,     only: interpolate3D_proj_geom_f => interpolate3D_proj_geom, &
+ use projections3Dgeom,     only: interpolate3D_proj_geom_f => interpolate3D_proj_geom, &
                                    interpolate3D_xsec_geom_f => interpolate3D_xsec_geom
 
-  use iso_c_binding,         only: c_float, c_int, c_bool
+ use iso_c_binding,         only: c_float, c_int, c_bool
 
-  implicit none
+ implicit none
 
 contains
 !-------------------------------------------------------------------------
@@ -50,7 +50,7 @@ subroutine interpolate3d_projection_c(                                         &
   pixwidthx, pixwidthy, normalise, zobserver, dscreen, useaccelerate, iverbose &
   ) bind(c)
 
-  real(c_float),   intent(in)  :: x(npart),      &
+ real(c_float),   intent(in)  :: x(npart),      &
                                   y(npart),      &
                                   z(npart),      &
                                   hh(npart),     &
@@ -62,22 +62,22 @@ subroutine interpolate3d_projection_c(                                         &
                                   pixwidthy,     &
                                   zobserver,     &
                                   dscreen
-  integer(c_int),  intent(in)  :: npart,         &
+ integer(c_int),  intent(in)  :: npart,         &
                                   npixx,         &
                                   npixy,         &
                                   itype(npart),  &
                                   iverbose
-  logical(c_bool), intent(in)  :: normalise,     &
+ logical(c_bool), intent(in)  :: normalise,     &
                                   useaccelerate
-  real(c_float),   intent(out) :: datsmooth(npixx,npixy)
+ real(c_float),   intent(out) :: datsmooth(npixx,npixy)
 
-  logical :: normalise_f, &
+ logical :: normalise_f, &
              useaccelerate_f
 
-  normalise_f     = normalise
-  useaccelerate_f = useaccelerate
+ normalise_f     = normalise
+ useaccelerate_f = useaccelerate
 
-  call interpolate3d_projection_f(                                        &
+ call interpolate3d_projection_f(                                        &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, &
     npixy, pixwidthx, pixwidthy, normalise_f, zobserver, dscreen,         &
     useaccelerate_f, iverbose)
@@ -93,12 +93,12 @@ subroutine interpolate3d_proj_vec_c(                                     &
   dscreen, iverbose                                                      &
   ) bind(c)
 
-  integer(c_int),  intent(in)  :: npart,                   &
+ integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
                                   npixy,                   &
                                   itype(npart),            &
                                   iverbose
-  real(c_float),   intent(in)  :: x(npart),                &
+ real(c_float),   intent(in)  :: x(npart),                &
                                   y(npart),                &
                                   z(npart),                &
                                   hh(npart),               &
@@ -111,15 +111,15 @@ subroutine interpolate3d_proj_vec_c(                                     &
                                   pixwidthy,               &
                                   zobserver,               &
                                   dscreen
-  logical(c_bool), intent(in)  :: normalise
-  real(c_float),   intent(out) :: vecsmoothx(npixx,npixy), &
+ logical(c_bool), intent(in)  :: normalise
+ real(c_float),   intent(out) :: vecsmoothx(npixx,npixy), &
                                   vecsmoothy(npixx,npixy)
 
-  logical :: normalise_f
+ logical :: normalise_f
 
-  normalise_f = normalise
+ normalise_f = normalise
 
-  call interpolate3d_proj_vec_f(                                            &
+ call interpolate3d_proj_vec_f(                                            &
     x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, vecsmoothx,  &
     vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise_f, zobserver, &
     dscreen, iverbose)
@@ -134,12 +134,12 @@ subroutine interpolate3d_fastxsec_c(                                     &
   npixx, npixy, pixwidthx, pixwidthy, normalise, iverbose                &
   ) bind(c)
 
-  integer(c_int),   intent(in) :: npart,         &
+ integer(c_int),   intent(in) :: npart,         &
                                   npixx,         &
                                   npixy,         &
                                   itype(npart),  &
                                   iverbose
-  real(c_float),   intent(in)  :: x(npart),      &
+ real(c_float),   intent(in)  :: x(npart),      &
                                   y(npart),      &
                                   z(npart),      &
                                   hh(npart),     &
@@ -150,14 +150,14 @@ subroutine interpolate3d_fastxsec_c(                                     &
                                   pixwidthx,     &
                                   pixwidthy,     &
                                   zslice
-  logical(c_bool), intent(in)  :: normalise
-  real(c_float),   intent(out) :: datsmooth(npixx,npixy)
+ logical(c_bool), intent(in)  :: normalise
+ real(c_float),   intent(out) :: datsmooth(npixx,npixy)
 
-  logical :: normalise_f
+ logical :: normalise_f
 
-  normalise_f = normalise
+ normalise_f = normalise
 
-  call interpolate3d_fastxsec_f(                                           &
+ call interpolate3d_fastxsec_f(                                           &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth, &
     npixx, npixy, pixwidthx, pixwidthy, normalise_f, iverbose)
 
@@ -171,12 +171,12 @@ subroutine interpolate3d_xsec_vec_c(                                     &
   vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise, &
   iverbose) bind(c)
 
-  integer(c_int),  intent(in)  :: npart,                   &
+ integer(c_int),  intent(in)  :: npart,                   &
                                   npixx,                   &
                                   npixy,                   &
                                   itype(npart),            &
                                   iverbose
-  real(c_float),   intent(in)  :: x(npart),                &
+ real(c_float),   intent(in)  :: x(npart),                &
                                   y(npart),                &
                                   z(npart),                &
                                   hh(npart),               &
@@ -188,15 +188,15 @@ subroutine interpolate3d_xsec_vec_c(                                     &
                                   pixwidthx,               &
                                   pixwidthy,               &
                                   zslice
-  logical(c_bool), intent(in)  :: normalise
-  real(c_float),   intent(out) :: vecsmoothx(npixx,npixy), &
+ logical(c_bool), intent(in)  :: normalise
+ real(c_float),   intent(out) :: vecsmoothx(npixx,npixy), &
                                   vecsmoothy(npixx,npixy)
 
-  logical :: normalise_f
+ logical :: normalise_f
 
-  normalise_f = normalise
+ normalise_f = normalise
 
-  call interpolate3d_xsec_vec_f(                                             &
+ call interpolate3d_xsec_vec_f(                                             &
     x, y, z, hh, weight, vecx, vecy, itype, npart, xmin, ymin, zslice,       &
     vecsmoothx, vecsmoothy, npixx, npixy, pixwidthx, pixwidthy, normalise_f, &
     iverbose)
@@ -212,13 +212,13 @@ subroutine interp3d_proj_opacity_c(                                         &
   dscreenfromobserver, rkappa, zcut, iverbose                               &
   ) bind(c)
 
-  integer(c_int), intent(in)  :: npart,                  &
+ integer(c_int), intent(in)  :: npart,                  &
                                  npixx,                  &
                                  npixy,                  &
                                  npmass,                 &
                                  itype(npart),           &
                                  iverbose
-  real(c_float),  intent(in)  :: x(npart),               &
+ real(c_float),  intent(in)  :: x(npart),               &
                                  y(npart),               &
                                  z(npart),               &
                                  hh(npart),              &
@@ -233,10 +233,10 @@ subroutine interp3d_proj_opacity_c(                                         &
                                  dscreenfromobserver,    &
                                  zcut,                   &
                                  rkappa
-  real(c_float),  intent(out) :: datsmooth(npixx,npixy), &
+ real(c_float),  intent(out) :: datsmooth(npixx,npixy), &
                                  brightness(npixx,npixy)
 
-  call interp3d_proj_opacity_f(                                               &
+ call interp3d_proj_opacity_f(                                               &
     x, y, z, pmass, npmass, hh, weight, dat, zorig, itype, npart, xmin, ymin, &
     datsmooth, brightness, npixx, npixy, pixwidth, zobserver,                 &
     dscreenfromobserver, rkappa, zcut, iverbose)
@@ -248,7 +248,7 @@ subroutine interpolate3D_proj_geom_c(                                          &
   pixwidthx, pixwidthy, normalise, igeom, iplotx, iploty, iplotz, ix, xorigin  &
   ) bind(c)
 
-  integer(c_int),  intent(in)    :: npart,         &
+ integer(c_int),  intent(in)    :: npart,         &
                                     npixx,         &
                                     npixy,         &
                                     itype(npart),  &
@@ -257,7 +257,7 @@ subroutine interpolate3D_proj_geom_c(                                          &
                                     iploty,        &
                                     iplotz,        &
                                     ix(3)
-  real(c_float),   intent(in)    :: x(npart),      &
+ real(c_float),   intent(in)    :: x(npart),      &
                                     y(npart),      &
                                     z(npart),      &
                                     hh(npart),     &
@@ -268,14 +268,14 @@ subroutine interpolate3D_proj_geom_c(                                          &
                                     pixwidthx,     &
                                     pixwidthy,     &
                                     xorigin(3)
-  real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
-  logical(c_bool), intent(inout) :: normalise
+ real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
+ logical(c_bool), intent(inout) :: normalise
 
-  logical :: normalise_f
+ logical :: normalise_f
 
-  normalise_f = normalise
+ normalise_f = normalise
 
-  call interpolate3D_proj_geom_f(                                            &
+ call interpolate3D_proj_geom_f(                                            &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx,    &
     npixy, pixwidthx, pixwidthy, normalise_f, igeom, iplotx, iploty, iplotz, &
     ix, xorigin)
@@ -287,7 +287,7 @@ subroutine interpolate3D_xsec_geom_c(                                          &
   npixx, npixy, pixwidthx, pixwidthy, normalise, igeom, iplotx, iploty,        &
   iplotz, ix, xorigin) bind(c)
 
-  integer(c_int),  intent(in)    :: npart,         &
+ integer(c_int),  intent(in)    :: npart,         &
                                     npixx,         &
                                     npixy,         &
                                     itype(npart),  &
@@ -296,7 +296,7 @@ subroutine interpolate3D_xsec_geom_c(                                          &
                                     iploty,        &
                                     iplotz,        &
                                     ix(3)
-  real(c_float),   intent(in)    :: x(npart),      &
+ real(c_float),   intent(in)    :: x(npart),      &
                                     y(npart),      &
                                     z(npart),      &
                                     hh(npart),     &
@@ -308,14 +308,14 @@ subroutine interpolate3D_xsec_geom_c(                                          &
                                     pixwidthx,     &
                                     pixwidthy,     &
                                     xorigin(3)
-  real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
-  logical(c_bool), intent(inout) :: normalise
+ real(c_float),   intent(out)   :: datsmooth(npixx,npixy)
+ logical(c_bool), intent(inout) :: normalise
 
-  logical :: normalise_f
+ logical :: normalise_f
 
-  normalise_f = normalise
+ normalise_f = normalise
 
-  call interpolate3D_xsec_geom_f(                                           &
+ call interpolate3D_xsec_geom_f(                                           &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, zslice, datsmooth,  &
     npixx, npixy, pixwidthx, pixwidthy, normalise_f, igeom, iplotx, iploty, &
     iplotz, ix, xorigin)

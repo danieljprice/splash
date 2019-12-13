@@ -85,48 +85,48 @@ contains
 !---------------------------------------------
 subroutine defaults_set_xsecrotate
 
-  xsec_nomulti = .false.    ! take cross section of data / particles
-  xsecpos_nomulti = 0.      ! position of cross section
-  flythru = .false.         ! take series of cross sections through data
-  xseclineX1 = 0.0
-  xseclineX2 = 0.0
-  xseclineY1 = 0.0
-  xseclineY2 = 0.0
-  xsecwidth = 0.0   ! width of xsec slices - zero means suggest better value to user
-  irotate = .false.
-  irotateaxes = 0
-  anglex = 0.
-  angley = 0.
-  anglez = 0.
-  xminrotaxes = 0.
-  xmaxrotaxes = 0.
-  use3Dperspective = .false.
-  use3Dopacityrendering = .false.
-  zobserver = 0.
-  dzscreenfromobserver = 0.
-  taupartdepth = 2.
+ xsec_nomulti = .false.    ! take cross section of data / particles
+ xsecpos_nomulti = 0.      ! position of cross section
+ flythru = .false.         ! take series of cross sections through data
+ xseclineX1 = 0.0
+ xseclineX2 = 0.0
+ xseclineY1 = 0.0
+ xseclineY2 = 0.0
+ xsecwidth = 0.0   ! width of xsec slices - zero means suggest better value to user
+ irotate = .false.
+ irotateaxes = 0
+ anglex = 0.
+ angley = 0.
+ anglez = 0.
+ xminrotaxes = 0.
+ xmaxrotaxes = 0.
+ use3Dperspective = .false.
+ use3Dopacityrendering = .false.
+ zobserver = 0.
+ dzscreenfromobserver = 0.
+ taupartdepth = 2.
 
-  !--defaults for animation sequences
-  nseq = 0
-  nframes = 0
-  iseqstart(:) = 0
-  iseqend(:)   = 0
-  iseqtype(:)  = 0
-  xminseqend = 0.
-  xmaxseqend = 0.
-  yminseqend = 0.
-  ymaxseqend = 0.
-  anglezend = 360.
-  angleyend = 0.
-  anglexend = 0.
-  icolchange = 0
-  xmincolend = 0.
-  xmaxcolend = 0.
-  zobserverend = 0.
-  taupartdepthend = 2000.0
-  xsecpos_nomulti_end = 0.
-  ihavesetsequence = .false.
-  rendersinks = .false.
+ !--defaults for animation sequences
+ nseq = 0
+ nframes = 0
+ iseqstart(:) = 0
+ iseqend(:)   = 0
+ iseqtype(:)  = 0
+ xminseqend = 0.
+ xmaxseqend = 0.
+ yminseqend = 0.
+ ymaxseqend = 0.
+ anglezend = 360.
+ angleyend = 0.
+ anglexend = 0.
+ icolchange = 0
+ xmincolend = 0.
+ xmaxcolend = 0.
+ zobserverend = 0.
+ taupartdepthend = 2000.0
+ xsecpos_nomulti_end = 0.
+ ihavesetsequence = .false.
+ rendersinks = .false.
 
 end subroutine defaults_set_xsecrotate
 
@@ -221,9 +221,9 @@ subroutine submenu_xsecrotate(ichoose)
        if (abs(anglez) < tiny(anglez) .and. &
            abs(angley) < tiny(angley) .and. &
            abs(anglex) < tiny(anglex)) then
-           anglez = 30.
-           anglex = 60.
-           print "(a)",' setting default rotation angles to 30,0,60'
+          anglez = 30.
+          anglex = 60.
+          print "(a)",' setting default rotation angles to 30,0,60'
        endif
     endif
 !------------------------------------------------------------------------

@@ -136,7 +136,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  print*,'ngas = ',ngas
 
  if (ntotal > ngas .and. (size(iamtype) > 1)) then
- !--must print the particles ordered by type
+    !--must print the particles ordered by type
     allocate(iorder(ntotal),stat=ierr)
     j = 0
     do itype=1,min(ntypes,6)

@@ -36,18 +36,18 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_limits
-  use multiplot, only:itrans
-  implicit none
+ use multiplot, only:itrans
+ implicit none
 
-  iadapt           = .true.  ! adaptive plot limits
-  iadaptcoords     = .false.
-  adjustlimitstodevice = .false.
-  scalemax         = 1.0     ! for rescaling adaptive limits
-  itrans(:)        = 0       ! no transformations (log10 etc)
-  xminoffset_track = 0.5     ! offset of limits from tracked particle
-  xmaxoffset_track = 0.5     !
+ iadapt           = .true.  ! adaptive plot limits
+ iadaptcoords     = .false.
+ adjustlimitstodevice = .false.
+ scalemax         = 1.0     ! for rescaling adaptive limits
+ itrans(:)        = 0       ! no transformations (log10 etc)
+ xminoffset_track = 0.5     ! offset of limits from tracked particle
+ xmaxoffset_track = 0.5     !
 
-  return
+ return
 end subroutine defaults_set_limits
 
 !----------------------------------------------------------------------
@@ -196,7 +196,7 @@ subroutine submenu_limits(ichoose)
        enddo
        if ((itrackoffset /= itrackoffsetprev .or. itracktype /= itracktypeprev) &
            .and. iCalcQuantities .and. irad > 0 .and. irad <= numplot) then
-       !--radius calculation is relative to tracked particle
+          !--radius calculation is relative to tracked particle
           print "(a)",' recalculating radius relative to tracked particle '
           if (DataIsBuffered) then
              call calc_quantities(1,nsteps)
@@ -226,48 +226,48 @@ subroutine submenu_limits(ichoose)
 !       call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
 !    endif
 !------------------------------------------------------------------------
-  case(5)
+ case(5)
 
 !+ Applies log, inverse and other transformations to data columns
 
-     index = 1
-     do i=1,ntrans
-        write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
-        index = len_trim(transprompt) + 1
-     enddo
+    index = 1
+    do i=1,ntrans
+       write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
+       index = len_trim(transprompt) + 1
+    enddo
 
-     ipick = 1
-     do while (ipick > 0 .and. ipick <= numplot)
-        ipick = 0
-        call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
-        if (ipick <= numplot .and. ipick /= 0) then
-           print "(a)", trim(transprompt)
-           if (ipick < 0) then
-              ipick = 0
-              call prompt('Which transform (or multiple e.g. 321)?',ipick,0)
-              itrans(:) = ipick
-              ipick = -99
-           else
-              call prompt('Which transform (or multiple e.g. 321)?',itrans(ipick),0)
-           endif
-        endif
-     enddo
-     return
+    ipick = 1
+    do while (ipick > 0 .and. ipick <= numplot)
+       ipick = 0
+       call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
+       if (ipick <= numplot .and. ipick /= 0) then
+          print "(a)", trim(transprompt)
+          if (ipick < 0) then
+             ipick = 0
+             call prompt('Which transform (or multiple e.g. 321)?',ipick,0)
+             itrans(:) = ipick
+             ipick = -99
+          else
+             call prompt('Which transform (or multiple e.g. 321)?',itrans(ipick),0)
+          endif
+       endif
+    enddo
+    return
 !------------------------------------------------------------------------
-  case(6)
+ case(6)
 
 !+ Resets plot limits using all data currently in memory
 !+ Note that these limits will only apply when fixed limits are used
 
-     if (ivegotdata) then
-        if (DataIsBuffered) then
-           call set_limits(1,nsteps,1,ndataplots)
-        else
-           call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
-        endif
-     else
-        print*,'no data with which to set limits!!'
-     endif
+    if (ivegotdata) then
+       if (DataIsBuffered) then
+          call set_limits(1,nsteps,1,ndataplots)
+       else
+          call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
+       endif
+    else
+       print*,'no data with which to set limits!!'
+    endif
 !------------------------------------------------------------------------
  case(7)
 
@@ -293,7 +293,7 @@ subroutine submenu_limits(ichoose)
        write(*,*)
     enddo
     return
-  end select
+ end select
 
  return
 end subroutine submenu_limits

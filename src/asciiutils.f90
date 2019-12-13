@@ -50,12 +50,12 @@ module asciiutils
 ! or an array of real numbers
 !--------------------------------------------------
  interface read_asciifile
-   module procedure read_asciifile_char, read_asciifile_real,&
+  module procedure read_asciifile_char, read_asciifile_real,&
                     read_asciifile_real_string, read_asciifile_realarr
  end interface read_asciifile
 
  interface string_delete
-   module procedure string_delete1,string_delete_array
+  module procedure string_delete1,string_delete_array
  end interface string_delete
 
 contains
@@ -108,17 +108,17 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  nlinesread = i-1
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ nlinesread = i-1
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  nlinesread = i-1
-  close(unit=iunit)
-  return
+ nlinesread = i-1
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_char
 
@@ -169,21 +169,21 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  do i=1,maxlines
-     if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  do i=1,maxlines
-     if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_real
 
@@ -287,22 +287,22 @@ subroutine read_asciifile_real_string(filename,nlinesread,realarr,charline,ierro
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  do i=1,maxlines
-     if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  do i=1,maxlines
-     if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
-  enddo
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
 
-  close(unit=iunit)
-  return
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_real_string
 
@@ -836,28 +836,28 @@ subroutine get_column_labels(line,nlabels,labels,method)
  i2 = i1
 
  if (index(nospaces(line),'][') > 0) then
- !
- ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
- !
+    !
+    ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
+    !
     istyle = 1
     call split(line(i1:),']',labels,nlabels)
  elseif (index(line,',') > 1) then
- !
- ! format style 2: mylabel1,mylabel2,mylabel3
- !
+    !
+    ! format style 2: mylabel1,mylabel2,mylabel3
+    !
     istyle = 2
     call split(line(i1:),',',labels,nlabelstmp)
     nlabels = count_sensible_labels(nlabelstmp,labels)
  else
- !
- ! format style 3: #     mylabel1     mylabel2     mylabel3
- !
+    !
+    ! format style 3: #     mylabel1     mylabel2     mylabel3
+    !
     istyle = 3
     call split(line(i1:),'  ',labels,nlabelstmp)
- !
- ! this style is dangerous, so perform sanity checks
- ! on the labels to ensure they are sensible
- !
+    !
+    ! this style is dangerous, so perform sanity checks
+    ! on the labels to ensure they are sensible
+    !
     nlabels = count_sensible_labels(nlabelstmp,labels)
     if (nlabels <= 1) then
        !
@@ -1012,17 +1012,17 @@ subroutine make_tags_unique(ntags,tags)
  j = 0
  tagprev = tags(1)
  do i=2,ntags
-     if (tags(i)==tagprev) then
-        j = j + 1
-        if (j==1) then
-           call append_number(tags(i-1),j)
-           j = j + 1
-        endif
-        call append_number(tags(i),j)
-     else
-        tagprev = tags(i)
-        j = 0
-     endif
+    if (tags(i)==tagprev) then
+       j = j + 1
+       if (j==1) then
+          call append_number(tags(i-1),j)
+          j = j + 1
+       endif
+       call append_number(tags(i),j)
+    else
+       tagprev = tags(i)
+       j = 0
+    endif
  enddo
 
 end subroutine make_tags_unique

@@ -45,15 +45,15 @@ subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
 
     if (iplot==2) then ! x axis is h
        where (xplot > tiny(xplot))
-         yplot(:) = pmassval*(hfact/xplot(:))**ndim
+          yplot(:) = pmassval*(hfact/xplot(:))**ndim
        elsewhere
-         yplot(:) = huge(yplot)
+          yplot(:) = huge(yplot)
        end where
     else ! y axis is h
        where (xplot > tiny(xplot))
-         yplot(:) = hfact*(pmassval/xplot(:))**(1./FLOAT(ndim))
+          yplot(:) = hfact*(pmassval/xplot(:))**(1./FLOAT(ndim))
        elsewhere
-         yplot(:) = huge(yplot)
+          yplot(:) = huge(yplot)
        end where
     endif
     write(*,"(a,f5.2,a,es9.2,a,i1,a)") ' plotting h = ',hfact, &

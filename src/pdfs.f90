@@ -152,10 +152,10 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
     pdf(1:nbins) = pdf(1:nbins)/totprob
 
     !call pdf_write(nbins,xbin,pdf,labelx,itransx,volweighted)
-   !
-   !--return min and max for adaptive plot limit setting
-   !  (exclude zero as min)
-   !
+    !
+    !--return min and max for adaptive plot limit setting
+    !  (exclude zero as min)
+    !
     pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins) > 0.))
     pdfmax = maxval(pdf(1:nbins))
  endif

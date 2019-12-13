@@ -48,277 +48,277 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,ipos,nstepsread)
-  use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
-  use params
-  use filenames,      only:nfiles
-  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,debugmode
-  use mem_allocation, only:alloc
-  use system_utils,   only:lenvironment
-  implicit none
-  integer,          intent(in)  :: indexstart,ipos
-  integer,          intent(out) :: nstepsread
-  character(len=*), intent(in)  :: rootname
-  character(len=len(rootname)+4) :: datfile
-  integer :: i,icol,ierr,iunit,ilen,j,ilast,k
-  integer :: ihead1,ihead2,ihead3,numdata ! # of items on header lines
-  integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
-  integer :: ncolstep,np,istep,nstepsinfile
-  logical :: reallocate,finished
+ use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
+ use params
+ use filenames,      only:nfiles
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,debugmode
+ use mem_allocation, only:alloc
+ use system_utils,   only:lenvironment
+ implicit none
+ integer,          intent(in)  :: indexstart,ipos
+ integer,          intent(out) :: nstepsread
+ character(len=*), intent(in)  :: rootname
+ character(len=len(rootname)+4) :: datfile
+ integer :: i,icol,ierr,iunit,ilen,j,ilast,k
+ integer :: ihead1,ihead2,ihead3,numdata ! # of items on header lines
+ integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
+ integer :: ncolstep,np,istep,nstepsinfile
+ logical :: reallocate,finished
 
-  integer :: norigin,ncr,istart,iout,nmlmax,index,ratio
-  integer :: dimsw,fluidsw,itrace
-  integer, dimension(:), allocatable :: head1
-  integer, dimension(:), allocatable :: head2
-  real(doub_prec), dimension(:), allocatable :: head3
-  real(doub_prec) :: timei,dt,sopt0
-  real(doub_prec) :: gammai
-  real(doub_prec), dimension(:), allocatable :: dattemp
-  integer, dimension(:), allocatable :: iam
-  integer, dimension(:), allocatable :: iwas
-  real :: dum
+ integer :: norigin,ncr,istart,iout,nmlmax,index,ratio
+ integer :: dimsw,fluidsw,itrace
+ integer, dimension(:), allocatable :: head1
+ integer, dimension(:), allocatable :: head2
+ real(doub_prec), dimension(:), allocatable :: head3
+ real(doub_prec) :: timei,dt,sopt0
+ real(doub_prec) :: gammai
+ real(doub_prec), dimension(:), allocatable :: dattemp
+ integer, dimension(:), allocatable :: iam
+ integer, dimension(:), allocatable :: iwas
+ real :: dum
 
-  iunit = 11 ! file unit number
-  ndim_max = 1
-  ndimV_max = 1
-  nstepsread = 0
-  if (rootname(1:1) /= ' ') then
-     datfile = trim(rootname)
-     !print*,'rootname = ',rootname
-  else
-     print*,' **** no data read **** '
-     return
-  endif
+ iunit = 11 ! file unit number
+ ndim_max = 1
+ ndimV_max = 1
+ nstepsread = 0
+ if (rootname(1:1) /= ' ') then
+    datfile = trim(rootname)
+    !print*,'rootname = ',rootname
+ else
+    print*,' **** no data read **** '
+    return
+ endif
 
-  if (iverbose >= 1) print "(1x,a)",'reading Maddison/Hutchison format'
-  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
+ if (iverbose >= 1) print "(1x,a)",'reading Maddison/Hutchison format'
+ write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
 !
 !--open data file and read data
 !
-  open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
-  if (ierr /= 0) then
-     print*,' *** Error opening '//trim(datfile)//' ***'
-     return
-  endif
+ open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
+ if (ierr /= 0) then
+    print*,' *** Error opening '//trim(datfile)//' ***'
+    return
+ endif
 !
 !--read first header line
 !
-  read(iunit,iostat=ierr,end=80) ihead1,ihead2,ihead3,ncolstep,np
+ read(iunit,iostat=ierr,end=80) ihead1,ihead2,ihead3,ncolstep,np
 
-  allocate(head1(ihead1))
-  allocate(head2(ihead2))
-  allocate(head3(ihead3))
+ allocate(head1(ihead1))
+ allocate(head2(ihead2))
+ allocate(head3(ihead3))
 
-  read(iunit,iostat=ierr,end=80) head1(1:ihead1)
-  read(iunit,iostat=ierr,end=80) head2(1:ihead2)
-  read(iunit,iostat=ierr,end=80) head3(1:ihead3)
+ read(iunit,iostat=ierr,end=80) head1(1:ihead1)
+ read(iunit,iostat=ierr,end=80) head2(1:ihead2)
+ read(iunit,iostat=ierr,end=80) head3(1:ihead3)
 
-  ! Header one variables
-  norigin = head1(1)
-  ncr     = head1(2)
-  istart  = head1(3)
-  iout    = head1(4)
-  nmlmax  = head1(5)
-  index   = head1(6)
-  ratio   = head1(7)
-  itrace  = head1(8)
+ ! Header one variables
+ norigin = head1(1)
+ ncr     = head1(2)
+ istart  = head1(3)
+ iout    = head1(4)
+ nmlmax  = head1(5)
+ index   = head1(6)
+ ratio   = head1(7)
+ itrace  = head1(8)
 
-  ! Header two variables
-  ndim       = abs(head2(1))
-  fluidsw    = head2(2)
-  !velsw      = head2(3)
-  !dragsw     = head2(4)
-  !Bkernsw    = head2(5)
-  !Dkernsw    = head2(6)
-  !freesw     = head2(7)
-  !stopgas    = head2(8)
-  !coolsw     = head2(9)
-  !interpsw   = head2(10)
-  !voidsw     = head2(11)
-  !phasesw    = head2(12)
-  !gravsw     = head2(13)
-  !photosw    = head2(14)
-  !eossw      = head2(15)
-  !masssw     = head2(16)
-  !usenumdens = head2(17)
-  !varhsw     = head2(18)
-  !tracesw    = head2(19)
-  !timesw     = head2(20)
-  !growsw     = head2(21)
-  !shocksw    = head2(22)
-  !wavesw     = head2(23)
-  !plotsw     = head2(24)
-  !disc1dsw   = head2(25)
+ ! Header two variables
+ ndim       = abs(head2(1))
+ fluidsw    = head2(2)
+ !velsw      = head2(3)
+ !dragsw     = head2(4)
+ !Bkernsw    = head2(5)
+ !Dkernsw    = head2(6)
+ !freesw     = head2(7)
+ !stopgas    = head2(8)
+ !coolsw     = head2(9)
+ !interpsw   = head2(10)
+ !voidsw     = head2(11)
+ !phasesw    = head2(12)
+ !gravsw     = head2(13)
+ !photosw    = head2(14)
+ !eossw      = head2(15)
+ !masssw     = head2(16)
+ !usenumdens = head2(17)
+ !varhsw     = head2(18)
+ !tracesw    = head2(19)
+ !timesw     = head2(20)
+ !growsw     = head2(21)
+ !shocksw    = head2(22)
+ !wavesw     = head2(23)
+ !plotsw     = head2(24)
+ !disc1dsw   = head2(25)
 
-  ! Header three variables
-  dt        = head3(1)
-  timei     = head3(2)
-  sopt0     = head3(3)
-  gammai    = head3(4)
+ ! Header three variables
+ dt        = head3(1)
+ timei     = head3(2)
+ sopt0     = head3(3)
+ gammai    = head3(4)
 
-  deallocate(head1)
-  deallocate(head2)
-  deallocate(head3)
+ deallocate(head1)
+ deallocate(head2)
+ deallocate(head3)
 
-  ncolstep  = ncolstep-2  ! minus 2 because iwas and iam read individually
-  ndimV     = 3  ! always have 3 velocity components written to file
+ ncolstep  = ncolstep-2  ! minus 2 because iwas and iam read individually
+ ndimV     = 3  ! always have 3 velocity components written to file
 
-  print "(a,i2,a,f8.4)",' ncolumns: ',ncolstep,' gamma: ',gammai
+ print "(a,i2,a,f8.4)",' ncolumns: ',ncolstep,' gamma: ',gammai
 
-  !
-  !--check for basic errors in first line
-  !
+ !
+ !--check for basic errors in first line
+ !
 
-  if (ierr /= 0 .or. ncr < 0 .or. istart < 0 &
+ if (ierr /= 0 .or. ncr < 0 .or. istart < 0 &
      .or. iout  < 0 .or. nmlmax < 0 .or. index < 0 .or. ratio < 0) then
 
-     print "(a)",' *** Error reading header ***'
-     print*,' norigin = ',norigin,' ncr = ',ncr,' istart =',istart,' iout = ',iout
-     print*,' nmlmax = ',nmlmax,' index = ',index,' ratio =',ratio
-     close(iunit)
-     return
-  endif
-  !
-  !--Check for errors
-  !
-  if (ierr /= 0 .or. np < 0 .or. np > 1.e9 .or. itrace > np) then
-     print*,'n = ',np,' dt = ',dt,' time = ',timei,' i = ',itrace
-     print*,'*** error reading timestep header ***'
-     close(iunit)
-     return
-  endif
+    print "(a)",' *** Error reading header ***'
+    print*,' norigin = ',norigin,' ncr = ',ncr,' istart =',istart,' iout = ',iout
+    print*,' nmlmax = ',nmlmax,' index = ',index,' ratio =',ratio
+    close(iunit)
+    return
+ endif
+ !
+ !--Check for errors
+ !
+ if (ierr /= 0 .or. np < 0 .or. np > 1.e9 .or. itrace > np) then
+    print*,'n = ',np,' dt = ',dt,' time = ',timei,' i = ',itrace
+    print*,'*** error reading timestep header ***'
+    close(iunit)
+    return
+ endif
 
-  !
-  !--check for errors in 3rd line
-  !
-  if (ndim > 3 .or. ndimV > 3) then
-     print*,'*** error in header: ndim or ndimV in file > 3'
-     ndim  = 3
-     ndimV = 3
-     close(iunit)
-     return
-  endif
+ !
+ !--check for errors in 3rd line
+ !
+ if (ndim > 3 .or. ndimV > 3) then
+    print*,'*** error in header: ndim or ndimV in file > 3'
+    ndim  = 3
+    ndimV = 3
+    close(iunit)
+    return
+ endif
 
-  nstepsinfile = 1 ! nmlmax/iout
-  nstep_max = 1    ! max(nstepsinfile,maxstep)
-  nstepsread = 0
-  npart_max = maxpart
-  ncol_max  = ncolstep
+ nstepsinfile = 1 ! nmlmax/iout
+ nstep_max = 1    ! max(nstepsinfile,maxstep)
+ nstepsread = 0
+ npart_max = maxpart
+ ncol_max  = ncolstep
 !
 !--read first step
 !
-  over_steps: do i = indexstart,indexstart + nstepsinfile - 1
+ over_steps: do i = indexstart,indexstart + nstepsinfile - 1
 !
 !--allocate memory for data arrays
 !
-     nstep_max = nstepsinfile !max(nstep_max,nfiles,maxstep,indexstart)
-     npart_max = max(np,maxpart,norigin)
+    nstep_max = nstepsinfile !max(nstep_max,nfiles,maxstep,indexstart)
+    npart_max = max(np,maxpart,norigin)
 
-     if (.not.allocated(dat) .or. np > maxpart  &
+    if (.not.allocated(dat) .or. np > maxpart  &
           .or. nstep_max > maxstep .or. ncol_max > maxcol) then
-        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
-     endif
-     !
-     !--now that memory is allocated, put header quantities -> splash quantities
-     !
-     time(i) = timei
-     gamma(i) = gammai
-     npartoftype(1,i) = np
-     if (iverbose >= 1) then
-        print "(a,i5,a,f8.4,a,i8,a,f8.4)",' step:',i,' time:',time(i),' npart:',np,' dt:',dt
-     else
-        print "(a,i5,a,f8.4,a,i8,a,i8)",' step:',i,' time:',time(i),' npart:',np
-     endif
+       call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
+    endif
+    !
+    !--now that memory is allocated, put header quantities -> splash quantities
+    !
+    time(i) = timei
+    gamma(i) = gammai
+    npartoftype(1,i) = np
+    if (iverbose >= 1) then
+       print "(a,i5,a,f8.4,a,i8,a,f8.4)",' step:',i,' time:',time(i),' npart:',np,' dt:',dt
+    else
+       print "(a,i5,a,f8.4,a,i8,a,i8)",' step:',i,' time:',time(i),' npart:',np
+    endif
 
-     if (ncolstep /= ncol_max) then
-        print*,'*** Warning number of columns not equal for timesteps'
-        ncolumns = ncolstep
-        if (iverbose >= 1) print*,'ncolumns = ',ncolumns,ncol_max
-        if (ncolumns > ncol_max) ncol_max = ncolumns
-     endif
+    if (ncolstep /= ncol_max) then
+       print*,'*** Warning number of columns not equal for timesteps'
+       ncolumns = ncolstep
+       if (iverbose >= 1) print*,'ncolumns = ',ncolumns,ncol_max
+       if (ncolumns > ncol_max) ncol_max = ncolumns
+    endif
 
-     ncolumns = ncolstep
-     nstepsread = nstepsread + 1
+    ncolumns = ncolstep
+    nstepsread = nstepsread + 1
 
-     !
-     !--read data for this timestep
-     !
-     allocate(iwas(np))
-     read(iunit,iostat=ierr,end=80)  iwas(1:np)
+    !
+    !--read data for this timestep
+    !
+    allocate(iwas(np))
+    read(iunit,iostat=ierr,end=80)  iwas(1:np)
 
-     if ( any(iwas < 1).or.any(iwas > norigin) ) then
-          do j = 1,np
-               iwas(j) = j
-          enddo
-     endif
+    if ( any(iwas < 1).or.any(iwas > norigin) ) then
+       do j = 1,np
+          iwas(j) = j
+       enddo
+    endif
 
-     npartoftype(:,i) = 0
-     allocate(iam(norigin))
+    npartoftype(:,i) = 0
+    allocate(iam(norigin))
 
-     iam(:) = 3
+    iam(:) = 3
 
-     read(iunit,iostat=ierr,end=80) iam(iwas(:))
+    read(iunit,iostat=ierr,end=80) iam(iwas(:))
 
-     do j=1,norigin
-        select case(iam(j))
-        case(1)       ! GAS
-           npartoftype(1,i) = npartoftype(1,i) + 1
-           iamtype(j,i) = 1_int1
-        case(0)       ! DUST
-           npartoftype(2,i) = npartoftype(2,i) + 1
-           iamtype(j,i) = 2_int1
-        case default  ! DELETED PARTICLES
-           npartoftype(3,i) = npartoftype(3,i) + 1
-           iamtype(j,i) = 3_int1
-        end select
-     enddo
-     deallocate(iam)
+    do j=1,norigin
+       select case(iam(j))
+       case(1)       ! GAS
+          npartoftype(1,i) = npartoftype(1,i) + 1
+          iamtype(j,i) = 1_int1
+       case(0)       ! DUST
+          npartoftype(2,i) = npartoftype(2,i) + 1
+          iamtype(j,i) = 2_int1
+       case default  ! DELETED PARTICLES
+          npartoftype(3,i) = npartoftype(3,i) + 1
+          iamtype(j,i) = 3_int1
+       end select
+    enddo
+    deallocate(iam)
 
-     if (kind(dat) /= kind(dattemp)) then
-        if (debugmode) print*,' converting kind from ',kind(dattemp),' to ',kind(dat)
-        allocate(dattemp(norigin))
+    if (kind(dat) /= kind(dattemp)) then
+       if (debugmode) print*,' converting kind from ',kind(dattemp),' to ',kind(dat)
+       allocate(dattemp(norigin))
 
-        !dattemp(:) = 0D0
+       !dattemp(:) = 0D0
 
-        !--convert precision
-        !do icol=1,ncolstep-1 ! all columns except h
-        do icol=1,ncolstep ! all columns with h
-           read(iunit,iostat=ierr,end=80) dattemp(iwas(:))
-           dat(1:norigin,icol,i) = real(dattemp)
-        enddo
-        deallocate(dattemp)
-     else
-        !--read directly into dat array if data types are the same
-        !do icol=1,ncolstep-1 ! all columns except h
-        do icol=1,ncolstep ! all columns with h
-            read(iunit,iostat=ierr,end=80) dat(iwas(:),icol,i)
-        enddo
-     endif
+       !--convert precision
+       !do icol=1,ncolstep-1 ! all columns except h
+       do icol=1,ncolstep ! all columns with h
+          read(iunit,iostat=ierr,end=80) dattemp(iwas(:))
+          dat(1:norigin,icol,i) = real(dattemp)
+       enddo
+       deallocate(dattemp)
+    else
+       !--read directly into dat array if data types are the same
+       !do icol=1,ncolstep-1 ! all columns except h
+       do icol=1,ncolstep ! all columns with h
+          read(iunit,iostat=ierr,end=80) dat(iwas(:),icol,i)
+       enddo
+    endif
 
-     deallocate(iwas)
-   enddo over_steps
+    deallocate(iwas)
+ enddo over_steps
 
-close(unit=11)
+ close(unit=11)
 
-ilast = indexstart+nstepsinfile - 1
-ncolumns = ncol_max
+ ilast = indexstart+nstepsinfile - 1
+ ncolumns = ncol_max
 
-call set_labels
+ call set_labels
 
-if ( fluidsw < 0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
-     call fake_twofluids
-endif
+ if ( fluidsw < 0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
+    call fake_twofluids
+ endif
 
-if (npartoftype(2,ilast) > 0) then
-   print*,' ngas = ',npartoftype(1,ilast),' ndust = ',npartoftype(2,ilast)
-   if (npartoftype(3,ilast) > 0) print*,' nunknown = ',npartoftype(3,ilast)
-endif
-if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
+ if (npartoftype(2,ilast) > 0) then
+    print*,' ngas = ',npartoftype(1,ilast),' ndust = ',npartoftype(2,ilast)
+    if (npartoftype(3,ilast) > 0) print*,' nunknown = ',npartoftype(3,ilast)
+ endif
+ if (debugmode) print*,'DEBUG> Read steps ',indexstart,'->',indexstart + nstepsread - 1, &
        ' last step ntot = ',sum(npartoftype(:,indexstart+nstepsread-1))
-return
+ return
 
 80 continue
-print*,' *** data file empty : no timesteps ***'
-return
+ print*,' *** data file empty : no timesteps ***'
+ return
 
 contains
 
@@ -408,12 +408,12 @@ subroutine fake_twofluids
                 veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
                 deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
                 if ( rhodust < 1.e-30 ) then
-                     vgas(:)   = veli(:)
-                     !vdust(:)  = 0.
-                     vdust(:)  = 1.e10  ! Dirty way to clean up axis
+                   vgas(:)   = veli(:)
+                   !vdust(:)  = 0.
+                   vdust(:)  = 1.e10  ! Dirty way to clean up axis
                 else
-                     vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
-                     vdust(:)  = veli(:) + rhogas/rhotot*deltav(:)
+                   vgas(:)   = veli(:) - rhodust/rhotot*deltav(:)
+                   vdust(:)  = veli(:) + rhogas/rhotot*deltav(:)
                 endif
                 dat(j    ,ivx:ivx+ndimV-1,i) = vgas(:)
                 dat(jdust,ivx:ivx+ndimV-1,i) = vdust(:)

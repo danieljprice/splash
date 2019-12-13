@@ -33,19 +33,19 @@ module shapes
  integer, parameter, private :: lentext = 120
 
  type shapedef
-   integer :: itype
-   integer :: icolour
-   integer :: linestyle
-   integer :: linewidth
-   integer :: ifillstyle
-   integer :: iunits
-   integer :: iplotonpanel
-   real :: xpos
-   real :: ypos
-   real :: xlen,ylen
-   real :: angle,fjust
-   real :: opacity
-   character(len=lentext) :: text
+    integer :: itype
+    integer :: icolour
+    integer :: linestyle
+    integer :: linewidth
+    integer :: ifillstyle
+    integer :: iunits
+    integer :: iplotonpanel
+    real :: xpos
+    real :: ypos
+    real :: xlen,ylen
+    real :: angle,fjust
+    real :: opacity
+    character(len=lentext) :: text
  end type
  type(shapedef), dimension(maxshapes), public :: shape
 
@@ -326,7 +326,7 @@ subroutine add_shape(istart,iend,nshape)
           endif
           poslabel = ' starting'
        case(8)
-           print "(/,' Marker options (for all from -8->31, see plot library userguide):',12(/,i2,') ',a))", &
+          print "(/,' Marker options (for all from -8->31, see plot library userguide):',12(/,i2,') ',a))", &
                       0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',12,'5-pointed star',17,'bold circle',-8,'large bold circle'
           call prompt('Enter marker type ',shape(ishape)%ifillstyle)
           poslabel = ''

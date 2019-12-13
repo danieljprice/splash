@@ -71,13 +71,13 @@ module particle_data
 
 contains
 
- logical function time_was_read(t)
-  real, intent(in) :: t
+logical function time_was_read(t)
+ real, intent(in) :: t
 
-  time_was_read = .true.
-  if (t <= time_not_read_val) time_was_read = .false.
+ time_was_read = .true.
+ if (t <= time_not_read_val) time_was_read = .false.
 
- end function time_was_read
+end function time_was_read
 
 end module particle_data
 !
@@ -98,21 +98,21 @@ module filenames
 
 contains
 
- subroutine set_filenames(prefix)
-  implicit none
-  character(len=*), intent(in) :: prefix
+subroutine set_filenames(prefix)
+ implicit none
+ character(len=*), intent(in) :: prefix
 
-  fileprefix   = trim(adjustl(prefix))
-  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix))=='.') then
-     fileprefix = fileprefix(1:len_trim(fileprefix)-1)
-  endif
-  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
-  limitsfile   = trim(adjustl(fileprefix))//'.limits'
-  unitsfile    = trim(adjustl(fileprefix))//'.units'
-  coloursfile  = trim(adjustl(fileprefix))//'.colours'
+ fileprefix   = trim(adjustl(prefix))
+ if (fileprefix(len_trim(fileprefix):len_trim(fileprefix))=='.') then
+    fileprefix = fileprefix(1:len_trim(fileprefix)-1)
+ endif
+ defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+ limitsfile   = trim(adjustl(fileprefix))//'.limits'
+ unitsfile    = trim(adjustl(fileprefix))//'.units'
+ coloursfile  = trim(adjustl(fileprefix))//'.colours'
 
-  return
- end subroutine set_filenames
+ return
+end subroutine set_filenames
 
 end module filenames
 

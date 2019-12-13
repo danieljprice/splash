@@ -79,10 +79,10 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 
     select case(iplot)
     case(1)
-    !--density
+       !--density
        yplot(i) = sigma
     case default
-    !--pressure
+       !--pressure
        yplot(i) = 0.
     end select
  enddo

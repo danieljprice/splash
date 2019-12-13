@@ -153,145 +153,145 @@ end subroutine get_nearest_unit
 !
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
-  use prompting,     only:prompt
-  use labels,        only:label,ix,ih,idivB,iamvec,labelvec,headertags
-  use settings_data, only:ndim,ndimV,ivegotdata
-  use particle_data, only:headervals,maxstep
-  use asciiutils,    only:match_tag
-  integer, intent(in) :: ncolumns,numplot
-  logical, intent(out) :: UnitsHaveChanged
-  integer :: icol,i,ihdr,ibs,ibc
-  real :: unitsprev,dunits
-  real(doub_prec) :: udist,utime
-  logical :: applytoall
+ use prompting,     only:prompt
+ use labels,        only:label,ix,ih,idivB,iamvec,labelvec,headertags
+ use settings_data, only:ndim,ndimV,ivegotdata
+ use particle_data, only:headervals,maxstep
+ use asciiutils,    only:match_tag
+ integer, intent(in) :: ncolumns,numplot
+ logical, intent(out) :: UnitsHaveChanged
+ integer :: icol,i,ihdr,ibs,ibc
+ real :: unitsprev,dunits
+ real(doub_prec) :: udist,utime
+ logical :: applytoall
 
-  icol = 1
-  utime = 0.d0
-  udist = 0.d0
-  do while(icol >= 0)
-     icol = -1
-     call prompt('enter column to change units (-2=reset all,-1=quit,0=time)',icol,-2,numplot)
-     if (icol >= 0) then
-        unitsprev = units(icol)
-        if (icol > ncolumns) then
-           print "(a)",' WARNING: calculated quantities are automatically calculated in physical units '
-           print "(a)",' this means that units set here will be re-scalings of these physical values'
-        endif
-        if (icol==0) then
-           ! give hints for possible time units, if utime is read from data file
-           ihdr = match_tag(headertags,'utime')
-           if (ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
-              utime = headervals(ihdr,1) ! retrieve from first file in memory
-              do i=1,nt
-                 print "(a,' = ',1pg11.4)",unit_labels_time(i),utime/unit_time(i)
-              enddo
-           endif
-           call prompt('enter time units (new=old*units)',units(icol))
-           if (utime > 0.d0) call suggest_label(unitsprev,units(icol),utime,&
+ icol = 1
+ utime = 0.d0
+ udist = 0.d0
+ do while(icol >= 0)
+    icol = -1
+    call prompt('enter column to change units (-2=reset all,-1=quit,0=time)',icol,-2,numplot)
+    if (icol >= 0) then
+       unitsprev = units(icol)
+       if (icol > ncolumns) then
+          print "(a)",' WARNING: calculated quantities are automatically calculated in physical units '
+          print "(a)",' this means that units set here will be re-scalings of these physical values'
+       endif
+       if (icol==0) then
+          ! give hints for possible time units, if utime is read from data file
+          ihdr = match_tag(headertags,'utime')
+          if (ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
+             utime = headervals(ihdr,1) ! retrieve from first file in memory
+             do i=1,nt
+                print "(a,' = ',1pg11.4)",unit_labels_time(i),utime/unit_time(i)
+             enddo
+          endif
+          call prompt('enter time units (new=old*units)',units(icol))
+          if (utime > 0.d0) call suggest_label(unitsprev,units(icol),utime,&
                                 unit_time,unit_labels_time,unitslabel(icol))
-        else
-           ! give hints for possible length units, if utime is read from data file
-           ihdr = match_tag(headertags,'udist')
-           if (any(ix==icol) .and. ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
-              udist = headervals(ihdr,1) ! retrieve from first file in memory
-              do i=1,nx
-                 print "(a,' = ',1pg11.4)",unit_labels_length(i),udist/unit_length(i)
-              enddo
-           endif
-           call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
-           if (udist > 0.d0) call suggest_label(unitsprev,units(icol),udist,&
+       else
+          ! give hints for possible length units, if utime is read from data file
+          ihdr = match_tag(headertags,'udist')
+          if (any(ix==icol) .and. ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
+             udist = headervals(ihdr,1) ! retrieve from first file in memory
+             do i=1,nx
+                print "(a,' = ',1pg11.4)",unit_labels_length(i),udist/unit_length(i)
+             enddo
+          endif
+          call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
+          if (udist > 0.d0) call suggest_label(unitsprev,units(icol),udist,&
                                 unit_length,unit_labels_length,unitslabel(icol))
-        endif
-        if (abs(units(icol)) > tiny(units)) then
-           if (abs(units(icol) - unitsprev) > tiny(units)) UnitsHaveChanged = .true.
-           if (len_trim(unitslabel(icol))==0) then
-           !--suggest a label amendment if none already set
-              dunits = 1./units(icol)
-              if (dunits > 100 .or. dunits < 1.e-1) then
-                 write(unitslabel(icol),"(1pe8.1)") dunits
-              else
-                 write(unitslabel(icol),"(f5.1)") dunits
-              endif
-              unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
-           endif
-           !--label amendment can be overwritten
-           call prompt('enter label amendment ',unitslabel(icol))
-        else
-           UnitsHaveChanged = .true.
-           units(icol) = 1.0
-           unitslabel(icol) = ' '
-        endif
-        if (UnitsHaveChanged .and. icol > 0) then
-           !
-           !--prompt to apply same units to coordinates and h for consistency
-           !
-           if (any(ix(1:ndim)==icol) .or. (icol==ih .and. ih > 0)) then
-              applytoall = .true.
-              !--try to make prompts apply to whichever situation we have
-              if (ndim==1) then
-                 if (icol==ix(1) .and. ih > 0) then
-                    call prompt(' Apply these units to h?',applytoall)
-                 else
-                    call prompt(' Apply these units to '//trim(label(ix(1)))//'?',applytoall)
-                 endif
-              elseif (any(ix(1:ndim)==icol) .and. ih > 0) then
-                 call prompt(' Apply these units to all coordinates and h?',applytoall)
-              else
-                 call prompt(' Apply these units to all coordinates?',applytoall)
-              endif
-              if (applytoall) then
-                 units(ix(1:ndim)) = units(icol)
-                 unitslabel(ix(1:ndim)) = unitslabel(icol)
-                 if (ih > 0) then
-                    if (idivb > 0) then
-                       ! amend units of div B and curl B
-                       ibs = index(unitslabel(idivB),'/')
-                       ibc = index(unitslabel(icol),'[')
-                       units(idivB:idivB+3) = units(idivB:idivB+3)*units(ih)/units(icol)
-                       unitslabel(idivB:idivB+3) = unitslabel(idivB)(1:ibs)//unitslabel(icol)(ibc+1:)
-                    endif
-                    units(ih) = units(icol)
-                    unitslabel(ih) = unitslabel(icol)
-                 endif
-              endif
-              !
-              !--set units for z integration in 3D
-              !  so for example can have x,y,z in kpc but column density in g/cm^2
-              !
-              if (abs(unitzintegration-1.0) <= tiny(unitzintegration)) then
-                 unitzintegration = units(icol)
-                 labelzintegration = unitslabel(icol)
-              endif
-              if (ndim==3) then
-                 call prompt(' Enter unit for ''z'' in 3D column integrated plots ',unitzintegration)
-                 call prompt(' Enter label for z integration unit (e.g. [cm])',labelzintegration)
-              endif
-           endif
-           !
-           !--also sensible to apply same units to all components of a vector
-           !
-           if (ndimV > 1 .and. iamvec(icol) > 0) then
-              applytoall = .true.
-              call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
-              if (applytoall) then
-                 where (iamvec(1:ncolumns)==iamvec(icol))
-                    units(1:ncolumns) = units(icol)
-                    unitslabel(1:ncolumns) = unitslabel(icol)
-                 end where
-              endif
-           endif
-        endif
+       endif
+       if (abs(units(icol)) > tiny(units)) then
+          if (abs(units(icol) - unitsprev) > tiny(units)) UnitsHaveChanged = .true.
+          if (len_trim(unitslabel(icol))==0) then
+             !--suggest a label amendment if none already set
+             dunits = 1./units(icol)
+             if (dunits > 100 .or. dunits < 1.e-1) then
+                write(unitslabel(icol),"(1pe8.1)") dunits
+             else
+                write(unitslabel(icol),"(f5.1)") dunits
+             endif
+             unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
+          endif
+          !--label amendment can be overwritten
+          call prompt('enter label amendment ',unitslabel(icol))
+       else
+          UnitsHaveChanged = .true.
+          units(icol) = 1.0
+          unitslabel(icol) = ' '
+       endif
+       if (UnitsHaveChanged .and. icol > 0) then
+          !
+          !--prompt to apply same units to coordinates and h for consistency
+          !
+          if (any(ix(1:ndim)==icol) .or. (icol==ih .and. ih > 0)) then
+             applytoall = .true.
+             !--try to make prompts apply to whichever situation we have
+             if (ndim==1) then
+                if (icol==ix(1) .and. ih > 0) then
+                   call prompt(' Apply these units to h?',applytoall)
+                else
+                   call prompt(' Apply these units to '//trim(label(ix(1)))//'?',applytoall)
+                endif
+             elseif (any(ix(1:ndim)==icol) .and. ih > 0) then
+                call prompt(' Apply these units to all coordinates and h?',applytoall)
+             else
+                call prompt(' Apply these units to all coordinates?',applytoall)
+             endif
+             if (applytoall) then
+                units(ix(1:ndim)) = units(icol)
+                unitslabel(ix(1:ndim)) = unitslabel(icol)
+                if (ih > 0) then
+                   if (idivb > 0) then
+                      ! amend units of div B and curl B
+                      ibs = index(unitslabel(idivB),'/')
+                      ibc = index(unitslabel(icol),'[')
+                      units(idivB:idivB+3) = units(idivB:idivB+3)*units(ih)/units(icol)
+                      unitslabel(idivB:idivB+3) = unitslabel(idivB)(1:ibs)//unitslabel(icol)(ibc+1:)
+                   endif
+                   units(ih) = units(icol)
+                   unitslabel(ih) = unitslabel(icol)
+                endif
+             endif
+             !
+             !--set units for z integration in 3D
+             !  so for example can have x,y,z in kpc but column density in g/cm^2
+             !
+             if (abs(unitzintegration-1.0) <= tiny(unitzintegration)) then
+                unitzintegration = units(icol)
+                labelzintegration = unitslabel(icol)
+             endif
+             if (ndim==3) then
+                call prompt(' Enter unit for ''z'' in 3D column integrated plots ',unitzintegration)
+                call prompt(' Enter label for z integration unit (e.g. [cm])',labelzintegration)
+             endif
+          endif
+          !
+          !--also sensible to apply same units to all components of a vector
+          !
+          if (ndimV > 1 .and. iamvec(icol) > 0) then
+             applytoall = .true.
+             call prompt(' Apply these units to all components of '//trim(labelvec(icol))//'?',applytoall)
+             if (applytoall) then
+                where (iamvec(1:ncolumns)==iamvec(icol))
+                   units(1:ncolumns) = units(icol)
+                   unitslabel(1:ncolumns) = unitslabel(icol)
+                end where
+             endif
+          endif
+       endif
 
-     elseif (icol==-2) then
-        UnitsHaveChanged = .true.
-        print "(/a)",' resetting all units to unity...'
-        units = 1.0
-        unitslabel = ' '
-        unitzintegration = 1.0
-        labelzintegration = ' '
-     endif
-     print*
-  enddo
+    elseif (icol==-2) then
+       UnitsHaveChanged = .true.
+       print "(/a)",' resetting all units to unity...'
+       units = 1.0
+       unitslabel = ' '
+       unitzintegration = 1.0
+       labelzintegration = ' '
+    endif
+    print*
+ enddo
 
 end subroutine set_units
 
@@ -324,29 +324,29 @@ end subroutine suggest_label
 !
 !-------------------------------------------------------
 subroutine write_unitsfile(unitsfile,ncolumns)
-  character(len=*), intent(in) :: unitsfile
-  integer, intent(in) :: ncolumns
-  integer :: i,ierr
+ character(len=*), intent(in) :: unitsfile
+ integer, intent(in) :: ncolumns
+ integer :: i,ierr
 
-  print "(1x,a)",'saving units to '//trim(unitsfile)
+ print "(1x,a)",'saving units to '//trim(unitsfile)
 
-  open(unit=77,file=unitsfile,status='replace',form='formatted',iostat=ierr)
-  if (ierr /=0) then
-     print "(1x,a)",'ERROR: cannot write units file'
-  else
-     write(77,*,iostat=ierr) units(0),';',trim(unitslabel(0)),' ;',unitzintegration,';',trim(labelzintegration)
-     do i=1,ncolumns
-        write(77,*,iostat=ierr) units(i),';',trim(unitslabel(i))
-        if (ierr /= 0) then
-           print "(1x,a)",'ERROR whilst writing units file'
-           close(unit=77)
-           return
-        endif
-     enddo
-  endif
-  close(unit=77)
+ open(unit=77,file=unitsfile,status='replace',form='formatted',iostat=ierr)
+ if (ierr /=0) then
+    print "(1x,a)",'ERROR: cannot write units file'
+ else
+    write(77,*,iostat=ierr) units(0),';',trim(unitslabel(0)),' ;',unitzintegration,';',trim(labelzintegration)
+    do i=1,ncolumns
+       write(77,*,iostat=ierr) units(i),';',trim(unitslabel(i))
+       if (ierr /= 0) then
+          print "(1x,a)",'ERROR whilst writing units file'
+          close(unit=77)
+          return
+       endif
+    enddo
+ endif
+ close(unit=77)
 
-  return
+ return
 
 end subroutine write_unitsfile
 
@@ -356,114 +356,114 @@ end subroutine write_unitsfile
 !
 !-------------------------------------------------------
 subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
-  use settings_data, only:ndim
-  character(len=*), intent(in) :: unitsfile
-  integer, intent(in) :: ncolumns
-  integer, intent(out) :: ierr
-  integer, intent(in), optional :: iverbose
-  character(len=2*len(unitslabel)+40) :: line
-  integer :: i,itemp,isemicolon,isemicolon2,isemicolon3,isverbose
-  logical :: ierrzunits,iexist
+ use settings_data, only:ndim
+ character(len=*), intent(in) :: unitsfile
+ integer, intent(in) :: ncolumns
+ integer, intent(out) :: ierr
+ integer, intent(in), optional :: iverbose
+ character(len=2*len(unitslabel)+40) :: line
+ integer :: i,itemp,isemicolon,isemicolon2,isemicolon3,isverbose
+ logical :: ierrzunits,iexist
 
-  if (present(iverbose)) then
-     isverbose= iverbose
-  else
-     isverbose = 1
-  endif
+ if (present(iverbose)) then
+    isverbose= iverbose
+ else
+    isverbose = 1
+ endif
 
-  ierr = 0
-  ierrzunits = .false.
-  inquire(file=unitsfile,exist=iexist)
-  if (.not.iexist) then
-     if (isverbose > 1) print "(1x,a)",trim(unitsfile)//' not found'
-     ierr = 1
-     return
-  endif
+ ierr = 0
+ ierrzunits = .false.
+ inquire(file=unitsfile,exist=iexist)
+ if (.not.iexist) then
+    if (isverbose > 1) print "(1x,a)",trim(unitsfile)//' not found'
+    ierr = 1
+    return
+ endif
 
-  open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
-  if (isverbose > 0) print "(a)",' read '//trim(unitsfile)
-  do i=0,maxplot  ! read all units possibly present in file
+ open(unit=78,file=unitsfile,status='old',form='formatted',err=997)
+ if (isverbose > 0) print "(a)",' read '//trim(unitsfile)
+ do i=0,maxplot  ! read all units possibly present in file
 !
 !    read a line from the file
 !
-     read(78,"(a)",err=998,end=999) line
+    read(78,"(a)",err=998,end=999) line
 !
 !    now get units from the first part of the line
 !
-     read(line,*,iostat=itemp) units(i)
-     if (itemp /= 0) print*,'error reading units for column ',i
+    read(line,*,iostat=itemp) units(i)
+    if (itemp /= 0) print*,'error reading units for column ',i
 !
 !    units label is what comes after the semicolon
 !
-     isemicolon = index(line,';')
-     if (i==0) then
-        !--time line also contains unit of z integration
-        isemicolon2 = index(line(isemicolon+1:),';')
-        if (isemicolon2 > 0) then
-           isemicolon2 = isemicolon + isemicolon2
-           unitslabel(i) = trim(line(isemicolon+1:isemicolon2-1))
-           isemicolon3 = isemicolon2 + index(line(isemicolon2+1:),';')
-           read(line(isemicolon2+1:isemicolon3-1),*,iostat=itemp) unitzintegration
-           if (itemp /= 0) then
-              print*,'error reading unit for z integration'
-              ierrzunits = .true.
-           else
-              labelzintegration = trim(line(isemicolon3+1:))
-           endif
+    isemicolon = index(line,';')
+    if (i==0) then
+       !--time line also contains unit of z integration
+       isemicolon2 = index(line(isemicolon+1:),';')
+       if (isemicolon2 > 0) then
+          isemicolon2 = isemicolon + isemicolon2
+          unitslabel(i) = trim(line(isemicolon+1:isemicolon2-1))
+          isemicolon3 = isemicolon2 + index(line(isemicolon2+1:),';')
+          read(line(isemicolon2+1:isemicolon3-1),*,iostat=itemp) unitzintegration
+          if (itemp /= 0) then
+             print*,'error reading unit for z integration'
+             ierrzunits = .true.
+          else
+             labelzintegration = trim(line(isemicolon3+1:))
+          endif
        else
-           ierrzunits = .true.
-           print*,'error: could not read z integration unit from units file'
-           if (isemicolon > 0) then
-              unitslabel(i) = trim(line(isemicolon+1:))
-           else
-              print*,'error reading units label for column ',i
-           endif
-        endif
-     else
-        if (isemicolon > 0) then
-           unitslabel(i) = trim(line(isemicolon+1:))
-        else
-           print*,'error reading units label for column ',i
-        endif
-     endif
+          ierrzunits = .true.
+          print*,'error: could not read z integration unit from units file'
+          if (isemicolon > 0) then
+             unitslabel(i) = trim(line(isemicolon+1:))
+          else
+             print*,'error reading units label for column ',i
+          endif
+       endif
+    else
+       if (isemicolon > 0) then
+          unitslabel(i) = trim(line(isemicolon+1:))
+       else
+          print*,'error reading units label for column ',i
+       endif
+    endif
 !     print*,i,'units = ',units(i),'label = ',unitslabel(i)
-  enddo
-  if (ierrzunits .and. ndim==3) then
-     unitzintegration = units(3)
-     labelzintegration = unitslabel(3)
-  endif
+ enddo
+ if (ierrzunits .and. ndim==3) then
+    unitzintegration = units(3)
+    labelzintegration = unitslabel(3)
+ endif
 
-  close(unit=78)
+ close(unit=78)
 
-  return
+ return
 
 997 continue
-  if (isverbose > 0) print*,trim(unitsfile),' not found'
-  ierr = 1
-  return
+ if (isverbose > 0) print*,trim(unitsfile),' not found'
+ ierr = 1
+ return
 998 continue
-  print*,'*** error reading units from '//trim(unitsfile)
-  ierr = 2
-  if (ierrzunits .and. ndim==3) then
-     unitzintegration = units(3)
-     labelzintegration = unitslabel(3)
-  endif
-  close(unit=78)
-  return
+ print*,'*** error reading units from '//trim(unitsfile)
+ ierr = 2
+ if (ierrzunits .and. ndim==3) then
+    unitzintegration = units(3)
+    labelzintegration = unitslabel(3)
+ endif
+ close(unit=78)
+ return
 999 continue
-  !--only give error if we really do not have enough columns
-  !  (on first call nextra is not set)
-  if (i <= ncolumns) then
-     print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
-     ierr = -1
-  endif
-  if (ierrzunits .and. ndim==3) then
-     unitzintegration = units(3)
-     labelzintegration = unitslabel(3)
-  endif
+ !--only give error if we really do not have enough columns
+ !  (on first call nextra is not set)
+ if (i <= ncolumns) then
+    print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
+    ierr = -1
+ endif
+ if (ierrzunits .and. ndim==3) then
+    unitzintegration = units(3)
+    labelzintegration = unitslabel(3)
+ endif
 
-  close(unit=78)
-  return
+ close(unit=78)
+ return
 
 end subroutine read_unitsfile
 

@@ -40,19 +40,19 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_powerspec
-  use settings_data, only:ndim
-  implicit none
+ use settings_data, only:ndim
+ implicit none
 
-  idisordered = .true.
-  ipowerspecy = max(ndim+1,2)
-  ipowerspecx = 0 ! reset later
-  nwavelengths = 128
-  freqmin = 1.0
-  freqmax = nwavelengths*freqmin
-  nfreqspec = 1
-  npdfbins  = 0
+ idisordered = .true.
+ ipowerspecy = max(ndim+1,2)
+ ipowerspecx = 0 ! reset later
+ nwavelengths = 128
+ freqmin = 1.0
+ freqmax = nwavelengths*freqmin
+ nfreqspec = 1
+ npdfbins  = 0
 
-  return
+ return
 end subroutine defaults_set_powerspec
 
 !----------------------------------------------------------------------

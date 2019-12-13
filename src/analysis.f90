@@ -54,35 +54,35 @@ logical function isanalysis(string,noprint)
  isanalysis = .false.
  select case(trim(string))
  case('energies','energy')
-     isanalysis = .true.
+    isanalysis = .true.
  case('massaboverho')
-     isanalysis = .true.
+    isanalysis = .true.
  case('max','maxvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('min','minvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('diff','diffvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('delta','deltavals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('amp','ampvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('mean','meanvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('rms','rmsvals')
-     isanalysis = .true.
+    isanalysis = .true.
  case('vrms','vrmsvals','vwrms','rmsvw')
-     isanalysis = .true.
+    isanalysis = .true.
  case('rhovar','rhomach')
-     isanalysis = .true.
+    isanalysis = .true.
  case('kh')
-     isanalysis = .true.
+    isanalysis = .true.
  case('timeaverage','timeav')
-     isanalysis = .true.
+    isanalysis = .true.
  case('ratio')
-     isanalysis = .true.
+    isanalysis = .true.
  case('tracks')
-     isanalysis = .true.
+    isanalysis = .true.
  end select
 
  if (present(noprint)) then
@@ -529,17 +529,17 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           pmassi = particlemass(i,itype)
 
           if (itype==1) then
-          !
-          !--gas particles contribute if they are above rho
-          !
+             !
+             !--gas particles contribute if they are above rho
+             !
              where(dat(i,irho) >= rholevels(1:nlevels))
                 massaboverho(1:nlevels) = massaboverho(1:nlevels) + pmassi
              end where
           elseif (labeltype(itype)=='sink') then
-          !
-          !--sink particles always contribute (ie. they are assumed to
-          !  be above every density threshold)
-          !
+             !
+             !--sink particles always contribute (ie. they are assumed to
+             !  be above every density threshold)
+             !
              massaboverho(1:nlevels) = massaboverho(1:nlevels) + pmassi
           endif
        enddo

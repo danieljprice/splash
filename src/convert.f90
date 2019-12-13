@@ -58,9 +58,9 @@ subroutine convert_all(outformat,igotfilenames,useall)
  lowmemorymode = .false. ! must not be true for first file
 
  if (.not.doanalysis) then
- !
- !--for format conversion each dump file is independent
- !
+    !
+    !--for format conversion each dump file is independent
+    !
     print "(/,5('-'),a,/)",'> CONVERTING SNAPSHOTS TO '//trim(ucase(outformat))//' FORMAT '
  endif
 
@@ -81,11 +81,11 @@ subroutine convert_all(outformat,igotfilenames,useall)
        ! read plot limits from file (overrides get_data limits settings)
        !
        call read_limits(trim(limitsfile),ierr)
- !
- !--for analysis we need to initialise the output file
- !  and close it at the end - do this here so we know
- !  the first filename and ndimV, labels etc.
- !
+       !
+       !--for analysis we need to initialise the output file
+       !  and close it at the end - do this here so we know
+       !  the first filename and ndimV, labels etc.
+       !
        if (doanalysis) then
           call open_analysis(outformat,required,ncolumns+ncalc,ndim,ndimV)
        endif

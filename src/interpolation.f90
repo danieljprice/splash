@@ -74,214 +74,214 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim, &
            iRescale,idensityweighted,inormalise,units,unit_interp,required, &
            rendersinks,isinktype)
-  integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
-  real, dimension(:), intent(out)              :: weighti
-  real, dimension(:,:), intent(in)             :: dati
-  integer(kind=1), dimension(:), intent(in)    :: iamtypei
-  logical, dimension(:), intent(in)            :: usetype
-  logical, dimension(0:ndataplots), intent(in) :: required
-  integer, intent(in)                          :: ih,irho,ipmass,ndim
-  integer, intent(in)                          :: ninterp,ntypes,ndataplots,isinktype
-  integer, dimension(:), intent(in)            :: npartoftype
-  real,    dimension(:), intent(in)            :: masstype
-  logical, intent(in)                          :: iRescale,idensityweighted,rendersinks
-  logical, intent(inout)                       :: inormalise
-  real, dimension(0:ndataplots), intent(in)    :: units
-  real(doub_prec), intent(in)                  :: unit_interp
-  integer         :: i2,i1,itype,ipart
-  real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
+ integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
+ real, dimension(:), intent(out)              :: weighti
+ real, dimension(:,:), intent(in)             :: dati
+ integer(kind=1), dimension(:), intent(in)    :: iamtypei
+ logical, dimension(:), intent(in)            :: usetype
+ logical, dimension(0:ndataplots), intent(in) :: required
+ integer, intent(in)                          :: ih,irho,ipmass,ndim
+ integer, intent(in)                          :: ninterp,ntypes,ndataplots,isinktype
+ integer, dimension(:), intent(in)            :: npartoftype
+ real,    dimension(:), intent(in)            :: masstype
+ logical, intent(in)                          :: iRescale,idensityweighted,rendersinks
+ logical, intent(inout)                       :: inormalise
+ real, dimension(0:ndataplots), intent(in)    :: units
+ real(doub_prec), intent(in)                  :: unit_interp
+ integer         :: i2,i1,itype,ipart
+ real(doub_prec) :: dunitspmass,dunitsrho,dunitsh
 
-  !
-  !-- unit_interp is a multiplication factor that can
-  !   be used to scale the "weight" in case the
-  !   units read from the read_data routine
-  !   are inconsistent (this is the case for the SEREN read)
-  !
-  dunitspmass = 1.d0
-  dunitsrho   = 1.d0
-  dunitsh     = 1.d0
-  if (iRescale) then
-     if (ipmass > 0) dunitspmass = 1.d0/units(ipmass)
-     if (ih > 0)     dunitsh     = 1.d0/units(ih)
-     if (irho > 0)   dunitsrho   = 1.d0/units(irho)
-  endif
-  dunitspmass = dunitspmass * unit_interp
+ !
+ !-- unit_interp is a multiplication factor that can
+ !   be used to scale the "weight" in case the
+ !   units read from the read_data routine
+ !   are inconsistent (this is the case for the SEREN read)
+ !
+ dunitspmass = 1.d0
+ dunitsrho   = 1.d0
+ dunitsh     = 1.d0
+ if (iRescale) then
+    if (ipmass > 0) dunitspmass = 1.d0/units(ipmass)
+    if (ih > 0)     dunitsh     = 1.d0/units(ih)
+    if (irho > 0)   dunitsrho   = 1.d0/units(irho)
+ endif
+ dunitspmass = dunitspmass * unit_interp
 
-  if (ipmass > 0 .and. ipmass <= ndataplots .and. &
+ if (ipmass > 0 .and. ipmass <= ndataplots .and. &
       irho > 0 .and. irho <= ndataplots .and. &
       ih  >  0 .and. ih <= ndataplots .and. &
       required(ipmass) .and. required(irho) .and. required(ih)) then
 
-     if (size(iamtypei) > 1) then
-        !
-        !--particles with mixed types
-        !
-        !$omp parallel do default(none) &
-        !$omp shared(ninterp,iamtypei,weighti,dati,rendersinks,isinktype) &
-        !$omp shared(usetype,idensityweighted,dunitsrho)    &
-        !$omp shared(ipmass,ih,irho,dunitspmass,dunitsh,ndim) &
-        !$omp private(ipart,itype)
-        do ipart=1,ninterp
-           itype = iamtypei(ipart)
-           if (.not.usetype(itype)) then
-              if (rendersinks .and. itype==isinktype) then
-                 weighti(ipart) = weight_sink
-              else
-                 weighti(ipart) = 0.
-              endif
-           elseif (idensityweighted) then
-              if (dati(ipart,ih) > tiny(dati)) then
-                 weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
+    if (size(iamtypei) > 1) then
+       !
+       !--particles with mixed types
+       !
+       !$omp parallel do default(none) &
+       !$omp shared(ninterp,iamtypei,weighti,dati,rendersinks,isinktype) &
+       !$omp shared(usetype,idensityweighted,dunitsrho)    &
+       !$omp shared(ipmass,ih,irho,dunitspmass,dunitsh,ndim) &
+       !$omp private(ipart,itype)
+       do ipart=1,ninterp
+          itype = iamtypei(ipart)
+          if (.not.usetype(itype)) then
+             if (rendersinks .and. itype==isinktype) then
+                weighti(ipart) = weight_sink
+             else
+                weighti(ipart) = 0.
+             endif
+          elseif (idensityweighted) then
+             if (dati(ipart,ih) > tiny(dati)) then
+                weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
                                  ((dati(ipart,ih)*dunitsh)**ndim)
-              else
-                 weighti(ipart) = 0.
-              endif
-           else
-              if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
-                 weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
+             else
+                weighti(ipart) = 0.
+             endif
+          else
+             if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
+                weighti(ipart) = (dati(ipart,ipmass)*dunitspmass)/ &
                                  ((dati(ipart,irho)*dunitsrho)*(dati(ipart,ih)*dunitsh)**ndim)
-              else
-                 weighti(ipart) = 0.
-              endif
-           endif
-        enddo
-        !$omp end parallel do
-     else
-        !
-        !--particles ordered by type
-        !
-        i2 = 0
-        over_types: do itype=1,ntypes
-           i1 = i2 + 1
-           i2 = i2 + npartoftype(itype)
-           i2 = min(i2,ninterp)
-           if (i1 > i2) cycle over_types
-           !--set weights to zero for particle types not used in the rendering
-           if (.not.usetype(itype)) then
-              if (rendersinks .and. itype==isinktype) then
-                 weighti(i1:i2) = weight_sink
-              else
-                 weighti(i1:i2) = 0.
-              endif
-           elseif (idensityweighted) then
-           !--for density weighted interpolation use m/h**ndim
-              where(dati(i1:i2,ih) > tiny(dati))
-                 weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+             else
+                weighti(ipart) = 0.
+             endif
+          endif
+       enddo
+       !$omp end parallel do
+    else
+       !
+       !--particles ordered by type
+       !
+       i2 = 0
+       over_types: do itype=1,ntypes
+          i1 = i2 + 1
+          i2 = i2 + npartoftype(itype)
+          i2 = min(i2,ninterp)
+          if (i1 > i2) cycle over_types
+          !--set weights to zero for particle types not used in the rendering
+          if (.not.usetype(itype)) then
+             if (rendersinks .and. itype==isinktype) then
+                weighti(i1:i2) = weight_sink
+             else
+                weighti(i1:i2) = 0.
+             endif
+          elseif (idensityweighted) then
+             !--for density weighted interpolation use m/h**ndim
+             where(dati(i1:i2,ih) > tiny(dati))
+                weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
                                   ((dati(i1:i2,ih)*dunitsh)**ndim)
-              elsewhere
-                 weighti(i1:i2) = 0.
-              endwhere
-           else
-           !--usual interpolation use m/(rho h**ndim)
-              where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                 weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
+             elsewhere
+                weighti(i1:i2) = 0.
+             endwhere
+          else
+             !--usual interpolation use m/(rho h**ndim)
+             where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                weighti(i1:i2) = (dati(i1:i2,ipmass)*dunitspmass)/ &
                                   ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
-              elsewhere
-                 weighti(i1:i2) = 0.
-              endwhere
-           endif
-        enddo over_types
-     endif
+             elsewhere
+                weighti(i1:i2) = 0.
+             endwhere
+          endif
+       enddo over_types
+    endif
 
-     if (idensityweighted) then
-        print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
-        inormalise = .true.
-     endif
+    if (idensityweighted) then
+       print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
+       inormalise = .true.
+    endif
 
-  elseif (any(masstype(1:ntypes) > 0.) .and. &
+ elseif (any(masstype(1:ntypes) > 0.) .and. &
           irho > 0 .and. irho <= ndataplots .and. &
           ih  >  0 .and. ih <= ndataplots .and. &
           required(irho) .and. required(ih)) then
 
-     if (size(iamtypei) > 1) then
-        !
-        !--particles with mixed types
-        !
-        !$omp parallel do default(none) &
-        !$omp shared(ninterp,iamtypei,weighti,dati,rendersinks,isinktype) &
-        !$omp shared(usetype,idensityweighted,dunitsrho,masstype) &
-        !$omp shared(ih,irho,dunitspmass,dunitsh,ndim)    &
-        !$omp private(ipart,itype)
-        do ipart=1,ninterp
-           itype = iamtypei(ipart)
-           if (.not.usetype(itype)) then
-              if (rendersinks .and. itype==isinktype) then
-                 weighti(ipart) = weight_sink
-              else
-                 weighti(ipart) = 0.
-              endif
-           elseif (idensityweighted) then
-              if (dati(ipart,ih) > tiny(dati)) then
-                 weighti(ipart) = (masstype(itype)*dunitspmass)/ &
+    if (size(iamtypei) > 1) then
+       !
+       !--particles with mixed types
+       !
+       !$omp parallel do default(none) &
+       !$omp shared(ninterp,iamtypei,weighti,dati,rendersinks,isinktype) &
+       !$omp shared(usetype,idensityweighted,dunitsrho,masstype) &
+       !$omp shared(ih,irho,dunitspmass,dunitsh,ndim)    &
+       !$omp private(ipart,itype)
+       do ipart=1,ninterp
+          itype = iamtypei(ipart)
+          if (.not.usetype(itype)) then
+             if (rendersinks .and. itype==isinktype) then
+                weighti(ipart) = weight_sink
+             else
+                weighti(ipart) = 0.
+             endif
+          elseif (idensityweighted) then
+             if (dati(ipart,ih) > tiny(dati)) then
+                weighti(ipart) = (masstype(itype)*dunitspmass)/ &
                                  ((dati(ipart,ih)*dunitsh)**ndim)
-              else
-                 weighti(ipart) = 0.
-              endif
-           else
-              if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
-                 weighti(ipart) = (masstype(itype)*dunitspmass)/ &
+             else
+                weighti(ipart) = 0.
+             endif
+          else
+             if (dati(ipart,irho) > tiny(dati) .and. dati(ipart,ih) > tiny(dati)) then
+                weighti(ipart) = (masstype(itype)*dunitspmass)/ &
                                  ((dati(ipart,irho)*dunitsrho)*(dati(ipart,ih)*dunitsh)**ndim)
-              else
-                 weighti(ipart) = 0.
-              endif
-           endif
-        enddo
-        !$omp end parallel do
-     else
-        !
-        !--particles ordered by type
-        !
-        i2 = 0
-        over_types2: do itype=1,ntypes
-           i1 = i2 + 1
-           i2 = i2 + npartoftype(itype)
-           i2 = min(i2,ninterp)
-           if (i1 > i2) cycle over_types2
-           !--set weights to zero for particle types not used in the rendering
-           if (.not.usetype(itype)) then
-              if (rendersinks .and. itype==isinktype) then
-                 weighti(i1:i2) = weight_sink
-              else
-                 weighti(i1:i2) = 0.
-              endif
-           else
-              where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
-                 weighti(i1:i2) = masstype(itype)/ &
+             else
+                weighti(ipart) = 0.
+             endif
+          endif
+       enddo
+       !$omp end parallel do
+    else
+       !
+       !--particles ordered by type
+       !
+       i2 = 0
+       over_types2: do itype=1,ntypes
+          i1 = i2 + 1
+          i2 = i2 + npartoftype(itype)
+          i2 = min(i2,ninterp)
+          if (i1 > i2) cycle over_types2
+          !--set weights to zero for particle types not used in the rendering
+          if (.not.usetype(itype)) then
+             if (rendersinks .and. itype==isinktype) then
+                weighti(i1:i2) = weight_sink
+             else
+                weighti(i1:i2) = 0.
+             endif
+          else
+             where(dati(i1:i2,irho) > tiny(dati) .and. dati(i1:i2,ih) > tiny(dati))
+                weighti(i1:i2) = masstype(itype)/ &
                                 ((dati(i1:i2,irho)*dunitsrho)*(dati(i1:i2,ih)*dunitsh)**ndim)
-              elsewhere
-                 weighti(i1:i2) = 0.
-              endwhere
-           endif
-        enddo over_types2
-     endif
+             elsewhere
+                weighti(i1:i2) = 0.
+             endwhere
+          endif
+       enddo over_types2
+    endif
 
-     if (idensityweighted) then
-        print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
-        inormalise = .true.
-     endif
-  else
-     if (required(ih) .and. required(irho) .and. ih > 0 .and. irho > 0) then
-        print "(a)",' WARNING: particle mass not set: using normalised interpolations'
-     endif
-     weighti(1:ninterp) = 1.0
+    if (idensityweighted) then
+       print "(a)",' USING DENSITY WEIGHTED INTERPOLATION '
+       inormalise = .true.
+    endif
+ else
+    if (required(ih) .and. required(irho) .and. ih > 0 .and. irho > 0) then
+       print "(a)",' WARNING: particle mass not set: using normalised interpolations'
+    endif
+    weighti(1:ninterp) = 1.0
 
-  !--if particle mass has not been set, then must use normalised interpolations
-     inormalise = .true.
+    !--if particle mass has not been set, then must use normalised interpolations
+    inormalise = .true.
 
-     if (size(iamtypei) > 1) then
-        !
-        !--particles with mixed types
-        !
-        !$omp parallel do default(none) &
-        !$omp shared(ninterp,iamtypei,weighti,usetype) &
-        !$omp private(ipart,itype)
-        do ipart=1,ninterp
-           itype = iamtypei(ipart)
-           if (.not.usetype(itype)) weighti(ipart) = 0.
-        enddo
-        !$omp end parallel do
-     endif
-  endif
+    if (size(iamtypei) > 1) then
+       !
+       !--particles with mixed types
+       !
+       !$omp parallel do default(none) &
+       !$omp shared(ninterp,iamtypei,weighti,usetype) &
+       !$omp private(ipart,itype)
+       do ipart=1,ninterp
+          itype = iamtypei(ipart)
+          if (.not.usetype(itype)) weighti(ipart) = 0.
+       enddo
+       !$omp end parallel do
+    endif
+ endif
 
 end subroutine set_interpolation_weights
 

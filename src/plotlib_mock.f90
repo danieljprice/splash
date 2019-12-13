@@ -25,39 +25,39 @@
 !  in external libraries (libexact)
 !---------------------------------------------------------------------------
 module plotlib
-  implicit none
-public
+ implicit none
+ public
 
 contains
 
 subroutine plot_pt1(R1,R2,I)
-  real :: R1, R2
-  integer :: I
+ real :: R1, R2
+ integer :: I
 end subroutine
 
 subroutine plot_swin(R1,R2,R3,R4)
-  real :: R1, R2, R3, R4
+ real :: R1, R2, R3, R4
 end subroutine
 
 subroutine plot_box(S1,R1,I1,S2,R2,I2)
-  real :: R1, R2
-  integer :: I1, I2
-  character(len=*) :: S1, S2
+ real :: R1, R2
+ integer :: I1, I2
+ character(len=*) :: S1, S2
 end subroutine
 
 subroutine plot_funx(F1,I1,R1,R2,I2)
-  real :: R1, R2, F1
-  integer :: I1, I2
-  external F1
+ real :: R1, R2, F1
+ integer :: I1, I2
+ external F1
 end subroutine
 
 subroutine plot_label (S1,S2,S3)
-  character(len=*) :: S1, S2, S3
+ character(len=*) :: S1, S2, S3
 end subroutine
 
 subroutine plot_line(I,R1,R2)
-  real :: R1(:), R2(:)
-  integer :: I
+ real :: R1(:), R2(:)
+ integer :: I
 end subroutine
 
 end module plotlib

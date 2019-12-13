@@ -37,414 +37,414 @@ contains
 subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,iplot_type, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
                         fast,datpix,nx,ny,dval,brightness)
-  use params,           only:int1
-  use labels,           only:labeltype, maxparttypes,is_coord
-  use settings_data,    only:ndim,icoords,ntypes
-  use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
+ use params,           only:int1
+ use labels,           only:labeltype, maxparttypes,is_coord
+ use settings_data,    only:ndim,icoords,ntypes
+ use settings_part,    only:imarktype,ncircpart,icoordsnew,icircpart,itypeorder, &
                              ilabelpart,iplotline,linestylethisstep,linecolourthisstep
-  use interpolations2D, only:interpolate_part,interpolate_part1
-  use transforms,       only:transform
-  use part_utils,       only:igettype
-  use sort,             only:indexx
-  use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
+ use interpolations2D, only:interpolate_part,interpolate_part1
+ use transforms,       only:transform
+ use part_utils,       only:igettype
+ use sort,             only:indexx
+ use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
                              plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
-  implicit none
-  integer,            intent(in) :: ntot,iplotx, iploty
-  integer(kind=int1), intent(in) :: iamtype(:)
-  integer,            intent(in) :: icolourpart(:)
-  integer,            intent(in) :: noftype(maxparttypes)
-  real,               intent(in) :: x(:), y(:), z(:), h(:)
-  real,               intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
-  logical,            intent(in) :: use_zrange,fast
-  logical,            intent(in) :: iplot_type(maxparttypes)
-  character(len=*),   intent(in) :: labelz
+ implicit none
+ integer,            intent(in) :: ntot,iplotx, iploty
+ integer(kind=int1), intent(in) :: iamtype(:)
+ integer,            intent(in) :: icolourpart(:)
+ integer,            intent(in) :: noftype(maxparttypes)
+ real,               intent(in) :: x(:), y(:), z(:), h(:)
+ real,               intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
+ logical,            intent(in) :: use_zrange,fast
+ logical,            intent(in) :: iplot_type(maxparttypes)
+ character(len=*),   intent(in) :: labelz
 
-  integer,            intent(in),    optional :: nx,ny
-  real,               intent(inout), optional :: datpix(:,:),brightness(:,:)
-  real,               intent(in),    optional :: dval
+ integer,            intent(in),    optional :: nx,ny
+ real,               intent(inout), optional :: datpix(:,:),brightness(:,:)
+ real,               intent(in),    optional :: dval
 
-  integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
-  integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
-  integer             :: nplottedtype(maxparttypes)
-  character(len=20)   :: string
-  integer, parameter  :: ncellx = 500, ncelly = 500 ! for crowded field reduction
-  integer(kind=int1)  :: nincell(ncellx,ncelly,maxparttypes)
-  integer             :: icellx,icelly,maxz
-  real                :: dx1,dy1,dxpix
-  logical             :: mixedtypes
-  real, allocatable   :: xerrb(:), yerrb(:), herr(:)
-  integer, allocatable :: iorder(:)
+ integer :: j,n,itype,linewidth,icolourindex,nplotted,oldlinestyle,ierr
+ integer :: lenstring,index1,index2,ntotplot,icolourstart,nlooptypes,ilooptype
+ integer             :: nplottedtype(maxparttypes)
+ character(len=20)   :: string
+ integer, parameter  :: ncellx = 500, ncelly = 500 ! for crowded field reduction
+ integer(kind=int1)  :: nincell(ncellx,ncelly,maxparttypes)
+ integer             :: icellx,icelly,maxz
+ real                :: dx1,dy1,dxpix
+ logical             :: mixedtypes
+ real, allocatable   :: xerrb(:), yerrb(:), herr(:)
+ integer, allocatable :: iorder(:)
 
-  !--query current character height and colour
-  call plot_qci(icolourstart)
-  !
-  !--check for errors in input
-  !
-  ntotplot = sum(noftype(1:ntypes))
-  if (ntot < ntotplot) then
-     print "(a)",' ERROR: number of particles input < number of each type '
-     print*,ntot,noftype(1:ntypes)
-     return
-  elseif (ntot /= ntotplot) then
-     print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
-     print*,' ntotal = ',ntot,' sum of types = ',ntotplot
-  endif
-  maxz = size(z)
-  if (maxz > ntot) maxz = ntot
-  if (use_zrange .and. maxz < ntot) then
-     print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
-  endif
-  dxpix = 0.
-  if (present(datpix)) then
-     if (.not.(present(nx).and.present(ny).and.present(dval))) then
-        print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
-        return
-     else
-        dxpix = (xmax - xmin)/real(nx)
-     endif
-  endif
+ !--query current character height and colour
+ call plot_qci(icolourstart)
+ !
+ !--check for errors in input
+ !
+ ntotplot = sum(noftype(1:ntypes))
+ if (ntot < ntotplot) then
+    print "(a)",' ERROR: number of particles input < number of each type '
+    print*,ntot,noftype(1:ntypes)
+    return
+ elseif (ntot /= ntotplot) then
+    print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
+    print*,' ntotal = ',ntot,' sum of types = ',ntotplot
+ endif
+ maxz = size(z)
+ if (maxz > ntot) maxz = ntot
+ if (use_zrange .and. maxz < ntot) then
+    print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
+ endif
+ dxpix = 0.
+ if (present(datpix)) then
+    if (.not.(present(nx).and.present(ny).and.present(dval))) then
+       print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
+       return
+    else
+       dxpix = (xmax - xmin)/real(nx)
+    endif
+ endif
 
-  !
-  !--loop over all particle types
-  !
-  index1 = 1
-  nplottedtype = 0
-  nlooptypes = ntypes
-  mixedtypes = size(iamtype) > 1
-  if (mixedtypes .or. use_zrange) nlooptypes = 1
-  dx1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
-  dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
-  nincell = 0
+ !
+ !--loop over all particle types
+ !
+ index1 = 1
+ nplottedtype = 0
+ nlooptypes = ntypes
+ mixedtypes = size(iamtype) > 1
+ if (mixedtypes .or. use_zrange) nlooptypes = 1
+ dx1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
+ dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
+ nincell = 0
 
-  over_types: do ilooptype=1,nlooptypes
-     call plot_bbuf !--buffer plot output until each particle type finished
-     if (mixedtypes .or. use_zrange) then
-        index1 = 1
-        index2 = ntot
-        itype = 0
-     else
-        itype = itypeorder(ilooptype)
-        if (itype==1) then
-           index1 = 1
-        else
-           index1 = sum(noftype(1:itype-1))+1
-        endif
-        index2 = index1 + noftype(itype) - 1
-        if (.not.iplot_type(itype)) then
-           call plot_ebuf
-           cycle over_types
-        endif
-     endif
-     if (index2 > ntot) then
-        index2 = ntot
-        print "(a)",' WARNING: incomplete data'
-     endif
-     if (index2 < index1) then
-        call plot_ebuf
-        cycle over_types
-     endif
+ over_types: do ilooptype=1,nlooptypes
+    call plot_bbuf !--buffer plot output until each particle type finished
+    if (mixedtypes .or. use_zrange) then
+       index1 = 1
+       index2 = ntot
+       itype = 0
+    else
+       itype = itypeorder(ilooptype)
+       if (itype==1) then
+          index1 = 1
+       else
+          index1 = sum(noftype(1:itype-1))+1
+       endif
+       index2 = index1 + noftype(itype) - 1
+       if (.not.iplot_type(itype)) then
+          call plot_ebuf
+          cycle over_types
+       endif
+    endif
+    if (index2 > ntot) then
+       index2 = ntot
+       print "(a)",' WARNING: incomplete data'
+    endif
+    if (index2 < index1) then
+       call plot_ebuf
+       cycle over_types
+    endif
 
-     if (use_zrange) then
-        !
-        !--if particle cross section, plot particles only in a defined (z) coordinate range
-        !
-        nplotted = 0
-        overj: do j=1,ntot
-           if (mixedtypes) then
-              itype = min(max(int(iamtype(j)),1),maxparttypes)
-           else
-              itype = igettype(j,noftype)
-           endif
-           if (.not. iplot_type(itype)) cycle overj
-           if (j <= maxz) then
-              if (z(j) > zmin .and. z(j) < zmax) then
-                 if (icolourpart(j) >= 0) then
-                    nplotted = nplotted + 1
-                    nplottedtype(itype) = nplottedtype(itype) + 1
+    if (use_zrange) then
+       !
+       !--if particle cross section, plot particles only in a defined (z) coordinate range
+       !
+       nplotted = 0
+       overj: do j=1,ntot
+          if (mixedtypes) then
+             itype = min(max(int(iamtype(j)),1),maxparttypes)
+          else
+             itype = igettype(j,noftype)
+          endif
+          if (.not. iplot_type(itype)) cycle overj
+          if (j <= maxz) then
+             if (z(j) > zmin .and. z(j) < zmax) then
+                if (icolourpart(j) >= 0) then
+                   nplotted = nplotted + 1
+                   nplottedtype(itype) = nplottedtype(itype) + 1
 
-                    if (fast .and. noftype(itype) > 100) then
-                       if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                          if (nincell(icellx,icelly,itype)==0) then
-                             nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
-                             call plot_sci(icolourpart(j))
-                             call plot_particle(imarktype(itype),x(j),y(j),h(j))
-                          endif
-                       endif
-                    else
-                       call plot_sci(icolourpart(j))
-                       call plot_particle(imarktype(itype),x(j),y(j),h(j))
-                    endif
+                   if (fast .and. noftype(itype) > 100) then
+                      if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
+                         if (nincell(icellx,icelly,itype)==0) then
+                            nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
+                            call plot_sci(icolourpart(j))
+                            call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                         endif
+                      endif
+                   else
+                      call plot_sci(icolourpart(j))
+                      call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                   endif
 
-                    if (present(datpix)) then
-                       if (present(brightness)) then
-                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
-                       else
-                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
-                       endif
-                    endif
-                 endif
-                 !--plot circle of interaction if gas particle
-                 if (itype==1 .and. ncircpart > 0 .and. ANY(icircpart(1:ncircpart)==j)) then
-                    call plot_circ(x(j),y(j),2*h(j))
-                 endif
-                 !!--plot particle label
-                 if (ilabelpart) then
-                    call plot_numb(j,0,1,string,lenstring)
-                    call plot_text(x(j),y(j),string(1:lenstring))
-                 endif
-              endif
-           endif
-        enddo overj
+                   if (present(datpix)) then
+                      if (present(brightness)) then
+                         call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
+                      else
+                         call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
+                      endif
+                   endif
+                endif
+                !--plot circle of interaction if gas particle
+                if (itype==1 .and. ncircpart > 0 .and. ANY(icircpart(1:ncircpart)==j)) then
+                   call plot_circ(x(j),y(j),2*h(j))
+                endif
+                !!--plot particle label
+                if (ilabelpart) then
+                   call plot_numb(j,0,1,string,lenstring)
+                   call plot_text(x(j),y(j),string(1:lenstring))
+                endif
+             endif
+          endif
+       enddo overj
 
-        do itype=1,ntypes
-           if (iplot_type(itype) .and. nplottedtype(itype) > 0) then
-              if (zmin < -0.1*huge(zmin)) then
-                 print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+       do itype=1,ntypes
+          if (iplot_type(itype) .and. nplottedtype(itype) > 0) then
+             if (zmin < -0.1*huge(zmin)) then
+                print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
                   trim(labeltype(itype))//' particles with ', trim(labelz),' < ',zmax
-              else
-                 print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+             else
+                print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
                   trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax
-              endif
-           endif
-        enddo
-     else
-        !
-        !--otherwise plot all particles of this type using appropriate marker and colour
-        !
-        call plot_qci(icolourindex)
-        !
-        !--all particles in range have same colour and type
-        !
-        if (.not.mixedtypes .and. all(icolourpart(index1:index2)==icolourpart(index1)) &
+             endif
+          endif
+       enddo
+    else
+       !
+       !--otherwise plot all particles of this type using appropriate marker and colour
+       !
+       call plot_qci(icolourindex)
+       !
+       !--all particles in range have same colour and type
+       !
+       if (.not.mixedtypes .and. all(icolourpart(index1:index2)==icolourpart(index1)) &
             .and. icolourpart(index1) >= 0) then
-           call plot_sci(icolourpart(index1))
-           if (fast .and. (index2-index1) > 100) then
-              !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
-              write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-              nincell = 0
-              do j=index1,index2
-                 if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                    if (nincell(icellx,icelly,itype)==0) then
-                       nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
+          call plot_sci(icolourpart(index1))
+          if (fast .and. (index2-index1) > 100) then
+             !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
+             write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+             nincell = 0
+             do j=index1,index2
+                if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
+                   if (nincell(icellx,icelly,itype)==0) then
+                      nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
 
-                       call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                      call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
-                       if (present(datpix)) then
-                          if (present(brightness)) then
-                             call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
-                          else
-                             call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
-                          endif
-                       endif
-                    endif
-                 endif
-              enddo
-           else
-              !--plot all particles of this type
-              print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
-              select case(imarktype(itype))
-              case(32:35)
-                 do j=1,noftype(itype)
-                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
-                 enddo
-                 call plot_sfs(1)
-              case default
-                 call plot_pt(noftype(itype),x(index1:index2),y(index1:index2),imarktype(itype))
-              end select
-              if (present(datpix)) then
-                 if (present(brightness)) then
-                    call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
+                      if (present(datpix)) then
+                         if (present(brightness)) then
+                            call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
+                         else
+                            call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
+                         endif
+                      endif
+                   endif
+                endif
+             enddo
+          else
+             !--plot all particles of this type
+             print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+             select case(imarktype(itype))
+             case(32:35)
+                do j=1,noftype(itype)
+                   call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                enddo
+                call plot_sfs(1)
+             case default
+                call plot_pt(noftype(itype),x(index1:index2),y(index1:index2),imarktype(itype))
+             end select
+             if (present(datpix)) then
+                if (present(brightness)) then
+                   call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
                                           noftype(itype),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
-                 else
-                    call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
+                else
+                   call interpolate_part(x(index1:index2),y(index1:index2),h(index1:index2), &
                                           noftype(itype),xmin,ymin,datpix,nx,ny,dxpix,dval)
-                 endif
-              endif
-           endif
-        else
-        !
-        !--mixed colours and/or mixed types
-        !
-           nplotted = 0
-           nplottedtype = 0
+                endif
+             endif
+          endif
+       else
+          !
+          !--mixed colours and/or mixed types
+          !
+          nplotted = 0
+          nplottedtype = 0
 
-           overj2: do j=index1,index2
-              if (icolourpart(j) >= 0) then
-                 if (mixedtypes) then
-                    itype = int(iamtype(j))
-                    if (.not.iplot_type(itype)) cycle overj2
-                    nplottedtype(itype) = nplottedtype(itype) + 1
-                 endif
-                 nplotted = nplotted + 1
-                 if (fast .and. noftype(itype) > 100) then
-                    if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                    !--exclude particles if there are more than 2 particles per cell
-                    !  (two here because particles can have different colours)
-                       if (nincell(icellx,icelly,itype) <= 0) then
-                          nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
+          overj2: do j=index1,index2
+             if (icolourpart(j) >= 0) then
+                if (mixedtypes) then
+                   itype = int(iamtype(j))
+                   if (.not.iplot_type(itype)) cycle overj2
+                   nplottedtype(itype) = nplottedtype(itype) + 1
+                endif
+                nplotted = nplotted + 1
+                if (fast .and. noftype(itype) > 100) then
+                   if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
+                      !--exclude particles if there are more than 2 particles per cell
+                      !  (two here because particles can have different colours)
+                      if (nincell(icellx,icelly,itype) <= 0) then
+                         nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
 
-                          call plot_sci(icolourpart(j))
-                          call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                         call plot_sci(icolourpart(j))
+                         call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
-                          if (present(datpix)) then
-                             if (present(brightness)) then
-                                call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
-                             else
-                                call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
-                             endif
-                          endif
-                       endif
-                    endif
-                 else
-                    call plot_sci(icolourpart(j))
-                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
+                         if (present(datpix)) then
+                            if (present(brightness)) then
+                               call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
+                            else
+                               call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
+                            endif
+                         endif
+                      endif
+                   endif
+                else
+                   call plot_sci(icolourpart(j))
+                   call plot_particle(imarktype(itype),x(j),y(j),h(j))
 
-                    if (present(datpix)) then
-                       if (present(brightness)) then
-                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
-                       else
-                          call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
-                       endif
-                    endif
-                 endif
-              endif
-           enddo overj2
-           if (mixedtypes) then
-              do itype=1,ntypes
-                 if (iplot_type(itype)) then
-                    if (fast .and. noftype(itype) > 100) then
-                       print*,' fast-plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
-                    elseif (noftype(itype) > 0) then
-                       print*,' plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
-                    endif
-                 endif
-              enddo
-           else
-              if (fast .and. noftype(itype) > 100) then
-                 print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
-              else
-                 print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
-              endif
-           endif
-        endif
-        call plot_sci(icolourindex)
+                   if (present(datpix)) then
+                      if (present(brightness)) then
+                         call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval,brightness)
+                      else
+                         call interpolate_part1(x(j),y(j),h(j),xmin,ymin,datpix,nx,ny,dxpix,dval)
+                      endif
+                   endif
+                endif
+             endif
+          enddo overj2
+          if (mixedtypes) then
+             do itype=1,ntypes
+                if (iplot_type(itype)) then
+                   if (fast .and. noftype(itype) > 100) then
+                      print*,' fast-plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
+                   elseif (noftype(itype) > 0) then
+                      print*,' plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
+                   endif
+                endif
+             enddo
+          else
+             if (fast .and. noftype(itype) > 100) then
+                print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+             else
+                print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+             endif
+          endif
+       endif
+       call plot_sci(icolourindex)
 
-        if (ilabelpart) then
-           !!--plot particle labels
-           print*,'plotting particle labels ',index1,':',index2
-           do j=index1,index2
-              call plot_numb(j,0,1,string,lenstring)
-              call plot_text(x(j),y(j),string(1:lenstring))
-           enddo
-        endif
-     endif
-     index1 = index2 + 1
-     call plot_ebuf !--flush PGPLOT buffer at end of each type
-  enddo over_types
+       if (ilabelpart) then
+          !!--plot particle labels
+          print*,'plotting particle labels ',index1,':',index2
+          do j=index1,index2
+             call plot_numb(j,0,1,string,lenstring)
+             call plot_text(x(j),y(j),string(1:lenstring))
+          enddo
+       endif
+    endif
+    index1 = index2 + 1
+    call plot_ebuf !--flush PGPLOT buffer at end of each type
+ enddo over_types
 
-  !
-  !--plot lines joining particles if relevant
-  !
-  call plot_qci(icolourindex)
-  call plot_sci(linecolourthisstep)
-  !  i.e., don't plot a line for cross section plots (would plot all particles)
-  !        but do if there is 3D perspective --> in which case zmin = -huge(x)
-  if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin) < 0.5*huge(0.))) then
-     call plot_qls(oldlinestyle)
-     call plot_sls(linestylethisstep)
-     if (ndim <= 1) then ! sort particles by x in 1D
-        allocate(iorder(noftype(1)))
-        call indexx(noftype(1),x(1:noftype(1)),iorder)
-        call plot_line(noftype(1),x(iorder),y(iorder))
-        deallocate(iorder)
-     else
-        call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
-     endif
-     if (noftype(2) > 0 .and. iplot_type(2)) then
-        call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
-        call plot_line(noftype(2),x(noftype(1)+1:sum(noftype(1:2))),y(noftype(1)+1:sum(noftype(1:2))))
-     endif
-     call plot_sls(oldlinestyle)! reset
-  endif
+ !
+ !--plot lines joining particles if relevant
+ !
+ call plot_qci(icolourindex)
+ call plot_sci(linecolourthisstep)
+ !  i.e., don't plot a line for cross section plots (would plot all particles)
+ !        but do if there is 3D perspective --> in which case zmin = -huge(x)
+ if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin) < 0.5*huge(0.))) then
+    call plot_qls(oldlinestyle)
+    call plot_sls(linestylethisstep)
+    if (ndim <= 1) then ! sort particles by x in 1D
+       allocate(iorder(noftype(1)))
+       call indexx(noftype(1),x(1:noftype(1)),iorder)
+       call plot_line(noftype(1),x(iorder),y(iorder))
+       deallocate(iorder)
+    else
+       call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
+    endif
+    if (noftype(2) > 0 .and. iplot_type(2)) then
+       call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
+       call plot_line(noftype(2),x(noftype(1)+1:sum(noftype(1:2))),y(noftype(1)+1:sum(noftype(1:2))))
+    endif
+    call plot_sls(oldlinestyle)! reset
+ endif
 
-  call plot_sci(icolourindex)
-  !
-  !--plot circles of interaction (ie a circle of radius 2h)
-  !  around all or selected particles. For plots with only one coordinate axis,
-  !  these are plotted as error bars in the coordinate direction.
-  !
-  !--this bit is also used for error bar plotting on x or y axis.
-  !
-  if (ncircpart > 0) then
-     !
-     !--set fill area style and line width
-     !
-     call plot_qlw(linewidth)
-     call plot_slw(2)
-     call plot_qci(icolourindex)
-     call plot_sci(2)
-     call plot_sfs(2)
+ call plot_sci(icolourindex)
+ !
+ !--plot circles of interaction (ie a circle of radius 2h)
+ !  around all or selected particles. For plots with only one coordinate axis,
+ !  these are plotted as error bars in the coordinate direction.
+ !
+ !--this bit is also used for error bar plotting on x or y axis.
+ !
+ if (ncircpart > 0) then
+    !
+    !--set fill area style and line width
+    !
+    call plot_qlw(linewidth)
+    call plot_slw(2)
+    call plot_qci(icolourindex)
+    call plot_sci(2)
+    call plot_sfs(2)
 
-     if (ncircpart > 0) then
+    if (ncircpart > 0) then
 
-        if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart > 0) then
-           print*,'plotting ',ncircpart,' circles of interaction'
-           do n = 1,ncircpart
-              if (icircpart(n) > ntot) then
-                 print*,'error: particle index > number of particles'
-              else
-                 if (icoordsnew /= icoords) then
-                    call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
+       if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart > 0) then
+          print*,'plotting ',ncircpart,' circles of interaction'
+          do n = 1,ncircpart
+             if (icircpart(n) > ntot) then
+                print*,'error: particle index > number of particles'
+             else
+                if (icoordsnew /= icoords) then
+                   call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
                          x(icircpart(n)),y(icircpart(n)),z(icircpart(n)),2*h(icircpart(n)))
-                 else
-                    call plot_circ(x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
-                 endif
-              endif
-           enddo
-        else
-           if (.not.allocated(herr)) then
-              allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
-              if (ierr /= 0) &
+                else
+                   call plot_circ(x(icircpart(n)),y(icircpart(n)),2*h(icircpart(n)))
+                endif
+             endif
+          enddo
+       else
+          if (.not.allocated(herr)) then
+             allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
+             if (ierr /= 0) &
                  stop ' Error allocating memory in particleplot for circles of interaction'
-           endif
-           !!--only on specified particles
-           do n=1,ncircpart
-              if (icircpart(n) > ntot) then
-                 print*,'error: particle index > number of particles'
-                 xerrb(n) = 0.
-                 yerrb(n) = 0.
-                 herr(n) = 0.
-              else
-                 xerrb(n) = x(icircpart(n))
-                 yerrb(n) = y(icircpart(n))
-                 herr(n) = 2.*h(icircpart(n))
-              endif
-           enddo
-           if (is_coord(iplotx,ndim)) then
-              print*,'plotting ',ncircpart,' error bars x axis '
-              call plot_errb(5,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
-           elseif (is_coord(iploty,ndim)) then
-              print*,'plotting ',ncircpart,' error bars y axis'
-              call plot_errb(6,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
-           endif
-           if (allocated(herr)) deallocate(herr)
-           if (allocated(xerrb)) deallocate(xerrb)
-           if (allocated(yerrb)) deallocate(yerrb)
-        endif
-     endif
+          endif
+          !!--only on specified particles
+          do n=1,ncircpart
+             if (icircpart(n) > ntot) then
+                print*,'error: particle index > number of particles'
+                xerrb(n) = 0.
+                yerrb(n) = 0.
+                herr(n) = 0.
+             else
+                xerrb(n) = x(icircpart(n))
+                yerrb(n) = y(icircpart(n))
+                herr(n) = 2.*h(icircpart(n))
+             endif
+          enddo
+          if (is_coord(iplotx,ndim)) then
+             print*,'plotting ',ncircpart,' error bars x axis '
+             call plot_errb(5,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+          elseif (is_coord(iploty,ndim)) then
+             print*,'plotting ',ncircpart,' error bars y axis'
+             call plot_errb(6,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
+          endif
+          if (allocated(herr)) deallocate(herr)
+          if (allocated(xerrb)) deallocate(xerrb)
+          if (allocated(yerrb)) deallocate(yerrb)
+       endif
+    endif
 
-     call plot_slw(linewidth)
-     call plot_sci(icolourindex)
+    call plot_slw(linewidth)
+    call plot_sci(icolourindex)
 
-  endif
+ endif
 
 !
 !--reset colour
 !
-  call plot_sci(icolourstart)
+ call plot_sci(icolourstart)
 
-  return
+ return
 
 end subroutine particleplot
 !--------------------------------------------------------------------------------
@@ -525,63 +525,63 @@ end function in_cell
 !
 !--------------------------------------------------------------------------------
 subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
-  use geometry, only:coord_transform,maxcoordsys,labelcoordsys
-  use plotlib,  only:plot_line
-  use labels,   only:ix
-  implicit none
-  integer, intent(in) :: igeom,igeomold,iplotx,iploty
-  real, intent(in) :: x,y,z,h
+ use geometry, only:coord_transform,maxcoordsys,labelcoordsys
+ use plotlib,  only:plot_line
+ use labels,   only:ix
+ implicit none
+ integer, intent(in) :: igeom,igeomold,iplotx,iploty
+ real, intent(in) :: x,y,z,h
 
-  integer, parameter :: npts = 100 ! big enough to give a smooth circle
-  real, parameter :: pi = 3.1415926536
-  integer :: i,iplotz
-  real, dimension(3) :: xtemp,xplot_coords
-  real, dimension(3,npts) :: xpts
-  real :: angle, dangle, xi, yi, zi
+ integer, parameter :: npts = 100 ! big enough to give a smooth circle
+ real, parameter :: pi = 3.1415926536
+ integer :: i,iplotz
+ real, dimension(3) :: xtemp,xplot_coords
+ real, dimension(3,npts) :: xpts
+ real :: angle, dangle, xi, yi, zi
 
-  if (igeom > 1 .and. igeom <= maxcoordsys) then
-     print 10,labelcoordsys(igeom)
-  else
-     print 10,labelcoordsys(1)
-  endif
+ if (igeom > 1 .and. igeom <= maxcoordsys) then
+    print 10,labelcoordsys(igeom)
+ else
+    print 10,labelcoordsys(1)
+ endif
 10 format('coordinate system = ',a)
 
-  iplotz = 0
-  do i=1,3
-     if (iplotx /= ix(i) .and. iploty /= ix(i)) iplotz = ix(i)
-  enddo
-  if (iplotz==0) return
+ iplotz = 0
+ do i=1,3
+    if (iplotx /= ix(i) .and. iploty /= ix(i)) iplotz = ix(i)
+ enddo
+ if (iplotz==0) return
 
-  xplot_coords = (/x,y,z/)  ! not actual x,y,z
-  xtemp(iplotx-ix(1)+1) = xplot_coords(1)
-  xtemp(iploty-ix(1)+1) = xplot_coords(2)
-  xtemp(iplotz-ix(1)+1) = xplot_coords(3)
-  !--e.g. from cylindricals TO cartesians
-  call coord_transform(xtemp,3,igeom,xpts(:,1),3,igeomold)
-  xi = xpts(1,1)
-  yi = xpts(2,1)
-  zi = xpts(3,1)
+ xplot_coords = (/x,y,z/)  ! not actual x,y,z
+ xtemp(iplotx-ix(1)+1) = xplot_coords(1)
+ xtemp(iploty-ix(1)+1) = xplot_coords(2)
+ xtemp(iplotz-ix(1)+1) = xplot_coords(3)
+ !--e.g. from cylindricals TO cartesians
+ call coord_transform(xtemp,3,igeom,xpts(:,1),3,igeomold)
+ xi = xpts(1,1)
+ yi = xpts(2,1)
+ zi = xpts(3,1)
 !
 !--step around a circle in co-ordinate space of radius h and store the
 !  location of the points in cartesian space in the 2D array xpts
 !
-  dangle = 2.*pi/REAL(npts-1)
-  do i=1,npts
-     angle = (i-1)*dangle
-     xtemp(1) = xi + h*cos(angle)
-     xtemp(2) = yi + h*sin(angle)
-     xtemp(3) = zi
+ dangle = 2.*pi/REAL(npts-1)
+ do i=1,npts
+    angle = (i-1)*dangle
+    xtemp(1) = xi + h*cos(angle)
+    xtemp(2) = yi + h*sin(angle)
+    xtemp(3) = zi
 !
 !--translate back to actual coordinate system plotted
 !
-     call coord_transform(xtemp,3,igeomold,xpts(:,i),3,igeom)
-  enddo
+    call coord_transform(xtemp,3,igeomold,xpts(:,i),3,igeom)
+ enddo
 !
 !--now plot the circle using pgline
 !
-  call plot_line(npts,xpts(iplotx-ix(1)+1,:),xpts(iploty-ix(1)+1,:))
+ call plot_line(npts,xpts(iplotx-ix(1)+1,:),xpts(iploty-ix(1)+1,:))
 
-  return
+ return
 end subroutine plot_kernel_gr
 
 !--------------------------------------------------------------------------------

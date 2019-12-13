@@ -45,27 +45,27 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_vecplot
-  implicit none
+ implicit none
 
-  npixvec = 40        ! pixels in x direction on vector plots
-  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
-  iplotpartvec = .true.   ! whether to plot particles on vector plot
-  iVecplotLegend = .true.
-  iVecLegendOnPanel = 0   ! all panels
-  hposlegendvec = 0.02
-  vposlegendvec = -1.5
-  iplotstreamlines = .false. ! plot stream lines instead of arrows
-  iplotarrowheads = .true.
-  iplotsynchrotron = .false.
-  zcrit = 2.5 ! kpc
-  rcrit = 13. ! kpc
-  synchrotronspecindex = 0.8
-  uthermcutoff = -1. ! flags this as uninitialised
-  ihidearrowswherenoparts = .false.
-  minpartforarrow = 1
-  iallarrowssamelength = .false.
+ npixvec = 40        ! pixels in x direction on vector plots
+ UseBackgndColorVecplot = .false. ! plot vector plot using black/white
+ iplotpartvec = .true.   ! whether to plot particles on vector plot
+ iVecplotLegend = .true.
+ iVecLegendOnPanel = 0   ! all panels
+ hposlegendvec = 0.02
+ vposlegendvec = -1.5
+ iplotstreamlines = .false. ! plot stream lines instead of arrows
+ iplotarrowheads = .true.
+ iplotsynchrotron = .false.
+ zcrit = 2.5 ! kpc
+ rcrit = 13. ! kpc
+ synchrotronspecindex = 0.8
+ uthermcutoff = -1. ! flags this as uninitialised
+ ihidearrowswherenoparts = .false.
+ minpartforarrow = 1
+ iallarrowssamelength = .false.
 
-  return
+ return
 end subroutine defaults_set_vecplot
 
 !----------------------------------------------------------------------

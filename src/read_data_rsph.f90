@@ -47,233 +47,233 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,ipos,nstepsread)
-  use exact, only:hfact
-  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
-  use params
+ use exact, only:hfact
+ use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
+ use params
 !  use labels
-  use filenames, only:nfiles
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,ntypes, &
+ use filenames, only:nfiles
+ use settings_data, only:ndim,ndimV,ncolumns,ncalc,ntypes, &
                           buffer_data
-  use mem_allocation, only:alloc
-  use geometry, only:labelcoordsys
-  implicit none
-  integer, intent(in) :: indexstart,ipos
-  integer, intent(out) :: nstepsread
-  character(len=*), intent(in) :: rootname
-  character(len=len(rootname)+4) :: datfile
-  integer :: i,icol,ierr,iunit,isizeheader
-  integer :: npart_max,nstep_max
-  integer :: ntoti
-  logical :: singleprecision
+ use mem_allocation, only:alloc
+ use geometry, only:labelcoordsys
+ implicit none
+ integer, intent(in) :: indexstart,ipos
+ integer, intent(out) :: nstepsread
+ character(len=*), intent(in) :: rootname
+ character(len=len(rootname)+4) :: datfile
+ integer :: i,icol,ierr,iunit,isizeheader
+ integer :: npart_max,nstep_max
+ integer :: ntoti
+ logical :: singleprecision
 
-  integer*2, dimension(10) :: sheader
-  integer, dimension(10) :: iheader
-  integer*8, dimension(10):: lheader
-  real, dimension(10) :: rheader
-  real(doub_prec), dimension(10) :: dheader
-  character(len=100) :: headerstring
-  character(len=10), dimension(maxplot) :: cheader
-  real, dimension(:,:), allocatable :: dattemp
-  real(doub_prec), dimension(:,:), allocatable :: dattempd
-  common /chead/ cheader
+ integer*2, dimension(10) :: sheader
+ integer, dimension(10) :: iheader
+ integer*8, dimension(10):: lheader
+ real, dimension(10) :: rheader
+ real(doub_prec), dimension(10) :: dheader
+ character(len=100) :: headerstring
+ character(len=10), dimension(maxplot) :: cheader
+ real, dimension(:,:), allocatable :: dattemp
+ real(doub_prec), dimension(:,:), allocatable :: dattempd
+ common /chead/ cheader
 
-  iunit = 11 ! file unit number
-  nstepsread = 0
-  if (rootname(1:1) /= ' ') then
-     datfile = trim(rootname)
-     !print*,'rootname = ',rootname
-  else
-     print*,' **** no data read **** '
-     return
-  endif
+ iunit = 11 ! file unit number
+ nstepsread = 0
+ if (rootname(1:1) /= ' ') then
+    datfile = trim(rootname)
+    !print*,'rootname = ',rootname
+ else
+    print*,' **** no data read **** '
+    return
+ endif
 
-  print "(1x,a)",'reading RSPH format'
-  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
-  !
-  !--open data file and read data
-  !
-  open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
-  if (ierr /= 0) then
-     print*,'*** Error opening '//trim(datfile)//' ***'
-     return
-  endif
+ print "(1x,a)",'reading RSPH format'
+ write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
+ !
+ !--open data file and read data
+ !
+ open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
+ if (ierr /= 0) then
+    print*,'*** Error opening '//trim(datfile)//' ***'
+    return
+ endif
 
-  i = indexstart
+ i = indexstart
 !
 !--read first header line
 !
-  read(iunit,iostat=ierr,end=80) headerstring
-  print "(1x,a)",'header string="'//trim(headerstring)//'"'
+ read(iunit,iostat=ierr,end=80) headerstring
+ print "(1x,a)",'header string="'//trim(headerstring)//'"'
 !
 !--read other header lines (short/normal/long ints, reals, doubles)
 !
-  read(iunit,iostat=ierr,end=80) sheader(1:10)
-  if (ierr /= 0) then
-     print*,'WARNING: errors during sheader read'
-  endif
-  print "(1x,a,10(1x,i2))",'sheader = ',sheader(1:10)
+ read(iunit,iostat=ierr,end=80) sheader(1:10)
+ if (ierr /= 0) then
+    print*,'WARNING: errors during sheader read'
+ endif
+ print "(1x,a,10(1x,i2))",'sheader = ',sheader(1:10)
 
-  isizeheader = sheader(1)
-  ndim = sheader(2)
-  ndimV = sheader(3)
-  ntypes = sheader(4)
-  ncolumns = sheader(5) + ndim  ! ncolumns in sheader + positions
-  !
-  !--check for errors in sheader
-  !
-  if (ndim > 3 .or. ndimV > 3 .or. ndim <= 0 .or. ndimV <= 0 .or. &
+ isizeheader = sheader(1)
+ ndim = sheader(2)
+ ndimV = sheader(3)
+ ntypes = sheader(4)
+ ncolumns = sheader(5) + ndim  ! ncolumns in sheader + positions
+ !
+ !--check for errors in sheader
+ !
+ if (ndim > 3 .or. ndimV > 3 .or. ndim <= 0 .or. ndimV <= 0 .or. &
       ncolumns <= 0 ) then
-     print*,'*** ERROR: header corrupted: ndim = ',ndim,' ndimV = ', ndimV
-     ndim = 0
-     ndimV = 0
-     ntypes = 0
-     ncolumns = 0
-     close(iunit)
-     return
-  elseif (ncolumns > maxplot) then
-     print "(1x,a)",'*** WARNING: too many columns for array limits'
-     ncolumns = maxplot
-     print "(1x,a,i2,a)",'    reading only first ',ncolumns,' columns'
-  endif
+    print*,'*** ERROR: header corrupted: ndim = ',ndim,' ndimV = ', ndimV
+    ndim = 0
+    ndimV = 0
+    ntypes = 0
+    ncolumns = 0
+    close(iunit)
+    return
+ elseif (ncolumns > maxplot) then
+    print "(1x,a)",'*** WARNING: too many columns for array limits'
+    ncolumns = maxplot
+    print "(1x,a,i2,a)",'    reading only first ',ncolumns,' columns'
+ endif
 
-  read(iunit,iostat=ierr,end=80) iheader(1:isizeheader)
-  if (ierr /= 0) then
-     print*,'WARNING: errors during iheader read'
-  endif
-  print "(1x,a,20(1x,i6))",'iheader = ',iheader(1:isizeheader)
+ read(iunit,iostat=ierr,end=80) iheader(1:isizeheader)
+ if (ierr /= 0) then
+    print*,'WARNING: errors during iheader read'
+ endif
+ print "(1x,a,20(1x,i6))",'iheader = ',iheader(1:isizeheader)
 
-  ntoti = sum(iheader(1:ntypes))
+ ntoti = sum(iheader(1:ntypes))
 
-  read(iunit,iostat=ierr,end=80) lheader(1:isizeheader)
-  if (ierr /= 0) then
-     print*,'WARNING: errors during lheader read'
-  endif
-  print "(1x,a,20(1x,i6))",'lheader = ',lheader(1:isizeheader)
+ read(iunit,iostat=ierr,end=80) lheader(1:isizeheader)
+ if (ierr /= 0) then
+    print*,'WARNING: errors during lheader read'
+ endif
+ print "(1x,a,20(1x,i6))",'lheader = ',lheader(1:isizeheader)
 
-  read(iunit,iostat=ierr,end=80) rheader(1:isizeheader)
-  if (ierr /= 0) then
-     print*,'WARNING: errors during rheader read'
-  endif
-  print "(1x,a,20(1x,f8.2))",'rheader = ',rheader
-  read(iunit,iostat=ierr,end=80) dheader(1:isizeheader)
-  if (ierr /= 0) then
-     print*,'WARNING: errors during dheader read'
-  endif
-  print "(1x,a,20(1x,1pe8.2))",'dheader = ',dheader(1:isizeheader)
-  do icol=1,ncolumns-ndim
-     read(iunit,iostat=ierr,end=80) cheader(icol)(1:isizeheader)
-  enddo
+ read(iunit,iostat=ierr,end=80) rheader(1:isizeheader)
+ if (ierr /= 0) then
+    print*,'WARNING: errors during rheader read'
+ endif
+ print "(1x,a,20(1x,f8.2))",'rheader = ',rheader
+ read(iunit,iostat=ierr,end=80) dheader(1:isizeheader)
+ if (ierr /= 0) then
+    print*,'WARNING: errors during dheader read'
+ endif
+ print "(1x,a,20(1x,1pe8.2))",'dheader = ',dheader(1:isizeheader)
+ do icol=1,ncolumns-ndim
+    read(iunit,iostat=ierr,end=80) cheader(icol)(1:isizeheader)
+ enddo
 !  print "(a)",(trim(cheader(icol)),icol=1,ncolumns-ndim)
 !
 !--allocate/reallocate memory for data arrays
 !
-  if (buffer_data) then
-     nstep_max = max(nfiles,maxstep,indexstart)
-  else
-     nstep_max = max(1,maxstep,indexstart)
-  endif
-  npart_max = max(int(2.0*ntoti),maxpart)
-  if (.not.allocated(dat) .or. ntoti > maxpart  &
+ if (buffer_data) then
+    nstep_max = max(nfiles,maxstep,indexstart)
+ else
+    nstep_max = max(1,maxstep,indexstart)
+ endif
+ npart_max = max(int(2.0*ntoti),maxpart)
+ if (.not.allocated(dat) .or. ntoti > maxpart  &
        .or. nstep_max > maxstep .or. ncolumns > maxcol) then
-     call alloc(npart_max,nstep_max,ncolumns+ncalc)
-  endif
+    call alloc(npart_max,nstep_max,ncolumns+ncalc)
+ endif
 !
 !--count this as a successful read
 !
-  nstepsread = nstepsread + 1
+ nstepsread = nstepsread + 1
 !
 !--copy header data into now-allocated arrays
 !
-  npartoftype(1,i) = iheader(1)
-  npartoftype(2,i) = iheader(2)
-  npartoftype(3,i) = iheader(3)
-  ntoti = sum(npartoftype(1:ntypes,i))
+ npartoftype(1,i) = iheader(1)
+ npartoftype(2,i) = iheader(2)
+ npartoftype(3,i) = iheader(3)
+ ntoti = sum(npartoftype(1:ntypes,i))
 !
 !--determine whether dump is single or double precision
 !
-  singleprecision = .true.
-  if (all(abs(rheader(1:isizeheader)) < tiny(rheader))) then
-     singleprecision = .false.
-     print "(1x,a)",'double precision dump'
-     time(i) = real(dheader(1))
-     print*,'particles per smoothing length = ',dheader(2)
-     print*,'kernel range = ',dheader(3)
-     gamma(i) = real(dheader(4))
-  else
-     print "(1x,a)",'single precision dump'
-     time(i) = rheader(1)
-     print*,'particles per smoothing length = ',rheader(2)
-     print*,'kernel range = ',rheader(3)
-     gamma(i) = rheader(4)
-  endif
-  hfact = 0.
-  print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',npartoftype(1,i),'ntotal',ntoti
-  print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i),'hfact',hfact
-  print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
+ singleprecision = .true.
+ if (all(abs(rheader(1:isizeheader)) < tiny(rheader))) then
+    singleprecision = .false.
+    print "(1x,a)",'double precision dump'
+    time(i) = real(dheader(1))
+    print*,'particles per smoothing length = ',dheader(2)
+    print*,'kernel range = ',dheader(3)
+    gamma(i) = real(dheader(4))
+ else
+    print "(1x,a)",'single precision dump'
+    time(i) = rheader(1)
+    print*,'particles per smoothing length = ',rheader(2)
+    print*,'kernel range = ',rheader(3)
+    gamma(i) = rheader(4)
+ endif
+ hfact = 0.
+ print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',npartoftype(1,i),'ntotal',ntoti
+ print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i),'hfact',hfact
+ print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
 !
 !--read data arrays
 !
-  if (singleprecision) then
-     if (allocated(dattemp)) deallocate(dattemp)
-     allocate(dattemp(ndim,ntoti))
-     !
-     !--read positions of all particles
-     !
-     read(iunit,iostat=ierr) dattemp(1:ndim,1:ntoti)
-     if (ierr /=0 ) then
-        print "(a)",'error reading particle positions'
-     else
-        do icol=1,ndim
-           dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
-        enddo
-     endif
-     !
-     !--read rest of data columns
-     !
-     do icol=ndim+1,ncolumns
-        read(iunit,iostat=ierr) dat(1:ntoti,icol,i)
-        if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
-     enddo
-  else
-     if (allocated(dattempd)) deallocate(dattempd)
-     allocate(dattempd(ndim,ntoti))
-     !
-     !--read positions of all particles
-     !
-     read(iunit,iostat=ierr) dattempd(1:ndim,1:ntoti)
-     if (ierr /=0 ) then
-        print "(a)",'error reading particle positions'
-     else
-        do icol=1,ndim
-           dat(1:ntoti,icol,i) = real(dattempd(icol,1:ntoti))
-        enddo
-     endif
-     !
-     !--read rest of data columns
-     !
-     do icol=ndim+1,ncolumns
-        read(iunit,iostat=ierr) dattempd(1,1:ntoti)
-        if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
-        !--convert to single precision
-        dat(1:ntoti,icol,i) = real(dattempd(1,1:ntoti))
-     enddo
+ if (singleprecision) then
+    if (allocated(dattemp)) deallocate(dattemp)
+    allocate(dattemp(ndim,ntoti))
+    !
+    !--read positions of all particles
+    !
+    read(iunit,iostat=ierr) dattemp(1:ndim,1:ntoti)
+    if (ierr /=0 ) then
+       print "(a)",'error reading particle positions'
+    else
+       do icol=1,ndim
+          dat(1:ntoti,icol,i) = dattemp(icol,1:ntoti)
+       enddo
+    endif
+    !
+    !--read rest of data columns
+    !
+    do icol=ndim+1,ncolumns
+       read(iunit,iostat=ierr) dat(1:ntoti,icol,i)
+       if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
+    enddo
+ else
+    if (allocated(dattempd)) deallocate(dattempd)
+    allocate(dattempd(ndim,ntoti))
+    !
+    !--read positions of all particles
+    !
+    read(iunit,iostat=ierr) dattempd(1:ndim,1:ntoti)
+    if (ierr /=0 ) then
+       print "(a)",'error reading particle positions'
+    else
+       do icol=1,ndim
+          dat(1:ntoti,icol,i) = real(dattempd(icol,1:ntoti))
+       enddo
+    endif
+    !
+    !--read rest of data columns
+    !
+    do icol=ndim+1,ncolumns
+       read(iunit,iostat=ierr) dattempd(1,1:ntoti)
+       if (ierr /= 0) print "(a,i2)", 'error reading column ',icol
+       !--convert to single precision
+       dat(1:ntoti,icol,i) = real(dattempd(1,1:ntoti))
+    enddo
 
-  endif
+ endif
 
-  if (allocated(dattemp)) deallocate(dattemp)
-  if (allocated(dattempd)) deallocate(dattempd)
-  !
-  !--close data file and return
-  !
-close(unit=iunit)
+ if (allocated(dattemp)) deallocate(dattemp)
+ if (allocated(dattempd)) deallocate(dattempd)
+ !
+ !--close data file and return
+ !
+ close(unit=iunit)
 
-print "(a)",' finished data read '
+ print "(a)",' finished data read '
 
-return
+ return
 
 80 continue
-print*,' *** data file empty : no timesteps ***'
-return
+ print*,' *** data file empty : no timesteps ***'
+ return
 
 end subroutine read_data
 

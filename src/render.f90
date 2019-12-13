@@ -103,7 +103,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        else
           call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
        endif
-   endif
+    endif
  endif
 !
 !--contours

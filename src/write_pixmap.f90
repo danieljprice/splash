@@ -51,7 +51,7 @@ logical function isoutputformat(string)
  isoutputformat = .false.
  select case(trim(string))
  case('ascii','ppm')
-     isoutputformat = .true.
+    isoutputformat = .true.
  end select
 
  if (.not.isoutputformat) then
@@ -74,7 +74,7 @@ logical function isinputformat(string)
  isinputformat = .false.
  select case(trim(string))
  case('ascii','ftn','ftn512','chf')
-     isinputformat = .true.
+    isinputformat = .true.
  end select
 
  if (.not.isinputformat) then
@@ -232,7 +232,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
        indexi = int(ftable) + 1
        indexi = min(indexi,ncolours)
        if (indexi < ncolours) then
-       !--do linear interpolation from colour table
+          !--do linear interpolation from colour table
           drgb(:) = rgbtable(:,indexi+1) - rgbtable(:,indexi)
           rgbi(:) = rgbtable(:,indexi) + (ftable - int(ftable))*drgb(:)
        else
