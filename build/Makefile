@@ -68,6 +68,8 @@ HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
+FITSLIBS = -L$(FITS_DIR)/lib -lcfitsio
+FITSINCLUDE = -I$(FITS_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
@@ -519,6 +521,13 @@ cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o rea
 read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
+#---FITS read ---
+fits: checksystem checkfits $(OBJECTS) read_data_fits_futils.o read_data_fits_utils.o read_data_fits.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) read_data_fits_futils.o read_data_fits_utils.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
+
+read_data_fits_utils.o: read_data_fits_utils.c
+	$(CC) $(CFLAGS) $(FITSINCLUDE) -c $< -o $@
+
 #---PBOB read ---
 
 OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
@@ -792,9 +801,16 @@ checkhdf5:
 
 checksilo: checkhdf5
    ifeq (X${SILO_DIR}, X)
-	@echo; echo "ERROR: SILO_DIR should be set before compiling splash with SILO reader"; echo; ${MAKE} err;
+	   @echo; echo "ERROR: SILO_DIR should be set before compiling splash with SILO reader"; echo; ${MAKE} err;
    else
-	@if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
+	   @if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
+   endif
+
+checkfits:
+   ifeq (X${FITS_DIR}, X)
+	   @echo; echo "ERROR: FITS_DIR should be set before compiling splash with FITS reader"; echo; ${MAKE} err;
+   else
+	   @if [ -d $$FITS_DIR ]; then echo; echo "FITS_DIR=$$FITS_DIR"; echo; else echo; echo "ERROR: Directory given by FITS_DIR=$$FITS_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
 
 checkpbob:
@@ -870,13 +886,13 @@ htmldocs: htmldoc
 
 htmldoc: doc cleanhtmldocs
 	cd ../docs;  \
-        hevea png.hva splash.tex -o html/splash.html; \
-        hevea png.hva splash.tex -o html/splash.html; \
+        hevea png.hva longtable.hva splash.tex -o html/splash.html; \
+        hevea png.hva longtable.hva splash.tex -o html/splash.html; \
         bibhva html/splash; \
         sed 's/et~al./et al./g' html/splash.hbbl > html/tmp.hbbl; \
         mv html/tmp.hbbl html/splash.hbbl; \
-        hevea png.hva splash.tex -o html/splash.html; \
-        hevea png.hva splash.tex -o html/splash.html; \
+        hevea png.hva longtable.hva splash.tex -o html/splash.html; \
+        hevea png.hva longtable.hva splash.tex -o html/splash.html; \
         imagen -png -pdf -mag 2000 html/splash; \
 	cd html; hacha -tocbis splash.html; \
         rm *.gif splash.h{tml,aux,toc,bbl} splash.blg splash.image.tex ../splash.image.out;
