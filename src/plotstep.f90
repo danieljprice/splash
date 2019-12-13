@@ -110,8 +110,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   use system_utils,       only:renvironment
   use calcquantities,     only:get_calc_data_dependencies
   use filenames,          only:coloursfile
-  implicit none
-  real, parameter     :: pi=3.1415926536
   integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
   integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,icolumn,ntries
   logical             :: iadapting,icoordplot,iallrendered,ians,iall_coord_plots,isamelimits
@@ -1638,6 +1636,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                           else
+                             !zmin = -30.
+                             !allocate(datpix3D(npixx,npixy,1))
+                             !call interpolate3D(xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp),&
+                             !     weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),ninterp,&
+                             !     xmin,ymin,zmin,datpix3D,npixx,npixy,1,pixwidth,pixwidthy,2.*abs(zmin),&
+                             !     inormalise,.false.,.false.,.false.)
+                             !datpix = datpix3D(:,:,1)
+                             !deallocate(datpix3D)
                              call interpolate3D_projection( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -2347,7 +2353,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            just = 0
            if (iploty.eq.itoomre) then
               itemp = 2
-              label(iploty) = 'Q\dToomre\u'
+              label(iploty) = 'Q_{Toomre}'
               labely = trim(label(iploty))
            elseif (iploty.eq.isurfdens) then
               itemp = 1
