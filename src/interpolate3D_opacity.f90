@@ -109,24 +109,24 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   datsmooth = 0.
   term = 0.
   brightness = 0.
-  if (pixwidth.le.0.) then
+  if (pixwidth <= 0.) then
      if (iverbose >= -1) print "(a)",'interpolate3D_opacity: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
+  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
   endif
   !--check that npmass is sensible
-  if (npmass.lt.1 .or. npmass.gt.npart) then
+  if (npmass < 1 .or. npmass > npart) then
      if (iverbose >= -1) print*,'interpolate3D_opacity: ERROR in input number of particle masses '
      return
   endif
   !--these values for npmass are not sensible but the routine will still work
-  if (npmass.ne.1 .and. npmass.ne.npart) then
+  if (npmass /= 1 .and. npmass /= npart) then
      if (iverbose >= -1) print*,'WARNING: interpolate3D_opacity: number of particle masses input =',npmass
   endif
 
-  if (abs(dscreenfromobserver).gt.tiny(dscreenfromobserver)) then
+  if (abs(dscreenfromobserver) > tiny(dscreenfromobserver)) then
      adjustzperspective = .true.
      zcutoff = zobserver
   else
@@ -153,12 +153,12 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = ((npart .ge. 1000000) .or. (npixx*npixy .gt.500000)) .and. (iverbose >= 0)
+  iprintprogress = ((npart  >=  1000000) .or. (npixx*npixy  > 500000)) .and. (iverbose >= 0)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e7) iprintinterval = 10
+  if (npart >= 1e7) iprintinterval = 10
   iprintnext = iprintinterval
 !
 !--get starting CPU time
@@ -180,24 +180,24 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   nused = 0
   nsink = 0
 
-!!$OMP PARALLEL default(none) &
-!!$OMP SHARED(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
-!!$OMP SHARED(xmin,ymin,xminpix,yminpix,xpix,pixwidth) &
-!!$OMP SHARED(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
-!!$OMP SHARED(zcut,zcutoff,iorder,rkappa,brightness) &
-!!$OMP PRIVATE(hi,zfrac,xi,yi,radkern) &
-!!$OMP PRIVATE(hi1,hi21,term,termi) &
-!!$OMP PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
-!!$OMP PRIVATE(dx2i,q2,ypix,dy,dy2,wab) &
-!!$OMP PRIVATE(ipart,i,ipix,jpix,tau,fopacity) &
-!!$OMP REDUCTION(+:nused)
-!!$OMP MASTER
+!!$omp parallel default(none) &
+!!$omp SHARED(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
+!!$omp SHARED(xmin,ymin,xminpix,yminpix,xpix,pixwidth) &
+!!$omp SHARED(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
+!!$omp SHARED(zcut,zcutoff,iorder,rkappa,brightness) &
+!!$omp PRIVATE(hi,zfrac,xi,yi,radkern) &
+!!$omp PRIVATE(hi1,hi21,term,termi) &
+!!$omp PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
+!!$omp PRIVATE(dx2i,q2,ypix,dy,dy2,wab) &
+!!$omp PRIVATE(ipart,i,ipix,jpix,tau,fopacity) &
+!!$omp REDUCTION(+:nused)
+!!$omp MASTER
 !#ifdef _OPENMP
 !  print "(1x,a,i3,a)",'Using ',OMP_GET_NUM_THREADS(),' cpus'
 !#endif
-!!$OMP END MASTER
+!!$omp END MASTER
 
-!!$OMP DO ORDERED SCHEDULE(dynamic)
+!!$omp DO ORDERED SCHEDULE(dynamic)
   over_particles: do ipart=1,npart
      !
      !--report on progress
@@ -205,7 +205,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !#ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*(ipart/real(npart))
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,ipart
            iprintnext = iprintnext + iprintinterval
         endif
@@ -234,7 +234,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      !
      !--allow slicing [take only particles with z(unrotated) < zcut]
      !
-     particle_within_zcut: if (zorig(i).lt.zcut .and. z(i).lt.zcutoff) then
+     particle_within_zcut: if (zorig(i) < zcut .and. z(i) < zcutoff) then
 
      !  count particles within slice
      nused = nused + 1
@@ -246,7 +246,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      !  would be cancelled by the corresponding change to h^2 in kappa)
      !
      hi = hh(i)
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_particles
      elseif (adjustzperspective) then
         zfrac = abs(dscreenfromobserver/(z(i)-zobserver))
@@ -258,7 +258,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      hi1 = 1./hi
      hi21 = hi1*hi1
      !--this is the term which multiplies tau
-     if (npmass.eq.npart) then
+     if (npmass==npart) then
         term = pmass(i)/(hh(i)*hh(i))
      else
         term = pmass(1)/(hh(i)*hh(i))
@@ -287,10 +287,10 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
      jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
 
-     if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+     if (ipixmin < 1) ipixmin = 1  ! make sure they only contribute
+     if (jpixmin < 1) jpixmin = 1  ! to pixels in the image
+     if (ipixmax > npixx) ipixmax = npixx ! (note that this optimises
+     if (jpixmax > npixy) jpixmax = npixy !  much better than using min/max)
      !
      !--precalculate an array of dx2 for this particle (optimisation)
      !
@@ -311,7 +311,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (q2.lt.radkernel2) then
+           if (q2 < radkernel2) then
               wab = wfromtable(q2)
               !
               !--get incremental tau for this pixel from the integrated SPH kernel
@@ -332,8 +332,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      endif particle_within_zcut
 
   enddo over_particles
-!!$OMP END DO
-!!$OMP END PARALLEL
+!!$omp end do
+!!$omp end parallel
 
 !
 !--get ending CPU time
@@ -345,14 +345,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
   endif
   call cpu_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.60.) then
+  if (t_used > 60.) then
      itmin = int(t_used/60.)
      tsec = t_used - (itmin*60.)
      if (iverbose >= 0) print "(1x,a,i4,a,f5.2,1x,a)",'completed in',itmin,' min ',tsec,'s'
   elseif (t_used > 10.) then
      if (iverbose >= 0) print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
   endif
-  if (zcut.lt.huge(zcut) .and. iverbose >= 0) print*,'slice contains ',nused,' of ',npart,' particles'
+  if (zcut < huge(zcut) .and. iverbose >= 0) print*,'slice contains ',nused,' of ',npart,' particles'
 
   return
 

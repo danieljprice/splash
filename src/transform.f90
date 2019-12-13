@@ -104,7 +104,7 @@ subroutine transform(array,itrans,errval)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
 
      write(string,*) itrans
      !
@@ -118,33 +118,33 @@ subroutine transform(array,itrans,errval)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+           where (arraytemp > 0. .and. arraytemp /= errvali)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = errvali
            end where
         case('2')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = abs(arraytemp)
            end where
         case('3')
-           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  /=  0. .and. arraytemp /= errvali)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = errvali
            end where
         case('4')
-           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  >  0. .and. arraytemp /= errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = errvali
            end where
         case('5')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = arraytemp**2
            end where
         case('6')
-           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+           where (arraytemp > 0. .and. arraytemp /= errvali)
               arraytemp = log(arraytemp)
            elsewhere
               arraytemp = errvali
@@ -228,7 +228,7 @@ subroutine transform_inverse(array,itrans,errval)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
 
      write(string,*) itrans
      !
@@ -242,27 +242,27 @@ subroutine transform_inverse(array,itrans,errval)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = 10**arraytemp
            end where
         case('3')
-           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  /=  0. .and. arraytemp /= errvali)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = errvali
            end where
         case('4')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = arraytemp**2
            end where
         case('5')
-           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  >  0. .and. arraytemp /= errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = errvali
            end where
         case('6')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = exp(arraytemp)
            end where
         end select
@@ -324,7 +324,7 @@ subroutine transform2(array,itrans,errval)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
 
      write(string,*) itrans
      !
@@ -338,33 +338,33 @@ subroutine transform2(array,itrans,errval)
         !
         select case(string(i:i))
         case('1')
-           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+           where (arraytemp > 0. .and. arraytemp /= errvali)
               arraytemp = log10(arraytemp)
            elsewhere
               arraytemp = errvali
            end where
         case('2')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = abs(arraytemp)
            end where
         case('3')
-           where (arraytemp .ne. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  /=  0. .and. arraytemp /= errvali)
               arraytemp = 1./arraytemp
            elsewhere
               arraytemp = errvali
            end where
         case('4')
-           where (arraytemp .gt. 0. .and. arraytemp.ne.errvali)
+           where (arraytemp  >  0. .and. arraytemp /= errvali)
               arraytemp = sqrt(arraytemp)
            elsewhere
               arraytemp = errvali
            end where
         case('5')
-           where (arraytemp.ne.errvali)
+           where (arraytemp /= errvali)
               arraytemp = arraytemp**2
            end where
         case('6')
-           where (arraytemp > 0. .and. arraytemp.ne.errvali)
+           where (arraytemp > 0. .and. arraytemp /= errvali)
               arraytemp = log(arraytemp)
            elsewhere
               arraytemp = errvali
@@ -394,7 +394,7 @@ subroutine transform_limits(xmin,xmax,itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
 
      write(string,*) itrans
      !
@@ -411,19 +411,19 @@ subroutine transform_limits(xmin,xmax,itrans)
         case('1')
            if (xmintemp > 0) then
               xmintemp = log10(xmintemp)
-           elseif (xmintemp.eq.0) then
+           elseif (xmintemp==0) then
               print*,' log10(xmin = 0): min set to ',zerolog
               xmintemp = log10(zerolog)
            endif
            if (xmaxtemp > 0) then
               xmaxtemp = log10(xmaxtemp)
-           elseif (xmaxtemp.eq.0) then
+           elseif (xmaxtemp==0) then
               print*,' log10(xmax = 0): max set to ',zerolog
               xmaxtemp = log10(zerolog)
            endif
         case('2')
-           if ((xmintemp.lt.0. .and. xmaxtemp.gt.0.) &
-           .or.(xmaxtemp.lt.0. .and. xmintemp.gt.0.)) then
+           if ((xmintemp < 0. .and. xmaxtemp > 0.) &
+           .or.(xmaxtemp < 0. .and. xmintemp > 0.)) then
            !
            !--minimum is zero if limits have opposite signs
            !
@@ -437,23 +437,23 @@ subroutine transform_limits(xmin,xmax,itrans)
               xmaxtemp = abs(xmaxtemp)
            endif
         case('3')
-           if (xmintemp .ne. 0) then
+           if (xmintemp  /=  0) then
               xmintemp = 1./xmintemp
            else
               xmintemp = 0.
            endif
-           if (xmaxtemp .ne. 0) then
+           if (xmaxtemp  /=  0) then
               xmaxtemp = 1./xmaxtemp
            else
               xmaxtemp = 0.
            endif
         case('4')
-           if (xmintemp .ge. 0) then
+           if (xmintemp  >=  0) then
               xmintemp = sqrt(xmintemp)
            else
               xmintemp = 0.
            endif
-           if (xmaxtemp .ge. 0) then
+           if (xmaxtemp  >=  0) then
               xmaxtemp = sqrt(xmaxtemp)
            else
               xmaxtemp = 0.
@@ -464,13 +464,13 @@ subroutine transform_limits(xmin,xmax,itrans)
         case('6')
            if (xmintemp > 0) then
               xmintemp = log(xmintemp)
-           elseif (xmintemp.eq.0) then
+           elseif (xmintemp==0) then
               print*,' ln(xmin = 0): min set to ',zerolog
               xmintemp = log(zerolog)
            endif
            if (xmaxtemp > 0) then
               xmaxtemp = log(xmaxtemp)
-           elseif (xmaxtemp.eq.0) then
+           elseif (xmaxtemp==0) then
               print*,' ln(xmax = 0): max set to ',zerolog
               xmaxtemp = log(zerolog)
            endif
@@ -501,7 +501,7 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
 
      write(string,*) itrans
      !
@@ -523,18 +523,18 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
            !--if minimum is zero give limits opposite signs
            !  (but same magnitude), otherwise do nothing
            !
-           if (xmintemp.eq.0.) then
+           if (xmintemp==0.) then
               xtemp = max(abs(xmintemp),abs(xmaxtemp))
               xmintemp = -xtemp
               xmaxtemp = xtemp
            endif
         case('3')
-           if (xmintemp .ne. 0) then
+           if (xmintemp  /=  0) then
               xmintemp = 1./xmintemp
            else
               xmintemp = 0.
            endif
-           if (xmaxtemp .ne. 0) then
+           if (xmaxtemp  /=  0) then
               xmaxtemp = 1./xmaxtemp
            else
               xmaxtemp = 0.
@@ -543,12 +543,12 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
            xmintemp = xmintemp**2
            xmaxtemp = xmaxtemp**2
         case('5')
-           if (xmintemp.gt.0) then
+           if (xmintemp > 0) then
               xmintemp = sqrt(xmintemp)
            else
               xmintemp = 0.
            endif
-           if (xmaxtemp.gt.0) then
+           if (xmaxtemp > 0) then
               xmaxtemp = sqrt(xmaxtemp)
            else
               xmaxtemp = 0.
@@ -586,7 +586,7 @@ function transform_label(label,itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
      call get_digits(itrans,digit,ndigits)
      temp_label = label
      !
@@ -644,7 +644,7 @@ subroutine get_digits(i,digits,ndigits)
   isubtract = 0
 
   do j=size(digits),0,-1
-     if (i.ge.10**j) then
+     if (i >= 10**j) then
         ndigits = ndigits + 1
         idigit = (i - isubtract)/10**j
         digits(ndigits) = idigit
@@ -672,7 +672,7 @@ real function convert_to_ln_fac(itrans)
   !
   !--extract the digits from the input number
   !
-  if (itrans.gt.0) then
+  if (itrans > 0) then
      write(string,*) itrans
      do i=len_trim(string),1,-1  ! do digits in reverse
         !
@@ -714,7 +714,7 @@ logical function islogged(itrans)
   character(len=20) :: string
 
   write(string,"(i8)") itrans
-  islogged = (index(string,'1').ne.0 .or. index(string,'6').ne.0)
+  islogged = (index(string,'1') /= 0 .or. index(string,'6') /= 0)
 
 end function islogged
 

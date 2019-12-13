@@ -162,12 +162,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   contminadapt   = huge(contminadapt)
   contmaxadapt   = -huge(contmaxadapt)
 
-  if (ndim.eq.1) x_sec = .false. ! can't have xsec in 1D
+  if (ndim==1) x_sec = .false. ! can't have xsec in 1D
   nxsec = 1
 
   iamrendering = .false.
   idoingvecplot = .false.
-  if (ipicky.eq.numplot+1) then   ! multiplot
+  if (ipicky==numplot+1) then   ! multiplot
      imulti = .true.
      nyplots = nyplotmulti
      iplotx = 0  ! set these to zero by default for multiplots
@@ -180,19 +180,19 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      !
      !--work out whether to tile plots and make labelling decisions
      !
-     if (any(multiplotx(1:nyplotmulti).ne.multiplotx(1))) isamexaxis = .false.
-     if (any(multiploty(1:nyplotmulti).ne.multiploty(1))) then
+     if (any(multiplotx(1:nyplotmulti) /= multiplotx(1))) isamexaxis = .false.
+     if (any(multiploty(1:nyplotmulti) /= multiploty(1))) then
         isameyaxis = .false.
-        if (any(multiploty(1:nyplotmulti).eq.icolpixmap)) then
+        if (any(multiploty(1:nyplotmulti)==icolpixmap)) then
            isameyaxis = .true.
            do i=1,nyplotmulti
-              if (.not.(multiploty(i).eq.icolpixmap .or. multiploty(i).eq.multiploty(1))) isameyaxis = .false.
+              if (.not.(multiploty(i)==icolpixmap .or. multiploty(i)==multiploty(1))) isameyaxis = .false.
            enddo
         endif
      endif
-     if (any(irendermulti(1:nyplotmulti).gt.0)) iamrendering = .true.
+     if (any(irendermulti(1:nyplotmulti) > 0)) iamrendering = .true.
      if (any(x_secmulti(1:nyplotmulti))) x_sec = .true.
-     if (any(ivecplotmulti(1:nyplotmulti).gt.0)) idoingvecplot = .true.
+     if (any(ivecplotmulti(1:nyplotmulti) > 0)) idoingvecplot = .true.
   else
      !
      !--or else set number of plots = 1 and use ipicky and ipickx
@@ -201,8 +201,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      nyplots = 1
      iploty = ipicky
      iplotx = ipickx
-     if (irender_nomulti.gt.0) iamrendering = .true.
-     if (ivecplot.gt.0) idoingvecplot = .true.
+     if (irender_nomulti > 0) iamrendering = .true.
+     if (ivecplot > 0) idoingvecplot = .true.
   endif
 
   !------------------------------------------------------------------------
@@ -223,15 +223,15 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
            icoordplot = .true.
            !--this check is to see if any co-ordinate plots involve just particles
            !  (if so need to initialise the cross section slice width)
-           if (irendermulti(i).le.0) iallrendered = .false.
+           if (irendermulti(i) <= 0) iallrendered = .false.
            iplotzprev = iplotz
            !!--work out coordinate that is not being plotted on cross-section/ 3D plots
            iplotz = 0
-           if (ndim.ge.3 .and. (x_sec .or. use3Dperspective .or. irotate)) then
+           if (ndim >= 3 .and. (x_sec .or. use3Dperspective .or. irotate)) then
               iplotz = get_z_dir(ndim,multiplotx(i),multiploty(i))
               !--use only first iplotz in the case of multiple slices
               !  (only effect is on default values for slice thickness etc below)
-              if (iplotzprev.gt.0) iplotz = iplotzprev
+              if (iplotzprev > 0) iplotz = iplotzprev
            endif
         else
            iall_coord_plots = .false.
@@ -240,10 +240,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
      if (iall_coord_plots) isamelimits = limits_are_equal(nyplotmulti,multiplotx,multiploty)
   elseif (icoordplot) then
      !!--work out coordinate that is not being plotted
-     if (ndim.ge.3) then
+     if (ndim >= 3) then
         do j=1,ndim
-           if ((iplotx.ne.iploty).and. &
-               (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iplotz = ix(j)
+           if ((iplotx /= iploty).and. &
+               (ix(j) /= iplotx).and.(ix(j) /= iploty)) iplotz = ix(j)
         enddo
      endif
   endif
@@ -259,14 +259,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   else
      iadapting = iadapt
   endif
-  tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown.eq.1  &
-                      .or. isamexaxis.and.nacross.eq.1 &
-                      .or. (iall_coord_plots .and. isamelimits)) .and. (nacross*ndown.gt.1)
+  tile_plots = tile .and. (isamexaxis.and.isameyaxis .or. isameyaxis.and.ndown==1  &
+                      .or. isamexaxis.and.nacross==1 &
+                      .or. (iall_coord_plots .and. isamelimits)) .and. (nacross*ndown > 1)
   !--do not tile if limits are adaptive
-  if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt .and. iColourbarStyle.gt.0))) then
+  if (tile_plots .and. (iadapting .or. (iamrendering .and. iadapt .and. iColourbarStyle > 0))) then
      print "(a)",'WARNING: cannot tile plots because limits are set to adaptive'
      tile_plots = .false.
-  elseif (.not. tile_plots .and. iall_coord_plots .and. nacross*ndown.gt.1 .and. .not.isamelimits) then
+  elseif (.not. tile_plots .and. iall_coord_plots .and. nacross*ndown > 1 .and. .not.isamelimits) then
      print "(a)",'WARNING: cannot tile plots because x-y limits are different'
   endif
 
@@ -274,23 +274,23 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !    multiple renderings which would involve different colour bars )
   OneColourBarPerRow    = .false.
   OneColourBarPerColumn = .false.
-  if (iamrendering .and. icolours.ne.0 .and. iColourbarStyle.gt.0) then
+  if (iamrendering .and. icolours /= 0 .and. iColourbarStyle > 0) then
      !--this option means that a margin is set aside for a colour bar on tiled plots
      iAllowspaceforcolourbar = .true.
      !--do not allow tiled plots if multiple (different) colour bars are plotted
      if (tile_plots) then
         ifirst = 0
         do i=1,nyplots
-           if (irendermulti(i).gt.0 .and. ifirst.eq.0) ifirst = i
-           if (ifirst.gt.0) then
-              if (irendermulti(i).gt.0 .and. irendermulti(i).ne.irendermulti(ifirst)) then
+           if (irendermulti(i) > 0 .and. ifirst==0) ifirst = i
+           if (ifirst > 0) then
+              if (irendermulti(i) > 0 .and. irendermulti(i) /= irendermulti(ifirst)) then
                  tile_plots = .false.
               endif
            endif
         enddo
         !--this means colour bars are not the same, but we can still tile if
         !  all the colour bars in each row are the same
-        if (.not.tile_plots .and. mod(nacross*ndown,nyplots).eq.0) then
+        if (.not.tile_plots .and. mod(nacross*ndown,nyplots)==0) then
            ! only allow a single colour bar at end of row if the
            ! colour bar is plotted in the correct orientation
            OneColourBarPerRow    = barisvertical(iColourBarStyle)
@@ -306,12 +306,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                  irow = i - ((i-1)/ndown)*ndown
                  icolumn = (i-1)/ndown + 1
               endif
-              if (ifirstinrow(irow).eq.0)       ifirstinrow(irow) = i
-              if (ifirstincolumn(icolumn).eq.0) ifirstincolumn(icolumn) = i
-              if (irendermulti(i).ne.irendermulti(ifirstinrow(irow))) then
+              if (ifirstinrow(irow)==0)       ifirstinrow(irow) = i
+              if (ifirstincolumn(icolumn)==0) ifirstincolumn(icolumn) = i
+              if (irendermulti(i) /= irendermulti(ifirstinrow(irow))) then
                  OneColourBarPerRow = .false.
               endif
-              if (irendermulti(i).ne.irendermulti(ifirstincolumn(icolumn))) then
+              if (irendermulti(i) /= irendermulti(ifirstincolumn(icolumn))) then
                  OneColourBarPerColumn = .false.
               endif
            enddo
@@ -325,7 +325,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   endif
 
   if (icoordplot) then
-     if (x_sec .and. iplotz.gt.0) then
+     if (x_sec .and. iplotz > 0) then
 !
 !--if series of cross sections (flythru), set position of first one
 !
@@ -343,8 +343,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !
            if (.not.imulti) then
               !--make sure position falls within the limits
-              if (xsecpos_nomulti.lt.lim(iplotz,1) &
-              .or.xsecpos_nomulti.gt.lim(iplotz,2)) then
+              if (xsecpos_nomulti < lim(iplotz,1) &
+              .or.xsecpos_nomulti > lim(iplotz,2)) then
                   xsecpos_nomulti = (lim(iplotz,2)+lim(iplotz,1))/2.
               endif
               call prompt(' enter '//trim(label(iplotz))// &
@@ -356,14 +356,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !  (default thickness is half of the average particle spacing)
 !
            if (.not.iallrendered .or. icolour_particles) then
-              if (xsecwidth.gt.0. .and. xsecwidth.lt.(lim(iplotz,2)-lim(iplotz,1))) then
+              if (xsecwidth > 0. .and. xsecwidth < (lim(iplotz,2)-lim(iplotz,1))) then
                  !--already set
                  dzsuggest = xsecwidth
               else
                  !--xsecwidth not set; suggest a good value
                  npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
                  print*,'average # of particles in each dimension = ',npartdim
-                 if (npartdim.gt.0) then
+                 if (npartdim > 0) then
                     dzsuggest = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
                  else
                     dzsuggest = 0.01*(lim(iplotz,2)-lim(iplotz,1))
@@ -380,9 +380,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
               endif
               !--if dz has been set from the prompt, save the setting,
               !  otherwise suggest (possibly different) value again next time
-              if (abs(dz-dzsuggest).gt.tiny(dz)) xsecwidth = dz
+              if (abs(dz-dzsuggest) > tiny(dz)) xsecwidth = dz
 
-           elseif (ndim.eq.3) then
+           elseif (ndim==3) then
 !
 !--for rendered cross sections in 3D, set thickness to 10%
 !  this is the distance slices are moved up and down in interactive mode
@@ -393,7 +393,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !
 !--set up for 1D cross sections through 2D data
 !
-    elseif (ndim.eq.2 .and. x_sec) then
+    elseif (ndim==2 .and. x_sec) then
        ians = .false.
        call prompt('set cross section position interactively?',ians)
 
@@ -413,8 +413,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        !
        !--set position manually
        !
-          if (abs(xseclineX2-xseclineX1).lt.1.e-5 .and. &
-              abs(xseclineY2-xseclineY1).lt.1.e-5) then
+          if (abs(xseclineX2-xseclineX1) < 1.e-5 .and. &
+              abs(xseclineY2-xseclineY1) < 1.e-5) then
           !--if not already set (ie. if all = 0.0)
           !  then set default line to diagonal across the domain
              xseclineX1 = lim(1,1)
@@ -430,14 +430,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        endif
      endif
 
-     if (iplotz.gt.0) then
+     if (iplotz > 0) then
 !
 !--initialise 3D perspective
 !
         if (use3Dperspective) then
            !--set default values if none set
-           if (abs(zobserver).lt.tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
-           if (abs(dzscreenfromobserver).lt.tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
+           if (abs(zobserver) < tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
+           if (abs(dzscreenfromobserver) < tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
            call prompt('enter z coordinate of observer ',zobserver)
            dzscreenfromobserver = zobserver
         endif
@@ -447,15 +447,15 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !
         if (use3Dopacityrendering .and. (iamrendering .or. idoingvecplot)) then
            hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
-           if (hav.le.epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
-           if (ipmass.gt.0) then
+           if (hav <= epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
+           if (ipmass > 0) then
               pmassav = lim(ipmass,1)
-              if (pmassav.le.epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
+              if (pmassav <= epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
            else  ! handle case where mass is not a data column
               pmassav = maxval(masstype)
               do i=1,ntypes
                  if (iplotpartoftype(i) .and. usetypeinrenderings(i) &
-                     .and. any(masstype(i,:).gt.0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
+                     .and. any(masstype(i,:) > 0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
               enddo
            endif
            print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
@@ -470,14 +470,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   endif
 
   !!--prompt for options if plotting power spectrum
-  if (iploty.eq.ipowerspec .and. .not. imulti &
-     .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipowerspec))) then
+  if (iploty==ipowerspec .and. .not. imulti &
+     .or. (imulti.and.any(multiploty(1:nyplotmulti)==ipowerspec))) then
      call options_powerspec
   endif
 
   !!--prompt for options if plotting PDFs
-  if (iploty.eq.ipdf .and. .not. imulti &
-     .or. (imulti.and.any(multiploty(1:nyplotmulti).eq.ipdf))) then
+  if (iploty==ipdf .and. .not. imulti &
+     .or. (imulti.and.any(multiploty(1:nyplotmulti)==ipdf))) then
      call options_pdf
   endif
 
@@ -492,12 +492,12 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         required(irendermulti(1:nyplotmulti)) = .true.
         required(icontourmulti(1:nyplotmulti)) = .true.
      else
-        if (iploty.ne.icolpixmap) required(iplotx) = .true.
+        if (iploty /= icolpixmap) required(iplotx) = .true.
         required(iploty) = .true.
      endif
      required(iplotz) = .true.
      if ((iamrendering .or. idoingvecplot) .and. &
-        (iploty.ne.icolpixmap .or. imulti .or. iploty.eq.0)) then
+        (iploty /= icolpixmap .or. imulti .or. iploty==0)) then
         required(ipmass) = .true.
         required(irho) = .true.
         required(ih) = .true.
@@ -509,30 +509,30 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
         if (rangeset(i)) required(i) = .true.
      enddo
   !!--need mass for some exact solutions
-     if (iexact.eq.7 .or. iploty.eq.isurfdens) required(ipmass) = .true.
-     if (iploty.eq.itoomre .and. iploty.gt.0) required(iutherm) = .true.
+     if (iexact==7 .or. iploty==isurfdens) required(ipmass) = .true.
+     if (iploty==itoomre .and. iploty > 0) required(iutherm) = .true.
   !!--only require actual dependencies of calculated quantities
      if (any(required(ncolumns+1:ncolumns+ncalc))) call get_calc_data_dependencies(required)
      !if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
   !!--vectors
      if (imulti) then
         do i=1,nyplotmulti
-           if (ivecplotmulti(i).gt.0) then
+           if (ivecplotmulti(i) > 0) then
               required(ivecplotmulti(i):ivecplotmulti(i)+ndimV-1) = .true.
            endif
         enddo
-     elseif (ivecplot.gt.0) then
+     elseif (ivecplot > 0) then
         required(ivecplot:ivecplot+ndimV-1) = .true.
      endif
    !!--if geometry is not default must read all coords
    !!  and if we are plotting a vector component, all components
-     if (icoordsnew.ne.icoords) then
+     if (icoordsnew /= icoords) then
         required(ix(1:ndim)) = .true.
-        if (iplotx.gt.0 .and. iplotx.le.numplot) then
-           if (iamvec(iplotx).gt.0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
+        if (iplotx > 0 .and. iplotx <= numplot) then
+           if (iamvec(iplotx) > 0) required(iamvec(iplotx):iamvec(iplotx)+ndimV-1) = .true.
         endif
-        if (iploty.gt.0 .and. iploty.le.numplot) then
-           if (iamvec(iploty).gt.0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
+        if (iploty > 0 .and. iploty <= numplot) then
+           if (iamvec(iploty) > 0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
         endif
      endif
      !
@@ -580,7 +580,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   !!------------------------------------------------------------------------
   !! initialise the plotting library
 
-  if (len_trim(device).le.0) then
+  if (len_trim(device) <= 0) then
      devstring = '?'           ! prompt for device
   else
      devstring = trim(device)  ! device specified on command line
@@ -588,20 +588,20 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
   ierr = 1
   ntries = 0
-  do while(ierr.ne.0)
+  do while(ierr /= 0)
      ntries = ntries + 1
-     if (ipapersize.gt.0 .and. papersizex.gt.0.0 .and. aspectratio.gt.0.0 ) then
+     if (ipapersize > 0 .and. papersizex > 0.0 .and. aspectratio > 0.0 ) then
         call plot_init(trim(devstring),ierr,papersizex,aspectratio,ipapersizeunits)
      else
         call plot_init(trim(devstring),ierr)  ! use default paper size
      endif
      !--abort if device specified on command line returns an error
-     if (len_trim(device).gt.0 .and. ierr.ne.0) then  ! -ve indicates an error
+     if (len_trim(device) > 0 .and. ierr /= 0) then  ! -ve indicates an error
         print "(a)",' ERROR: unknown device "'//trim(device)//'"'
         stop
      endif
-     if (ierr.ne.0) print "(a)",' ERROR opening plotting device'
-     if (ntries.gt.10) stop
+     if (ierr /= 0) print "(a)",' ERROR opening plotting device'
+     if (ntries > 10) stop
   enddo
 
   !--query whether or not device is interactive
@@ -623,7 +623,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
   !!--set colour table
   !   do this regardless of whether rendering or not
-  if (iamrendering .and. icolours.ne.0) then
+  if (iamrendering .and. icolours /= 0) then
      call colour_set(icolours)
      ihavesetcolours = .true.
   else
@@ -643,7 +643,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
   end select
 
   !!--set line width (0=auto based on whether device is vector or not)
-  if (linewidth.le.0) then
+  if (linewidth <= 0) then
      if (vectordevice) then
         print "(a)",' setting line width = 2 for '//devstring(1:ilen)//' device'
         call plot_slw(2)
@@ -798,7 +798,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !
   isize = max(maxpart,2000)
   !--do not allocate the temporary arrays if the dat array has not been allocated
-  if (lowmemorymode .and. maxcol.eq.0) then
+  if (lowmemorymode .and. maxcol==0) then
      isize = 2000
   endif
   if (debugmode) print*,'DEBUG: in plotstep, allocating local memory...'
@@ -827,14 +827,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   iaxistemp = iaxis
 
   !--set the arrays needed for rendering if they are present
-  if (ih.gt.0 .and. ih.le.ndataplots .and. (required(ih) .or. .not.ipartialread)) then
+  if (ih > 0 .and. ih <= ndataplots .and. (required(ih) .or. .not.ipartialread)) then
      hh(:) = dat(:,ih)
      got_h = .true.
   else
      got_h = .false.
   endif
 
-  if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+  if (ipmass > 0 .and. ipmass <= ndataplots) then
      if (required(ipmass)) then
         pmassmin = minval(dat(:,ipmass))
         pmassmax = maxval(dat(:,ipmass))
@@ -843,12 +843,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         pmassmax = 0.
      endif
   else
-     pmassmin = minval(masstype,mask=(masstype.gt.0.))
+     pmassmin = minval(masstype,mask=(masstype > 0.))
      pmassmax = maxval(masstype)
      pmassav = masstype(1)
-     if (pmassav(1).le.0.) then
+     if (pmassav(1) <= 0.) then
         do i=ntypes,2,-1
-           if (UseTypeInRenderings(i) .and. iplotpartoftype(i) .and. masstype(i).gt.0.) then
+           if (UseTypeInRenderings(i) .and. iplotpartoftype(i) .and. masstype(i) > 0.) then
               pmassav = masstype(i)
            endif
         enddo
@@ -861,17 +861,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ntoti = sum(npartoftype)
   ninterp = npartoftype(1)
   if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-      .or. size(iamtype).gt.1 .or. (use3Dopacityrendering .and. rendersinks)) ninterp = ntoti
+      .or. size(iamtype) > 1 .or. (use3Dopacityrendering .and. rendersinks)) ninterp = ntoti
 
   !--work out the identity of a particle being tracked
   if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
   itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
-  if (itrackpart.eq.0) then
+  if (itrackpart==0) then
      write(string,"(i12)") itrackoffset
      string = adjustl(string)
-     if (itracktype.gt.0 .and. itracktype.le.ntypes) then
+     if (itracktype > 0 .and. itracktype <= ntypes) then
         print "(/,a,/)",' WARNING: tracked '//trim(labeltype(itracktype))//' particle #'//trim(string)//' not found in data'
-     elseif (itrackoffset.gt.0) then
+     elseif (itrackoffset > 0) then
         print "(/,a,/)",' WARNING: tracked particle #'//trim(string)//' not found in data'
      endif
   else
@@ -924,8 +924,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !print*,' iseqpos = ',iseqpos,ipos
 
   iframe = 0
-  if (nseq.gt.0 .and. insidesequence(iseqpos)) then
-     if (nacross*ndown.eq.1) then
+  if (nseq > 0 .and. insidesequence(iseqpos)) then
+     if (nacross*ndown==1) then
         nframesloop = nframes
      else
         nframesloop = max(iframesave+1,1)
@@ -938,9 +938,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   if (debugmode) print*,'DEBUG: starting frame loop...'
 
   !--loop over frames: flexible to allow forwards/backwards in interactive mode
-  over_frames: do while (iframe.lt.nframesloop)
+  over_frames: do while (iframe < nframesloop)
 
-  if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.0) then
+  if (interactivereplot .and. ipos==ifirststeponpage .and. iframe==0) then
      iframe = min(nframefirstonpage,nframesloop)
   else
      iframe = iframe + 1
@@ -948,7 +948,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   !print*,'iframe = ',iframe, ipagechange,nstepsperpage
   !--sanity check on frame number, should never happen...
-  if (iframe.eq.0) then
+  if (iframe==0) then
      print*,' Internal error in iframe, setting to 1 '
      iframe = 1
   endif
@@ -956,7 +956,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   ! loop over plots per timestep
   ! (jump to first on the page if replotting in interactivemode)
   !-------------------------------------
-  if (interactivereplot .and. ipos.eq.ifirststeponpage .and. iframe.eq.nframefirstonpage) then
+  if (interactivereplot .and. ipos==ifirststeponpage .and. iframe==nframefirstonpage) then
      nyplotstart = nyplotfirstonpage
      ipanel = 0
   else
@@ -965,7 +965,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
   over_plots: do nyplot=nyplotstart,nyplots
 
-     if (nyplot.gt.1 .or. iframe.gt.1) print 34
+     if (nyplot > 1 .or. iframe > 1) print 34
      !--make sure character height is set correctly
      call plot_sch(charheight) ! in PGPLOT scaled units
 
@@ -987,7 +987,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         else
            iusetype(:) = iplotpartoftypemulti(:,nyplot)
         endif
-        if (irender.gt.0 .or. icontourplot.gt.0 .or. ivectorplot.gt.0) then
+        if (irender > 0 .or. icontourplot > 0 .or. ivectorplot > 0) then
            if (debugmode) print*,'DEBUG: resetting interpolation weights for multiplot...'
            call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
         endif
@@ -1004,12 +1004,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
      !--if the contour plot is the same as the rendered plot,
      !  do not interpolate twice. Instead simply plot the contours
      !  of the rendered quantity when plotting the render plot.
-     if (irender.gt.0 .and. irender.le.numplot) then
-        if (icontourplot.eq.irender .and. isameweights) then
+     if (irender > 0 .and. irender <= numplot) then
+        if (icontourplot==irender .and. isameweights) then
            icontourplot = 0
            iplotcont = .true.
            !print "(a)",' contouring same as rendering'
-        elseif (icolours.eq.0) then
+        elseif (icolours==0) then
            iplotcont = .true.
         endif
      else
@@ -1029,23 +1029,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         irenderplot = irender
      endif
 
-     if (ivectorplot.gt.0) iplotpart = iplotpartvec
+     if (ivectorplot > 0) iplotpart = iplotpartvec
 
      !--if replotting in interactive mode, use the temporarily stored plot limits
      !  (check iplot values are sensible though, otherwise will seg fault here)
-     if (interactivereplot .and. (nacross*ndown.gt.1 .or. iploty.gt.ndataplots)) then
-        if (iplotx.gt.0 .and. iplotx.le.numplot) then
+     if (interactivereplot .and. (nacross*ndown > 1 .or. iploty > ndataplots)) then
+        if (iplotx > 0 .and. iplotx <= numplot) then
            xmin = xminmulti(iplotx)
            xmax = xmaxmulti(iplotx)
         endif
-        if (iploty.gt.0 .and. iploty.le.numplot) then
+        if (iploty > 0 .and. iploty <= numplot) then
            ymin = xminmulti(iploty)
            ymax = xmaxmulti(iploty)
         endif
-        if (irender.gt.0 .and. irender.le.numplot) then
+        if (irender > 0 .and. irender <= numplot) then
            rendermin = xminmulti(irender)
            rendermax = xmaxmulti(irender)
-           if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+           if (icontourplot > 0 .and. icontourplot <= numplot) then
               contmin = xminmulti(icontourplot)
               contmax = xmaxmulti(icontourplot)
            endif
@@ -1060,26 +1060,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
      iscoordplot = (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim))
      iz = 0
-     if (iscoordplot .and. ndim.ge.3) then
+     if (iscoordplot .and. ndim >= 3) then
         do j=1,ndim
-           if ((iplotx.ne.iploty).and. &
-               (ix(j).ne.iplotx).and.(ix(j).ne.iploty)) iz = ix(j)
+           if ((iplotx /= iploty).and. &
+               (ix(j) /= iplotx).and.(ix(j) /= iploty)) iz = ix(j)
         enddo
      endif
      iplotz = iz
 
-     initx = (iplotx.gt.0 .and. iplotx.le.ndataplots)
-     inity = (iploty.gt.0 .and. iploty.le.ndataplots)
-     initz = (iplotz.gt.0 .and. iplotz.le.ndataplots)
-     if (iplotx.gt.0 .and. iplotx.le.numplot) labelx = label(iplotx)
-     if (iploty.gt.0 .and. iploty.le.numplot) labely = label(iploty)
-     if (iplotz.gt.0 .and. iplotz.le.numplot) labelz = label(iplotz)
+     initx = (iplotx > 0 .and. iplotx <= ndataplots)
+     inity = (iploty > 0 .and. iploty <= ndataplots)
+     initz = (iplotz > 0 .and. iplotz <= ndataplots)
+     if (iplotx > 0 .and. iplotx <= numplot) labelx = label(iplotx)
+     if (iploty > 0 .and. iploty <= numplot) labely = label(iploty)
+     if (iplotz > 0 .and. iplotz <= numplot) labelz = label(iplotz)
 
      initdataplots: if (initx .or. inity .or. initz) then
         if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
         if (initx) then
            !--check for errors
-           if (iplotx.gt.size(dat(1,:)) .or. iplotx.lt.1) then
+           if (iplotx > size(dat(1,:)) .or. iplotx < 1) then
               print*,'ERROR: Internal error with out-of-bounds x column = ',iplotx
               exit over_plots
            endif
@@ -1090,7 +1090,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
         if (inity) then
            !--check for errors
-           if (iploty.gt.size(dat(1,:)) .or. iploty.lt.1) then
+           if (iploty > size(dat(1,:)) .or. iploty < 1) then
               print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
               exit over_plots
            endif
@@ -1109,19 +1109,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (debugmode) print*,'DEBUG: setting itrans...'
         itransx = 0
         itransy = 0
-        if (iplotx.gt.0 .and. iplotx.le.numplot) itransx = itrans(iplotx)
-        if (iploty.gt.0 .and. iploty.le.numplot) itransy = itrans(iploty)
+        if (iplotx > 0 .and. iplotx <= numplot) itransx = itrans(iplotx)
+        if (iploty > 0 .and. iploty <= numplot) itransy = itrans(iploty)
 
         zslicemin = -huge(zslicemax) !-- " "
         zslicemax = huge(zslicemax)
         if (.not.interactivereplot) then
-!           if (iplotx.gt.0 .and. iplotx.le.numplot .and. ipos.eq.ifirststeponpage) then
-           if (iplotx.gt.0 .and. iplotx.le.numplot) then
+!           if (iplotx > 0 .and. iplotx <= numplot .and. ipos==ifirststeponpage) then
+           if (iplotx > 0 .and. iplotx <= numplot) then
               xmin = lim(iplotx,1)
               xmax = lim(iplotx,2)
            endif
-!           if (iploty.gt.0 .and. iploty.le.numplot .and. ipos.eq.ifirststeponpage) then
-           if (iploty.gt.0 .and. iploty.le.numplot) then
+!           if (iploty > 0 .and. iploty <= numplot .and. ipos==ifirststeponpage) then
+           if (iploty > 0 .and. iploty <= numplot) then
               ymin = lim(iploty,1)
               ymax = lim(iploty,2)
            endif
@@ -1131,7 +1131,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            dzscreentemp = 0.
            zobservertemp = 0.
            taupartdepthtemp = 0.
-           if (ndim.eq.3) then
+           if (ndim==3) then
               if (use3Dperspective) then
                  dzscreentemp = dzscreenfromobserver
                  zobservertemp = zobserver
@@ -1139,38 +1139,38 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               if (use3Dopacityrendering) taupartdepthtemp = taupartdepth
            endif
         else
-           if (ndim.eq.3 .and. use3Dperspective) dzscreentemp = zobservertemp
+           if (ndim==3 .and. use3Dperspective) dzscreentemp = zobservertemp
         endif
         !
         !--flag for whether or not we have raw particle plot or not
         !  (not allowed to use transformations on coords otherwise)
         !
-        rendering = (iscoordplot .and.(irenderplot.gt.0 .or. ivectorplot.gt.0) &
+        rendering = (iscoordplot .and.(irenderplot > 0 .or. ivectorplot > 0) &
                      .and.(.not.icolour_particles))
         !
         !--change coordinate system if relevant
         !
-        if (icoordsnew.ne.icoords) then
+        if (icoordsnew /= icoords) then
            !--do this if one is a coord but not if rendering
            call changecoords(iplotx,iploty,iplotz,xplot,yplot,zplot,ntoti,ndim,itrackpart,dat)
-           if (iamvecx.gt.0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
-           if (iamvecy.gt.0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
+           if (iamvecx > 0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
+           if (iamvecy > 0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
         endif
 
         !--apply transformations (log, 1/x etc) if appropriate
         !  also change labels and limits appropriately
         if (.not.(rendering)) then
-           if (itransx.ne.0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x',iplotx,iaxis,interactivereplot)
-           if (itransy.ne.0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty,iaxis,interactivereplot)
+           if (itransx /= 0) call applytrans(xplot,xmin,xmax,labelx,itransx,'x',iplotx,iaxis,interactivereplot)
+           if (itransy /= 0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty,iaxis,interactivereplot)
         endif
 
         !--write username, date on plot
-        !         if (nacross.le.2.and.ndown.le.2) call pgiden
+        !         if (nacross <= 2.and.ndown <= 2) call pgiden
         !
         !--adjust plot limits if adaptive plot limits set
         !  (find minimum/maximum only on particle types actually plotted)
         !
-        if (itrackpart.le.0 .and. .not.(iscoordplot .and. irotate)) then
+        if (itrackpart <= 0 .and. .not.(iscoordplot .and. irotate)) then
            if (initx) call adapt_limits(iplotx,xplot,xmin,xmax,xminadapti,xmaxadapti,'x',&
                                         iamtype,ntoti,npartoftype,iusetype,ipagechange)
            if (inity) call adapt_limits(iploty,yplot,ymin,ymax,yminadapti,ymaxadapti,'y',&
@@ -1178,19 +1178,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         endif
 
         !!-reset co-ordinate plot limits if particle tracking
-        if (itrackpart.gt.0 .and. .not.interactivereplot) then
+        if (itrackpart > 0 .and. .not.interactivereplot) then
            if (initx) call settrackinglimits(itrackpart,iplotx,xplot,xmin,xmax)
            if (inity) call settrackinglimits(itrackpart,iploty,yplot,ymin,ymax)
         endif
 
         !--override settings based on positions in sequence
-        if (nseq.gt.0) then
+        if (nseq > 0) then
            call getsequencepos(iseqpos,iframe,iplotx,iploty,irender, &
                 angletempx,angletempy,angletempz,zobservertemp,dzscreentemp,taupartdepthtemp,&
                 zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
         endif
         !--for 3D perspective, do not plot particles behind the observer
-        if (ndim.eq.3) then
+        if (ndim==3) then
            if (use3Dperspective) then
               dzscreenfromobserver = zobserver
               zslicemax = zobservertemp
@@ -1209,15 +1209,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (debugmode) print*,'DEBUG: starting coord plot...'
         if (.not.interactivereplot .or. irerender) then
            npixx = npix
-           if (npixx.le.0) npixx = 500 ! default for other uses of npixx if auto pixels are used
+           if (npixx <= 0) npixx = 500 ! default for other uses of npixx if auto pixels are used
         endif
 
         !!--page setup preliminaries
         if (usesquarexy) then
            just = 1  ! x and y axis have same scale
            ! unless 1D xsec through 2D data or non-cartesian
-           if ((irender.gt.ndim .and. ndim.eq.2 .and. x_sec) &
-               .or.(icoordsnew.gt.1 .and. .not.(coord_is_length(iplotx,icoordsnew) &
+           if ((irender > ndim .and. ndim==2 .and. x_sec) &
+               .or.(icoordsnew > 1 .and. .not.(coord_is_length(iplotx,icoordsnew) &
                                           .and. coord_is_length(iploty,icoordsnew)))) then
               just = 0
            endif
@@ -1227,7 +1227,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--work out if colour bar is going to be plotted
         !  (leave space in page setup if so)
         iPlotColourBar = .false.
-        if (irender.gt.ndim .and..not.(ndim.eq.2.and.x_sec)) iPlotColourBar = (iColourBarStyle.gt.0)
+        if (irender > ndim .and..not.(ndim==2.and.x_sec)) iPlotColourBar = (iColourBarStyle > 0)
 
         if (.not.interactivereplot) then
            irerender = .false.
@@ -1236,20 +1236,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--rotate the particles about the z (and y and x) axes
         !  only applies to particle plots at the moment
         !
-        if (ndim.ge.2 .and. (irotate .or. (ndim.eq.3 .and.use3Dperspective)) &
-            .and. icoordsnew.eq.1) then
-           if ((irotate .and. (angletempx.gt.tiny(0.) .or. angletempy.gt.tiny(0.))) &
-               .or.(ndim.eq.3 .and.use3Dperspective .and. dzscreentemp.gt.tiny(0.))) then
-              if (iaxis.ge.0) iaxistemp = -3
+        if (ndim >= 2 .and. (irotate .or. (ndim==3 .and.use3Dperspective)) &
+            .and. icoordsnew==1) then
+           if ((irotate .and. (angletempx > tiny(0.) .or. angletempy > tiny(0.))) &
+               .or.(ndim==3 .and.use3Dperspective .and. dzscreentemp > tiny(0.))) then
+              if (iaxis >= 0) iaxistemp = -3
            endif
            ivectemp = 0
 
            !--for vector plots with rotation, need to allocate temporary
            !  arrays to hold the rotated vector components
-           if (ivectorplot.gt.0) then
+           if (ivectorplot > 0) then
               ichangesize = .false.
               if (allocated(vecplot)) then
-                 if (size(vecplot(1,:)).lt.ninterp) ichangesize = .true.
+                 if (size(vecplot(1,:)) < ninterp) ichangesize = .true.
               endif
               if (.not.allocated(vecplot) .or. ichangesize) then
                  if (allocated(vecplot)) deallocate(vecplot)
@@ -1271,7 +1271,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 iamtype,ntoti,npartoftype,iusetype,ipagechange)
            endif
            !!-reset co-ordinate plot limits if particle tracking
-           if (itrackpart.gt.0 .and. .not.interactivereplot) then
+           if (itrackpart > 0 .and. .not.interactivereplot) then
               call settrackinglimits(itrackpart,iplotx,xplot,xmin,xmax)
               call settrackinglimits(itrackpart,iploty,yplot,ymin,ymax)
            endif
@@ -1281,15 +1281,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  rendering setup and interpolation (this is the rendering done
         !  *before* the cross sections are taken, e.g. to 3D grid)
         !------------------------------------------------------------------
-        if ((irenderplot.gt.ndim).and. &
-             ((ndim.eq.3).or.(ndim.eq.2.and..not.x_sec))) then
+        if ((irenderplot > ndim).and. &
+             ((ndim==3).or.(ndim==2.and..not.x_sec))) then
 
            !!--determine number of pixels in rendered image (npix = pixels in x direction)
-           if (npix.gt.0) then
+           if (npix > 0) then
               npixx = npix
               call page_setup(dummy=.true.) ! do this here in case limits are auto-adjusted
               pixwidth  = (xmax-xmin)/real(npix)
-              if (just.eq.1) then
+              if (just==1) then
                  pixwidthy = pixwidth
               else
                  pixwidthy = pixwidth*(ymax-ymin)/(xmax - xmin)
@@ -1298,7 +1298,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !!--automatically reset the pixel number to match the device
               call page_setup(dummy=.true.) !--npixx and npixy are determined here
               pixwidth = (xmax-xmin)/real(npixx)
-              if (just.eq.1) then
+              if (just==1) then
                  pixwidthy = pixwidth
               else
                  pixwidthy = (ymax-ymin)/real(npixy)
@@ -1309,32 +1309,32 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            !!--only need z pixels if working with interpolation to 3D grid
            !  (then number of z pixels is equal to number of cross sections)
-           if ((ndim.ge.3).and.(x_sec.and.nxsec.gt.2)) then
+           if ((ndim >= 3).and.(x_sec.and.nxsec > 2)) then
               zmin = lim(iplotz,1)
               npixz = nxsec
            endif
 
            if (.not.interactivereplot .or. irerender) then
               if (allocated(datpix)) then
-                 if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
+                 if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
                     deallocate(datpix)
                     allocate (datpix(npixx,npixy))
-                    if (ndim.eq.3 .and. use3Dopacityrendering) then
+                    if (ndim==3 .and. use3Dopacityrendering) then
                        if (allocated(brightness)) deallocate(brightness)
                        allocate(brightness(npixx,npixy))
                     endif
-                    if (icontourplot.gt.ndim) then
+                    if (icontourplot > ndim) then
                        if (allocated(datpixcont)) deallocate(datpixcont)
                        allocate(datpixcont(npixx,npixy))
                     endif
                  endif
               else
                  allocate (datpix(npixx,npixy))
-                 if (ndim.eq.3 .and. use3Dopacityrendering) then
+                 if (ndim==3 .and. use3Dopacityrendering) then
                     if (allocated(brightness)) deallocate(brightness)
                     allocate(brightness(npixx,npixy))
                  endif
-                 if (icontourplot.gt.ndim) then
+                 if (icontourplot > ndim) then
                     if (allocated(datpixcont)) deallocate(datpixcont)
                     allocate(datpixcont(npixx,npixy))
                  endif
@@ -1350,7 +1350,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
                          pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy)
                     !--also get contour plot data
-                    if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                    if (icontourplot > 0 .and. icontourplot <= numplot) then
                        if (.not.isameweights) & ! set contouring weights as necessary
                           call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1367,7 +1367,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               case(3)
                  !!--interpolation to 3D grid - then take multiple cross sections/projections
                  !!  do this if taking more than 2 cross sections, otherwise use fast xsec
-                 if (x_sec.and.nxsec.gt.2) then
+                 if (x_sec.and.nxsec > 2) then
                     !!--allocate memory for 3D rendering array
                     if (allocated(datpix3D)) deallocate(datpix3D)
                     allocate ( datpix3D(npixx,npixy,npixz) )
@@ -1379,7 +1379,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          pixwidth,pixwidth,dz, &
                          inormalise,isperiodicx,isperiodicy,isperiodicz)
 
-                    if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                    if (icontourplot > 0 .and. icontourplot <= numplot) then
                        !!--allocate memory for 3D contouring array
                        if (allocated(datpixcont3D)) deallocate(datpixcont3D)
                        allocate ( datpixcont3D(npixx,npixy,npixz) )
@@ -1408,15 +1408,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !--if vector plot determine whether or not to plot the particles as well
         !
         iplotpart = .true.
-        if (ivectorplot.gt.0) iplotpart = iplotpartvec
-        if (irenderplot.gt.0) iplotpart = .false.
+        if (ivectorplot > 0) iplotpart = iplotpartvec
+        if (irenderplot > 0) iplotpart = .false.
 
         !
         !%%%%%%%%%%%%%%% loop over cross-section slices %%%%%%%%%%%%%%%%%%%%%%%
         !
         over_cross_sections: do k=1,nxsec
 
-           if (k.gt.1) print 34
+           if (k > 1) print 34
 
            if (x_sec) then
               !!--for multislice cross section (flythru)
@@ -1429,13 +1429,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
 
            !------------take projections/cross sections through 3D data-----------------!
-           if (irenderplot.gt.0 .and. ndim.eq.3) then
+           if (irenderplot > 0 .and. ndim==3) then
 
               !!--allocate memory for 2D rendered array
 
               if (.not.interactivereplot) then
                  if (allocated(datpix)) then
-                    if (npixx.ne.size(datpix(:,1)) .or. npixy.ne.size(datpix(1,:))) then
+                    if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
                        deallocate(datpix)
                        if (debugmode) print*,'reallocating datpix...'
                        allocate ( datpix(npixx,npixy) )
@@ -1444,9 +1444,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     if (debugmode) print*,'allocating datpix...'
                     allocate ( datpix(npixx,npixy) )
                  endif
-                 if (icontourplot.gt.ndim) then
+                 if (icontourplot > ndim) then
                     if (allocated(datpixcont)) then
-                       if (npixx.ne.size(datpixcont(:,1)) .or. npixy.ne.size(datpixcont(1,:))) then
+                       if (npixx /= size(datpixcont(:,1)) .or. npixy /= size(datpixcont(1,:))) then
                           deallocate(datpixcont)
                           if (debugmode) print*,'reallocating datpixcont...'
                           allocate ( datpixcont(npixx,npixy) )
@@ -1461,9 +1461,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !------------------------------------------------------------------------
               ! if we have rendered to a 3D grid, take cross sections from this array
               !------------------------------------------------------------------------
-              if (x_sec .and. nxsec.gt.2) then
+              if (x_sec .and. nxsec > 2) then
                  ipixxsec = int(0.99999*(zslicepos-zmin)/dz) + 1
-                 if (ipixxsec.gt.npixz) ipixxsec = npixz
+                 if (ipixxsec > npixz) ipixxsec = npixz
                  print*,TRIM(label(iplotz)),' = ',zslicepos, &
                       ' cross section, pixel ',ipixxsec
                  datpix = datpix3D(:,:,ipixxsec)    ! slices are in 3rd dimension
@@ -1482,8 +1482,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do surface-rendered cross-section with opacity
                           if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : opacity-rendered cross section', xmin,ymin
-                          if (ipmass.gt.0) then
-                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                          if (ipmass > 0) then
+                             if (icontourplot > 0 .and. icontourplot <= numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1507,7 +1507,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos,iverbose)
                           else
-                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                             if (icontourplot > 0 .and. icontourplot <= numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1536,7 +1536,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           !!--do fast cross-section
                           if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : fast cross section', xmin,ymin
-                          if (icoordsnew.ne.icoords) then
+                          if (icoordsnew /= icoords) then
                              call interpolate3D_xsec_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
@@ -1551,11 +1551,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   pixwidthy,inormalise,iverbose)
                           endif
                           !!--same but for contour plot
-                          if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                          if (icontourplot > 0 .and. icontourplot <= numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             if (icoordsnew.ne.icoords) then
+                             if (icoordsnew /= icoords) then
                                 call interpolate3D_xsec_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
@@ -1578,9 +1578,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     else
                        if (use3Dopacityrendering) then
                           !!--do fast projection with opacity
-                          if (ipmass.gt.0) then
+                          if (ipmass > 0) then
                              !--contour plot first
-                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                             if (icontourplot > 0 .and. icontourplot <= numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1605,7 +1605,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreentemp,rkappa,huge(zslicepos),iverbose)
                           else
                              !--do contour plot first so brightness corresponds to render plot
-                             if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                             if (icontourplot > 0 .and. icontourplot <= numplot) then
                                 if (.not.isameweights) & ! set contouring weights as necessary
                                    call set_weights(weight,dat,iamtype,UseTypeInContours)
 
@@ -1629,7 +1629,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                           endif
                        else
                           !!--do fast projection of z integrated data (e.g. column density)
-                          if (icoordsnew.ne.icoords) then
+                          if (icoordsnew /= icoords) then
                              call interpolate3D_proj_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -1651,11 +1651,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,iverbose)
                           endif
                           !!--same but for contour plot
-                          if (icontourplot.gt.0 .and. icontourplot.le.numplot) then
+                          if (icontourplot > 0 .and. icontourplot <= numplot) then
                              if (.not.isameweights) & ! set contouring weights as necessary
                                 call set_weights(weight,dat,iamtype,UseTypeInContours)
 
-                             if (icoordsnew.ne.icoords) then
+                             if (icoordsnew /= icoords) then
                                 call interpolate3D_proj_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
                                      hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
@@ -1674,7 +1674,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                           endif
                           !!--adjust the units of the z-integrated quantity
-                          if (iRescale .and. units(ih).gt.0. .and. .not.inormalise &
+                          if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
                               .and. coord_is_length(iplotz,icoordsnew)) then
                              datpix = datpix*(unitzintegration/units(ih))
                              if (gotcontours) then
@@ -1688,7 +1688,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               endif ! whether 3D grid or fast renderings
 
               !-------------take cross sections through 2D data------------------!
-           elseif (irenderplot.gt.0 .and. ndim.eq.2 .and. x_sec) then
+           elseif (irenderplot > 0 .and. ndim==2 .and. x_sec) then
               !-------------------------------------------------------------------
               !  or do a fast cross section through 2D data to 1D array
               !-------------------------------------------------------------------
@@ -1697,7 +1697,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !--set up 1D grid and allocate memory for datpix1D
               if (.not.interactivereplot) then
                  xmin = 0.   ! distance (r) along cross section
-                 xmax = SQRT((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
+                 xmax = sqrt((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
               endif
               dxgrid = (xmax-xmin)/REAL(npixx)
               call set_grid1D(xmin,dxgrid,npixx)
@@ -1714,7 +1714,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !
               call transform(datpix1D,itrans(irenderplot))
               labely = transform_label(label(irenderplot),itrans(irenderplot))
-              if (abs(xseclineY2-xseclineY1).gt.epsilon(0.)) then
+              if (abs(xseclineY2-xseclineY1) > epsilon(0.)) then
                  labelx = 'cross section' ! only if cross-section is oblique (otherwise keep x axis label)
               endif
               !!--if adaptive limits, find limits of datpix
@@ -1741,8 +1741,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !   do this *before* the page setup so that rendermin,max
            !   can be stored in page_setup for interactive plots
            !------------------------------------------------------------------
-           if (irenderplot.gt.0 .and. irenderplot.le.numplot) then
-              if (ndim.eq.3 .or. (ndim.eq.2 .and..not.x_sec)) then
+           if (irenderplot > 0 .and. irenderplot <= numplot) then
+              if (ndim==3 .or. (ndim==2 .and..not.x_sec)) then
                  !!--determine whether rendered quantity is logged or not
                  logged = islogged(itrans(irenderplot))
                  if (gotcontours) then
@@ -1773,7 +1773,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (gotcontours) labelcont = label(icontourplot)
 
                  !!--set label for column density (projection) plots
-                 if (ndim.eq.3 .and..not. x_sec .and..not.use3Dopacityrendering) then
+                 if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
                     inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                     labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
                                                   labelzintegration,projlabelformat,iapplyprojformat)
@@ -1788,13 +1788,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  if (.not.interactivereplot .or. irerender) then
                     !!--find (adaptive) limits of rendered array
                     if (logged) then
-                       renderminadapt = minval(datpix,mask=abs(datpix-error_in_log).gt.tiny(datpix)) ! see above
+                       renderminadapt = minval(datpix,mask=abs(datpix-error_in_log) > tiny(datpix)) ! see above
                     else
                        renderminadapt = minval(datpix)
                     endif
                     rendermaxadapt = maxval(datpix)
                     !--fix case where no limits are set due to NaNs etc.
-                    if (renderminadapt.gt.rendermaxadapt) then
+                    if (renderminadapt > rendermaxadapt) then
                        print "(a)",' WARNING: NaNs in rendered quantity'
                        renderminadapt = 0.
                        rendermaxadapt = 0.
@@ -1802,13 +1802,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                     if (gotcontours) then
                        if (loggedcont) then
-                          contminadapt = minval(datpixcont,mask=abs(datpixcont+666.).gt.tiny(datpixcont))
+                          contminadapt = minval(datpixcont,mask=abs(datpixcont+666.) > tiny(datpixcont))
                        else
                           contminadapt = minval(datpixcont)
                        endif
                        contmaxadapt = maxval(datpixcont)
                        !--fix case where no limits are set due to NaNs etc.
-                       if (contminadapt.gt.contmaxadapt) then
+                       if (contminadapt > contmaxadapt) then
                           print "(a)",' WARNING: NaNs in contoured quantity'
                           contminadapt = 0.
                           contmaxadapt = 1.
@@ -1831,7 +1831,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                              if (iverbose > 1) print*,'adapting contour limits'
                              contmin = contminadapt
                              contmax = contmaxadapt
-                          elseif (icontourplot.eq.irenderplot .and. lim2set(icontourplot)) then
+                          elseif (icontourplot==irenderplot .and. lim2set(icontourplot)) then
                              contmin = lim2(icontourplot,1)
                              contmax = lim2(icontourplot,2)
                              call transform_limits(contmin,contmax,itrans(icontourplot))
@@ -1861,13 +1861,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                  !!  do not let max=0 on log plots as this is suspiciously wrong
                  if (logged) then
-                    if (iadapt .and. abs(rendermax).lt.tiny(datpix)) then
+                    if (iadapt .and. abs(rendermax) < tiny(datpix)) then
                        !!print*,'max=0 on log plot, fixing'
                        rendermax = maxval(datpix)
                     endif
                  endif
                  if (gotcontours .and. loggedcont) then
-                    if (iadapt .and. abs(contmax).lt.tiny(datpixcont)) then
+                    if (iadapt .and. abs(contmax) < tiny(datpixcont)) then
                        contmax = maxval(datpixcont)
                     endif
                  endif
@@ -1876,7 +1876,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !-------------------------------------------------------------------------
            !   similar but where particle colouring is used instead of interpolation
            !-------------------------------------------------------------------------
-           elseif (irenderpart.gt.0 .and. iplotpart) then
+           elseif (irenderpart > 0 .and. iplotpart) then
               !--allocate memory for particle colouring
               if (.not.allocated(renderplot)) then
                  allocate(renderplot(ntoti),stat=ierr)
@@ -1923,8 +1923,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !   similarly, get limits to be used in the vector plot so we can store
            !   them during page_setup for interactive plots
            !-------------------------------------------------------------------------
-           if (ivectorplot.ne.0 .and. ndim.ge.2) then
-             if (iamvec(ivectorplot).ne.0) then
+           if (ivectorplot /= 0 .and. ndim >= 2) then
+             if (iamvec(ivectorplot) /= 0) then
                 !!--choose quantity to be plotted
                 ivecx = iamvec(ivectorplot) + iplotx - 1
                 ivecy = iamvec(ivectorplot) + iploty - 1
@@ -1948,7 +1948,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call page_setup
 
            !--add to log
-           if (x_sec.and.iplotpart .and. iplotz.gt.0 .and. iverbose > 1) then
+           if (x_sec.and.iplotpart .and. iplotz > 0 .and. iverbose > 1) then
               print "(' cross section: ',a1,' = ',f7.3,' to ',a1,' = ',f7.3)",&
                     label(iplotz),zslicemin,label(iplotz),zslicemax
            endif
@@ -1956,8 +1956,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !------------------------------
            ! now actually plot the data
            !------------------------------
-           if (irenderplot.gt.0) then
-              if ((ndim.eq.3).or.(ndim.eq.2.and. .not.x_sec)) then
+           if (irenderplot > 0) then
+              if ((ndim==3).or.(ndim==2.and. .not.x_sec)) then
 
                  !!--call subroutine to actually render the image
                  if (gotcontours .and. double_rendering) then
@@ -2010,7 +2010,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       xmin,xmax,ymin,ymax,ifastparticleplot)
                  endif
 
-              elseif (ndim.eq.2 .and. x_sec) then
+              elseif (ndim==2 .and. x_sec) then
                  !---------------------------------------------------------------
                  ! plot 1D cross section through 2D data (contents of datpix)
                  !---------------------------------------------------------------
@@ -2021,7 +2021,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               ! particle plots
               !-----------------------
               if (iplotpart) then
-                 if (debugmode .and. size(icolourme).ge.10) &
+                 if (debugmode .and. size(icolourme) >= 10) &
                     print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
                            zplot(1:10),icolourme(1:10),npartoftype(:),iusetype(:)
                  !!--plot all particle types
@@ -2044,7 +2044,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--------------------------------------------------------------
            ! vector maps (can be on top of particle plots and renderings)
            !--------------------------------------------------------------
-           if (ivecx.gt.0 .and. ivecy.gt.0 .and. ivectorplot.gt.0) then
+           if (ivecx > 0 .and. ivecy > 0 .and. ivectorplot > 0) then
               labelvecplot = trim(labelvec(ivectorplot))
               labelvecunits = ''
               if (iRescale) then
@@ -2052,7 +2052,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  call string_delete(labelvecunits,(/'[',']'/))
               endif
               !!--set label for projection plots (2268 or 2412 for integral sign)
-              if (ndim.eq.3 .and..not. x_sec) then
+              if (ndim==3 .and..not. x_sec) then
                  if (iRescale) then
                     labelvecplot = '\int '//trim(labelvecplot)//' d'// &
                       trim(label(iz)(1:index(label(iz),unitslabel(iz))-1))//' [code units]'
@@ -2061,7 +2061,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  endif
               endif
               pixwidthvec  = (xmax-xmin)/real(npixvec)
-              if (just.eq.1) then
+              if (just==1) then
                  pixwidthvecy = pixwidthvec !(xmax-xmin)/real(npixvec)
               else
                  pixwidthvecy = pixwidthvec
@@ -2078,20 +2078,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
               !--vecmax is returned with the adaptive value if sent in -ve
               !  store this for use in interactive_multi
-              if (xmaxmulti(ivectorplot).lt.0.) xmaxmulti(ivectorplot) = vecmax
+              if (xmaxmulti(ivectorplot) < 0.) xmaxmulti(ivectorplot) = vecmax
            endif
 
            !---------------------------------
            ! plot rotated axes
            !---------------------------------
-           if (irotate .and. irotateaxes.gt.0 .and. icoordsnew.eq.1) then
+           if (irotate .and. irotateaxes > 0 .and. icoordsnew==1) then
               call rotatedaxes(irotateaxes,iplotx,iploty,angletempx,angletempy,angletempz, &
                                dzscreentemp,zobservertemp)
            endif
            !
            !--redraw axes over what has been plotted
            !
-           if (irenderplot.gt.0 .or. plotlib_is_pgplot) then
+           if (irenderplot > 0 .or. plotlib_is_pgplot) then
               call redraw_axes(iaxistemp,just,yscalealt,itransy)
            endif
            !
@@ -2101,11 +2101,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--plot exact solution if relevant (before going interactive)
            !
-           if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+           if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
                ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
               iaxisy = iaxis
-              if (tile_plots .and. icolumn.ne.1) iaxisy = -1
-              if (iexact.eq.iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
+              if (tile_plots .and. icolumn /= 1) iaxisy = -1
+              if (iexact==iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
                  isinktype = get_sink_type(ntypes)
                  call locate_first_two_of_type(isink1,isink2,isinktype,iamtype,npartoftype,ntoti)
                  mprim = dat(isink1,ipmass)
@@ -2133,7 +2133,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
 
            if (interactive) then
-              if (nacross*ndown.eq.1 .and. (nstepsperpage.eq.1 .or. nsteps.eq.1)) then
+              if (nacross*ndown==1 .and. (nstepsperpage==1 .or. nsteps==1)) then
                  iadvance = nfreq
                  call interactive_part(ntoti,iplotx,iploty,iplotz,irender,icontourplot,ivecx,ivecy, &
                       xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
@@ -2145,11 +2145,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       (double_rendering .and. gotcontours),irerender,itrackpart,icolours,&
                       iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                  !--turn rotation on if necessary
-                 if (abs(angletempx-anglex).gt.tol) irotate = .true.
-                 if (abs(angletempy-angley).gt.tol) irotate = .true.
-                 if (abs(angletempz-anglez).gt.tol) irotate = .true.
-                 if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
-              elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
+                 if (abs(angletempx-anglex) > tol) irotate = .true.
+                 if (abs(angletempy-angley) > tol) irotate = .true.
+                 if (abs(angletempz-anglez) > tol) irotate = .true.
+                 if (iadvance==-666 .or. interactivereplot) exit over_frames
+              elseif ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot) then
                  !
                  !--slightly different interactive mode if multiple plots on page
                  !
@@ -2162,7 +2162,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       icontourtemp(1:nplots),ivecplottemp(1:nplots),double_rendering,xminmulti(:),xmaxmulti(:),&
                       vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                       xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
-                 if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+                 if (iadvance==-666 .or. interactivereplot) exit over_frames
               endif
            endif
 
@@ -2175,14 +2175,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         ! not both coordinates - these are just particle plots
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-     elseif ((.not.iscoordplot).and.(iploty.le.ndataplots .and. iplotx.le.ndataplots)) then
+     elseif ((.not.iscoordplot).and.(iploty <= ndataplots .and. iplotx <= ndataplots)) then
 
         if (debugmode) print*,'DEBUG: starting particle plot...'
         !
         !--sort out particle colouring
         !  (at present this is NOT used -can't render if not co-ord plot)
         !
-        if (irenderpart.gt.0 .and. irenderpart.le.numplot) then
+        if (irenderpart > 0 .and. irenderpart <= numplot) then
            !--allocate memory for particle colouring
            if (.not.allocated(renderplot)) then
               allocate(renderplot(ntoti),stat=ierr)
@@ -2267,11 +2267,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call plot_qci(icolourprev)        ! query line style and colour
            call plot_sci(linecolourthisstep) ! set colour to current line
            !--y error bars
-           if (ilocerrbars(iploty).gt.0 .and. ilocerrbars(iploty).le.ndataplots) then
+           if (ilocerrbars(iploty) > 0 .and. ilocerrbars(iploty) <= ndataplots) then
               call plot_errorbarsy(ntoti,xplot,yplot,dat(:,ilocerrbars(iploty)),itransy)
            endif
            !--x error bars
-           if (ilocerrbars(iplotx).gt.0 .and. ilocerrbars(iplotx).le.ndataplots) then
+           if (ilocerrbars(iplotx) > 0 .and. ilocerrbars(iplotx) <= ndataplots) then
               call plot_errorbarsx(ntoti,xplot,yplot,dat(:,ilocerrbars(iplotx)),itransx)
            endif
            call plot_sci(icolourprev)        ! restore line colour
@@ -2288,10 +2288,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !
         !--plot exact solution (after redrawn axis for residual plots)
         !
-        if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+        if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
             ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
            iaxisy = iaxis
-           if (tile_plots .and. icolumn.ne.1) iaxisy = -1
+           if (tile_plots .and. icolumn /= 1) iaxisy = -1
            call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
@@ -2306,7 +2306,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         if (lastplot) istepsonpage = nstepsperpage
 
         if (interactive) then
-           if (nacross*ndown.eq.1 .and. (nstepsperpage.eq.1 .or. nsteps.eq.1)) then
+           if (nacross*ndown==1 .and. (nstepsperpage==1 .or. nsteps==1)) then
               iadvance = nfreq
               call interactive_part(ntoti,iplotx,iploty,0,irenderpart,0,0,0, &
                    xplot(1:ntoti),yplot(1:ntoti),zplot(1:ntoti), &
@@ -2316,8 +2316,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    angletempx,angletempy,angletempz,ndim,xorigin(1:ndim), &
                    dumxsec,dummy,dummy,dummy,dummy,.false.,dummy,.false.,irerender, &
                    itrackpart,icolours,iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
-              if (iadvance.eq.-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
-           elseif ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot) then
+              if (iadvance==-666 .or. interactivereplot) exit over_frames ! this should be unnecessary
+           elseif ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot) then
               !
               !--timestep control only if multiple plots on page
               !
@@ -2330,11 +2330,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
-              if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+              if (iadvance==-666 .or. interactivereplot) exit over_frames
            endif
         endif
 
-     elseif (iploty.le.numplot) then! ie iploty = extra
+     elseif (iploty <= numplot) then! ie iploty = extra
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! additional plots (not plots of particle data - e.g where some additional
 ! information is read from a file and plotted on the same page as the
@@ -2349,32 +2349,32 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  => these all involve a new "y column"
         !     but use a particle property as the x axis
         !--------------------------------------------------------------
-        if (iploty.eq.isurfdens .or. iploty.eq.itoomre .or. iploty.eq.ipdf) then
+        if (iploty==isurfdens .or. iploty==itoomre .or. iploty==ipdf) then
            just = 0
-           if (iploty.eq.itoomre) then
+           if (iploty==itoomre) then
               itemp = 2
               label(iploty) = 'Q_{Toomre}'
               labely = trim(label(iploty))
-           elseif (iploty.eq.isurfdens) then
+           elseif (iploty==isurfdens) then
               itemp = 1
               label(iploty) = '\gS '//get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
               labely = trim(label(iploty))
-           elseif (iploty.eq.ipdf) then
+           elseif (iploty==ipdf) then
               label(iploty) = 'PDF ('//trim(label(iplotx))//')'
               labely = trim(label(iploty))
            endif
            yplot(:) = 0.
 
-           if (itrans(iploty).ne.0) then
+           if (itrans(iploty) /= 0) then
               labely = trim(transform_label(label(iploty),itrans(iploty)))
            endif
 
            if ((.not.interactivereplot) .or. irerender) then
               !--call routines which actually calculate disc properties from the particles
-              if (iploty.eq.isurfdens .or. iploty.eq.itoomre) then
-                 if (ispsound.gt.0 .and. ispsound.le.ndataplots) then
+              if (iploty==isurfdens .or. iploty==itoomre) then
+                 if (ispsound > 0 .and. ispsound <= ndataplots) then
                     icol = ispsound   ! sound speed is present in data
-                 elseif (iutherm.gt.0 .and. iutherm.le.ndataplots) then
+                 elseif (iutherm > 0 .and. iutherm <= ndataplots) then
                     icol = iutherm    ! use thermal energy if spsound not present
                  else
                     icol = 0
@@ -2396,15 +2396,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  !call locate_nth_particle_of_type(1,isink1,isinktype,iamtype,npartoftype,ntoti)
                  !mstari = 1.d0
 
-                 if (ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                 if (ipmass > 0 .and. ipmass <= ndataplots) then
                     !if (isink1 > 0) mstari = dat(isink1,ipmass)
                     if (iRescale) unit_mass = units(ipmass)
-                    if (icol.gt.0) then
+                    if (icol > 0) then
                        call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
                             unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari,&
-                            unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
+                            unit_u,dat(1:ntoti,icol),icol==ispsound)
                     else
                        call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
                             unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
@@ -2413,12 +2413,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                     endif
                  else
                     if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
-                    if (icol.gt.0) then
+                    if (icol > 0) then
                        call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
                             unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari,&
-                            unit_u,dat(1:ntoti,icol),icol.eq.ispsound)
+                            unit_u,dat(1:ntoti,icol),icol==ispsound)
                     else
                        call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
                             unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
@@ -2426,8 +2426,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             iusetype,npartoftype,gammai,mstari)
                     endif
                  endif
-              elseif (iploty.eq.ipdf) then
-                 if (npdfbins.gt.0) then
+              elseif (iploty==ipdf) then
+                 if (npdfbins > 0) then
                     ngrid = npdfbins
                  else  ! automatic number of bins determination
                     ngrid = int(0.75*ntoti**(1./3.))+1
@@ -2436,30 +2436,30 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !--call routine which calculates pdf on the particles
                  !--compute PDF on raw (un-transformed) data
                  xplot(1:ntoti) = dat(1:ntoti,iplotx)
-                 if (irho.gt.0 .and. irho.le.ndataplots .and. ipmass.gt.0 .and. ipmass.le.ndataplots) then
+                 if (irho > 0 .and. irho <= ndataplots .and. ipmass > 0 .and. ipmass <= ndataplots) then
                     call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,(npdfbins.gt.0),volweightedpdf, &
+                         yminadapti,ymaxadapti,(npdfbins > 0),volweightedpdf, &
                          ierr,icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))
                  else
                     call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,(npdfbins.gt.0),volweightedpdf, &
+                         yminadapti,ymaxadapti,(npdfbins > 0),volweightedpdf, &
                          ierr,icolourme(1:ntoti))
                  endif
                  !
                  !--write PDF to file
                  !
-                 if (ierr.eq.0) then
+                 if (ierr==0) then
                     call pdf_write(ngrid,xgrid,datpix1D,label(iplotx), &
                                    volweightedpdf,rootname(ifileopen),tagline)
                  endif
                  !
                  !--apply transformations to PDF data
                  !
-                 if (itrans(iplotx).gt.0) then
+                 if (itrans(iplotx) > 0) then
                     !--reapply the x transform
                     call transform(xplot,itrans(iplotx))
                  endif
-                 if (itrans(iploty).gt.0) then
+                 if (itrans(iploty) > 0) then
                     call transform(datpix1D,itrans(iploty))
                     call transform_limits(yminadapti,ymaxadapti,itrans(iploty))
                  endif
@@ -2476,13 +2476,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            call plot_qci(icolourprev)    ! query line style and colour
            call plot_qls(linestyleprev)
            ! set appropriate colour and style if multiple steps per page
-           if (nstepsperpage.gt.1) then
+           if (nstepsperpage > 1) then
               call plot_sci(linecolourthisstep)
               call plot_sls(linestylethisstep)
            endif
-           if (iploty.eq.itoomre .or. iploty.eq.isurfdens) then
+           if (iploty==itoomre .or. iploty==isurfdens) then
               call discplot()
-           elseif (iploty.eq.ipdf) then
+           elseif (iploty==ipdf) then
               !
               !--plot PDF as line segment, with blanking at zero
               !
@@ -2499,10 +2499,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--plot exact solution (after redrawn axis for residual plots)
            !
-           if (iexact.ne.0 .and.nyplot.le.nacross*ndown .and. &
+           if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
                ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
               iaxisy = iaxis
-              if (tile_plots .and. icolumn.ne.1) iaxisy = -1
+              if (tile_plots .and. icolumn /= 1) iaxisy = -1
               call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                    icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
@@ -2511,7 +2511,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            endif
 
            if (lastplot) istepsonpage = nstepsperpage
-           if (interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) then
+           if (interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) then
               iadvance = nfreq
               nplots = ipanel
               irerender = .true.
@@ -2520,37 +2520,37 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    icontourtemp(1:nplots),ivecplottemp(1:nplots),.false.,xminmulti(:),xmaxmulti(:),&
                    vptxmin(1:nplots),vptxmax(1:nplots),vptymin(1:nplots),vptymax(1:nplots),barwmulti(1:nplots), &
                    xminadapt(:),xmaxadapt(:),nacross,ndim,xorigin(1:ndim),icolours,iColourBarStyle,interactivereplot)
-              if (iadvance.eq.-666 .or. interactivereplot) exit over_frames
+              if (iadvance==-666 .or. interactivereplot) exit over_frames
            endif
            cycle over_plots
         !--------------------------------------------------------------
         !  plot Toy star A-C plane solution
         !--------------------------------------------------------------
-        elseif (iexact.eq.4 .and. iploty.eq.iacplane) then
+        elseif (iexact==4 .and. iploty==iacplane) then
         !
         !--A vs C for exact toystar solution
         !
-           if (ndim.eq.1) then
+           if (ndim==1) then
               call exact_toystar_acplane(atstar,ctstar,sigma,gammai)
-           elseif (ndim.eq.2) then
+           elseif (ndim==2) then
               call exact_toystar_acplane2D(atstar,ctstar,sigma,gammai)
            endif
            !--increment page counter as setpage is not called
            iplots = iplots + 1
            ipanel = ipanel + 1
-           if (ipanel.gt.nacross*ndown) ipanel = 1
+           if (ipanel > nacross*ndown) ipanel = 1
 
         !--------------------------------------------------------------
         !  power spectrum plots (uses x and data as yet unspecified)
         !--------------------------------------------------------------
-        elseif (iploty.eq.ipowerspec) then
+        elseif (iploty==ipowerspec) then
 
            labelx = 'frequency'
            labely = 'power'
         !
         !--3D: use FFT routines
         !
-           if (ndim.eq.3) then
+           if (ndim==3) then
               if (.not.ihavesetweights) then
                  call set_weights(weight,dat,iamtype,iusetype)
               endif
@@ -2571,14 +2571,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  xmin = freqmin  ! freq min
                  xmax = freqmax  ! freq max
               endif
-              if (.not.interactivereplot .and. itrans(iploty).gt.0) then
+              if (.not.interactivereplot .and. itrans(iploty) > 0) then
                  call transform_limits(xmin,xmax,itrans(iploty))
               endif
               !
               !--setup frequency grid (evenly spaced in transformed grid)
               !
               nfreqpts = nfreqspec
-              if (nfreqpts.ge.size(xplot)) then
+              if (nfreqpts >= size(xplot)) then
                  nfreqpts = size(xplot)
                  print*,' WARNING: nfreqpts > array size, restricting to ',nfreqpts
               else
@@ -2591,7 +2591,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
               !
               !--transform back to frequency space
               !
-              if (itrans(iploty).gt.0) &
+              if (itrans(iploty) > 0) &
                  call transform_inverse(xplot(1:nfreqpts),itrans(iploty))
 
               if (.not.idisordered) then! interpolate first
@@ -2649,7 +2649,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !   xmax = maxval(xplot(1:nfreqspec))
            !endif
 
-           if (itrans(iploty).ne.0) then
+           if (itrans(iploty) /= 0) then
               call transform(xplot(1:nfreqpts),itrans(iploty))
               labelx = transform_label(labelx,itrans(iploty))
 
@@ -2666,7 +2666,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
            call plot_qci(icolourprev)    ! query line style and colour
            call plot_qls(linestyleprev)
-           if (nstepsperpage.gt.1) then
+           if (nstepsperpage > 1) then
               call plot_sci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
               call plot_sls(linestylethisstep)
            endif
@@ -2686,7 +2686,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            call legends_and_title
 
-        elseif (iploty.eq.icolpixmap) then
+        elseif (iploty==icolpixmap) then
         !--------------------------------------------------------------
         !  plot the contents of a pixel map read from a file
         !--------------------------------------------------------------
@@ -2696,12 +2696,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !  limit settings from the SPH data. Otherwise just
            !  treat it like a separate column.
            !
-           if (irender.eq.0) irender = icolpixmap
+           if (irender==0) irender = icolpixmap
 
            !--datpix is allocated inside the readpixmap routine
            if (allocated(datpix)) deallocate(datpix)
 
-           if (irender.eq.icolpixmap) then
+           if (irender==icolpixmap) then
               labelrender = '|B_\phi|/|B_p|'
            else
               labelrender = label(irender)
@@ -2710,14 +2710,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 shortlabel(labelrender,unitslabel(irender)),istep,x_sec,ierr)
 
            if (.not.interactivereplot) then
-              if (ndim.ge.1) then
+              if (ndim >= 1) then
                  xmin = lim(ix(1),1)
                  xmax = lim(ix(1),2)
               else
                  xmin = 0.
                  xmax = 1.
               endif
-              if (ndim.ge.2) then
+              if (ndim >= 2) then
                  ymin = lim(ix(3),1)
                  ymax = lim(ix(3),2)
               else
@@ -2725,21 +2725,21 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                  ymax = 1.
               endif
            endif
-           if (ndim.ge.1) iplotx = ix(1)
-           if (ndim.ge.2) then
+           if (ndim >= 1) iplotx = ix(1)
+           if (ndim >= 2) then
               iploty = ix(3)
               labely = label(ix(3))
            endif
            pixwidth = (xmax-xmin)/real(npixx)
 
-           if (itrans(irender).ne.0 .and. allocated(datpix)) then
+           if (itrans(irender) /= 0 .and. allocated(datpix)) then
               call transform(datpix,itrans(irender),errval=error_in_log)
            endif
            labelrender = transform_label(labelrender,itrans(irender))
 
            !--find (adaptive) limits of rendered array
            if (allocated(datpix)) then
-              renderminadapt = minval(datpix,mask=abs(datpix-error_in_log).gt.tiny(datpix))
+              renderminadapt = minval(datpix,mask=abs(datpix-error_in_log) > tiny(datpix))
               rendermaxadapt = maxval(datpix)
            endif
            !--limits for rendered quantity
@@ -2759,7 +2759,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            iPlotColourBar = .true.
            call page_setup
 
-           if (ierr.eq.0 .and. allocated(datpix)) then
+           if (ierr==0 .and. allocated(datpix)) then
               !!--call subroutine to actually render the image
               call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
                 npixx,npixy,xmin,ymin,pixwidth,pixwidth,    &
@@ -2768,7 +2768,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !
            !--redraw axes over what has been plotted
            !
-           if ((allocated(datpix) .and. ierr.eq.0) .or. plotlib_is_pgplot) then
+           if ((allocated(datpix) .and. ierr==0) .or. plotlib_is_pgplot) then
               call redraw_axes(iaxis,just,yscalealt,itransy)
            endif
            !
@@ -2801,9 +2801,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
            !--plot extra point corresponding to current time
            ipt = 0
            do i=1,nfreqpts-1
-              if (xplot(i).le.timei .and. xplot(i+1).gt.timei) ipt = i
+              if (xplot(i) <= timei .and. xplot(i+1) > timei) ipt = i
            enddo
-           if (ipt.ne.0) then
+           if (ipt /= 0) then
               call plot_pt1(xplot(ipt),yplot(ipt),4)
               call plot_line(ipt,xplot(1:ipt),yplot(1:ipt))
            endif
@@ -2818,12 +2818,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
         !  (makes interactive replotting behave better)
         if (lastplot) istepsonpage = nstepsperpage
 
-        if (interactive .and.((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) &
+        if (interactive .and.((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) &
            .or. lastplot)) then
            iadvance = nfreq
            call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax,interactivereplot)
            irerender = .true.
-           if (iadvance.eq.-666) exit over_frames
+           if (iadvance==-666) exit over_frames
         endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! if plot not in correct range
@@ -2842,11 +2842,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
   !--frame changing for multiple steps on the page (ie. page split into panels)
   !
   iframesave = 0
-  if (iadvance.ne.-666 .and..not.interactivereplot) then
-     if (nacross*ndown.gt.1 .and. insidesequence(iseqpos)) then
+  if (iadvance /= -666 .and..not.interactivereplot) then
+     if (nacross*ndown > 1 .and. insidesequence(iseqpos)) then
         !--for the last panel on the page, reset the sequence for next time
-        if (ipanel.eq.nacross*ndown) then
-           if (iframe.lt.nframes) then
+        if (ipanel==nacross*ndown) then
+           if (iframe < nframes) then
               ipos = ipos - nacross*ndown
            endif
            iframesave = iframe
@@ -2919,10 +2919,10 @@ contains
 
     iplots = iplots + 1
     ipanelchange = .true.
-    if (nstepsperpage.eq.0 .and. iplots.gt.1) ipanelchange = .false. ! this is an option to never change panels
-    if (iplots.gt.1 .and. nyplots.eq.1 .and. nacross*ndown.gt.1.and..not.ipagechange) ipanelchange = .false.
+    if (nstepsperpage==0 .and. iplots > 1) ipanelchange = .false. ! this is an option to never change panels
+    if (iplots > 1 .and. nyplots==1 .and. nacross*ndown > 1.and..not.ipagechange) ipanelchange = .false.
     if (ipanelchange) ipanel = ipanel + 1
-    if (ipanel.gt.nacross*ndown) ipanel = 1
+    if (ipanel > nacross*ndown) ipanel = 1
     ipanel = max(ipanel,1) ! catch panel=0 if panel is not changing
     !--set counter for where we are in row, col
     if (.not.usecolumnorder) then
@@ -2935,12 +2935,12 @@ contains
        ipanelpos = ipanel
     endif
     !--if we are in interactive mode, use the currently buffered plot limits
-    if (interactivereplot .and. (nacross*ndown.gt.1 .or. (nstepsperpage.gt.1 .and. nsteps.gt.1))) then
+    if (interactivereplot .and. (nacross*ndown > 1 .or. (nstepsperpage > 1 .and. nsteps > 1))) then
        xmin = xminmulti(iplotx)
        xmax = xmaxmulti(iplotx)
        ymin = xminmulti(iploty)
        ymax = xmaxmulti(iploty)
-       if (ivectorplot.gt.0 .and. ivectorplot.le.numplot) then
+       if (ivectorplot > 0 .and. ivectorplot <= numplot) then
           vecmax = xmaxmulti(ivectorplot)
        endif
     endif
@@ -2952,19 +2952,19 @@ contains
 !    npanels_remaining = (nsteps - istep)*nyplots/nstepsperpage
     lastrow  = (npanels_remaining < nacross)
 
-    lastplot = ((ipos.eq.iendatstep .or. istep.eq.nsteps) &
-                .and. nyplot.eq.nyplots .and. k.eq.nxsec)
+    lastplot = ((ipos==iendatstep .or. istep==nsteps) &
+                .and. nyplot==nyplots .and. k==nxsec)
 
     !--------------------------------------------------------------
     ! output some muff to the screen
     !--------------------------------------------------------------
-    if (((interactive .and. ((ipanel.eq.nacross*ndown .and. istepsonpage.eq.nstepsperpage) .or. lastplot)) &
-        .or. (iadapt .and. (istepsonpage.eq.nstepsperpage .or. lastplot))) .and. .not.dum) then
+    if (((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
+        .or. (iadapt .and. (istepsonpage==nstepsperpage .or. lastplot))) .and. .not.dum) then
        if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
           print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelx),xmin,xmax
        if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
           print "(1x,a,' min, max = ',g0,2x,g0)",trim(labely),ymin,ymax
-       if (irender.gt.0 .and. .not.(ndim.eq.2 .and. x_sec)) then
+       if (irender > 0 .and. .not.(ndim==2 .and. x_sec)) then
           if (.not.same_limits(rendermin,rendermax,renderminwas,rendermaxwas)) &
              print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelrender),rendermin,rendermax
           if (gotcontours .and. .not.same_limits(contmin,contmax,contminwas,contmaxwas)) &
@@ -2995,10 +2995,10 @@ contains
     endif
     !--work out whether or not to leave space above plots for titles/legends
     TitleOffset = -tiny(Titleoffset)
-    if (iPlotTitles .and. nstepsperpage.eq.1 .and. vpostitle.gt.0.) TitleOffset = vpostitle
-    if (iPlotLegend .and. nstepsperpage.eq.1 .and. vposlegend.lt.0.) TitleOffset = max(Titleoffset,-vposlegend)
+    if (iPlotTitles .and. nstepsperpage==1 .and. vpostitle > 0.) TitleOffset = vpostitle
+    if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
-    inewpage = ipanel.eq.1 .and. ipanelchange .and. ipagechange
+    inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
     if (inewpage .and. .not.dum) then
        call plot_page
        !--store ipos and nyplot positions for first on page
@@ -3010,20 +3010,20 @@ contains
     !
     !--do not allow limits to be the same
     !
-    if (abs(xmax-xmin).lt.tiny(xmax)) then
+    if (abs(xmax-xmin) < tiny(xmax)) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labelx)//'min='//trim(labelx)//'max '
        call fix_equal_limits(xmin,xmax)
     endif
-    if (abs(ymax-ymin).lt.tiny(ymax)) then
+    if (abs(ymax-ymin) < tiny(ymax)) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
        call fix_equal_limits(ymin,ymax)
     endif
-    if (irender.gt.0 .and. abs(rendermax-rendermin).lt.tiny(rendermax) .or.rendermax.ne.rendermax) then
+    if (irender > 0 .and. abs(rendermax-rendermin) < tiny(rendermax) .or.rendermax /= rendermax) then
        if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
        call fix_equal_limits(rendermin,rendermax)
     endif
     if (debugmode) print*,'DEBUG: calling setpage...',nstepsperpage
-    if (nstepsperpage.gt.0 .or. inewpage) then
+    if (nstepsperpage > 0 .or. inewpage) then
        if (dum) then !--fake the page setup, then return
           if (.not.(interactivereplot .and. .not.irerender)) then
              call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -3038,24 +3038,24 @@ contains
              npixy = max(nint(ymaxpix-yminpix),1)
              if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
              if (debugmode) print*,'DEBUG: dxpix = ',xmaxpix-xminpix,' dypix = ',ymaxpix-yminpix
-             if (vectordevice .and. npixx.gt.1024) then
+             if (vectordevice .and. npixx > 1024) then
                 npixx = 1024/nacross
                 dxpix = (xmax-xmin)/npixx
                 npixy = int(0.999*(ymax-ymin)/real(dxpix)) + 1
                 print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
                 print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
              else
-                if (npix.eq.0 .and. debugmode) &
+                if (npix==0 .and. debugmode) &
                    print "(a,i4,a,i4)",' auto-selecting device resolution = ',npixx,' x ',npixy
                 !
                 !--warn about PGPLOT limitations
                 !
                 if (plotlib_is_pgplot) then
-                   if ((xmaxpix-xminpix).gt.1024. .or. (ymaxpix-yminpix).gt.1024) then
+                   if ((xmaxpix-xminpix) > 1024. .or. (ymaxpix-yminpix) > 1024) then
                       print "(/,75('*'))"
                       print "(a)",'!! WARNING: PGPLOT will truncate image to 1024 pixels on pixel devices.'
                       print "(a)",'!! To fix this, change line 18 of file grimg2.f in the PGPLOT source code:'
-                      print "(a)",'!!          REAL     BUFFER(1026)'
+                      print "(a)",'!!          real     BUFFER(1026)'
                       print "(a)",'!! changing 1026 to something much bigger, then recompile PGPLOT.'
                       print "(75('*'),/)"
                    endif
@@ -3072,7 +3072,7 @@ contains
 
           !--if we are not changing page, do not reprint the axes
           iprint_axes = ipagechange .or. inewpage .or. &
-                        ((iplots.le.nacross*ndown) .and. (nyplot.le.nacross*ndown .and. istepsonpage.eq.1))
+                        ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
 
           if (iprint_axes) then
              if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
@@ -3110,15 +3110,15 @@ contains
     xmaxmulti(iplotx) = xmax
     xminmulti(iploty) = ymin
     xmaxmulti(iploty) = ymax
-    if (irender.gt.0 .and. irender.le.size(xmaxmulti)) then
+    if (irender > 0 .and. irender <= size(xmaxmulti)) then
        xminmulti(irender) = rendermin
        xmaxmulti(irender) = rendermax
-       if (icontourplot.gt.0 .and. gotcontours .and. icontourplot.le.size(xmaxmulti)) then
+       if (icontourplot > 0 .and. gotcontours .and. icontourplot <= size(xmaxmulti)) then
           xminmulti(icontourplot) = contmin
           xmaxmulti(icontourplot) = contmax
        endif
     endif
-    if (ivectorplot.gt.0 .and. ivectorplot.le.numplot) then
+    if (ivectorplot > 0 .and. ivectorplot <= numplot) then
        xmaxmulti(ivectorplot) = vecmax
     endif
 
@@ -3137,10 +3137,10 @@ contains
        xmaxadapt(iplotx) = max(xmaxadapt(iplotx),xmaxadapti)
        xminadapt(iploty) = min(xminadapt(iploty),yminadapti)
        xmaxadapt(iploty) = max(xmaxadapt(iploty),ymaxadapti)
-       if (irender.gt.0) then
+       if (irender > 0) then
           xminadapt(irender) = min(xminadapt(irender),renderminadapt)
           xmaxadapt(irender) = max(xmaxadapt(irender),rendermaxadapt)
-          if (icontourplot.gt.0) then
+          if (icontourplot > 0) then
              xminadapt(icontourplot) = min(xminadapt(icontourplot),contminadapt)
              xmaxadapt(icontourplot) = max(xmaxadapt(icontourplot),contmaxadapt)
           endif
@@ -3193,15 +3193,15 @@ contains
     ! plot colour bar for rendered plots (use currently set colour)
     ! do this here so it always appears OVERLAID on the renderings
     !--------------------------------------------------------------
-    if (irender.gt.0) then
+    if (irender > 0) then
        !--only plot colour bar at the end of first row on tiled plots
-       if (tile_plots .and..not.(ipanel.eq.nacross*ndown .or. lastplot .or. &
-           (OneColourBarPerRow.and.icolumn.eq.nacross) .or. &
-           (OneColourBarPerColumn .and. irow.eq.ndown))) iPlotColourBar = .false.
+       if (tile_plots .and..not.(ipanel==nacross*ndown .or. lastplot .or. &
+           (OneColourBarPerRow.and.icolumn==nacross) .or. &
+           (OneColourBarPerColumn .and. irow==ndown))) iPlotColourBar = .false.
 
        if (iPlotColourBar) then
           xlabeloffsettemp = xlabeloffset + 1.0
-          if (iaxistemp.lt.0) xlabeloffsettemp = 0.
+          if (iaxistemp < 0) xlabeloffsettemp = 0.
 
           !--for tiled plots only on last plot in first row,
           !  and use full viewport size in the y direction
@@ -3217,8 +3217,8 @@ contains
                      minval(vptxmin(1:ipanel)),maxval(vptxmax(1:ipanel)), &
                      minval(vptymin(1:ipanel)),maxval(vptymax(1:ipanel)))
              endif
-          elseif (.not.tile_plots .or. (OneColourBarPerRow .and. icolumn.eq.nacross) &
-                                  .or. (OneColourBarPerColumn .and. irow.eq.ndown)) then
+          elseif (.not.tile_plots .or. (OneColourBarPerRow .and. icolumn==nacross) &
+                                  .or. (OneColourBarPerColumn .and. irow==ndown)) then
              !!--plot colour bar
              if (double_rendering .and. gotcontours) then
                 !--for double rendering, plot the colour bar in the 2nd quantity
@@ -3233,17 +3233,17 @@ contains
     endif
 
     !--plot time on plot
-    if (iPlotLegend .and. nyplot.eq.1 &
+    if (iPlotLegend .and. nyplot==1 &
         .and. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn) &
-        .and. timei.gt.-0.5*huge(timei)) then  ! but not if time has not been read from dump
+        .and. timei > -0.5*huge(timei)) then  ! but not if time has not been read from dump
 
        !--change to background colour index for legend text if overlaid
-       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) then
+       if (iUseBackGroundColourForAxes .and. vposlegend > 0.) then
           call plot_sci(0)
           call plot_set_opacity(alphalegend)
        endif
-       usebox = (ivectorplot.gt.0)
-       if (istepsonpage.eq.1) then
+       usebox = (ivectorplot > 0)
+       if (istepsonpage==1) then
           nhdr = count_non_blank(headertags)
           call legend(legendtext,timei,nhdr,headervalsi,headertags,labeltimeunits,&
                       hposlegend,vposlegend,fjustlegend,usebox)
@@ -3251,20 +3251,20 @@ contains
     endif
 
     !--line/marker style/colour legend for multiple timesteps on same page
-    if (iPlotStepLegend .and. istepsonpage.gt.0 &
-        .and.((nyplot.eq.1 .and. iPlotLegendOnlyOnPanel.eq.0) &
+    if (iPlotStepLegend .and. istepsonpage > 0 &
+        .and.((nyplot==1 .and. iPlotLegendOnlyOnPanel==0) &
         .or. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn))) then
 
        !--change to background colour index for overlaid text and axes
-       if (iUseBackGroundColourForAxes .and. vposlegend.gt.0.) call plot_sci(0)
+       if (iUseBackGroundColourForAxes .and. vposlegend > 0.) call plot_sci(0)
        !
        !--use filenames in legendif none set
        !
-       if (nstepsperpage.ge.1 .and. nsteplegendlines.ge.nstepsperpage*nacross*ndown) then
+       if (nstepsperpage >= 1 .and. nsteplegendlines >= nstepsperpage*nacross*ndown) then
           steplegendtext = steplegend(istepsonpage + (ipanel-1)*nstepsperpage)
-       elseif (istepsonpage.le.nsteplegendlines) then
+       elseif (istepsonpage <= nsteplegendlines) then
           steplegendtext = steplegend(istepsonpage)
-       elseif (all(nstepsinfile(1:nfiles).le.1)) then
+       elseif (all(nstepsinfile(1:nfiles) <= 1)) then
           steplegendtext = add_escape_chars(rootname(istep))
        else
           write(steplegendtext,"(a,i4)") 'step ',istep
@@ -3272,7 +3272,7 @@ contains
        if (debugmode) print "(a,i2,a)",&
           ' DEBUG: plotting step legend (step ',istepsonpage,': "'//trim(steplegendtext)//'")'
 
-       if (iploty.gt.ndataplots) then
+       if (iploty > ndataplots) then
           call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
             .false.,.true.,trim(steplegendtext),hposlegend,vposlegend,1.0)
        else
@@ -3285,18 +3285,18 @@ contains
     call plot_sci(1)
 
     !--print title if appropriate
-    if (iPlotTitles .and. istepsonpage.eq.1 .and. ipanel.le.ntitles) then
-       if (ntitles.gt.nacross*ndown) then
+    if (iPlotTitles .and. istepsonpage==1 .and. ipanel <= ntitles) then
+       if (ntitles > nacross*ndown) then
           ititle = (ipos - 1)/nstepsperpage + 1
-          if (ititle.gt.ntitles) ititle = ipanel
+          if (ititle > ntitles) ititle = ipanel
        else
           ititle = ipanel
        endif
 
-       if (len_trim(pagetitles(ititle)).gt.0) then
+       if (len_trim(pagetitles(ititle)) > 0) then
 
           !--change to background colour index if title is overlaid
-          if (iUseBackGroundColourForAxes .and. vpostitle.lt.0.) then
+          if (iUseBackGroundColourForAxes .and. vpostitle < 0.) then
              call plot_sci(0)
              call plot_set_opacity(alphalegend)
           endif
@@ -3309,11 +3309,11 @@ contains
     call plot_sci(1)
 
     !--scale on co-ordinate plots
-    if (iPlotScale .and. (iscalepanel.eq.0 .or. ipanel.eq.iscalepanel) &
+    if (iPlotScale .and. (iscalepanel==0 .or. ipanel==iscalepanel) &
                    .and. is_coord(iplotx,ndim) .and. is_coord(iploty,ndim)) then
 
        !--change to background colour index if title is overlaid
-       if (iUseBackGroundColourForAxes .and. vposscale.gt.0.) then
+       if (iUseBackGroundColourForAxes .and. vposscale > 0.) then
           call plot_sci(0)
           call plot_set_opacity(alphalegend)
        endif
@@ -3321,7 +3321,7 @@ contains
     endif
 
     !--plot shapes
-    if (nshapes.gt.0 .and. istepsonpage.eq.1) &
+    if (nshapes > 0 .and. istepsonpage==1) &
        call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty),timei)
 
     !--restore colour index
@@ -3436,11 +3436,11 @@ contains
    call plot_qlw(linewidthprev)
 
    !print*,'plotting vector field ',trim(label)
-   if ((is_coord(ivecx,ndim) .or. ivecx.lt.0 .or.(ivecx.gt.ndataplots)) .or. &
-       (is_coord(ivecy,ndim) .or. ivecy.lt.0 .or.(ivecy.gt.ndataplots))) then
+   if ((is_coord(ivecx,ndim) .or. ivecx < 0 .or.(ivecx > ndataplots)) .or. &
+       (is_coord(ivecy,ndim) .or. ivecy < 0 .or.(ivecy > ndataplots))) then
       print*,'error finding location of vector plot in array'
    else
-      use3Dstreamlines = (ndim.eq.3) .and. .not.x_sec !lenvironment('SPLASH_3DSTREAMLINES')
+      use3Dstreamlines = (ndim==3) .and. .not.x_sec !lenvironment('SPLASH_3DSTREAMLINES')
 
       !--plot arrows in either background or foreground colour
       if (UseBackgndColorVecplot) then
@@ -3493,7 +3493,7 @@ contains
          else
             if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
                !--get synchrotron polarisation vectors
-               if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
+               if (iutherm > 0 .and. iutherm <= numplot .and. uthermcutoff > 0.) then
                   if (usevecplot) then
                      call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
@@ -3562,7 +3562,7 @@ contains
                endif
             endif
             !--adjust the units of the z-integrated quantity
-            !if (iRescale .and. units(ih).gt.0.) then
+            !if (iRescale .and. units(ih) > 0.) then
             !   vecpixx = vecpixx*(unitzintegration/units(ih))
             !   vecpixy = vecpixy*(unitzintegration/units(ih))
             !endif
@@ -3608,12 +3608,12 @@ contains
       !--plot it, either as streamlines or arrows
       !
       if (iplotstreamlines) then
-         if (ndim.eq.3) then
+         if (ndim==3) then
             !--normalise the 3D vector field
             do j=1,numpixy
                do i=1,numpixx
                   vmag = sqrt(vecpixx(i,j)**2 + vecpixy(i,j)**2)
-                  if (vmag.gt.tiny(vmag)) then
+                  if (vmag > tiny(vmag)) then
                      vecpixx(i,j) = vecpixx(i,j)/vmag
                      vecpixy(i,j) = vecpixy(i,j)/vmag
                   endif
@@ -3621,7 +3621,7 @@ contains
             enddo
          endif
 
-         if (ndim.eq.3 .and. use3Dstreamlines .and. .not.x_sec) then
+         if (ndim==3 .and. use3Dstreamlines .and. .not.x_sec) then
             if (usevecplot) then
                if (.not.allocated(vecplot)) stop 'vecplot not allocated'
                call vecplot3D_proj(xplot(1:ninterp), &
@@ -3673,7 +3673,7 @@ contains
 
          if (iplotsynchrotron .and. .not. iplotarrowheads) then
             !--get synchrotron polarisation intensity using more pixels
-            if (iutherm.gt.0 .and. iutherm.le.numplot .and. uthermcutoff.gt.0.) then
+            if (iutherm > 0 .and. iutherm <= numplot .and. uthermcutoff > 0.) then
                call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                  yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                  weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
@@ -3693,7 +3693,7 @@ contains
             endif
 
             !--adjust the units of the z-integrated quantity
-            !if (iRescale .and. units(ih).gt.0. .and..not.inormalise) then
+            !if (iRescale .and. units(ih) > 0. .and..not.inormalise) then
             !   datpix = datpix*(unitzintegration/units(ih))
             !endif
 
@@ -3744,11 +3744,11 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
   xminadaptive = huge(xminadaptive)
   xmaxadaptive = -huge(xmaxadaptive)
 
-  mixedtypes = size(iamtype).gt.1
+  mixedtypes = size(iamtype) > 1
   if (mixedtypes) then
      do i=1,ntoti
         itype = iamtype(i)
-        if (iusetype(itype) .or. (iplotline.and.itype.eq.1)) then
+        if (iusetype(itype) .or. (iplotline.and.itype==1)) then
            xminadaptive = min(xminadaptive,xploti(i))
            xmaxadaptive = max(xmaxadaptive,xploti(i))*scalemax
         endif
@@ -3757,8 +3757,8 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
      index1 = 1
      do itype=1,maxparttypes
         index2 = index1 + npartoftype(itype) - 1
-        if (iusetype(itype).and.npartoftype(itype).gt.0 &
-           .or. (iplotline.and.itype.eq.1)) then
+        if (iusetype(itype).and.npartoftype(itype) > 0 &
+           .or. (iplotline.and.itype==1)) then
            xminadaptive = min(xminadaptive,minval(xploti(index1:index2)))
            xmaxadaptive = max(xmaxadaptive,maxval(xploti(index1:index2))*scalemax)
         endif
@@ -3815,16 +3815,16 @@ subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,i
   integer           :: itranstemp,lstr
   character(len=20) :: string
 
-  if (itransxi.ne.0) then
-     if (iplotxi.gt.0 .and. iplotxi.le.numplot) call transform(xploti(:),itransxi)
-     if ((chaxis.eq.'x' .and. (iaxis.eq.10 .or. iaxis.eq.30)).or. &
-         (chaxis.eq.'y' .and. (iaxis.eq.20 .or. iaxis.eq.30))) then ! logarithmic axes
+  if (itransxi /= 0) then
+     if (iplotxi > 0 .and. iplotxi <= numplot) call transform(xploti(:),itransxi)
+     if ((chaxis=='x' .and. (iaxis==10 .or. iaxis==30)).or. &
+         (chaxis=='y' .and. (iaxis==20 .or. iaxis==30))) then ! logarithmic axes
         write(string,*) itransxi
         string = adjustl(string)
         itranstemp = 0
         lstr = len_trim(string)
-        if (string(lstr:lstr).eq.'1') then
-           if (lstr.gt.1) read(string(1:lstr-1),*) itranstemp
+        if (string(lstr:lstr)=='1') then
+           if (lstr > 1) read(string(1:lstr-1),*) itranstemp
            labelxi = transform_label(labelxi,itranstemp)
         else
            labelxi = transform_label(labelxi,itransxi)
@@ -3863,26 +3863,26 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   anglerady = angleyi*pi/180.
   angleradx = anglexi*pi/180.
   if (plot_qcur()) then  ! only print for interactive devices
-     if (ndim.eq.3) then
+     if (ndim==3) then
         print "(1x,a,2(f6.2,1x),f6.2,a)",'rotation: (z, y, x) = (',anglezi,angleyi,anglexi,')'
      else
         print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
      endif
-     if (ndim.eq.3 .and. use3Dperspective) then
+     if (ndim==3 .and. use3Dperspective) then
         print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
-     elseif (ndim.eq.3) then
-        if (abs(zobs).gt.tiny(zobs) .or. abs(dzscreen).gt.tiny(dzscreen)) then
+     elseif (ndim==3) then
+        if (abs(zobs) > tiny(zobs) .or. abs(dzscreen) > tiny(dzscreen)) then
            print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
         endif
      endif
-     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+     if (itrackpart > 0 .and. itrackpart <= ntot) then
         print*,'rotating about tracked particle ',itrackpart,' x,y,z = ',dat(itrackpart,ix(1:ndim))
-     elseif (any(abs(xorigin).ge.tiny(xorigin))) then
+     elseif (any(abs(xorigin) >= tiny(xorigin))) then
         print*,'rotating about x,y,z = ',xorigin(1:ndim)
      endif
   endif
 
-  if (debugmode .and. ivecstart.gt.0) print "(1x,a)",'(also rotating vector components)'
+  if (debugmode .and. ivecstart > 0) print "(1x,a)",'(also rotating vector components)'
   !
   !--set location of x,y and z
   !  such that:
@@ -3894,11 +3894,11 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
   iposy = 2
   iposz = 3
   do i=1,ndim
-     if (ix(i).eq.iplotx) then
+     if (ix(i)==iplotx) then
         iposx = i
-     elseif (ix(i).eq.iploty) then
+     elseif (ix(i)==iploty) then
         iposy = i
-     elseif (ix(i).eq.iplotz) then
+     elseif (ix(i)==iplotz) then
         iposz = i
      else
         print "(a)",' WARNING: internal error in ix setting for rotation: ix = ',ix(:)
@@ -3913,42 +3913,42 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 !$omp private(j,xcoords,veci)
 !$omp do
   do j=1,ntot
-     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+     if (itrackpart > 0 .and. itrackpart <= ntot) then
         xcoords(1:ndim) = dat(j,ix(1:ndim)) - dat(itrackpart,ix(1:ndim))
      else
         xcoords(1:ndim) = dat(j,ix(1:ndim)) - xorigin(1:ndim)
      endif
-     if (ndim.eq.2) then
+     if (ndim==2) then
         call rotate2D(xcoords(:),angleradz)
-     elseif (ndim.eq.3) then
+     elseif (ndim==3) then
         call rotate3D(xcoords(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
      endif
-     if (itrackpart.gt.0 .and. itrackpart.le.ntot) then
+     if (itrackpart > 0 .and. itrackpart <= ntot) then
         xploti(j) = xcoords(iposx) + dat(itrackpart,ix(iposx))
         yploti(j) = xcoords(iposy) + dat(itrackpart,ix(iposy))
-        if (iplotz.gt.0) then
+        if (iplotz > 0) then
            zploti(j) = xcoords(iposz) + dat(itrackpart,ix(iposz))
         endif
      else
         xploti(j) = xcoords(iposx) + xorigin(iposx)
         yploti(j) = xcoords(iposy) + xorigin(iposy)
-        if (iplotz.gt.0) then
+        if (iplotz > 0) then
            zploti(j) = xcoords(iposz) + xorigin(iposz)
         endif
      endif
 !
 !--rotate vector components
 !
-     if (ivecstart.gt.0) then
+     if (ivecstart > 0) then
         veci(1:ndim) = dat(j,ivecstart:ivecstart+ndim-1)
-        if (ndim.eq.2) then
+        if (ndim==2) then
            call rotate2D(veci(:),angleradz)
-        elseif (ndim.eq.3) then
+        elseif (ndim==3) then
            call rotate3D(veci(1:ndim),angleradx,anglerady,angleradz,zobs,dzscreen)
         endif
         vecploti(1,j) = veci(iposx)
         vecploti(2,j) = veci(iposy)
-        if (ndim.ge.3) vecploti(3,j) = veci(iposz)
+        if (ndim >= 3) vecploti(3,j) = veci(iposz)
      endif
   enddo
 !$omp enddo
@@ -3977,8 +3977,8 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
   anglerady = angleyi*pi/180.
   angleradx = anglexi*pi/180.
 
-  if (ndim.eq.3) then
-     if (.not.use3Dperspective .and. dzscreen.gt.tiny(zobs)) then
+  if (ndim==3) then
+     if (.not.use3Dperspective .and. dzscreen > tiny(zobs)) then
         print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
         zobs = 0.
         dzscreen = 0.
@@ -3986,7 +3986,7 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
      call rotate_axes3D(irotateaxes,iplotx-ix(1)+1,iploty-ix(1)+1, &
           xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
           angleradx,anglerady,angleradz,zobs,dzscreen)
-  elseif (ndim.eq.2) then
+  elseif (ndim==2) then
      call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
                        xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
   endif

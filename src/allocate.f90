@@ -50,31 +50,31 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 !
 !--check for errors in input
 !
-  if (npartin.le.0) then
+  if (npartin <= 0) then
      print*,'allocate: error in input, npartin = ',npartin
      return
   endif
-  if (nstep.le.0) then
+  if (nstep <= 0) then
      print*,'allocate: error in input, nstep = ',nstep
      return
   endif
-  if (ncolumnsin.lt.0) then
+  if (ncolumnsin < 0) then
      print*,'allocate: error in input, ncolumns = ',ncolumnsin
      return
-  elseif (ncolumnsin.eq.0) then
+  elseif (ncolumnsin==0) then
      print*,'WARNING: allocate: ncolumns = 0 in input'
   endif
   !--do nothing if array sizes are the same
-  if (npartin.eq.maxpart .and. ncolumnsin.eq.maxcol .and. nstep.eq.maxstep) then
+  if (npartin==maxpart .and. ncolumnsin==maxcol .and. nstep==maxstep) then
      return
   endif
 !
 !--save array sizes
 !
-  if (npartin.lt.maxpart) print "(a)",' WARNING: # particles < previous in allocate'
-  if (nstep.lt.maxstep) print "(a)",' WARNING: # steps < previous in allocate'
+  if (npartin < maxpart) print "(a)",' WARNING: # particles < previous in allocate'
+  if (nstep < maxstep) print "(a)",' WARNING: # steps < previous in allocate'
 !--at the moment ncolumns cannot be decreased (due to calc_quantities)
-  if (ncolumnsin.lt.maxcol) then
+  if (ncolumnsin < maxcol) then
      ncolumns = maxcol
      !!print "(a)",' WARNING: # columns < previous in allocate'
   else
@@ -95,8 +95,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
   ierr = 0
   if (allocated(dat)) then
      reallocate = .true.
-     if (maxpart.ne.npartin) reallocate_part = .true.
-     if (maxstep.ne.nstep) reallocate_step = .true.
+     if (maxpart /= npartin) reallocate_part = .true.
+     if (maxstep /= nstep) reallocate_step = .true.
 
      if (npartin > 1000000) print 10,'> reallocating memory:',npartin,nstep,ncolumns
 10   format (a,' parts = ',i10,' steps = ',i6,' cols = ',i4)
@@ -115,7 +115,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 
      if (allocated(iamtype)) then ! should always be true
         !--if iamtype has meaningful contents and reallocation is necessary
-        reallocate_itype = (reallocate_part .or. reallocate_step) .and. (size(iamtype(:,1)).eq.maxpartold)
+        reallocate_itype = (reallocate_part .or. reallocate_step) .and. (size(iamtype(:,1))==maxpartold)
         if (reallocate_itype) then
            allocate(iamtypetemp(maxpartold,maxstepold), stat=ierr)
            if (ierr /= 0) stop 'error allocating memory (iamtypetemp)'
@@ -125,7 +125,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
         elseif (present(mixedtypes)) then
         !--if iamtype has size 1 or 0 but should be allocated here,
         !  deallocate so we can give it correct size
-           if (mixedtypes .and. size(iamtype(:,1)).lt.maxpart) deallocate(iamtype)
+           if (mixedtypes .and. size(iamtype(:,1)) < maxpart) deallocate(iamtype)
         endif
      endif
 

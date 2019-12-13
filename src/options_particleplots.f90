@@ -150,11 +150,11 @@ subroutine submenu_particleplots(ichoose)
   !--we require some tricks with the format string to print only the actual number of
   !  particle types rather than the whole array
   !
-  if (ntypes.gt.100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
-  if (ntypes.le.0) then
+  if (ntypes > 100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
+  if (ntypes <= 0) then
      substring1 = "no types specified"
      substring2 = "not applicable"
-  elseif (ntypes.eq.1) then
+  elseif (ntypes==1) then
      substring1 = "a"
      substring2 = "i2"
   else
@@ -182,16 +182,16 @@ subroutine submenu_particleplots(ichoose)
          "' 9) exact solution plot options ')"
 
   print "(a)",'------------- particle plot options -------------------'
-  if (iaction.le.0 .or. iaction.gt.9) then
+  if (iaction <= 0 .or. iaction > 9) then
      if (iplotcont_nomulti) then
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
                  (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
-                 print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
+                 print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
      else
         print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
-                 print_logical(iplotline),print_logical(ncircpart.gt.0 .or.iploterrbars),icoordsnew,iexact
+                 print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
      endif
      call prompt('enter option',iaction,0,9)
   endif
@@ -201,7 +201,7 @@ subroutine submenu_particleplots(ichoose)
   case(1)
      !          plot particles by type?
      do itype=1,ntypes
-        if (UseTypeinRenderings(itype) .and. ndim.gt.1) then
+        if (UseTypeinRenderings(itype) .and. ndim > 1) then
            call prompt('Plot '//trim(labeltype(itype))//' particles / use in renderings?',iplotpartoftype(itype))
            if (iplotcont_nomulti) then
               call prompt('Use '//trim(labeltype(itype))//' particles in contour plots?',UseTypeInContours(itype))
@@ -210,7 +210,7 @@ subroutine submenu_particleplots(ichoose)
            call prompt('Plot '//trim(labeltype(itype))//' particles?',iplotpartoftype(itype))
            UseTypeInContours(itype) = .false.
         endif
-        if (iplotpartoftype(itype) .and. itype.gt.1) then
+        if (iplotpartoftype(itype) .and. itype > 1) then
            if (.not.UseTypeInRenderings(itype)) then
               call prompt('>> Plot '//trim(labeltype(itype))//' particles on top of rendered plots?',PlotOnRenderings(itype))
            else
@@ -234,7 +234,7 @@ subroutine submenu_particleplots(ichoose)
         call prompt(' Enter marker to use for '//trim(labeltype(itype)) &
              //' particles:',imarktype(itype),-8,35)
      enddo
-     if (any(imarktype(1:ntypes).ge.32)) then
+     if (any(imarktype(1:ntypes) >= 32)) then
         print*
         call prompt(' Enter proportionality factor for scalable markers (radius = fac*h)',hfacmarkers)
      endif
@@ -260,8 +260,8 @@ subroutine submenu_particleplots(ichoose)
      !                 ' 1) render particle plots with fixed h', &
      !                 ' 2) render particle plots with adaptive h (slower)'
      call prompt('smooth particle plots? (0=none 1=fixed 2=adaptive)',ismooth_particle_plots,0,2)
-     if (ismooth_particle_plots.eq.0) then
-        if (size(iamtype(:,1)).gt.1) then
+     if (ismooth_particle_plots==0) then
+        if (size(iamtype(:,1)) > 1) then
            print "(3(/,a),/)", &
              ' WARNING: changing type plotting order currently has no effect ', &
              '          when particle types are mixed in the dump file', &
@@ -278,7 +278,7 @@ subroutine submenu_particleplots(ichoose)
                  do while (ierr /= 0)
                     itype = itypeorder(i)
                     call prompt('enter next particle type to plot',itype,1,ntypes)
-                    if (any(itypeorder(1:i-1).eq.itype)) then
+                    if (any(itypeorder(1:i-1)==itype)) then
                        print "(a)",' error: cannot be same as previous type'
                        ierr = 1
                     else
@@ -305,32 +305,32 @@ subroutine submenu_particleplots(ichoose)
      return
 !------------------------------------------------------------------------
   case(6)
-     if (ndim.le.1 .or. ih.le.0) then
+     if (ndim <= 1 .or. ih <= 0) then
         icol = 0
         do icol=1,ndataplots
-           if (ilocerrbars(icol).gt.0) print "(a,i2,a,i2,a)", &
+           if (ilocerrbars(icol) > 0) print "(a,i2,a,i2,a)", &
               'column ',ilocerrbars(icol),' contains errors for column ',icol,':'//label(icol)
         enddo
-        if (any(ilocerrbars(1:ndataplots).gt.0)) then
+        if (any(ilocerrbars(1:ndataplots) > 0)) then
            call prompt('turn on plotting of error bars? ',iploterrbars)
            if (.not.iploterrbars) return
         else
            iploterrbars = .false.
         endif
         icol = 1
-        do while(icol.ne.0)
+        do while(icol /= 0)
            icol = 0
            call prompt('Enter column to set location of error bars for (0=none)',icol,0,ndataplots)
-           if (icol.gt.0) then
+           if (icol > 0) then
               call prompt('Enter location of error data for this column in the data',ilocerrbars(icol),0)
               if (ilocerrbars(icol) <= 0 .or. ilocerrbars(icol) > ndataplots) then
                  print "(a,i2)",' WARNING: currently no data in column ',ilocerrbars(icol)
               else
                  iploterrbars = .true.
               endif
-              if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
+              if (all(ilocerrbars(1:ndataplots) <= 0)) iploterrbars = .false.
            else
-              if (all(ilocerrbars(1:ndataplots).le.0)) iploterrbars = .false.
+              if (all(ilocerrbars(1:ndataplots) <= 0)) iploterrbars = .false.
            endif
         enddo
         print "(2(/,a))",' 0) Default style |--|',&
@@ -339,10 +339,10 @@ subroutine submenu_particleplots(ichoose)
      else
         print*,'Circles of interaction can also be set interactively'
         call prompt('Enter number of circles to draw',ncircpart,0,size(icircpart))
-        if (ncircpart.gt.0) then
+        if (ncircpart > 0) then
            do n=1,ncircpart
-              if (icircpart(n).eq.0) then
-                 if (n.gt.1) then
+              if (icircpart(n)==0) then
+                 if (n > 1) then
                     icircpart(n) = icircpart(n-1)+1
                  else
                     icircpart(n) = 1
@@ -363,7 +363,7 @@ subroutine submenu_particleplots(ichoose)
      icoordsprev = icoordsnew
      call prompt(' Enter coordinate system to plot in:', &
                  icoordsnew,0,maxcoordsys)
-     if (icoordsnew.eq.0) icoordsnew = icoords
+     if (icoordsnew==0) icoordsnew = icoords
      select case(icoordsnew)
      !case(igeom_rotated)
       !  call prompt('enter rotation angle a (degrees)',rot_angle_a)
@@ -377,7 +377,7 @@ subroutine submenu_particleplots(ichoose)
         call set_flaring_index(rref,betaflare)
      end select
 
-     if (icoordsnew.ne.icoordsprev) then
+     if (icoordsnew /= icoordsprev) then
         itrans(1:ndim) = 0
         call coord_transform_limits(lim(1:ndim,1),lim(1:ndim,2), &
                                     icoordsprev,icoordsnew,ndim)

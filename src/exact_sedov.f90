@@ -53,7 +53,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
   ierr = 0
   print*,' Plotting 3D Sedov similarity solution at t = ',time
   print*,' rhozero = ',rhozero,' energy = ',energy, ' rmax = ',rmax
-  if (abs(time).lt.1.e-10) then
+  if (abs(time) < 1.e-10) then
      print*,'nothing at t=0, returning'
      ierr = 1
      return
@@ -75,7 +75,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 !
 !--on x-y plots plot a circle at radius rshock
 !
-  if (iplot.eq.0) then
+  if (iplot==0) then
      dphi = 2.*pi/real(npts-1)
      phi = 0.
      do i=1,npts
@@ -101,7 +101,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 
   ishock = INT((rshock - rplot(1))/dr)
 
-  if (ishock.gt.0) then
+  if (ishock > 0) then
      ishock = min(ishock,npts)
 !
 !--the solution for rho is given as a function of ubar (dimensionless velocity)
@@ -141,7 +141,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
 !--solution ahead of shock front
 !
   ishock = max(ishock,1)
-  if (ishock.lt.npts) then
+  if (ishock < npts) then
      do i=ishock,npts
         rplot(i) = rshock + (i-ishock)*dr
         select case(iplot)
@@ -230,7 +230,7 @@ real function eta0(gamma,ndim)
   real :: u0, u, du
   real :: sum, term, weight, factor
 
-!  if (abs(gamma-5./3.).lt.1.e-3) then
+!  if (abs(gamma-5./3.) < 1.e-3) then
 !     eta0 = 1.1517
 !  else
 !     print*,'warning: don''t know eta0: integral not implemented'
@@ -245,20 +245,20 @@ real function eta0(gamma,ndim)
   sum = 0.
   do i=1,ipts
      weight = 1.0
-     if (mod(i,2).eq.0) then
+     if (mod(i,2)==0) then
         weight = 4./3.
      else
         weight = 2./3.
      endif
-     if ((i.eq.1).or.(i.eq.ipts)) weight = 1./3.
+     if ((i==1).or.(i==ipts)) weight = 1./3.
      u = u0 + i*du
      term = (pru(u,gamma) + rhou(u,gamma)*u**2)*(etau(u,gamma,ndim)**(ndim+2))/dudlneta(u,gamma)
      sum = sum + weight*du*term
   enddo
 
-  if (ndim.eq.3) then
+  if (ndim==3) then
      factor = 4.*pi
-  elseif (ndim.eq.2) then
+  elseif (ndim==2) then
      factor = 2.*pi
   else
      factor = 1.

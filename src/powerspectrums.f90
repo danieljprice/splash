@@ -58,7 +58,7 @@ subroutine powerspectrum(npts,x,dat,nfreqpts,freq,power,idisordered)
 !
     call mean_variance(dat,npts,datmean,datvar)
     print*,'data mean = ',datmean,' std. dev = ',sqrt(datvar)
-    if (datvar.le.0.) then
+    if (datvar <= 0.) then
        print*,'error: variance = 0'
        power = 0.
        return
@@ -90,8 +90,8 @@ subroutine power_fourier(npts,x,dat,omega,power)
  sum1 = 0.
  sum2 = 0.
  do i=1,npts
-    sum1 = sum1 + dat(i)*COS(-omega*x(i))
-    sum2 = sum2 + dat(i)*SIN(-omega*x(i))
+    sum1 = sum1 + dat(i)*cos(-omega*x(i))
+    sum2 = sum2 + dat(i)*sin(-omega*x(i))
  enddo
  power= sqrt(sum1**2 + sum2**2)/REAL(npts)
 
@@ -125,10 +125,10 @@ subroutine power_lomb(npts,x,dat,datmean,datvar,omega,power)
  tau_numerator = 0.
  tau_denominator = 0.
  do i=1,npts
-    tau_numerator = tau_numerator + SIN(2.*omega*x(i))
-    tau_denominator = tau_denominator + COS(2.*omega*x(i))
+    tau_numerator = tau_numerator + sin(2.*omega*x(i))
+    tau_denominator = tau_denominator + cos(2.*omega*x(i))
  enddo
- tau = ATAN(tau_numerator/tau_denominator)/(2.*omega)
+ tau = atan(tau_numerator/tau_denominator)/(2.*omega)
 !
 !--calculate the terms in the power
 !
@@ -139,8 +139,8 @@ subroutine power_lomb(npts,x,dat,datmean,datvar,omega,power)
  do i=1,npts
     ddat = dat(i) - datmean
     omega_dx = omega*(x(i) - tau)
-    cos_term = COS(omega_dx)
-    sin_term = SIN(omega_dx)
+    cos_term = cos(omega_dx)
+    sin_term = sin(omega_dx)
     term1_numerator = term1_numerator + ddat*cos_term
     term1_denominator = term1_denominator + cos_term**2
     term2_numerator = term2_numerator + ddat*sin_term

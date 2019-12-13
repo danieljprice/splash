@@ -43,10 +43,10 @@ subroutine rotate2D(xcoords,anglez)
 !--rotate about z
 !
   r = sqrt(x**2 + y**2)
-  phi = ATAN2(y,x)
+  phi = atan2(y,x)
   phi = phi - anglez
-  x = r*COS(phi)
-  y = r*SIN(phi)
+  x = r*cos(phi)
+  y = r*sin(phi)
 
   xcoords(1) = x
   xcoords(2) = y
@@ -70,39 +70,39 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
 !
 !--rotate about z
 !
-  if (abs(anglez).gt.tiny(anglez)) then
+  if (abs(anglez) > tiny(anglez)) then
      r = sqrt(x**2 + y**2)
-     phi = ATAN2(y,x)
+     phi = atan2(y,x)
      phi = phi - anglez
-     x = r*COS(phi)
-     y = r*SIN(phi)
+     x = r*cos(phi)
+     y = r*sin(phi)
   endif
 !
 !--rotate about y
 !
-  if (abs(angley).gt.tiny(angley)) then
+  if (abs(angley) > tiny(angley)) then
      r = sqrt(z**2 + x**2)
-     phi = ATAN2(z,x)
+     phi = atan2(z,x)
      phi = phi - angley
-     z = r*SIN(phi)
-     x = r*COS(phi)
+     z = r*sin(phi)
+     x = r*cos(phi)
   endif
 !
 !--rotate about x
 !
-  if (abs(anglex).gt.tiny(anglex)) then
+  if (abs(anglex) > tiny(anglex)) then
      r = sqrt(y**2 + z**2)
-     phi = ATAN2(z,y)
+     phi = atan2(z,y)
      phi = phi - anglex
-     y = r*COS(phi)
-     z = r*SIN(phi)
+     y = r*cos(phi)
+     z = r*sin(phi)
   endif
 !
 !--change perspective according to z depth
 !  (for straight rotation == parallel projections use dz1= 0 on input)
 !  zobs is the z position of the observer.
 !
-  if (abs(dz1).gt.tiny(dz1)) then
+  if (abs(dz1) > tiny(dz1)) then
      zfrac = abs(dz1/(z-zobs))
   else
      zfrac = 1.0

@@ -55,7 +55,7 @@ subroutine read_contours(ncontours,ierr)
     contourtitles(:) = ''
     ierr = 1
  endif
- if (ncontours.gt.0) then
+ if (ncontours > 0) then
     print "(1x,a)",'read contours and titles from file '//trim(contourfile)
  else
     ierr = -1

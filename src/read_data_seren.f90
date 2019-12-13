@@ -136,7 +136,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   nstepsread = 0
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -231,9 +231,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   typedata = 0
 
-  if (iambinaryfile.eq.1) then
+  if (iambinaryfile==1) then
      call read_serenheader_binary(iunit)
-  elseif (iambinaryfile.eq.0) then
+  elseif (iambinaryfile==0) then
      call read_serenheader_ascii(iunit)
   endif
   !
@@ -253,8 +253,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   dmdt_range = idata(30)
 
   !--check for errors in integer header (either from corrupt file or wrong endian)
-  if (ptot+stot.le.0 .or. ptot+stot.gt.1.e10) then
-     if (iambinaryfile.eq.1) then
+  if (ptot+stot <= 0 .or. ptot+stot > 1.e10) then
+     if (iambinaryfile==1) then
         print "(a)",' ERROR reading binary file header: wrong endian? '
      else
         print "(a)",' ERROR reading ascii file header '
@@ -286,9 +286,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if ((ptot+stot).gt.maxpart) then
+  if ((ptot+stot) > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*(ptot+stot))
      else
@@ -296,7 +296,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ptot+stot)
      endif
   endif
-  if (step.ge.maxstep .and. step.ne.1) then
+  if (step >= maxstep .and. step /= 1) then
      nstep_max = step + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -316,8 +316,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--read particle data
   !
-  if (ptot.gt.0) then
-!      if (iambinaryfile.eq.1) then
+  if (ptot > 0) then
+!      if (iambinaryfile==1) then
 !         call read_dragonbody_binary(iunit,ierr)
 !      else
 !         call read_dragonbody_ascii(iunit,ierr)
@@ -334,9 +334,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !      !--relabel particle types
   call set_types(iamtype(:,step),ptot+stot,npartoftype(:,step))
 !   endif
-  if (any(npartoftype(2:,step).ne.0)) then
+  if (any(npartoftype(2:,step) /= 0)) then
      do itype=1,ntypes
-        if (npartoftype(itype,step).gt.0) then
+        if (npartoftype(itype,step) > 0) then
            string = ' '
            write(string,"(a)") 'n_'//trim(labeltype(itype))
            write(string(18:len(string)),"(a)") ':'
@@ -1060,7 +1060,7 @@ subroutine set_types(itypei,ntotal,noftype)
  noftype_temp(6) = pdust
  noftype_temp(7) = pion
 
- if (sum(noftype_temp(1:7)).ne.ntotal) then
+ if (sum(noftype_temp(1:7)) /= ntotal) then
     print "(a)",' INTERNAL ERROR setting number in each type in dragon read'
  endif
 
@@ -1106,11 +1106,11 @@ subroutine set_labels
   character(len=lenlabel)      :: type_names(1:7)
   logical                      :: type_use_render(1:7)
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif

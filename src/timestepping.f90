@@ -73,22 +73,22 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
   !  make sure we read the file again now that we may have different plotting options
   if (ipartialread) ifileopen = 0
 
-  over_timesteps: do while (ipos.le.iendatstep)
+  over_timesteps: do while (ipos <= iendatstep)
 
      ipos = max(ipos,1) !--can't go further back than ipos=1
 
      if (iUseStepList) then
         istep = isteplist(ipos)
-        if (istep.gt.nsteps) then
+        if (istep > nsteps) then
            print*,'ERROR: step > nsteps in step list, setting step = last'
            istep = nsteps
-        elseif (istep.le.0) then
+        elseif (istep <= 0) then
         !--this should never happen
            stop 'internal error: corrupted step list: please send bug report'
         endif
      else
         istep = ipos
-        if (istep.ge.nsteps) then
+        if (istep >= nsteps) then
            istep = nsteps
            iendatstep = istep
            ipos = min(ipos,iendatstep)
@@ -100,7 +100,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      !
      if (DataIsBuffered) then
         !--if data is in memory, we just go to the position in dat
-        if (istep.gt.nsteps) then
+        if (istep > nsteps) then
            print*,'error: step # > nsteps, setting step = last'
            istep = nsteps
         endif
@@ -112,7 +112,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
         !
         call get_nextstep(istep,ilocindat)
 
-        if (.not.iUseStepList .and. istep.ge.nsteps) then
+        if (.not.iUseStepList .and. istep >= nsteps) then
            !--reset step position to last useable timestep (ie. nsteps)
            istep = nsteps
            iendatstep = istep
@@ -125,7 +125,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
            endif
         endif
         !--this is a general "catch all" when step cannot be located
-        if (ilocindat.le.0) then
+        if (ilocindat <= 0) then
            print*,'ERROR: could not locate timestep'
            exit over_timesteps
         endif
@@ -134,10 +134,10 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      !
      !--write timestepping log
      !
-     if (iadvance.ne.0) then
+     if (iadvance /= 0) then
         if (.not.time_was_read(time(ilocindat))) then
            print "(5('-'),' t = (not read), dump #',i5,1x,18('-'))", istep
-        elseif (time(ilocindat).lt.1.e-2 .or. time(ilocindat).gt.1.e2) then
+        elseif (time(ilocindat) < 1.e-2 .or. time(ilocindat) > 1.e2) then
            print "(5('-'),' t = ',es9.2,', dump #',i5,1x,18('-'))", time(ilocindat),istep
         else
            print "(5('-'),' t = ',f8.2,', dump #',i5,1x,18('-'))", time(ilocindat),istep
@@ -145,20 +145,20 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
      endif
 
      istepsonpage = istepsonpage + 1
-!     if ((nstepsperpage.gt.1 .and. istepsonpage > 1 .and. istepsonpage.le.nstepsperpage).or.nstepsperpage.eq.0) then
-     if ((nstepsperpage.gt.1 .and. istepsonpage.le.nstepsperpage).or.nstepsperpage.eq.0) then
+!     if ((nstepsperpage > 1 .and. istepsonpage > 1 .and. istepsonpage <= nstepsperpage).or.nstepsperpage==0) then
+     if ((nstepsperpage > 1 .and. istepsonpage <= nstepsperpage).or.nstepsperpage==0) then
         ipagechange = .false.
      else
         istepsonpage = 1
         ipagechange = .true.
      endif
      !--colour the timestep if appropriate
-     if ((nstepsperpage.eq.0 .or. nstepsperpage.gt.1) .and. (iColourEachStep .or. iChangeStyles)) then
+     if ((nstepsperpage==0 .or. nstepsperpage > 1) .and. (iColourEachStep .or. iChangeStyles)) then
         call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
      else
      !--otherwise set default colours for each particle type
      !  (do not call if repeating same step so interactive colours stick for same step)
-        if (istep.ne.istepprev) call colourparts_default(npartoftype(:,ilocindat),iamtype(:,ilocindat))
+        if (istep /= istepprev) call colourparts_default(npartoftype(:,ilocindat),iamtype(:,ilocindat))
         istepprev = istep
      endif
 
@@ -169,7 +169,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
 !
 !--increment timestep -- iadvance can be changed interactively
 !
-     if (iadvance.eq.-666) exit over_timesteps ! this is the interactive quit signal
+     if (iadvance==-666) exit over_timesteps ! this is the interactive quit signal
      ipos = ipos + iadvance ! if ipos goes over iendatstep, this ends the loop
 
   enddo over_timesteps
@@ -183,7 +183,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
         read*
         !--if somehow the data has become corrupted (e.g. last file full of rubbish)
         !  read in the first dump again
-        if (ncolumns.le.0) then
+        if (ncolumns <= 0) then
            print*,'data is corrupted: re-reading first data file'
            call get_nextstep(1,ilocindat)
         endif
@@ -220,13 +220,13 @@ recursive subroutine get_nextstep(istep,ilocindat)
  nstepstotal = 0
  nstepsprev = 0
  iposinfile = 1 ! this should always be overwritten anyway
- do while (nstepstotal.lt.istep .and. ifile.lt.nfiles)
+ do while (nstepstotal < istep .and. ifile < nfiles)
     ifile = ifile + 1
     nstepsprev = nstepstotal
     nstepstotal = nstepstotal + nstepsinfile(ifile)
  enddo
 
- if (nstepstotal.ge.istep) then
+ if (nstepstotal >= istep) then
  !--set position in dat array depending on how many steps are in the file
     iposinfile = istep - nstepsprev
  else
@@ -239,7 +239,7 @@ recursive subroutine get_nextstep(istep,ilocindat)
 
  !print*,'step ',istep,' in file ',ifile,' nsteps = ',nsteps
  !print*,'position in file = ',iposinfile
- if (istep.gt.nsteps) then
+ if (istep > nsteps) then
     ilocindat = 0
     return
  endif
@@ -251,11 +251,11 @@ recursive subroutine get_nextstep(istep,ilocindat)
  !
 
  !--neither or these two error conditions should occur
- if (ifile.gt.nfiles) then
+ if (ifile > nfiles) then
     print*,'*** get_nextstep: error: ifile > nfiles'
- elseif (ifile.lt.1) then
+ elseif (ifile < 1) then
     print*,'*** get_nextstep: error: request for file < 1'
- elseif (ifile.ne.ifileopen) then
+ elseif (ifile /= ifileopen) then
  !
  !--read next data file and determine position in file
  !
@@ -266,7 +266,7 @@ recursive subroutine get_nextstep(istep,ilocindat)
  !  iposinfile does not point to a real timestep (ie. iposinfile > nstepsinfile).
  !  In this case we query the step again with our better knowledge of nstepsinfile.
  !
-    if (iposinfile.gt.nstepsinfile(ifile)) then
+    if (iposinfile > nstepsinfile(ifile)) then
        print*,'not enough steps in file... trying next file'
        call get_nextstep(istep,ilocindat)
     endif
@@ -301,7 +301,7 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
      if (allocated(icolourme)) then
         icolour = istep + 1
         icolour = (icolour-2)/modcolour + 1
-        if (icolour.gt.plotlib_maxlinecolour) then
+        if (icolour > plotlib_maxlinecolour) then
            print "(a,i2,a)",'warning: step colour > ',plotlib_maxlinecolour,': re-using colours'
            icolour = mod(icolour-1,plotlib_maxlinecolour) + 1
         endif
@@ -355,11 +355,11 @@ subroutine colourparts_default(npartoftype,iamtype)
   integer(kind=int1), dimension(:), intent(in) :: iamtype
   integer :: i,index1,index2,itype
 
-  if (size(iamtype).gt.1) then
+  if (size(iamtype) > 1) then
      do i=1,sum(npartoftype(1:ntypes))
         itype = iamtype(i)
-        if (itype.gt.0 .and. itype.le.ntypes) then
-           if (idefaultcolourtype(itype).ge.0) then
+        if (itype > 0 .and. itype <= ntypes) then
+           if (idefaultcolourtype(itype) >= 0) then
               icolourme(i) = idefaultcolourtype(itype)
            endif
         endif
@@ -368,7 +368,7 @@ subroutine colourparts_default(npartoftype,iamtype)
      index1 = 1
      do itype=1,ntypes
         index2 = index1 + npartoftype(itype) - 1
-        if (idefaultcolourtype(itype).ge.0) then
+        if (idefaultcolourtype(itype) >= 0) then
            icolourme(index1:index2) = idefaultcolourtype(itype)
         endif
         index1 = index2 + 1

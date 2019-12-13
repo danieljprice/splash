@@ -119,14 +119,14 @@ subroutine submenu_render(ichoose)
   ians = ichoose
   print "(a)",'----------------- rendering options -------------------'
 
-  if (ians.le.0 .or. ians.gt.8) then
-     if (npix.gt.0) then
+  if (ians <= 0 .or. ians > 8) then
+     if (npix > 0) then
         write(string,"(i5)") npix
      else
         string = 'AUTO'
      endif
      kname = ''
-     if (ikernel.ge.0 .and. ikernel.le.nkernels) kname = trim(kernelname(ikernel))
+     if (ikernel >= 0 .and. ikernel <= nkernels) kname = trim(kernelname(ikernel))
      print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
@@ -175,7 +175,7 @@ subroutine submenu_render(ichoose)
           ierr = 0
           if (icolours==ncolourschemes+1)    icolours=icustom
           if (icolours==-(ncolourschemes+1)) icolours=-icustom
-          if (abs(icolours).eq.icustom) then
+          if (abs(icolours)==icustom) then
              call prompt('enter filename for rgb table',rgbfile,noblank=.true.)
              call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
              if (ierr /= 0 .or. ncoltable <= 0) then
@@ -188,7 +188,7 @@ subroutine submenu_render(ichoose)
        enddo promptloop
 !------------------------------------------------------------------------
     case(3)
-       if (icolours.eq.0) then
+       if (icolours==0) then
           print "(2(/,a),/)",' Warning: this option has no effect if colour scheme 0 is set', &
                              '          (cannot plot contours on top of contours)'
        endif
@@ -207,7 +207,7 @@ subroutine submenu_render(ichoose)
        else
           print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
        endif
-       if ((iplotcont_nomulti .or. icolours.eq.0) .and. .not.double_rendering) then
+       if ((iplotcont_nomulti .or. icolours==0) .and. .not.double_rendering) then
           call prompt('enter number of contours between min,max',ncontours,0,500)
           call prompt('plot contour labels?',ilabelcont)
        endif
@@ -229,7 +229,7 @@ subroutine submenu_render(ichoose)
        call prompt('enter colour bar style to use ',iColourBarStyle,0,maxcolourbarstyles)
        print "(a,/)",'colour bar style = '//trim(labelcolourbarstyles(iColourBarStyle))
 
-       if (iColourBarStyle.gt.0) then
+       if (iColourBarStyle > 0) then
           if (isfloating(iColourBarStyle)) then
              print "(5(a,/),a)",' Positioning of floating colour bar: ', &
                               (trim(labelfloatingstyles(i)),i=1,maxfloatingstyles)
@@ -254,7 +254,7 @@ subroutine submenu_render(ichoose)
                 print "(a)",' A=axis,B=bottom,C=top,T=major ticks,S=minor ticks,N=labels,V=vertical,L=log,M=labels above'
              else
                 print "(a)",' B=left,C=right,T=major ticks,S=minor ticks,N=labels,L=log,M=labels to left'
-                if (ColourBarFmtStr.eq.'BCMSTV') then
+                if (ColourBarFmtStr=='BCMSTV') then
                    ColourBarFmtStr='BCNST' ! use default string for horizontal bars instead
                 endif
              endif

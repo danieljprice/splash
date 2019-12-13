@@ -70,7 +70,7 @@ contains
     integer :: ierr
 
     call get_environment(variable,string)
-    if (len_trim(string).gt.0) then
+    if (len_trim(string) > 0) then
        read(string,*,iostat=ierr) renvironment
     else
        ierr = 1
@@ -106,10 +106,10 @@ contains
  logical function lenvstring(string)
     character(len=*), intent(in) :: string
 
-    if (string(1:1).eq.'y'.or.string(1:1).eq.'Y' &
-    .or.string(1:1).eq.'t'.or.string(1:1).eq.'T' &
-    .or.trim(string).eq.'on'.or.trim(string).eq.'ON' &
-    .or.trim(string).eq.'1') then
+    if (string(1:1)=='y'.or.string(1:1)=='Y' &
+    .or.string(1:1)=='t'.or.string(1:1)=='T' &
+    .or.trim(string)=='on'.or.trim(string)=='ON' &
+    .or.trim(string)=='1') then
        lenvstring = .true.
     else
        lenvstring = .false.
@@ -126,7 +126,7 @@ contains
     character(len=5) :: fmtstring
     integer :: ierr
 
-    if (len_trim(string).gt.0) then
+    if (len_trim(string) > 0) then
     !--use a formatted read - this is to avoid a compiler bug
     !  should in general be more robust anyway
        write(fmtstring,"(a,i2,a)",iostat=ierr) '(i',len_trim(string),')'
@@ -168,25 +168,25 @@ contains
     !--split the string on commas
     i1 = 1
     i2 = index(string,',')-1
-    if (i2.eq.-1) i2 = len_trim(string)
+    if (i2==-1) i2 = len_trim(string)
     nlist = 0
     ierr = 0
     notlistfull = .true.
 
     !--for each comma separated string, add a list member
-    do while(i2.ge.i1 .and. notlistfull .and. ierr.eq.0)
+    do while(i2 >= i1 .and. notlistfull .and. ierr==0)
        nlist = nlist + 1
        !print*,'i1,i2,stringfrag= ',i1,i2,trim(string(i1:))
        if (present(list)) then
           read(string(i1:i2),"(a)",iostat=ierr) list(nlist)
-          notlistfull = (nlist.lt.size(list))
+          notlistfull = (nlist < size(list))
        else
           read(string(i1:i2),"(a)",iostat=ierr) dummy ! to get ierr at end of string
           notlistfull = .true.
        endif
        i1 = i2 + 2
        i2 = index(string(i1:),',')
-       if (i2.eq.0) then
+       if (i2==0) then
           i2 = len_trim(string)
        else
           i2 = i2 + i1 - 2

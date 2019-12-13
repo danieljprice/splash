@@ -49,8 +49,8 @@ subroutine plotline(npts,xline,yline,blank)
     istart = 1
     !--plot line in segments, leaving blank segments where y=blank
     do i=1,npts
-       if (abs(yline(i)-blank).lt.tiny(yline) .or. i.eq.npts) then
-          if (nseg.gt.0) call plot_line(nseg,xline(istart:istart+nseg),yline(istart:istart+nseg))
+       if (abs(yline(i)-blank) < tiny(yline) .or. i==npts) then
+          if (nseg > 0) call plot_line(nseg,xline(istart:istart+nseg),yline(istart:istart+nseg))
           istart = i+1
           nseg = 0
        else
@@ -79,8 +79,8 @@ subroutine plotbins(nbins,xbins,ybins,blank)
     istart = 1
     !--plot line in segments, leaving blank segments where y=blank
     do i=1,nbins
-       if (abs(ybins(i)-blank).lt.tiny(ybins) .or. i.eq.nbins) then
-          if (nseg.gt.0) call plot_bins(nseg,xbins(istart:istart+nseg),ybins(istart:istart+nseg),.true.)
+       if (abs(ybins(i)-blank) < tiny(ybins) .or. i==nbins) then
+          if (nseg > 0) call plot_bins(nseg,xbins(istart:istart+nseg),ybins(istart:istart+nseg),.true.)
           istart = i+1
           nseg = 0
        else
@@ -105,13 +105,13 @@ subroutine formatreal(val,string,ierror)
  integer :: ierr,i,idot
  logical :: nonzero
 
- if (abs(val).ge.1.d99) then
+ if (abs(val) >= 1.d99) then
     write(string,"(1pe10.3)",iostat=ierr) val
- elseif (abs(val).lt.1.e-3 .or. abs(val).ge.1.e4) then
+ elseif (abs(val) < 1.e-3 .or. abs(val) >= 1.e4) then
     write(string,"(1pe9.2)",iostat=ierr) val
- elseif (abs(val).lt.0.1) then
+ elseif (abs(val) < 0.1) then
     write(string,"(f8.3)",iostat=ierr) val
- elseif (abs(val).ge.100.) then
+ elseif (abs(val) >= 100.) then
     write(string,"(f8.0)",iostat=ierr) val
  else
     write(string,"(f8.2)",iostat=ierr) val
@@ -125,12 +125,12 @@ subroutine formatreal(val,string,ierror)
  !  (and the decimal place if it is the last character)
  !
  idot = index(string,'.')
- if (idot.gt.0) then
+ if (idot > 0) then
     nonzero = .false.
     do i = len_trim(string),idot,-1
-       if (.not.nonzero .and. string(i:i).eq.'0') then
+       if (.not.nonzero .and. string(i:i)=='0') then
           string(i:i) = ' '
-       elseif (.not.nonzero .and. string(i:i).eq.'.') then
+       elseif (.not.nonzero .and. string(i:i)=='.') then
           string(i:i) = ' '
           nonzero = .true.
        else

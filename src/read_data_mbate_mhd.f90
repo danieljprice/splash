@@ -93,12 +93,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !
   !--for rootnames without the '00', read all files starting at #1
   !
-  if (len_trim(rootname).lt.7) then
+  if (len_trim(rootname) < 7) then
      ifile = 1
-     if (len_trim(rootname).eq.4) then
+     if (len_trim(rootname)==4) then
         write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
         dumpfile = rootname(1:4)//fileno
-     elseif (len_trim(rootname).eq.5) then
+     elseif (len_trim(rootname)==5) then
         write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
         dumpfile = rootname(1:5)//trim(fileno)
      endif
@@ -143,7 +143,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         !  allocate memory and rewind
         !
         read(15,end=55,iostat=ierr) udisti,umassi,utimei,umagfdi,nprint
-        if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+        if (.not.allocated(dat) .or. nprint > npart_max) then
            npart_max = max(npart_max,INT(1.1*nprint))
            call alloc(npart_max,nstep_max,ncolstep+ncalc)
         endif
@@ -160,7 +160,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-        if (j.gt.maxstep) then
+        if (j > maxstep) then
            call alloc(maxpart,j+1,maxcol)
         endif
 !
@@ -242,7 +242,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   close(15)
 
   print*,'>> end of dump file: nsteps =',j-1
-  if (j-1.gt.0) then
+  if (j-1 > 0) then
      print*,'ntot = ',sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
   endif
      !
@@ -250,11 +250,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !  set next filename and see if it exists
      !
   ifile = ifile + 1
-  if (len_trim(rootname).eq.4) then
+  if (len_trim(rootname)==4) then
      write(fileno,"(i1,i1,i1)") ifile/100,mod(ifile,100)/10,mod(ifile,10)
      dumpfile = rootname(1:4)//fileno
      inquire(file=dumpfile,exist=iexist)
-     elseif (len_trim(rootname).eq.5) then
+     elseif (len_trim(rootname)==5) then
      write(fileno,"(i1,i1)") ifile/10,mod(ifile,10)
      dumpfile = rootname(1:5)//trim(fileno)
      inquire(file=dumpfile,exist=iexist)
@@ -279,11 +279,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -307,7 +307,7 @@ subroutine set_labels
   label(19) = 'psi'
 
   label(ndim + ndimV+5) = '\ga'
-  if (ncolumns.gt.11) then
+  if (ncolumns > 11) then
      iBfirst = 9    ! location of Bx
      idivB = 12
      label(idivB) = 'div B'

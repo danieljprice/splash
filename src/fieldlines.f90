@@ -76,7 +76,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  !
  !--check for errors in input
  !
- if (pixwidth.le.0.) then
+ if (pixwidth <= 0.) then
     print "(1x,a)",'streamlines: error: pixel width <= 0'
     datpix = 0.
     return
@@ -90,7 +90,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  do j=1,npixy
     do i=1,npixx
        term = 0.
-       if (i.eq.1) then
+       if (i==1) then
           fyj = 0.
           fyjhalf = 0.
        else
@@ -98,7 +98,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           !--trapezoidal rule in x
           termj = 0.5*pixwidth*(vecpixy(i-1,j)+vecpixy(i,j))
           fyj = fyj - termj
-          if (mod(i-1,2).eq.0) then ! 3, 5, 7, 9 ...
+          if (mod(i-1,2)==0) then ! 3, 5, 7, 9 ...
              !
              !--for odd points, use trapezoidal solution at half grid points
              !  to get Simpson's rule
@@ -116,7 +116,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
        !
        !--same as above but for integration in y
        !
-       if (j.eq.1) then
+       if (j==1) then
           fx(i) = 0.
           fxhalf(i) = 0.
           fxprevi = 0.
@@ -124,7 +124,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           fxprevi = fx(i)
           termi = 0.5*pixwidth*(vecpixx(i,j-1)+vecpixx(i,j))
           fx(i) = fx(i) + termi
-          if (mod(j-1,2).eq.0) then
+          if (mod(j-1,2)==0) then
              fxhalf(i) = fxhalf(i) + pixwidth*(vecpixx(i,j-2)+vecpixx(i,j))
              term = term + 4./3.*fx(i) - 1./3.*fxhalf(i)
           else
@@ -142,7 +142,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  do j=npixy,1,-1
     do i=npixx,1,-1
        term = 0.
-       if (i.eq.npixx) then
+       if (i==npixx) then
           fyj = 0.
           fyjhalf = 0.
        else
@@ -150,7 +150,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           !--trapezoidal rule in x
           termj = 0.5*pixwidth*(vecpixy(i+1,j)+vecpixy(i,j))
           fyj = fyj + termj
-          if (mod(npixx-i,2).eq.0) then ! 3, 5, 7, 9 ...
+          if (mod(npixx-i,2)==0) then ! 3, 5, 7, 9 ...
              !
              !--for odd points, use trapezoidal solution at half grid points
              !  to get Simpson's rule
@@ -168,7 +168,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
        !
        !--same as above but for integration in y
        !
-       if (j.eq.npixy) then
+       if (j==npixy) then
           fx(i) = 0.
           fxhalf(i) = 0.
           fxprevi = 0.
@@ -176,7 +176,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           fxprevi = fx(i)
           termi = 0.5*pixwidth*(vecpixx(i,j+1)+vecpixx(i,j))
           fx(i) = fx(i) - termi
-          if (mod(npixy-j,2).eq.0) then
+          if (mod(npixy-j,2)==0) then
              fxhalf(i) = fxhalf(i) - pixwidth*(vecpixx(i,j+2)+vecpixx(i,j))
              term = term + 4./3.*fx(i) - 1./3.*fxhalf(i)
           else
@@ -219,7 +219,7 @@ subroutine fieldlines2D(npart,x,y,vecx,vecy,h,pmass,rho,xmin,xmax,ymin,ymax)
  ystart = ymin
  ymaxline = ymin
 
- do while (ymaxline.lt.ymax)
+ do while (ymaxline < ymax)
     do i=1,nlines
        xstart = xmin + (i-1)*dx + 0.5*dx
        print*,' tracing field line ',i,' x, y = ',xstart,ystart
@@ -250,8 +250,8 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
  ipt = 0
  sign = 1.0
 
- do while ((xline(1).ge.xmin .and. xline(1).le.xmax) .and. &
-           (yline(1).ge.ymin .and. yline(1).le.ymax) .and. ipt.lt.10*npix)
+ do while ((xline(1) >= xmin .and. xline(1) <= xmax) .and. &
+           (yline(1) >= ymin .and. yline(1) <= ymax) .and. ipt < 10*npix)
 
     ipt = ipt + 1
     !
@@ -263,7 +263,7 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
     !--get unit vector in direction of vector
     !
     runit = sqrt(vx**2 + vy**2)
-    if (runit.gt.0) then
+    if (runit > 0) then
        runit1 = 1./runit
        dx = vx*runit1*pixwidth
        dy = vy*runit1*pixwidth
@@ -272,7 +272,7 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
        dy = 0.
     endif
 
-    if (ipt.eq.1 .and. dy.lt.0.) sign = -1.0
+    if (ipt==1 .and. dy < 0.) sign = -1.0
 
     xline(2) = xline(1) + sign*dx
     yline(2) = yline(1) + sign*dy
@@ -289,7 +289,7 @@ subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
 
  enddo
 
- if (ipt.ge.10*npix) print*,'WARNING: infinite field line'
+ if (ipt >= 10*npix) print*,'WARNING: infinite field line'
 
 end subroutine trace2D
 
@@ -319,7 +319,7 @@ subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
     !
     !--if particles are within range, calculate contribution to this pt
     !
-    if (q2.lt.radkernel2) then
+    if (q2 < radkernel2) then
        if (rho(i) > 0.) then
           rho1i = 1./rho(i)
        else
@@ -371,10 +371,10 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  !
  !--get the max adaptively if it is not already set
  !
- if (vecmax.le.0. .or. vecmax.gt.0.5*huge(vecmax)) then
+ if (vecmax <= 0. .or. vecmax > 0.5*huge(vecmax)) then
     vmax = 0.
     do i=1,n
-       if (itype(i).ge.0 .and. weight(i).gt.0.) then
+       if (itype(i) >= 0 .and. weight(i) > 0.) then
           vmax = max(vx(i)**2 + vy(i)**2 + vz(i)**2,vmax)
        endif
     enddo
@@ -384,7 +384,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
     vmax = vecmax
  endif
 
- use3Dperspective = abs(dscreen).gt.tiny(dscreen)
+ use3Dperspective = abs(dscreen) > tiny(dscreen)
 
  !
  !--work out whether or not we have a white or black
@@ -433,9 +433,9 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  lw = 2.*lwold
  over_particles: do ipart=1,n
     i = iorder(ipart)
-    if (itype(i).ge.0 .and. weight(i).gt.0.) then
+    if (itype(i) >= 0 .and. weight(i) > 0.) then
        if (use3Dperspective) then
-          if (z(i).gt.zobs) cycle over_particles
+          if (z(i) > zobs) cycle over_particles
           zfrac = abs(dscreen/(z(i)-zobs))
        endif
        !if (mod(ipart,10)/=0) cycle over_particles
@@ -453,7 +453,7 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
        vunit = abs((/vxi,vyi,vzi/)*dvmag)
        frac = min(vmag/vmax,1.0)
 
-       if (frac.ge.1.e-3) then
+       if (frac >= 1.e-3) then
           !--specify the length of line to draw
           term = 1.5*dx*dvmag*zfrac
           !term = term*(vmag/vmax)**0.2

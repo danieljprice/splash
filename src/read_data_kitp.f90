@@ -106,7 +106,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      timei = 0.
      print "(a,f10.2,a,i10,a,f10.4)",' time: ',timei,' npart: ',np,' wp: ',wp
      !--barf if stupid values read
-     if (np.le.0 .or. np.gt.1e10) then
+     if (np <= 0 .or. np > 1e10) then
         print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
         close(15)
         return
@@ -117,7 +117,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
      ncolumns = ncol
 
-     if (.not.allocated(dat) .or. np.gt.maxpart) then
+     if (.not.allocated(dat) .or. np > maxpart) then
         call alloc(np,nstep_max,ncol+ncalc)
      endif
      !
@@ -135,7 +135,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
 44   continue
 
-     if (nread.lt.ncol) then
+     if (nread < ncol) then
         print "(a)",' WARNING: END OF FILE: read to column ',nread
      endif
 
@@ -167,11 +167,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -183,7 +183,7 @@ subroutine set_labels
   irho = 7
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
 
-  if (ivx.ne.0) then
+  if (ivx /= 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

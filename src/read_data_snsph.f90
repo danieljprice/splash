@@ -102,7 +102,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ntoti = npart_max
   ncolumns = ncolstep
 
-  if (.not.allocated(dat) .or. ntoti.gt.npart_max) then
+  if (.not.allocated(dat) .or. ntoti > npart_max) then
      npart_max = max(npart_max,INT(1.1*ntoti))
      call alloc(npart_max,nstep_max,ncolstep+ncalc)
   endif
@@ -111,7 +111,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-  if (j.gt.maxstep) then
+  if (j > maxstep) then
      call alloc(maxpart,j+2*nstepsread,maxcol)
   endif
 !
@@ -132,7 +132,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
   call readsdf(dumpfile,len_trim(dumpfile),dat(:,:,j),maxpart,maxcol,ierr)
 
-  if (nstepsread .gt. 0 .and. j.gt.0) then
+  if (nstepsread  >  0 .and. j > 0) then
      print*,'>> end of dump file: ntotal = ',sum(npartoftype(:,j))
   endif
 
@@ -152,11 +152,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif

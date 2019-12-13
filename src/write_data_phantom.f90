@@ -154,7 +154,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
        rheader(3+i) = dat(index1,ipmass)
        rheader_tags(3+i) = 'massoftype'
        if (npartoftype(i) > 0) then
-          if (any(dat(index1:index1+npartoftype(i)-1,ipmass).ne.dat(index1,ipmass))) then
+          if (any(dat(index1:index1+npartoftype(i)-1,ipmass) /= dat(index1,ipmass))) then
              print "(a)",' WARNING: unequal mass particles detected but PHANTOM only accepts equal mass...'
           endif
           index1 = index1 + npartoftype(i) - 1
@@ -233,7 +233,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 !
  number8 = np
  nums(:) = 0
- if (iutherm.gt.0) then
+ if (iutherm > 0) then
     nums(i_real) = 7
  else
     nums(i_real) = 6
@@ -288,7 +288,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
     write (idump, err=100) (dat(i,ivx+j-1), i=1, np)
  enddo
 
- if (iutherm.gt.0) then
+ if (iutherm > 0) then
     write (idump, err=100) tag(label_dat(iutherm))
     write (idump, err=100) (dat(i,iutherm), i=1, np)
  endif

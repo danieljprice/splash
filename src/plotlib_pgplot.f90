@@ -490,7 +490,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  integer                      :: pgopen
  real :: aspect
 
- if (devicein(1:1).eq.'?') then
+ if (devicein(1:1)=='?') then
     call pgbegin(0,'?',1,1)
     ierr = 1
  else
@@ -498,8 +498,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  endif
  !--check if there is an error
  !  (be careful here: from PGPLOT zero or -ve indicates an error)
- if (ierr.le.0) then
-    if (ierr.eq.0) ierr = -1   !--make sure we return an error
+ if (ierr <= 0) then
+    if (ierr==0) ierr = -1   !--make sure we return an error
     return
  else
     ierr = 0
@@ -516,7 +516,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
     endif
     if (present(paperunits)) then
     !--make sure that the units are in inches for PGPLOT
-       if (paperunits.ne.1) return
+       if (paperunits /= 1) return
     endif
     call plot_pap(papersizex,aspect)
  endif
@@ -536,7 +536,7 @@ subroutine plot_pap(width,aspect,paperunits)
   integer, intent(in), optional :: paperunits
 
   if (present(paperunits)) then
-     if (paperunits.ne.1) print "(a)",' WARNING: units not valid for PGPLOT'
+     if (paperunits /= 1) print "(a)",' WARNING: units not valid for PGPLOT'
   endif
   call pgpap(papersizex,aspect)
 
@@ -600,7 +600,7 @@ logical function plot_qcur()
   integer           :: nc
   call pgqinf('CURSOR',string,nc)
 
-  if (string(1:nc).eq.'YES') then
+  if (string(1:nc)=='YES') then
      plot_qcur = .true.
   else
      plot_qcur = .false.
@@ -619,7 +619,7 @@ function pgcurs_sub(x,y,ch)
 
   ierr = pgcurs(x,y,ch)
 
-  if (ierr.eq.0) then
+  if (ierr==0) then
     pgcurs_sub = 1
   else
     pgcurs_sub = 0
@@ -695,7 +695,7 @@ function pgband_sub(mode, posn, xref, yref, x, y, ch)
 
   ierr = pgband(mode,posn,xref,yref,x,y,ch)
 
-  if (ierr.eq.1) then
+  if (ierr==1) then
     pgband_sub = 0
   else
     pgband_sub = 1

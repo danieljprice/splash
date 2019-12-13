@@ -69,7 +69,7 @@ contains
 subroutine select_kernel(j)
  integer, intent(in) :: j
 
- if (j.ge.1 .and. j.le.nkernels) then
+ if (j >= 1 .and. j <= nkernels) then
     !--print only if NOT using the default kernel
     print "(a,/)",' Using '//trim(kernelname(j))//' kernel'
  endif
@@ -111,7 +111,7 @@ subroutine select_kernel(j)
     cnormk3D = 1./(20.*pi)
     wfunc => w_quartic
  case default  !-- cubic spline kernel
-    if (j.eq.1) then
+    if (j==1) then
        ikernel = 1 ! deliberately chose cubic spline
     else
        ikernel = 0 ! just whatever is the default
@@ -148,7 +148,7 @@ subroutine select_kernel_by_name(string)
  !
  !--if no match to a kernel name, look for other possible strings
  !
- if (ikernel.eq.0) then
+ if (ikernel==0) then
     select case(trim(adjustl(lcase(string))))
     case('wendlandc6','wendland c6','6th order wendland','wendland 3d c6','w6','wendland6')
        jkern = 6
@@ -179,10 +179,10 @@ pure real function w_cubic(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.1.0) then
+ if (q2 < 1.0) then
     q = sqrt(q2)
     w_cubic = 1.-1.5*q2 + 0.75*q2*q
- elseif (q2.lt.4.0) then
+ elseif (q2 < 4.0) then
     q = sqrt(q2)
     w_cubic = 0.25*(2.-q)**3
  else
@@ -197,11 +197,11 @@ pure real function w_quartic(q2)
  real :: q
 
  q = sqrt(q2)
- if (q.lt.0.5) then
+ if (q < 0.5) then
     w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4 + 10.*(0.5-q)**4
- elseif (q.lt.1.5) then
+ elseif (q < 1.5) then
     w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4
- elseif (q.lt.2.5) then
+ elseif (q < 2.5) then
     w_quartic = (2.5-q)**4
  else
     w_quartic = 0.
@@ -214,14 +214,14 @@ pure real function w_quintic(q2)
  real, intent(in) :: q2
  real :: q,q4
 
- if (q2.lt.1.0) then
+ if (q2 < 1.0) then
     q = sqrt(q2)
     q4 = q2*q2
     w_quintic = 66.-60.*q2 + 30.*q4 - 10.*q4*q
- elseif ((q2.ge.1.0).and.(q2.lt.4.0)) then
+ elseif ((q2 >= 1.0).and.(q2 < 4.0)) then
     q = sqrt(q2)
     w_quintic = (3.-q)**5 - 6.*(2.-q)**5
- elseif ((q2.ge.4.0).and.(q2.lt.9.0)) then
+ elseif ((q2 >= 4.0).and.(q2 < 9.0)) then
     q = sqrt(q2)
     w_quintic = (3.-q)**5
  else
@@ -236,11 +236,11 @@ pure real function w_quartic2h(q2)
  real :: q
 
  q = sqrt(q2)
- if (q.lt.0.4) then
+ if (q < 0.4) then
     w_quartic2h = (2.-q)**4 - 5.*(1.2-q)**4 + 10.*(0.4-q)**4
- elseif (q.lt.1.2) then
+ elseif (q < 1.2) then
     w_quartic2h = (2.-q)**4 - 5.*(1.2-q)**4
- elseif (q.lt.2.) then
+ elseif (q < 2.) then
     w_quartic2h = (2.-q)**4
  else
     w_quartic2h = 0.
@@ -253,7 +253,7 @@ pure real function w_wendlandc2(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc2 = (1. - 0.5*q)**4*(2.*q + 1.)
  else
@@ -267,7 +267,7 @@ pure real function w_wendlandc4(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc4 = (1. - 0.5*q)**6*(35./12.*q2 + 3.*q + 1.)
  else
@@ -281,7 +281,7 @@ pure real function w_wendlandc6(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc6 = (1. - 0.5*q)**8*(4.*q2*q + 25./4.*q2 + 4.*q + 1.)
  else

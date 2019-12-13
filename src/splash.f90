@@ -452,7 +452,7 @@ program splash
      i = i + 1
      call get_argument(i,string)
 
-     if (string(1:1).eq.'-') then
+     if (string(1:1)=='-') then
         select case(trim(string(2:)))
         case('x')
            i = i + 1
@@ -495,7 +495,7 @@ program splash
         case('p')
            i = i + 1
            call get_argument(i,string)
-           if (len_trim(string).gt.0) then
+           if (len_trim(string) > 0) then
               fileprefix = trim(string)
               call set_filenames(trim(fileprefix))
            endif
@@ -537,14 +537,14 @@ program splash
            stop
         case default
            call print_usage
-           if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
+           if (string(2:2) /= 'v') print "(a)",'unknown command line argument '''//trim(string)//''''
            stop
         end select
-     elseif (trim(string).eq.'to' .or. trim(string).eq.'allto') then
+     elseif (trim(string)=='to' .or. trim(string)=='allto') then
      !
      !--for converting SPH formats
      !
-           if (trim(string).eq.'allto') useall = .true.
+           if (trim(string)=='allto') useall = .true.
            i = i + 1
            call get_argument(i,string)
            if (isgridformat(string)) then
@@ -557,7 +557,7 @@ program splash
               call print_gridformats()
               stop
            endif
-     elseif (trim(string).eq.'calc') then
+     elseif (trim(string)=='calc') then
      !
      !--for performing analysis on a sequence of dump files
      !
@@ -569,9 +569,9 @@ program splash
            else
               stop
            endif
-     elseif (len_trim(string).gt.0) then
+     elseif (len_trim(string) > 0) then
         nfiles = nfiles + 1
-        if (nfiles.le.maxfile) then
+        if (nfiles <= maxfile) then
            rootname(nfiles) = trim(string)
         endif
      endif
@@ -597,11 +597,11 @@ program splash
   ! and no alternative prefix has been set.
   !
   inquire(file=defaultsfile,exist=iexist)
-  if (.not.iexist .and. trim(fileprefix).eq.'splash') then
+  if (.not.iexist .and. trim(fileprefix)=='splash') then
      call get_environment('SPLASH_DEFAULTS',string)
-     if (len_trim(string).ne.0) then
+     if (len_trim(string) /= 0) then
         i = index(string,'.defaults')
-        if (i.gt.0) then
+        if (i > 0) then
            defaultsfile = trim(string)
         else
            defaultsfile = trim(string)//'.defaults'
@@ -615,21 +615,21 @@ program splash
   !
   ! check that we have got filenames
   !
-  if (nfiles.gt.0) then
-     if (nfiles.gt.maxfile) then
+  if (nfiles > 0) then
+     if (nfiles > maxfile) then
         print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile
         nfiles = maxfile
      endif
   endif
-  if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
+  if (nfiles >= 1 .and. rootname(1)(1:1) /= ' ') then
      ihavereadfilenames = .true.
-     if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
+     if (nfiles > 1) print*,nfiles,' filenames read from command line'
   else
      ihavereadfilenames = .false.
      !print "(a)",' no filenames read from command line'
      call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
      !print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
-     if (nfiles.gt.0) then
+     if (nfiles > 0) then
         ihavereadfilenames = .true.
      else
         call get_argument(0,string)
@@ -641,10 +641,10 @@ program splash
   endif
   if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
-  if (ikernel.eq.0) then
+  if (ikernel==0) then
      !--if no kernel has been set
      call get_environment('SPLASH_KERNEL',string)
-     if (len_trim(string).gt.0) then
+     if (len_trim(string) > 0) then
         call select_kernel_by_name(string)
      else
         call select_kernel(0)
@@ -703,21 +703,21 @@ program splash
      ! check command line plot invocation
      !
 
-        if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
-           if (ipicky.le.numplot .and. (ipickx.eq.0 .or. ipickx.gt.numplot)) then
+        if (ipicky > 0 .and. ipicky <= numplot+1) then
+           if (ipicky <= numplot .and. (ipickx==0 .or. ipickx > numplot)) then
               print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
               stop
            endif
-           if (irender.gt.0) then
+           if (irender > 0) then
               if (.not.allowrendering(ipicky,ipickx,xsec_nomulti)) then
                  print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
                  stop
               endif
-              if (icontour.gt.numplot .or. icontour.lt.0) then
+              if (icontour > numplot .or. icontour < 0) then
                  print "(a)",' ERROR: contour plot choice out of bounds'
                  stop
               endif
-           elseif (icontour.gt.0) then
+           elseif (icontour > 0) then
               print "(a)",' ERROR: -cont also requires -render setting'
               stop
            elseif (use_360) then
@@ -725,14 +725,14 @@ program splash
               stop
            endif
         else
-           if (irender.gt.0 .and. ndim.ge.2) then
+           if (irender > 0 .and. ndim >= 2) then
               ipicky = 2
               ipickx = 1
               if (.not.allowrendering(ipicky,ipickx)) then
                  print "(a)",' ERROR: cannot render'
                  stop
               endif
-              if (icontour.gt.numplot .or. icontour.lt.0) then
+              if (icontour > numplot .or. icontour < 0) then
                  print "(a)",' ERROR: contour plot choice out of bounds'
                  stop
               endif

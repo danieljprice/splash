@@ -94,7 +94,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
   logical, parameter :: useexactpixelboundaries = .true.
   logical :: plot_alt_y_axis
 
-  if (axis.eq.4) then
+  if (axis==4) then
      plot_alt_y_axis = .true.
   else
      plot_alt_y_axis = .false.
@@ -102,10 +102,10 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! new page if iplot > number of plots on page
 !
-  if (iplotin.gt.nx*ny) then
-     if (mod(iplotin,nx*ny).eq.1)  call plot_page
+  if (iplotin > nx*ny) then
+     if (mod(iplotin,nx*ny)==1)  call plot_page
      iplot = iplotin - (nx*ny)*((iplotin-1)/(nx*ny))
-  elseif (iplotin.le.0) then
+  elseif (iplotin <= 0) then
      return
   else
      iplot = iplotin
@@ -113,11 +113,11 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! check for errors in input
 !
-  if (nx.le.0 .or. ny.le.0) return
+  if (nx <= 0 .or. ny <= 0) return
 !
 ! for tiled plots, adjust effective viewport size if just=1 and graphs are not square
 !
-  if (tile .and. just.eq.1) then
+  if (tile .and. just==1) then
      if (abs(ymax-ymin) < tiny(ymin)) then
         print*,'setpage: error tiling plots: ymax=ymin'
         return
@@ -155,7 +155,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
   vmargintop = vmargintopin
   vmarginright = vmarginrightin
-  if (axis.ge.0) then
+  if (axis >= 0) then
      !--if we are drawing an axis
      !  leave a minimum of half a character
      !  spacing (or 0.7 for antialiasing)
@@ -164,7 +164,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      vmargintop = max(vmargintop,0.7*ych)
      vmarginright = max(vmarginright,0.7*xch)
      !--leave space for labels
-     if (axis.ne.3) then
+     if (axis /= 3) then
         vmarginleft = vmarginleftin + (ylabeloffset+1.5)*xch
         vmarginbottom = vmarginbottomin + (xlabeloffset+1.0)*ych
      else
@@ -174,9 +174,9 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      if (plot_alt_y_axis) vmarginright = vmarginleft
 
      if (.not.tile) then
-        if (ny.gt.1 .and. .not.isamexaxis) then
+        if (ny > 1 .and. .not.isamexaxis) then
            vmarginbottom = vmarginbottom + 0.5*ych
-        elseif (ny.gt.1) then
+        elseif (ny > 1) then
            vmarginbottom = vmarginbottom + 0.25*ych
         endif
      endif
@@ -192,7 +192,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 
   if (tile) then
      !--also leave room for title if necessary
-     if (titleoffset.ge.0.) then
+     if (titleoffset >= 0.) then
         vmargintop = vmargintop + (titleoffset+1.)*ych
      endif
 
@@ -203,15 +203,15 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      vptsizeeffy = 1.0 - vmargintop - vmarginbottom
      !     reduce x or y size if just=1 to get right aspect ratio
      if (.not.adjustlimits) then
-        if (aspectratio.le.1.0 .and. just.eq.1) then
-           if (aspectratio*vptsizeeffy.lt.vptsizeeffx) then
+        if (aspectratio <= 1.0 .and. just==1) then
+           if (aspectratio*vptsizeeffy < vptsizeeffx) then
               vptsizeeffx = aspectratio*vptsizeeffy
            !  but this could still be bigger than the margins allow...
            else
               vptsizeeffy = vptsizeeffx/aspectratio
            endif
-        elseif (aspectratio.gt.1.0 .and. just.eq.1) then
-           if (vptsizeeffx/aspectratio.lt.vptsizeeffy) then
+        elseif (aspectratio > 1.0 .and. just==1) then
+           if (vptsizeeffx/aspectratio < vptsizeeffy) then
               vptsizeeffy = vptsizeeffx/aspectratio
            !  but this could still be bigger than the margins allow...
            else
@@ -241,12 +241,12 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 
 
      !--also leave room for title if necessary
-     if (titleoffset.ge.0.) then
+     if (titleoffset >= 0.) then
         vptymax = vptymax - (titleoffset+1.)*ych
      endif
 
      !--also leave room for colour bar if necessary
-     if (colourbarwidth.GT.0.) then
+     if (colourbarwidth > 0.) then
         vptxmax = vptxmax - (colourbarwidth + 1.6)*xch
      endif
 
@@ -260,7 +260,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! set axes
 !
- if (just.eq.1) then
+ if (just==1) then
     if (adjustlimits) then
        !--query viewport aspect ratio
        call plot_qvp(3,x1,x2,y1,y2)
@@ -269,7 +269,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
        !--adjust limits to match viewport aspect ratio
        dx = (xmax - xmin)/nx
        dy = (ymax - ymin)/ny
-       if (devaspectratio*dy/dx.ge.1.) then
+       if (devaspectratio*dy/dx >= 1.) then
           xcen = 0.5*(xmin + xmax)
           xmin = xcen - 0.5*devaspectratio*dy*ny
           xmax = xcen + 0.5*devaspectratio*dy*ny
@@ -292,7 +292,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! option to return before actually doing anything
 !
-  if (trim(title).eq.'NOPGBOX') return
+  if (trim(title)=='NOPGBOX') return
 !
 ! set options for call to pgbox (draws axes) and label axes where appropriate
 ! (options are exactly as in pgenv apart from axis=-3,-4 which i have added)
@@ -330,7 +330,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     print*,'setpage: illegal axis argument.'
     xopts = 'BCNST'
   end select
-  if (yopts.eq.'*') yopts = xopts
+  if (yopts=='*') yopts = xopts
 
   if (plot_alt_y_axis) call string_delete(yopts,'C')
 !
@@ -340,7 +340,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !
      ! decide whether to number and label the y axis
      !
-     if (ix.eq.nx .and. axis.ge.0) then
+     if (ix==nx .and. axis >= 0) then
         !
         !--apply label to right hand side axis if used
         !
@@ -348,38 +348,38 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
            call plot_second_y_axis(yopts,just,axis,itransy,yscale,ylabeloffset,labelyalt)
         endif
      endif
-     if (ix.eq.1 .and. axis.ge.0) then
+     if (ix==1 .and. axis >= 0) then
         !
         !--label "normal" y axis
         !
-        if (axis.eq.3) then
+        if (axis==3) then
            yopts = '1N'//trim(yopts)
         else
            yopts = '1VN'//trim(yopts)
            call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
         endif
-     elseif (axis.ge.0) then
+     elseif (axis >= 0) then
         !yopts = trim(yopts)//'N'
      endif
      !
      ! decide whether to number and label the x axis
      !
-     if ((iy.eq.ny .or. lastplot .or. lastrow) .and. axis.ge.0) then
+     if ((iy==ny .or. lastplot .or. lastrow) .and. axis >= 0) then
         xopts = 'N'//trim(xopts)
-        if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
+        if (axis /= 3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !
      ! plot the title if inside the plot boundaries
      !
-     if (titleoffset.lt.0.) call plot_annotate('t',-titleoffset,0.96,1.0,title)
+     if (titleoffset < 0.) call plot_annotate('t',-titleoffset,0.96,1.0,title)
 
-  elseif (axis.ge.0) then
+  elseif (axis >= 0) then
      !
      !--label x axis only if on last row
      !  or if x axis quantities are different
      !
-     if (((ny*nx-iplot).lt.nx).or.(.not.isamexaxis).or.lastplot) then
-       if (axis.ne.3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
+     if (((ny*nx-iplot) < nx).or.(.not.isamexaxis).or.lastplot) then
+       if (axis /= 3) call plot_annotate('B',xlabeloffset,0.5,0.5,labelx)
      endif
      !--always plot numbers
      xopts = 'N'//trim(xopts)
@@ -392,7 +392,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
      !
      !--always label y axis
      !
-     if (axis.eq.3) then
+     if (axis==3) then
         yopts = '1N'//trim(yopts)
      else
         yopts = '1VN'//trim(yopts)
@@ -461,9 +461,9 @@ subroutine redraw_axes(iaxis,just,yscale,itransy)
      print*,'redraw_axes: illegal AXIS argument.'
      xopts = 'BCST'
   end select
-  if (yopts.eq.'*') yopts = xopts
+  if (yopts=='*') yopts = xopts
 
-  if (iaxis.eq.4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
+  if (iaxis==4) call plot_second_y_axis(yopts,just,iaxis,itransy,yscale)
   call plot_box(xopts,0.0,0,yopts,0.0,0)
 
 end subroutine redraw_axes
@@ -491,28 +491,28 @@ subroutine plot_second_y_axis(yopts,just,iaxis,itransy,yscale,ylabeloffset,label
  !--scaling of y axis: multiplication in un-transformed space
  yminalt = ymin
  ymaxalt = ymax
- if (itransy.gt.0) call transform_inverse(yminalt,ymaxalt,itransy)
+ if (itransy > 0) call transform_inverse(yminalt,ymaxalt,itransy)
  yminalt = yminalt*yscale
  ymaxalt = ymaxalt*yscale
- if (itransy.gt.0) call transform(yminalt,ymaxalt,itransy)
+ if (itransy > 0) call transform(yminalt,ymaxalt,itransy)
 
  !--set plot window to new scaled y axis
  call plot_swin(xmin,xmax,yminalt,ymaxalt)
 
  !--draw axes and label on right hand side of box
- if (iaxis.eq.3) then
+ if (iaxis==3) then
     call plot_box(' ',0.0,0,'1MC'//trim(yoptsi),0.0,0)
  else
     call plot_box(' ',0.0,0,'1VMC'//trim(yoptsi),0.0,0)
  endif
  if (present(labely) .and. present(ylabeloffset)) then
     labelyalt = labely
-    if (itransy.gt.0) labelyalt = transform_label(labely,itransy)
+    if (itransy > 0) labelyalt = transform_label(labely,itransy)
     call plot_annotate('R',ylabeloffset,0.5,0.5,labelyalt)
  endif
 
  !--reset plot window
- if (just.eq.1) then
+ if (just==1) then
     call plot_wnad(xmin,xmax,ymin,ymax)
  else
     call plot_swin(xmin,xmax,ymin,ymax)

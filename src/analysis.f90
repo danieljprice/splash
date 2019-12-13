@@ -172,7 +172,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     required(iBfirst:iBfirst+ndimV-1) = .true.
     required(iutherm) = .true.
     required(ipmass) = .true.
-    if (iBfirst.gt.0) required(irho) = .true.
+    if (iBfirst > 0) required(irho) = .true.
     required(ix(1:ndim)) = .true.
     !
     !--set filename and header line
@@ -316,7 +316,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--set filename and header line
     !
     fileout = 'time_average.out'
-    if (ncolumns.gt.0) then
+    if (ncolumns > 0) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
@@ -330,7 +330,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--set filename and header line
     !
     fileout = 'ratio.out'
-    if (ncolumns.gt.0 .and. ncolumns.ne.maxplot) then
+    if (ncolumns > 0 .and. ncolumns /= maxplot) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
@@ -379,7 +379,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
 !--write header if the headerline is set
 !  (no header is written if headerline is blank)
 !
- if (len_trim(headerline).gt.0) then
+ if (len_trim(headerline) > 0) then
     write(iunit,"(a)") '# '//trim(tagline)
     write(iunit,"(a)") '# '//trim(fileout)//' produced using "splash calc '//trim(analysistype)// &
                        '" on dump files '//trim(rootname(1))//'->'//trim(rootname(nfiles))
@@ -444,7 +444,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           '> CALCULATING '//trim(ucase(analysistype)),nfilesread
  endif
 
- change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
+ change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
  x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
  v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
@@ -467,7 +467,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           pmassi = particlemass(i,itype)
 
           !--kinetic energy
-          if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+          if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) then
              vi(:) = 0.
              vi(1:ndimV) = dat(i,ivx:ivx+ndimV-1)
 
@@ -477,7 +477,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
              xmom = xmom + pmassi*vi
 
              !--angular momentum
-             if (ndim.ge.1 .and. all(ix(1:ndim).gt.0)) then
+             if (ndim >= 1 .and. all(ix(1:ndim) > 0)) then
                 ri(:) = 0.
                 ri(1:ndim) = dat(i,ix(1):ix(ndim))
                 call cross_product3D(ri,vi,angmomi)
@@ -486,12 +486,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           endif
 
           !--thermal energy
-          if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+          if (iutherm > 0 .and. iutherm <= ncolumns) then
              etherm = etherm + pmassi*dat(i,iutherm)
           endif
 
           !--magnetic energy
-          if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) then
+          if (iBfirst > 0 .and. iBfirst+ndimV-1 <= ncolumns) then
              emag = emag + pmassi*dot_product(dat(i,iBfirst:iBfirst+ndimV-1),&
                                               dat(i,iBfirst:iBfirst+ndimV-1))/dat(i,irho)
           endif
@@ -509,15 +509,15 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--write line to output file
     !
     write(iunit,"(64(es18.10,1x))") timei,ekin,etherm,emag,epot,etot,totmom,totang
-    if (nused.ne.ntot) print*,'energies calculated using ',nused,' of ',ntot,' particles'
+    if (nused /= ntot) print*,'energies calculated using ',nused,' of ',ntot,' particles'
 
  case('massaboverho')
     massaboverho(:) = 0.
-    if (irho.gt.0 .and. irho.le.ncolumns) then
+    if (irho > 0 .and. irho <= ncolumns) then
        !
        !--warn if particle masses not found
        !
-       if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
+       if (ipmass <= 0 .or. ipmass > ncolumns .and. all(massoftype < tiny(massoftype))) then
           print "(a)",' WARNING in massaboverho analysis!'// &
                       ' masses not read or are zero from dump file'
        endif
@@ -528,14 +528,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           itype = igettype(i)
           pmassi = particlemass(i,itype)
 
-          if (itype.eq.1) then
+          if (itype==1) then
           !
           !--gas particles contribute if they are above rho
           !
-             where(dat(i,irho).ge.rholevels(1:nlevels))
+             where(dat(i,irho) >= rholevels(1:nlevels))
                 massaboverho(1:nlevels) = massaboverho(1:nlevels) + pmassi
              end where
-          elseif (labeltype(itype).eq.'sink') then
+          elseif (labeltype(itype)=='sink') then
           !
           !--sink particles always contribute (ie. they are assumed to
           !  be above every density threshold)
@@ -590,7 +590,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
-    if (nused.ne.ntot) print*,'max calculated using ',nused,' of ',ntot,' particles'
+    if (nused /= ntot) print*,'max calculated using ',nused,' of ',ntot,' particles'
 
  case('min','minvals')
     !
@@ -620,7 +620,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
-    if (nused.ne.ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
+    if (nused /= ntot) print*,'min calculated using ',nused,' of ',ntot,' particles'
 
  case('diff','diffvals','amp','ampvals','delta','deltavals','deltas','tracks')
     !
@@ -632,7 +632,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     nused = 0
     do j=1,ntot
        itype = igettype(j)
-       if (iplotpartoftype(itype) .or. j.eq.itrack) then
+       if (iplotpartoftype(itype) .or. j==itrack) then
           vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
           if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
           nused = nused + 1
@@ -641,10 +641,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
              lmax(i) = max(lmax(i), vals(i))
              lmean(i) = lmean(i) + vals(i)
           enddo
-          if (j.eq.itrack) coltemp = vals
+          if (j==itrack) coltemp = vals
        endif
     enddo
-    if (nused.gt.0) lmean(:) = lmean(:)/real(nused)
+    if (nused > 0) lmean(:) = lmean(:)/real(nused)
 
     select case(trim(analysistype))
     case('amp','ampvals')
@@ -678,7 +678,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
 
-    if (nused.ne.ntot) then
+    if (nused /= ntot) then
        select case(trim(analysistype))
        case('diff', 'diffvals')
           print*,'diff calculated using ',nused,' of ',ntot,' particles'
@@ -706,7 +706,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           enddo
        endif
     enddo
-    if (nused.gt.0) then
+    if (nused > 0) then
        coltemp(:) = coltemp(:)/real(nused)
     else
        coltemp(:) = 0.
@@ -722,7 +722,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
-    if (nused.ne.ntot) print*,'mean calculated using ',nused,' of ',ntot,' particles'
+    if (nused /= ntot) print*,'mean calculated using ',nused,' of ',ntot,' particles'
 
  case('rms','rmsvals')
     !
@@ -741,7 +741,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
           enddo
        endif
     enddo
-    if (nused.gt.0) then
+    if (nused > 0) then
        coltemp(:) = sqrt(coltemp(:)/real(nused))
     else
        coltemp(:) = 0.
@@ -757,10 +757,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
-    if (nused.ne.ntot) print*,'rms calculated using ',nused,' of ',ntot,' particles'
+    if (nused /= ntot) print*,'rms calculated using ',nused,' of ',ntot,' particles'
 
  case('vrms','vrmsvals','vwrms','rmsvw')
-    if (irho.le.0 .or. irho.gt.ncolumns) then
+    if (irho <= 0 .or. irho > ncolumns) then
        print "(a)",' ERROR in volume weighted rms calculation!'// &
                    ' density not present / not labelled in dump file, skipping...'
        return
@@ -768,7 +768,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--warn if particle masses not found
     !
-    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
+    if (ipmass <= 0 .or. ipmass > ncolumns .and. all(massoftype < tiny(massoftype))) then
        print "(a)",' WARNING in volume weighted rms calculation!'// &
                    ' masses not read or are zero from dump file'
     endif
@@ -785,7 +785,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
 
           pmassi = particlemass(j,itype)
           rhoi   = dat(j,irho)
-          if (rhoi.gt.0.) then
+          if (rhoi > 0.) then
              voli = pmassi/rhoi
           else
              voli = 0.
@@ -812,7 +812,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     write(iunit,fmtstring) timei,coltemp(1:ncolumns)
 
  case('rhovar','rhomach')
-    if (irho.le.0 .or. irho.gt.ncolumns) then
+    if (irho <= 0 .or. irho > ncolumns) then
        print "(a)",' ERROR in density variance--rms velocity field calculation!'// &
                    ' density not present / not labelled in dump file, skipping...'
        return
@@ -820,12 +820,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !
     !--warn if particle masses not found
     !
-    if (ipmass.le.0 .or. ipmass.gt.ncolumns .and. all(massoftype < tiny(massoftype))) then
+    if (ipmass <= 0 .or. ipmass > ncolumns .and. all(massoftype < tiny(massoftype))) then
        print "(a)",' WARNING in volume weighted rms calculation!'// &
                    ' masses not read or are zero from dump file'
     endif
 
-    if (ivx.le.0 .or. ivx.gt.ncolumns) then
+    if (ivx <= 0 .or. ivx > ncolumns) then
        print "(a)",' WARNING in volume weighted rms calculation!'// &
                    ' velocities not present / not labelled in dump file'
     endif
@@ -843,7 +843,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        itype  = igettype(i)
        pmassi = particlemass(i,itype)
        rhoi   = dat(i,irho)
-       if (rhoi.gt.0.) then
+       if (rhoi > 0.) then
           voli = pmassi/rhoi
        else
           voli = 0.
@@ -858,7 +858,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        !
        !--mean squared velocity
        !
-       if (ivx.gt.0 .and. ivx.le.ncolumns) then
+       if (ivx > 0 .and. ivx <= ncolumns) then
           v2i    = dot_product(dat(i,ivx:ivx+ndimV-1),dat(i,ivx:ivx+ndimV-1))
           rmsvali = rmsvali + voli*v2i
           rmsvmw = rmsvmw + v2i
@@ -874,7 +874,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     !--option to override volume from sum with environment variable
     !
     voli = renvironment('SPLASH_CALC_VOLUME',errval=-1.0)
-    if (voli.gt.0.) then
+    if (voli > 0.) then
        print "(1x,a,es9.2)",&
                   'volume from sum(m/rho)           = ',totvol
        totvol = voli
@@ -902,7 +902,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        itype  = igettype(i)
        pmassi = particlemass(i,itype)
        rhoi   = dat(i,irho)
-       if (rhoi.gt.0.) then
+       if (rhoi > 0.) then
           voli = pmassi/rhoi
           si = log(rhoi)
        else
@@ -934,12 +934,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
     print "(1x,'ln density variance (mass weighted) = ',es11.4)",svarmw
     print "(1x,'rms velocity     (vol. weighted) = ',es11.4)",rmsvali
     print "(1x,'rms velocity     (mass weighted) = ',es11.4)",rmsvmw
-    if (rmsvali.gt.0.) then
+    if (rmsvali > 0.) then
        bval = sqrt(svarvw)/rmsvali
     else
        bval = 0.
     endif
-    if (rmsvmw.gt.0.) then
+    if (rmsvmw > 0.) then
        bvalmw = sqrt(svarmw)/rmsvmw
     else
        bvalmw = 0.
@@ -954,12 +954,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
                            rmsvali,rmsvmw,bval,bvalmw,smeanvw,smeanmw,svarvw,svarmw,sqrt(svarvw),sqrt(svarmw)
  case('kh')
 
-    if (irho.le.0 .or. irho.gt.ncolumns) then
+    if (irho <= 0 .or. irho > ncolumns) then
        print "(a)",' ERROR in kh calculation!'// &
                    ' density not present / not labelled in dump file, skipping...'
        return
     endif
-    if (ivx.le.0 .or. ivx.gt.ncolumns) then
+    if (ivx <= 0 .or. ivx > ncolumns) then
        print "(a)",' WARNING in kh calculation!'// &
                    ' velocities not present / not labelled in dump file'
     endif
@@ -986,18 +986,18 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        datvar = 0.
     endif
     ntot1 = size(datmean(:,1))
-    if (ntot.gt.ntot1) then
+    if (ntot > ntot1) then
        print*,' WARNING: nrows = ',ntot,' > nrows from previous dumpfile =',ntot1
        print*,'          ignoring all rows/particles greater than ',ntot1
-    elseif (ntot.lt.ntot1) then
+    elseif (ntot < ntot1) then
        print*,' WARNING: nrows = ',ntot,' < nrows from previous dumpfile =',ntot1
        print*,'          assuming zeros for rows/particles greater than ',ntot
     endif
     ncol1 = size(datmean(1,:))
-    if (ncolumns.gt.ncol1) then
+    if (ncolumns > ncol1) then
        print*,' WARNING: ncolumns = ',ncolumns,' > ncolumns from previous dumpfile =',ncol1
        print*,'          ignoring all rows/particles greater than ',ncol1
-    elseif (ncolumns.lt.ncol1) then
+    elseif (ncolumns < ncol1) then
        print*,' WARNING: ncolumns = ',ntot,' < ncolumns from previous dumpfile =',ncol1
        print*,'          assuming zeros for columns greater than ',ncolumns
     endif
@@ -1033,29 +1033,29 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,iamtype,nc
        datvar = 0.
     endif
     ntot1 = size(datmean(:,1))
-    if (ntot.gt.ntot1) then
+    if (ntot > ntot1) then
        print*,' WARNING: nrows = ',ntot,' > nrows from previous dumpfile =',ntot1
        print*,'          ignoring all rows/particles greater than ',ntot1
-    elseif (ntot.lt.ntot1) then
+    elseif (ntot < ntot1) then
        print*,' WARNING: nrows = ',ntot,' < nrows from previous dumpfile =',ntot1
        print*,'          assuming zeros for rows/particles greater than ',ntot
     endif
     ncol1 = size(datmean(1,:))
-    if (size(dat(1,:)).gt.ncol1) then
+    if (size(dat(1,:)) > ncol1) then
        print*,' WARNING: ncolumns = ',ncolumns,' > ncolumns from previous dumpfile =',ncol1
        print*,'          ignoring all rows/particles greater than ',ncol1
-    elseif (ncolumns.lt.ncol1) then
+    elseif (ncolumns < ncol1) then
        print*,' WARNING: ncolumns = ',ntot,' < ncolumns from previous dumpfile =',ncol1
        print*,'          assuming zeros for columns greater than ',ncolumns
     endif
     ntot1 = min(ntot1,ntot)
     ncol1 = min(ncol1,size(dat(1,:)))
-    if (ntot1.le.0 .or. ncol1.le.0) then
+    if (ntot1 <= 0 .or. ncol1 <= 0) then
        print "(a,i2,a,i2,a)",' ERROR: nrows = ',ntot1,' ncolumns = ',ncol1,' aborting...'
        return
     endif
 
-    if (nfilesread.le.1) then
+    if (nfilesread <= 1) then
        !--store first dump
        datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
     else
@@ -1108,12 +1108,12 @@ integer function igettype(i)
  integer :: np
  integer, intent(in) :: i
 
- if (size(iamtype).gt.1) then
+ if (size(iamtype) > 1) then
     igettype = int(iamtype(i))
  else
     np = 0
     igettype = 0
-    do while (i.gt.np .and. igettype.le.ntypes)
+    do while (i > np .and. igettype <= ntypes)
        igettype = igettype + 1
        np = np + npartoftype(igettype)
     enddo
@@ -1129,7 +1129,7 @@ real function particlemass(i,iparttype)
  implicit none
  integer, intent(in) :: i,iparttype
 
- if (ipmass.gt.0 .and. ipmass.le.ncolumns) then
+ if (ipmass > 0 .and. ipmass <= ncolumns) then
     particlemass = dat(i,ipmass)
  else
     particlemass = massoftype(iparttype)
@@ -1162,7 +1162,7 @@ subroutine close_analysis(analysistype)
  select case(trim(analysistype))
  case('timeaverage','timeav')
     print "(a)",'----> WRITING time_average.out ...'
-    if (allocated(datmean) .and. allocated(datvar) .and. nfilesread.gt.0) then
+    if (allocated(datmean) .and. allocated(datvar) .and. nfilesread > 0) then
        !--get standard deviation from variance (also normalise with 1/n)
        datvar(:,:) = sqrt(datvar(:,:))/sqrt(real(nfilesread))
        do i=1,size(datmean(:,1))

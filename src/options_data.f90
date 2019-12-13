@@ -100,7 +100,7 @@ subroutine submenu_data(ichoose)
 
  print "(a)",'----------------- data read options -------------------'
 
- if (ians.le.0 .or. ians.gt.8) then
+ if (ians <= 0 .or. ians > 8) then
     if (iUseStepList) then
        print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
                  print_logical(iCalcQuantities),print_logical(iRescale)
@@ -146,7 +146,7 @@ subroutine submenu_data(ichoose)
     call prompt('Enter number of steps to plot ', &
          iendatstep,1,size(isteplist))
     do i=1,iendatstep
-       if (isteplist(i).le.0 .or. isteplist(i).gt.nsteps) isteplist(i) = i
+       if (isteplist(i) <= 0 .or. isteplist(i) > nsteps) isteplist(i) = i
        write(fmtstring,"(a,i2)") 'Enter step ',i
        call prompt(fmtstring,isteplist(i),1,nsteps)
     enddo
@@ -171,7 +171,7 @@ subroutine submenu_data(ichoose)
           call calc_quantities(1,nsteps)
           call set_limits(1,nsteps,ncolumns+ncalcwas+1,ncolumns+ncalc)
        else
-          if (ifileopen.gt.0) then
+          if (ifileopen > 0) then
              call calc_quantities(1,nstepsinfile(ifileopen))
              call set_limits(1,nstepsinfile(ifileopen),ncolumns+ncalcwas+1,ncolumns+ncalc)
           endif

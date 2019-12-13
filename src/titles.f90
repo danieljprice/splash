@@ -54,7 +54,7 @@ subroutine read_titles(ntitles)
  ntitles = 0
 
  call read_asciifile(titlefile,ntitles,pagetitles)
- if (ntitles.gt.0) print "(a)",'read plot titles from file '//trim(titlefile)
+ if (ntitles > 0) print "(a)",'read plot titles from file '//trim(titlefile)
 
  return
 end subroutine read_titles
@@ -80,7 +80,7 @@ subroutine read_steplegend(nsteptitles)
  nsteptitles = 0
 
  call read_asciifile(legendfile,nsteptitles,steplegend)
- if (nsteptitles.gt.0) print "(a)"//'read legend text from file '''//trim(legendfile)//''''
+ if (nsteptitles > 0) print "(a)"//'read legend text from file '''//trim(legendfile)//''''
 
  return
 end subroutine read_steplegend

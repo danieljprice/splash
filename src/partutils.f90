@@ -51,7 +51,7 @@ pure integer function igettype(i,noftype)
  igettype = 1 ! so even if in error, will not lead to seg fault
  over_types: do jtype=1,maxparttypes
     ntot1 = ntot + noftype(jtype)
-    if (i.gt.ntot .and. i.le.ntot1) then
+    if (i > ntot .and. i <= ntot1) then
        igettype = jtype
        exit over_types
     endif
@@ -70,7 +70,7 @@ integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer :: ntot
 
- if (itype.le.0 .or. itype.gt.size(noftype)) then
+ if (itype <= 0 .or. itype > size(noftype)) then
     !--type not set, itrackpart = itrackoffset
     get_tracked_particle = ioffset
  else
@@ -93,7 +93,7 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
 
  !--locate first two sink particles in the data
  ntot = sum(noftype)
- if (size(iamtype(:)).eq.1) then
+ if (size(iamtype(:))==1) then
     i1 = sum(noftype(1:itype-1)) + 1
     i2 = i1 + 1
  else
@@ -101,11 +101,11 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
     i2 = 0
     i = 0
     nfound = 0
-    do while ((i1.eq.0 .or. i2.eq.0) .and. i.le.ntot)
+    do while ((i1==0 .or. i2==0) .and. i <= ntot)
        i = i + 1
-       if (iamtype(i).eq.itype) nfound = nfound + 1
-       if (nfound.eq.1) i1 = i
-       if (nfound.eq.2) i2 = i
+       if (iamtype(i)==itype) nfound = nfound + 1
+       if (nfound==1) i1 = i
+       if (nfound==2) i2 = i
     enddo
  endif
 
@@ -122,16 +122,16 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  integer :: i,nfound
 
  ntot = sum(noftype)
- if (size(iamtype(:)).eq.1) then
+ if (size(iamtype(:))==1) then
     ipos = sum(noftype(1:itype-1)) + n
  else
     ipos = 0
     i = 0
     nfound = 0
-    do while (ipos.eq.0 .and. i.le.ntot)
+    do while (ipos==0 .and. i <= ntot)
        i = i + 1
-       if (iamtype(i).eq.itype) nfound = nfound + 1
-       if (nfound.eq.n) ipos = i
+       if (iamtype(i)==itype) nfound = nfound + 1
+       if (nfound==n) ipos = i
     enddo
  endif
 

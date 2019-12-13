@@ -100,7 +100,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !--can override these settings with environment variables
   if (lenvironment('BSPLASH_R8')) doubleprec = .true.
   ncoltemp = ienvironment('BSPLASH_NCOL')
-  if (ncoltemp.gt.0) ncol = ncoltemp
+  if (ncoltemp > 0) ncol = ncoltemp
   !
   !--allocate memory initially
   !
@@ -130,17 +130,17 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
      print "(a,f10.2,a,i10,a,i10,a,f10.4)",' time: ',timei,' npart: ',nprint,' n1: ',n1,' dt = ',dti
      !--barf if stupid values read
-     if (nprint.le.0 .or. nprint.gt.1e10) then
+     if (nprint <= 0 .or. nprint > 1e10) then
         print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
         close(15)
         return
      elseif (ierr /= 0) then
         print "(a)",'*** WARNING: ERRORS READING HEADER ***'
      endif
-     if (timei.lt.0. .or. dti.lt.0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
+     if (timei < 0. .or. dti < 0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
      ncolumns = ncol
 
-     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+     if (.not.allocated(dat) .or. nprint > npart_max) then
         npart_max = max(npart_max,nprint)
         call alloc(npart_max,nstep_max,ncolumns)
      endif
@@ -172,9 +172,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
 
 44   continue
-     if (nerr.gt.0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
+     if (nerr > 0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
 
-     if (nread.lt.nprint) then
+     if (nread < nprint) then
         print "(a)",' WARNING: END OF FILE: read to particle ',nread
         nprint = nread
      endif
@@ -212,11 +212,11 @@ subroutine set_labels
   implicit none
   integer :: i,ipmom
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -233,7 +233,7 @@ subroutine set_labels
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
-  if (iutherm.gt.0) label(iutherm) = 'u'
+  if (iutherm > 0) label(iutherm) = 'u'
   label(12) = 'psi_{pot}'
   label(13) = 'alpha_{pot}'
   label(ipmass) = 'particle mass'

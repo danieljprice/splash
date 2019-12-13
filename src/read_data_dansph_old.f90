@@ -78,7 +78,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ndim_max = 1
   ndimV_max = 1
   nstepsread = 0
-  if (rootname(1:1).ne.' ') then
+  if (rootname(1:1) /= ' ') then
      datfile = trim(rootname)
      !print*,'rootname = ',rootname
   else
@@ -104,11 +104,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        hfactind,ndim_max,ndimV_max,ncol_max,icoords
   !!print*,'time = ',timeind,' hfact = ',hfactind,' ndim=',ndim_max,'ncol=',ncol_max
   !!print*,'npart = ',npartin,ntotin
-  if (ierr /= 0 .or. ndim_max.le.0 .or. ndim_max.gt.3 &
-     .or. ndimV_max.le.0 .or. ndimV_max.gt.3 &
-     .or. ncol_max.le.0 .or. ncol_max.gt.100 &
-     .or. npartin.le.0 .or. npartin.gt.1e7 .or. ntotin.le.0 .or. ntotin.gt.1e7 &
-     .or. icoords.le.0 .or. icoords.gt.10) then
+  if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
+     .or. ndimV_max <= 0 .or. ndimV_max > 3 &
+     .or. ncol_max <= 0 .or. ncol_max > 100 &
+     .or. npartin <= 0 .or. npartin > 1e7 .or. ntotin <= 0 .or. ntotin > 1e7 &
+     .or. icoords <= 0 .or. icoords > 10) then
      !
      !--try single precision
      !
@@ -133,8 +133,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      nstep_max = max(1,maxstep,indexstart)
   endif
   npart_max = max(int(1.5*ntotin),maxpart)
-  if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
-       .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
+  if (.not.allocated(dat) .or. ntotin > maxpart  &
+       .or. nstep_max > maxstep .or. ncol_max > maxcol) then
      call alloc(npart_max,nstep_max,ncol_max+ncalc)
   endif
 !
@@ -185,15 +185,15 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
      print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
      print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
-     if (icoords.gt.1) print "(a14,':',2x,a)",' geometry',labelcoordsys(icoords)
-     if (any(ibound(1:ndim).ne.0)) then
+     if (icoords > 1) print "(a14,':',2x,a)",' geometry',labelcoordsys(icoords)
+     if (any(ibound(1:ndim) /= 0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
         print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
      endif
      !
      !--check for errors in timestep header
      !
-     if (ndim.gt.3 .or. ndimV.gt.3) then
+     if (ndim > 3 .or. ndimV > 3) then
         print*,'*** error in header: ndim or ndimV in file> 3'
         nstepsread = nstepsread - 1
         ndim = ndim_max
@@ -201,16 +201,16 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         close(iunit)
         return
      endif
-     if (ndim.gt.ndim_max) ndim_max = ndim
-     if (ndimV.gt.ndimV_max) ndimV_max = ndimV
+     if (ndim > ndim_max) ndim_max = ndim
+     if (ndimV > ndimV_max) ndimV_max = ndimV
 
-     if (ncolstep.ne.ncol_max) then
+     if (ncolstep /= ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         ncolumns = ncolstep
         print*,'ncolumns = ',ncolumns,ncol_max
-        if (ncolumns.gt.ncol_max) ncol_max = ncolumns
+        if (ncolumns > ncol_max) ncol_max = ncolumns
      endif
-     if (ncolstep.gt.maxcol) then
+     if (ncolstep > maxcol) then
         reallocate = .true.
         ncolumns = ncolstep
         ncol_max = ncolumns
@@ -218,12 +218,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         ncolumns = ncolstep
      endif
 
-     if (ntoti.gt.maxpart) then
+     if (ntoti > maxpart) then
         !print*, 'ntot greater than array limits!!'
         reallocate = .true.
         npart_max = int(1.5*ntoti)
      endif
-     if (i.gt.maxstep) then
+     if (i > maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
         reallocate = .true.
      endif
@@ -235,7 +235,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
 
 
-     if (ntoti.gt.0) then
+     if (ntoti > 0) then
         !
         !--read position vector
         !
@@ -266,7 +266,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         !
         !--non-MHD output
         !
-          if (iformat.ne.2) then
+          if (iformat /= 2) then
         !
         !--read alpha, alphau
         !
@@ -424,11 +424,11 @@ subroutine set_labels
  implicit none
  integer :: i
 
- if (ndim.le.0 .or. ndim.gt.3) then
+ if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
     return
  endif
- if (ndimV.le.0 .or. ndimV.gt.3) then
+ if (ndimV <= 0 .or. ndimV > 3) then
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif
@@ -454,7 +454,7 @@ subroutine set_labels
  label(ipmass) = 'particle mass'
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga_{u}'
- if (iformat.eq.2) then
+ if (iformat==2) then
 
     !
     !--mag field (vector)
@@ -488,7 +488,7 @@ subroutine set_labels
     label(ndim+ndimV+11) = 'f_{grav}'
 !    label(ndim+ndimV+8) = 'div v'
 !    label(ndim+ndimV+9) = 'grad h'
-    if (iformat.eq.3) then
+    if (iformat==3) then
        !!!irho = ndim+ndimV+9
        label(ndim+ndimV+9) = 'rho*'
        label(ndim+ndimV+10) = 'sqrt g'
@@ -497,7 +497,7 @@ subroutine set_labels
     iBfirst = 0
  endif
 
- if (ncolumns.gt.ndim+3*ndimV+11) then
+ if (ncolumns > ndim+3*ndimV+11) then
     label(ndim+3*ndimV+12) = 'f_{visc,x}'
     label(ndim+3*ndimV+13) = 'f_{visc,y}'
     label(ndim+3*ndimV+14) = 'f_{x}'
@@ -505,7 +505,7 @@ subroutine set_labels
  endif
 !
 !--these are here for backwards compatibility -- could be removed
-!  if (ncolumns.gt.ndim+3*ndimV+7) then
+!  if (ncolumns > ndim+3*ndimV+7) then
 !     label(ndim + 3*ndimV+8) = 'v_parallel'
 !     label(ndim + 3*ndimV+9) = 'v_perp'
 !     label(ndim + 3*ndimV+10) = 'B_parallel'

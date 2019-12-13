@@ -79,7 +79,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   goterrors  = .false.
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -161,9 +161,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   endif
   if (nsteps_to_read > maxstep) reallocate = .true.
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntoti)
      else
@@ -183,7 +183,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   got_particles: if (ntoti > 0) then
 
-     if (buffer_steps_in_file .or. ipos.eq.istep) then
+     if (buffer_steps_in_file .or. ipos==istep) then
         call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,dx,ignoretl,ierr)
         call set_labels
         ! set smoothing length and particle mass
@@ -222,7 +222,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   enddo over_snapshots
 
-  if (nstepsread.gt.0) then
+  if (nstepsread > 0) then
      print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart)),' cells'
   endif
 
@@ -252,7 +252,7 @@ subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
   'DEBUG: reading column ',icol,' -> '//trim(label(icolput))//' parts ',i1,' to ',i2
 
   ! check column is within array limits
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
@@ -283,7 +283,7 @@ subroutine read_cactus_itype_fromc(ntot,np,itype) bind(c)
   i2 = ntot
   ! set particle type
   len_type = size(iamtype(:,1))
-  if (len_type.gt.1) then
+  if (len_type > 1) then
      if (i2 > len_type) then
         print*,'error with itype length',i2,len_type
         return
@@ -309,11 +309,11 @@ subroutine set_labels
   implicit none
   integer :: i,icol
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -339,14 +339,14 @@ subroutine set_labels
   enddo
 
   ! set labels of the quantities read in
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  !if (irho.gt.0)    label(irho)       = 'density'
-  !if (iutherm.gt.0) label(iutherm)    = 'u'
-  !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  !if (ih.gt.0)      label(ih)         = 'h'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  !if (irho > 0)    label(irho)       = 'density'
+  !if (iutherm > 0) label(iutherm)    = 'u'
+  !if (ipmass > 0)  label(ipmass)     = 'particle mass'
+  !if (ih > 0)      label(ih)         = 'h'
 
   ! set labels for vector quantities
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

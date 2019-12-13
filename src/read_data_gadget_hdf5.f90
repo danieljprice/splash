@@ -119,7 +119,7 @@ contains
 
    fstring = ''
    do i=1,size(array)
-      if (array(i).eq.achar(0)) exit
+      if (array(i)==achar(0)) exit
       fstring(i:i) = array(i)
    enddo
 
@@ -193,13 +193,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   nstepsread = 0
   goterrors  = .false.
-  if (maxparttypes.lt.6) then
+  if (maxparttypes < 6) then
      print*,' *** ERROR: not enough particle types for GADGET data read ***'
      print*,' *** you need to edit splash parameters and recompile ***'
      stop
   endif
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -272,7 +272,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   ntoti = int(sum(npartoftypei(1:6)))  ! int here is unnecessary, but avoids compiler warnings
 
-  if (nfiles.gt.1) then
+  if (nfiles > 1) then
      ntotall = int(sum(Nall(1:6)))
   else
      ntotall = ntoti
@@ -281,11 +281,11 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--if we are reading from multiple files,
   !  check that the sequence starts from the correct file
   !
-  if (nfiles.gt.1) then
+  if (nfiles > 1) then
      idot = index(datfile,'.hdf5')
      idot = index(datfile(1:idot-1),'.',back=.true.)
-     if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
-        if (nfiles.lt.100) then
+     if (ifile==1 .and. datfile(idot:idot+1) /= '.0') then
+        if (nfiles < 100) then
            string = "(/,a,i2,a,/,a,/)"
         else
            string = "(/,a,i7,a,/,a,/)"
@@ -297,7 +297,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      ncolumns = ncolstep
   !
   !--call set labels to get ih, ipmass, irho for use in the read routine
@@ -306,7 +306,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      call set_labels
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      print*,'time            : ',timetemp
      if (usez) then
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
@@ -315,22 +315,22 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   endif
   print "(a,6(1x,i10))",' Npart (by type) : ',npartoftypei(1:6)
-  if (any(massoftypei.gt.0.)) print "(a,6(1x,es10.3))",' Mass  (by type) : ',massoftypei
+  if (any(massoftypei > 0.)) print "(a,6(1x,es10.3))",' Mass  (by type) : ',massoftypei
   print "(a,6(1x,i10))",' N_gas           : ',npartoftypei(1)
   print "(a,1x,i10)",' N_total         : ',ntoti
-  if (ifile.eq.1) print "(a,1x,i10)",' N data columns  : ',ncolstep
-  if (nfiles.gt.1 .and. ifile.eq.1) then
+  if (ifile==1) print "(a,1x,i10)",' N data columns  : ',ncolstep
+  if (nfiles > 1 .and. ifile==1) then
      print "(a,6(1x,i10))",' Nall            : ',Nall(1:6)
   endif
 
-  if (nfiles.gt.1) then
-     if (ifile.eq.1) print "(a,i4,a)",' reading from ',nfiles,' files'
-  elseif (nfiles.le.0) then
+  if (nfiles > 1) then
+     if (ifile==1) print "(a,i4,a)",' reading from ',nfiles,' files'
+  elseif (nfiles <= 0) then
      print*,'*** ERROR: nfiles = ',nfiles,' in file header: aborting'
      return
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      !--Softening lengths for Dark Matter Particles...
      hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
      !
@@ -342,13 +342,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      hfact = 1.2 ! related to the analytic neighbour number (hfact=1.2 gives 58 neighbours in 3D)
      open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
      open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
-     if (ih.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+     if (ih==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
         ncolumns = ncolumns + 1
         blocklabelgas(ncolumns) = 'SmoothingLength'
         ih = ncolumns
         call set_labels
      endif
-     if (irho.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+     if (irho==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
         ncolumns = ncolumns + 1
         blocklabelgas(ncolumns) = 'Density'
         irho = ncolumns
@@ -366,9 +366,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntotall)
      else
@@ -376,7 +376,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntotall)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -384,7 +384,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--reallocate memory for main data array
   !
   if (reallocate .or. .not.(allocated(dat))) then
-     if (igotids.eq.1) then
+     if (igotids==1) then
         call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
      else
         call alloc(npart_max,nstep_max,max(ncolumns+ncalc,maxcol))
@@ -395,10 +395,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--copy npartoftypei into allocated header arrays
   !  and set the offset position of particle types in the main data arrays
   !
-  if (nfiles.eq.1 .or. ifile.eq.1) then
+  if (nfiles==1 .or. ifile==1) then
      i0(1) = 0
      do itype=2,ntypes
-        if (nfiles.eq.1) then
+        if (nfiles==1) then
            i0(itype) = sum(npartoftypei(1:itype-1)) ! this is avoid depending on Nall at all for single file read
         else
            i0(itype) = sum(Nall(1:itype-1))
@@ -416,7 +416,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--set time to be used in the legend
   !
-  if (ifile.eq.1) then
+  if (ifile==1) then
      if (usez) then
         !--use this line for redshift
         legendtext = 'z='
@@ -427,11 +427,11 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   else
      if (usez) then
-        if (abs(real(ztemp)-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
+        if (abs(real(ztemp)-time(i)) > tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
      else
-        if (abs(real(timetemp)-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
+        if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
      endif
-     if (sum(Nall).ne.ntotall) then
+     if (sum(Nall) /= ntotall) then
         print*,' ERROR: Nall differs between files'
         goterrors = .true.
      endif
@@ -439,7 +439,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--read particle data
   !
-  got_particles: if (ntoti.gt.0) then
+  got_particles: if (ntoti > 0) then
 
      isrequired(:) = 0
      where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
@@ -459,18 +459,18 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--for read from multiple files, work out the next file in the sequence
 !
   iexist = .false.
-  if (nfiles.gt.1 .and. ifile.lt.nfiles) then
+  if (nfiles > 1 .and. ifile < nfiles) then
      !--see if the next file exists
      idot = index(datfile,'.hdf5')
      idot = index(datfile(1:idot-1),'.',back=.true.)
-     if (idot.le.0) then
+     if (idot <= 0) then
         print "(a)",' ERROR: read from multiple files but could not determine next file in sequence'
         goterrors = .true.
      else
         write(string,*) ifile
-        if (ifile.lt.10) then
+        if (ifile < 10) then
            write(datfile,"(a,i1)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
-        elseif (ifile.lt.100) then
+        elseif (ifile < 100) then
            write(datfile,"(a,i2)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
         else
            write(datfile,"(a,i3)") trim(datfile(1:idot))//trim(adjustl(string))//'.hdf5'
@@ -490,7 +490,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   if (arepo) then
      dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
      print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
-  elseif (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
+  elseif (required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
   !
   !--for some reason the smoothing length output by GADGET is
   !  twice the usual SPH smoothing length
@@ -500,8 +500,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
 
-  if (nfiles.gt.1. .and. any(npartoftype(:,i).ne.Nall(:))) then
-     print*,'ERROR: sum of Npart across multiple files .ne. Nall in data read '
+  if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
      print*,'Npart = ',npartoftype(:,i)
      print*,'Nall  = ',Nall(:)
      goterrors = .true.
@@ -509,21 +509,21 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--look for dark matter smoothing length/density files
   !
-  if (ierrh.eq.0 .or. ierrrho.eq.0) then
-     if (ierrh.eq.0) then
+  if (ierrh==0 .or. ierrrho==0) then
+     if (ierrh==0) then
         print "(a)",' READING DARK MATTER SMOOTHING LENGTHS from '//trim(hfile)
         ierr = 0
         index1 = npartoftype(1,i)+1
         index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
         read(iunith,*,iostat=ierr) (dat(j,ih,i),j=index1,index2)
         close(unit=iunith)
-        if (ierr.lt.0) then
+        if (ierr < 0) then
            nhset = 0
            do j=index1,index2
-              if (dat(j,ih,i).gt.0.) nhset = nhset + 1
+              if (dat(j,ih,i) > 0.) nhset = nhset + 1
            enddo
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' SMOOTHING LENGTHS ***'
-        elseif (ierr.gt.0) then
+        elseif (ierr > 0) then
            print "(a)", ' *** ERROR reading smoothing lengths from file'
            goterrors = .true.
         else
@@ -532,26 +532,26 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
      endif
 
-     if (ierrrho.eq.0) then
+     if (ierrrho==0) then
         print "(a)",' READING DARK MATTER DENSITIES FROM '//trim(densfile)
         ierr = 0
         index1 = npartoftype(1,i)+1
         index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
         read(iunitd,*,iostat=ierr) (dat(j,irho,i),j=index1,index2)
         close(iunitd)
-        if (ierr.lt.0) then
+        if (ierr < 0) then
            nhset = 0
            do j=index1,index2
-              if (dat(j,irho,i).gt.0.) nhset = nhset + 1
+              if (dat(j,irho,i) > 0.) nhset = nhset + 1
            enddo
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' DENSITIES ***'
-        elseif (ierr.gt.0) then
+        elseif (ierr > 0) then
            print "(a)", ' *** ERROR reading dark matter densities from file'
            goterrors = .true.
         else
            print "(a,i10,a)",' DENSITY READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
-        if (ierrh.ne.0 .and. ipmass.gt.0) then
+        if (ierrh /= 0 .and. ipmass > 0) then
            where(dat(:,irho,i) > tiny(dat))
               dat(:,ih,i) = hfact*(dat(:,ipmass,i)/dat(:,irho,i))**(1./3.)
            elsewhere
@@ -569,12 +569,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !  give dark matter particles this smoothing length
   !  and a density of 1 (so column density plots work)
   !
-     if (hsoft.gt.tiny(hsoft)) then
+     if (hsoft > tiny(hsoft)) then
         if (required(ih)) then
            print "(a,1pe10.3,a)",' ASSIGNING SMOOTHING LENGTH of h = ',hsoft, &
                                  ' to dark matter particles'
            !print*,'ih = ',ih,' npartoftype = ',npartoftype(1:2,i), shape(dat)
-           if (ih.gt.0) then
+           if (ih > 0) then
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
            else
               print*,' ERROR: smoothing length not found in data arrays'
@@ -582,7 +582,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            endif
         endif
         if (required(irho)) then
-           if (irho.gt.0) then
+           if (irho > 0) then
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
            else
               print*,' ERROR: place for density not found in data arrays'
@@ -590,7 +590,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            endif
         endif
      else
-        if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
+        if (npartoftype(1,i) <= 0 .and. sum(npartoftype(:,i)) > 0) then
            print "(66('*'),4(/,a),/)",'* NOTE!! For GADGET data using dark matter only, column density ',&
                               '* plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
                               '* environment variable to give the dark matter smoothing length', &
@@ -618,7 +618,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
      print "(a,/)",'    Please REPORT this and/or fix your file ***'
      print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
-     if (iverbose.ge.1) then
+     if (iverbose >= 1) then
         print "(a)",'    > Press any key to bravely proceed anyway  <'
         read*
      endif
@@ -627,14 +627,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
-  if (ih.gt.0 .and. required(ih) .and. ipmass.gt.0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)).lt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
+  if (ih > 0 .and. required(ih) .and. ipmass > 0 .and. required(ipmass) &
+      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned) then
      nhfac = 100
-     if (npartoftype(1,i).gt.nhfac) then
+     if (npartoftype(1,i) > nhfac) then
         hfactmean = 0.
         do j=1,nhfac
            pmassi = dat(j,ipmass,i)
-           if (pmassi.gt.0.) then
+           if (pmassi > 0.) then
               pmassi = 1./pmassi
            else
               pmassi = 0.
@@ -644,18 +644,18 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         enddo
         hfact = hfactmean/real(nhfac)
         havewarned = .true.
-        if (hfact.lt.1.125 .or. hfact.gt.1.45) then
+        if (hfact < 1.125 .or. hfact > 1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
 
-           if (hfact.lt.1.15) then
+           if (hfact < 1.15) then
               print "(4(/,3x,a))",'This is a quite a low number of neighbours for the cubic spline and ', &
                                   'may result in increased noise and inaccurate wave propagation speeds', &
                                   '(a cubic lattice is also an unstable initial configuration for the ',&
                                   ' particles in this regime -- see Morris 1996, Borve et al. 2004).'
-           elseif (hfact.gt.1.45) then
+           elseif (hfact > 1.45) then
               print "(4(/,3x,a))",'Using h >~ 1.5*(m/rho)^(1/3) with the cubic spline results in the', &
                                 'particle pairing instability due to the first neighbour being placed under', &
                                 'the hump in the kernel gradient. Whilst not fatal, it results in a', &
@@ -680,12 +680,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--cover the special case where no particles have been read
 !
-  if (ntotall.le.0) then
+  if (ntotall <= 0) then
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
 
-  if (nstepsread.gt.0) then
+  if (nstepsread > 0) then
      print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
   endif
   return
@@ -708,49 +708,49 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
 
   icolput = icol
   if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))//', offset ',i0
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
   nmax = size(dat(:,1,1))
 
   useids = lenvironment('GSPLASH_USE_IDS') .or. lenvironment('GSPLASH_CHECKIDS')
-  if (all(id.le.0) .or. size(iamtype(:,1)).le.1) useids = .false.
+  if (all(id <= 0) .or. size(iamtype(:,1)) <= 1) useids = .false.
   if (debugmode) print*,'DEBUG: using particle IDs = ',useids,' max = ',nmax
 
   if (useids) then
      nerr = 0
      !print*,' id range is ',minval(id),' to ',maxval(id),' type ',itype+1,' column = ',trim(label(icolput))
      do i=1,npartoftypei
-        if (id(i).lt.1 .or. id(i).gt.nmax) then
+        if (id(i) < 1 .or. id(i) > nmax) then
            idi = id(i)
            !
            !--correct for particle IDs > 1e9 (used to represent recycled particles?)
            !
-           if (idi.gt.1000000000) then
+           if (idi > 1000000000) then
               idi = idi - 1000000000
-              if (idi.le.nmax .or. idi.le.0) then
+              if (idi <= nmax .or. idi <= 0) then
                  dat(idi,icolput,1) = real(temparr(i))
                  iamtype(idi,1) = itype + 1
               else
                  nerr = nerr + 1
-                 if (debugmode .and. nerr.le.10) print*,i,'fixed id = ',idi
+                 if (debugmode .and. nerr <= 10) print*,i,'fixed id = ',idi
               endif
            else
               nerr = nerr + 1
-              if (debugmode .and. nerr.le.10) print*,i,' id = ',idi,idi-1000000000
+              if (debugmode .and. nerr <= 10) print*,i,' id = ',idi,idi-1000000000
            endif
         else
            dat(id(i),icolput,1) = real(temparr(i))
            iamtype(id(i),1) = itype + 1
         endif
      enddo
-     if (nerr.gt.0) print*,'ERROR: got particle ids outside array dimensions ',nerr,' times'
+     if (nerr > 0) print*,'ERROR: got particle ids outside array dimensions ',nerr,' times'
   else
-     if (i0.lt.0) then
+     if (i0 < 0) then
         print*,'ERROR: i0 = ',i0,' but should be positive: SOMETHING IS VERY WRONG...'
         return
-     elseif (i0+npartoftypei.gt.nmax) then
+     elseif (i0+npartoftypei > nmax) then
         print "(a,i8,a)",' ERROR: offset = ',i0,': read will exceed array dimensions in receive_data_fromc'
         nmax = nmax - i0
      else
@@ -759,7 +759,7 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
      do i=1,nmax
         dat(i0+i,icolput,1) = real(temparr(i))
      enddo
-     if (size(iamtype(:,1)).gt.1) then
+     if (size(iamtype(:,1)) > 1) then
         do i=1,nmax
            iamtype(i0+i,1) = itype + 1
         enddo
@@ -785,11 +785,11 @@ subroutine set_labels
   implicit none
   integer :: i,j,icol,irank
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -798,12 +798,12 @@ subroutine set_labels
   ix = 0
   do i=1,size(blocklabelgas)
      irank = blocksize(i)
-     if (irank.gt.0 .and. (len_trim(blocklabelgas(i)).gt.0)) then
+     if (irank > 0 .and. (len_trim(blocklabelgas(i)) > 0)) then
         select case(blocklabelgas(i))
         case('Coordinates')
            ix(1) = icol
            ix(2) = icol + 1
-           if (irank.ge.3) ix(3) = icol + 2
+           if (irank >= 3) ix(3) = icol + 2
         case('Velocities','Velocity')
            ivx = icol
         case('SmoothingLength')
@@ -823,7 +823,7 @@ subroutine set_labels
            label(icol:icol+irank-1) = reformatlabel(blocklabelgas(i))
         end select
 
-        if (irank.eq.ndimV) then
+        if (irank==ndimV) then
            iamvec(icol:icol+ndimV-1)   = icol
            labelvec(icol:icol+ndimV-1) = label(icol)
            do j=1,ndimV
@@ -836,15 +836,15 @@ subroutine set_labels
   !
   !--set labels of the quantities read in
   !
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0)    label(irho)       = 'density'
-  if (iutherm.gt.0) label(iutherm)    = 'u'
-  if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  if (ih.gt.0)      label(ih)         = 'h'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  if (irho > 0)    label(irho)       = 'density'
+  if (iutherm > 0) label(iutherm)    = 'u'
+  if (ipmass > 0)  label(ipmass)     = 'particle mass'
+  if (ih > 0)      label(ih)         = 'h'
   !
   !--set labels for vector quantities
   !
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
@@ -852,7 +852,7 @@ subroutine set_labels
      enddo
   endif
 
-  if (iax.gt.0) then
+  if (iax > 0) then
      iamvec(iax:iax+ndimV-1) = iax
      labelvec(iax:iax+ndimV-1) = 'a'
      do i=1,ndimV
@@ -860,7 +860,7 @@ subroutine set_labels
      enddo
    endif
 
-  if (iBfirst.gt.0) then
+  if (iBfirst > 0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV
@@ -882,7 +882,7 @@ subroutine set_labels
   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
   !  unless they have had a smoothing length defined
   !
-  if (hsoft.gt.tiny(hsoft)) then
+  if (hsoft > tiny(hsoft)) then
      UseTypeInRenderings(2) = .true.
   else
      UseTypeInRenderings(2) = .false.

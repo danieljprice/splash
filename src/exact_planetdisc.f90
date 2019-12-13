@@ -123,7 +123,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
      rmax = min(max(maxval(rplot),abs(minval(rplot))),5.*rplanet)
      dr = (rmax - rmin)/npts
      do iarm=1,narms
-        if (ispiral.eq.2) then
+        if (ispiral==2) then
            phimin = params(1,iarm) + 90.  ! add 90 deg for East of North convention
            phimax = params(2,iarm) + 90.
            coeff(:) = params(3:,iarm)

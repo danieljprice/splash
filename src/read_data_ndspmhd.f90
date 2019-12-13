@@ -81,7 +81,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ndim_max = 1
   ndimV_max = 1
   nstepsread = 0
-  if (rootname(1:1).ne.' ') then
+  if (rootname(1:1) /= ' ') then
      datfile = trim(rootname)
      !print*,'rootname = ',rootname
   else
@@ -89,7 +89,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      return
   endif
 
-  if (iverbose.ge.1) print "(1x,a)",'reading ndspmhd format'
+  if (iverbose >= 1) print "(1x,a)",'reading ndspmhd format'
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
   !
   !--open data file and read data
@@ -107,11 +107,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        hfactind,ndim_max,ndimV_max,ncol_max,iformat
 !  print*,'time = ',timeind,' hfact = ',hfactind,' ndim=',ndim_max,'ncol=',ncol_max
 !  print*,'npart = ',npartin,ntotin,geomfile
-  if (ierr /= 0 .or. ndim_max.le.0 .or. ndim_max.gt.3 &
-     .or. ndimV_max.le.0 .or. ndimV_max.gt.3 &
-     .or. ncol_max.le.0 .or. ncol_max.gt.100 &
-     .or. npartin.le.0 .or. npartin.gt.1e7 .or. ntotin.le.0 .or. ntotin.gt.1e7 &
-     .or. iformat.lt.0 .or. iformat.gt.10) then
+  if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
+     .or. ndimV_max <= 0 .or. ndimV_max > 3 &
+     .or. ncol_max <= 0 .or. ncol_max > 100 &
+     .or. npartin <= 0 .or. npartin > 1e7 .or. ntotin <= 0 .or. ntotin > 1e7 &
+     .or. iformat < 0 .or. iformat > 10) then
      !
      !--try single precision
      !
@@ -119,11 +119,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
          hfactin,ndim_max,ndimV_max,ncol_max,iformat
      singleprecision = .true.
-     if (ierr /= 0 .or. ndim_max.le.0 .or. ndim_max.gt.3 &
-        .or. ndimV_max.le.0 .or. ndimV_max.gt.3 &
-        .or. ncol_max.le.0 .or. ncol_max.gt.100 &
-        .or. npartin.le.0 .or. npartin.gt.1e7 .or. ntotin.le.0 .or. ntotin.gt.1e7 &
-        .or. iformat.lt.0 .or. iformat.gt.10) then
+     if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
+        .or. ndimV_max <= 0 .or. ndimV_max > 3 &
+        .or. ncol_max <= 0 .or. ncol_max > 100 &
+        .or. npartin <= 0 .or. npartin > 1e7 .or. ntotin <= 0 .or. ntotin > 1e7 &
+        .or. iformat < 0 .or. iformat > 10) then
 
         print "(a)",' *** Error reading first header ***'
         print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
@@ -140,8 +140,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      nstep_max = max(1,maxstep,indexstart)
   endif
   npart_max = max(int(1.5*ntotin),maxpart)
-  if (.not.allocated(dat) .or. ntotin.gt.maxpart  &
-       .or. nstep_max.gt.maxstep .or. ncol_max.gt.maxcol) then
+  if (.not.allocated(dat) .or. ntotin > maxpart  &
+       .or. nstep_max > maxstep .or. ncol_max > maxcol) then
      call alloc(npart_max,nstep_max,ncol_max+ncalc,mixedtypes=.true.)
   endif
 !
@@ -188,7 +188,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      hfact = hfactin
      npartoftype(1,i) = nparti
      npartoftype(3,i) = ntoti - nparti
-     if (iverbose.ge.1) then
+     if (iverbose >= 1) then
         print "(a14,':',es10.3,a6,':',i8,a8,':',i8)",' time',time(i),'npart',nparti,'ntotal',ntoti
         print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolstep,'gamma',gamma(i),'hfact',hfact
         print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
@@ -203,15 +203,15 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      case default
         icoords = 1
      end select
-     if (icoords.ne.1) print "(a14,a)",' geometry: ',trim(geomfile)//' ('//trim(labelcoordsys(icoords))//')'
-     if (iverbose.ge.1 .and. any(ibound(1:ndim).ne.0)) then
+     if (icoords /= 1) print "(a14,a)",' geometry: ',trim(geomfile)//' ('//trim(labelcoordsys(icoords))//')'
+     if (iverbose >= 1 .and. any(ibound(1:ndim) /= 0)) then
         print "(a14,':',a15,' =',3(f8.4))",'boundaries','xmin',xmin(1:ndim)
         print "(15x,a15,' =',3(f8.4))",'xmax',xmax(1:ndim)
      endif
      !
      !--check for errors in timestep header
      !
-     if (ndim.gt.3 .or. ndimV.gt.3) then
+     if (ndim > 3 .or. ndimV > 3) then
         print*,'*** error in header: ndim or ndimV in file> 3'
         nstepsread = nstepsread - 1
         ndim = ndim_max
@@ -219,16 +219,16 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         close(iunit)
         return
      endif
-     if (ndim.gt.ndim_max) ndim_max = ndim
-     if (ndimV.gt.ndimV_max) ndimV_max = ndimV
+     if (ndim > ndim_max) ndim_max = ndim
+     if (ndimV > ndimV_max) ndimV_max = ndimV
 
-     if (ncolstep.ne.ncol_max) then
+     if (ncolstep /= ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         ncolumns = ncolstep
-        if (iverbose.ge.1) print*,'ncolumns = ',ncolumns,ncol_max
-        if (ncolumns.gt.ncol_max) ncol_max = ncolumns
+        if (iverbose >= 1) print*,'ncolumns = ',ncolumns,ncol_max
+        if (ncolumns > ncol_max) ncol_max = ncolumns
      endif
-     if (ncolstep.gt.maxcol) then
+     if (ncolstep > maxcol) then
         reallocate = .true.
         ncolumns = ncolstep
         ncol_max = ncolumns
@@ -236,12 +236,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         ncolumns = ncolstep
      endif
 
-     if (ntoti.gt.maxpart) then
+     if (ntoti > maxpart) then
         !print*, 'ntot greater than array limits!!'
         reallocate = .true.
         npart_max = int(1.5*ntoti)
      endif
-     if (i.gt.maxstep) then
+     if (i > maxstep) then
         nstep_max = i + max(10,INT(0.1*nstep_max))
         reallocate = .true.
      endif
@@ -253,7 +253,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
 
 
-     if (ntoti.gt.0) then
+     if (ntoti > 0) then
         if (.not.singleprecision) allocate(dattempd(ntoti))
         do icol=1,ncolstep
            if (singleprecision) then
@@ -268,7 +268,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
         allocate(itype(ntoti))
         read(iunit,iostat=ierr) itype(1:ntoti)
-        if (ierr.ne.0) then
+        if (ierr /= 0) then
            if (debugmode) print "(a)",'DEBUG: itype not found in dump file'
            iamtype(1:nparti,i) = 1
            iamtype(nparti+1:ntoti,i) = 3
@@ -286,7 +286,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
                     iamtype(j,i) = 3
                     npartoftype(3,i) = npartoftype(3,i) + 1
                  endif
-              elseif (itype(j).eq.2) then
+              elseif (itype(j)==2) then
                  iamtype(j,i) = 2
                  npartoftype(2,i) = npartoftype(2,i) + 1
               else
@@ -322,7 +322,7 @@ ndimV = ndimV_max
 
 call set_labels
 
-!if (iformat.eq.5 .and. .not.lenvironment('NSPLASH_BARYCENTRIC')) then
+!if (iformat==5 .and. .not.lenvironment('NSPLASH_BARYCENTRIC')) then
 !   call fake_twofluids
 !   iformat = 1
 !endif
@@ -354,11 +354,11 @@ subroutine set_labels
  implicit none
  integer :: i,icol
 
- if (ndim.le.0 .or. ndim.gt.3) then
+ if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
     return
  endif
- if (ndimV.le.0 .or. ndimV.gt.3) then
+ if (ndimV <= 0 .or. ndimV > 3) then
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif
@@ -386,7 +386,7 @@ subroutine set_labels
  label(ndim + ndimV+5) = '\ga'
  label(ndim + ndimV+6) = '\ga\du'
  icol = ndim+ndimV + 7
- if (iformat.eq.2 .or. iformat.eq.4) then
+ if (iformat==2 .or. iformat==4) then
     !
     !--mag field (vector)
     !
@@ -453,7 +453,7 @@ subroutine set_labels
        icol = icol + ndimV
     endif
  endif
- if (iformat.eq.5) then
+ if (iformat==5) then
     icol = icol + 1
     label(icol) = 'Dust fraction'
     idustfrac = icol
@@ -461,7 +461,7 @@ subroutine set_labels
     labelvec(icol+1:icol+ndimV) = '\Deltav'
     ideltav = icol + 1
     icol = icol + ndimV
- elseif (iformat.gt.2) then
+ elseif (iformat > 2) then
     irhorestframe = irho
     icol = icol + 1
     irho = icol

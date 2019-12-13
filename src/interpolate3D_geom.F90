@@ -101,7 +101,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
   endif
 
@@ -109,12 +109,12 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npix(1)*npix(2) .gt.100000)
+  iprintprogress = (npart  >=  100000) .or. (npix(1)*npix(2)  > 100000)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
   !
   !--get starting CPU time
@@ -161,7 +161,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -170,12 +170,12 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_parts
-     elseif (hi.lt.hmin) then
+     elseif (hi < hmin) then
      !
      !--use minimum h to capture subgrid particles
      !  (get better results *without* adjusting weights)
@@ -298,7 +298,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
   endif
 
@@ -306,12 +306,12 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npix(1)*npix(2) .gt.100000)
+  iprintprogress = (npart  >=  100000) .or. (npix(1)*npix(2)  > 100000)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
   !
   !--get starting CPU time
@@ -356,7 +356,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -365,12 +365,12 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_parts
-     elseif (hi.lt.hmin) then
+     elseif (hi < hmin) then
      !
      !--use minimum h to capture subgrid particles
      !  (get better results *without* adjusting weights)
@@ -422,7 +422,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wkernel(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -455,7 +455,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      do kpix=1,npix(3)
         do jpix=1,npix(2)
            do ipix=1,npix(1)
-              if (datnorm(ipix,jpix,kpix).gt.tiny(datnorm)) then
+              if (datnorm(ipix,jpix,kpix) > tiny(datnorm)) then
                  ddatnorm = 1./datnorm(ipix,jpix,kpix)
                  datsmooth(1,ipix,jpix,kpix) = datsmooth(1,ipix,jpix,kpix)*ddatnorm
                  datsmooth(2,ipix,jpix,kpix) = datsmooth(2,ipix,jpix,kpix)*ddatnorm

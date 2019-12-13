@@ -322,36 +322,36 @@ contains
   batcode = .false.
   tagged = .false.
   use_dustfrac = .false.
-  if (fileident(1:1).eq.'S') then
+  if (fileident(1:1)=='S') then
      smalldump = .true.
   endif
-  if (fileident(2:2).eq.'T') then
+  if (fileident(2:2)=='T') then
      tagged = .true.
   endif
-  if (index(fileident,'Phantom').ne.0) then
+  if (index(fileident,'Phantom') /= 0) then
      phantomdump = .true.
   else
      phantomdump = .false.
   endif
-  if (index(fileident,'vecp').ne.0) then
+  if (index(fileident,'vecp') /= 0) then
      usingvecp = .true.
   endif
-  if (index(fileident,'eulr').ne.0) then
+  if (index(fileident,'eulr') /= 0) then
      usingeulr = .true.
   endif
-  if (index(fileident,'clean').ne.0) then
+  if (index(fileident,'clean') /= 0) then
      cleaning = .true.
   endif
-  if (index(fileident,'H2chem').ne.0) then
+  if (index(fileident,'H2chem') /= 0) then
      h2chem = .true.
   endif
-  if (index(fileident,'RT=on').ne.0) then
+  if (index(fileident,'RT=on') /= 0) then
      rt_in_header = .true.
   endif
-  if (index(fileident,'1dust').ne.0) then
+  if (index(fileident,'1dust') /= 0) then
      use_dustfrac = .true.
   endif
-  if (index(fileident,'This is a test').ne.0) then
+  if (index(fileident,'This is a test') /= 0) then
      batcode = .true.
   endif
 
@@ -377,17 +377,17 @@ contains
      tagsreal(6) = 'hfact'
      tagsreal(7) = 'tolh'
      tagsreal(15:19) = 'massoftype'
-     if (nreals.ge.ilocbinary + 14) then
-        if (nreals.ge.ilocbinary + 15) then
+     if (nreals >= ilocbinary + 14) then
+        if (nreals >= ilocbinary + 15) then
            ipos = ilocbinary
         else
            print*,'*** WARNING: obsolete header format for external binary information ***'
            ipos = ilocbinary + 1
         endif
         if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
-        if (any(realarr(ilocbinary:ilocbinary+14).ne.0.)) then
+        if (any(realarr(ilocbinary:ilocbinary+14) /= 0.)) then
            tagsreal(ipos:ipos+2) = (/'x1','y1','z1'/)
-           if (nreals.ge.ilocbinary+15) then
+           if (nreals >= ilocbinary+15) then
               tagsreal(ipos+3:ipos+9) = (/'m1','h1','x2','y2','z2','m2','h2'/)
               ipos = ipos + 10
            else
@@ -410,7 +410,7 @@ contains
      tagsreal(4) = 'rhozero'
      tagsreal(5) = 'RK2'
      if (smalldump) then ! sphNG small dump
-        if (nreals.eq.15) then
+        if (nreals==15) then
            tagsreal(15) = 'pmassinitial'
         else
            tagsreal(23) = 'pmassinitial'
@@ -519,19 +519,19 @@ contains
            if (ierr /= 0) return
         endif
         if (phantomdump .and. nints < 7) ntypes = nints - 1
-        if (iverbose.ge.1) print *,'npart = ',npart,' MPI blocks = ',nblocks
+        if (iverbose >= 1) print *,'npart = ',npart,' MPI blocks = ',nblocks
         if (phantomdump) then
            n1 = npartoftypei(1)
         else
            call extract('n1',n1,intarr,tags,nints,ierr)
         endif
      else
-        if (nints.lt.3) then
+        if (nints < 3) then
            if (.not.phantomdump) print "(a)",'WARNING: npart,n1,n2 NOT IN HEADER??'
            read(iunit,iostat=ierr) npart
            npartoftypei(1) = npart
         elseif (phantomdump) then
-           if (nints.lt.7) then
+           if (nints < 7) then
               ntypes = nints - 1
               read(iunit,iostat=ierr) npart,npartoftypei(1:ntypes)
            else
@@ -543,7 +543,7 @@ contains
            endif
            n1 = npartoftypei(1)
            n2 = 0
-        elseif (nints.ge.7) then
+        elseif (nints >= 7) then
            read(iunit,iostat=ierr) npart,n1,n2,nreassign,naccrete,nkill,nblocks
         else
            print "(a)",'warning: nblocks not read from file (assuming non-MPI dump)'
@@ -552,12 +552,12 @@ contains
         if (ierr /=0) then
            print "(a)",'error reading npart,n1,n2 and/or number of MPI blocks'
            return
-        elseif (nblocks.gt.2000) then
+        elseif (nblocks > 2000) then
            print *,'npart = ',npart,' MPI blocks = ',nblocks
            nblocks = 1
            print*,' corrupt number of MPI blocks, assuming 1 '
         else
-           if (iverbose.ge.1) print *,'npart = ',npart,' MPI blocks = ',nblocks
+           if (iverbose >= 1) print *,'npart = ',npart,' MPI blocks = ',nblocks
         endif
      endif
   endif
@@ -623,7 +623,7 @@ contains
      return
   endif
 !   print "(a,i3)",' ndoubles = ',nreal8s
-  if (iverbose.ge.1) print "(4(a,i3),a)",' header contains ',nints,' ints, ',&
+  if (iverbose >= 1) print "(4(a,i3),a)",' header contains ',nints,' ints, ',&
                            nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
   if (tagged) then
      if (nreal8s > maxinblock) then
@@ -650,9 +650,9 @@ contains
      endif
 
   else
-     if (nreal8s.ge.4) then
+     if (nreal8s >= 4) then
         read(iunit,iostat=ierr) udist,umass,utime,umagfd
-     elseif (nreal8s.ge.3) then
+     elseif (nreal8s >= 3) then
         read(iunit,iostat=ierr) udist,umass,utime
         umagfd = 1.0
      else
@@ -677,11 +677,11 @@ contains
      print "(a)",'*** error reading number of array sizes ***'
      close(iunit)
      return
-  elseif (narrsizes.gt.maxarrsizes) then
+  elseif (narrsizes > maxarrsizes) then
      narrsizes = maxarrsizes
      print "(a,i2)",'WARNING: too many array sizes: reading only ',narrsizes
   endif
-  if (narrsizes.ge.4 .and. nreal8s.lt.4) then
+  if (narrsizes >= 4 .and. nreal8s < 4) then
      print "(a)",' WARNING: could not read magnetic units from dump file'
   endif
   if (debug) print*,' number of array sizes = ',narrsizes
@@ -701,21 +701,21 @@ contains
   integer,   intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
 
   read(iunit,iostat=ierr) isize(iarr),nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
-  if (iarr.eq.1) then
+  if (iarr==1) then
      ntotblock = isize(iarr)
-     if (npart.le.0) npart = ntotblock
+     if (npart <= 0) npart = ntotblock
      ntotal = ntotal + ntotblock
-  elseif (iarr.eq.2) then
+  elseif (iarr==2) then
      nptmasstot = nptmasstot + isize(iarr)
   endif
   if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
-  if (isize(iarr).gt.0 .and. iblock.eq.1) then
-     if (iverbose.ge.1) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
+  if (isize(iarr) > 0 .and. iblock==1) then
+     if (iverbose >= 1) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
         'block ',iarr,' dim = ',isize(iarr),' nint =',nint,nint1,nint2,nint4,nint8,&
         'nreal =',nreal,nreal4,nreal8
   endif
 !--we are going to read all real arrays but need to convert them all to default real
-  if (iarr.ne.2 .and. isize(iarr).eq.isize(1) .and. iblock.eq.1) then
+  if (iarr /= 2 .and. isize(iarr)==isize(1) .and. iblock==1) then
      ncolstep = ncolstep + nreal + nreal4 + nreal8
   endif
 
@@ -752,8 +752,8 @@ contains
   call extract('rhozero',rhozero,realarr,tags,nreals,ierrs(3))
 
 !--extract required information from the first block header
-  if (rhozero.gt.0.) then
-     tfreefall = SQRT((3. * pi) / (32. * rhozero))
+  if (rhozero > 0.) then
+     tfreefall = sqrt((3. * pi) / (32. * rhozero))
      tff = time/tfreefall
   else
      tfreefall = 0.
@@ -769,7 +769,7 @@ contains
         massoftype(itype)  = massoftypei(i)
      enddo
      npartoftype(itypemap_sink_phantom) = nptmasstot  ! sink particles
-     if (nblocks.gt.1) then
+     if (nblocks > 1) then
         print "(a)",' setting ngas=npart for MPI code '
         npartoftype(1)  = npart
         npartoftype(2:) = 0
@@ -785,22 +785,22 @@ contains
         call extract('x1',dat(npart+1,ix(1)),realarr,tags,nreals,ierrs(1))
         call extract('y1',dat(npart+1,ix(2)),realarr,tags,nreals,ierrs(2))
         call extract('z1',dat(npart+1,ix(3)),realarr,tags,nreals,ierrs(3))
-        if (ipmass.gt.0) call extract('m1',dat(npart+1,ipmass),realarr,tags,nreals,ierrs(4))
+        if (ipmass > 0) call extract('m1',dat(npart+1,ipmass),realarr,tags,nreals,ierrs(4))
         call extract('h1',dat(npart+1,ih),realarr,tags,nreals,ierrs(4))
         if (debug) print *,npart+1,npart+2
-        if (iverbose.ge.1) print *,'binary position:   primary: ',dat(npart+1,ix(1):ix(3))
+        if (iverbose >= 1) print *,'binary position:   primary: ',dat(npart+1,ix(1):ix(3))
 
         call extract('x2',dat(npart+2,ix(1)),realarr,tags,nreals,ierrs(1))
         call extract('y2',dat(npart+2,ix(2)),realarr,tags,nreals,ierrs(2))
         call extract('z2',dat(npart+2,ix(3)),realarr,tags,nreals,ierrs(3))
-        if (ipmass.gt.0) call extract('m2',dat(npart+2,ipmass),realarr,tags,nreals,ierrs(4))
+        if (ipmass > 0) call extract('m2',dat(npart+2,ipmass),realarr,tags,nreals,ierrs(4))
         call extract('h2',dat(npart+2,ih),realarr,tags,nreals,ierrs(5))
-        if (iverbose.ge.1 .and. ipmass > 0 .and. ih > 0) then
+        if (iverbose >= 1 .and. ipmass > 0 .and. ih > 0) then
            print *,'                 secondary: ',dat(npart+2,ix(1):ix(3))
            print *,' m1: ',dat(npart+1,ipmass),' m2:',dat(npart+2,ipmass),&
                    ' h1: ',dat(npart+2,ipmass),' h2:',dat(npart+2,ih)
         endif
-        if (ivx.gt.0) then
+        if (ivx > 0) then
            call extract('vx1',dat(npart+1,ivx),realarr,tags,nreals,ierrs(1))
            call extract('vy1',dat(npart+1,ivx+1),realarr,tags,nreals,ierrs(2))
            call extract('vz1',dat(npart+1,ivx+2),realarr,tags,nreals,ierrs(3))
@@ -856,7 +856,7 @@ contains
   real(doub_prec) :: uergg
 
 !--the following only for mhd small dumps or full dumps
-  if (ncolumns.ge.7) then
+  if (ncolumns >= 7) then
      if (mhddump) then
         iBfirst = irho+1
         if (.not.smalldump) then
@@ -865,9 +865,9 @@ contains
 
            if (phantomdump) then
               !--phantom MHD full dumps
-              if (nmhd.ge.4) then
+              if (nmhd >= 4) then
                  call make_vector_label('A',istartmhd,ndimV,iamvec,labelvec,label,labelcoord(:,1))
-                 if (nmhd.ge.7) then
+                 if (nmhd >= 7) then
                     label(istartmhd+3) = 'Euler beta_{x}'
                     label(istartmhd+4) = 'Euler beta_{x}'
                     label(istartmhd+5) = 'Euler beta_{y}'
@@ -875,18 +875,18 @@ contains
                  else
                     idivB = istartmhd+ndimV
                  endif
-              elseif (nmhd.ge.3) then
+              elseif (nmhd >= 3) then
                  label(istartmhd) = 'Euler alpha'
                  label(istartmhd+1) = 'Euler beta'
                  idivB = istartmhd + 2
-              elseif (nmhd.ge.2) then
+              elseif (nmhd >= 2) then
                  label(istartmhd) = 'Psi'
                  idivB = istartmhd + 1
-              elseif (nmhd.ge.1) then
+              elseif (nmhd >= 1) then
                  idivB = istartmhd
               endif
               iJfirst = 0
-              if (ncolumns.ge.idivB+1) then
+              if (ncolumns >= idivB+1) then
                  label(idivB+1) = 'alpha_{B}'
               endif
 
@@ -895,50 +895,50 @@ contains
               label(iutherm+1) = 'grad h'
               label(iutherm+2) = 'grad soft'
               label(iutherm+3) = 'alpha'
-              if (nmhd.ge.7 .and. usingvecp) then
+              if (nmhd >= 7 .and. usingvecp) then
                  call make_vector_label('A',istartmhd,ndimV,iamvec,labelvec,label,labelcoord(:,1))
                  idivB = istartmhd+ndimV
-              elseif (nmhd.ge.6 .and. usingeulr) then
+              elseif (nmhd >= 6 .and. usingeulr) then
                  label(istartmhd) = 'Euler alpha'
                  label(istartmhd+1) = 'Euler beta'
                  idivB = istartmhd + 2
-              elseif (nmhd.ge.6) then
+              elseif (nmhd >= 6) then
                  label(istartmhd) = 'psi'
                  idivB = istartmhd + 1
-                 if (nmhd.ge.8) then
+                 if (nmhd >= 8) then
                     label(istartmhd+2+ndimV+1) = '\eta_{real}'
                     label(istartmhd+2+ndimV+2) = '\eta_{art}'
                     units(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = udist*udist/utime
                     unitslabel(istartmhd+2+ndimV+1:istartmhd+2+ndimV+2) = ' [cm^2/s]'
                  endif
-                 if (nmhd.ge.14) then
+                 if (nmhd >= 14) then
                     call make_vector_label('fsym',istartmhd+2+ndimV+3,ndimV,&
                          iamvec,labelvec,label,labelcoord(:,1))
                     call make_vector_label('faniso',istartmhd+2+ndimV+6,ndimV,&
                          iamvec,labelvec,label,labelcoord(:,1))
                  endif
-              elseif (nmhd.ge.1) then
+              elseif (nmhd >= 1) then
                  idivB = istartmhd
               endif
               iJfirst = idivB + 1
-              if (ncolumns.ge.iJfirst+ndimV) then
+              if (ncolumns >= iJfirst+ndimV) then
                  label(iJfirst+ndimV) = 'alpha_{B}'
               endif
            endif
         else ! mhd small dump
-           if (nhydroreal4.ge.3) iutherm = iBfirst+ndimV
+           if (nhydroreal4 >= 3) iutherm = iBfirst+ndimV
         endif
      elseif (.not.smalldump) then
         ! pure hydro full dump
         ivx = irho+1
         iutherm = ivx + ndimV
         if (phantomdump) then
-           if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
+           if (istart_extra_real4 > 0 .and. istart_extra_real4 < 100) then
               label(istart_extra_real4) = 'alpha'
               label(istart_extra_real4+1) = 'alphau'
            endif
         else
-           if (istart_extra_real4.gt.0 .and. istart_extra_real4.lt.100) then
+           if (istart_extra_real4 > 0 .and. istart_extra_real4 < 100) then
               label(istart_extra_real4) = 'grad h'
               label(istart_extra_real4+1) = 'grad soft'
               label(istart_extra_real4+2) = 'alpha'
@@ -949,7 +949,7 @@ contains
      if (phantomdump .and. h2chem) then
         if (smalldump) then
            label(nhydroarrays+nmhdarrays+1) = 'H_2 ratio'
-        elseif (.not.smalldump .and. iutherm.gt.0) then
+        elseif (.not.smalldump .and. iutherm > 0) then
            label(iutherm+1) = 'H_2 ratio'
            label(iutherm+2) = 'HI abundance'
            label(iutherm+3) = 'proton abundance'
@@ -957,7 +957,7 @@ contains
            label(iutherm+5) = 'CO abundance'
         endif
      endif
-     if (istartrt.gt.0 .and. istartrt.le.ncolumns .and. rtdump) then ! radiative transfer dump
+     if (istartrt > 0 .and. istartrt <= ncolumns .and. rtdump) then ! radiative transfer dump
         iradenergy = istartrt
         label(iradenergy) = 'radiation energy'
         uergg = (udist/utime)**2
@@ -974,7 +974,7 @@ contains
            label(istartrt+4) = 'eddington factor'
            units(istartrt+4) = 1.0
         endif
-       if (icv.gt.0) then
+       if (icv > 0) then
           label(icv) = 'u/T'
           units(icv) = uergg
        endif
@@ -1042,42 +1042,42 @@ contains
      ! particular arrays are assumed to be in particular places
      !
      if (ikind==6) then   ! default reals
-        if (iarr.eq.1.and.((phantomdump.and.ipos.eq.4) &
-           .or.(.not.phantomdump.and.ipos.eq.6))) then
+        if (iarr==1.and.((phantomdump.and.ipos==4) &
+           .or.(.not.phantomdump.and.ipos==6))) then
            ! read x,y,z,m,h and then place arrays after always-present ones
            ! (for phantom read x,y,z only)
            icolumn = nhydroarrays+nmhdarrays + 1
-        elseif (.not.phantomdump .and. (iarr.eq.4 .and. ipos.le.3)) then
+        elseif (.not.phantomdump .and. (iarr==4 .and. ipos <= 3)) then
            icolumn = nhydroarrays + ipos
         else
            icolumn = imaxcolumnread + 1
         endif
      elseif (ikind==4) then  ! real*4s
         if (phantomdump) then
-           if (iarr.eq.1 .and. ipos.eq.1) then
+           if (iarr==1 .and. ipos==1) then
               icolumn = ih ! h is always first real4 in phantom dumps
               !!--density depends on h being read
               !required(ih) = .true.
-           elseif (iarr.eq.4 .and. ipos.le.3) then
+           elseif (iarr==4 .and. ipos <= 3) then
               icolumn = nhydroarrays + ipos
            else
               icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
-              if (iarr.eq.1) then
+              if (iarr==1) then
                  istart_extra_real4 = min(istart_extra_real4,icolumn)
                  if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
               endif
            endif
         else
-           if (iarr.eq.1 .and. ipos.eq.1) then
+           if (iarr==1 .and. ipos==1) then
               icolumn = irho ! density
-           elseif (iarr.eq.1 .and. smalldump .and. ipos.eq.2) then
+           elseif (iarr==1 .and. smalldump .and. ipos==2) then
               icolumn = ih ! h which is real4 in small dumps
            !--this was a bug for sphNG files...
-           !elseif (iarr.eq.4 .and. i.le.3) then
+           !elseif (iarr==4 .and. i <= 3) then
            !   icolumn = nhydroarrays + ipos
            else
               icolumn = max(nhydroarrays+nmhdarrays + 1,imaxcolumnread + 1)
-              if (iarr.eq.1) then
+              if (iarr==1) then
                  istart_extra_real4 = min(istart_extra_real4,icolumn)
                  if (debug) print*,' istart_extra_real4 = ',istart_extra_real4
               endif
@@ -1231,7 +1231,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
      if (required(i)) ilastrequired = i
   enddo
 
-  if (iverbose.ge.1) print "(1x,a)",'reading sphNG format'
+  if (iverbose >= 1) print "(1x,a)",'reading sphNG format'
   write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
   debug = lenvironment('SSPLASH_DEBUG')
@@ -1249,20 +1249,20 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       !
       doubleprec = .true.
       read(iunit,iostat=ierr) intg1,r8,int2,iversion,int3
-      if (intg1.ne.690706 .and. intg1.ne.060769) then
+      if (intg1 /= 690706 .and. intg1 /= 060769) then
          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
          close(iunit)
          return
       endif
-      if (int2.ne.780806 .and. int2.ne.060878) then
+      if (int2 /= 780806 .and. int2 /= 060878) then
          print "(a)",' single precision dump'
          rewind(iunit)
          read(iunit,iostat=ierr) intg1,r4,int2,iversion,int3
-         if (int2.ne.780806 .and. int2.ne.060878) then
+         if (int2 /= 780806 .and. int2 /= 060878) then
             print "(a)",'ERROR determining single/double precision in file header'
          endif
          doubleprec = .false.
-      elseif (int3.ne.690706) then
+      elseif (int3 /= 690706) then
           print*,' got ',intg1,r4,int2,iversion,int3
          print "(a)",'*** WARNING: default int appears to be int*8: not implemented'
       else
@@ -1324,7 +1324,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
 !--read array header from this block
 !
-   if (iblock.eq.1) ncolstep = 0
+   if (iblock==1) ncolstep = 0
    do iarr=1,narrsizes
       call read_block_header(iunit,iblock,iarr,iverbose,debug, &
            isize,nint(iarr),nint1(iarr),nint2(iarr),nint4(iarr),nint8(iarr),&
@@ -1341,7 +1341,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
 !
-   if (smalldump .and. nreal(1).eq.5 .and. iblock.eq.1 .and. lenvironment('SSPLASH_FIX_CORRUPT')) then
+   if (smalldump .and. nreal(1)==5 .and. iblock==1 .and. lenvironment('SSPLASH_FIX_CORRUPT')) then
       print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
       nreal(1) = 3
       ncolstep = ncolstep - 2
@@ -1353,7 +1353,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !--work out from array header how many columns we are going to read
 !  in order to allocate memory
 !
-   if (iblock.eq.1) then
+   if (iblock==1) then
       igotmass = .true.
       if (smalldump .or. phantomdump) then
          if (phantomdump) then
@@ -1372,7 +1372,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
             endif
          endif
          if (debug) print*,'DEBUG: got massoftype(gas) = ',massoftypei(1)
-         if (any(massoftypei(1:ntypes).gt.tiny(0.)) .and. .not.lowmemorymode) then
+         if (any(massoftypei(1:ntypes) > tiny(0.)) .and. .not.lowmemorymode) then
             ncolstep = ncolstep + 1  ! make an extra column to contain particle mass
             imadepmasscolumn = .true.
          elseif (lowmemorymode) then
@@ -1380,7 +1380,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          else
             igotmass = .false.
          endif
-         if (all(abs(massoftypei(1:ntypes)).lt.tiny(0.)) .and. nreal(1).lt.4) then
+         if (all(abs(massoftypei(1:ntypes)) < tiny(0.)) .and. nreal(1) < 4) then
             print "(a)",' error: particle masses not present in small dump file'
             igotmass = .false.
          endif
@@ -1410,10 +1410,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       nhydroarraysinfile = nreal(1) + nreal4(1) + nreal8(1)
       nhydroreal4 = nreal4(1)
       if (imadepmasscolumn) nhydroarraysinfile = nhydroarraysinfile + 1
-      if (nhydroarraysinfile .lt.nhydroarrays .and. .not.phantomdump) then
+      if (nhydroarraysinfile  < nhydroarrays .and. .not.phantomdump) then
          print "(a)",' ERROR: one of x,y,z,m,h or rho missing in small dump read'
          nhydroarrays = nreal(1)+nreal4(1)+nreal8(1)
-      elseif (phantomdump .and. (nreal(1).lt.3 .or. nreal4(1).lt.1)) then
+      elseif (phantomdump .and. (nreal(1) < 3 .or. nreal4(1) < 1)) then
          print "(a)",' ERROR: x,y,z or h missing in phantom read'
       endif
       if (onefluid_dust) then
@@ -1426,7 +1426,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       else
          ndustarrays = 0
       endif
-      if (narrsizes.ge.4) then
+      if (narrsizes >= 4) then
          nmhdarrays = 3 ! Bx,By,Bz
          nmhd = nreal(4) + nreal4(4) + nreal8(4) - nmhdarrays ! how many "extra" mhd arrays
          if (debug) print*,'DEBUG: ',nmhd,' extra MHD arrays'
@@ -1435,9 +1435,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       endif
 
       !--radiative transfer dump?
-      if (narrsizes.ge.3 .and. isize(3).eq.isize(1)) rtdump = .true.
+      if (narrsizes >= 3 .and. isize(3)==isize(1)) rtdump = .true.
       !--mhd dump?
-      if (narrsizes.ge.4) mhddump = .true.
+      if (narrsizes >= 4) mhddump = .true.
 
       if (.not.(mhddump.or.smalldump)) then
          ivx = nhydroarrays+1
@@ -1466,9 +1466,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
 !--allocate memory now that we know the number of columns
 !
-   if (iblock.eq.1) then
+   if (iblock==1) then
       ncolumns = ncolstep + ncalc
-      if (ncolumns.gt.maxplot) then
+      if (ncolumns > maxplot) then
          print*,'ERROR with ncolumns = ',ncolumns,' in data read'
          return
       endif
@@ -1478,7 +1478,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       enddo
    endif
 
-   if (npart_max.gt.maxpart .or. j.gt.maxstep .or. ncolumns.gt.maxcol) then
+   if (npart_max > maxpart .or. j > maxstep .or. ncolumns > maxcol) then
       if (lowmemorymode) then
          call alloc(max(npart_max+2,maxpart),j,ilastrequired)
       else
@@ -1489,7 +1489,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !--now that memory has been allocated, copy info from the header into
 !  the relevant arrays
 !
-   if (iblock.eq.1) then
+   if (iblock==1) then
       call extract_variables_from_header(tagsreal,dummyreal,nreals,iverbose,debug, &
            gotbinary,nblocks,nptmasstot,npartoftypei,ntypes,&
            time(j),gamma(j),hfact,npart,ntotal,npartoftype(:,j),masstype(:,j), &
@@ -1508,7 +1508,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
       !
       !--stop reading file here if no columns required
       !
-      if (ilastrequired.eq.0) exit over_MPIblocks
+      if (ilastrequired==0) exit over_MPIblocks
 
       if (allocated(iphase)) deallocate(iphase)
       allocate(iphase(npart_max+2))
@@ -1535,35 +1535,35 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
    i2 = i1 + isize(1) - 1
    if (debug) then
       print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
-   elseif (nblocks.gt.1) then
-      if (iblock.eq.1) write(*,"(a,i1,a)",ADVANCE="no") ' reading MPI blocks: .'
+   elseif (nblocks > 1) then
+      if (iblock==1) write(*,"(a,i1,a)",ADVANCE="no") ' reading MPI blocks: .'
       write(*,"('.')",ADVANCE="no")
    endif
    iptmass1 = iptmass2 + 1
    iptmass2 = iptmass1 + isize(2) - 1
    nptmass = nptmasstot
-   if (nptmass.gt.0 .and. debug) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
+   if (nptmass > 0 .and. debug) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
    do iarr=1,narrsizes
-      if (nreal(iarr) + nreal4(iarr) + nreal8(iarr).gt.0) then
-         if (iarr.eq.4) then
+      if (nreal(iarr) + nreal4(iarr) + nreal8(iarr) > 0) then
+         if (iarr==4) then
             istartmhd = imaxcolumnread + 1
             if (debug) print*,' istartmhd = ',istartmhd
-         elseif (iarr.eq.3 .and. rtdump) then
+         elseif (iarr==3 .and. rtdump) then
             istartrt = max(nhydroarrays+nmhdarrays+1,imaxcolumnread + 1)
             if (debug) print*,' istartrt = ',istartrt
          endif
       endif
 !--read iphase from array block 1
-      if (iarr.eq.1) then
+      if (iarr==1) then
          !--skip default int
          nskip = nint(iarr)
          do i=1,nskip
             if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
             read(iunit,end=33,iostat=ierr)
          enddo
-         if (nint1(iarr).lt.1) then
-            if (.not.phantomdump .or. any(npartoftypei(2:).gt.0)) then
+         if (nint1(iarr) < 1) then
+            if (.not.phantomdump .or. any(npartoftypei(2:) > 0)) then
                if (iverbose > 0) print "(a)",' WARNING: can''t locate iphase in dump'
             elseif (phantomdump) then
                if (iverbose > 0) print "(a)",' WARNING: can''t locate iphase in dump'
@@ -1578,11 +1578,11 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
             !--skip remaining integer arrays
             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
          endif
-      elseif (smalldump .and. iarr.eq.2 .and. isize(iarr).gt.0 .and. .not.phantomdump) then
+      elseif (smalldump .and. iarr==2 .and. isize(iarr) > 0 .and. .not.phantomdump) then
 !--read listpm from array block 2 for small dumps (needed here to extract sink masses)
          if (allocated(listpm)) deallocate(listpm)
          allocate(listpm(isize(iarr)))
-         if (nint(iarr).lt.1) then
+         if (nint(iarr) < 1) then
             print "(a)",'ERROR: can''t locate listpm in dump'
             nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
          else
@@ -1595,7 +1595,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
       endif
 
-      if (iarr.eq.3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
+      if (iarr==3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
          nskip = nskip - 1
          print*,' FIXING HACKED DUMP FILE'
       endif
@@ -1607,10 +1607,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
 !--real arrays
 !
-      if (iarr.eq.2) then
+      if (iarr==2) then
 !--read sink particles from phantom dumps
-         if (phantomdump .and. iarr.eq.2 .and. isize(iarr).gt.0) then
-            if (nreal(iarr).lt.5) then
+         if (phantomdump .and. iarr==2 .and. isize(iarr) > 0) then
+            if (nreal(iarr) < 5) then
                print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
                nskip = nreal(iarr)
             else
@@ -1646,8 +1646,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                            iloc = 0
                         endif
                      end select
-                     if (iloc.gt.size(dat(1,:,j))) then; print*,' error iloc = ',iloc,ivx; stop; endif
-                     if (iloc.gt.0) then
+                     if (iloc > size(dat(1,:,j))) then; print*,' error iloc = ',iloc,ivx; stop; endif
+                     if (iloc > 0) then
                         do i=1,isize(iarr)
                            dat(npart+i,iloc,j) = real(dattemp(i))
                         enddo
@@ -1678,7 +1678,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                            iloc = 0
                         endif
                      end select
-                     if (iloc.gt.0) then
+                     if (iloc > 0) then
                         if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
                         if (tagged) read(iunit,end=33,iostat=ierr) !tagarr(iloc)
                         read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
@@ -1695,10 +1695,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                endif
                npart  = npart + isize(iarr)
             endif
-         elseif (smalldump .and. iarr.eq.2 .and. allocated(listpm)) then
+         elseif (smalldump .and. iarr==2 .and. allocated(listpm)) then
 !--for sphNG, read sink particle masses from block 2 for small dumps
-            if (nreal(iarr).lt.1) then
-               if (isize(iarr).gt.0) print "(a)",'ERROR: sink masses not present in small dump'
+            if (nreal(iarr) < 1) then
+               if (isize(iarr) > 0) print "(a)",'ERROR: sink masses not present in small dump'
                nskip = nreal(iarr) + nreal4(iarr) + nreal8(iarr)
             else
                if (doubleprec) then
@@ -1708,8 +1708,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                   if (ierr /=0) print "(a)",'ERROR in memory allocation'
                   if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
                   read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
-                  if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
-                  if (ipmass.gt.0) then
+                  if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
+                  if (ipmass > 0) then
                      do i=1,isize(iarr)
                         dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
                      enddo
@@ -1723,8 +1723,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                   if (ierr /=0) print "(a)",'ERROR in memory allocation'
                   if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
                   read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
-                  if (nptmass.ne.isize(iarr)) print "(a)",'ERROR: nptmass.ne.block size'
-                  if (ipmass.gt.0) then
+                  if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
+                  if (ipmass > 0) then
                      do i=1,isize(iarr)
                         dat(listpm(iptmass1+i-1),ipmass,j) = real(dattempsingle(i))
                      enddo
@@ -1745,15 +1745,15 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          ! deallocate dattempsingle
          if (allocated(dattempsingle)) deallocate(dattempsingle)
 
-      elseif (isize(iarr).eq.isize(1)) then
+      elseif (isize(iarr)==isize(1)) then
 !
 !--read all real arrays defined on all the particles (same size arrays as block 1)
 !
-         if ((doubleprec.and.nreal(iarr).gt.0).or.nreal8(iarr).gt.0) then
+         if ((doubleprec.and.nreal(iarr) > 0).or.nreal8(iarr) > 0) then
             if (allocated(dattemp)) deallocate(dattemp)
             allocate(dattemp(isize(iarr)),stat=ierr)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattemp)'
-         elseif (nreal(iarr).gt.0 .or. nreal8(iarr).gt.0) then
+         elseif (nreal(iarr) > 0 .or. nreal8(iarr) > 0) then
             if (allocated(dattempsingle)) deallocate(dattempsingle)
             allocate(dattempsingle(isize(iarr)),stat=ierr)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
@@ -1780,30 +1780,30 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
 !        set masses for equal mass particles (not dumped in small dump or in phantom)
 !
-         if (((smalldump.and.nreal(1).lt.ipmass).or.phantomdump).and. iarr.eq.1) then
-            if (abs(masstype(1,j)).gt.tiny(masstype)) then
+         if (((smalldump.and.nreal(1) < ipmass).or.phantomdump).and. iarr==1) then
+            if (abs(masstype(1,j)) > tiny(masstype)) then
                icolumn = ipmass
-               if (required(ipmass) .and. ipmass.gt.0) then
+               if (required(ipmass) .and. ipmass > 0) then
                   if (phantomdump) then
                      dat(i1:i2,ipmass,j) = masstype(itypemap_phantom(iphase(i1:i2)),j)
                   else
-                     where (iphase(i1:i2).eq.0) dat(i1:i2,icolumn,j) = masstype(1,j)
+                     where (iphase(i1:i2)==0) dat(i1:i2,icolumn,j) = masstype(1,j)
                   endif
                endif
                !--dust mass for phantom particles
-               if (phantomdump .and. npartoftypei(itypemap_dust_phantom).gt.0 .and. ipmass.gt.0) then
+               if (phantomdump .and. npartoftypei(itypemap_dust_phantom) > 0 .and. ipmass > 0) then
                   print*,'dust particle mass = ',masstype(itypemap_dust_phantom,j),&
                          ' ratio m_dust/m_gas = ',masstype(itypemap_dust_phantom,j)/masstype(1,j)
                endif
                if (debug) print*,'mass ',icolumn
-            elseif (phantomdump .and. npartoftypei(1).gt.0) then
+            elseif (phantomdump .and. npartoftypei(1) > 0) then
                print*,' ERROR: particle mass zero in Phantom dump file!'
             endif
          endif
 !
 !        real4 arrays (may need converting if splash is compiled in double precision)
 !
-         if (nreal4(iarr).gt.0 .and. kind(dat).eq.doub_prec) then
+         if (nreal4(iarr) > 0 .and. kind(dat)==doub_prec) then
             if (allocated(dattempsingle)) deallocate(dattempsingle)
             allocate(dattempsingle(isize(iarr)),stat=ierr)
             if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
@@ -1812,7 +1812,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
          if (debug) print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
 !        real4s may need converting
          imaxcolumnread = max(imaxcolumnread,icolumn)
-         if ((nreal(iarr)+nreal4(iarr)).gt.6) imaxcolumnread = max(imaxcolumnread,6)
+         if ((nreal(iarr)+nreal4(iarr)) > 6) imaxcolumnread = max(imaxcolumnread,6)
 
          do i=1,nreal4(iarr)
             tagtmp = ''
@@ -1834,13 +1834,13 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                read(iunit,end=33,iostat=ierr)
             endif
             !--construct density for phantom dumps based on h, hfact and particle mass
-            if (phantomdump .and. icolumn.eq.ih) then
+            if (phantomdump .and. icolumn==ih) then
                icolumn = irho ! density
                !
                !--dead particles have -ve smoothing lengths in phantom
                !  so use abs(h) for these particles and hide them
                !
-               if (any(npartoftypei(2:).gt.0)) then
+               if (any(npartoftypei(2:) > 0)) then
                   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
                   !--need masses for each type if not all gas
                   if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
@@ -1865,9 +1865,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
                   !--assume all particles are gas particles
                   do k=i1,i2
                      hi = dat(k,ih,j)
-                     if (hi.gt.0.) then
+                     if (hi > 0.) then
                         rhoi = massoftypei(1)*(hfact/hi)**3
-                     elseif (hi.lt.0.) then
+                     elseif (hi < 0.) then
                         rhoi = massoftypei(1)*(hfact/abs(hi))**3
                         npartoftype(1,j) = npartoftype(1,j) - 1
                         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
@@ -1914,7 +1914,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
  !
  !--read .divv file for phantom dumps
  !
-    if (phantomdump .and. idivvcol.ne.0 .and. any(required(idivvcol:icurlvzcol))) then
+    if (phantomdump .and. idivvcol /= 0 .and. any(required(idivvcol:icurlvzcol))) then
        print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
        open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
        if (ierr /= 0) then
@@ -1934,22 +1934,22 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
-    if (allocated(dat) .and. n1.GT.0 .and. n1 <= size(dat(:,1,1)) &
+    if (allocated(dat) .and. n1 > 0 .and. n1 <= size(dat(:,1,1)) &
        .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
        call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
     endif
  !
  !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
  !
-    if (allocated(dat) .and. n1.GT.0 .and. all(required(1:2))) then
+    if (allocated(dat) .and. n1 > 0 .and. all(required(1:2))) then
        omega = renvironment('SSPLASH_OMEGAT')
-       if (abs(omega).gt.tiny(omega) .and. ndim.ge.2) then
+       if (abs(omega) > tiny(omega) .and. ndim >= 2) then
           call reset_corotating_positions(n1,dat(1:n1,1:2,j),omega,time(j))
        endif
 
        if (.not. smalldump) then
-          if (abs(omega).lt.tiny(omega)) omega = renvironment('SSPLASH_OMEGA')
-          if (abs(omega).gt.tiny(omega) .and. ivx.gt.0) then
+          if (abs(omega) < tiny(omega)) omega = renvironment('SSPLASH_OMEGA')
+          if (abs(omega) > tiny(omega) .and. ivx > 0) then
              if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
                 print*,' ERROR subtracting corotating frame with partial data read'
              else
@@ -1973,7 +1973,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !
 !--translate iphase into particle types (mixed type storage)
 !
-    if (size(iamtype(:,j)).gt.1) then
+    if (size(iamtype(:,j)) > 1) then
        if (phantomdump) then
        !
        !--phantom: translate iphase to splash types
@@ -1983,7 +1983,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              iamtype(i,j) = itype
              select case(itype)
              case(1,2,4) ! remove accreted particles
-                if (ih.gt.0 .and. required(ih)) then
+                if (ih > 0 .and. required(ih)) then
                    if (dat(i,ih,j) <= 0.) then
                       iamtype(i,j) = itypemap_unknown_phantom
                    endif
@@ -2016,7 +2016,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        endif
        !print*,'mixed types: ngas = ',ngas,nptmassi,nunknown
 
-    elseif (any(iphase(1:ntotal).ne.0)) then
+    elseif (any(iphase(1:ntotal) /= 0)) then
        if (phantomdump) then
           print*,'ERROR: low memory mode will not work correctly with phantom + multiple types'
           print*,'press any key to ignore this and continue anyway (at your own risk...)'
@@ -2029,7 +2029,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        print "(a)",' sorting particles by type...'
        nunknown = 0
        do i=1,npart
-          if (iphase(i).ne.0) nunknown = nunknown + 1
+          if (iphase(i) /= 0) nunknown = nunknown + 1
        enddo
        ncolcopy = min(ncolstep,maxcol)
        allocate(dattemp2(nunknown,ncolcopy))
@@ -2053,16 +2053,16 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
           do i=1,ntotal
              ipos = ipos + 1
-             if (iphase(i).ge.iphaseminthistype .and. iphase(i).le.iphasemaxthistype) then
+             if (iphase(i) >= iphaseminthistype .and. iphase(i) <= iphasemaxthistype) then
                 nthistype = nthistype + 1
                 !--save point mass information in temporary array
-                if (nptmassi.gt.size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
+                if (nptmassi > size(dattemp2(:,1))) stop 'error: ptmass array bounds exceeded in data read'
                 dattemp2(nthistype,1:ncolcopy) = dat(i,1:ncolcopy,j)
    !             print*,i,' removed', dat(i,1:3,j)
                 ipos = ipos - 1
              endif
             !--shuffle dat array
-             if (ipos.ne.i .and. i.lt.ntotal) then
+             if (ipos /= i .and. i < ntotal) then
      !           print*,'copying ',i+1,'->',ipos+1
                 dat(ipos+1,1:ncolcopy,j) = dat(i+1,1:ncolcopy,j)
                 !--must also shuffle iphase (to be correct for other types)
@@ -2082,7 +2082,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
           select case(itype)
           case(1)
              nptmassi = nthistype
-             if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
+             if (nptmassi /= nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass =',nptmass
           case(2)
              nstar = nthistype
           case(3)
@@ -2146,7 +2146,7 @@ contains
   xcm(:) = 0.
   masstot = 0.
   do i=1,np
-     if (iphase(i).ge.0) then
+     if (iphase(i) >= 0) then
         pmassi = pmass(i)
         masstot = masstot + pmass(i)
         where (required(1:3)) xcm(:) = xcm(:) + pmassi*xyz(i,:)
@@ -2199,8 +2199,8 @@ contains
      r = sqrt(xy(ip,1)**2 + xy(ip,2)**2)
      phii = atan2(xy(ip,2),xy(ip,1))
      phinew = phii + omeg*t
-     xy(ip,1) = r*COS(phinew)
-     xy(ip,2) = r*SIN(phinew)
+     xy(ip,1) = r*cos(phinew)
+     xy(ip,2) = r*sin(phinew)
   enddo
 !$omp enddo
 !$omp end parallel
@@ -2233,11 +2233,11 @@ subroutine set_labels
   character(len=20) :: string,unitlabelx
   character(len=20) :: deltav_string
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -2363,23 +2363,23 @@ subroutine set_labels
         end select
      enddo
   else
-     if (smalldump .and. nhydroreal4.ge.3) iutherm = irho+1
+     if (smalldump .and. nhydroreal4 >= 3) iutherm = irho+1
      call guess_labels(ncolumns,iamvec,label,labelvec,istartmhd,istart_extra_real4,&
           nmhd,nhydroreal4,ndimV,irho,iBfirst,ivx,iutherm,idivB,iJfirst,&
           iradenergy,icv,udist,utime,units,unitslabel)
   endif
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0) label(irho) = 'density'
-  if (iutherm.gt.0) label(iutherm) = 'u'
-  if (ih.gt.0) label(ih) = 'h       '
-  if (ipmass.gt.0) label(ipmass) = 'particle mass'
-  if (idivB.gt.0) label(idivB) = 'div B'
-  if (idivvcol.gt.0) label(idivvcol) = 'div v'
-  if (icurlvxcol.gt.0 .and. icurlvycol.gt.0 .and. icurlvzcol.gt.0) then
+  if (irho > 0) label(irho) = 'density'
+  if (iutherm > 0) label(iutherm) = 'u'
+  if (ih > 0) label(ih) = 'h       '
+  if (ipmass > 0) label(ipmass) = 'particle mass'
+  if (idivB > 0) label(idivB) = 'div B'
+  if (idivvcol > 0) label(idivvcol) = 'div v'
+  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
      call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   endif
-  if (ideltavsum.gt.0) then
+  if (ideltavsum > 0) then
      ! Modify the deltavsum labels to have vector subscripts
      do j=1,ndimV
         label(ideltavsum+j-1) = 'deltavsum'//'_'//labelcoord(j,1)
@@ -2411,55 +2411,55 @@ subroutine set_labels
   !--set units for plot data
   !
   call get_nearest_length_unit(udist,unitx,unitlabelx)
-  if (ndim.ge.3) then
+  if (ndim >= 3) then
      units(1:3) = unitx
      unitslabel(1:3) = unitlabelx
   endif
-   if (ipmass.gt.0) then
+   if (ipmass > 0) then
       units(ipmass) = umass
       unitslabel(ipmass) = ' [g]'
    endif
    units(ih) = unitx
    unitslabel(ih) = unitlabelx
-   if (ivx.gt.0) then
+   if (ivx > 0) then
       units(ivx:ivx+ndimV-1) = udist/utime
       unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'
    endif
-   if (ideltavsum.gt.0) then
+   if (ideltavsum > 0) then
       units(ideltavsum:ideltav+ndimV-1) = udist/utime
       unitslabel(ideltavsum:ideltav+ndimV-1) = ' [cm/s]'
    endif
-   if (ideltav.gt.0) then
+   if (ideltav > 0) then
       units(ideltav:ideltav+ndimV-1) = udist/utime
       unitslabel(ideltav:ideltav+ndimV-1) = ' [cm/s]'
    endif
-   if (iutherm.gt.0) then
+   if (iutherm > 0) then
       units(iutherm) = (udist/utime)**2
       unitslabel(iutherm) = ' [erg/g]'
    endif
-   if (ipr.gt.0) then
+   if (ipr > 0) then
       units(ipr) = umass/(udist*utime**2)
       unitslabel(ipr) = ' [g / (cm s^2)]'
    endif
    units(irho) = umass/udist**3
    unitslabel(irho) = ' [g/cm^3]'
-   if (iBfirst.gt.0) then
+   if (iBfirst > 0) then
       units(iBfirst:iBfirst+ndimV-1) = umagfd
       unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
    endif
-   if (igrainsize.gt.0) then
+   if (igrainsize > 0) then
        units(igrainsize) = udist
        unitslabel(igrainsize) = ' [cm]'
    endif
-   if (igraindens.gt.0) then
+   if (igraindens > 0) then
        units(igraindens) = umass/udist**3
        unitslabel(igraindens) = ' [g/cm^3]'
    endif
-   if (ivrel.gt.0) then
+   if (ivrel > 0) then
       units(ivrel) = udist/utime/100
       unitslabel(ivrel) = ' [m/s]'
    endif
-   if (idivB.gt.0) then
+   if (idivB > 0) then
       units(idivB:idivB+3) = umagfd/unitx
       unitslabel(idivB:idivB+3) = ' [G/'//trim(unitlabelx(3:))
    endif

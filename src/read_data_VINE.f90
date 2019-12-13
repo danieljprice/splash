@@ -188,37 +188,37 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !--get number of particles from header and allocate memory
      !
      iheadlength = iheader(id_iheadlen)
-     if (iheadlength.gt.maxheadlength) print "(a)",' ERROR: header length too big!'
+     if (iheadlength > maxheadlength) print "(a)",' ERROR: header length too big!'
      ntoti   = iheader(id_npart    )
      nparti  = iheader(id_npart_sph)
      nptmass = iheader(id_npoim    )
      ndim    = iheader(id_ndim     )
-     if (ntoti.lt.nparti) then
+     if (ntoti < nparti) then
         print*,' *** WARNING: ntotal < npart_sph in header, setting n_total=n_sph'
         ntoti = nparti
      endif
-     if (nptmass.lt.0) then
+     if (nptmass < 0) then
         print*,' *** WARNING: error in nptmass read from header, nptmass = ',nptmass,' setting to 0'
         nptmass = 0
      endif
-     if (nparti.le.0) then
+     if (nparti <= 0) then
         print*,' *** WARNING: error in npart read from header, npart = ',nparti
         ierr = 2
      endif
-     if (ndim.le.0 .or. ndim.gt.3) then
+     if (ndim <= 0 .or. ndim > 3) then
         print*,' *** WARNING: error in ndim read from header, ndim = ',ndim
         ierr = 1
      endif
 
      ndimV   = ndim
-     if (ndim.ne.3) print "(a,i1)",' number of dimensions = ',ndim
+     if (ndim /= 3) print "(a,i1)",' number of dimensions = ',ndim
      if (mhdread) then
         ncolstep = 2*ndim + 6 + ndim
      else
         ncolstep = 2*ndim + 6
      endif
      ncolumns = ncolstep
-     if ((.not.allocated(dat) .or. ntoti+nptmass.gt.npart_max) .and. ierr.eq.0) then
+     if ((.not.allocated(dat) .or. ntoti+nptmass > npart_max) .and. ierr==0) then
         if (.not.allocated(dat)) then
            npart_max = ntoti + nptmass
         else
@@ -243,7 +243,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-       if (j.gt.maxstep) then
+       if (j > maxstep) then
           call alloc(maxpart,j+2*nstepsread,maxcol)
        endif
 !
@@ -274,7 +274,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate a temporary array for itstepbin (MHD or point masses only)
 !
-       if (mhdread .or. nptmass.gt.0) then
+       if (mhdread .or. nptmass > 0) then
           if (allocated(itstepbin)) deallocate(itstepbin)
           allocate(itstepbin(npart_max),stat=ierr)
           !itstepbin = 0
@@ -290,7 +290,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        icol = ndim + 1 + ndimV + 1
 
        if (mhdread) then
-          if (nptmass.gt.0) then
+          if (nptmass > 0) then
              print "(a)",' WARNING: MHD format but point masses are present'
              print "(a)",'          and reading of point masses is not implemented'
              print "(a)",' *** Please email a copy of io.F so I can fix this ***  '
@@ -310,7 +310,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
                (itstepbin(i),i=1,ntoti), &
                (dattempvec(ivx+ndimV:ivx+2*ndimV-1,i),i=1,nparti)
        else
-          if (nptmass.gt.0) then
+          if (nptmass > 0) then
              !
              !--read point mass information at the end of the dump file
              !
@@ -371,7 +371,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !--check sanity of ipindx array: do not sort particles if values not sensible
 !
        useipindx = .true.
-       if (any(ipindx(1:ntoti).le.0 .or. ipindx(1:ntoti).gt.ntoti)) then
+       if (any(ipindx(1:ntoti) <= 0 .or. ipindx(1:ntoti) > ntoti)) then
           print*,'WARNING: ipindx array has values < 0 or > ntot: particles not sorted'
           useipindx = .false.
        endif
@@ -385,7 +385,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
              dat(1:ntoti,i,j) = real(dattempvec(i,1:ntoti))
           endif
        enddo
-       if (nptmass.gt.0) then
+       if (nptmass > 0) then
           do i=1,2*ndim+1
              dat(ntoti+1:ntoti+nptmass,i,j) = real(dattempvec(i,ntoti+1:ntoti+nptmass))
           enddo
@@ -412,18 +412,18 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        else
           dat(1:ntoti,icol:ncolstep,j) = real(dattemp(1:ntoti,icol:ncolstep))
        endif
-       if (nptmass.gt.0) then
+       if (nptmass > 0) then
           dat(ntoti+1:ntoti+nptmass,icol,j) = real(dattemp(ntoti+1:ntoti+nptmass,icol))
        endif
 
        call set_labels
-       if (ih.gt.0 .and. hfactor.gt.1.0) then
+       if (ih > 0 .and. hfactor > 1.0) then
           dat(1:ntoti+nptmass,ih,j) = hfactor*dat(1:ntoti+nptmass,ih,j)
        endif
 
-       if (nptmass.lt.10) then
+       if (nptmass < 10) then
           do i=1,nptmass
-             if (ndim.eq.2) then
+             if (ndim==2) then
                 print "('| point mass ',i1,': pos = (',es10.2,',',es10.2,'), mass = ',es10.2)", &
                    i,dat(ntoti+i,1:ndim,j),dat(ntoti+i,ipmass,j)
              else
@@ -453,7 +453,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  !--reached end of file
  !
  close(15)
- if (nstepsread .gt. 0) then
+ if (nstepsread  >  0) then
     print*,'>> end of dump file: ntotal = ',sum(npartoftype(:,j))
  endif
 
@@ -475,11 +475,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -509,7 +509,7 @@ subroutine set_labels
   do i=1,ndimV
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
-  if (iBfirst.gt.0) then
+  if (iBfirst > 0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV

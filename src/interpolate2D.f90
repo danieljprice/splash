@@ -103,11 +103,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
   else
      print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
      print "(1x,a)",'interpolate2D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate2D: warning: ignoring some or all particles with h < 0'
   endif
   const = cnormk2D  ! normalisation constant
@@ -118,17 +118,17 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--skip particles with zero weights
      !
      termnorm = const*weight(i)
-     if (termnorm.le.0.) cycle over_parts
+     if (termnorm <= 0.) cycle over_parts
      !
      !--skip particles with wrong h's
      !
      hi = hh(i)
-     if (hi.le.tiny(hi)) cycle over_parts
+     if (hi <= tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -144,12 +144,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
      if (.not.periodicx) then
-        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+        if (ipixmin < 1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax > npixx) ipixmax = npixx  ! to pixels in the image
      endif
      if (.not.periodicy) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (jpixmin < 1)     jpixmin = 1
+        if (jpixmax > npixy) jpixmax = npixy
      endif
 
      if (exact) then
@@ -158,7 +158,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         !
         !--first pixel row
         !
-        if (jpixmax.ge.jpixmin) then
+        if (jpixmax >= jpixmin) then
            jpix = jpixmin
            jpixi = jpix
            if (periodicy) jpixi = iroll(jpix,npixy)
@@ -186,7 +186,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
         !
         !--first pixel column
         !
-        if (ipixmax.ge.ipixmin) then
+        if (ipixmax >= ipixmin) then
            ipix = ipixmin
            ipixi = ipix
            if (periodicx) ipixi = iroll(ipix,npixx)
@@ -313,7 +313,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
   call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.10. .or. .true.) call print_time(t_used)
+  if (t_used > 10. .or. .true.) call print_time(t_used)
 
   return
 end subroutine interpolate2D
@@ -360,11 +360,11 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
   else
      print "(1x,a)",'interpolating vector field from particles to 2D grid (non-normalised)...'
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
      print*,'interpolate2D_vec: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate2D_vec: warning: ignoring some or all particles with h < 0'
   endif
   const = cnormk2D  ! normalisation constant
@@ -375,17 +375,17 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--skip particles with zero weights
      !
      termnorm = const*weight(i)
-     if (termnorm.le.0.) cycle over_parts
+     if (termnorm <= 0.) cycle over_parts
      !
      !--skip particles with wrong h's
      !
      hi = hh(i)
-     if (hi.le.tiny(hi)) cycle over_parts
+     if (hi <= tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -402,12 +402,12 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
      jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
      if (.not.periodicx) then
-        if (ipixmin.lt.1)     ipixmin = 1
-        if (ipixmax.gt.npixx) ipixmax = npixx
+        if (ipixmin < 1)     ipixmin = 1
+        if (ipixmax > npixx) ipixmax = npixx
      endif
      if (.not.periodicy) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (jpixmin < 1)     jpixmin = 1
+        if (jpixmax > npixy) jpixmax = npixy
      endif
      !
      !--loop over pixels, adding the contribution from this particle
@@ -499,13 +499,13 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
   !--check for errors in input
   !
   tol = 1.e-3
-  ysame = (abs(y2 - y1).lt.tol)
-  xsame = (abs(x2 - x1).lt.tol)
+  ysame = (abs(y2 - y1) < tol)
+  xsame = (abs(x2 - x1) < tol)
   if (xsame.and.ysame) then
      print*,'error: interpolate2D_xsec: zero length cross section'
      return
   endif
-  if (npixx.eq.0) then
+  if (npixx==0) then
      print*,'error: interpolate2D_xsec: npix = 0 '
      return
   endif
@@ -540,17 +540,17 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--skip particles with zero weights
      !
      termnorm = const*weight(i)
-     if (termnorm.le.0.) cycle over_parts
+     if (termnorm <= 0.) cycle over_parts
      !
      !--skip particles with wrong h's
      !
      hi = hh(i)
-     if (hi.le.tiny(hi)) cycle over_parts
+     if (hi <= tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -579,10 +579,10 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
         det = sqrt(determinant)
         xstart = (-bb - det)/(2.*aa)
         xend =  (-bb + det)/(2.*aa)
-        if (xstart.lt.x1) xstart = x1
-        if (xstart.gt.x2) xstart = x2
-        if (xend.gt.x2) xend = x2
-        if (xend.lt.x1) xend = x1
+        if (xstart < x1) xstart = x1
+        if (xstart > x2) xstart = x2
+        if (xend > x2) xend = x2
+        if (xend < x1) xend = x1
         ystart = gradient*xstart + yintercept
         yend = gradient*xend + yintercept
         !
@@ -594,10 +594,10 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
         ipixmin = int(rstart/pixwidth)
         ipixmax = int(rend/pixwidth) + 1
 
-        if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-        if (ipixmax.lt.1) ipixmax = 1
-        if (ipixmax.gt.npixx) ipixmax = npixx
-        if (ipixmin.gt.npixx) ipixmax = npixx
+        if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+        if (ipixmax < 1) ipixmax = 1
+        if (ipixmax > npixx) ipixmax = npixx
+        if (ipixmin > npixx) ipixmax = npixx
                !
         !--loop over pixels, adding the contribution from this particle
         !
@@ -651,11 +651,11 @@ subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidt
   real, intent(inout), dimension(npixx,npixy), optional :: brightness
   integer :: i
 
-  if (pixwidth.le.0.) then
+  if (pixwidth <= 0.) then
      print "(1x,a)",'interpolate_part: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate_part: warning: ignoring some or all particles with h < 0'
   endif
   !
@@ -691,7 +691,7 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
   !
   !--skip particles with wrong h's
   !
-  if (hi.le.tiny(hi)) return
+  if (hi <= tiny(hi)) return
   !
   !--set kernel related quantities
   !
@@ -705,10 +705,10 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
   ipixmax = int((xi + radkern - xmin)/pixwidth) + 1
   jpixmax = int((yi + radkern - ymin)/pixwidth) + 1
 
-  if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-  if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-  if (ipixmax.gt.npixx) ipixmax = npixx
-  if (jpixmax.gt.npixy) jpixmax = npixy
+  if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+  if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+  if (ipixmax > npixx) ipixmax = npixx
+  if (jpixmax > npixy) jpixmax = npixy
   !
   !--loop over pixels, adding the contribution from this particle
   !
@@ -722,7 +722,7 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
         !
         !--set data value at this pixel to maximum
         !
-        if (rab2.lt.radkern2) then
+        if (rab2 < radkern2) then
            datsmooth(ipix,jpix) = datval
            if (present(brightness)) then
               brightness(ipix,jpix) = 1.0
@@ -806,7 +806,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
 
   pixwidthx = 1. !/npixx
   pixwidthy = 1. !/npixy
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
      print "(1x,a)",'interpolate2D: error: pixel width <= 0'
      return
   endif
@@ -822,7 +822,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
 
      !
      !--scale particle positions into viewport coordinates
@@ -833,7 +833,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
 
      ipix = int(xi)
      jpix = int(yi)
-     if (its > 1 .and. ipix.ge.1 .and. ipix.le.npixx.and. jpix.ge.1 .and. jpix.le.npixy) then
+     if (its > 1 .and. ipix >= 1 .and. ipix <= npixx.and. jpix >= 1 .and. jpix <= npixy) then
         hi = min(1.5/sqrt(datold(ipix,jpix)),20.) !) !,1.)
      endif
      hi1 = 1./hi
@@ -856,10 +856,10 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
      ipixmax = int((xi + radkernx)) + 1
      jpixmax = int((yi + radkerny)) + 1
 
-     if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-     if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
-     if (jpixmin.lt.1)     jpixmin = 1
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (ipixmin < 1)     ipixmin = 1      ! make sure they only contribute
+     if (ipixmax > npixx) ipixmax = npixx  ! to pixels in the image
+     if (jpixmin < 1)     jpixmin = 1
+     if (jpixmax > npixy) jpixmax = npixy
      !
      !--precalculate an array of dx2 for this particle (optimisation)
      !

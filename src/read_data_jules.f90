@@ -108,7 +108,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         read(15,*,end=55,iostat=ierr) timei,istep,n,nprint,hi,dti
         print*,'time = ',timei,' step = ',istep,' n = ',n,' ng = ',nprint
         print*,'first time = ',hi,' npart = ',nprint
-        if (.not.allocated(dat) .or. (nprint.gt.npart_max)) then
+        if (.not.allocated(dat) .or. (nprint > npart_max)) then
            npart_max = max(npart_max,INT(1.1*(nprint)))
            call alloc(npart_max,nstep_max,ncolumns,mixedtypes=.true.)
         endif
@@ -126,7 +126,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  !
  !--allocate/reallocate memory if j > maxstep
  !
-        if (j.gt.maxstep) then
+        if (j > maxstep) then
            call alloc(maxpart,j+1,maxcol,mixedtypes=.true.)
         endif
  !
@@ -181,7 +181,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         npartoftype(2,j) = nbnd
         npartoftype(3,j) = nother
         npartoftype(4,j) = nweird
-        if (nweird.gt.0) print*,' WARNING: ',nweird,' particles of unknown type'
+        if (nweird > 0) print*,' WARNING: ',nweird,' particles of unknown type'
         print*,j,' time = ',time(j)
         gamma(j) = 1.666666666667
         j = j + 1
@@ -214,11 +214,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif

@@ -78,7 +78,7 @@ subroutine write_gridlimits(ndim,xmin,xmax,labelx)
 
  print "(a)",' grid dimensions (edit .limits file to change):'
  do i=1,ndim
-    if (maxval(abs(xmax)).lt.1.e7) then
+    if (maxval(abs(xmax)) < 1.e7) then
        print "(1x,a,': ',f14.6,' -> ',f14.6)",trim(labelx(i)),xmin(i),xmax(i)
     else
        print "(1x,a,': ',es14.6,' -> ',es14.6)",trim(labelx(i)),xmin(i),xmax(i)
@@ -270,13 +270,13 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
  real    :: xi,yi,zi
 
  ierr = 0
- if (ndim.eq.3 .and. .not.(present(dat3D) .or. present(dat))) then
+ if (ndim==3 .and. .not.(present(dat3D) .or. present(dat))) then
     print "(a)",' ERROR in call to write_grid: ndim=3 but 3D grid not passed'
     ierr = 1
- elseif (ndim.eq.2 .and. .not.present(dat2D)) then
+ elseif (ndim==2 .and. .not.present(dat2D)) then
     print "(a)",' ERROR in call to write_grid: ndim=2 but 2D grid not passed'
     ierr = 1
- elseif (.not.(ndim.eq.2 .or. ndim.eq.3)) then
+ elseif (.not.(ndim==2 .or. ndim==3)) then
     print "(a,i2,a)",' ERROR in call to write_grid: cannot write grid for ',ndim,' dimensions'
     ierr = 2
  endif
@@ -318,7 +318,7 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
     write(iunit,"(a,i1,a)",err=100) '# '//trim(label)//' interpolated to ',ndim,'D '//trim(labelcoordsys)//' grid '
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# written in the form: '
-    if (ndim.eq.3) then
+    if (ndim==3) then
        write(iunit,"(a)",err=100) '#   do k=1,n'//trim(xlab(3))
        write(iunit,"(a)",err=100) '#      do j=1,n'//trim(xlab(2))
        write(iunit,"(a)",err=100) '#         write(*,*) (dat(i,j,k),i=1,n'//trim(xlab(1))//')'

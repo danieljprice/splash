@@ -190,7 +190,7 @@ subroutine submenu_page(ichoose)
  iaction = ichoose
 
  papersizey = papersizex*aspectratio
- if (ipapersizeunits.gt.0) then
+ if (ipapersizeunits > 0) then
     write(paperfmtstr,"(f5.2,1x,f5.2)") papersizex,papersizey
  else
     write(paperfmtstr,"(i5,' x ',i4)") nint(papersizex),nint(papersizey)
@@ -198,7 +198,7 @@ subroutine submenu_page(ichoose)
 
  print "(a)",'---------------- page setup options -------------------'
 
- if (iaction.le.0 .or. iaction.gt.9) then
+ if (iaction <= 0 .or. iaction > 9) then
     print "( "// &
           "' 0) exit ',/, "// &
           "' 1) plot n steps on top of each other   (n =',i4,')',/, "// &
@@ -223,13 +223,13 @@ subroutine submenu_page(ichoose)
   case(1)
      call prompt('Enter number of timesteps per panel ',nstepsperpage,1)
      print*,'Plotting up to ',nstepsperpage,' timesteps per panel'
-     if (nstepsperpage.gt.1) then
+     if (nstepsperpage > 1) then
         if (iadapt .or. iadaptcoords) then
            print "(a)",'(note that adaptive plot limits are now off)'
            iadapt = .false.
            iadaptcoords = .false.
         endif
-        if (nstepsperpage.gt.14) then
+        if (nstepsperpage > 14) then
            print "(a)",'(warning: steps per panel > number of colours, ie. colours will repeat)'
         endif
         call prompt('Use different colours for each step?',iColourEachStep)
@@ -270,7 +270,7 @@ subroutine submenu_page(ichoose)
      print*,'20 : draw box and label Y-axis logarithmically;'
      print*,'30 : draw box and label both axes logarithmically.'
      call prompt('enter axis option ',iaxis,-4,30)
-     if (iaxis.eq.4) then
+     if (iaxis==4) then
         call prompt('enter scale factor for alternative y axis',yscalealt,0.)
         call prompt('enter label for alternative y axis',labelyalt)
      endif
@@ -341,7 +341,7 @@ subroutine submenu_page(ichoose)
            ipapersizeunits = 1
            call prompt(' x size (inches) ',papersizex,0.0)
            call prompt(' y size (inches) or aspect ratio (-ve)',papersizey)
-           if (papersizey.lt.0.0) then
+           if (papersizey < 0.0) then
               aspectratio = abs(papersizey)
            else
               aspectratio = papersizey/papersizex
@@ -426,7 +426,7 @@ subroutine submenu_page(ichoose)
            print*,' 1) inches '
            print*,' 2) cm '
            call prompt(' choose units for paper size',ipapersizeunits,0,2)
-           if (ipapersizeunits.ne.iunitsprev) then
+           if (ipapersizeunits /= iunitsprev) then
               select case(ipapersizeunits)
               case(2)
                  papersizex = 29.7
@@ -444,7 +444,7 @@ subroutine submenu_page(ichoose)
            endif
            call prompt(' x size in above units ',papersizex,1.)
            call prompt(' y size or aspect ratio (-ve)',papersizey)
-           if (papersizey.lt.0.0) then
+           if (papersizey < 0.0) then
               aspectratio = abs(papersizey)
            else
               aspectratio = papersizey/papersizex
@@ -463,7 +463,7 @@ subroutine submenu_page(ichoose)
   case(4)
      call prompt('Enter number of plots across (columns):',nacross,1,maxplot)
      call prompt('Enter number of plots down   (rows):',ndown,1,maxplot/nacross)
-     if (nacross*ndown.gt.1) then
+     if (nacross*ndown > 1) then
         call prompt('Tile plots on the page where possible?',tile)
         call prompt('Plot panels across-then-down? (no=down-then-across)',usecolumnorder)
      endif
@@ -502,7 +502,7 @@ subroutine submenu_page(ichoose)
        ' ticks, legend text and titles are by default plotted ', &
        ' in the foreground colour'
 
-     if (iPageColours.gt.0) then
+     if (iPageColours > 0) then
         print "(a,/)",' [i.e. '//trim(colour_fore(iPageColours))//'].'
         call prompt('Do you want to plot these in background colour [i.e. '&
                     //trim(colour_back(iPageColours))//'] instead?',&
@@ -570,9 +570,9 @@ subroutine submenu_legend(ichoose)
              '  '''//trim(fileprefix)//'.titles'' in the working directory, with one title per line'
  endif
 
- if (iaction.le.0 .or. iaction.gt.6) then
+ if (iaction <= 0 .or. iaction > 6) then
     !--format shape settings string
-    if (nshapes.gt.0) then
+    if (nshapes > 0) then
        i2 = 2
        string = ': '
     else
@@ -583,7 +583,7 @@ subroutine submenu_legend(ichoose)
        i1 = i2 + 1
        i2 = min(i1 + len_trim(labelshapetype(shape(i)%itype)),len(string))
        write(string(i1:i2),"(a)",iostat=ierr) trim(labelshapetype(shape(i)%itype)(1:i2-i1))
-       if (i.lt.nshapes .and. i2.lt.len(string)) then
+       if (i < nshapes .and. i2 < len(string)) then
           write(string(i2:i2+1),"(', ')",iostat=ierr)
           i2 = i2 + 1
        endif
@@ -662,7 +662,7 @@ subroutine submenu_legend(ichoose)
        call prompt('Enter horizontal position as fraction of viewport', &
                    hposscale,0.0,1.0)
        call prompt('Enter vertical position in character heights above bottom',vposscale)
-       if (nacross*ndown.gt.1) then
+       if (nacross*ndown > 1) then
           call prompt('Enter which panel on the plotting page the scale should appear on '// &
                '(0=all co-ordinate plots)',iscalepanel,0,nacross*ndown)
        endif

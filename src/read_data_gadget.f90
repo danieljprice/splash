@@ -117,13 +117,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   nstepsread = 0
   goterrors  = .false.
-  if (maxparttypes.lt.6) then
+  if (maxparttypes < 6) then
      print*,' *** ERROR: not enough particle types for GADGET data read ***'
      print*,' *** you need to edit splash parameters and recompile ***'
      stop
   endif
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -184,25 +184,25 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      return
   endif
 
-  !if (any(i0.gt.0)) print*,'starting position for each type in data array: ',i0(:)
+  !if (any(i0 > 0)) print*,'starting position for each type in data array: ',i0(:)
   !
   !--read header for this timestep
   !
-  if (idumpformat.eq.2) then
+  if (idumpformat==2) then
      print "(a)",' >> reading block labelled Gadget format <<'
      read(iunit,iostat=ierr) blocklabel,lenblock
      !print*,ierr,blocklabel,lenblock
-     if (ierr /= 0 .or. lenblock.ne.264) then
+     if (ierr /= 0 .or. lenblock /= 264) then
         print "(/,a,/)",'*** ERROR READING HEADER: wrong endian? or wrong format? ***'
         close(iunit)
-        if (ifile.eq.1) then
+        if (ifile==1) then
            return
         else
            exit over_files
         endif
      endif
   else
-     if (ifile.eq.1) print "(a)",' >> reading default Gadget format <<'
+     if (ifile==1) print "(a)",' >> reading default Gadget format <<'
   endif
 
   npartoftypei(:) = 0
@@ -215,7 +215,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
   ntoti = int(sum(npartoftypei(1:6)))  ! int here is unnecessary, but avoids compiler warnings
 
-  if (nfiles.gt.1) then
+  if (nfiles > 1) then
      ntotall = int(sum(Nall(1:6)))
   else
      ntotall = ntoti
@@ -228,15 +228,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      print*,'DEBUG: time = ',timetemp,' z = ',ztemp
   endif
 
-  if (ierr /= 0 .or. ntoti.le.0 .or. ntotall.le.0 .or. any(npartoftypei.lt.0) .or. nfiles.lt.0 &
-      .or. nfiles.gt.1e6) then
+  if (ierr /= 0 .or. ntoti <= 0 .or. ntotall <= 0 .or. any(npartoftypei < 0) .or. nfiles < 0 &
+      .or. nfiles > 1e6) then
      print "(/,a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
      print "(/,a)", '   (see splash userguide for compiler-dependent'
      print "(a)",   '    ways to change endianness on the command line)'
      print "(/,a)", '   (set environment variable GSPLASH_FORMAT to 2 '
      print "(a,/)", '    if you are using the block-labelled Gadget format)'
      close(iunit)
-     if (ifile.eq.1) then
+     if (ifile==1) then
         return
      else
         exit over_files
@@ -247,15 +247,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--if we are reading from multiple files,
   !  check that the sequence starts from the correct file
   !
-  if (nfiles.gt.1) then
+  if (nfiles > 1) then
      idot = len_trim(datfile)-1
-     if (ifile.eq.1 .and. datfile(idot:idot+1).ne.'.0') then
-        if (nfiles.lt.100) then
+     if (ifile==1 .and. datfile(idot:idot+1) /= '.0') then
+        if (nfiles < 100) then
            string = "(/,a,i2,a,/,a,/)"
         else
            string = "(/,a,i7,a,/,a,/)"
         endif
-        if (nfiles.gt.10000) then
+        if (nfiles > 10000) then
            !--this is the most likely scenario here
            print "(a)",'*** ERROR reading timestep header: wrong endian? ***'
         else
@@ -267,17 +267,17 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   endif
 
-  if (idumpformat.eq.2) then
+  if (idumpformat==2) then
      ncolstep = 1
-     do while (ierr.eq.0)
+     do while (ierr==0)
         call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock,nvec)
         read(iunit,iostat=ierr)
-        if ((ierr.eq.0 .and. index2.gt.0) .and. (index2.eq.ntoti &
-            .or. index2.eq.npartoftypei(1) &
-            .or. index2.eq.npartoftypei(2) &
-            .or. index2.eq.npartoftypei(5) &
-            .or. index2.eq.(npartoftypei(1)+npartoftypei(5)) &
-            .or. index2.eq.(npartoftypei(1)+npartoftypei(2)))) then
+        if ((ierr==0 .and. index2 > 0) .and. (index2==ntoti &
+            .or. index2==npartoftypei(1) &
+            .or. index2==npartoftypei(2) &
+            .or. index2==npartoftypei(5) &
+            .or. index2==(npartoftypei(1)+npartoftypei(5)) &
+            .or. index2==(npartoftypei(1)+npartoftypei(2)))) then
            select case(blocklabelgas(ncolstep))
            case('ID  ')
               ! not a column
@@ -297,38 +297,38 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   else
 
      iformat = 0
-     if (iFlagCool.eq.1 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
+     if (iFlagCool==1 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
         iformat = 1
         ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
-        if (ifile.eq.1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
+        if (ifile==1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
      else
         iformat = 0
         ncolstep = 10 ! 3 x pos, 3 x vel, pmass, utherm, rho, h
      endif
-     if (iFlagSfr.eq.1) then
-        if (ifile.eq.1) print "(a)",' star formation flag on: assuming star formation rate dumped '
+     if (iFlagSfr==1) then
+        if (ifile==1) print "(a)",' star formation flag on: assuming star formation rate dumped '
         ncolstep = ncolstep + 1
         iformat = iformat + 10
      endif
 
      call envlist('GSPLASH_EXTRACOLS',nextracols)
-     if (nextracols.gt.0) then
+     if (nextracols > 0) then
         print "(a,i2,a)",' READING ',nextracols,' EXTRA COLUMNS '
         ncolstep = ncolstep + nextracols
      endif
      call envlist('GSPLASH_STARPARTCOLS',nstarcols)
-     if (nstarcols.gt.0) then
+     if (nstarcols > 0) then
         print "(a,i2,a)",' READING ',nstarcols,' STAR PARTICLE COLUMN(S) '
         ncolstep = ncolstep + nstarcols
      endif
      !call envlist('GSPLASH_EXTRAVECCOLS',nextraveccols)
-     !if (nextraveccols.gt.0) then
+     !if (nextraveccols > 0) then
      !   print "(a,i2,a)",' READING ',nextraveccols,' EXTRA COLUMNS '
      !   ncolstep = ncolstep + nextraveccols
      !endif
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      ncolumns = ncolstep
   !
   !--call set labels to get ih, ipmass, irho for use in the read routine
@@ -337,7 +337,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      call set_labels
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      print*,'time            : ',timetemp
      if (usez) then
         print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
@@ -346,25 +346,25 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   endif
   print*,'Npart (by type) : ',npartoftypei(1:6)
-  if (ifile.eq.1) print*,'Mass  (by type) : ',massoftypei(1:6)
+  if (ifile==1) print*,'Mass  (by type) : ',massoftypei(1:6)
 !  print "(10x,'|',6(1x,a12,'|'))",   (labeltype(itype),itype=1,ntypes)
 !  print "(a10,'|',6(i11,2x,'|'))",   'Npart  : ',npartoftypei
 !  print "(a10,'|',6(es11.3,2x,'|'))",'Mass   : ',massoftypei
   print*,'N_gas           : ',npartoftypei(1)
   print*,'N_total         : ',ntoti
-  if (ifile.eq.1) print*,'N data columns  : ',ncolstep
-  if (nfiles.gt.1 .and. ifile.eq.1) then
+  if (ifile==1) print*,'N data columns  : ',ncolstep
+  if (nfiles > 1 .and. ifile==1) then
      print*,'Nall            : ',Nall(1:6)
   endif
 
-  if (nfiles.gt.1) then
-     if (ifile.eq.1) print "(a,i4,a)",' reading from ',nfiles,' files'
-  elseif (nfiles.lt.0) then
+  if (nfiles > 1) then
+     if (ifile==1) print "(a,i4,a)",' reading from ',nfiles,' files'
+  elseif (nfiles < 0) then
      print*,'*** ERROR: nfiles = ',nfiles,' in file header: aborting'
      return
   endif
 
-  if (ifile.eq.1) then
+  if (ifile==1) then
      !--Softening lengths for Dark Matter Particles...
      hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
      !
@@ -377,14 +377,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      open(unit=iunitd,file=densfile,iostat=ierrrho,status='old',form='formatted')
      open(unit=iunith,file=hfile,iostat=ierrh,status='old',form='formatted')
 
-     if (idumpformat.eq.2) then
-        if (ih.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+     if (idumpformat==2) then
+        if (ih==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
            ncolumns = ncolumns + 1
            blocklabelgas(ncolumns) = 'HSML'
            ih = ncolumns
            call set_labels
         endif
-        if (irho.eq.0 .and. (hsoft.gt.tiny(hsoft) .or. ierrrho.eq.0 .or. ierrh.eq.0)) then
+        if (irho==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
            ncolumns = ncolumns + 1
            blocklabelgas(ncolumns) = 'RHO '
            irho = ncolumns
@@ -404,9 +404,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntotall)
      else
@@ -414,7 +414,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntotall)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -429,10 +429,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !--copy npartoftypei into allocated header arrays
   !  and set the offset position of particle types in the main data arrays
   !
-  if (nfiles.eq.1 .or. ifile.eq.1) then
+  if (nfiles==1 .or. ifile==1) then
      i0(1) = 0
      do itype=2,ntypes
-        if (nfiles.eq.1) then
+        if (nfiles==1) then
            i0(itype) = sum(npartoftypei(1:itype-1)) ! this is avoid depending on Nall at all for single file read
         else
            i0(itype) = sum(Nall(1:itype-1))
@@ -450,7 +450,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--set time to be used in the legend
   !
-  if (ifile.eq.1) then
+  if (ifile==1) then
      if (usez) then
         !--use this line for redshift
         legendtext = 'z='
@@ -461,11 +461,11 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
   else
      if (usez) then
-        if (abs(real(ztemp)-time(i)).gt.tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
+        if (abs(real(ztemp)-time(i)) > tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
      else
-        if (abs(real(timetemp)-time(i)).gt.tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
+        if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
      endif
-     if (sum(Nall).ne.ntotall) then
+     if (sum(Nall) /= ntotall) then
         print*,' ERROR: Nall differs between files'
         goterrors = .true.
      endif
@@ -473,13 +473,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--read particle data
   !
-  got_particles: if (ntoti.gt.0) then
+  got_particles: if (ntoti > 0) then
      !
      !--read positions of all particles
      !  (note that errors on position read are fatal)
      !
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'POS ')  then
+     if (iformat==2 .and. blocklabel /= 'POS ')  then
         print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
      endif
      if (any(required(1:3))) then
@@ -487,12 +487,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         if (allocated(dattemp)) deallocate(dattemp)
         allocate(dattemp(3,ntoti))
         read(iunit,iostat=ierr) (dattemp(:,j),j=1,index2)
-        if (nfiles.gt.1) then
+        if (nfiles > 1) then
            !
            !--read data into type order if multiple files are present:
            !  this means the offset position is different for each type
            !
-           if (sum(npartoftypei).ne.index2) print*,' ERROR: number of positions .ne. sum of types'
+           if (sum(npartoftypei) /= index2) print*,' ERROR: number of positions  /=  sum of types'
            n = 0
            do itype=1,ntypes
               do j=i0(itype)+1,i0(itype)+npartoftypei(itype)
@@ -523,7 +523,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      !--same for velocities
      !
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'VEL ')  then
+     if (iformat==2 .and. blocklabel /= 'VEL ')  then
         print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
      endif
      if (any(required(4:6))) then
@@ -531,9 +531,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
 
         read (iunit, iostat=ierr) (dattemp(:,j),j=1,index2)
-        if (nfiles.gt.1) then
+        if (nfiles > 1) then
            !--see above re: type order
-           if (sum(npartoftypei).ne.index2) print*,' ERROR: number of velocities .ne. sum of types'
+           if (sum(npartoftypei) /= index2) print*,' ERROR: number of velocities  /=  sum of types'
            n = 0
            do itype=1,ntypes
               do j=i0(itype)+1,i0(itype)+npartoftypei(itype)
@@ -575,11 +575,11 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      endif
 
      call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-     if (iformat.eq.2 .and. blocklabel.ne.'ID  ') then
+     if (iformat==2 .and. blocklabel /= 'ID  ') then
         print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
      endif
 
-     if (index2.gt.0) then
+     if (index2 > 0) then
         if (checkids .and. required(ih)) then
            !--particle IDs are currently only used to set h -ve for accreted particles
            !  so do not read if h not required
@@ -598,29 +598,29 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      !--work out total number of masses dumped
      nmassesdumped = 0
      do itype = 1,6
-        if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then
+        if (abs(massoftypei(itype)) < tiny(massoftypei)) then
            nmassesdumped = nmassesdumped + npartoftypei(itype)
         endif
      enddo
 
-     if (ipmass.eq.0) then
+     if (ipmass==0) then
         masstype(1:6,i) = real(massoftypei(1:6))
      else
         if (required(ipmass)) then
            print*,'particle masses ',nmassesdumped
            !--read this number of entries
-           if (nmassesdumped.gt.0) then
+           if (nmassesdumped > 0) then
               if (allocated(dattemp1)) deallocate(dattemp1)
               allocate(dattemp1(nmassesdumped))
               call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec)
-              if (iformat.eq.2 .and. blocklabel.ne.'MASS')  then
+              if (iformat==2 .and. blocklabel /= 'MASS')  then
                  print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
               endif
            else
               index2 = 0
            endif
 
-           if (index2.gt.0) then
+           if (index2 > 0) then
               read(iunit,iostat=ierr) dattemp1(1:index2)
            endif
            if (ierr /= 0) then
@@ -632,12 +632,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            !index1 = 1
 
            do itype=1,6
-              if (npartoftypei(itype).ne.0) then
+              if (npartoftypei(itype) /= 0) then
                  !--work out the appropriate section of the dat array for this particle type
                  index1 = i0(itype) + 1
                  index2 = i0(itype) + npartoftypei(itype)
 
-                 if (abs(massoftypei(itype)).lt.tiny(massoftypei)) then ! masses dumped
+                 if (abs(massoftypei(itype)) < tiny(massoftypei)) then ! masses dumped
                     indexend = indexstart + npartoftypei(itype) - 1
                     if (debugmode) &
                        print*,' read ',npartoftypei(itype),' masses for '//trim(labeltype(itype))// &
@@ -656,7 +656,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
               endif
            enddo
            if (allocated(dattemp1)) deallocate(dattemp1)
-        elseif (nmassesdumped.gt.0) then
+        elseif (nmassesdumped > 0) then
            read(iunit,iostat=ierr)
            if (ierr /= 0) then
               print "(a)",'error reading particle masses'
@@ -668,20 +668,20 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      !--read other quantities for rest of particles
      !
      print*,'gas properties ',npartoftypei(1)
-     if (ipmass.eq.0) then
+     if (ipmass==0) then
         istart = 7
      else
         istart = 8
      endif
      icol = istart-1
-     gas_properties: do while (icol.lt.ncolstep) !icol=istart,ncolstep !-nextraveccols
+     gas_properties: do while (icol < ncolstep) !icol=istart,ncolstep !-nextraveccols
         !!print*,icol
         i3 = 0
         i4 = 0
         ireadtype(:) = .false.
 
-        if (idumpformat.eq.2) then
-           if (icol+1.le.ih) then
+        if (idumpformat==2) then
+           if (icol+1 <= ih) then
               call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)
            else
               call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock,nvec)
@@ -691,32 +691,32 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            !--work out from the number of entries what mix of particle types
            !  the quantity is defined on
            !
-           if (index2.eq.ntoti) then
+           if (index2==ntoti) then
               i1 = i0(1) + 1
               i2 = i1 + ntoti - 1
               print*,blocklabel//' (',index2,': all particles)'
               ireadtype(:) = .true.
-           elseif (index2.eq.npartoftypei(1)) then
+           elseif (index2==npartoftypei(1)) then
               i1 = i0(1) + 1
               i2 = i1 + index2 - 1
               print*,blocklabel//' (',index2,': gas particles only)'
               ireadtype(1) = .true.
-           elseif (index2.eq.npartoftypei(2)) then
+           elseif (index2==npartoftypei(2)) then
               i1 = i0(2) + 1
               i2 = i1 + index2 - 1
               print*,blocklabel//' (',index2,': dark matter particles only)'
               ireadtype(2) = .true.
-           elseif (index2.eq.npartoftypei(1)+npartoftypei(2)) then
+           elseif (index2==npartoftypei(1)+npartoftypei(2)) then
               i1 = i0(1) + 1
               i2 = i1 + index2 - 1
               print*,blocklabel//' (',index2,': gas+dark matter particles only)'
               ireadtype(1:2) = .true.
-           elseif (index2.eq.npartoftypei(5)) then
+           elseif (index2==npartoftypei(5)) then
               i1 = i0(5) + 1
               i2 = i1 + index2 - 1
               print*,blocklabel//' (',index2,': star particles only)'
               ireadtype(5) = .true.
-           elseif (index2.eq.npartoftypei(1)+npartoftypei(5)) then
+           elseif (index2==npartoftypei(1)+npartoftypei(5)) then
               i1 = i0(1) + 1
               i2 = i1 + npartoftypei(1) - 1
               i3 = i0(5) + 1
@@ -732,7 +732,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         else
            nvec = 1
            icol = icol + nvec
-           if (icol.gt.ncolstep-nstarcols) then
+           if (icol > ncolstep-nstarcols) then
               i1 = i0(5) + 1
               i2 = i1 + npartoftypei(5) - 1
               print*,'star particle properties ',icol,i1,i2
@@ -750,31 +750,31 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         !
         ntypesused = 0
         do itype=1,6
-           if (ireadtype(itype) .and. npartoftypei(itype).gt.0) then
+           if (ireadtype(itype) .and. npartoftypei(itype) > 0) then
               ntypesused = ntypesused + 1
               i1all(ntypesused) = i0(itype) + 1
               i2all(ntypesused) = i0(itype) + npartoftypei(itype)
            endif
         enddo
 
-        if (npartoftypei(1).gt.0) then
+        if (npartoftypei(1) > 0) then
            if (required(icol)) then
-              if (i3.gt.0) then
-                 if (nfiles.gt.1) then
+              if (i3 > 0) then
+                 if (nfiles > 1) then
                     read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
                  else
                     read (iunit,iostat=ierr) dat(i1:i2,icol,i),dat(i3:i4,icol,i)
                  endif
               else
-                 if (nvec.gt.1) then
-                    if (nfiles.gt.1) then
+                 if (nvec > 1) then
+                    if (nfiles > 1) then
                        read (iunit,iostat=ierr) &
                         (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
                     else
                        read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
                     endif
                  else
-                    if (nfiles.gt.1) then
+                    if (nfiles > 1) then
                        read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
                     else
                        if (.not. allocated(dattemp1) .or. size(dattemp1) < i2-i1) then
@@ -797,7 +797,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      enddo gas_properties
      if (allocated(dattemp1)) deallocate(dattemp1)
 
-     !if (nextraveccols.gt.0) then
+     !if (nextraveccols > 0) then
      !   print*,'chemical species ',index2
      !   read (iunit, iostat=ierr) (dat(j,4:6,i),j=1,index2)
      !   if (ierr /= 0) then
@@ -824,13 +824,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            do j=1,npartoftypei(itype)
               n = n + 1
               if (iamtemp(n) < 0) then
-                 !if (itype.gt.1) print*,' id -ve on non-gas particle ',itype,j
+                 !if (itype > 1) print*,' id -ve on non-gas particle ',itype,j
                  dat(i0(itype)+j,ih,i) = -abs(dat(i0(itype)+j,ih,i))
                  nacc = nacc + 1
               endif
            enddo
            !enddo
-           if (nacc.gt.0) then
+           if (nacc > 0) then
               print "(a,i10,a,/,a)",' marking ',nacc,' '//trim(labeltype(1))// &
                 ' particles with negative ID as accreted/dead', &
                 ' (giving them a negative smoothing length so they will be ignored in renderings)'
@@ -854,10 +854,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--for read from multiple files, work out the next file in the sequence
 !
   iexist = .false.
-  if (nfiles.gt.1 .and. ifile.lt.nfiles) then
+  if (nfiles > 1 .and. ifile < nfiles) then
      !--see if the next file exists
      idot = index(datfile,'.',back=.true.)
-     if (idot.le.0) then
+     if (idot <= 0) then
         print "(a)",' ERROR: read from multiple files but could not determine next file in sequence'
         goterrors = .true.
      else
@@ -879,13 +879,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !  twice the usual SPH smoothing length
   !  (do this after we have read data from all of the files)
   !
-  if (required(ih) .and. ih.gt.0 .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0) then
+  if (required(ih) .and. ih > 0 .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
      print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
      dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
 
-  if (nfiles.gt.1. .and. any(npartoftype(:,i).ne.Nall(:))) then
-     print*,'ERROR: sum of Npart across multiple files .ne. Nall in data read '
+  if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
      print*,'Npart = ',npartoftype(:,i)
      print*,'Nall  = ',Nall(:)
      goterrors = .true.
@@ -893,21 +893,21 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--look for dark matter smoothing length/density files
   !
-  if (ierrh.eq.0 .or. ierrrho.eq.0) then
-     if (ierrh.eq.0) then
+  if (ierrh==0 .or. ierrrho==0) then
+     if (ierrh==0) then
         print "(a)",' READING DARK MATTER SMOOTHING LENGTHS from '//trim(hfile)
         ierr = 0
         index1 = npartoftype(1,i)+1
         index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
         read(iunith,*,iostat=ierr) (dat(j,ih,i),j=index1,index2)
         close(unit=iunith)
-        if (ierr.lt.0) then
+        if (ierr < 0) then
            nhset = 0
            do j=index1,index2
-              if (dat(j,ih,i).gt.0.) nhset = nhset + 1
+              if (dat(j,ih,i) > 0.) nhset = nhset + 1
            enddo
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' SMOOTHING LENGTHS ***'
-        elseif (ierr.gt.0) then
+        elseif (ierr > 0) then
            print "(a)", ' *** ERROR reading smoothing lengths from file'
            goterrors = .true.
         else
@@ -916,26 +916,26 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
      endif
 
-     if (ierrrho.eq.0) then
+     if (ierrrho==0) then
         print "(a)",' READING DARK MATTER DENSITIES FROM '//trim(densfile)
         ierr = 0
         index1 = npartoftype(1,i)+1
         index2 = npartoftype(1,i)+sum(npartoftype(2:,i))
         read(iunitd,*,iostat=ierr) (dat(j,irho,i),j=index1,index2)
         close(iunitd)
-        if (ierr.lt.0) then
+        if (ierr < 0) then
            nhset = 0
            do j=index1,index2
-              if (dat(j,irho,i).gt.0.) nhset = nhset + 1
+              if (dat(j,irho,i) > 0.) nhset = nhset + 1
            enddo
            print "(a,i10,a,/)",' *** END-OF-FILE: GOT ',nhset,' DENSITIES ***'
-        elseif (ierr.gt.0) then
+        elseif (ierr > 0) then
            print "(a)", ' *** ERROR reading dark matter densities from file'
            goterrors = .true.
         else
            print "(a,i10,a)",' DENSITY READ OK for ',index2-index1+1,' dark matter / star particles '
         endif
-        if (ierrh.ne.0 .and. ipmass.gt.0) then
+        if (ierrh /= 0 .and. ipmass > 0) then
            where(dat(:,irho,i) > tiny(dat))
               dat(:,ih,i) = hfact*(dat(:,ipmass,i)/dat(:,irho,i))**(1./3.)
            elsewhere
@@ -953,12 +953,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !  give dark matter particles this smoothing length
   !  and a density of 1 (so column density plots work)
   !
-     if (hsoft.gt.tiny(hsoft)) then
+     if (hsoft > tiny(hsoft)) then
         if (required(ih)) then
            print "(a,1pe10.3,a)",' ASSIGNING SMOOTHING LENGTH of h = ',hsoft, &
                                  ' to dark matter particles'
            !print*,'ih = ',ih,' npartoftype = ',npartoftype(1:2,i), shape(dat)
-           if (ih.gt.0) then
+           if (ih > 0) then
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),ih,i) = hsoft
            else
               print*,' ERROR: smoothing length not found in data arrays'
@@ -966,7 +966,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            endif
         endif
         if (required(irho)) then
-           if (irho.gt.0) then
+           if (irho > 0) then
               dat(npartoftype(1,i)+1:npartoftype(1,i)+npartoftype(2,i),irho,i) = 1.0
            else
               print*,' ERROR: place for density not found in data arrays'
@@ -974,7 +974,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            endif
         endif
      else
-        if (npartoftype(1,i).le.0 .and. sum(npartoftype(:,i)).gt.0) then
+        if (npartoftype(1,i) <= 0 .and. sum(npartoftype(:,i)) > 0) then
            print "(66('*'),4(/,a),/)",'* NOTE!! For GADGET data using dark matter only, column density ',&
                               '* plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
                               '* environment variable to give the dark matter smoothing length', &
@@ -1002,7 +1002,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
      print "(a,/)",'    Please REPORT this and/or fix your file ***'
      print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
-     if (iverbose.ge.1) then
+     if (iverbose >= 1) then
         print "(a)",'    > Press any key to bravely proceed anyway  <'
         read*
      endif
@@ -1011,10 +1011,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
-  if (ih.gt.0 .and. required(ih) .and. ipmass.gt.0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)).lt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
+  if (ih > 0 .and. required(ih) .and. ipmass > 0 .and. required(ipmass) &
+      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned) then
      nhfac = 100
-     if (npartoftype(1,i).gt.nhfac) then
+     if (npartoftype(1,i) > nhfac) then
         hfactmean = 0.
         do j=1,nhfac
            hfact = dat(j,ih,i)*(dat(j,irho,i)/(dat(j,ipmass,i)))**(1./ndim)
@@ -1022,18 +1022,18 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         enddo
         hfact = hfactmean/real(nhfac)
         havewarned = .true.
-        if (hfact.lt.1.125 .or. hfact.gt.1.45) then
+        if (hfact < 1.125 .or. hfact > 1.45) then
            print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
            print "(3x,a,f5.1,a,/,3x,a,f5.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
 
-           if (hfact.lt.1.15) then
+           if (hfact < 1.15) then
               print "(4(/,3x,a))",'This is a quite a low number of neighbours for the cubic spline and ', &
                                   'may result in increased noise and inaccurate wave propagation speeds', &
                                   '(a cubic lattice is also an unstable initial configuration for the ',&
                                   ' particles in this regime -- see Morris 1996, Borve et al. 2004).'
-           elseif (hfact.gt.1.45) then
+           elseif (hfact > 1.45) then
               print "(4(/,3x,a))",'Using h >~ 1.5*(m/rho)^(1/3) with the cubic spline results in the', &
                                 'particle pairing instability due to the first neighbour being placed under', &
                                 'the hump in the kernel gradient. Whilst not fatal, it results in a', &
@@ -1058,12 +1058,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--cover the special case where no particles have been read
 !
-  if (ntotall.le.0) then
+  if (ntotall <= 0) then
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
 
-  if (nstepsread.gt.0) then
+  if (nstepsread > 0) then
      print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
   endif
   return
@@ -1082,14 +1082,14 @@ contains
   integer, intent(out) :: nvec
 
   blklabel = '    '
-  if (idumpfmt.eq.2) then
+  if (idumpfmt==2) then
      read(lun, iostat=ierr) blklabel,lenblk
      if (ierr /= 0) then
         ndumped = 0
         return
      endif
-     if (blklabel.eq.'POS ' .OR. blklabel.eq.'VEL ' .OR. blklabel.eq.'ACCE' .OR. blklabel.eq.'BFLD' .OR. &
-         blklabel.eq.'BPOL' .OR. blklabel.eq.'BTOR') then
+     if (blklabel=='POS ' .OR. blklabel=='VEL ' .OR. blklabel=='ACCE' .OR. blklabel=='BFLD' .OR. &
+         blklabel=='BPOL' .OR. blklabel=='BTOR') then
         ndumped = (lenblk-8)/12
         nvec = 3
      else
@@ -1097,8 +1097,8 @@ contains
         nvec = 1
      endif
      !print*,blklabel,lenblk,ndumped
-     !if (nexpected.gt.0) then
-     !   if (ndumped.ne.nexpected) then
+     !if (nexpected > 0) then
+     !   if (ndumped /= nexpected) then
      !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
      !   endif
      !endif
@@ -1128,16 +1128,16 @@ subroutine set_labels
   integer :: i,nextracols,nstarcols,icol,ihset
   character(len=30), dimension(10) :: labelextra
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
 
-  if (iformat.eq.2) then
+  if (iformat==2) then
      icol = 0
      do i=1,size(blocklabelgas)
         icol = icol + 1
@@ -1280,21 +1280,21 @@ subroutine set_labels
      irho = 9        ! location of rho in data array
      ipr = 0
      iutherm = 8     !  thermal energy
-     if (iformat.eq.1 .or. iformat.eq.11 .and. ncolumns.gt.10) then
+     if (iformat==1 .or. iformat==11 .and. ncolumns > 10) then
         label(10) = 'Ne'
         label(11) = 'Nh'
         ih = 12        !  smoothing length
-        if (iformat.eq.11) label(13) = 'Star formation rate'
+        if (iformat==11) label(13) = 'Star formation rate'
      else
         ih = 10
-        if (iformat.eq.1) label(11) = 'Star formation rate'
+        if (iformat==1) label(11) = 'Star formation rate'
      endif
      ihset = ienvironment('GSPLASH_HSML_COLUMN',errval=-1)
-     if (ihset.gt.0) ih = ihset
+     if (ihset > 0) ih = ihset
      !
      !--deal with extra columns
      !
-     if (ncolumns.gt.ih) then
+     if (ncolumns > ih) then
         call envlist('GSPLASH_EXTRACOLS',nextracols,labelextra)
         do i=ih+1,ih+nextracols
            label(i) = trim(labelextra(i-ih))
@@ -1308,11 +1308,11 @@ subroutine set_labels
   !
   !--set labels of the quantities read in
   !
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0)    label(irho)       = 'density'
-  if (iutherm.gt.0) label(iutherm)    = 'u'
-  if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  if (ih.gt.0)      label(ih)         = 'h'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  if (irho > 0)    label(irho)       = 'density'
+  if (iutherm > 0) label(iutherm)    = 'u'
+  if (ipmass > 0)  label(ipmass)     = 'particle mass'
+  if (ih > 0)      label(ih)         = 'h'
   !
   !--set labels for vector quantities
   !
@@ -1336,7 +1336,7 @@ subroutine set_labels
   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
   !  unless they have had a smoothing length defined
   !
-  if (hsoft.gt.tiny(hsoft)) then
+  if (hsoft > tiny(hsoft)) then
      UseTypeInRenderings(2) = .true.
   else
      UseTypeInRenderings(2) = .false.

@@ -77,8 +77,8 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
     xmin = xminplot
     xmax = xmaxplot
     print "(a,1pe10.3,a,1pe10.3)",' PDF bins are fixed between the current x limits, min = ',xminplot,' max = ',xmaxplot
-    if (xminpart.lt.xmin) print "(a)",' WARNING: particles fall outside of (fixed) bin range, will pile up on first bin'
-    if (xmaxpart.gt.xmax) print "(a)",' WARNING: particles fall outside of (fixed) bin range, will pile up on last bin'
+    if (xminpart < xmin) print "(a)",' WARNING: particles fall outside of (fixed) bin range, will pile up on first bin'
+    if (xmaxpart > xmax) print "(a)",' WARNING: particles fall outside of (fixed) bin range, will pile up on last bin'
     dx = (xmax - xmin)/real(nbins)
     print "(a,1pe10.3)",' bin width = ',dx
     do ibin=1,nbins
@@ -101,18 +101,18 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
  totvol = 0.
  do i=1,npart
     if (present(icolours)) then
-       use_part = (icolours(i).ge.0)
+       use_part = (icolours(i) >= 0)
     else
        use_part = .true.
     endif
     !--do not use hidden particles
     if (use_part) then
        ibin = int((xpart(i) - xmin)/dx) + 1
-       if (ibin.lt.1) ibin = 1
-       if (ibin.gt.nbins) ibin = nbins
+       if (ibin < 1) ibin = 1
+       if (ibin > nbins) ibin = nbins
 
        if (volweighted) then
-          if (rhopart(i).gt.0.) then
+          if (rhopart(i) > 0.) then
              weighti = pmass(i)/rhopart(i)
           else
              weighti = 0.
@@ -123,7 +123,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
        totvol = totvol + weighti
 
        !!--take the PDF of ln(x) if quantity is logged
-       !if (itransx.gt.0) then
+       !if (itransx > 0) then
        !    weighti = weighti*convert_to_ln_fac(itransx)
        !endif
        pdf(ibin) = pdf(ibin) + weighti
@@ -145,7 +145,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
  !totprob = totvol*dx
  !totprob = dx
 
- if (totprob.le.0.) then
+ if (totprob <= 0.) then
     ierr = 1
     print "(a)",' error in normalisation factor: returning non-normalised PDF'
  else
@@ -156,7 +156,7 @@ subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
    !--return min and max for adaptive plot limit setting
    !  (exclude zero as min)
    !
-    pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins).gt.0.))
+    pdfmin = minval(pdf(1:nbins),mask=(pdf(1:nbins) > 0.))
     pdfmax = maxval(pdf(1:nbins))
  endif
 

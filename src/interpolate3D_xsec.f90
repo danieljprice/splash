@@ -84,21 +84,21 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
         print*,'taking fast cross section (non-normalised)...',zslice
      endif
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0. .and. iverbose >= -1) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
-  elseif (npart.le.0 .and. iverbose >= -1) then
+  elseif (npart <= 0 .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: error: npart = 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
+  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
   endif
   const = cnormk3D
   !
   !--renormalise dat array by first element to speed things up
   !
-  if (dat(1).gt.tiny(dat)) then
+  if (dat(1) > tiny(dat)) then
      rescalefac = dat(1)
   else
      rescalefac = 1.0
@@ -110,12 +110,12 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     if (hi <= 0.) cycle over_parts
      hi1 = 1./hi
      hi21 = hi1*hi1
      radkern = radkernel*hi    ! radius of the smoothing kernel
@@ -128,7 +128,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      !--if this is < 2h then add the particle's contribution to the pixels
      !  otherwise skip all this and start on the next particle
      !
-     if (dz2 .lt. radkernel2) then
+     if (dz2  <  radkernel2) then
 
         xi = x(i)
         yi = y(i)
@@ -142,10 +142,10 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
         ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
         jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
 
-        if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-        if (ipixmax.gt.npixx) ipixmax = npixx
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+        if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+        if (ipixmax > npixx) ipixmax = npixx
+        if (jpixmax > npixy) jpixmax = npixy
         !
         !--precalculate an array of dx2 for this particle (optimisation)
         !
@@ -164,7 +164,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -255,11 +255,11 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         print*,'taking fast cross section (non-normalised)...',zslice
      endif
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0. .and. iverbose >= -1) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
      print*,'interpolate3D_xsec_vec: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh)) .and. iverbose >= -1) then
+  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
      print*,'interpolate3D_xsec_vec: WARNING: ignoring some or all particles with h < 0'
   endif
   const = cnormk3D ! normalisation constant (3D)
@@ -270,12 +270,12 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     if (hi <= 0.) cycle over_parts
      hi1 = 1./hi
      radkern = radkernel*hi    ! radius of the smoothing kernel
      !
@@ -287,7 +287,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !--if this is < 2h then add the particle's contribution to the pixels
      !  otherwise skip all this and start on the next particle
      !
-     if (abs(dz) .lt. radkern) then
+     if (abs(dz)  <  radkern) then
         termnorm = const*weight(i)
         termx = termnorm*vecx(i)
         termy = termnorm*vecy(i)
@@ -299,10 +299,10 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
         jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
 
-        if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-        if (ipixmax.gt.npixx) ipixmax = npixx
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+        if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+        if (ipixmax > npixx) ipixmax = npixx
+        if (jpixmax > npixy) jpixmax = npixy
         !
         !--loop over pixels, adding the contribution from this particle
         !
@@ -316,7 +316,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant

@@ -103,7 +103,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   else
      call get_ncolumns(iunit,ncol,nheaderlines)
      ncol = max(ncol - 1,0)
-     if (ncol.le.0) then
+     if (ncol <= 0) then
         print "(a,/)",' *** no data read from file ***'
         return
      endif
@@ -112,7 +112,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !
      nprint = 10001
      nstep_max = max(nstep_max,indexstart,1)
-     if (.not.allocated(dat) .or. (nprint.gt.npart_max) .or. (ncol+ncalc).gt.maxcol) then
+     if (.not.allocated(dat) .or. (nprint > npart_max) .or. (ncol+ncalc) > maxcol) then
         npart_max = max(npart_max,nprint)
         call alloc(npart_max,nstep_max,ncol+ncalc)
      endif
@@ -123,7 +123,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-  if (j.gt.maxstep) then
+  if (j > maxstep) then
      call alloc(maxpart,j+1,maxcol)
   endif
 
@@ -133,17 +133,17 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   timeset = .false.
   gammaset = .false.
 
-  if (nheaderlines.gt.0) then
+  if (nheaderlines > 0) then
      print*,'skipping ',nheaderlines,' header lines'
      do i=1,nheaderlines
         read(iunit,*,iostat=ierr) dummyreal
-        if (timeset .and. .not.gammaset .and. ierr.eq.0 &
-           .and. dummyreal.gt.0.999999 .and. dummyreal.lt.2.000001) then
+        if (timeset .and. .not.gammaset .and. ierr==0 &
+           .and. dummyreal > 0.999999 .and. dummyreal < 2.000001) then
            print*,'setting gamma = ',dummyreal,' from header line ',i
            gamma(j) = dummyreal
            gammaset = .true.
         endif
-        if (ierr.eq.0 .and. .not. timeset) then
+        if (ierr==0 .and. .not. timeset) then
            time(j) = dummyreal
            timeset = .true.
            print*,'setting time = ',dummyreal,' from header line ',i
@@ -164,14 +164,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   nerr = 0
   overparts: do while (ierr >= 0)
      i = i + 1
-     if (i.gt.npart_max) then ! reallocate memory if necessary
+     if (i > npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
         call alloc(npart_max,nstep_max,ncol+ncalc)
      endif
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,10),lab,(dat(i,icol,j),icol=11,ncol)
      if (ierr > 0) then
         nerr = nerr + 1
-        if (nerr .le. 10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
+        if (nerr  <=  10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
         i = i - 1 ! ignore lines with errors
      endif
   enddo overparts
@@ -196,12 +196,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
   !--find the last underscore in the file name
   ilen = index(rootname,'_',back=.true.)
-  if (ilen.le.0) ilen = len_trim(rootname) + 1
+  if (ilen <= 0) ilen = len_trim(rootname) + 1
   dumpfile = rootname(1:ilen-1)//'_S'
   inquire(file=trim(dumpfile),exist=iexist)
   if (iexist) then
      open(unit=iunit+1,file=trim(dumpfile),form='formatted',status='old',iostat=ierr)
-     if (ierr.ne.0) then
+     if (ierr /= 0) then
         print "(a)",' ERROR: could not open sink particle file '//trim(dumpfile)
      else
         i = npartoftype(1,j)
@@ -209,14 +209,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         nerr = 0
         oversinks: do while (ierr >= 0)
            i = i + 1
-           if (i.gt.npart_max) then ! reallocate memory if necessary
+           if (i > npart_max) then ! reallocate memory if necessary
               npart_max = npart_max + 1000
               call alloc(npart_max,nstep_max,ncol+ncalc)
            endif
            read(iunit+1,*,iostat=ierr) (dat(i,icol,j),icol = 1,10)
            if (ierr > 0) then
               nerr = nerr + 1
-              if (nerr .le. 10) print "(a,i8,a)",' ERROR reading sink data from line ',i+nheaderlines,', skipping'
+              if (nerr  <=  10) print "(a,i8,a)",' ERROR reading sink data from line ',i+nheaderlines,', skipping'
               i = i - 1 ! ignore lines with errors
            endif
         enddo oversinks
@@ -234,11 +234,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   inquire(file=trim(dumpfile),exist=iexist)
   if (iexist) then
      open(unit=iunit+2,file=trim(dumpfile),form='formatted',status='old',iostat=ierr)
-     if (ierr.ne.0) then
+     if (ierr /= 0) then
         print "(a)",' ERROR: could not open time file '//trim(dumpfile)
      else
         read(iunit+2,*,iostat=ierr) time(j)
-        if (ierr.ne.0) then
+        if (ierr /= 0) then
            print "(a)",' ERROR reading time from file '//trim(dumpfile)
         else
            print*,' got time = ',time(j),' from file '//trim(dumpfile)
@@ -264,11 +264,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -286,7 +286,7 @@ subroutine set_labels
   label(ipmass) = 'particle mass'
   label(ih)     = 'h'
   label(irho)   = 'density'
-  if (iutherm.gt.0) label(iutherm) = 'u'
+  if (iutherm > 0) label(iutherm) = 'u'
   label(11)     = 't_{dust}'
   label(12)     = 'N_{col}'
   label(13)     = 'N_{loc}'

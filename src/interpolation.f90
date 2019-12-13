@@ -101,15 +101,15 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
   dunitsrho   = 1.d0
   dunitsh     = 1.d0
   if (iRescale) then
-     if (ipmass.gt.0) dunitspmass = 1.d0/units(ipmass)
-     if (ih.gt.0)     dunitsh     = 1.d0/units(ih)
-     if (irho.gt.0)   dunitsrho   = 1.d0/units(irho)
+     if (ipmass > 0) dunitspmass = 1.d0/units(ipmass)
+     if (ih > 0)     dunitsh     = 1.d0/units(ih)
+     if (irho > 0)   dunitsrho   = 1.d0/units(irho)
   endif
   dunitspmass = dunitspmass * unit_interp
 
-  if (ipmass.gt.0 .and. ipmass.le.ndataplots .and. &
-      irho.gt.0 .and. irho.le.ndataplots .and. &
-      ih .gt. 0 .and. ih.le.ndataplots .and. &
+  if (ipmass > 0 .and. ipmass <= ndataplots .and. &
+      irho > 0 .and. irho <= ndataplots .and. &
+      ih  >  0 .and. ih <= ndataplots .and. &
       required(ipmass) .and. required(irho) .and. required(ih)) then
 
      if (size(iamtypei) > 1) then
@@ -124,7 +124,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         do ipart=1,ninterp
            itype = iamtypei(ipart)
            if (.not.usetype(itype)) then
-              if (rendersinks .and. itype.eq.isinktype) then
+              if (rendersinks .and. itype==isinktype) then
                  weighti(ipart) = weight_sink
               else
                  weighti(ipart) = 0.
@@ -158,7 +158,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            if (i1 > i2) cycle over_types
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
-              if (rendersinks .and. itype.eq.isinktype) then
+              if (rendersinks .and. itype==isinktype) then
                  weighti(i1:i2) = weight_sink
               else
                  weighti(i1:i2) = 0.
@@ -188,9 +188,9 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         inormalise = .true.
      endif
 
-  elseif (any(masstype(1:ntypes).gt.0.) .and. &
-          irho.gt.0 .and. irho.le.ndataplots .and. &
-          ih .gt. 0 .and. ih.le.ndataplots .and. &
+  elseif (any(masstype(1:ntypes) > 0.) .and. &
+          irho > 0 .and. irho <= ndataplots .and. &
+          ih  >  0 .and. ih <= ndataplots .and. &
           required(irho) .and. required(ih)) then
 
      if (size(iamtypei) > 1) then
@@ -205,7 +205,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         do ipart=1,ninterp
            itype = iamtypei(ipart)
            if (.not.usetype(itype)) then
-              if (rendersinks .and. itype.eq.isinktype) then
+              if (rendersinks .and. itype==isinktype) then
                  weighti(ipart) = weight_sink
               else
                  weighti(ipart) = 0.
@@ -239,7 +239,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            if (i1 > i2) cycle over_types2
            !--set weights to zero for particle types not used in the rendering
            if (.not.usetype(itype)) then
-              if (rendersinks .and. itype.eq.isinktype) then
+              if (rendersinks .and. itype==isinktype) then
                  weighti(i1:i2) = weight_sink
               else
                  weighti(i1:i2) = 0.
@@ -260,7 +260,7 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
         inormalise = .true.
      endif
   else
-     if (required(ih) .and. required(irho) .and. ih.gt.0 .and. irho.gt.0) then
+     if (required(ih) .and. required(irho) .and. ih > 0 .and. irho > 0) then
         print "(a)",' WARNING: particle mass not set: using normalised interpolations'
      endif
      weighti(1:ninterp) = 1.0

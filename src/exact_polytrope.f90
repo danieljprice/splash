@@ -58,12 +58,12 @@ subroutine exact_polytrope(gamma,polyk,totmass,rplot,denplot,npts,ierr)
   r(1) = 0.
  
   i = 2
-  do while (v(i).ge.0.)
+  do while (v(i) >= 0.)
     r(i) = (i-1)*dr
     rhs = - r(i)*(v(i)/r(i))**an
     v(i+1) = 2*v(i) - v(i-1) + dr*dr*rhs
     i = i + 1
-    if (i+1.gt.size(rplot)) then
+    if (i+1 > size(rplot)) then
        dr = dr*2.
        r(2) = dr
        v(2) = dr*(1.0 - dr*dr/6. )

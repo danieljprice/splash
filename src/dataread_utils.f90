@@ -158,10 +158,10 @@ subroutine count_types(np,iamtype,noftype,nunknown)
  integer :: i,itype
 
  noftype(:) = 0
- if (size(iamtype).ge.np) then
+ if (size(iamtype) >= np) then
     do i=1,np
        itype = iamtype(i)
-       if (itype.gt.0 .and. itype.le.size(noftype)) then
+       if (itype > 0 .and. itype <= size(noftype)) then
           noftype(itype) = noftype(itype) + 1
        else
           nunknown = nunknown + 1

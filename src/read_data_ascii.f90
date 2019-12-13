@@ -103,7 +103,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   dumpfile = trim(rootname)
 
-  if (iverbose.gt.1) print "(1x,a)",'reading ascii format'
+  if (iverbose > 1) print "(1x,a)",'reading ascii format'
   print "(26('>'),1x,a,1x,26('<'))",trim(dumpfile)
   !
   !--check if first data file exists
@@ -135,17 +135,17 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      call get_ncolumns(iunit,ncolstep,nheaderlines)
      !--override header lines setting
      nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
-     if (nheaderenv.ge.0) then
-        if (iverbose.gt.0) print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
+     if (nheaderenv >= 0) then
+        if (iverbose > 0) print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
         nheaderlines = nheaderenv
      endif
      !--override columns setting with environment variable
      ncolenv = ienvironment('ASPLASH_NCOLUMNS',-1)
-     if (ncolenv.gt.0) then
-        if (iverbose.gt.0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
+     if (ncolenv > 0) then
+        if (iverbose > 0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
         ncolstep = ncolenv
      endif
-     if (ncolstep.le.1) then
+     if (ncolstep <= 1) then
         print "(a)",'*** ERROR: could not determine number of columns in file ***'
         return
      endif
@@ -178,7 +178,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      !
      nprint = 101
      nstep_max = max(nstep_max,indexstart,1)
-     if (.not.allocated(dat) .or. (nprint.gt.npart_max) .or. (ncolstep+ncalc).gt.maxcol) then
+     if (.not.allocated(dat) .or. (nprint > npart_max) .or. (ncolstep+ncalc) > maxcol) then
         npart_max = max(npart_max,INT(1.1*(nprint)))
         call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
      endif
@@ -188,7 +188,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-  if (j.gt.maxstep) then
+  if (j > maxstep) then
      call alloc(maxpart,j+1,maxcol,mixedtypes=(icoltype > 0))
   endif
 !
@@ -199,12 +199,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   timeset = .false.
   gammaset = .false.
   dummyreal = renvironment('ASPLASH_TIMEVAL',errval=-1.)
-  if (dummyreal.gt.0.) then
+  if (dummyreal > 0.) then
      time(j) = dummyreal
      timeset = .true.
   endif
   dummyreal = renvironment('ASPLASH_GAMMAVAL',errval=-1.)
-  if (dummyreal.gt.0.) then
+  if (dummyreal > 0.) then
      gamma(j) = dummyreal
      gammaset = .true.
   endif
@@ -213,7 +213,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--read header lines, try to use it to set time
 !
-  !if (nheaderlines.gt.0 .and. iverbose.gt.0) print*,'skipping ',nheaderlines,' header lines'
+  !if (nheaderlines > 0 .and. iverbose > 0) print*,'skipping ',nheaderlines,' header lines'
   do i=1,nheaderlines
      !--read header lines as character strings
      !  so that blank lines are counted in nheaderlines
@@ -223,8 +223,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      else
         read(line,*,iostat=ierr) dummyreal
      endif
-     if (i.eq.iheader_time .and. .not.timeset) then
-        if (ierr.eq.0) then
+     if (i==iheader_time .and. .not.timeset) then
+        if (ierr==0) then
            time(j) = dummyreal
            timeset = .true.
            print*,'setting time = ',dummyreal,' from header line ',i
@@ -233,8 +233,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            print "(a,i2,a)",' ** ERROR reading time from header line ',i, &
                             ' (using ASPLASH_HEADERLINE_TIME)'
         endif
-     elseif (i.eq.iheader_gamma .and. .not.gammaset) then
-        if (ierr.eq.0) then
+     elseif (i==iheader_gamma .and. .not.gammaset) then
+        if (ierr==0) then
            gamma(j) = dummyreal
            gammaset = .true.
            print*,'setting gamma = ',dummyreal,' from header line ',i
@@ -243,12 +243,12 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            print "(a,i2,a)",' ** ERROR reading gamma from header line ',i, &
                             ' (using ASPLASH_HEADERLINE_GAMMA)'
         endif
-     elseif (timeset .and. .not.gammaset .and. ierr.eq.0 .and. iheader_gamma.eq.notset &
-        .and. dummyreal.gt.1.0 .and. dummyreal.lt.2.000001) then
+     elseif (timeset .and. .not.gammaset .and. ierr==0 .and. iheader_gamma==notset &
+        .and. dummyreal > 1.0 .and. dummyreal < 2.000001) then
         print*,'setting gamma = ',dummyreal,' from header line ',i
         gamma(j) = dummyreal
         gammaset = .true.
-     elseif (ierr.eq.0 .and. .not. timeset .and. iheader_time.eq.notset) then
+     elseif (ierr==0 .and. .not. timeset .and. iheader_time==notset) then
         time(j) = dummyreal
         timeset = .true.
         print*,'setting time = ',dummyreal,' from header line ',i
@@ -268,7 +268,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ntypes = 1
   overparts: do while (ierr >= 0)
      i = i + 1
-     if (i.gt.npart_max) then ! reallocate memory if necessary
+     if (i > npart_max) then ! reallocate memory if necessary
         npart_max = 10*npart_max
         call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
      endif
@@ -288,7 +288,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
      if (ierr > 0) then
         nerr = nerr + 1
-        if (nerr .le. 10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
+        if (nerr  <=  10) print "(a,i8,a)",' ERROR reading data from line ',i+nheaderlines,', skipping'
         i = i - 1 ! ignore lines with errors
      endif
   enddo overparts
@@ -305,7 +305,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      str = adjustl(str)
      write(strc,"(i10)") ncolstep
      strc = adjustl(strc)
-     if (nheaderlines.gt.0 .and. iverbose.gt.0) then
+     if (nheaderlines > 0 .and. iverbose > 0) then
         if (nheaderlines > 10) then
            print "(a,i3,a)",' npts = '//trim(str)//', ncols = '//trim(strc)//', skipped ',nheaderlines,' header lines'
         else
@@ -369,10 +369,10 @@ subroutine set_labels
 !
   if (.not.iexist) then
      call get_environment('ASPLASH_COLUMNSFILE',columnfile)
-     if (len_trim(columnfile).gt.0) then
+     if (len_trim(columnfile) > 0) then
         inquire(file=trim(columnfile),exist=iexist)
         if (iexist) then
-           if (iverbose.gt.0) print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+           if (iverbose > 0) print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
         else
            print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
            columnfile = 'columns'
@@ -434,38 +434,38 @@ subroutine set_labels
 !--guess positions of various quantities from the column labels
 !
      if (.not.got_time) then
-        if (ndim.le.0 .and. (labeli(1:1).eq.'x' .or. trim(labeli).eq.'r' .or. labeli(1:3).eq.'rad')) then
+        if (ndim <= 0 .and. (labeli(1:1)=='x' .or. trim(labeli)=='r' .or. labeli(1:3)=='rad')) then
            ndim = 1
            ix(1) = i
         endif
-        if (ndim.eq.1 .and. i.eq.ix(1)+1 .and. (labeli(1:1).eq.'y' .or. labeli(1:1).eq.'z')) then
+        if (ndim==1 .and. i==ix(1)+1 .and. (labeli(1:1)=='y' .or. labeli(1:1)=='z')) then
            ndim = 2
            ix(2) = i
         endif
-        if (ndim.eq.2 .and. i.eq.ix(2)+1 .and. labeli(1:1).eq.'z') then
+        if (ndim==2 .and. i==ix(2)+1 .and. labeli(1:1)=='z') then
            ndim = 3
            ix(3) = i
         endif
      endif
-     if (labeli(1:3).eq.'den' .or. index(labeli,'rho').ne.0 .or. labeli(1:3).eq.'\gr' .or. &
-         (index(labeli,'density').ne.0 .and. irho==0)) then
+     if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:3)=='\gr' .or. &
+         (index(labeli,'density') /= 0 .and. irho==0)) then
         irho = i
-     elseif (labeli(1:5).eq.'pmass' .or. labeli(1:13).eq.'particle mass' &
-             .or. index(labeli,'mass').ne.0) then
+     elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass' &
+             .or. index(labeli,'mass') /= 0) then
         ipmass = i
-     elseif (ipmass.eq.0 .and. trim(labeli).eq.'m') then
+     elseif (ipmass==0 .and. trim(labeli)=='m') then
         ipmass = i
      !--use first column labelled h as smoothing length
-     elseif (ih.eq.0 .and. (labeli(1:1).eq.'h' &
-             .or. labeli(1:6).eq.'smooth')) then
+     elseif (ih==0 .and. (labeli(1:1)=='h' &
+             .or. labeli(1:6)=='smooth')) then
         ih = i
-     elseif (trim(labeli).eq.'u'.or.labeli(1:6).eq.'utherm' &
-         .or.(index(labeli,'internal energy').ne.0 .and. iutherm==0)) then
+     elseif (trim(labeli)=='u'.or.labeli(1:6)=='utherm' &
+         .or.(index(labeli,'internal energy') /= 0 .and. iutherm==0)) then
         iutherm = i
-     elseif (labeli(1:2).eq.'pr' .or. trim(labeli).eq.'p' .or. &
-            (index(labeli,'pressure').ne.0 .and. ipr==0)) then
+     elseif (labeli(1:2)=='pr' .or. trim(labeli)=='p' .or. &
+            (index(labeli,'pressure') /= 0 .and. ipr==0)) then
         ipr = i
-     elseif (icoltype==0 .and. index(labeli,'type').ne.0) then
+     elseif (icoltype==0 .and. index(labeli,'type') /= 0) then
         icoltype = i
      endif
   enddo
@@ -473,12 +473,12 @@ subroutine set_labels
 !--try to find vectors by looking for multiple entries starting with 'v'
 !
   if (ndim > 0 .and. ivx==0) call find_repeated_tags('v_',ncolumns,label,ivx,ndimV)
-  if (ndimVtemp.gt.ndimV .and. iverbose > 0) &
+  if (ndimVtemp > ndimV .and. iverbose > 0) &
      print "(a)",' WARNING: possible confusion with vector dimensions'
 !
 !--ignore label identifications if no spatial coordinates found
 !
-  if (ndim.lt.1) then
+  if (ndim < 1) then
      ndimV = 0
      irho = 0
      ipmass = 0
@@ -488,31 +488,31 @@ subroutine set_labels
      ivx = 0
   endif
   if (iverbose > 0) then
-     if (ndim.gt.0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
-     !if (ndimV.gt.0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
+     if (ndim > 0) print "(a,i1,a,i2,a,i2)",' Assuming ',ndim,' dimensions, coords in cols ',ix(1),' to ',ix(ndim)
+     !if (ndimV > 0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV
      if (ndim > 0 .and. (irho > 0 .or. ipmass>0 .or. ih > 0)) write(*,"(a)",advance='no') ' Assuming'
-     if (irho.gt.0) write(*,"(a,i2)",advance='no') ' density in column ',irho
-     if (ipmass.gt.0) write(*,"(a,i2)",advance='no') ', mass in ',ipmass
-     if (ih.gt.0) write(*,"(a,i2)",advance='no') ', h in ',ih
-     if (iutherm.gt.0) write(*,"(/,a,i2)") ' Assuming thermal energy in ',iutherm
+     if (irho > 0) write(*,"(a,i2)",advance='no') ' density in column ',irho
+     if (ipmass > 0) write(*,"(a,i2)",advance='no') ', mass in ',ipmass
+     if (ih > 0) write(*,"(a,i2)",advance='no') ', h in ',ih
+     if (iutherm > 0) write(*,"(/,a,i2)") ' Assuming thermal energy in ',iutherm
      if (iutherm==0 .and. ipr > 0) write(*,"(/,a)",advance='no') ' Assuming'
-     if (ipr.gt.0) write(*,"(a,i2)",advance='no') ' pressure in column ',ipr
-     if (ivx.gt.0) then
+     if (ipr > 0) write(*,"(a,i2)",advance='no') ' pressure in column ',ipr
+     if (ivx > 0) then
         if (ipr==0 .and. iutherm==0) write(*,*)
-        if (ndimV.gt.1) then
+        if (ndimV > 1) then
            print "(a,i2,a,i2)",' Assuming velocity in cols ',ivx,' to ',ivx+ndimV-1
         else
            print "(a,i2)",' Assuming velocity in column ',ivx
         endif
      endif
-     if (icoltype.gt.0) then
+     if (icoltype > 0) then
         if (ipr==0 .and. iutherm==0 .and. ivx==0) write(*,*)
         write(*,"(a,i2)") ' Assuming particle type in column ',icoltype
      endif
      if ((irho > 0 .or. ih > 0 .or. ipmass > 0) &
         .and. ipr==0 .and. iutherm==0 .and. ivx==0 .and. icoltype==0) write(*,*)
 
-     if (ndim.gt.0 .and. (irho.eq.0 .or. ipmass.eq.0 .or. ih.eq.0)) then
+     if (ndim > 0 .and. (irho==0 .or. ipmass==0 .or. ih==0)) then
         print "(2(/,a))",' NOTE: Rendering disabled until density, h and mass columns known', &
                     ' (i.e. label relevant columns in file header or columns file)'
      endif

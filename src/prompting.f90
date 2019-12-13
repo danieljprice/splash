@@ -535,7 +535,7 @@ contains
       else
          allowblank = .true.
       endif
-      if (allowblank .and. len_trim(adjustl(string)).gt.0) then
+      if (allowblank .and. len_trim(adjustl(string)) > 0) then
          write(*,"(a,1x,'(blank=""blank"",default=""',a,'""):',1x)",advance='no') &
               trim(adjustl(text)), trim(adjustl(string))
       else
@@ -550,11 +550,11 @@ contains
       if (len_trim(newstring) > len(string)) then
          print "(a)", "Warning: string too long, will be truncated"
       endif
-      if (allowblank .and. trim(adjustl(newstring)).eq.'blank') then
+      if (allowblank .and. trim(adjustl(newstring))=='blank') then
          string = ' '
       elseif ( len_trim(adjustl(newstring)) /= 0 ) then
          string = newstring
-      elseif ( .not.allowblank .and. len_trim(adjustl(string)).eq.0 ) then
+      elseif ( .not.allowblank .and. len_trim(adjustl(string))==0 ) then
          print "(a)", "Error, cannot enter blank string"
          if (present(list)) then
             call string_prompt(text,string,noblank=.not.allowblank,list=list)
@@ -627,7 +627,7 @@ contains
          write(valstring,*,iostat=ios) value(ival)
          string = trim(string)//trim(adjustl(valstring))//','
       enddo
-      if (nvalues.gt.0) then
+      if (nvalues > 0) then
          write(valstring,*,iostat=ios) value(nvalues)
       endif
       string = trim(string)//trim(adjustl(valstring))
@@ -660,7 +660,7 @@ contains
       read(string,*,iostat=ios) newvalue(:)
       nvaluesnew = 0
       do ival=1,size(newvalue)
-         if (newvalue(ival).ne.-huge(0)) nvaluesnew = nvaluesnew + 1
+         if (newvalue(ival) /= -huge(0)) nvaluesnew = nvaluesnew + 1
       enddo
 
       !

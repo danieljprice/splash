@@ -129,11 +129,11 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        !
        !--write body
        !
-       change_coordsys = (icoordsnew.ne.icoords .and. ndim.gt.0 .and. all(ix(1:ndim).gt.0))
+       change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
        x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
        v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
-       if (size(itype).gt.1) then
+       if (size(itype) > 1) then
           write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
           do i=1,npart
              vals(1:ncolumns) = dat(i,1:ncolumns)
@@ -180,7 +180,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        !
        !--write body
        !
-       if (size(itype).gt.1) then
+       if (size(itype) > 1) then
           do i=1,npart
              write(iunit,err=200) dat(i,1:ncolumns),int(itype(i))
           enddo
@@ -200,7 +200,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
 !
 !--Files for Steinar Borve's RSPH format
 !
-    if (ndim.lt.2) then
+    if (ndim < 2) then
        print "(a)",' ERROR: cannot write RSPH format for < 2D'
        return
     endif

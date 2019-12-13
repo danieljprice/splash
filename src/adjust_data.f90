@@ -51,15 +51,15 @@ subroutine adjust_data_codeunits
  !
  !--environment variable setting to enforce a minimum h
  !
- if (ih.gt.0 .and. ih.le.ncolumns) then
+ if (ih > 0 .and. ih <= ncolumns) then
     hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
-    if (hmin.gt.0.) then
+    if (hmin > 0.) then
        if (.not.allocated(dat)) then
           print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
           return
        endif
        print "(/,a,es10.3)",' >> SETTING MINIMUM H TO ',hmin
-       where (dat(:,ih,:) < hmin .and. dat(:,ih,:).gt.0.)
+       where (dat(:,ih,:) < hmin .and. dat(:,ih,:) > 0.)
           dat(:,ih,:) = hmin
        end where
        print "(a)",' >> Switching accelerated rendering ON'
@@ -70,27 +70,27 @@ subroutine adjust_data_codeunits
  !
  !--environment variable setting to subtract a mean velocity
  !
- if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+ if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) then
     call envlist('SPLASH_VZERO_CODEUNITS',nlist,list)
     nerr = 0
-    if (nlist.gt.0 .and. nlist.lt.ndimV) then
+    if (nlist > 0 .and. nlist < ndimV) then
        print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO_CODEUNITS setting: number of components = ',nlist,', needs to be ',ndimV
        nerr = 1
-    elseif (nlist.gt.0) then
-       if (nlist.gt.ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
+    elseif (nlist > 0) then
+       if (nlist > ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
                                                ' components: using only first ',ndimV
        nerr = 0
        do i=1,ndimV
           read(list(i),*,iostat=ierr) v0(i)
-          if (ierr.ne.0) then
+          if (ierr /= 0) then
              print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//&
                          ' component from SPLASH_VZERO_CODEUNITS setting'
              nerr = ierr
           endif
        enddo
-       if (nerr.eq.0) then
+       if (nerr==0) then
           print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO_CODEUNITS setting):'
-          if (.not.allocated(dat) .or. size(dat(1,:,1)).lt.ivx+ndimV-1) then
+          if (.not.allocated(dat) .or. size(dat(1,:,1)) < ivx+ndimV-1) then
              print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
              return
           endif
@@ -100,21 +100,21 @@ subroutine adjust_data_codeunits
           enddo
        endif
     endif
-    if (nerr.ne.0) then
+    if (nerr /= 0) then
        print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
     endif
  endif
- if (ndim.gt.0) then
+ if (ndim > 0) then
     !
     !--environment variable to corotate with first two sink particles
     !
     if (lenvironment('SPLASH_COROTATE')) then
        itype = get_sink_type(ntypes)
-       if (itype.gt.0) then
-          if (all(npartoftype(itype,:).lt.2)) then
+       if (itype > 0) then
+          if (all(npartoftype(itype,:) < 2)) then
              print "(a)",' ERROR: SPLASH_COROTATE set but less than 2 sink particles'
           else
-             if (iverbose.ge.1) print*
+             if (iverbose >= 1) print*
              print "(a,i3,a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from SPLASH_COROTATE setting'
              do j=1,nstepsinfile(ifileopen)
                 !  find first two sink particles in the data
@@ -122,7 +122,7 @@ subroutine adjust_data_codeunits
                 !  get properties of the binary
                 call get_binary(isink1,isink2,dat(:,:,j),x0,v0,dphi,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
                 !  rotate all the particles into this frame
-                if (ierr.eq.0) call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
+                if (ierr==0) call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
              enddo
           endif
        else
@@ -137,32 +137,32 @@ subroutine adjust_data_codeunits
     !--can specify either just "true" for sink #1, or specify a number for a particular sink
     centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK') .or. lenvironment('SPLASH_CENTER_ON_SINK')
     isink        = max(ienvironment('SPLASH_CENTRE_ON_SINK'),ienvironment('SPLASH_CENTER_ON_SINK'))
-    if (isink.gt.0 .or. centreonsink) then
-       if (isink.eq.0) isink = 1
+    if (isink > 0 .or. centreonsink) then
+       if (isink==0) isink = 1
        itype = get_sink_type(ntypes)
-       if (itype.gt.0) then
-          if (all(npartoftype(itype,:).lt.isink)) then
+       if (itype > 0) then
+          if (all(npartoftype(itype,:) < isink)) then
              print "(a,i10,a)",' ERROR: SPLASH_CENTRE_ON_SINK = ',isink,' but not enough sink particles'
           else
-             if (iverbose.ge.1) print*
-             if (isink.lt.10) then
+             if (iverbose >= 1) print*
+             if (isink < 10) then
                 print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
              else
                 print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
              endif
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
-                if (isinkpos.eq.0) then
+                if (isinkpos==0) then
                    print "(a)",' ERROR: could not locate sink particle in dat array'
                 else
                    if (debugmode) print*,' SINK POSITION = ',isinkpos,npartoftype(1:itype,j)
                    !--make positions relative to sink particle
                    xyzsink(1:ndim) = dat(isinkpos,ix(1:ndim),j)
-                   if (iverbose.ge.1) print "(a,3(1x,es10.3))",' :: sink position =',xyzsink(1:ndim)
+                   if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: sink position =',xyzsink(1:ndim)
                    !--make velocities relative to sink particle
-                   if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) then
+                   if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) then
                       vsink(1:ndimV) = dat(isinkpos,ivx:ivx+ndimV-1,j)
-                      if (iverbose.ge.1) print "(a,3(1x,es10.3))",' :: sink velocity =',vsink(1:ndimV)
+                      if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: sink velocity =',vsink(1:ndimV)
                    else
                       vsink = 0.
                    endif
@@ -179,7 +179,7 @@ subroutine adjust_data_codeunits
  !
  !--fake a set of dust particles from the one-fluid dust formulation
  !
- if (idustfrac.gt.0 .and. irho.gt.0 .and.            &
+ if (idustfrac > 0 .and. irho > 0 .and.            &
           .not.(lenvironment('SPLASH_BARYCENTRIC')   &
           .or. lenvironment('NSPLASH_BARYCENTRIC'))) then
     fakedust = .true.
@@ -301,7 +301,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  real, dimension(ndimV) :: veli,vgas,vdust,deltav,deltavsum
  logical :: use_vels
 
- if (idustfrac.gt.0 .and. irho.gt.0) then
+ if (idustfrac > 0 .and. irho > 0) then
     !
     !--determine which dust fraction is being used to create the fake dust particles
     !
@@ -325,7 +325,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
     !
     do i=istart,iend
        ntoti = sum(npartoftype(:,i))
-       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
+       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)) > maxpart) then
           call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
        endif
        if (npartoftype(2,i) > 0) cycle
@@ -336,9 +336,9 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
           print*,' ERROR: idustfrac out of range: cannot create fake dust particles'
           return
        endif
-       use_vels = (ideltav_temp.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0)
+       use_vels = (ideltav_temp > 0 .and. ivx > 0 .and. ndimV > 0)
        do j=1,ntoti
-          if (iamtype(j,i).eq.1) then
+          if (iamtype(j,i)==1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
              rhotot  = dat(j,irho,i)
              dustfraci = dat(j,idustfrac_temp,i)
@@ -355,9 +355,9 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              jdust = ntoti + ndust
 
              !--fill in dust properties
-             if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
-             if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
-             if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             if (ndim > 0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
+             if (ih > 0)   dat(jdust,ih,i)         = dat(j,ih,i)
+             if (irho > 0) dat(jdust,irho,i)       = rhodust
              if (idustfracsum == 0) then
                 !--copy the dustfracion
                 dat(jdust,idustfrac,i) = dustfraci
@@ -378,7 +378,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              iamtype(ntoti + ndust,i) = 2
 
              !--particle masses
-             if (ipmass.gt.0) then
+             if (ipmass > 0) then
                 pmassj    = dat(j,ipmass,i)
                 pmassgas  = pmassj*gasfraci
                 pmassdust = pmassj*dustfraci
@@ -403,7 +403,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
              endif
           endif
        enddo
-       if (iverbose.ge.1) then
+       if (iverbose >= 1) then
           print "(a,i8,a)",' Creating ',ndust,' fake dust particles (set SPLASH_BARYCENTRIC=yes to plot barycentric values)'
           if (.not.use_vels .and. ivx > 0) print "(a)",' WARNING: deltav not found in one fluid dust data: cannot get vels'
        endif

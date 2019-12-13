@@ -52,8 +52,8 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   if (iverbose > 1 .or. debugmode) print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
   !--avoid tripping over array bounds (but these are valid do-nothing calls)
-  if (ifromcol.gt.maxcol .or. maxcol.eq.0) return
-  if (ifromcol.gt.itocol) return
+  if (ifromcol > maxcol .or. maxcol==0) return
+  if (ifromcol > itocol) return
   itocoli = min(itocol,maxcol)
 
   !--find limits of particle properties
@@ -80,8 +80,8 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
   !
   !--transform coord limits into new coordinate system if coord transform is applied
   !
-  if (icoordsnew.ne.icoords .and. ndim.gt.0) then
-     if (ifromcol.le.ix(ndim)) then ! separate if is to avoid referencing ix(0) if ndim=0
+  if (icoordsnew /= icoords .and. ndim > 0) then
+     if (ifromcol <= ix(ndim)) then ! separate if is to avoid referencing ix(0) if ndim=0
         call coord_transform_limits(lim(ix(1):ix(ndim),1),lim(ix(1):ix(ndim),2), &
                                     icoords,icoordsnew,ndim)
      endif
@@ -102,11 +102,11 @@ subroutine write_limits(limitsfile)
 
   open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
   do i=1,numplot
-     if (rangeset(i) .and. i.lt.ndataplots .and. lim2set(i)) then
+     if (rangeset(i) .and. i < ndataplots .and. lim2set(i)) then
         write(55,"(6(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2),lim2(i,1),lim2(i,2)
-     elseif (lim2set(i) .and. i.lt.ndataplots) then
+     elseif (lim2set(i) .and. i < ndataplots) then
         write(55,"(6(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),0.,0.,lim2(i,1),lim2(i,2)
-     elseif (rangeset(i) .and. i.lt.ndataplots) then
+     elseif (rangeset(i) .and. i < ndataplots) then
         write(55,"(4(1x,1pe14.6))",err=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
      else
         write(55,"(2(1x,1pe14.6))",err=999) lim(i,1),lim(i,2)
@@ -153,11 +153,11 @@ subroutine read_limits(limitsfile,ierr)
   do i=1,numplot
      read(54,"(a)",err=998,end=999) line
      ncolsline = ncolumnsline(line)
-     if (ncolsline.lt.2) then
+     if (ncolsline < 2) then
         goto 998
-     elseif (ncolsline.ge.6) then
+     elseif (ncolsline >= 6) then
         read(line,*,err=998,end=999) lim(i,1),lim(i,2),range(i,1),range(i,2),lim2(i,1),lim2(i,2)
-     elseif (ncolsline.ge.4) then
+     elseif (ncolsline >= 4) then
         read(line,*,err=998,end=999) lim(i,1),lim(i,2),range(i,1),range(i,2)
      else
         read(line,*,err=998,end=999) lim(i,1),lim(i,2)
@@ -185,7 +185,7 @@ subroutine read_limits(limitsfile,ierr)
 999 continue
   !--only give error if we really do not have enough columns
   !  (on first call nextra is not set)
-  if (i.le.ncolumns+ncalc) then
+  if (i <= ncolumns+ncalc) then
      print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
      ierr = -1
   endif
@@ -210,7 +210,7 @@ subroutine get_particle_subset(icolours,datstep,ncolumns)
 
  if (anyrangeset()) then
     !--reset colours of all particles (to not hidden) if using range restriction
-    where (icolours(:).eq.-1000)
+    where (icolours(:)==-1000)
        icolours(:) = 0
     elsewhere
        icolours(:) = abs(icolours(:))
@@ -224,9 +224,9 @@ subroutine get_particle_subset(icolours,datstep,ncolumns)
        !--loop over the particles and colour those outside the range
        !  NB: background colour (0) is set to -1000
        !
-          where (datstep(:,icol).lt.range(icol,1) .or. &
-                 datstep(:,icol).gt.range(icol,2))
-             where (icolours.eq.0)
+          where (datstep(:,icol) < range(icol,1) .or. &
+                 datstep(:,icol) > range(icol,2))
+             where (icolours==0)
                 icolours = -1000
              elsewhere
                 icolours = -abs(icolours)
@@ -246,7 +246,7 @@ subroutine reset_all_ranges()
  use particle_data, only:icolourme
 
  print "(a)",' removing all range restrictions '
- where (icolourme(:).eq.-1000)
+ where (icolourme(:)==-1000)
     icolourme(:) = 0
  elsewhere
     icolourme(:) = abs(icolourme(:))
@@ -264,7 +264,7 @@ logical function rangeset(icol)
  integer, intent(in) :: icol
 
  rangeset = .false.
- if (abs(range(icol,2)-range(icol,1)).gt.tiny(range)) rangeset = .true.
+ if (abs(range(icol,2)-range(icol,1)) > tiny(range)) rangeset = .true.
 
  return
 end function rangeset
@@ -277,7 +277,7 @@ logical function lim2set(icol)
  integer, intent(in) :: icol
 
  lim2set = .false.
- if (abs(lim2(icol,2)).gt.tiny(lim2) .or. abs(lim2(icol,1)).gt.tiny(lim2)) lim2set = .true.
+ if (abs(lim2(icol,2)) > tiny(lim2) .or. abs(lim2(icol,1)) > tiny(lim2)) lim2set = .true.
 
  return
 end function lim2set
@@ -289,7 +289,7 @@ subroutine reset_lim2(icol)
  integer, intent(in) :: icol
 
  print "(a)",' contour limits same as render limits'
- if (icol.gt.0 .and. icol.le.maxplot) lim2(icol,:) = 0
+ if (icol > 0 .and. icol <= maxplot) lim2(icol,:) = 0
 
  return
 end subroutine reset_lim2
@@ -359,7 +359,7 @@ subroutine warn_minmax(labelx,xmin,xmax)
  character(len=*), intent(in) :: labelx
  real,             intent(in) :: xmin,xmax
 
- if (abs(xmin-xmax).lt.tiny(xmax)) then
+ if (abs(xmin-xmax) < tiny(xmax)) then
     print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
  endif
 
@@ -418,7 +418,7 @@ subroutine fix_equal_limits(xmin,xmax)
  call assert_sensible_limits(xmin,xmax)
  if (abs(xmax - xmin) < tiny(xmin)) then
     xmax = xmax + 1.0
-    if (xmin.gt.0.) then
+    if (xmin > 0.) then
        xmin = max(xmin - 1.0,0.)
     else
        xmin = xmin - 1.0

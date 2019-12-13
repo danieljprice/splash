@@ -68,14 +68,14 @@ subroutine convert_all(outformat,igotfilenames,useall)
  !--if nfiles = 0 (ie. no files read from command line), then call get_data here
  !  to also get nfiles correctly prior to the loop
  !
- if (nfiles.eq.0) then
+ if (nfiles==0) then
     call get_data(1,igotfilenames)
     igotfilenames = .true.
  endif
 
  do ifile=1,nfiles
     !--read data from dump file + calculate extra columns
-    if (ifile.eq.1) then
+    if (ifile==1) then
        call get_data(ifile,igotfilenames,firsttime=.true.)
        !
        ! read plot limits from file (overrides get_data limits settings)
@@ -100,7 +100,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
        else
           iloc = idump
        endif
-       if (nstepsinfile(ifile).gt.1) then
+       if (nstepsinfile(ifile) > 1) then
           write(filename,"(a,'_',i5.5)") trim(rootname(ifile)),idump
        else
           filename = trim(rootname(ifile))

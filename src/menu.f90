@@ -103,9 +103,9 @@ subroutine menu
   indexi = 7
   iamvecprev = 0
   do icol=1,numplot
-     if (iamvec(icol).ne.0 .and. iamvec(icol).ne.iamvecprev) then
+     if (iamvec(icol) /= 0 .and. iamvec(icol) /= iamvecprev) then
         iamvecprev = iamvec(icol)
-        if (iamvec(icol).ge.10) then
+        if (iamvec(icol) >= 10) then
            write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
         else
@@ -122,7 +122,7 @@ subroutine menu
 !  print menu
 !---------------------------------------------------------------------------
 
-  if (numplot.gt.0) then
+  if (numplot > 0) then
 !
 !--data columns
 !
@@ -138,7 +138,7 @@ subroutine menu
           (i,transform_label(label(i),itrans(i)), &
           ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
           itrans(ihalf+i+iadjust)),i=1,ihalf)
-     if (iadjust.ne.0) then
+     if (iadjust /= 0) then
         fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
         print fmtstr2, &
               ihalf + iadjust,transform_label(label(ihalf + iadjust), &
@@ -163,7 +163,7 @@ subroutine menu
 !--options
 !
   print sep
-  if (ndim.le.1) then
+  if (ndim <= 1) then
      print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
   else
      print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
@@ -226,7 +226,7 @@ subroutine menu
            endif
            call prompt(' (x axis) ',ipickx)
            !--go back to y prompt if out of range
-           if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
+           if (ipickx > numplot .or. ipickx <= 0) cycle menuloop
            !
            !--work out whether rendering is allowed
            !
@@ -264,14 +264,14 @@ subroutine menu
               else
                  irender = 0
               endif
-              if (any(iamvec(1:numplot).ne.0) .and. (icoordsnew.eq.icoords)) then
+              if (any(iamvec(1:numplot) /= 0) .and. (icoordsnew==icoords)) then
                  ivecplottemp = -1
                  ierr = 1
                  do while(ierr /= 0 .and. ivecplottemp /= 0)
                     ivecplottemp = ivecplot
                     ierr = 0
                     call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-                    if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+                    if (.not.any(iamvec(1:numplot)==ivecplottemp)) then
                        print "(a)",'Error, value not in list'
                        ierr = 1
                     endif
@@ -280,7 +280,7 @@ subroutine menu
               else
                  ivecplot = 0
               endif
-              if (ivecplot.gt.0 .and. irender.eq.0) then
+              if (ivecplot > 0 .and. irender==0) then
                  call prompt('plot particles?',iplotpartvec)
               endif
            else
@@ -369,17 +369,17 @@ subroutine menu
 !------------------------------------------------------------------------
 !+ This submenu sets (r)endering options
      case('r','R')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
+        if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_render(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets (v)ector plotting options
      case('v','V')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
+        if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_vecplot(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets cross section and rotation options
      case('x','X')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
+        if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
         call submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets options relating to the plot limits
@@ -397,9 +397,9 @@ subroutine menu
 !+ 'splash.limits' which is also read automatically
 !+ at startup.
      case('s')
-        if (ioption(2:2).eq.'a') then
+        if (ioption(2:2)=='a') then
            call prompt('enter prefix for defaults file: ',fileprefix,noblank=.true.)
-           if (index(fileprefix,'.defaults').eq.0) then
+           if (index(fileprefix,'.defaults')==0) then
               defaultsfile = trim(fileprefix)//'.defaults'
            else
               defaultsfile = trim(fileprefix)
@@ -407,7 +407,7 @@ subroutine menu
         endif
         call defaults_write(defaultsfile)
      case('S')
-        if (ioption(2:2).eq.'a' .or. ioption(2:2).eq.'A') then
+        if (ioption(2:2)=='a' .or. ioption(2:2)=='A') then
            call prompt('enter prefix for filenames: ',fileprefix,noblank=.true.)
            call set_filenames(trim(fileprefix))
         endif
@@ -459,14 +459,14 @@ subroutine menu
 
    call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
 
-   isamey = all(multiploty(1:nyplotmulti).eq.multiploty(1))
-   if (ndim.ge.2) call prompt('Same y axis for all?',isamey)
+   isamey = all(multiploty(1:nyplotmulti)==multiploty(1))
+   if (ndim >= 2) call prompt('Same y axis for all?',isamey)
    if (isamey) then
       call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
       multiploty(2:nyplotmulti) = multiploty(1)
    endif
 
-   isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
+   isamex = all(multiplotx(1:nyplotmulti)==multiplotx(1))
    call prompt('Same x axis for all?',isamex)
    if (isamex) then
       call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
@@ -479,18 +479,18 @@ subroutine menu
       if (.not.isamey) then
          call prompt(' y axis ',multiploty(i),1,numplot)
       endif
-      if (multiploty(i).le.ndataplots .and. .not.isamex) then
+      if (multiploty(i) <= ndataplots .and. .not.isamex) then
          call prompt(' x axis ',multiplotx(i),1,ndataplots)
       else
-         if (multiploty(i).eq.isurfdens) then
+         if (multiploty(i)==isurfdens) then
             print "(a)",' setting x axis to r for surface density plot'
             multiplotx(i) = 1
-         elseif (multiploty(i).eq.itoomre) then
+         elseif (multiploty(i)==itoomre) then
             print "(a)",' setting x axis to r for Toomre Q plot'
             multiplotx(i) = 1
-         elseif (multiploty(i).eq.ipdf) then
+         elseif (multiploty(i)==ipdf) then
             call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)
-         elseif (multiploty(i).eq.icolpixmap) then
+         elseif (multiploty(i)==icolpixmap) then
             call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
             multiplotx(i) = 1
          elseif (.not.isamex) then
@@ -508,14 +508,14 @@ subroutine menu
       if (icoordplot) then
          if (iAllowRendering) then
             call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
-            if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
+            if (irendermulti(i) > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
                if (double_rendering) then
                   rprompt = '2nd render'
                else
                   rprompt = 'contours'
                endif
                call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
-               if (icontourmulti(i).eq.irendermulti(i)) then
+               if (icontourmulti(i)==irendermulti(i)) then
                   if (iadapt) then
                      print "(a)",' limits for '//trim(rprompt)//' are adaptive '
                   else
@@ -532,14 +532,14 @@ subroutine menu
             endif
             !iplotcontmulti(i) = iplotcont_nomulti
          endif
-         if (any(iamvec(1:numplot).gt.0)) then
+         if (any(iamvec(1:numplot) > 0)) then
             ivecplottemp = -1
             ierr = 1
-            do while(ierr.ne.0 .and. ivecplottemp.ne.0)
+            do while(ierr /= 0 .and. ivecplottemp /= 0)
                ivecplottemp = ivecplotmulti(i)
                ierr = 0
                call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-               if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
+               if (.not.any(iamvec(1:numplot)==ivecplottemp)) then
                   print "(a)",'Error, value not in list'
                   ierr = 1
                endif
@@ -548,19 +548,19 @@ subroutine menu
          else
             ivecplotmulti(i) = 0
          endif
-         if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
+         if (ivecplotmulti(i) > 0 .and. irendermulti(i)==0) then
             call prompt('plot particles?',iplotpartvec)
          endif
       else
          !
          !--set irender, icontour and ivecplot to zero if no rendering allowed
          !
-         if (multiploty(i).ne.icolpixmap) irendermulti(i) = 0
+         if (multiploty(i) /= icolpixmap) irendermulti(i) = 0
          icontourmulti(i) = 0
          ivecplotmulti(i) = 0
       endif
 
-      if (icoordplot .and. ndim.ge.2) then
+      if (icoordplot .and. ndim >= 2) then
          call prompt(' is this a cross section (no=projection)? ',x_secmulti(i))
          if (x_secmulti(i)) then
             call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
@@ -571,7 +571,7 @@ subroutine menu
       !  if more than one SPH particle type is present
       !
       itypelist = 0
-      if (ntypes.ge.2) then
+      if (ntypes >= 2) then
          call prompt('use all active particle types?',iusealltypesmulti(i))
 
          if (iusealltypesmulti(i)) then
@@ -588,7 +588,7 @@ subroutine menu
                   itypelist(nvalues) = itype
                endif
             enddo
-            if (nvalues.eq.0) then
+            if (nvalues==0) then
                print*,'warning: internal error in type list'
                itypelist(:) = 0
                nvalues = 1
@@ -623,22 +623,22 @@ subroutine menu
       imultisamepanel = .false.
    endif
 
-   if (nyplotmulti.eq.1 .or. imultisamepanel) then
+   if (nyplotmulti==1 .or. imultisamepanel) then
       nacross = 1
       ndown = 1
       print*,'setting nacross,ndown = ',nacross,ndown
-   elseif (mod(nacross*ndown,nyplotmulti).ne.0) then
+   elseif (mod(nacross*ndown,nyplotmulti) /= 0) then
       !--guess nacross,ndown based on largest factor
       ifac = nyplotmulti/2
-      do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
+      do while (mod(nyplotmulti,ifac) /= 0 .and. ifac > 1)
          ifac = ifac - 1
       enddo
-      if (ifac.le.1) then
+      if (ifac <= 1) then
          nacross = nyplotmulti/2
       else
          nacross = ifac
       endif
-      if (nacross.le.0) nacross = 1
+      if (nacross <= 0) nacross = 1
       ndown = nyplotmulti/nacross
       print*,'setting nacross,ndown = ',nacross,ndown
    else
@@ -671,8 +671,8 @@ logical function allowrendering(iplotx,iploty,xsec)
  endif
  itransx = 0
  itransy = 0
- if (iplotx.gt.0) itransx = itrans(iplotx)
- if (iploty.gt.0) itransy = itrans(iploty)
+ if (iplotx > 0) itransx = itrans(iplotx)
+ if (iploty > 0) itransy = itrans(iploty)
 
  iz = get_z_coord(ndim,iplotx,iploty)
  islengthz = coord_is_length(iz,icoordsnew)
@@ -680,10 +680,10 @@ logical function allowrendering(iplotx,iploty,xsec)
 !--work out whether rendering is allowed based on presence of rho, h & m in data read
 !  also must be in base coordinate system and no transformations applied
 !
- if ((ih.gt.0 .and. ih.le.ndataplots) &
-    .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(icoords.eq.icoordsnew .or. (.not.is_xsec .or. (is_xsec .and. islengthz))) &
-    .and.(itransx.eq.0 .and. itransy.eq.0)) then
+ if ((ih > 0 .and. ih <= ndataplots) &
+    .and.(irho > 0 .and. irho <= ndataplots) &
+    .and.(icoords==icoordsnew .or. (.not.is_xsec .or. (is_xsec .and. islengthz))) &
+    .and.(itransx==0 .and. itransy==0)) then
 
     allowrendering = .true.
  else
@@ -712,36 +712,36 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  !
  !-add extra columns (but not if nothing read from file)
  !
- if (ncolumns.gt.0) then
+ if (ncolumns > 0) then
     nextra = 0
     ipowerspec = 0
     iacplane = 0
     isurfdens = 0
     itoomre = 0
-    if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
+    if (ndim==3 .and. icoordsnew==2 .or. icoordsnew==3) then
        nextra = nextra + 1
        isurfdens = ncolumns + ncalc + nextra
        label(isurfdens) = 'Surface density'
-       if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+       if (iutherm > 0 .and. iutherm <= ncolumns) then
           nextra = nextra + 1
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'
        endif
     endif
-    if (ndim.eq.3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
+    if (ndim==3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
        label(ipdf) = 'PDF'
     endif
 
-    if (ndim.le.1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
+    if (ndim <= 1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
        nextra = nextra + 1      ! one extra plot = power spectrum
        ipowerspec = ncolumns + ncalc + nextra
        label(ipowerspec) = '1D power spectrum'
     else
        ipowerspec = 0
     endif
-    if (iexact.eq.6) then       ! toy star plot a-c plane
+    if (iexact==6) then       ! toy star plot a-c plane
        nextra = nextra + 1
        iacplane = ncolumns + ncalc + nextra
        label(iacplane) = 'a-c plane'
@@ -750,7 +750,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
     endif
     !nextra = nextra + 1
     !label(ncolumns+ncalc+nextra) = 'gwaves'
-    if (ndim.ge.2) then
+    if (ndim >= 2) then
        if (ireadpixmap) then
           nextra = nextra + 1
           icolpixmap = ncolumns + ncalc + nextra
@@ -763,7 +763,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 !
  if (ivegotdata) then
     numplot = ncolumns + ncalc + nextra
-    if (numplot.gt.maxplot) then
+    if (numplot > maxplot) then
        print "(a,i3,a)",' ERROR: total number of columns = ',numplot,' is greater '
        print "(a,i3,a)",'        than the current allowed maximum (',maxplot,').'
        print "(a)",'        This is set by the parameter "maxplot" in the params module'

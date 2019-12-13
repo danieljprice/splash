@@ -81,7 +81,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ndim_max = 1
   ndimV_max = 1
   nstepsread = 0
-  if (rootname(1:1).ne.' ') then
+  if (rootname(1:1) /= ' ') then
      datfile = trim(rootname)
      !print*,'rootname = ',rootname
   else
@@ -89,7 +89,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      return
   endif
 
-  if (iverbose.ge.1) print "(1x,a)",'reading Maddison/Hutchison format'
+  if (iverbose >= 1) print "(1x,a)",'reading Maddison/Hutchison format'
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
 !
 !--open data file and read data
@@ -223,17 +223,17 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      time(i) = timei
      gamma(i) = gammai
      npartoftype(1,i) = np
-     if (iverbose.ge.1) then
+     if (iverbose >= 1) then
         print "(a,i5,a,f8.4,a,i8,a,f8.4)",' step:',i,' time:',time(i),' npart:',np,' dt:',dt
      else
         print "(a,i5,a,f8.4,a,i8,a,i8)",' step:',i,' time:',time(i),' npart:',np
      endif
 
-     if (ncolstep.ne.ncol_max) then
+     if (ncolstep /= ncol_max) then
         print*,'*** Warning number of columns not equal for timesteps'
         ncolumns = ncolstep
-        if (iverbose.ge.1) print*,'ncolumns = ',ncolumns,ncol_max
-        if (ncolumns.gt.ncol_max) ncol_max = ncolumns
+        if (iverbose >= 1) print*,'ncolumns = ',ncolumns,ncol_max
+        if (ncolumns > ncol_max) ncol_max = ncolumns
      endif
 
      ncolumns = ncolstep
@@ -245,7 +245,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      allocate(iwas(np))
      read(iunit,iostat=ierr,end=80)  iwas(1:np)
 
-     if ( any(iwas.lt.1).or.any(iwas.gt.norigin) ) then
+     if ( any(iwas < 1).or.any(iwas > norigin) ) then
           do j = 1,np
                iwas(j) = j
           enddo
@@ -273,7 +273,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      enddo
      deallocate(iam)
 
-     if (kind(dat).ne.kind(dattemp)) then
+     if (kind(dat) /= kind(dattemp)) then
         if (debugmode) print*,' converting kind from ',kind(dattemp),' to ',kind(dat)
         allocate(dattemp(norigin))
 
@@ -304,11 +304,11 @@ ncolumns = ncol_max
 
 call set_labels
 
-if ( fluidsw.lt.0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
+if ( fluidsw < 0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
      call fake_twofluids
 endif
 
-if (npartoftype(2,ilast).gt.0) then
+if (npartoftype(2,ilast) > 0) then
    print*,' ngas = ',npartoftype(1,ilast),' ndust = ',npartoftype(2,ilast)
    if (npartoftype(3,ilast) > 0) print*,' nunknown = ',npartoftype(3,ilast)
 endif
@@ -343,7 +343,7 @@ subroutine fake_twofluids
  !   ix(i) = i             ! x,y,z positions
  !enddo
  !!--2D means x-z
- !if (ndim.eq.2) ix(2) = 3 ! x,z positions if 2D
+ !if (ndim==2) ix(2) = 3 ! x,z positions if 2D
  !ivx       = 4            ! velocity (vector so it takes 3 rows)
  !irho      = 7            ! density
  !ipmass    = 8            ! mass
@@ -361,17 +361,17 @@ subroutine fake_twofluids
  !idepsdt   = 20           ! time derivative of dust fraction
 
 
- if (idustfrac.gt.0 .and. irho.gt.0) then
+ if (idustfrac > 0 .and. irho > 0) then
     do i=indexstart,indexstart+nstepsread-1
        ntoti = sum(npartoftype(:,i))
-       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)).gt.maxpart) then
+       if (.not.allocated(dat) .or. (ntoti + npartoftype(1,i)) > maxpart) then
           call alloc(ntoti + npartoftype(1,i),maxstep,maxcol,mixedtypes=.true.)
        endif
        ndust = 0
        !--zero the properties of newly created dust particles
        dat(ntoti+1:ntoti+npartoftype(1,i),:,i) = 0.
        do j=1,ntoti
-          if (iamtype(j,i).eq.1) then
+          if (iamtype(j,i)==1) then
              ndust = ndust + 1 ! one dust particle for every gas particle
              rhotot  = dat(j,irho,i)
              dustfraci = dat(j,idustfrac,i)
@@ -389,13 +389,13 @@ subroutine fake_twofluids
              dat(j,ir_grain,i) = 0.
 
              !--fill in dust properties
-             if (ndim.gt.0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
-             if (ih.gt.0)   dat(jdust,ih,i)         = dat(j,ih,i)
-             if (irho.gt.0) dat(jdust,irho,i)       = rhodust
+             if (ndim > 0) dat(jdust,ix(1:ndim),i) = dat(j,ix(1:ndim),i)
+             if (ih > 0)   dat(jdust,ih,i)         = dat(j,ih,i)
+             if (irho > 0) dat(jdust,irho,i)       = rhodust
              iamtype(ntoti + ndust,i) = 2
 
              !--particle masses
-             if (ipmass.gt.0) then
+             if (ipmass > 0) then
                 pmassj    = dat(j,ipmass,i)
                 pmassgas  = pmassj*(1. - dustfraci)
                 pmassdust = pmassj*dustfraci
@@ -404,10 +404,10 @@ subroutine fake_twofluids
              endif
 
              !--velocities
-             if (ideltav.gt.0 .and. ivx.gt.0 .and. ndimV.gt.0) then
+             if (ideltav > 0 .and. ivx > 0 .and. ndimV > 0) then
                 veli(:)   = dat(j,ivx:ivx+ndimV-1,i)
                 deltav(:) = dat(j,ideltav:ideltav+ndimV-1,i)
-                if ( rhodust.lt.1.e-30 ) then
+                if ( rhodust < 1.e-30 ) then
                      vgas(:)   = veli(:)
                      !vdust(:)  = 0.
                      vdust(:)  = 1.e10  ! Dirty way to clean up axis
@@ -420,7 +420,7 @@ subroutine fake_twofluids
              endif
           endif
        enddo
-       if (iverbose.ge.1) then
+       if (iverbose >= 1) then
           print "(a,i10,a)",' Creating ',ndust,' fictional dust particles...'
           print "(a)",' (set NSPLASH_BARYCENTRIC=yes to plot barycentric values)'
        endif
@@ -462,11 +462,11 @@ subroutine set_labels
  integer :: itstop
  integer :: itdiff
 
- if (ndim.le.0 .or. ndim.gt.3) then
+ if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
     return
  endif
- if (ndimV.le.0 .or. ndimV.gt.3) then
+ if (ndimV <= 0 .or. ndimV > 3) then
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif
@@ -475,7 +475,7 @@ subroutine set_labels
     ix(i) = i              ! x,y,z positions
  enddo
  !--2D means x-z
- if (ndim.eq.2) ix(2) = 3  ! x,z positions if 2D
+ if (ndim==2) ix(2) = 3  ! x,z positions if 2D
  ivx        = 4            ! velocity (vector so it takes 3 rows)
  irho       = 7            ! density
  ipmass     = 8            ! mass

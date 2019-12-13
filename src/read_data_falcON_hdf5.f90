@@ -176,7 +176,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   goterrors  = .false.
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -272,7 +272,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   ! print header information
   !
-  if (iverbose >= 1 .and. buffer_steps_in_file .or. istep.eq.ipos) then
+  if (iverbose >= 1 .and. buffer_steps_in_file .or. istep==ipos) then
      !print "(2(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep
      !print "(a,i2)",' ntypes: ',ntypes,'
      !print*,' npartoftype = ',(npartoftypei(itypemap_falcON(j)),j=1,ntypes)
@@ -285,9 +285,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   reallocate = .false.
   npart_max = maxpart
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntotall)
      else
@@ -305,7 +305,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   ! copy header data into allocated arrays
   !
-  if (buffer_steps_in_file .or. istep.eq.ipos) then
+  if (buffer_steps_in_file .or. istep==ipos) then
      do j=1,ntypes
         npartoftype(itypemap_falcON(j),i) = npartoftypei(j)
      enddo
@@ -318,7 +318,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   got_particles: if (ntoti > 0) then
      !isrequired(:) = 0
      !where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
-     if (buffer_steps_in_file .or. istep.eq.ipos) then
+     if (buffer_steps_in_file .or. istep==ipos) then
         i_current_step = i
         call read_falcON_snapshot(ierr);
         if (ierr /= 0) then
@@ -354,7 +354,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   call set_labels
 
-  !if (nstepsread.gt.0) then
+  !if (nstepsread > 0) then
   !   print "(a,i10,a)",' >> read ',sum(npartoftype(:,i)),' particles'
   !endif
   call close_falcON_file()
@@ -381,7 +381,7 @@ subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
     ' type ',itypemap_falcON(itype),' -> '//trim(label(icolput))
 
   ! check column is within array limits
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
@@ -402,7 +402,7 @@ subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
   dat(istart:iend,icolput,i_current_step) = real(temparr(1:nmax),kind=kind(dat))
 
   ! set particle type
-  if (size(iamtype(:,1)).gt.1) then
+  if (size(iamtype(:,1)) > 1) then
      print*,' SETTING TYPES ',istart,iend
      do i=istart,iend
         iamtype(i,i_current_step) = int(itypemap_falcON(itype),kind=kind(iamtype))
@@ -425,11 +425,11 @@ subroutine set_labels
   implicit none
   integer :: i,icol
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -459,13 +459,13 @@ subroutine set_labels
   enddo
 
   ! set labels of the quantities read in
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  if (irho.gt.0)    label(irho)       = 'density'
-  !if (iutherm.gt.0) label(iutherm)    = 'u'
-  if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  if (irho > 0)    label(irho)       = 'density'
+  !if (iutherm > 0) label(iutherm)    = 'u'
+  if (ipmass > 0)  label(ipmass)     = 'particle mass'
 
   ! set labels for vector quantities
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
@@ -473,7 +473,7 @@ subroutine set_labels
      enddo
   endif
 
-  if (iax.gt.0) then
+  if (iax > 0) then
      iamvec(iax:iax+ndimV-1) = iax
      labelvec(iax:iax+ndimV-1) = 'a'
      do i=1,ndimV

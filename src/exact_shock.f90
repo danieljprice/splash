@@ -69,11 +69,11 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
 ! check for errors in input
 !
   ierr = 0
-  if (rho_L.le.0. .or. rho_R.le.0.) then
+  if (rho_L <= 0. .or. rho_R <= 0.) then
      print*,'error: rho <= 0 on input : ',rho_L,rho_R
      ierr = 1
      return
-  elseif (p_L .le.0. .or. p_R .le.0.) then
+  elseif (p_L  <= 0. .or. p_R  <= 0.) then
      print*,'error: pr <= 0 on input ',p_L, p_R
      ierr = 2
      return
@@ -91,7 +91,7 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
 !
   cs_L = sqrt(gamma*p_L/rho_L)
   cs_R = sqrt(gamma*p_R/rho_R)
-  if (rdust_to_gas .gt.epsilon(rdust_to_gas)) then
+  if (rdust_to_gas  > epsilon(rdust_to_gas)) then
      cs_L = cs_L*sqrt(1./(1.+rdust_to_gas))
      cs_R = cs_R*sqrt(1./(1.+rdust_to_gas))
   endif
@@ -103,7 +103,7 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
 !  although this can be calculated from ppost)
 !------------------------------------------------------------
 
-  if (gamma.gt.1.0001) then
+  if (gamma > 1.0001) then
      call get_pstar(gamma,p_L,p_R,v_L,v_R,cs_L,cs_R,ppost,vpost)
      useisothermal = .false.
   else
@@ -120,12 +120,12 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
   !
   !  check whether solutions are shocks or rarefactions
   !
-  if (ppost .gt. p_L) then
+  if (ppost  >  p_L) then
      leftisshock = .true.
   else
      leftisshock = .false.
   endif
-  if (ppost .gt. p_R) then
+  if (ppost  >  p_R) then
      rightisshock = .true.
   else
      rightisshock = .false.
@@ -302,7 +302,7 @@ subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdu
   case(3)
      yplot = vel
   case(4)
-     if (gamma.gt.1.0001) then
+     if (gamma > 1.0001) then
         yplot = pr/((gamma-1.)*dens)
      else
         yplot = pr/dens
@@ -349,7 +349,7 @@ subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
 
   !!print*,'initial guess = ',prnew
 
-  do while (abs(prnew-pr).gt.tol .and. its.lt.maxits)
+  do while (abs(prnew-pr) > tol .and. its < maxits)
 
      its = its + 1
      pr = prnew
@@ -371,7 +371,7 @@ subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
 
   enddo
 
-  if (its.eq.maxits) print*,'WARNING: its not converged in riemann solver'
+  if (its==maxits) print*,'WARNING: its not converged in riemann solver'
   pr = prnew
   vstar = v_L - f_L
 
@@ -392,7 +392,7 @@ subroutine f_and_df(prstar,pr,cs,gam,fp,dfdp)
   H = prstar/pr
   gamm1 = gam - 1.
 
-  if (H.gt.1.) then  ! shock
+  if (H > 1.) then  ! shock
      denom = gam*((gam+1.)*H + gamm1)
      term = sqrt(2./denom)
      fp = (H - 1.)*cs*term

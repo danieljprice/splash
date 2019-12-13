@@ -85,14 +85,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   iunit = 11 ! file unit number
   nstepsread = 0
-  if (rootname(1:1).ne.' ') then
+  if (rootname(1:1) /= ' ') then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
      return
   endif
 
-  if (iverbose.ge.1) print "(1x,a)",'reading Aly format'
+  if (iverbose >= 1) print "(1x,a)",'reading Aly format'
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
 
   ndim = 2
@@ -116,7 +116,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   timein = timesingle
   read(iunit,iostat=ierr,end=80) np
   read(iunit,iostat=ierr,end=80) ione
-  if (ierr /= 0 .or. np <= 0 .or. timesingle.lt.0.) then
+  if (ierr /= 0 .or. np <= 0 .or. timesingle < 0.) then
      !
      !--try single precision
      !
@@ -150,8 +150,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   endif
   npart_max = max(int(1.1*np),maxpart)
   ncolumns = 7
-  if (.not.allocated(dat) .or. npart_max.gt.maxpart  &
-       .or. nstep_max.gt.maxstep .or. ncolumns+ncalc.gt.maxcol) then
+  if (.not.allocated(dat) .or. npart_max > maxpart  &
+       .or. nstep_max > maxstep .or. ncolumns+ncalc > maxcol) then
      call alloc(npart_max,nstep_max,ncolumns+ncalc,mixedtypes=.true.)
   endif
 
@@ -202,7 +202,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
      do j=1,np
         read(iunit,iostat=ierr,end=67) dum,dat(j,ipr,i),dat(j,ivx,i),dat(j,ivx+1,i),dat(j,1,i),dat(j,2,i)
-        if (abs(dum).lt.tiny(0.)) then
+        if (abs(dum) < tiny(0.)) then
            npartoftype(iamtype(j,i),i) = npartoftype(iamtype(j,i),i) - 1 ! remove from previous type
            iamtype(j,i) = 3
            npartoftype(3,i) = npartoftype(3,i) + 1 ! add to "box" type
@@ -261,11 +261,11 @@ subroutine set_labels
  implicit none
  integer :: i
 
- if (ndim.le.0 .or. ndim.gt.3) then
+ if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
     return
  endif
- if (ndimV.le.0 .or. ndimV.gt.3) then
+ if (ndimV <= 0 .or. ndimV > 3) then
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif

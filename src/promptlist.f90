@@ -65,7 +65,7 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
  objmenu: do while(.not.done)
     call print_objlist(nobj)
     iend = maxobj
-    if (nobj.gt.0 .or. .not.first) then
+    if (nobj > 0 .or. .not.first) then
        charp='q'
        print*
        call prompt(' a)dd '//trim(objname)//', e)dit, d)elete, c)lear all or q)uit/finish?',&
@@ -75,10 +75,10 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
           istart = nobj
           iend = nobj + 1
        case('e')
-          if (nobj.gt.0) then
+          if (nobj > 0) then
              ipick = 0
              call prompt(' pick a '//objname//' to edit ',ipick,0,nobj)
-             if (ipick.gt.0) then
+             if (ipick > 0) then
                 istart = ipick - 1
                 iend   = istart + 1
              else
@@ -93,7 +93,7 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
           endif
           first = .false.
        case('d')
-          if (nobj.gt.0) then
+          if (nobj > 0) then
              ipick = 0
              call prompt(' pick a '//objname//' to delete ',ipick,0,nobj)
              call delete_obj(ipick,nobj)

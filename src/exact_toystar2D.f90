@@ -72,15 +72,15 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
   ierr = 1
   npts = size(xplot)
 
-  linear = (jorder.ge.0 .and. morder.ge.0)
+  linear = (jorder >= 0 .and. morder >= 0)
   gamm1 = gamma - 1.
-  if (gamm1.lt.1.e-3) then
+  if (gamm1 < 1.e-3) then
      print*,'Error: no toy star solution for isothermal yet'
      ierr = 1
      return
   endif
   gam1 = 1./gamm1
-  if (polyK.le.0.) then
+  if (polyK <= 0.) then
      print*,'Error: polytropic K <= 0 on input: using 0.25 by default'
      constK = 0.25
   else
@@ -102,7 +102,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 
      ! sigma is the frequency of oscillation
      nu2 = (jmode + smode)*(jmode+smode + 2./gamm1) - smode**2
-     if (nu2.le.0.) then
+     if (nu2 <= 0.) then
         print*,'Error: nu^2 < 0 in linear toy star  ',nu2
         print*,' radial mode = ',jmode,' theta mode = ',smode
         ierr = 2
@@ -122,13 +122,13 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (denscentre - C0*xplot(i)**2)
-        if (rhoplot.le.0.) rhoplot = 0.
+        if (rhoplot <= 0.) rhoplot = 0.
         deltarho = etar(jmode,smode,xplot(i)/radstar,gamma)  ! functional form of rho(r)
         !!print*,'deltarho = ',rhoplot,deltarho,xplot(i)
-        rhoplot = (rhoplot + deltarho*ampl*SIN(sigma*time))**gam1
+        rhoplot = (rhoplot + deltarho*ampl*sin(sigma*time))**gam1
 
         deltav = ampl*detadr(jmode,smode,xplot(i)/radstar,gamma)
-        vplot = deltav*COS(sigma*time)
+        vplot = deltav*cos(sigma*time)
 
         select case(iplot)
         case(1)                 ! plot solution for density
@@ -150,7 +150,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 !
   else
 
-     if (jorder.lt.0 .and. smode.lt.0) then
+     if (jorder < 0 .and. smode < 0) then
         smode = 2
         jmode = 0
      else
@@ -189,7 +189,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 !--get frequency to determine timestep
 !
      nu2 = (jmode + smode)*(jmode+smode + 2./gamm1) - smode**2
-     if (nu2.le.0.) then
+     if (nu2 <= 0.) then
         print*,'Error: nu^2 < 0 in exact toy star  ',nu2
         print*,' radial mode = ',jmode,' theta mode = ',smode
         ierr = 2
@@ -224,10 +224,10 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
      massafter = pi*gamm1/gamma*H**(gamma*gam1)/(sqrt(C*D - B**2))
      print*,' conserved mass before = ',massbefore,' after =',massafter
 
-     if (C.le.0.) then
+     if (C <= 0.) then
         radstar = 0.5
         stop '*** C = 0 = illegal'
-     !!elseif (A.le.1.e-5) then
+     !!elseif (A <= 1.e-5) then
      else
         radstar = sqrt(H/C)
      endif
@@ -238,7 +238,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
-        if (rhoplot.le.0.) rhoplot = 0.
+        if (rhoplot <= 0.) rhoplot = 0.
         rhoplot = rhoplot**gam1
         select case(iplot)
         case(1)                 ! plot solution for density
@@ -258,9 +258,9 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
 !
   endif
 
-  if (iplot.gt.0 .and. iplot.le.5) then
+  if (iplot > 0 .and. iplot <= 5) then
      ierr = 0
-  elseif (iplot.eq.0) then
+  elseif (iplot==0) then
      print*,' plotting non-axisymmetric boundary'
 !
 !--for x-y plots we plot the rho=0 curve (ie. toy star boundary)
@@ -272,7 +272,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
         cosphi = cos(phi)
         sinphi = sin(phi)
         denom = C*cosphi**2 + 2.*B*cosphi*sinphi + D*sinphi**2
-        radstar = SQRT(H/denom)
+        radstar = sqrt(H/denom)
         xplot(i) = radstar*cosphi
         yplot(i) = radstar*sinphi
      enddo
@@ -310,7 +310,7 @@ real function etar(j,m,rad,gamma)
 !--this solution is for arbitrary gamma
 !
   gamm1 = gamma - 1.
-  if (gamm1.lt.1.e-3) then
+  if (gamm1 < 1.e-3) then
      print*,'error gamma -1 <= 0'
      etar = 0.
      return
@@ -357,7 +357,7 @@ real function detadr(j,m,rad,gamma)
 !--this solution is for arbitrary gamma
 !
   gamm1 = gamma - 1.
-  if (gamm1.lt.1.e-3) then
+  if (gamm1 < 1.e-3) then
      print*,'error gamma -1 <= 0'
      detadr = 0.
      return
@@ -388,7 +388,7 @@ real function detadr(j,m,rad,gamma)
      akprev = ak
   enddo
 
-  if (m.eq.0) then
+  if (m==0) then
      detadr = term2
   else
      detadr = m*rad**(m-1)*term1 + rad**m*term2
@@ -474,7 +474,7 @@ subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
      xi = xstart + (i-1)*npts
      xplot(i) = xi
      term = -(xi**2 + Omega2 + 2.*polyk*gamma*(sigma*xi**gamma)*gam1**2 + constk*xi)
-     if (term.le.0) then
+     if (term <= 0) then
         yplot(i) = 0.
      else
         yplot(i) = sqrt(term)

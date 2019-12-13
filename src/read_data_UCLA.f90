@@ -118,7 +118,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !--(re)allocate memory
 !
   nstep_max = max(nstep_max,indexstart,1)
-  if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
+  if (.not.allocated(dat) .or. (nprint > maxpart) .or. (ncolstep+ncalc) > maxcol) then
      npart_max = max(npart_max,INT(1.1*(nprint)),maxpart)
      call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
   endif
@@ -137,7 +137,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   nerr = 0
   do i=1,nprint
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,9)
-     if (ierr.ne.0) nerr = nerr + 1
+     if (ierr /= 0) nerr = nerr + 1
   enddo
   if (nerr > 0) print *,' ERRORS reading particle data on ',nerr,' lines'
   close(iunit)
@@ -188,7 +188,7 @@ subroutine set_labels
   label(ih) = 'smoothing length'
   label(ipmass) = 'particle mass'
 
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

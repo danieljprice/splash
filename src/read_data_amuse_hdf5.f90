@@ -121,7 +121,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   goterrors  = .false.
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -172,9 +172,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntotall)
      else
@@ -182,7 +182,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntoti)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -231,7 +231,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !  twice the usual SPH smoothing length
   !  (do this after we have read data from all of the files)
   !
-  if (required(ih) .and. size(dat(1,:,:)).ge.ih .and. npartoftype(1,i).gt.0 .and. ih.gt.0) then
+  if (required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0 .and. ih > 0) then
      print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
      dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
   endif
@@ -240,14 +240,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--give a friendly warning about using too few or too many neighbours
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
-  if (ih.gt.0 .and. required(ih) .and. ipmass.gt.0 .and. required(ipmass) &
-      .and. abs(masstype(1,i)).lt.tiny(0.) .and. ndim.eq.3 .and. .not.havewarned) then
+  if (ih > 0 .and. required(ih) .and. ipmass > 0 .and. required(ipmass) &
+      .and. abs(masstype(1,i)) < tiny(0.) .and. ndim==3 .and. .not.havewarned) then
      nhfac = 100
-     if (npartoftype(1,i).gt.nhfac) then
+     if (npartoftype(1,i) > nhfac) then
         hfactmean = 0.
         do j=1,nhfac
            pmassi = dat(j,ipmass,i)
-           if (pmassi.gt.0.) then
+           if (pmassi > 0.) then
               pmassi = 1./pmassi
            else
               pmassi = 0.
@@ -265,12 +265,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--cover the special case where no particles have been read
 !
-  if (ntoti.le.0) then
+  if (ntoti <= 0) then
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
 
-  if (nstepsread.gt.0) then
+  if (nstepsread > 0) then
      print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
   endif
   return
@@ -293,7 +293,7 @@ subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
   if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))
 
   ! check column is within array limits
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
@@ -305,7 +305,7 @@ subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
   dat(1:nmax,icolput,1) = real(temparr(1:nmax))
 
   ! set particle type
-  if (size(iamtype(:,1)).gt.1) then
+  if (size(iamtype(:,1)) > 1) then
      do i=1,nmax
         iamtype(i,1) = itype + 1
      enddo
@@ -330,11 +330,11 @@ subroutine set_labels
   implicit none
   integer :: i,j,icol,irank
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -364,14 +364,14 @@ subroutine set_labels
   enddo
 
   ! set labels of the quantities read in
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  !if (irho.gt.0)    label(irho)       = 'density'
-  !if (iutherm.gt.0) label(iutherm)    = 'u'
-  !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  !if (ih.gt.0)      label(ih)         = 'h'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  !if (irho > 0)    label(irho)       = 'density'
+  !if (iutherm > 0) label(iutherm)    = 'u'
+  !if (ipmass > 0)  label(ipmass)     = 'particle mass'
+  !if (ih > 0)      label(ih)         = 'h'
 
   ! set labels for vector quantities
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
@@ -379,7 +379,7 @@ subroutine set_labels
      enddo
   endif
 
-  if (iax.gt.0) then
+  if (iax > 0) then
      iamvec(iax:iax+ndimV-1) = iax
      labelvec(iax:iax+ndimV-1) = 'a'
      do i=1,ndimV

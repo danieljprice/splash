@@ -50,7 +50,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
   complex :: xc(3)
 
   Kdrag = Kdragin
-  if (mod(iplot,2).eq.1) then
+  if (mod(iplot,2)==1) then
      print*,'plotting two-fluid gas/dust linear wave solution ... '
      print*,' lambda = ',lambda,' ampl = ',ampl,' cs = ',cs,' Kdrag = ',Kdrag
   endif
@@ -58,7 +58,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 ! check for errors
 !
   ierr = 0
-  if (ampl.lt.0.) then
+  if (ampl < 0.) then
      print*,'error: amplitude < 0 on input'
      ierr = 1
      return
@@ -87,14 +87,14 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
      print*,'error: drag coefficient < 0 on input'
      ierr = 5
      return
-  elseif (abs(Kdrag).lt.1.e-8) then
+  elseif (abs(Kdrag) < 1.e-8) then
      print*,' WARNING: Kdrag = 0 on input; using tiny to avoid divergence '
      Kdrag = 0.
   endif
 
   rhodeq  = rhod0 ! initial dust density
   rhogeq  = rhog0 ! initial gas density
-  if (mod(iplot,2).eq.1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
+  if (mod(iplot,2)==1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
   select case(iplot)
   case(4)
      print*,'(dust density)'
@@ -302,7 +302,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 !-------------------------------
 ! D U S T  V E L O C I T I E S
 !-------------------------------
-  if (Kdrag.gt.0.) then
+  if (Kdrag > 0.) then
 
   vd3r = - (rhogeq*cs**2*k**2*w2r**2*w1r**2*rhogsol + rhogeq**2*w3i**4*k*w1r*vgsol -&
         w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w2r - w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w1r +&
@@ -922,7 +922,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 !-------------------------------
 ! D U S T  D E N S I T I E S
 !-------------------------------
-  if (Kdrag.gt.0.) then
+  if (Kdrag > 0.) then
 
   rhod3r = - rhodeq*( - w3r**3*rhogeq*w1i**2*w2r**2*rhogsol - w3r**2*Kdrag**2*k*vgsol*w2r*w1r +&
         w3r**2*Kdrag**2*k*vgsol*w2i*w1i - w3r**2*Kdrag**2*k*vdsol*w2i*w1i + w3r**2*Kdrag*k*rhogeq*vgsol*w2i*w1i**2 +&
@@ -2411,14 +2411,14 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
   !print*,'w1 = ',w1r,w1i
   !print*,'w2 = ',w2r,w2i
   !print*,'w3 = ',w3r,w3i
-  !if (iplot.eq.2) then
+  !if (iplot==2) then
   !  print "(a,3('(',es10.3,',',es10.3,') '))",'  vgas = ',vg1r,vg1i,vg2r,vg2i,vg3r,vg3i
-  !   if (Kdrag.gt.0.) then
+  !   if (Kdrag > 0.) then
   !      print "(a,3('(',es10.3,',',es10.3,') '))",' vdust = ',vd1r,vd1i,vd2r,vd2i,vd3r,vd3i
   !   endif
   !else
   !   print "(a,3('(',es10.3,',',es10.3,') '))",' rhog = ',rhog1r,rhog1i,rhog2r,rhog2i,rhog3r,rhog3i
-  !   if (Kdrag.gt.0.) then
+  !   if (Kdrag > 0.) then
   !      print "(a,3('(',es10.3,',',es10.3,') '))",' rhod = ',rhod1r,rhod1i,rhod2r,rhod2i,rhod3r,rhod3i
   !   endif
   !endif

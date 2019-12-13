@@ -93,7 +93,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   npart_max = maxpart
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -106,7 +106,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
      print "(a)",' *** error: '//trim(datfile)//': file not found ***'
-     STOP
+     stop
   endif
 
 !
@@ -128,7 +128,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   open(11,iostat=ierr,file=datfile,status='old', form='unformatted')
   if (ierr /= 0) then
      print "(a)", '*** ERROR OPENING FILE ***'
-     STOP
+     stop
   endif
 
   !
@@ -143,7 +143,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   print *, nproc
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
-     STOP
+     stop
   endif
 
 !  t_global = t_global  - 0.13
@@ -171,9 +171,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (global_n .gt. maxpart) then
+  if (global_n  >  maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*global_n)
      else
@@ -181,7 +181,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(global_n)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -217,7 +217,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !        endif
         if (ierr /= 0) then
            print *, '*** ERROR READING PARTICLE', i, 'PROC:', myproc
-           STOP
+           stop
         endif
         dat(j + nread, 1, i) = posx
         dat(j + nread, 2, i) = posy
@@ -269,16 +269,16 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
              xmin, ymin, zmin, xmax, ymax, zmax
         if (ierr /= 0) then
            print *, '*** ERROR READING TIMESTEP HEADER ***, proc=', proc
-           STOP
+           stop
         endif
      endif
   enddo
 
-  if (nread .ne. global_n) then
+  if (nread  /=  global_n) then
      print *, 'nread=     ', nread
      print *, 'global_n=  ', global_n
      print "(a)", ' *** SOMETHING WENT WRONG ***'
-     STOP
+     stop
   endif
 
 !!!!!!!!!!!!!!!!!!!!!
@@ -298,7 +298,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
   close(unit=11)
 
-  if (nstepsread.gt.0) then
+  if (nstepsread > 0) then
      print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
   endif
   return
@@ -318,11 +318,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -374,7 +374,7 @@ subroutine set_labels
      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
   enddo
   !--mag field
-  if (iBfirst.gt.0) then
+  if (iBfirst > 0) then
      iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
      labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
      do i=1,ndimV

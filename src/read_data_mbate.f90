@@ -132,9 +132,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
       print*,'nprint = ',nprint
       doubleprec = .true.
       !--try single precision if non-sensible values for time, gamma etc.
-      if (ierr.ne.0 .or. timei.lt.0. .or. timei.gt.1e30  &
-          .or. gammai.lt.1. .or. gammai.gt.10. &
-          .or. rhozero.lt.0. .or. RK2.lt.0. .or. RK2.gt.1.e10) then
+      if (ierr /= 0 .or. timei < 0. .or. timei > 1e30  &
+          .or. gammai < 1. .or. gammai > 10. &
+          .or. rhozero < 0. .or. RK2 < 0. .or. RK2 > 1.e10) then
           doubleprec = .false.
       endif
       nstepsalloc = 1
@@ -144,7 +144,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
          read(15,iostat=ierr) udisti,umassi,utimei,nprint
       enddo
       ierr = 0
-      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+      if (.not.allocated(dat) .or. nprint > npart_max) then
          npart_max = max(npart_max,INT(1.1*nprint))
          call alloc(npart_max,nstepsalloc,ncolstep+ncalc)
       endif
@@ -162,8 +162,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-     if (j.gt.maxstep) then
-        !if (nstepsread.gt.2) then
+     if (j > maxstep) then
+        !if (nstepsread > 2) then
         !   nstepsalloc = j + 2*nstepsread
         !else
         !   nstepsalloc = j
@@ -244,7 +244,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
      ipart = 0
      do i=1,nprint
-        if (iphase(i).eq.0) then
+        if (iphase(i)==0) then
            ipart = ipart + 1
            if (doubleprec) then
               dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
@@ -259,7 +259,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
      nptmassi = 0
      do i=1,nprint
-        if (iphase(i).ge.1) then
+        if (iphase(i) >= 1) then
            ipart = ipart + 1
            nptmassi = nptmassi + 1
            if (doubleprec) then
@@ -269,14 +269,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            endif
         endif
      enddo
-     if (nptmass.gt.0) print*,' Number of point masses = ',nptmass
-     if (nptmassi.ne.nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass'
+     if (nptmass > 0) print*,' Number of point masses = ',nptmass
+     if (nptmassi /= nptmass) print *,'WARNING: nptmass from iphase =',nptmassi,'not equal to nptmass'
 !
 !--put any others as unknown
 !
      nunknown = 0
      do i=1,nprint
-        if (iphase(i).lt.0) then
+        if (iphase(i) < 0) then
            ipart = ipart + 1
            nunknown = nunknown + 1
            if (doubleprec) then
@@ -286,7 +286,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
            endif
         endif
      enddo
-     if (nunknown.gt.0) print *,nunknown,' particles of unknown type (probably dead)'
+     if (nunknown > 0) print *,nunknown,' particles of unknown type (probably dead)'
 
      if (allocated(dattemp)) deallocate(dattemp)
      if (allocated(dattemps)) deallocate(dattemps)
@@ -324,7 +324,7 @@ endif
 !--reached end of file
 !
 close(15)
-if (j-1 .gt. 0) then
+if (j-1  >  0) then
    print*,'>> end of dump file: nsteps =',j-1,'ntot = ', &
          sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
 endif
@@ -345,11 +345,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -362,7 +362,7 @@ subroutine set_labels
   iutherm = 8  !  thermal energy
   ipmass = 9   !  particle mass
   irho = 10     ! location of rho in data array
-  if (ncolumns.gt.10) then
+  if (ncolumns > 10) then
      label(11) = 'dgrav'
   endif
 

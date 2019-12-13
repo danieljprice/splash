@@ -103,7 +103,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   real :: timetemp,gammatemp,runit,massunit,sinksoft,sinkrad
 
   nstepsread = 0
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -125,7 +125,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   ncolstep = ndim + ndimV + 4 ! pos x 3, vel x 3, temp, h, rho, mass
   nlastcol = ncolstep
   nextracols = ienvironment('DSPLASH_EXTRACOLS',0)
-  if (nextracols.gt.0 .and. nextracols.le.99) then
+  if (nextracols > 0 .and. nextracols <= 99) then
      print "(a,i2,a)",' ASSUMING ',nextracols,' EXTRA COLUMNS BEYOND ITYPE'
      ncolstep = ncolstep + nextracols
   else
@@ -172,15 +172,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !  try binary format first, and if unsuccessful try ascii
   !
   doubleprec = .true.
-  if (iambinaryfile.eq.1) then
+  if (iambinaryfile==1) then
      print "(a)",' reading binary dragon format '
      call read_dragonheader_binary(iunit,ierr)
-  elseif (iambinaryfile.eq.0) then
+  elseif (iambinaryfile==0) then
      print "(a)",' reading ascii dragon format '
      call read_dragonheader_ascii(iunit,ierr,iambinaryfile)
   else
      call read_dragonheader_binary(iunit,ierr)
-     if (ierr.eq.0) then
+     if (ierr==0) then
         !--if successful binary header read, file is doubleprec binary
         iambinaryfile = 1
         print "(a)",' reading binary dragon format '
@@ -192,7 +192,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         iambinaryfile = 1
         open(unit=iunit,file=datfile,status='old',form='unformatted',iostat=ierr)
         call read_dragonheader_binary(iunit,ierr)
-        if (ierr.eq.0) then
+        if (ierr==0) then
            print "(a)",' reading binary dragon format '
            print "(a)",' Single precision file'
         else
@@ -220,9 +220,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nei_min = idata(12)
 
   !--check for errors in integer header (either from corrupt file or wrong endian)
-  if (ntoti.le.0 .or. ntoti.gt.1.e10 .or. nmax.lt.0 &
-      .or. nei_want.lt.0 .or. nei_want.gt.1e6 .or. nei_min.lt.0) then
-     if (iambinaryfile.eq.1) then
+  if (ntoti <= 0 .or. ntoti > 1.e10 .or. nmax < 0 &
+      .or. nei_want < 0 .or. nei_want > 1e6 .or. nei_min < 0) then
+     if (iambinaryfile==1) then
         print "(a)",' ERROR reading binary file header: wrong endian? '
      else
         print "(a)",' ERROR reading ascii file header '
@@ -250,9 +250,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   endif
 
   !--assume first that the file is single precision, check values are sensible, if not try double
-!   if (iambinaryfile.eq.1) then
-!      if (timetemp.lt.0. .or. runit.lt.0. .or. massunit.lt.0. .or. gammatemp.lt.0. &
-!       .or. gammatemp.gt.6.) then
+!   if (iambinaryfile==1) then
+!      if (timetemp < 0. .or. runit < 0. .or. massunit < 0. .or. gammatemp < 0. &
+!       .or. gammatemp > 6.) then
 !         print "(a)",' double precision file'
 !         doubleprec = .true.
 !         rewind(iunit)
@@ -267,7 +267,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   print*,'n_total          : ',ntoti
 
   if (ierr /= 0) then
-     if (iambinaryfile.eq.1) then
+     if (iambinaryfile==1) then
         print "(a)",' ERROR reading real part of binary file header '
      else
         print "(a)",' ERROR reading real part of ascii file header '
@@ -292,9 +292,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntoti)
      else
@@ -302,7 +302,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntoti)
      endif
   endif
-  if (j.ge.maxstep .and. j.ne.1) then
+  if (j >= maxstep .and. j /= 1) then
      nstep_max = j + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -322,8 +322,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   !
   !--read particle data
   !
-  if (ntoti.gt.0) then
-     if (iambinaryfile.eq.1) then
+  if (ntoti > 0) then
+     if (iambinaryfile==1) then
         call read_dragonbody_binary(iunit,ierr)
      else
         call read_dragonbody_ascii(iunit,ierr)
@@ -338,9 +338,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
      !--relabel particle types
      call set_types(iamtype(:,j),ntoti,npartoftype(:,j))
   endif
-  if (any(npartoftype(2:,j).ne.0)) then
+  if (any(npartoftype(2:,j) /= 0)) then
      do itype=1,ntypes
-        if (npartoftype(itype,j).gt.0) then
+        if (npartoftype(itype,j) > 0) then
            string = ' '
            write(string,"(a)") 'n_'//trim(labeltype(itype))
            write(string(18:len(string)),"(a)") ':'
@@ -405,7 +405,7 @@ subroutine read_dragonheader_ascii(iunita,ierr,iwarn)
  return
 
 55 continue
- if (iwarn.ge.0) print "(a)",' ERROR: end of file in binary header read'
+ if (iwarn >= 0) print "(a)",' ERROR: end of file in binary header read'
  ierr = -1
  return
 
@@ -487,7 +487,7 @@ subroutine read_dragonbody_binary(iunitb,ierr)
     endif
  enddo
 
- if (size(iamtype(:,j)).gt.1) then
+ if (size(iamtype(:,j)) > 1) then
     allocate(idumtype(ntoti),stat=ierr)
     if (ierr /= 0) then
        print*,'error reading type, assuming all gas'
@@ -546,7 +546,7 @@ subroutine read_dragonbody_ascii(iunita,ierr)
    read(iunita,*,end=55,iostat=ierr) dat(i,1:ndim,j)
    if (ierr /= 0) nerr = nerr + 1
  enddo
- if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading positions '
+ if (nerr > 0) print*,' WARNING: ',nerr,' errors reading positions '
 
  !--velocities
  nerr = 0
@@ -554,7 +554,7 @@ subroutine read_dragonbody_ascii(iunita,ierr)
     read(iunita,*,end=55,iostat=ierr) dat(i,ndim+1:ndim+ndimV,j)
     if (ierr /= 0) nerr = nerr + 1
  enddo
- if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading velocities '
+ if (nerr > 0) print*,' WARNING: ',nerr,' errors reading velocities '
 
  !--the rest
  if (any(required(ndim+ndimV+1:nlastcol))) then
@@ -564,19 +564,19 @@ subroutine read_dragonbody_ascii(iunita,ierr)
           read(iunita,*,end=55,iostat=ierr) dat(i,icol,j)
           if (ierr /= 0) nerr = nerr + 1
        enddo
-       if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading '//trim(label(icol))
+       if (nerr > 0) print*,' WARNING: ',nerr,' errors reading '//trim(label(icol))
     enddo
  endif
 
  !--particle type
- if (size(iamtype(:,j)).gt.1) then
+ if (size(iamtype(:,j)) > 1) then
     nerr = 0
     do i=1,ntoti
        read(iunita,*,end=55,iostat=ierr) idumtype
        iamtype(i,j) = idumtype
        if (ierr /= 0) nerr = nerr + 1
     enddo
-    if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading itype'
+    if (nerr > 0) print*,' WARNING: ',nerr,' errors reading itype'
  endif
 
  !--the rest
@@ -587,7 +587,7 @@ subroutine read_dragonbody_ascii(iunita,ierr)
           read(iunita,*,end=55,iostat=ierr) dat(i,icol,j)
           if (ierr /= 0) nerr = nerr + 1
        enddo
-       if (nerr.gt.0) print*,' WARNING: ',nerr,' errors reading '//trim(label(icol))
+       if (nerr > 0) print*,' WARNING: ',nerr,' errors reading '//trim(label(icol))
     enddo
  endif
 
@@ -668,7 +668,7 @@ subroutine set_types(itypei,ntotal,noftype)
  noftype(4) = ncloud
  noftype(5) = nsplit
  noftype(6) = nstar
- if (sum(noftype(1:6)).ne.ntotal) then
+ if (sum(noftype(1:6)) /= ntotal) then
     print "(a)",' INTERNAL ERROR setting number in each type in dragon read'
  endif
 
@@ -689,11 +689,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif

@@ -142,12 +142,12 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
   print "(a,i10,a,es10.3,a,i2)",' npart = ',nprint,' time = ',tread
 
   call set_labels
-  if (ih.gt.0 .and. required(ih)) required(irho) = .true.
+  if (ih > 0 .and. required(ih)) required(irho) = .true.
 !
 !--(re)allocate memory
 !
   nstep_max = max(nstep_max,indexstart,1)
-  if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
+  if (.not.allocated(dat) .or. (nprint > maxpart) .or. (ncolstep+ncalc) > maxcol) then
      npart_max = max(npart_max,nprint,maxpart)
      if (lowmemorymode) then
         ilastrequired = 0
@@ -168,7 +168,7 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
   npartoftype(1,j) = nprint
 
   totmass = renvironment('FSPLASH_TOTMASS',-1.0)
-  if (totmass.gt.0.) then
+  if (totmass > 0.) then
      print "(a,1pe10.3)",' setting total mass for all particles using FSPLASH_TOTMASS=',totmass
   else
      print "(a)",' FSPLASH_TOTMASS not set, assuming total mass of all particles is 1.0'
@@ -183,7 +183,7 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
 !
   isrequired(:) = 0
   do i=1,ncolstep
-     if (icolshuffle(i).ne.0 .and. required(icolshuffle(i))) then
+     if (icolshuffle(i) /= 0 .and. required(icolshuffle(i))) then
         !print*,'required '//trim(label(icolshuffle(i)))//' so must read ',i
         isrequired(i) = 1
      endif
@@ -224,14 +224,14 @@ subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
   integer(kind=c_int) :: i,icolput
 
   icolput = icolshuffle(icol)
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
      return
   endif
   print "(a,i2,a)",' reading column ',icol,' -> '//trim(label(icolput))
 
   do i=1,npart
-     if (id(i).lt.1 .or. id(i).gt.npart) then
+     if (id(i) < 1 .or. id(i) > npart) then
         print*,' ERROR in particle id = ',id(i)
      else
         dat(id(i),icolput,1) = real(temparr(i))
@@ -268,14 +268,14 @@ subroutine set_labels
   label(4) = 'density (from grid)'
   label(ih) = 'smoothing length'
   irho = 4
-  if (ncolumns.ge.9) then
+  if (ncolumns >= 9) then
      irho = 9
      label(9) = 'density (on particles)'
   else
      irho = 4
   endif
 
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

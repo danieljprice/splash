@@ -101,7 +101,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !--can override these settings with environment variables
   if (lenvironment('VSPLASH_SINGLEPREC')) doubleprec = .false.
   ncoltemp = ienvironment('VSPLASH_NCOL')
-  if (ncoltemp.gt.0) ncol = ncoltemp
+  if (ncoltemp > 0) ncol = ncoltemp
   !
   !--allocate memory initially
   !
@@ -132,7 +132,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      print "(2(a,1pe12.3))",'time:',timei,' gamma:',gammai
 
      !--barf if stupid values read
-     if (nprint.lt.0 .or. nacc.lt.0 .or. nsink.lt.0 .or. nsink.gt.1e7) then
+     if (nprint < 0 .or. nacc < 0 .or. nsink < 0 .or. nsink > 1e7) then
         print "(a)",' *** ERROR IN TIMESTEP HEADER: WRONG ENDIAN? (or old header format)?'
         close(iunit)
         return
@@ -141,13 +141,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         close(iunit)
         return
      endif
-     if (timei.lt.0. .or. gammai.lt.1.0 .or. gammai.gt.2.0) then
+     if (timei < 0. .or. gammai < 1.0 .or. gammai > 2.0) then
         print*,'*** ERROR IN HEADER: strange time and/or gamma read: wrong precision?'
      endif
      ncolumns = ncol
 
      ntotal = nprint + nsink
-     if (.not.allocated(dat) .or. ntotal.gt.npart_max) then
+     if (.not.allocated(dat) .or. ntotal > npart_max) then
         npart_max = max(npart_max,ntotal)
         call alloc(npart_max,nstep_max,ncolumns)
      endif
@@ -198,7 +198,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 44   continue
      print "(a,i10)",' WARNING: END-OF-FILE AT LINE ',nread
 45   continue
-     if (nerr.gt.0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
+     if (nerr > 0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
 
      nstepsread = nstepsread + 1
      npartoftype(1,j) = nprint - nacc
@@ -230,11 +230,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -251,12 +251,12 @@ subroutine set_labels
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(ih) = 'h'
-  if (irho.gt.0) label(irho) = '\gr'
-  if (ipmass.gt.0) label(ipmass) = 'particle mass'
-  if (iutherm.gt.0) label(iutherm) = 'u'
-  if (ispsound.gt.0) label(ispsound) = 'c_s'
+  if (irho > 0) label(irho) = '\gr'
+  if (ipmass > 0) label(ipmass) = 'particle mass'
+  if (iutherm > 0) label(iutherm) = 'u'
+  if (ispsound > 0) label(ispsound) = 'c_s'
 
-  if (ivx.ne.0) then
+  if (ivx /= 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

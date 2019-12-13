@@ -45,12 +45,12 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
 ! check for errors
 !
   ierr = 0
-  if (lambda.le.0.) then
+  if (lambda <= 0.) then
      print*,'error: lambda <= 0'
      ierr = 1
      return
   endif
-  if (abs(period).gt.tiny(period)) then
+  if (abs(period) > tiny(period)) then
      omega = 2.*pi/period
   else
      print*,'warning: period <= 0'
@@ -58,7 +58,7 @@ subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
   endif
 
   do i=1,size(xplot)
-     if (abs(ymean).le.0.) then
+     if (abs(ymean) <= 0.) then
         yplot(i) = ymean + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time)
      else
         yplot(i) = ymean*(1. + ampl*sin(2.*pi/lambda*(xplot(i)-x0) - omega*time))

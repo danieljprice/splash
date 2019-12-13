@@ -66,27 +66,27 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
 !
 !--check if we have enough data to write a GADGET dump
 !
- if (ndim.lt.3) then
+ if (ndim < 3) then
     print "(a)",' ERROR: ndim < 3 but must be 3 for GADGET data -- cannot write PHANTOM dump, skipping...'
     return
  endif
- if (any(ix(:).le.0)) then
+ if (any(ix(:) <= 0)) then
     print "(a)",' ERROR: position labels not set -- cannot write GADGET dump, skipping...'
     return
  endif
- if (ivx.le.0) then
+ if (ivx <= 0) then
     print "(a)",' ERROR: velocity not found in data -- cannot write GADGET dump, skipping...'
     return
  endif
- if (iutherm.le.0) then
+ if (iutherm <= 0) then
     print "(a)",' ERROR: thermal energy not found in data -- cannot write GADGET dump, skipping...'
     return
  endif
- if (irho.le.0) then
+ if (irho <= 0) then
     print "(a)",' ERROR: density not found in data -- cannot write GADGET dump, skipping...'
     return
  endif
- if (ih.le.0) then
+ if (ih <= 0) then
     print "(a)",' ERROR: smoothing length not found in data -- cannot write GADGET dump, skipping...'
     return
  endif
@@ -127,7 +127,7 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  !
  nmasses = 0
  do j=1,6
-    if (massoftype(j).le.0.) then
+    if (massoftype(j) <= 0.) then
        nmasses = nmasses + noftype(j)
     endif
  enddo
@@ -135,21 +135,21 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  ngas = npartoftype(1)
  print*,'ngas = ',ngas
 
- if (ntotal > ngas .and. (size(iamtype).gt.1)) then
+ if (ntotal > ngas .and. (size(iamtype) > 1)) then
  !--must print the particles ordered by type
     allocate(iorder(ntotal),stat=ierr)
     j = 0
     do itype=1,min(ntypes,6)
-       if (npartoftype(itype).gt.0) then
+       if (npartoftype(itype) > 0) then
           do i=1,ntotal
-             if (iamtype(i).eq.itype) then
+             if (iamtype(i)==itype) then
                 j = j + 1
                 iorder(j) = i
              endif
           enddo
        endif
     enddo
-    if (j.lt.ntotal) then
+    if (j < ntotal) then
        print*,' ERROR: too many particle types in conversion to gadget format'
        do i=j+1,ntotal
           iorder(i) = i

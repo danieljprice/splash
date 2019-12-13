@@ -82,17 +82,17 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   !--check for errors in input
   !
   ntotplot = sum(noftype(1:ntypes))
-  if (ntot.lt.ntotplot) then
+  if (ntot < ntotplot) then
      print "(a)",' ERROR: number of particles input < number of each type '
      print*,ntot,noftype(1:ntypes)
      return
-  elseif (ntot.ne.ntotplot) then
+  elseif (ntot /= ntotplot) then
      print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
      print*,' ntotal = ',ntot,' sum of types = ',ntotplot
   endif
   maxz = size(z)
   if (maxz > ntot) maxz = ntot
-  if (use_zrange .and. maxz.lt.ntot) then
+  if (use_zrange .and. maxz < ntot) then
      print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
   endif
   dxpix = 0.
@@ -111,7 +111,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   index1 = 1
   nplottedtype = 0
   nlooptypes = ntypes
-  mixedtypes = size(iamtype).gt.1
+  mixedtypes = size(iamtype) > 1
   if (mixedtypes .or. use_zrange) nlooptypes = 1
   dx1 = (ncellx - 1)/(xmax-xmin + tiny(xmin))
   dy1 = (ncelly - 1)/(ymax-ymin + tiny(ymin))
@@ -125,7 +125,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         itype = 0
      else
         itype = itypeorder(ilooptype)
-        if (itype.eq.1) then
+        if (itype==1) then
            index1 = 1
         else
            index1 = sum(noftype(1:itype-1))+1
@@ -136,11 +136,11 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
            cycle over_types
         endif
      endif
-     if (index2.gt.ntot) then
+     if (index2 > ntot) then
         index2 = ntot
         print "(a)",' WARNING: incomplete data'
      endif
-     if (index2.lt.index1) then
+     if (index2 < index1) then
         call plot_ebuf
         cycle over_types
      endif
@@ -157,15 +157,15 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
               itype = igettype(j,noftype)
            endif
            if (.not. iplot_type(itype)) cycle overj
-           if (j.le.maxz) then
+           if (j <= maxz) then
               if (z(j) > zmin .and. z(j) < zmax) then
-                 if (icolourpart(j).ge.0) then
+                 if (icolourpart(j) >= 0) then
                     nplotted = nplotted + 1
                     nplottedtype(itype) = nplottedtype(itype) + 1
 
                     if (fast .and. noftype(itype) > 100) then
                        if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                          if (nincell(icellx,icelly,itype).eq.0) then
+                          if (nincell(icellx,icelly,itype)==0) then
                              nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
                              call plot_sci(icolourpart(j))
                              call plot_particle(imarktype(itype),x(j),y(j),h(j))
@@ -185,7 +185,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                     endif
                  endif
                  !--plot circle of interaction if gas particle
-                 if (itype.eq.1 .and. ncircpart.gt.0 .and. ANY(icircpart(1:ncircpart).eq.j)) then
+                 if (itype==1 .and. ncircpart > 0 .and. ANY(icircpart(1:ncircpart)==j)) then
                     call plot_circ(x(j),y(j),2*h(j))
                  endif
                  !!--plot particle label
@@ -198,7 +198,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         enddo overj
 
         do itype=1,ntypes
-           if (iplot_type(itype) .and. nplottedtype(itype).gt.0) then
+           if (iplot_type(itype) .and. nplottedtype(itype) > 0) then
               if (zmin < -0.1*huge(zmin)) then
                  print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
                   trim(labeltype(itype))//' particles with ', trim(labelz),' < ',zmax
@@ -216,16 +216,16 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
         !
         !--all particles in range have same colour and type
         !
-        if (.not.mixedtypes .and. all(icolourpart(index1:index2).eq.icolourpart(index1)) &
-            .and. icolourpart(index1).ge.0) then
+        if (.not.mixedtypes .and. all(icolourpart(index1:index2)==icolourpart(index1)) &
+            .and. icolourpart(index1) >= 0) then
            call plot_sci(icolourpart(index1))
-           if (fast .and. (index2-index1).gt.100) then
+           if (fast .and. (index2-index1) > 100) then
               !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
               write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
               nincell = 0
               do j=index1,index2
                  if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
-                    if (nincell(icellx,icelly,itype).eq.0) then
+                    if (nincell(icellx,icelly,itype)==0) then
                        nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
 
                        call plot_particle(imarktype(itype),x(j),y(j),h(j))
@@ -270,7 +270,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
            nplottedtype = 0
 
            overj2: do j=index1,index2
-              if (icolourpart(j).ge.0) then
+              if (icolourpart(j) >= 0) then
                  if (mixedtypes) then
                     itype = int(iamtype(j))
                     if (.not.iplot_type(itype)) cycle overj2
@@ -281,7 +281,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
                     if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
                     !--exclude particles if there are more than 2 particles per cell
                     !  (two here because particles can have different colours)
-                       if (nincell(icellx,icelly,itype).le.0) then
+                       if (nincell(icellx,icelly,itype) <= 0) then
                           nincell(icellx,icelly,itype) = nincell(icellx,icelly,itype) + 1_int1  ! this +1 of type int*1
 
                           call plot_sci(icolourpart(j))
@@ -313,15 +313,15 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
            if (mixedtypes) then
               do itype=1,ntypes
                  if (iplot_type(itype)) then
-                    if (fast .and. noftype(itype).gt.100) then
+                    if (fast .and. noftype(itype) > 100) then
                        print*,' fast-plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
-                    elseif (noftype(itype).gt.0) then
+                    elseif (noftype(itype) > 0) then
                        print*,' plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
                     endif
                  endif
               enddo
            else
-              if (fast .and. noftype(itype).gt.100) then
+              if (fast .and. noftype(itype) > 100) then
                  print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
               else
                  print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
@@ -350,7 +350,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   call plot_sci(linecolourthisstep)
   !  i.e., don't plot a line for cross section plots (would plot all particles)
   !        but do if there is 3D perspective --> in which case zmin = -huge(x)
-  if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin).lt.0.5*huge(0.))) then
+  if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin) < 0.5*huge(0.))) then
      call plot_qls(oldlinestyle)
      call plot_sls(linestylethisstep)
      if (ndim <= 1) then ! sort particles by x in 1D
@@ -361,7 +361,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
      else
         call plot_line(noftype(1),x(1:noftype(1)),y(1:noftype(1)))
      endif
-     if (noftype(2).gt.0 .and. iplot_type(2)) then
+     if (noftype(2) > 0 .and. iplot_type(2)) then
         call plot_sls(mod(linestylethisstep+1,plotlib_maxlinestyle) + 1)
         call plot_line(noftype(2),x(noftype(1)+1:sum(noftype(1:2))),y(noftype(1)+1:sum(noftype(1:2))))
      endif
@@ -376,7 +376,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
   !
   !--this bit is also used for error bar plotting on x or y axis.
   !
-  if (ncircpart.gt.0) then
+  if (ncircpart > 0) then
      !
      !--set fill area style and line width
      !
@@ -386,15 +386,15 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
      call plot_sci(2)
      call plot_sfs(2)
 
-     if (ncircpart.gt.0) then
+     if (ncircpart > 0) then
 
-        if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart.gt.0) then
+        if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart > 0) then
            print*,'plotting ',ncircpart,' circles of interaction'
            do n = 1,ncircpart
-              if (icircpart(n).gt.ntot) then
+              if (icircpart(n) > ntot) then
                  print*,'error: particle index > number of particles'
               else
-                 if (icoordsnew.ne.icoords) then
+                 if (icoordsnew /= icoords) then
                     call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
                          x(icircpart(n)),y(icircpart(n)),z(icircpart(n)),2*h(icircpart(n)))
                  else
@@ -410,7 +410,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
            endif
            !!--only on specified particles
            do n=1,ncircpart
-              if (icircpart(n).gt.ntot) then
+              if (icircpart(n) > ntot) then
                  print*,'error: particle index > number of particles'
                  xerrb(n) = 0.
                  yerrb(n) = 0.
@@ -466,18 +466,18 @@ subroutine plot_particle(imarktype,x,y,h)
  case(32:35)
     imarker = imarktype - 31
     size = hfacmarkers*h
-    if (imarker.le.2) then
+    if (imarker <= 2) then
        call plot_sfs(imarker)
        call plot_circ(x,y,size)
        call plot_sfs(1)
-    elseif (imarker.eq.3) then
+    elseif (imarker==3) then
        call plot_sfs(1)
        call plot_circ(x,y,size)
        call plot_sfs(2)
        call plot_sci(0)
        call plot_circ(x,y,size)
        call plot_sfs(1)
-    elseif (imarker.eq.4) then
+    elseif (imarker==4) then
        call plot_sfs(1)
        call plot_circ(x,y,size)
        call plot_sfs(2)
@@ -507,7 +507,7 @@ logical function in_cell(ix,iy,x,y,xmin,ymin,dx1,dy1,nx,ny)
  iy = int((y - ymin)*dy1) + 1
  !--exclude particles if there are more than 2 particles per cell
  !  (two here because particles can have different colours)
- in_cell = (ix.gt.0 .and. ix.le.nx .and. iy.gt.0 .and. iy.le.ny)
+ in_cell = (ix > 0 .and. ix <= nx .and. iy > 0 .and. iy <= ny)
 
 end function in_cell
 
@@ -539,7 +539,7 @@ subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
   real, dimension(3,npts) :: xpts
   real :: angle, dangle, xi, yi, zi
 
-  if (igeom.gt.1 .and. igeom.le.maxcoordsys) then
+  if (igeom > 1 .and. igeom <= maxcoordsys) then
      print 10,labelcoordsys(igeom)
   else
      print 10,labelcoordsys(1)
@@ -548,7 +548,7 @@ subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
 
   iplotz = 0
   do i=1,3
-     if (iplotx.ne.ix(i) .and. iploty.ne.ix(i)) iplotz = ix(i)
+     if (iplotx /= ix(i) .and. iploty /= ix(i)) iplotz = ix(i)
   enddo
   if (iplotz==0) return
 
@@ -568,8 +568,8 @@ subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
   dangle = 2.*pi/REAL(npts-1)
   do i=1,npts
      angle = (i-1)*dangle
-     xtemp(1) = xi + h*COS(angle)
-     xtemp(2) = yi + h*SIN(angle)
+     xtemp(1) = xi + h*cos(angle)
+     xtemp(2) = yi + h*sin(angle)
      xtemp(3) = zi
 !
 !--translate back to actual coordinate system plotted
@@ -612,7 +612,7 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
        print "(a,i10,a)",' plotting ',npts,' error bars y axis'
     endif
  endif
- if (itrans.ne.0) then
+ if (itrans /= 0) then
     if (islogged(itrans)) then
        errval = 0. !-300.
     else
@@ -668,7 +668,7 @@ subroutine plot_errorbarsx(npts,x,y,err,itrans)
  integer :: i
 
  print*,'plotting ',npts,' error bars x axis '
- if (itrans.ne.0) then
+ if (itrans /= 0) then
     if (islogged(itrans)) then
        errval = -300.
     else

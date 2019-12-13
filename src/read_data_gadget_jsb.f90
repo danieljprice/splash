@@ -72,7 +72,7 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
 
   nstepsread = 0
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -125,11 +125,11 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,1)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
      npart_max = int(1.1*ntoti)
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -146,7 +146,7 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
   time(i) = real(timetemp)
 
 
-  if (ntoti.gt.0) then
+  if (ntoti > 0) then
      if (allocated(dattemp)) deallocate(dattemp)
      allocate(dattemp(3,ntoti))
      !
@@ -188,7 +188,7 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
      !--work out total number of masses dumped
      Nmassesdumped = 0
      do itype = 1,6
-        if (abs(Massoftype(itype)).lt.1.e-8) then
+        if (abs(Massoftype(itype)) < 1.e-8) then
            Nmassesdumped = Nmassesdumped + Npartoftype(itype,i)
         endif
      enddo
@@ -197,7 +197,7 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
      !--read this number of entries
      if (allocated(dattemp1)) deallocate(dattemp1)
      allocate(dattemp1(Nmassesdumped))
-     if (Nmassesdumped.gt.0) then
+     if (Nmassesdumped > 0) then
         read(11,end=66,err=74) dattemp1(1:Nmassesdumped)
      endif
      !--now copy to the appropriate sections of the .dat array
@@ -205,9 +205,9 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
      index1 = 1
 
      do itype=1,6
-        if (Npartoftype(itype,i).ne.0) then
+        if (Npartoftype(itype,i) /= 0) then
            index2 = index1 + Npartoftype(itype,i) -1
-           if (abs(Massoftype(itype)).lt.1.e-8) then ! masses dumped
+           if (abs(Massoftype(itype)) < 1.e-8) then ! masses dumped
               indexend = indexstart + Npartoftype(itype,i) - 1
               print*,'read ',Npartoftype(itype,i),' masses for type ', &
                      itype,index1,'->',index2,indexstart,'->',indexend
@@ -233,7 +233,7 @@ subroutine read_data(rootname,istart,ipos,nstepsread)
         !--for some reason the smoothing length output by GADGET is
         !  twice the usual SPH smoothing length
         !
-        if (icol.eq.15) then
+        if (icol==15) then
            dat(1:npartoftype(1,i),icol,i) = 0.5*dat(1:npartoftype(1,i),icol,i)
         endif
      enddo
@@ -312,11 +312,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif

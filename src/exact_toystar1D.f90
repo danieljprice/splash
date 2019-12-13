@@ -58,7 +58,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
   logical :: linear
 
   linear = .false.
-  if (norder.ge.0) linear = .true.
+  if (norder >= 0) linear = .true.
   gamp1 = gamma + 1.
   gamm1 = gamma - 1.
   gam1 = 1./gamm1
@@ -77,7 +77,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
      print*,' Plotting toy star oscills: time, norder, omega = ', &
           time,norder,omega,H0,C0,A0
 
-     if (C0.le.0.) then
+     if (C0 <= 0.) then
         print*,'*** C = 0 = illegal in input'
         ierr = 1
         return
@@ -91,7 +91,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H0 - C0*xplot(i)**2)
-        if (rhoplot.le.0.) rhoplot = 0.
+        if (rhoplot <= 0.) rhoplot = 0.
         deltarho = Pm(xplot(i),norder+1)*sin(omega*time)
         rhoplot = rhoplot**gam1 + 2.*omega*A0*deltarho/fnorm
         select case(iplot)
@@ -109,7 +109,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
 
      enddo
 
-     if (iplot.eq.6) then        ! plot By \propto rho
+     if (iplot==6) then        ! plot By \propto rho
         dx = (H0**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
         xplot(1) = 0.
         yplot(1) = sigma*xplot(1)
@@ -119,7 +119,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         enddo
      endif
 
-     if (iplot.eq.7) then        ! plot current point on A-C plane
+     if (iplot==7) then        ! plot current point on A-C plane
         call plot_pt1(C0,A0*cos(omega*time),4)
         ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
@@ -173,8 +173,8 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         Hprev = H
 
         !         print*,' time = ',tnow
-        !         IF ((abs(C-C0).LT.5.e-3).AND. &
-        !                  (abs(A-A0).LT.5.e-3).AND.(tnow.GT.5e-3)) THEN
+        !         if ((abs(C-C0) < 5.e-3).AND. &
+        !                  (abs(A-A0) < 5.e-3).AND.(tnow > 5e-3)) then
         !             PRINT*,'*** period, t = ',tnow,' err = ',abs(C-C0)+abs(A-A0)
         !         ENDIF
 
@@ -184,7 +184,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
 
      print*,' C, A, H, k = ',C,A,H,const
 
-     if (C.le.0.) then
+     if (C <= 0.) then
         radstar = 0.5
         print*,'*** C = 0 = illegal'
         ierr = 1
@@ -199,7 +199,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         xplot(i) = xplot(1)+dx*(i-1)
         !         print*,i,' x,y = ',xplot(i),yplot(i)
         rhoplot = (H - C*xplot(i)**2)
-        if (rhoplot.le.0.) rhoplot = 0.
+        if (rhoplot <= 0.) rhoplot = 0.
         rhoplot = rhoplot**gam1
         select case(iplot)
         case(1)                 ! plot solution for density
@@ -216,7 +216,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
 
      enddo
 
-     if (iplot.eq.6) then        ! plot By \propto rho
+     if (iplot==6) then        ! plot By \propto rho
         dx = (H**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
         xplot(1) = 0.
         yplot(1) = sigma*xplot(1)
@@ -226,7 +226,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
         enddo
      endif
 
-     if (iplot.eq.7) then        ! plot current point on A-C plane
+     if (iplot==7) then        ! plot current point on A-C plane
         call plot_pt1(C,A,4)
         ierr = 2 ! do not plot again
      else                        ! plot normal exact solution line
@@ -343,7 +343,7 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
   c = 1.e6
   cnew = 0.25
 
-  do while (abs(c-cnew).gt.1.e-5)
+  do while (abs(c-cnew) > 1.e-5)
 
      c = cnew
 
@@ -352,7 +352,7 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
 
      cnew = c - funct/fderiv
 
-     if (cnew.lt.0.) print*,'eek c < 0'
+     if (cnew < 0.) print*,'eek c < 0'
 
   enddo
 
@@ -361,7 +361,7 @@ subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
   c = 1.e6
   cnew = 6.37935
 
-  do while (abs(c-cnew).gt.1.e-5)
+  do while (abs(c-cnew) > 1.e-5)
 
      c = cnew
 
@@ -409,7 +409,7 @@ real function func(x)
   !      print*,'k = ',k
 
   term = -1 -2.*fact*x*gam1 + k*x**(2./gamp1)
-  if (term.le.0.) then
+  if (term <= 0.) then
   !         print*,' warning: func < 0 ',term
      func = 0.
   else
@@ -427,7 +427,7 @@ real function func2(x)
   !      print*,' k = ',k
 
   term = -1 -2.*fact*x*gam1 + k*x**(2./gamp1)
-  if (term.le.0.) then
+  if (term <= 0.) then
      func2 = 0.
   else
      func2 = -sqrt(term)

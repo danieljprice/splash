@@ -306,7 +306,7 @@ subroutine defaults_read(filename)
     read(iunit,NML=animopts,iostat=ierr)
     if (ierr /= 0) nerr = nerr + 1
 
-    if (len_trim(rootname(1)).eq.0) then
+    if (len_trim(rootname(1))==0) then
        do i=1,maxfile
           read(iunit,*,end=66,iostat=ierr) rootname(i)
        enddo

@@ -83,7 +83,7 @@ contains
   character(len=10) :: time
 
   !--do self-initialisation the first time it is called
-  if (starttime.lt.0.) call initialise_timing
+  if (starttime < 0.) call initialise_timing
 
   call date_and_time(date,time,zone,ivalues)
   iday   = ivalues(3)
@@ -92,14 +92,14 @@ contains
   isec   = ivalues(7)
   imsec  = ivalues(8)
 
-  if (ivalues(2).lt.istarttime(2)) then
+  if (ivalues(2) < istarttime(2)) then
      ivalues(2) = ivalues(2) + 12
   endif
   do i = istarttime(2), ivalues(2) - 1
      imonth = mod(i,12)
-     if (imonth.eq.4 .or. imonth.eq.6 .or. imonth.eq.9 .or. imonth.eq.11) then
+     if (imonth==4 .or. imonth==6 .or. imonth==9 .or. imonth==11) then
         iday = iday + 30
-     elseif (imonth.eq.2) then
+     elseif (imonth==2) then
         iday = iday + 28
      else
         iday = iday + 31
@@ -126,10 +126,10 @@ contains
 
   trem = time
   nhr = int(trem/3600.)
-  if (nhr.gt.0) trem = trem - nhr*3600.
+  if (nhr > 0) trem = trem - nhr*3600.
 
   nmin = int(trem/60.)
-  if (nmin.gt.0) trem = trem - nmin*60.
+  if (nmin > 0) trem = trem - nmin*60.
 
   if (present(string)) then
      newstring = trim(string(1:min(len(newstring),len_trim(string))))
@@ -143,10 +143,10 @@ contains
      lunit = 6
   endif
 
-  if (nhr.gt.0) then
+  if (nhr > 0) then
      write(lunit,"(1x,a,1x,i3,a,i2,a,f6.2,a)") &
           trim(newstring),nhr,' hr, ',nmin,' min, ',trem,' s'
-  elseif (nmin.gt.0) then
+  elseif (nmin > 0) then
      write(lunit,"(1x,a,1x,i2,a,f6.2,a)") &
           trim(newstring),nmin,' min, ',trem,' s'
   else

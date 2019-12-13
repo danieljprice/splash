@@ -76,7 +76,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   goterrors  = .false.
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -164,11 +164,11 @@ subroutine set_labels
   implicit none
   integer :: i,icol
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -194,14 +194,14 @@ subroutine set_labels
 !   enddo
 
   ! set labels of the quantities read in
-  if (ix(1).gt.0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  !if (irho.gt.0)    label(irho)       = 'density'
-  !if (iutherm.gt.0) label(iutherm)    = 'u'
-  !if (ipmass.gt.0)  label(ipmass)     = 'particle mass'
-  !if (ih.gt.0)      label(ih)         = 'h'
+  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  !if (irho > 0)    label(irho)       = 'density'
+  !if (iutherm > 0) label(iutherm)    = 'u'
+  !if (ipmass > 0)  label(ipmass)     = 'particle mass'
+  !if (ih > 0)      label(ih)         = 'h'
 
   ! set labels for vector quantities
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV

@@ -112,7 +112,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
   endif
 
@@ -120,12 +120,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000) .or. exact_rendering
+  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000) .or. exact_rendering
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
   !
   !--get starting CPU time
@@ -176,7 +176,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -185,12 +185,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_parts
-     elseif (hi.lt.hmin) then
+     elseif (hi < hmin) then
      !
      !--use minimum h to capture subgrid particles
      !  (get better results *without* adjusting weights)
@@ -225,16 +225,16 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      kpixmax = int((zi + radkern - zmin)/pixwidthz) + 1
 
      if (.not.periodicx) then
-        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+        if (ipixmin < 1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax > npixx) ipixmax = npixx  ! to pixels in the image
      endif
      if (.not.periodicy) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (jpixmin < 1)     jpixmin = 1
+        if (jpixmax > npixy) jpixmax = npixy
      endif
      if (.not.periodicz) then
-        if (kpixmin.lt.1)     kpixmin = 1
-        if (kpixmax.gt.npixz) kpixmax = npixz
+        if (kpixmin < 1)     kpixmin = 1
+        if (kpixmax > npixz) kpixmax = npixz
      endif
 
      negflag = 0
@@ -249,7 +249,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
         if (periodicx) ipixi = iroll(ipix,npixx)
         xpixi = xminpix + ipix*pixwidthx
         !--watch out for errors with periodic wrapping...
-        if (nxpix.le.size(dx2i)) then
+        if (nxpix <= size(dx2i)) then
            dx2i(nxpix) = ((xpixi - xi)**2)*hi21
         endif
      enddo
@@ -257,7 +257,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
      !--if particle contributes to more than npixx pixels
      !  (i.e. periodic boundaries wrap more than once)
      !  truncate the contribution and give warning
-     if (nxpix.gt.npixx) then
+     if (nxpix > npixx) then
         nwarn = nwarn + 1
         ipixmax = ipixmin + npixx - 1
      endif
@@ -282,7 +282,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
            nxpix = 0
            do ipix = ipixmin,ipixmax
-              if ((kpix.eq.kpixmin).and.(jpix.eq.jpixmin).and.(ipix.eq.ipixmin)) then
+              if ((kpix==kpixmin).and.(jpix==jpixmin).and.(ipix==ipixmin)) then
                  usedpart = usedpart + 1
               endif
 
@@ -335,7 +335,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
                     endif
                  endif
               else
-                 if (q2.lt.radkernel2) then
+                 if (q2 < radkernel2) then
                     !
                     !--SPH kernel - standard cubic spline
                     !
@@ -358,7 +358,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp enddo
 !$omp end parallel
 
-  if (nwarn.gt.0) then
+  if (nwarn > 0) then
      print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
                            '                that wrap periodic boundaries more than once'
   endif
@@ -412,11 +412,11 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   else
      print "(1x,a)",'interpolating to 3D grid (non-normalised) ...'
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0. .or. pixwidthz.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0. .or. pixwidthz <= 0.) then
      print "(1x,a)",'interpolate3D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
   endif
 
@@ -424,12 +424,12 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
+  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
   !
   !--get starting CPU time
@@ -469,7 +469,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -478,10 +478,10 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
 
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     if (hi <= 0.) cycle over_parts
 
      !
      !--set kernel related quantities
@@ -506,16 +506,16 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      kpixmax = int((zi + radkern - zmin)/pixwidthz) + 1
 
      if (.not.periodicx) then
-        if (ipixmin.lt.1)     ipixmin = 1      ! make sure they only contribute
-        if (ipixmax.gt.npixx) ipixmax = npixx  ! to pixels in the image
+        if (ipixmin < 1)     ipixmin = 1      ! make sure they only contribute
+        if (ipixmax > npixx) ipixmax = npixx  ! to pixels in the image
      endif
      if (.not.periodicy) then
-        if (jpixmin.lt.1)     jpixmin = 1
-        if (jpixmax.gt.npixy) jpixmax = npixy
+        if (jpixmin < 1)     jpixmin = 1
+        if (jpixmax > npixy) jpixmax = npixy
      endif
      if (.not.periodicz) then
-        if (kpixmin.lt.1)     kpixmin = 1
-        if (kpixmax.gt.npixz) kpixmax = npixz
+        if (kpixmin < 1)     kpixmin = 1
+        if (kpixmax > npixz) kpixmax = npixz
      endif
      !
      !--precalculate an array of dx2 for this particle (optimisation)
@@ -527,7 +527,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
         if (periodicx) ipixi = iroll(ipix,npixx)
         xpixi = xminpix + ipix*pixwidthx
         !--watch out for errors with perioic wrapping...
-        if (nxpix.le.size(dx2i)) then
+        if (nxpix <= size(dx2i)) then
            dx2i(nxpix) = ((xpixi - xi)**2)*hi21
         endif
      enddo
@@ -535,7 +535,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      !--if particle contributes to more than npixx pixels
      !  (i.e. periodic boundaries wrap more than once)
      !  truncate the contribution and give warning
-     if (nxpix.gt.npixx) then
+     if (nxpix > npixx) then
         nwarn = nwarn + 1
         ipixmax = ipixmin + npixx - 1
      endif
@@ -565,7 +565,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
               !
               !--SPH kernel - standard cubic spline
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wkernel(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -588,7 +588,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp enddo
 !$omp end parallel
 
-  if (nwarn.gt.0) then
+  if (nwarn > 0) then
      print "(a,i11,a,/,a)",' interpolate3D: WARNING: contributions truncated from ',nwarn,' particles',&
                            '                that wrap periodic boundaries more than once'
   endif
@@ -602,7 +602,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
      do kpix=1,npixz
         do jpix=1,npixy
            do ipix=1,npixx
-              if (datnorm(ipix,jpix,kpix).gt.tiny(datnorm)) then
+              if (datnorm(ipix,jpix,kpix) > tiny(datnorm)) then
                  ddatnorm = 1./datnorm(ipix,jpix,kpix)
                  datsmooth(1,ipix,jpix,kpix) = datsmooth(1,ipix,jpix,kpix)*ddatnorm
                  datsmooth(2,ipix,jpix,kpix) = datsmooth(2,ipix,jpix,kpix)*ddatnorm
@@ -681,7 +681,7 @@ real function pint(r0, R_0, d1, d2, hi)
      return
   endif
 
-  if (r0 .gt. 0.d0) then
+  if (r0  >  0.d0) then
      pint = 1.d0
      ar0 = r0
   else
@@ -689,7 +689,7 @@ real function pint(r0, R_0, d1, d2, hi)
      ar0 = -r0
   endif
 
-  if (R_0 .gt. 0.d0) then
+  if (R_0  >  0.d0) then
     aR_0 = R_0
   else
     pint = -pint
@@ -702,10 +702,10 @@ real function pint(r0, R_0, d1, d2, hi)
   if (int1 < 0.d0) int1 = 0.d0
   if (int2 < 0.d0) int2 = 0.d0
 
-  if (d1*d2 .ge. 0) then
+  if (d1*d2  >=  0) then
      pint = pint*(int1 + int2)
      if (int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
-  elseif (abs(d1) .lt. abs(d2)) then
+  elseif (abs(d1)  <  abs(d2)) then
      pint = pint*(int2 - int1)
      if (int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
   else

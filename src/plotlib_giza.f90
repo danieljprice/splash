@@ -178,7 +178,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
     ierr = 0
  endif
 
- if (ierr.eq.0) then
+ if (ierr==0) then
     call giza_stop_prompting
  endif
 end subroutine plot_init

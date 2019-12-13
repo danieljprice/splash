@@ -69,7 +69,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   ifile = 1
 
   dumpfile = trim(rootname)
-!  if (index(dumpfile,'.plt').eq.0) dumpfile = trim(rootname)//'.plt'
+!  if (index(dumpfile,'.plt')==0) dumpfile = trim(rootname)//'.plt'
   !
   !--check if first data file exists
   !
@@ -107,7 +107,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         !
         read(15,*,end=55,iostat=ierr) istep,nprint,timei,dti
         print*,'first time = ',timei,nprint
-        if (.not.allocated(dat) .or. (nprint.gt.npart_max)) then
+        if (.not.allocated(dat) .or. (nprint > npart_max)) then
            npart_max = max(npart_max,INT(1.1*(nprint)))
            call alloc(npart_max,nstep_max,ncolumns)
         endif
@@ -125,7 +125,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     !
     !--allocate/reallocate memory if j > maxstep
     !
-           if (j.gt.maxstep) then
+           if (j > maxstep) then
               call alloc(maxpart,2*j,maxcol)
            endif
     !
@@ -179,11 +179,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -198,7 +198,7 @@ subroutine set_labels
   label(ih) = 'h'
   irho = ndim+ndimV+1     ! location of rho in data array
   label(irho) = 'density'
-  if (ipr.gt.0) label(ipr) = 'pressure'
+  if (ipr > 0) label(ipr) = 'pressure'
   iutherm = 0  !  thermal energy
 !  label(iutherm) = 'u'
   ipmass = 0  !  particle mass

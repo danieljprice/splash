@@ -95,7 +95,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--check for errors in input settings
  !
- if (ndim.lt.2 .or. ndim.gt.3) then
+ if (ndim < 2 .or. ndim > 3) then
     print "(/,a,i2,a,/)",' ERROR: SPH data has ',ndim,' spatial dimensions: cannot convert to 3D grid'
     return
  endif
@@ -119,23 +119,23 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  ierr = 0
  do i=1,ndim
-    if ((xmax(i)-xmin(i)).lt.tiny(0.)) then
+    if ((xmax(i)-xmin(i)) < tiny(0.)) then
        print "(a)",' ERROR: min = max in '//trim(label(ix(i)))//&
                    ' coordinate: cannot interpolate to zero-sized grid!'
        ierr = 1
     endif
  enddo
 
- if (irho.le.0 .or. irho.gt.ncolumns) then
+ if (irho <= 0 .or. irho > ncolumns) then
     print "(a)",' ERROR: density not found in data read.'
     ierr = 2
  endif
- if (ih.le.0 .or. ih.gt.ncolumns) then
+ if (ih <= 0 .or. ih > ncolumns) then
     print "(a)",' ERROR: smoothing length not found in data read.'
     ierr = 3
  endif
- if (ipmass.le.0 .or. ipmass.gt.ncolumns) then
-    if (all(masstype(:).lt.tiny(0.))) then
+ if (ipmass <= 0 .or. ipmass > ncolumns) then
+    if (all(masstype(:) < tiny(0.))) then
        print "(a)",' ERROR: particle masses not read as column, and mass per type not set.'
        ierr = 4
     endif
@@ -154,7 +154,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  ntoti = sum(npartoftype)
  ninterp = npartoftype(1)
  if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-     .or. size(itype).gt.1) ninterp = ntoti
+     .or. size(itype) > 1) ninterp = ntoti
 
  allocate(weight(ninterp),stat=ierr)
  if (ierr /= 0) then
@@ -186,17 +186,17 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (product(npixels) > 0) then
     print*,'Using npixels = ',npixels,' from SPLASH_TO_GRID_NPIX'
  else
-    if (npixx.le.0) then
+    if (npixx <= 0) then
        print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
        hmin = 0.
        call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
        hmin = partmin(1)
-       if (hmin.gt.0. .and. igeom==igeom_cartesian) then
+       if (hmin > 0. .and. igeom==igeom_cartesian) then
           print*,'based on the minimum smoothing length of hmin = ',hmin
           npixels8(1:ndim) = int((xmax(1:ndim) - xmin(1:ndim))/hmin,kind=int8) + 1
-          if (ndim.eq.3) then
+          if (ndim==3) then
              print "(a,i6,2(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
-             if (product(npixels8(1:ndim)).gt.512**3 .or. product(npixels8(1:ndim)).le.0) then
+             if (product(npixels8(1:ndim)) > 512**3 .or. product(npixels8(1:ndim)) <= 0) then
                 npixx = 512
                 print "(a,i4)",' but this is ridiculous, so instead we choose ',npixx
              else
@@ -204,7 +204,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              endif
           else
              print "(a,i6,1(' x',i6),a)",' requires ',npixels8(1:ndim),' pixels to capture the full resolution'
-             if (product(npixels8(1:ndim)).gt.1024**ndim .or. product(npixels8(1:ndim)).le.0) then
+             if (product(npixels8(1:ndim)) > 1024**ndim .or. product(npixels8(1:ndim)) <= 0) then
                 npixx = 1024
                 print "(a,i4)",' but this is very large, so instead we choose ',npixx
              else
@@ -236,19 +236,19 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--work out how many columns will be written to file
  !
  nvec = 0
- if (ncolstogrid.gt.0) then
+ if (ncolstogrid > 0) then
     ncolsgrid = ncolstogrid
  elseif (interpolateall) then
     ncolsgrid = 0
     do i=1,ncolumns
-       if (.not.any(ix(1:ndim).eq.i) .and. i.ne.ih .and. i.ne.ipmass) then
+       if (.not.any(ix(1:ndim)==i) .and. i /= ih .and. i /= ipmass) then
           ncolsgrid = ncolsgrid + 1
        endif
     enddo
  else
-    if (ndimV.eq.ndim) then
-       if (ivx.gt.0 .and. ivx+ndimV-1.le.ncolumns) nvec = nvec + 1
-       if (iBfirst.gt.0 .and. iBfirst+ndimV-1.le.ncolumns) nvec = nvec + 1
+    if (ndimV==ndim) then
+       if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) nvec = nvec + 1
+       if (iBfirst > 0 .and. iBfirst+ndimV-1 <= ncolumns) nvec = nvec + 1
     endif
     ncolsgrid = 1 + ndimV*nvec
  endif
@@ -262,7 +262,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     lowmem = .true.
  endif
 
- if (lowmem .and. nvec.gt.0) &
+ if (lowmem .and. nvec > 0) &
     print "(a,/)",' [doing velocity field components separately (low memory mode)]'
  !
  !--allocate memory for the grid
@@ -270,10 +270,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (allocated(datgrid))   deallocate(datgrid)
  if (allocated(datgrid2D)) deallocate(datgrid2D)
 
- if (ndim.eq.3) then
+ if (ndim==3) then
     write(*,"(a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' grid ...'
     allocate(datgrid(npixels(1),npixels(2),npixels(3)),stat=ierr)
- elseif (ndim.eq.2) then
+ elseif (ndim==2) then
     write(*,"(a,i5,1(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' grid ...'
     allocate(datgrid2D(npixels(1),npixels(2)),stat=ierr)
  endif
@@ -316,7 +316,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     print "(9x,a23,1x,es10.4,/)",'total mass on parts:',mtot
  endif
 
- if (ndim.eq.3) then
+ if (ndim==3) then
     call wall_time(t1)
     if (igeom /= igeom_cartesian) then
        call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
@@ -364,23 +364,23 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  rhominset = renvironment('SPLASH_TO_GRID_RHOMIN',errval=-1.)
 
  print*
- if (rhominset.ge.0.) then
+ if (rhominset >= 0.) then
     rhomin = rhominset
     print*,'enforcing minimum density on grid = ',rhomin
     print*,'(based on SPLASH_TO_GRID_RHOMIN setting)'
- elseif (rhomin.gt.0.) then
+ elseif (rhomin > 0.) then
     print*,'enforcing minimum density on grid = ',rhomin
     print*,'set SPLASH_TO_GRID_RHOMIN=minval to manually set this (e.g. to zero)'
  endif
 
- if (rhomin.gt.0.) then
+ if (rhomin > 0.) then
     nzero = 0
-    if (ndim.eq.3) then
+    if (ndim==3) then
        !$omp parallel do private(k,j,i) reduction(+:nzero) schedule(static)
        do k=1,npixels(3)
           do j=1,npixels(2)
              do i=1,npixels(1)
-                if (datgrid(i,j,k).le.tiny(datgrid)) then
+                if (datgrid(i,j,k) <= tiny(datgrid)) then
                    datgrid(i,j,k) = rhomin
                    nzero = nzero + 1
                 endif
@@ -391,7 +391,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        !$omp parallel do private(j,i) reduction(+:nzero) schedule(static)
        do j=1,npixels(2)
           do i=1,npixels(1)
-             if (datgrid2D(i,j).le.tiny(datgrid2D)) then
+             if (datgrid2D(i,j) <= tiny(datgrid2D)) then
                 datgrid2D(i,j) = rhomin
                 nzero = nzero + 1
              endif
@@ -407,8 +407,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--write density to grid data file
  !
  print*
- if (ndim.eq.3) then
-    if (lowmem .or. interpolateall .or. ncolstogrid.gt.0) then
+ if (ndim==3) then
+    if (lowmem .or. interpolateall .or. ncolstogrid > 0) then
        call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid,&
                        tagline=tagline,origin=origin)
@@ -421,16 +421,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--interpolate remaining quantities to the 3D grid
  !
- if (interpolateall .or. ncolstogrid.gt.0) then
-    if (ncolstogrid.gt.0) then
+ if (interpolateall .or. ncolstogrid > 0) then
+    if (ncolstogrid > 0) then
        print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from SPLASH_TO_GRID setting:'
        print "(' got SPLASH_TO_GRID=',10(i2,1x))",icoltogrid(1:ncolstogrid)
     endif
 
     do i=1,ncolumns
-       if ((ncolstogrid.gt.0 .and. any(icoltogrid.eq.i) .and. i.ne.irho) .or.  &
+       if ((ncolstogrid > 0 .and. any(icoltogrid==i) .and. i /= irho) .or.  &
            (interpolateall .and. &
-            .not.any(ix(:).eq.i) .and. i.ne.ih .and. i.ne.ipmass .and. i.ne.irho)) then
+            .not.any(ix(:)==i) .and. i /= ih .and. i /= ipmass .and. i /= irho)) then
 
           print "(/,a)",' interpolating '//trim(label(i))
           print fmtstring1,trim(label(i))
@@ -440,7 +440,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           if (iszero(partmin,partmax,1)) then
              datgrid = 0.
           else
-             if (ndim.eq.3) then
+             if (ndim==3) then
                 if (igeom /= igeom_cartesian) then
                    call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
@@ -462,7 +462,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           !
           !--write gridded data to file
           !
-          if (ndim.eq.3) then
+          if (ndim==3) then
              call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
              call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
@@ -478,13 +478,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  else
 
-    if (nvec.gt.0) then
+    if (nvec > 0) then
 
        print "(/,a,i2,a)",' set SPLASH_TO_GRID=',irho,' to interpolate density ONLY and skip remaining columns'
        print "(a,i2,a)",  '     SPLASH_TO_GRID=6,8,10 to select particular columns'
 
        if (.not.lowmem) then
-          if (ndim.eq.3) then
+          if (ndim==3) then
              write(*,"(/,a,i5,2(' x',i5),a)",advance='no') ' >>> allocating memory for ',npixels(1:ndim),' x 3 grid ...'
              allocate(datgridvec(3,npixels(1),npixels(2),npixels(3)),stat=ierr)
           else
@@ -514,7 +514,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              iloc = 0
              exit over_vec
           end select
-          if (iloc.le.0 .or. iloc.ge.ncolumns) cycle over_vec
+          if (iloc <= 0 .or. iloc >= ncolumns) cycle over_vec
 
           if (lowmem) then
 
@@ -527,7 +527,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 if (iszero(partmin,partmax,1)) then
                    datgrid = 0.
                 else
-                   if (ndim.eq.3) then
+                   if (ndim==3) then
                       if (igeom /= igeom_cartesian) then
                          call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
@@ -549,7 +549,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 !
                 !--write gridded data to file
                 !
-                if (ndim.eq.3) then
+                if (ndim==3) then
                    call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
@@ -572,7 +572,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              if (iszero(partmin,partmax,ndimV)) then
                 datgridvec = 0.
              else
-                if (ndim.eq.3) then
+                if (ndim==3) then
                    if (igeom /= igeom_cartesian) then
                       call interpolate3Dgeom_vec(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
@@ -591,7 +591,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 endif
              endif
 
-             if (ndim.eq.3) then
+             if (ndim==3) then
                 call minmaxmean_gridvec(datgridvec,npixels,ndimV,datmin,datmax,datmean)
              else
                 call minmaxmean_gridvec2D(datgridvec2D,npixels,ndimV,datmin,datmax,datmean)
@@ -602,7 +602,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !
              !--write result to grid file
              !
-             if (ndim.eq.3) then
+             if (ndim==3) then
                 call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
                                 label(irho),labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,&
                                 dat=datgrid,dat3D=datgridvec,label3D=label(iloc:iloc+ndimV),tagline=tagline,origin=origin)
@@ -651,10 +651,10 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  ncolstogrid   = 0
  icoltogrid(:) = 0
  call envlist('SPLASH_TO_GRID',nstring,strings)
- if (nstring.gt.0) then
+ if (nstring > 0) then
     do i=1,nstring
        icol = ienvstring(strings(i))
-       if (ienvstring(strings(i)).gt.0) then
+       if (ienvstring(strings(i)) > 0) then
           ncolstogrid = ncolstogrid + 1
           icoltogrid(ncolstogrid) = icol
        endif
@@ -664,7 +664,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  !--for backwards compatibility, support the SPLASH_TO_GRID_DENSITY_ONLY option
  !  but only if SPLASH_TO_GRID is not set
  !
- if (ncolstogrid.eq.0 .and. lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
+ if (ncolstogrid==0 .and. lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
     ncolstogrid = 1
     icoltogrid(1) = irho
  endif
@@ -673,14 +673,14 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  !
  isperiodic(:) = .false.
  call envlist('SPLASH_TO_GRID_PERIODIC',nstring,strings)
- if (nstring.gt.ndim) then
+ if (nstring > ndim) then
     print "(a)",' ERROR in SPLASH_TO_GRID_PERIODIC setting'
     nstring = ndim
  endif
  do i=1,nstring
     isperiodic(i) = lenvstring(strings(i))
  enddo
- if (nstring.eq.1) isperiodic(2:ndim) = isperiodic(1)
+ if (nstring==1) isperiodic(2:ndim) = isperiodic(1)
 
  if (all(isperiodic(1:ndim))) then
     print "(/,a)",' using PERIODIC boundaries (from SPLASH_TO_GRID_PERIODIC setting)'
@@ -696,7 +696,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  else
     print "(/,a)",' using NON-PERIODIC boundaries'
     print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic'
-    if (ndim.eq.3) then
+    if (ndim==3) then
        print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'
     else
        print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no for mixed)'
@@ -729,7 +729,7 @@ subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
           dati = datgrid(i,j,k)
           gridmax  = max(gridmax,dati)
           if (nonzero) then
-             if (dati.gt.tiny(0.)) gridmin  = min(gridmin,dati)
+             if (dati > tiny(0.)) gridmin  = min(gridmin,dati)
           else
              gridmin  = min(gridmin,dati)
           endif
@@ -765,7 +765,7 @@ subroutine minmaxmean_grid2D(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
        dati = datgrid(i,j)
        gridmax  = max(gridmax,dati)
        if (nonzero) then
-          if (dati.gt.tiny(0.)) gridmin  = min(gridmin,dati)
+          if (dati > tiny(0.)) gridmin  = min(gridmin,dati)
        else
           gridmin  = min(gridmin,dati)
        endif
@@ -880,12 +880,12 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  !!$omp private(i,j,partval)
  do i=1,npart
     !--only count particles used in the rendering
-    if (weight(i).gt.tiny(0.)) then
+    if (weight(i) > tiny(0.)) then
        np = np + 1
        do j=1,jlen
           partval = dat(i,j)
           if (usenonzero) then
-             if (partval.gt.tiny(0.)) partmin(j) = min(partmin(j),partval)
+             if (partval > tiny(0.)) partmin(j) = min(partmin(j),partval)
           else
              partmin(j) = min(partmin(j),partval)
           endif
@@ -896,7 +896,7 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  enddo
  !!$omp end parallel do
 
- if (np.gt.0) then
+ if (np > 0) then
     partmean(:) = partmean(:)/real(np)
  endif
 
@@ -909,8 +909,8 @@ logical function iszero(partmin,partmax,ndim)
  real, dimension(:), intent(in) :: partmin,partmax
  integer, intent(in)            :: ndim
 
- if (all(abs(partmin(1:ndim)).lt.tiny(0.)) .and. &
-     all(abs(partmax(1:ndim)).lt.tiny(0.))) then
+ if (all(abs(partmin(1:ndim)) < tiny(0.)) .and. &
+     all(abs(partmax(1:ndim)) < tiny(0.))) then
     iszero = .true.
     print "(a)",' min=max=0 on particles: skipping pointless interpolation and setting dat = 0.'
  else

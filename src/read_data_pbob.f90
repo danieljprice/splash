@@ -107,7 +107,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   nstepsread = 0
   goterrors  = .false.
 
-  if (len_trim(rootname).gt.0) then
+  if (len_trim(rootname) > 0) then
      datfile = trim(rootname)
   else
      print*,' **** no data read **** '
@@ -153,9 +153,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   npart_max = maxpart
   nstep_max = max(maxstep,nstep_max)
 
-  if (ntoti.gt.maxpart) then
+  if (ntoti > maxpart) then
      reallocate = .true.
-     if (maxpart.gt.0) then
+     if (maxpart > 0) then
         ! if we are reallocating, try not to do it again
         npart_max = int(1.1*ntoti)
      else
@@ -163,7 +163,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
         npart_max = int(ntoti)
      endif
   endif
-  if (i.ge.maxstep .and. i.ne.1) then
+  if (i >= maxstep .and. i /= 1) then
      nstep_max = i + max(10,INT(0.1*nstep_max))
      reallocate = .true.
   endif
@@ -188,7 +188,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   got_particles: if (ntoti > 0) then
 
      do while(ierr == 0 .and. i <= nstep_max)
-        if (i.gt.maxstep .and. i.ne.1) then
+        if (i > maxstep .and. i /= 1) then
            nstep_max = i + max(10,INT(0.1*nstep_max))
            reallocate = .true.
         endif
@@ -202,7 +202,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            print "(a,i3,a,es10.3)",' time slice #',i,' time = ',timetemp
            time(i) = real(timetemp)
            call set_labels ! sets ntypes and labeltype
-           if (size(iamtype(:,i)).gt.1) then
+           if (size(iamtype(:,i)) > 1) then
               npartoftype(:,i) = 0
               do j=1,ntoti
                  itype = iamtype(j,i)
@@ -228,7 +228,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--cover the special case where no particles have been read
 !
-  if (ntoti.le.0) then
+  if (ntoti <= 0) then
      npartoftype(1,i) = 1
      dat(:,:,i) = 0.
   endif
@@ -253,7 +253,7 @@ subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
   if (debugmode) print "(a,i2,a,i2,a)",'DEBUG: reading column ',icol,' -> '//trim(label(icolput))
 
   ! check column is within array limits
-  if (icolput.gt.size(dat(1,:,1)) .or. icolput.eq.0) then
+  if (icolput > size(dat(1,:,1)) .or. icolput==0) then
      print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in read_pbob_data_fromc'
      return
   endif
@@ -272,7 +272,7 @@ subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
   dat(1:nmax,icolput,istep) = real(temparr(1:nmax))
 
   ! set particle type
-  if (size(iamtype(:,1)).gt.1) then
+  if (size(iamtype(:,1)) > 1) then
      do i=1,nmax
         iamtype(i,istep) = int(itype(i),kind=kind(iamtype))
      enddo
@@ -297,11 +297,11 @@ subroutine set_labels
   implicit none
   integer :: i,icol
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -332,10 +332,10 @@ subroutine set_labels
   enddo
 
   !! set labels of the quantities read in
-  !if (ix(1).gt.0) label(ix(1:ndim)) = labelcoord(1:ndim,1)
+  !if (ix(1) > 0) label(ix(1:ndim)) = labelcoord(1:ndim,1)
 
   ! set labels for vector quantities
-  if (ivx.gt.0) then
+  if (ivx > 0) then
      iamvec(ivx:ivx+ndimV-1) = ivx
      labelvec(ivx:ivx+ndimV-1) = 'v'
      do i=1,ndimV
@@ -343,7 +343,7 @@ subroutine set_labels
      enddo
   endif
 
-  if (iax.gt.0) then
+  if (iax > 0) then
      iamvec(iax:iax+ndimV-1) = iax
      labelvec(iax:iax+ndimV-1) = 'a'
      do i=1,ndimV

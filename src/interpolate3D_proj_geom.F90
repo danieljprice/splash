@@ -134,11 +134,11 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   else
      write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0) then
      print "(1x,a)",'interpolate3D_proj_geom: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.0.)) then
+  if (any(hh(1:npart) <= 0.)) then
      print*,'interpolate3D_proj_geom: warning: ignoring some or all particles with h <= 0'
   endif
 
@@ -156,19 +156,19 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
   !
   !--check column density table has actually been setup
   !
-  if (abs(coltable(1)).le.1.e-5) then
+  if (abs(coltable(1)) <= 1.e-5) then
      call setup_integratedkernel
   endif
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000)
+  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000)
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
 !
 !--get starting CPU time
@@ -204,7 +204,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -213,12 +213,12 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_particles
+     if (itype(i) < 0) cycle over_particles
      !
      !--set h related quantities
      !
      horigi = hh(i)
-     if (horigi.le.0.) cycle over_particles
+     if (horigi <= 0.) cycle over_particles
      hi = max(horigi,hmin)
 
      radkern = radkernel*hi ! radius of the smoothing kernel
@@ -241,7 +241,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
      ! h gives the z length scale (NB: no perspective)
      if (islengthz) then
         termnorm = weight(i)*horigi
-     elseif (igeom.eq.igeom_cylindrical) then
+     elseif (igeom==igeom_cylindrical) then
         termnorm = weight(i) !*atan(radkern/xi(ixcoord))/pi !*horigi/xi(ixcoord)
      else
         termnorm = weight(i)
@@ -280,7 +280,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (q2.lt.radkernel2) then
+           if (q2 < radkernel2) then
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
@@ -368,14 +368,14 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
   else
      print*,'taking fast cross section (non-cartesian)...',zslice
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
      print*,'interpolate3D_xsec: error: pixel width <= 0'
      return
-  elseif (npart.le.0) then
+  elseif (npart <= 0) then
      print*,'interpolate3D_xsec: error: npart = 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate3D_xsec_geom: WARNING: ignoring some or all particles with h < 0'
   endif
   const = cnormk3D
@@ -405,14 +405,14 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--set h related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) cycle over_parts
+     if (hi <= 0.) cycle over_parts
      !horigi = hh(i)
-     !if (horigi.le.0.) cycle over_parts
+     !if (horigi <= 0.) cycle over_parts
      !hi = max(horigi,hmin)
 
      radkern = radkernel*hi ! radius of the smoothing kernel
@@ -431,7 +431,7 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
      !--if this is < 2h then add the particle's contribution to the pixels
      !  otherwise skip all this and start on the next particle
      !
-     if (dz2 .lt. radkernel2) then
+     if (dz2  <  radkernel2) then
         !
         !--get limits of contribution from particle in cartesian space
         !
@@ -469,7 +469,7 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
               !--SPH kernel - integral through cubic spline
               !  interpolate from a pre-calculated table
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wfunc(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -517,15 +517,15 @@ subroutine get_coord_info(iplotx,iploty,iplotz,ix1,igeom,ixcoord,iycoord,izcoord
   ixcoord = iplotx - ix1 + 1
   iycoord = iploty - ix1 + 1
   izcoord = iplotz - ix1 + 1
-  if (ixcoord.le.0 .or. ixcoord.gt.3) then
+  if (ixcoord <= 0 .or. ixcoord > 3) then
      print*,' ERROR finding x coordinate offset, cannot render'
      ierr = 1
   endif
-  if (iycoord.le.0 .or. iycoord.gt.3) then
+  if (iycoord <= 0 .or. iycoord > 3) then
      print*,' ERROR finding y coordinate offset, cannot render'
      ierr = 2
   endif
-  if (izcoord.le.0 .or. izcoord.gt.3) then
+  if (izcoord <= 0 .or. izcoord > 3) then
      print*,' ERROR finding y coordinate offset, cannot render'
      ierr = 3
   endif
@@ -566,22 +566,22 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,jpixmin,jpixmax,igeom
   !--now work out contributions to pixels in the the transformed space
   !
   ipixmax = int((xpixmax(ixcoord) - xmin)/pixwidthx)+1
-  if (ipixmax.lt.1) ierr = 1
+  if (ipixmax < 1) ierr = 1
   jpixmax = int((xpixmax(iycoord) - ymin)/pixwidthy)+1
-  if (jpixmax.lt.1) ierr = 2
+  if (jpixmax < 1) ierr = 2
 
   ipixmin = int((xpixmin(ixcoord) - xmin)/pixwidthx)
-  if (ipixmin.gt.npixx) ierr = 3
+  if (ipixmin > npixx) ierr = 3
   jpixmin = int((xpixmin(iycoord) - ymin)/pixwidthy)
-  if (jpixmin.gt.npixy) ierr = 4
+  if (jpixmin > npixy) ierr = 4
 
   if (.not.coord_is_periodic(ixcoord,igeom)) then
-     if (ipixmin.lt.1)     ipixmin = 1       ! make sure they only contribute
-     if (ipixmax.gt.npixx) ipixmax = npixx   ! to pixels in the image
+     if (ipixmin < 1)     ipixmin = 1       ! make sure they only contribute
+     if (ipixmax > npixx) ipixmax = npixx   ! to pixels in the image
   endif
   if (.not.coord_is_periodic(iycoord,igeom)) then
-     if (jpixmin.lt.1)     jpixmin = 1       ! (note that this optimises
-     if (jpixmax.gt.npixy) jpixmax = npixy   !  much better than using min/max)
+     if (jpixmin < 1)     jpixmin = 1       ! (note that this optimises
+     if (jpixmax > npixy) jpixmax = npixy   !  much better than using min/max)
   endif
 
 end subroutine get_pixel_limits

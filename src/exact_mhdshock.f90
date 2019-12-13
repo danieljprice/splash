@@ -61,7 +61,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,
   !
   !--set up grid for exact solution
   !
-  const = 1./SQRT(4.*3.1415926536)
+  const = 1./sqrt(4.*3.1415926536)
   ierr = 0
 
   select case(ishk)   ! which solution to plot
@@ -356,7 +356,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,
      pr(5:6) = 1.0
 
      !       machno = 0.5*25.5
-     !       vs = SQRT(gamma*pr(1)/rho(1))
+     !       vs = sqrt(gamma*pr(1)/rho(1))
      !
      xpts(1) = xmin
      xpts(2:3) = -0.35*tfac
@@ -445,7 +445,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,
   !
   !--plot just the initial conditions at t=0
   !
-  if (abs(time).le.0.) then
+  if (abs(time) <= 0.) then
      rho(1:2) = rho(1)
      pr(1:2)  = pr(1)
      vx(1:2)  = vx(1)
@@ -490,7 +490,7 @@ subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,
      ypts(1:npts) = Bz(1:npts)
   case(8)
      print*,'gamma = ',gamma
-     if (abs(gamma-1.).gt.1.e-5) then
+     if (abs(gamma-1.) > 1.e-5) then
         where (abs(rho(1:npts)) > 0.)
            ypts(1:npts) = pr(1:npts) / ((gamma-1.)*rho(1:npts))
         end where

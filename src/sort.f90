@@ -49,18 +49,18 @@ subroutine indexx(n, arr, indx)
  l = 1
  ir = n
 
-1 if (ir - l.lt.m) then
+1 if (ir - l < m) then
      do j = l + 1, ir
         indxt = indx(j)
         a = arr(indxt)
         do i = j - 1, 1, -1
-           if (arr(indx(i)).le.a) goto 2
+           if (arr(indx(i)) <= a) goto 2
            indx(i + 1) = indx(i)
         enddo
         i = 0
 2       indx(i + 1) = indxt
      enddo
-     if (jstack.eq.0) return
+     if (jstack==0) return
      ir = istack(jstack)
      l = istack(jstack - 1)
      jstack = jstack - 2
@@ -69,17 +69,17 @@ subroutine indexx(n, arr, indx)
      itemp = indx(k)
      indx(k) = indx(l + 1)
      indx(l + 1) = itemp
-     if (arr(indx(l + 1)).gt.arr(indx(ir))) then
+     if (arr(indx(l + 1)) > arr(indx(ir))) then
         itemp = indx(l + 1)
         indx(l + 1) = indx(ir)
         indx(ir) = itemp
      endif
-     if (arr(indx(l)).gt.arr(indx(ir))) then
+     if (arr(indx(l)) > arr(indx(ir))) then
         itemp = indx(l)
         indx(l) = indx(ir)
         indx(ir) = itemp
      endif
-     if (arr(indx(l + 1)).gt.arr(indx(l))) then
+     if (arr(indx(l + 1)) > arr(indx(l))) then
         itemp = indx(l + 1)
         indx(l + 1) = indx(l)
         indx(l) = itemp
@@ -90,11 +90,11 @@ subroutine indexx(n, arr, indx)
      a = arr(indxt)
 3    continue
      i = i + 1
-     if (arr(indx(i)).lt.a) goto 3
+     if (arr(indx(i)) < a) goto 3
 4    continue
      j = j - 1
-     if (arr(indx(j)).gt.a) goto 4
-     if (j.lt.i) goto 5
+     if (arr(indx(j)) > a) goto 4
+     if (j < i) goto 5
      itemp = indx(i)
      indx(i) = indx(j)
      indx(j) = itemp
@@ -103,13 +103,13 @@ subroutine indexx(n, arr, indx)
 5    indx(l) = indx(j)
      indx(j) = indxt
      jstack = jstack + 2
-     if (jstack.gt.nstack) then
+     if (jstack > nstack) then
         print*,'fatal error!!! stacksize exceeded in sort'
         print*,'(need to set parameter nstack higher in subroutine indexx '
         print*,' this is in the file sort.f90)'
         stop
      endif
-     if (ir - i + 1.ge.j - l) then
+     if (ir - i + 1 >= j - l) then
         istack(jstack) = ir
         istack(jstack - 1) = i
         ir = j - 1
@@ -149,18 +149,18 @@ subroutine indexxi(n, arr, indx)
  l = 1
  ir = n
 
-1 if (ir - l.lt.m) then
+1 if (ir - l < m) then
      do j = l + 1, ir
         indxt = indx(j)
         a = arr(indxt)
         do i = j - 1, 1, -1
-           if (arr(indx(i)).le.a) goto 2
+           if (arr(indx(i)) <= a) goto 2
            indx(i + 1) = indx(i)
         enddo
         i = 0
 2       indx(i + 1) = indxt
      enddo
-     if (jstack.eq.0) return
+     if (jstack==0) return
      ir = istack(jstack)
      l = istack(jstack - 1)
      jstack = jstack - 2
@@ -169,17 +169,17 @@ subroutine indexxi(n, arr, indx)
      itemp = indx(k)
      indx(k) = indx(l + 1)
      indx(l + 1) = itemp
-     if (arr(indx(l + 1)).gt.arr(indx(ir))) then
+     if (arr(indx(l + 1)) > arr(indx(ir))) then
         itemp = indx(l + 1)
         indx(l + 1) = indx(ir)
         indx(ir) = itemp
      endif
-     if (arr(indx(l)).gt.arr(indx(ir))) then
+     if (arr(indx(l)) > arr(indx(ir))) then
         itemp = indx(l)
         indx(l) = indx(ir)
         indx(ir) = itemp
      endif
-     if (arr(indx(l + 1)).gt.arr(indx(l))) then
+     if (arr(indx(l + 1)) > arr(indx(l))) then
         itemp = indx(l + 1)
         indx(l + 1) = indx(l)
         indx(l) = itemp
@@ -190,11 +190,11 @@ subroutine indexxi(n, arr, indx)
      a = arr(indxt)
 3    continue
      i = i + 1
-     if (arr(indx(i)).lt.a) goto 3
+     if (arr(indx(i)) < a) goto 3
 4    continue
      j = j - 1
-     if (arr(indx(j)).gt.a) goto 4
-     if (j.lt.i) goto 5
+     if (arr(indx(j)) > a) goto 4
+     if (j < i) goto 5
      itemp = indx(i)
      indx(i) = indx(j)
      indx(j) = itemp
@@ -203,13 +203,13 @@ subroutine indexxi(n, arr, indx)
 5    indx(l) = indx(j)
      indx(j) = indxt
      jstack = jstack + 2
-     if (jstack.gt.nstack) then
+     if (jstack > nstack) then
         print*,'fatal error!!! stacksize exceeded in sort'
         print*,'(need to set parameter nstack higher in subroutine indexx '
         print*,' this is in the file sort.f90)'
         stop
      endif
-     if (ir - i + 1.ge.j - l) then
+     if (ir - i + 1 >= j - l) then
         istack(jstack) = ir
         istack(jstack - 1) = i
         ir = j - 1

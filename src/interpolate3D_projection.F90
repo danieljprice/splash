@@ -71,12 +71,12 @@ subroutine setup_integratedkernel
     deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
-    if (deltaz.ne.deltaz) print "(a)",'WARNING: NaN in kernel table setup'
+    if (deltaz /= deltaz) print "(a)",'WARNING: NaN in kernel table setup'
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
        wkern = wfunc(q2)
-       if (j.eq.1 .or. j.eq.npts) then
+       if (j==1 .or. j==npts) then
           coldens = coldens + 0.5*wkern*dz ! trapezoidal rule
        else
           coldens = coldens + wkern*dz
@@ -211,32 +211,32 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      write (*,"(1x,a,': ',i4,' x ',i4)") trim(string),npixx,npixy
   endif
 
-  if (pixwidthx.le.0. .or. pixwidthy.le.0) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0) then
      if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
      return
   endif
-  !nout = count(hh(1:npart).le.0.)
-  !if (nout.gt.0) then
+  !nout = count(hh(1:npart) <= 0.)
+  !if (nout > 0) then
   !   print*,'interpolate3D_projection: warning: ignoring ',nout,' particles with h <= 0'
   !endif
   !
   !--check column density table has actually been setup
   !
-  if (abs(coltable(1)).le.1.e-5) then
+  if (abs(coltable(1)) <= 1.e-5) then
      call setup_integratedkernel
   endif
   !
   !--print a progress report if it is going to take a long time
   !  (a "long time" is, however, somewhat system dependent)
   !
-  iprintprogress = (npart .ge. 100000) .or. (npixx*npixy .gt.100000) .and. iverbose >= 0
+  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000) .and. iverbose >= 0
   !
   !--loop over particles
   !
   iprintinterval = 25
-  if (npart.ge.1e6) iprintinterval = 10
+  if (npart >= 1e6) iprintinterval = 10
   iprintnext = iprintinterval
-  use3Dperspective = abs(dscreen).gt.tiny(dscreen)
+  use3Dperspective = abs(dscreen) > tiny(dscreen)
 !
 !--get starting CPU time
 !
@@ -283,7 +283,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 #ifndef _OPENMP
      if (iprintprogress) then
         iprogress = 100*i/npart
-        if (iprogress.ge.iprintnext) then
+        if (iprogress >= iprintnext) then
            write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
            iprintnext = iprintnext + iprintinterval
         endif
@@ -292,16 +292,16 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_particles
+     if (itype(i) < 0) cycle over_particles
      !
      !--set h related quantities
      !
      hi = hh(i)
      horigi = hi
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_particles
      elseif (use3Dperspective) then
-        if (z(i).gt.zobserver) cycle over_particles
+        if (z(i) > zobserver) cycle over_particles
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
@@ -311,18 +311,18 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !--cycle as soon as we know the particle does not contribute
      xi = x(i)
      xpixmin = xi - radkern
-     if (xpixmin.gt.xmax) cycle over_particles
+     if (xpixmin > xmax) cycle over_particles
      xpixmax = xi + radkern
-     if (xpixmax.lt.xmin) cycle over_particles
+     if (xpixmax < xmin) cycle over_particles
 
      yi = y(i)
      ypixmin = yi - radkern
-     if (ypixmin.gt.ymax) cycle over_particles
+     if (ypixmin > ymax) cycle over_particles
      ypixmax = yi + radkern
-     if (ypixmax.lt.ymin) cycle over_particles
+     if (ypixmax < ymin) cycle over_particles
 
      !--take resolution length as max of h and 1/2 pixel width
-     if (hi.lt.hmin) then
+     if (hi < hmin) then
         hminall = min(hi,hminall)
         nsubgrid = nsubgrid + 1
         hsmooth = hmin
@@ -361,9 +361,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      !  copy by quarters if all pixels within domain
      !
      accelerate = useaccelerate .and. (.not.normalise) &
-                 .and. npixpartx.gt.5 .and. npixparty.gt.5 &
-                 .and. ipixmin.ge.1 .and. ipixmax.le.npixx &
-                 .and. jpixmin.ge.1 .and. jpixmax.le.npixy
+                 .and. npixpartx > 5 .and. npixparty > 5 &
+                 .and. ipixmin >= 1 .and. ipixmax <= npixx &
+                 .and. jpixmin >= 1 .and. jpixmax <= npixy
 
      if (accelerate) then
         !--adjust xi, yi to centre of pixel
@@ -385,7 +385,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
               !--SPH kernel - integral through cubic spline
               !  interpolate from a pre-calculated table
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wfromtable(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -403,7 +403,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
               !$omp atomic
               datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + row(ipixmax-(ipix-ipixmin))
            enddo
-           if (jpix.ne.jpixi) then
+           if (jpix /= jpixi) then
               jpixcopy = jpixi - (jpix-jpixi)
               !--copy top right -> bottom left
               do ipix=ipixmin,ipixi-1
@@ -424,10 +424,10 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
         jpixmin = int((yi - radkern - ymin)/pixwidthy)
         jpixmax = int((yi + radkern - ymin)/pixwidthy)
 
-        if (ipixmin.lt.1) ipixmin = 1  ! make sure they only contribute
-        if (jpixmin.lt.1) jpixmin = 1  ! to pixels in the image
-        if (ipixmax.gt.npixx) ipixmax = npixx ! (note that this optimises
-        if (jpixmax.gt.npixy) jpixmax = npixy !  much better than using min/max)
+        if (ipixmin < 1) ipixmin = 1  ! make sure they only contribute
+        if (jpixmin < 1) jpixmin = 1  ! to pixels in the image
+        if (ipixmax > npixx) ipixmax = npixx ! (note that this optimises
+        if (jpixmax > npixy) jpixmax = npixy !  much better than using min/max)
         !
         !--precalculate an array of dx2 for this particle (optimisation)
         !
@@ -448,7 +448,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
               !--SPH kernel - integral through cubic spline
               !  interpolate from a pre-calculated table
               !
-              if (q2.lt.radkernel2) then
+              if (q2 < radkernel2) then
                  wab = wfromtable(q2)
                  !
                  !--calculate data value at this pixel using the summation interpolant
@@ -480,9 +480,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
 !--warn about subgrid interpolation
 !
-  if (nsubgrid.gt.1) then
+  if (nsubgrid > 1) then
      nfull = int((xmax-xmin)/(hminall)) + 1
-     if (nsubgrid.gt.0.1*nok .and. iverbose >= -1) print "(a,i9,a,/,a,i6,a)",&
+     if (nsubgrid > 0.1*nok .and. iverbose >= -1) print "(a,i9,a,/,a,i6,a)",&
       ' Warning: pixel size > 2h for ',nsubgrid,' particles', &
       '          need',nfull,' pixels for full resolution'
   endif
@@ -491,7 +491,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
   call wall_time(t_end)
   t_used = t_end - t_start
-  if (t_used.gt.10. .and. iverbose >= 0) call print_time(t_used)
+  if (t_used > 10. .and. iverbose >= 0) call print_time(t_used)
 
   return
 
@@ -546,7 +546,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
   else
      if (iverbose >= 0) print "(1x,a)",'projecting vector from particles to pixels...'
   endif
-  if (pixwidthx.le.0. .or. pixwidthy.le.0.) then
+  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
      if (iverbose >= -1) print "(a)",'interpolate3D_proj_vec: error: pixel width <= 0'
      return
   endif
@@ -568,16 +568,16 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_particles
+     if (itype(i) < 0) cycle over_particles
      !
      !--set kernel related quantities
      !
      hi = hh(i)
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
-     if (hi.le.0.) then
+     if (hi <= 0.) then
         cycle over_particles
-     elseif (abs(dscreen).gt.tiny(dscreen)) then
-        if (z(i).gt.zobserver) cycle over_particles
+     elseif (abs(dscreen) > tiny(dscreen)) then
+        if (z(i) > zobserver) cycle over_particles
         zfrac = abs(dscreen/(z(i)-zobserver))
         hi = hi*zfrac
      endif
@@ -603,10 +603,10 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+     if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+     if (ipixmax > npixx) ipixmax = npixx
+     if (jpixmax > npixy) jpixmax = npixy
      !
      !--loop over pixels, adding the contribution from this particle
      !
@@ -623,7 +623,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (q2.lt.radkernel2) then
+           if (q2 < radkernel2) then
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant
@@ -733,7 +733,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      print*,' using only particles with utherm > ',uthermcutoff
   endif
 
-  if (pixwidth.le.0.) then
+  if (pixwidth <= 0.) then
      print "(a)",'interpolate3D_proj_vec_synchrotron: error: pixel width <= 0'
      return
   endif
@@ -756,18 +756,18 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_particles
+     if (itype(i) < 0) cycle over_particles
      !
      !--skip particles with utherm < uthermcutoff
      !
      if (present(utherm) .and. present(uthermcutoff)) then
-        if (utherm(i).lt.uthermcutoff) cycle over_particles
+        if (utherm(i) < uthermcutoff) cycle over_particles
      endif
      !
      !--set kernel related quantities
      !
      hi = hh(i)
-     if (hi.le.0.) cycle over_particles
+     if (hi <= 0.) cycle over_particles
      const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
      zi = z(i)
 
@@ -797,8 +797,8 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
         term = 0.
         !--faraday rotation would change angle here
         angle = atan2(vecy(i),vecx(i))
-        termx = pintrinsic*emissivity*const*COS(angle)
-        termy = pintrinsic*emissivity*const*SIN(angle)
+        termx = pintrinsic*emissivity*const*cos(angle)
+        termy = pintrinsic*emissivity*const*sin(angle)
      endif
      !
      !--for each particle work out which pixels it contributes to
@@ -811,10 +811,10 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      ! PRINT*,'particle ',i,' x, y, z = ',x(i),y(i),z(i),dat(i),rho(i),hi
      ! PRINT*,'pixels = ',ipixmin,ipixmax,jpixmin,jpixmax
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (jpixmin.lt.1) jpixmin = 1 ! to pixels in the image
-     if (ipixmax.gt.npixx) ipixmax = npixx
-     if (jpixmax.gt.npixy) jpixmax = npixy
+     if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+     if (jpixmin < 1) jpixmin = 1 ! to pixels in the image
+     if (ipixmax > npixx) ipixmax = npixx
+     if (jpixmax > npixy) jpixmax = npixy
 
      !
      !--precalculate an array of dx2 for this particle (optimisation)
@@ -837,7 +837,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
            !--SPH kernel - integral through cubic spline
            !  interpolate from a pre-calculated table
            !
-           if (q2.lt.radkernel2) then
+           if (q2 < radkernel2) then
               wab = wfromtable(q2)
               !
               !--calculate data value at this pixel using the summation interpolant

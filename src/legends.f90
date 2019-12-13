@@ -86,7 +86,7 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  endif
  call parse_text(label,vars,vals)
 
- if (index(label,'%ut').gt.0) then
+ if (index(label,'%ut') > 0) then
     call string_replace(label,'%ut',trim(unitslabel))
  else
     label = trim(label)//trim(unitslabel)
@@ -190,7 +190,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
  vecmaxnew = adjustlength*vecmax
  ndec = 2
- if (vecmaxnew.lt.tiny(vecmaxnew)) then
+ if (vecmaxnew < tiny(vecmaxnew)) then
     string = '0'
     nc = 1
  else
@@ -296,7 +296,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
 !
 !--do not plot anything if string is blank
 !
-  if (len_trim(text).le.0) return
+  if (len_trim(text) <= 0) return
   !call pgstbg(0)           ! opaque text to overwrite previous
 !
 !--set horizontal and vertical position and spacing
@@ -344,7 +344,7 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
 !
 !--add text
 !
-  if (iplotline .or. iplotpts .and. len_trim(text).gt.0) then
+  if (iplotline .or. iplotpts .and. len_trim(text) > 0) then
      call plot_text(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
   endif
 
@@ -377,7 +377,7 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
   real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
 
   call plot_qwin(xmin,xmax,ymin,ymax)
-  if (dxscale.gt.(xmax-xmin)) then
+  if (dxscale > (xmax-xmin)) then
      print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
   else
      call plot_qcs(4,xch,ych)
@@ -420,10 +420,10 @@ logical function ipanelselect(iselect,ipanel,irow,icolumn)
  implicit none
  integer,       intent(in) :: iselect,ipanel,irow,icolumn
 
- ipanelselect = ((iselect.gt.0 .and. ipanel.eq.iselect) &
-              .or.(iselect.eq.-1 .and. irow.eq.1) &
-              .or.(iselect.eq.-2 .and. icolumn.eq.1) &
-              .or.(iselect.eq.0))
+ ipanelselect = ((iselect > 0 .and. ipanel==iselect) &
+              .or.(iselect==-1 .and. irow==1) &
+              .or.(iselect==-2 .and. icolumn==1) &
+              .or.(iselect==0))
 
 end function ipanelselect
 

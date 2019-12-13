@@ -79,7 +79,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
   iunit = 11 ! file unit number
   nstepsread = 0
-  if (rootname(1:1).ne.' ') then
+  if (rootname(1:1) /= ' ') then
      datfile = trim(rootname)
      !print*,'rootname = ',rootname
   else
@@ -121,8 +121,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !
   !--check for errors in sheader
   !
-  if (ndim.gt.3 .or. ndimV.gt.3 .or. ndim.le.0 .or. ndimV.le.0 .or. &
-      ncolumns.le.0 ) then
+  if (ndim > 3 .or. ndimV > 3 .or. ndim <= 0 .or. ndimV <= 0 .or. &
+      ncolumns <= 0 ) then
      print*,'*** ERROR: header corrupted: ndim = ',ndim,' ndimV = ', ndimV
      ndim = 0
      ndimV = 0
@@ -130,7 +130,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      ncolumns = 0
      close(iunit)
      return
-  elseif (ncolumns.gt.maxplot) then
+  elseif (ncolumns > maxplot) then
      print "(1x,a)",'*** WARNING: too many columns for array limits'
      ncolumns = maxplot
      print "(1x,a,i2,a)",'    reading only first ',ncolumns,' columns'
@@ -173,8 +173,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      nstep_max = max(1,maxstep,indexstart)
   endif
   npart_max = max(int(2.0*ntoti),maxpart)
-  if (.not.allocated(dat) .or. ntoti.gt.maxpart  &
-       .or. nstep_max.gt.maxstep .or. ncolumns.gt.maxcol) then
+  if (.not.allocated(dat) .or. ntoti > maxpart  &
+       .or. nstep_max > maxstep .or. ncolumns > maxcol) then
      call alloc(npart_max,nstep_max,ncolumns+ncalc)
   endif
 !
@@ -192,7 +192,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !--determine whether dump is single or double precision
 !
   singleprecision = .true.
-  if (all(abs(rheader(1:isizeheader)).lt.tiny(rheader))) then
+  if (all(abs(rheader(1:isizeheader)) < tiny(rheader))) then
      singleprecision = .false.
      print "(1x,a)",'double precision dump'
      time(i) = real(dheader(1))
@@ -293,11 +293,11 @@ subroutine set_labels
  character(len=10), dimension(maxplot) :: cheader
  common /chead/ cheader
 
- if (ndim.le.0 .or. ndim.gt.3) then
+ if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
     return
  endif
- if (ndimV.le.0 .or. ndimV.gt.3) then
+ if (ndimV <= 0 .or. ndimV > 3) then
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif
@@ -310,7 +310,7 @@ subroutine set_labels
     label(i) = cheader(i-ndim)
     !--blank characters in c are ascii zero - correct these to spaces
     do j=1,len(label(i))
-       if (iachar(label(i)(j:j)).eq.0) label(i)(j:j) = ' '
+       if (iachar(label(i)(j:j))==0) label(i)(j:j) = ' '
     enddo
     !--set positions of various quantities depending on labels
     if (label(i)(1:1)=='m' .or. label(i)(1:4)=='mass') then
@@ -324,9 +324,9 @@ subroutine set_labels
     elseif (label(i)(1:2)=='pr' .or. trim(label(i))=='P') then
        ipr = i
     elseif (label(i)(1:1)=='v') then
-       if (ivx.eq.0 .or. i.lt.ivx) ivx = i
+       if (ivx==0 .or. i < ivx) ivx = i
     elseif (label(i)(1:1)=='B') then
-       if (iBfirst.eq.0 .or. i.lt.iBfirst) iBfirst = i
+       if (iBfirst==0 .or. i < iBfirst) iBfirst = i
     endif
  enddo
 
@@ -334,14 +334,14 @@ subroutine set_labels
  !
  !--label vector quantities (e.g. velocity) appropriately
  !
- if (ivx.gt.0) then
+ if (ivx > 0) then
     iamvec(ivx:ivx+ndimV-1) = ivx
     labelvec(ivx:ivx+ndimV-1) = 'v'
     do i=1,ndimV
        label(ivx+i-1) = trim(labelvec(ivx+i-1))//'\d'//labelcoord(i,1)
     enddo
  endif
- if (iBfirst.gt.0) then
+ if (iBfirst > 0) then
     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
  endif
@@ -350,11 +350,11 @@ subroutine set_labels
 !
  labeltype(1) = 'gas'
  UseTypeInRenderings(1) = .true.
- if (ntypes.ge.2) then
+ if (ntypes >= 2) then
     labeltype(2) = 'auxiliary'
     UseTypeInRenderings(2) = .true.
  endif
- if (ntypes.ge.3) then
+ if (ntypes >= 3) then
     labeltype(3) = 'mirror'
     UseTypeInRenderings(3) = .true.
  endif

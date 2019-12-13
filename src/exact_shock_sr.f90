@@ -59,11 +59,11 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
 ! check for errors in input
 !
   ierr = 0
-  if (rho_L.le.0. .or. rho_R.le.0.) then
+  if (rho_L <= 0. .or. rho_R <= 0.) then
      print*,'error: rho <= 0 on input : ',rho_L,rho_R
      ierr = 1
      return
-  elseif (p_L .le.0. .or. p_R .le.0.) then
+  elseif (p_L  <= 0. .or. p_R  <= 0.) then
      print*,'error: pr <= 0 on input ',p_L, p_R
      ierr = 2
      return
@@ -91,7 +91,7 @@ subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,ypl
   case(3)
      yplot = real(vel)
   case(4)
-     if (gamma.gt.1.0001) then
+     if (gamma > 1.0001) then
         yplot = real(pr/((gamma-1.)*dens))
      else
         yplot = real(pr/dens)
@@ -267,7 +267,7 @@ end subroutine exact_shock_sr
   call getdvel(pmax, dvel2)
 
   check = dvel1*dvel2
-  if (check.gt.0.d0) goto 5
+  if (check > 0.d0) goto 5
 
 ! ---------------------------
 ! pressure and flow velocity in the intermediate states
@@ -285,7 +285,7 @@ end subroutine exact_shock_sr
 ! positions of the waves
 ! -----------
 
-  if (pl.ge.ps) then
+  if (pl >= ps) then
 
     x1 = x0 + (vell - csl )/(1.d0 - vell*csl )*t
     x2 = x0 + (vels - csls)/(1.d0 - vels*csls)*t
@@ -299,7 +299,7 @@ end subroutine exact_shock_sr
 
   x3 = x0 + vels*t
 
-  if (pr.ge.ps) then
+  if (pr >= ps) then
 
     x4 = x0 + (vels + csrs)/(1.d0 + vels*csrs)*t
     x5 = x0 + (velr + csr )/(1.d0 + velr*csr )*t
@@ -323,35 +323,35 @@ end subroutine exact_shock_sr
 
   do i=1,n
 
-    if (rad(i).le.x1) then
+    if (rad(i) <= x1) then
 
       pa(i)   = pl
       rhoa(i) = rhol
       vela(i) = vell
       ua(i)   = ul
 
-    elseif (rad(i).le.x2) then
+    elseif (rad(i) <= x2) then
 
       xi = (rad(i) - x0)/t
 
       call raref(xi, rhol,  csl,  vell,  'l', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
-    elseif (rad(i).le.x3) then
+    elseif (rad(i) <= x3) then
 
       pa(i)   = ps
       rhoa(i) = rhols
       vela(i) = vels
       ua(i)   = uls
 
-    elseif (rad(i).le.x4) then
+    elseif (rad(i) <= x4) then
 
       pa(i)   = ps
       rhoa(i) = rhors
       vela(i) = vels
       ua(i)   = urs
 
-    elseif (rad(i).le.x5) then
+    elseif (rad(i) <= x5) then
 
       xi = (rad(i) - x0)/t
 
@@ -499,7 +499,7 @@ end subroutine exact_shock_sr
   eps  = 1.d0
 10    eps  = eps/2.d0
   tol1 = 1.d0 + eps
-  if ( tol1 .gt. 1.d0 ) go to 10
+  if ( tol1  >  1.d0 ) go to 10
 
 ! -------
 ! initialization
@@ -518,7 +518,7 @@ end subroutine exact_shock_sr
   fc = fa
   d  = b - a
   e  = d
-30    if ( dabs(fc) .ge. dabs(fb) )go to 40
+30    if ( dabs(fc)  >=  dabs(fb) )go to 40
   a  = b
   b  = c
   c  = a
@@ -532,21 +532,21 @@ end subroutine exact_shock_sr
 
 40    tol1 = 2.d0*eps*dabs(b) + 0.5d0*tol
   xm   = 0.5d0*(c - b)
-  if ( dabs(xm) .le. tol1 ) go to 90
-  if ( fb .eq. 0.d0 ) go to 90
+  if ( dabs(xm)  <=  tol1 ) go to 90
+  if ( fb == 0.d0 ) go to 90
 
 ! ------------
 ! is bisection necessary?
 ! ------------
 
-  if ( dabs(e) .lt. tol1 ) go to 70
-  if ( dabs(fa) .le. dabs(fb) ) go to 70
+  if ( dabs(e)  <  tol1 ) go to 70
+  if ( dabs(fa)  <=  dabs(fb) ) go to 70
 
 ! ------------------
 ! is quadratic interpolation possible?
 ! ------------------
 
-  if ( a .ne. c ) go to 50
+  if ( a  /=  c ) go to 50
 
 ! ----------
 ! linear interpolation
@@ -571,15 +571,15 @@ end subroutine exact_shock_sr
 ! adjust signs
 ! ------
 
-60 if ( p .gt. 0.d0 ) q = -q
+60 if ( p  >  0.d0 ) q = -q
   p = dabs(p)
 
 ! --------------
 ! is interpolation acceptable?
 ! --------------
 
-  if ( (2.d0*p) .ge. (3.d0*xm*q-dabs(tol1*q)) ) go to 70
-  if ( p .ge. dabs(0.5d0*e*q) ) go to 70
+  if ( (2.d0*p)  >=  (3.d0*xm*q-dabs(tol1*q)) ) go to 70
+  if ( p  >=  dabs(0.5d0*e*q) ) go to 70
   e = d
   d = p/q
   go to 80
@@ -597,10 +597,10 @@ end subroutine exact_shock_sr
 
 80 a  = b
   fa = fb
-  if ( dabs(d) .gt. tol1 ) b = b+d
-  if ( dabs(d) .le. tol1 ) b = b+dsign(tol1,xm)
+  if ( dabs(d)  >  tol1 ) b = b+d
+  if ( dabs(d)  <=  tol1 ) b = b+dsign(tol1,xm)
   call getdvel(b,fb)
-  if ( (fb*(fc/dabs(fc))) .gt. 0.d0) go to 20
+  if ( (fb*(fc/dabs(fc)))  >  0.d0) go to 20
   go to 30
 
 ! --
@@ -659,13 +659,13 @@ end subroutine exact_shock_sr
 ! ---------------
 
   sign = 0.d0
-  if (s.eq.'l') sign = -1.d0
+  if (s=='l') sign = -1.d0
 
-  if (s.eq.'r') sign =  1.d0
+  if (s=='r') sign =  1.d0
 
 !
 
-  if (p.gt.pa) then
+  if (p > pa) then
 
 !   ---
 !   shock
@@ -679,7 +679,7 @@ end subroutine exact_shock_sr
 !   check for unphysical enthalpies
 !   ----------------
 
-    if (c.gt.(b**2/4.d0/a)) then
+    if (c > (b**2/4.d0/a)) then
        print*,'getvel: unphysical specific enthalpy in intermediate state'
        return
     endif
@@ -832,9 +832,9 @@ end subroutine exact_shock_sr
 ! ---------------
 
   sign = 0.d0
-  if (s.eq.'l') sign =  1.d0
+  if (s=='l') sign =  1.d0
 
-  if (s.eq.'r') sign = -1.d0
+  if (s=='r') sign = -1.d0
 
   b    = dsqrt(gamma - 1.d0)
   c    = (b + csa)/(b - csa)
@@ -854,7 +854,7 @@ end subroutine exact_shock_sr
 
   cs2 = ocs2 - fcs2/dfdcs2
 
-  if (abs(cs2 - ocs2)/ocs2.gt.5.e-7) then
+  if (abs(cs2 - ocs2)/ocs2 > 5.e-7) then
     ocs2 = cs2
     goto 25
   endif

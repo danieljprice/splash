@@ -103,7 +103,7 @@ contains
   character(len=*), intent(in) :: prefix
 
   fileprefix   = trim(adjustl(prefix))
-  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix)).eq.'.') then
+  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix))=='.') then
      fileprefix = fileprefix(1:len_trim(fileprefix)-1)
   endif
   defaultsfile = trim(adjustl(fileprefix))//'.defaults'

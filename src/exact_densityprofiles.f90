@@ -48,12 +48,12 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
 ! check for errors
 !
   ierr = 0
-  if (all(Msphere.le.0.)) then
+  if (all(Msphere <= 0.)) then
      print*,'error: mass <= 0 in exact_densityprofile'
      ierr = 2
      return
   endif
-  if (any(rsoft.lt.0.)) then
+  if (any(rsoft < 0.)) then
      print*,'error: rsoft < 0 in exact_densityprofile'
      ierr = 3
      return

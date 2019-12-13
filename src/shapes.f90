@@ -122,7 +122,7 @@ subroutine check_shapes(nshape)
  integer :: ishape
 
  print "(/,a)", ' Current list of plot annotations:'
- if (nshape.gt.0) then
+ if (nshape > 0) then
     do ishape=1,nshape
        call print_shapeinfo(ishape,shape(ishape)%itype,shape(ishape))
     enddo
@@ -234,7 +234,7 @@ subroutine add_shape(istart,iend,nshape)
 
  itype   = 1
  ishape  = istart + 1
- if (ishape.gt.maxshapes) then
+ if (ishape > maxshapes) then
     print "(/,a,i2,a)",' *** Error, maximum number of shapes (',maxshapes,') reached, cannot add any more.'
     print "(a)",       ' *** If you hit this limit, *please email me* so I can change the default limits!'
     print "(a)",       ' *** (and then edit shapes.f90, changing the parameter "maxshapes" to something higher...)'
@@ -245,7 +245,7 @@ subroutine add_shape(istart,iend,nshape)
  !
  indexi = 1
  do i=1,maxshapetype
-    if (i.lt.10) then
+    if (i < 10) then
        write(string(indexi:),"(1x,i1,') ',a)") i,trim(labelshapetype(i))
     else
        write(string(indexi:),"(1x,i2,') ',a)") i,trim(labelshapetype(i))
@@ -255,18 +255,18 @@ subroutine add_shape(istart,iend,nshape)
  print "(/,a)",trim(string)
  !print "(i2,a)",(i,') '//trim(labelshapetype(i)),i=1,maxshapetype)
 
- over_shapes: do while(ishape.le.iend .and. i.le.maxshapes)
-    if (istart.eq.0 .or. shape(ishape)%itype.le.0 .or. shape(ishape)%itype.gt.maxshapetype) then
+ over_shapes: do while(ishape <= iend .and. i <= maxshapes)
+    if (istart==0 .or. shape(ishape)%itype <= 0 .or. shape(ishape)%itype > maxshapetype) then
        call prompt('choose an object type (0=none) ',shape(ishape)%itype,0,maxshapetype)
     endif
     itype = shape(ishape)%itype
-    if (itype.eq.0) then
+    if (itype==0) then
        call delete_shape(ishape,nshape)
        exit over_shapes
     else
        call print_shapeinfo(ishape,itype)
 
-       if (itype.eq.7) then
+       if (itype==7) then
           shape(ishape)%iunits = 1
        else
           !--choose units
@@ -308,18 +308,18 @@ subroutine add_shape(istart,iend,nshape)
        case(7) ! arbitrary function
           ierr = 1
           itry = 1
-          do while(ierr /= 0 .and. itry.le.3)
-             if (itry.gt.1) print "(a,i1,a)",'attempt ',itry,' of 3:'
+          do while(ierr /= 0 .and. itry <= 3)
+             if (itry > 1) print "(a,i1,a)",'attempt ',itry,' of 3:'
              print "(a,6(/,11x,a),/)",' Examples: sin(2*pi*x)','sqrt(0.5*x)','x^2', &
              'exp(-2*x**2)','log10(x/2)','exp(p),p=sin(pi*x)','cos(z/d),z=acos(d),d=x^2'
              call prompt('enter function f(x) to plot ',shape(ishape)%text)
              call check_function(shape(ishape)%text,ierr)
-             if (ierr /= 0 .and. len(shape(ishape)%text).eq.len_trim(shape(ishape)%text)) then
+             if (ierr /= 0 .and. len(shape(ishape)%text)==len_trim(shape(ishape)%text)) then
                 print "(a,i3,a)",' (errors are probably because string is too long, max length = ',len(shape(ishape)%text),')'
              endif
              itry = itry + 1
           enddo
-          if (ierr.ne.0) then
+          if (ierr /= 0) then
              print "(a)",' *** too many tries, aborting ***'
              ishape = ishape - 1
              cycle over_shapes
@@ -331,22 +331,22 @@ subroutine add_shape(istart,iend,nshape)
           call prompt('Enter marker type ',shape(ishape)%ifillstyle)
           poslabel = ''
        end select
-       if (itype.ne.7 .and. itype.ne.2) then
+       if (itype /= 7 .and. itype /= 2) then
           call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
           call prompt('enter'//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
-       elseif (itype.eq.7) then
+       elseif (itype==7) then
           call prompt('enter xmin for line segment (0=ignore)',shape(ishape)%xpos)
           call prompt('enter xmax for line segment (0=ignore)',shape(ishape)%xlen)
        endif
-       if (itype.eq.1 .or. itype.eq.2 .or. itype.eq.4) then
+       if (itype==1 .or. itype==2 .or. itype==4) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,plotlib_maxfillstyle)
        endif
-       if (itype.ne.6 .and. itype.ne.8) then
+       if (itype /= 6 .and. itype /= 8) then
           call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%linestyle,0,plotlib_maxlinestyle)
        endif
-       if (itype.eq.6 .or. itype.eq.8) then
+       if (itype==6 .or. itype==8) then
           call prompt('enter character height for '//trim(labelshapetype(itype)),shape(ishape)%xlen,0.,10.)
        else
           call prompt('enter line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
@@ -364,11 +364,11 @@ subroutine add_shape(istart,iend,nshape)
               "'  n : plot on nth panel only ')"
 
        !--make sure the current setting falls within the allowed bounds
-       if (shape(ishape)%iplotonpanel.lt.-2 .or. &
-           shape(ishape)%iplotonpanel.gt.maxplot) shape(:)%iplotonpanel = 0
+       if (shape(ishape)%iplotonpanel < -2 .or. &
+           shape(ishape)%iplotonpanel > maxplot) shape(:)%iplotonpanel = 0
 
        call prompt('Enter selection ',shape(ishape)%iplotonpanel,-2,maxplot)
-       if (ishape.gt.nshape) nshape = ishape
+       if (ishape > nshape) nshape = ishape
        ishape = ishape + 1
     endif
  enddo over_shapes
@@ -383,7 +383,7 @@ subroutine delete_shape(ishape,nshape)
  integer, intent(inout) :: nshape
  integer :: i
 
- if (ishape.gt.0 .and. nshape.gt.0 .and. ishape.le.maxshapes) then
+ if (ishape > 0 .and. nshape > 0 .and. ishape <= maxshapes) then
     do i=ishape+1,nshape
        shape(i-1) = shape(i)
     enddo
@@ -449,10 +449,10 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  do i=1,nshapes
 
     iplotonthispanel = shape(i)%iplotonpanel
-    if (iplotonthispanel.eq.0 &
-       .or.(iplotonthispanel.gt.0  .and. ipanel.eq.iplotonthispanel) &
-       .or.(iplotonthispanel.eq.-1 .and. irow.eq.1) &
-       .or.(iplotonthispanel.eq.-2 .and. icolumn.eq.1)) then
+    if (iplotonthispanel==0 &
+       .or.(iplotonthispanel > 0  .and. ipanel==iplotonthispanel) &
+       .or.(iplotonthispanel==-1 .and. irow==1) &
+       .or.(iplotonthispanel==-2 .and. icolumn==1)) then
 
        call plot_sci(shape(i)%icolour)
        call plot_sls(shape(i)%linestyle)
@@ -470,7 +470,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
        !print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
        select case(shape(i)%itype)
        case(1,2) ! square, rectangle
-          if (xlen.gt.dxplot .or. ylen.gt.dyplot) then
+          if (xlen > dxplot .or. ylen > dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
              if (shape(i)%itype==1) then
@@ -483,14 +483,14 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
           dx = xlen*cos(anglerad)
           dy = xlen*sin(anglerad)
           !--do not plot if length > size of plot
-          if (dx.gt.dxplot .or. dy.gt.dyplot) then
+          if (dx > dxplot .or. dy > dyplot) then
              print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
           else
              fjust = shape(i)%fjust
              call plot_arro(xpos-fjust*dx,ypos-fjust*dy,xpos+(1.-fjust)*dx,ypos+(1.-fjust)*dy)
           endif
        case(4) ! circle
-          if (xlen.gt.dxplot .or. xlen.gt.dyplot) then
+          if (xlen > dxplot .or. xlen > dyplot) then
              print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
           else
              call plot_circ(xpos,ypos,xlen)
@@ -508,7 +508,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
        case(6) ! text
           text = trim(shape(i)%text)
           !--handle special characters in text strings (e.g. replace %t with time)
-          if (index(text,'%t').ne.0) then
+          if (index(text,'%t') /= 0) then
              ndec = 3
              call plot_numb(nint(time/10.**(int(log10(time)-ndec))),int(log10(time)-ndec),1,string,nc)
              call string_replace(text,'%t',string(1:nc))
@@ -525,15 +525,15 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
              xfunc(j) = xmini + (j-1)*dx
           enddo
           !--transform x array back to untransformed space to evaluate f(x)
-          if (itransx.gt.0) call transform_inverse(xfunc,itransx)
+          if (itransx > 0) call transform_inverse(xfunc,itransx)
           call exact_function(shape(i)%text,xfunc,yfunc,0.,ierr)
-          if (ierr.eq.0) then
+          if (ierr==0) then
              !--reset x values
              do j=1,maxfuncpts
                 xfunc(j) = xmini + (j-1)*dx
              enddo
              !--transform y if necessary
-             if (itransy.gt.0) call transform(yfunc,itransy)
+             if (itransy > 0) call transform(yfunc,itransy)
              !--plot the line
              call plot_line(maxfuncpts,xfunc,yfunc)
           endif
@@ -586,8 +586,8 @@ integer function inshape(xpt,ypt,itransx,itransy)
 
     case(6) ! text
        call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
-       if (xpt.gt.minval(xbox) .and. xpt.le.maxval(xbox) &
-          .and. ypt.gt.minval(ybox) .and. ypt.le.maxval(ybox)) then
+       if (xpt > minval(xbox) .and. xpt <= maxval(xbox) &
+          .and. ypt > minval(ybox) .and. ypt <= maxval(ybox)) then
           inshape = i
        endif
     end select
@@ -634,7 +634,7 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
 
  ierr = 0
  nshapes = nshapes + 1
- if (nshapes.gt.maxshapes) then
+ if (nshapes > maxshapes) then
     print*,' *** cannot add shape: array limits reached, delete some shapes first ***'
     nshapes = maxshapes
     ierr = 1
@@ -690,11 +690,11 @@ subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itran
     xlen = xlen*dxplot
     ylen = ylen*dyplot
  case(1)
-    if (itransx.gt.0) then
+    if (itransx > 0) then
        call transform(xpos,itransx)
        call transform(xlen,itransx)
     endif
-    if (itransy.gt.0) then
+    if (itransy > 0) then
        call transform(ypos,itransy)
        call transform(ylen,itransy)
     endif
@@ -727,16 +727,16 @@ subroutine edit_textbox(xpt,ypt,angle,string)
  xpt2 = xpt
  ypt2 = ypt
  ierr = plot_curs(xpt2,ypt2,mychar)
- do while (mychar.ne.achar(13) &   ! carriage return
-     .and. mychar.ne.achar(27) &   ! ctrl-c
-     .and. mychar.ne.achar(3))     ! esc
-    if (mychar.eq.achar(8)) then   ! backspace
+ do while (mychar /= achar(13) &   ! carriage return
+     .and. mychar /= achar(27) &   ! ctrl-c
+     .and. mychar /= achar(3))     ! esc
+    if (mychar==achar(8)) then   ! backspace
        i = max(i - 1,1)
        string(i:i) = '_'
        call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        string(i:i) = ' '
     else
-       if (trim(string).eq.'click to edit') then
+       if (trim(string)=='click to edit') then
           !print*,'erasing string'
           string = ' '
           i = 1
@@ -744,13 +744,13 @@ subroutine edit_textbox(xpt,ypt,angle,string)
        string(i:i) = mychar
        call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
        i = min(i + 1,len(string))
-       if (i.eq.len(string)) print*,' reached end of string'
+       if (i==len(string)) print*,' reached end of string'
     endif
     ierr = plot_curs(xpt2,ypt2,mychar)
  enddo
 
  !--if ctrl-c or esc, restore original string
- if (mychar.eq.achar(3) .or. mychar.eq.achar(27)) then
+ if (mychar==achar(3) .or. mychar==achar(27)) then
     string = oldstring
     print*,'cancelled'
  else

@@ -109,9 +109,9 @@ subroutine colour_set(icolourscheme)
 !  print*,' from device = ',icolmin,icolmax
   call plot_qcir(icolmin,icolmax)
 !  print*,' other = ',icolmin,icolmax
-  if (ifirstcolour.lt.icolmin) ifirstcolour = icolmin
+  if (ifirstcolour < icolmin) ifirstcolour = icolmin
   ncolmax = icolmax - ifirstcolour
-  if (ncolours.gt.ncolmax) then
+  if (ncolours > ncolmax) then
      ncolours = ncolmax
      print*,'Warning: Device allows only ',ncolours+1,' colours'
   endif
@@ -124,9 +124,9 @@ subroutine colour_set(icolourscheme)
   brightness = 0.5
   contrast = 1.0
   !--invert colour table for negative values
-  if (icolourscheme.lt.0) contrast = -1.0
+  if (icolourscheme < 0) contrast = -1.0
 
-  if (abs(icolourscheme).le.ncolourschemes) then
+  if (abs(icolourscheme) <= ncolourschemes) then
      select case(abs(icolourscheme))
      case(1)
      !--greyscale
@@ -527,7 +527,7 @@ subroutine colour_set(icolourscheme)
 !--if icolourscheme = ncolourschemes+1 set the PGPLOT colour indices
 !  from the contents of the rgbtable array
 !
-  if (abs(icolourscheme).eq.icustom) then
+  if (abs(icolourscheme)==icustom) then
      print "(1x,a)",'using colour scheme other'
      !
      !--for giza we have to call set_ctab directly with all 256 colours
@@ -547,7 +547,7 @@ subroutine colour_set(icolourscheme)
         call plot_scr(index,rgbtable(1,i),rgbtable(2,i),rgbtable(3,i))
      enddo
 
-  elseif (abs(icolourscheme).le.ncolourschemes) then
+  elseif (abs(icolourscheme) <= ncolourschemes) then
 !
 !--also store the colour table as a list of r,g,b values
 !
@@ -558,7 +558,7 @@ subroutine colour_set(icolourscheme)
      enddo
 
      if (icolourscheme /= icolourscheme_prev) then ! silent if not changed
-        if (icolourscheme.lt.0) then
+        if (icolourscheme < 0) then
            print "(1x,a)",'using colour scheme inverse '//trim(schemename(abs(icolourscheme)))
         else
            print "(1x,a)",'using colour scheme '//trim(schemename(icolourscheme))

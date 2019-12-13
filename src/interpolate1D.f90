@@ -88,11 +88,11 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
   else
      print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
   endif
-  if (pixwidth.le.0.) then
+  if (pixwidth <= 0.) then
      print*,'interpolate1D: error: pixel width <= 0'
      return
   endif
-  if (any(hh(1:npart).le.tiny(hh))) then
+  if (any(hh(1:npart) <= tiny(hh))) then
      print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
   endif
   const = cnormk1D  ! normalisation constant
@@ -103,17 +103,17 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      !
      !--skip particles with itype < 0
      !
-     if (itype(i).lt.0) cycle over_parts
+     if (itype(i) < 0) cycle over_parts
      !
      !--skip particles with zero weights
      !
      termnorm = const*weight(i)
-     if (termnorm.le.0.) cycle over_parts
+     if (termnorm <= 0.) cycle over_parts
      !
      !--skip particles with wrong h's
      !
      hi = hh(i)
-     if (hi.le.tiny(hi)) cycle over_parts
+     if (hi <= tiny(hi)) cycle over_parts
      !
      !--set kernel related quantities
      !
@@ -126,8 +126,8 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      ipixmin = int((x(i) - radkern - xmin)/pixwidth)
      ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (ipixmax.gt.npixx) ipixmax = npixx ! to pixels in the image
+     if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+     if (ipixmax > npixx) ipixmax = npixx ! to pixels in the image
      !
      !--loop over pixels, adding the contribution from this particle
      !

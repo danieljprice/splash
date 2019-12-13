@@ -40,10 +40,10 @@ subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
  real, dimension(:), intent(in) :: xplot
  real, dimension(size(xplot)), intent(out) :: yplot
 
- if (hfact.gt.0.01) then
+ if (hfact > 0.01) then
     ierr = 0
 
-    if (iplot.eq.2) then ! x axis is h
+    if (iplot==2) then ! x axis is h
        where (xplot > tiny(xplot))
          yplot(:) = pmassval*(hfact/xplot(:))**ndim
        elsewhere

@@ -103,14 +103,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !--use minidump format if minidump
   !
   minidump = .false.
-  if (index(dumpfile,'minidump').ne.0) minidump = .true.
+  if (index(dumpfile,'minidump') /= 0) minidump = .true.
   !
   !--get hfact for minidumps
   !
   if (minidump) then
      call get_environment('RSPLASH_HFACT',string)
      read(string,*,iostat=ierr) hfacttemp
-     if (hfacttemp.gt.0.5 .and. hfacttemp .lt.10.0 .and. ierr.eq.0) then
+     if (hfacttemp > 0.5 .and. hfacttemp  < 10.0 .and. ierr==0) then
         hfact = hfacttemp
         print *,'setting hfact =',hfact,' from RSPLASH_HFACT environment variable'
      else
@@ -122,10 +122,10 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !
   magfield = .true.
 !  if (.not.minidump) then
-!     if (index(dumpfile,'SMBH').gt.0) magfield = .false.
-!     if (index(dumpfile,'nsbh').gt.0) magfield = .false.
-!     if (index(dumpfile,'NSBH').gt.0) magfield = .false.
-!     if (index(dumpfile,'WD').gt.0) magfield = .false.
+!     if (index(dumpfile,'SMBH') > 0) magfield = .false.
+!     if (index(dumpfile,'nsbh') > 0) magfield = .false.
+!     if (index(dumpfile,'NSBH') > 0) magfield = .false.
+!     if (index(dumpfile,'WD') > 0) magfield = .false.
 !  endif
   !
   !--override this with environment variable
@@ -194,8 +194,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         !--try double precision first
         read(15,end=55,iostat=ierr) timedb,nprint,nptmass
         !--change to single precision if stupid answers
-        if (nprint.le.0.or.nprint.gt.1e10 &
-            .or.nptmass.lt.0.or.nptmass.gt.1e6) then
+        if (nprint <= 0.or.nprint > 1e10 &
+            .or.nptmass < 0.or.nptmass > 1e6) then
            doubleprec = .false.
            rewind(15)
            read(15,end=55,iostat=ierr) timei,nprint,nptmass
@@ -217,8 +217,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         read(15,end=55,iostat=ierr) nprint,rstardb,mstardb,n1,n2, &
                 nptmass,timedb
         !--change to single precision if stupid answers
-        if (n1.lt.0.or.n1.gt.1e10.or.n2.lt.0.or.n2.gt.1e10 &
-           .or.nptmass.lt.0.or.nptmass.gt.1.e6) then
+        if (n1 < 0.or.n1 > 1e10.or.n2 < 0.or.n2 > 1e10 &
+           .or.nptmass < 0.or.nptmass > 1.e6) then
            doubleprec = .false.
            rewind(15)
            read(15,end=55,iostat=ierr) nprint,rstar,mstar,n1,n2, &
@@ -239,8 +239,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      endif
      print "(a,f10.2,a,i9,a,i6)",' time: ',timei,' npart: ',nprint,' nptmass: ',nptmass
      !--barf if stupid answers in single and double precision
-     if (nptmass.lt.0.or.nptmass.gt.1.e6 .or. nprint.lt.0 &
-         .or. nprint.gt.1e10 .or. (nprint.eq.0 .and. nptmass.eq.0)) then
+     if (nptmass < 0.or.nptmass > 1.e6 .or. nprint < 0 &
+         .or. nprint > 1e10 .or. (nprint==0 .and. nptmass==0)) then
         print "(a)",' *** ERRORS IN TIMESTEP HEADER: NO DATA READ ***'
         close(15)
         return
@@ -272,7 +272,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         endif
      endif
 
-     if (.not.allocated(dat) .or. (nprint+nptmass).gt.npart_max) then
+     if (.not.allocated(dat) .or. (nprint+nptmass) > npart_max) then
         npart_max = max(npart_max,INT(1.1*(nprint+nptmass)))
         call alloc(npart_max,nstep_max,ncolumns)
      endif
@@ -288,7 +288,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-     if (j.gt.maxstep) then
+     if (j > maxstep) then
         call alloc(maxpart,j+1,maxcol)
      endif
 !
@@ -473,7 +473,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         read(41,iostat=ierr1) nprint
         if (ierr1 /= 0) then
            print "(a)",' *** ERROR READING ABUNDANCE FILE ***'
-        elseif (nprint.ne.npartoftype(1,j)) then
+        elseif (nprint /= npartoftype(1,j)) then
            print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'
         else
            rewind(41)
@@ -489,7 +489,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
               print "(a)",' *** END OF FILE REACHED IN ABUNDANCE FILE ***'
            elseif (ierr1 > 0) then
               print "(a)",' *** ERRORS DURING ABUNDANCE FILE READ ***'
-           elseif (nprint.ne.npartoftype(1,j)) then
+           elseif (nprint /= npartoftype(1,j)) then
               print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'
            endif
         endif
@@ -511,7 +511,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   !
   !--reset centre of mass to zero
   !
-  if (allocated(dat) .and. n2.eq.0 .and. lenvironment('RSPLASH_RESET_CM')) then
+  if (allocated(dat) .and. n2==0 .and. lenvironment('RSPLASH_RESET_CM')) then
      if (minidump) then
         call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
      else ! full dumps ipmass = 9
@@ -621,13 +621,13 @@ subroutine set_labels
   real :: udistcm,udistkm,utime,umass,uvelkms
 
   minidump = .false.
-  if (index(rootname(1),'minidump').ne.0) minidump = .true.
+  if (index(rootname(1),'minidump') /= 0) minidump = .true.
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -642,11 +642,11 @@ subroutine set_labels
      iutherm = 0  !  thermal energy
      ipmass = 7  !  particle mass
      label(6) = 'T'
-     if (ncolumns.gt.7) then
+     if (ncolumns > 7) then
         iBfirst = 8
         idivB = 11
      endif
-     if (ncolumns.gt.11) then
+     if (ncolumns > 11) then
         label(12) = 'grad h'
         label(13) = 'grad soft'
         label(14) = 'dsoft'
@@ -666,7 +666,7 @@ subroutine set_labels
      unitslabel(ipmass) = ' [g]'
      units(irho) = umass/udistcm**3
      unitslabel(irho) = ' [g/cm^3]'
-     if (iBfirst.gt.0) then
+     if (iBfirst > 0) then
         units(iBfirst:iBfirst+ndimV-1) = 8.0988e14
         unitslabel(iBfirst:iBfirst+ndimV-1) = ' [G]'
         units(idivB) = units(iBfirst)/udistcm
@@ -682,7 +682,7 @@ subroutine set_labels
      label(11) = 'temperature [ MeV ]'
      label(12) = 'electron fraction (y_{e})'
 
-     if (iformat.eq.2) then ! MHD full dump
+     if (iformat==2) then ! MHD full dump
         iBfirst = 13
         label(16) = 'psi'
         idivB = 17
@@ -724,12 +724,12 @@ subroutine set_labels
      else
         call make_vector_label('force',13,ndimV,iamvec,labelvec,label,labelcoord(:,1))
         label(16) = 'dgrav'
-        if (ncolumns.gt.16) then
+        if (ncolumns > 16) then
            label(11) = 'temperature [ 10^6 K ]'
            do i=17,ncolumns
               write(label(i),"('species ',i2)") i-16
            enddo
-           if (ncolumns.ge.25) then
+           if (ncolumns >= 25) then
               label(17) = 'He'
               label(18) = 'C'
               label(19) = 'O'
@@ -768,11 +768,11 @@ subroutine set_labels
 
   call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
-  if (iBfirst.ne.0) label(idivB) = 'div B'
+  if (iBfirst /= 0) label(idivB) = 'div B'
 
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = '\gr'
-  if (iutherm.gt.0) label(iutherm) = 'u'
+  if (iutherm > 0) label(iutherm) = 'u'
   label(ih) = 'h       '
   label(ipmass) = 'particle mass'
   !

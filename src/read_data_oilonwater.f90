@@ -138,15 +138,15 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
       !
       read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei,gammai,rhozero,RK2
       print*,'npart = ',nprint
-      if (.not.allocated(dat) .or. nprint.gt.npart_max) then
+      if (.not.allocated(dat) .or. nprint > npart_max) then
          npart_max = max(npart_max,INT(1.1*nprint))
          call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=.true.)
       endif
       doubleprec = .true.
       !--try single precision if non-sensible values for time, gamma etc.
-      if (ierr.ne.0 .or. timei.lt.0. .or. timei.gt.1e30  &
-          .or. gammai.lt.1. .or. gammai.gt.10. &
-          .or. rhozero.lt.0. .or. RK2.lt.0. .or. RK2.gt.1.e10) then
+      if (ierr /= 0 .or. timei < 0. .or. timei > 1e30  &
+          .or. gammai < 1. .or. gammai > 10. &
+          .or. rhozero < 0. .or. RK2 < 0. .or. RK2 > 1.e10) then
           doubleprec = .false.
       endif
       rewind(15)
@@ -165,8 +165,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate/reallocate memory if j > maxstep
 !
-     if (j.gt.maxstep) then
-        if (nstepsread.ge.2) then
+     if (j > maxstep) then
+        if (nstepsread >= 2) then
            nstepsalloc = 2*nstepsread
         else
            nstepsalloc = j
@@ -270,11 +270,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--set particle type for point masses
 !
-     if (nptmass.gt.0) then
+     if (nptmass > 0) then
         iamtype(nprint+1:nprint+nptmass,j) = 3
      endif
 
-     if (nunknown.gt.0) print *,nunknown,' particles of unknown type (probably dead)'
+     if (nunknown > 0) print *,nunknown,' particles of unknown type (probably dead)'
 
      if (allocated(dattemp)) deallocate(dattemp)
      if (allocated(isteps)) deallocate(isteps)
@@ -304,7 +304,7 @@ endif
 !--reached end of file
 !
 close(15)
-if (j-1 .gt. 0) then
+if (j-1  >  0) then
    print*,'>> end of dump file: nsteps =',j-1
 endif
 
@@ -327,11 +327,11 @@ subroutine set_labels
   implicit none
   integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
+  if (ndim <= 0 .or. ndim > 3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
      return
   endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
+  if (ndimV <= 0 .or. ndimV > 3) then
      print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
      return
   endif
@@ -344,7 +344,7 @@ subroutine set_labels
   iutherm = 8  !  thermal energy
   ipmass = 9   !  particle mass
   irho = 10     ! location of rho in data array
-  if (ncolumns.gt.10) then
+  if (ncolumns > 10) then
      label(11) = 'dgrav'
      label(12) = 'torque t'
      label(13) = 'torque g'

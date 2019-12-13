@@ -120,7 +120,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !--(re)allocate memory
 !
   nstep_max = max(maxstep,nstep_max,indexstart,1)
-  if (.not.allocated(dat) .or. (nprint.gt.maxpart) .or. (ncolstep+ncalc).gt.maxcol) then
+  if (.not.allocated(dat) .or. (nprint > maxpart) .or. (ncolstep+ncalc) > maxcol) then
      npart_max = max(npart_max,nprint+nstar,maxpart)
      !--allow extra room if reallocating
      if (allocated(dat)) npart_max = max(npart_max,INT(1.1*(nprint+nstar)),maxpart)
@@ -147,14 +147,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
   do i=1,ncolstep
      if (required(i)) ncolread = i
   enddo
-  if (ncolread.ne.ncolstep) then
+  if (ncolread /= ncolstep) then
      ipartialread = .true.
      print*,' reading only up to column ',ncolread
   endif
 
   do i=1,nprint
      read(iunit,*,iostat=ierr) (dat(i,icol,j),icol = 1,ncolread)
-     if (ierr.ne.0) nerr = nerr + 1
+     if (ierr /= 0) nerr = nerr + 1
   enddo
   if (nerr > 0) print *,' ERRORS reading particle data on ',nerr,' lines'
 !
@@ -182,7 +182,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
      dat(i,5,j) = vyptmass(i-nprint)
      dat(i,6,j) = 0.
      dat(i,7:ncolstep,j) = 0.
-     if (ih.gt.0) dat(i,ih,j) = epsilon(0.) ! small but non-zero smoothing length
+     if (ih > 0) dat(i,ih,j) = epsilon(0.) ! small but non-zero smoothing length
   enddo
   print "(' primary     (x,y) = (',1pe10.2,',',1pe10.2,')')",xptmass(1),yptmass(1)
   print "(' secondary   (x,y) = (',1pe10.2,',',1pe10.2,')')",xptmass(2),yptmass(2)
@@ -234,9 +234,9 @@ subroutine set_labels
   label(irho+13) = 'neighbour number'
   label(irho+14) = 'iwas'
   label(irho+15) = 'll'
-  if (irho.gt.0) label(irho) = 'density'
-  if (ih.gt.0) label(ih) = 'smoothing length'
-  if (ipmass.gt.0) label(ipmass) = 'particle mass'
+  if (irho > 0) label(irho) = 'density'
+  if (ih > 0) label(ih) = 'smoothing length'
+  if (ipmass > 0) label(ipmass) = 'particle mass'
   call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   call make_vector_label('f',ifx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !

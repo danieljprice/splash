@@ -41,8 +41,8 @@ subroutine colour_particles(dat,datmin,datmax,icolour,npart)
 
  do i=1,npart
     icolourtemp = int((dat(i) - datmin)/dx) + icolourmin
-    if (icolourtemp.gt.icolourmax) icolourtemp = icolourmax
-    if (icolourtemp.lt.icolourmin) icolourtemp = icolourmin
+    if (icolourtemp > icolourmax) icolourtemp = icolourmax
+    if (icolourtemp < icolourmin) icolourtemp = icolourmin
     icolour(i) = icolourtemp
  enddo
 
