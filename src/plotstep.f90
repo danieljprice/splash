@@ -778,7 +778,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
  logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
  logical :: dumxsec, isetrenderlimits, iscoordplot, inorm_label
- logical :: ichangesize, initx, inity, initz, isameweights, volweightedpdf, got_h
+ logical :: ichangesize, initx, inity, initz, isameweights, got_h
  logical, parameter :: isperiodicx = .false. ! feature not implemented
  logical, parameter :: isperiodicy = .false. ! feature not implemented
  logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -1636,14 +1636,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                             else
-                               !zmin = -30.
-                               !allocate(datpix3D(npixx,npixy,1))
-                               !call interpolate3D(xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp),&
-                               !     weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),ninterp,&
-                               !     xmin,ymin,zmin,datpix3D,npixx,npixy,1,pixwidth,pixwidthy,2.*abs(zmin),&
-                               !     inormalise,.false.,.false.,.false.)
-                               !datpix = datpix3D(:,:,1)
-                               !deallocate(datpix3D)
                                call interpolate3D_projection( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
@@ -2438,19 +2430,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xplot(1:ntoti) = dat(1:ntoti,iplotx)
                    if (irho > 0 .and. irho <= ndataplots .and. ipmass > 0 .and. ipmass <= ndataplots) then
                       call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,(npdfbins > 0),volweightedpdf, &
-                         ierr,icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))
+                         yminadapti,ymaxadapti,(npdfbins > 0),ierr, &
+                         icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))
                    else
                       call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,(npdfbins > 0),volweightedpdf, &
-                         ierr,icolourme(1:ntoti))
+                         yminadapti,ymaxadapti,(npdfbins > 0),ierr,icolourme(1:ntoti))
                    endif
                    !
                    !--write PDF to file
                    !
                    if (ierr==0) then
                       call pdf_write(ngrid,xgrid,datpix1D,label(iplotx), &
-                                   volweightedpdf,rootname(ifileopen),tagline)
+                                     rootname(ifileopen),tagline)
                    endif
                    !
                    !--apply transformations to PDF data
