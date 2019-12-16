@@ -68,19 +68,20 @@ subroutine interpolate3d_projection_c(                                         &
                                   itype(npart),  &
                                   iverbose
  logical(c_bool), intent(in)  :: normalise,     &
-                                  useaccelerate
+                                  useaccelerate, &
+                                  exact_rendering, &
  real(c_float),   intent(out) :: datsmooth(npixx,npixy)
 
- logical :: normalise_f, &
-             useaccelerate_f
+ logical :: normalise_f,useaccelerate_f,exact_rendering_f
 
  normalise_f     = normalise
  useaccelerate_f = useaccelerate
+ exact_rendering_f = exact_rendering
 
  call interpolate3d_projection_f(                                        &
     x, y, z, hh, weight, dat, itype, npart, xmin, ymin, datsmooth, npixx, &
     npixy, pixwidthx, pixwidthy, normalise_f, zobserver, dscreen,         &
-    useaccelerate_f, iverbose)
+    useaccelerate_f, exact_rendering_f, iverbose)
 
 end subroutine interpolate3d_projection_c
 

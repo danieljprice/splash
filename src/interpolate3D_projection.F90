@@ -155,9 +155,9 @@ end function wfromtable
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
-     useaccelerate,iverbose)
+     useaccelerate,exact_rendering,iverbose)
 
- use kernels, only:radkernel,radkernel2
+ use kernels, only:radkernel,radkernel2,cnormk3D,wallint
  use timing,  only:wall_time,print_time
  implicit none
  integer, intent(in) :: npart,npixx,npixy
@@ -167,7 +167,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  real, intent(out), dimension(npixx,npixy) :: datsmooth
  logical, intent(in) :: normalise
  real, dimension(npixx,npixy) :: datnorm
- logical, intent(in) :: useaccelerate
+ logical, intent(in) :: useaccelerate,exact_rendering
  integer, intent(in) :: iverbose
  real :: row(npixx)
 
@@ -182,7 +182,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
  real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
- real :: hmin,fac,hminall !,dhmin3
+ real :: hmin,fac,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact,termnorm_exact
  real, dimension(npixx) :: xpix,dx2i
  real :: t_start,t_end,t_used
  logical :: iprintprogress,use3Dperspective,accelerate
@@ -196,6 +196,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     datnorm = 0.
  elseif (useaccelerate) then
     string = trim(string)//' (fast)'
+ elseif (exact_rendering) then
+    string = trim(string)//' (exact/Petkova)'
  endif
 
  ncpus = 0
@@ -251,6 +253,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !  sure that particles contribute to at least one pixel
 !
  hmin = 0.5*max(pixwidthx,pixwidthy)
+
  !dhmin3 = 1./(hmin*hmin*hmin)
 !
 !--store x value for each pixel (for optimisation)
@@ -266,13 +269,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(hh,z,x,y,weight,dat,itype,npart) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
-!$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm) &
+!$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm,cnormk3D,exact_rendering) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
-!$omp private(dx2i,row,q2,ypix,dy,dy2,wab) &
-!$omp private(i,ipix,jpix,jpixcopy,fac) &
+!$omp private(dx2i,row,q2,ypix,dy,dy2,wab,termnorm_exact,term_exact) &
+!$omp private(i,ipix,jpix,jpixcopy,fac,dfac,pixwidthz,pixint,zi,xpixi,zpix) &
 !$omp reduction(+:nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !$omp do schedule (guided, 2)
@@ -322,7 +325,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     if (ypixmax < ymin) cycle over_particles
 
     !--take resolution length as max of h and 1/2 pixel width
-    if (hi < hmin) then
+    if (.not.exact_rendering .and. hi < hmin) then
        hminall = min(hi,hminall)
        nsubgrid = nsubgrid + 1
        hsmooth = hmin
@@ -332,6 +335,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        hsmooth = hi
        nok = nok + 1
     endif
+
     radkern = radkernel*hsmooth
     !
     !--set kernel related quantities
@@ -340,6 +344,14 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     hi21 = hi1*hi1
     termnorm = weight(i)*fac*horigi
     term = termnorm*dat(i) ! h gives the z length scale (NB: no perspective)
+    !
+    !--quantities for exact 3D wall integrals
+    !
+    dfac = horigi**3/(pixwidthx*pixwidthy*cnormk3D)
+    termnorm_exact = cnormk3D*weight(i)
+    term_exact = termnorm_exact*dat(i)
+    pixwidthz = 2.*radkern
+    zi = 0.; zpix = 0.
     !
     !--for each particle work out which pixels it contributes to
     !
@@ -351,11 +363,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     ipixmax = ipixi + npixpartx
     jpixmin = jpixi - npixparty
     jpixmax = jpixi + npixparty
-
-!     ipixmin = int((xi - radkern - xmin)/pixwidth)
-!     jpixmin = int((yi - radkern - ymin)/pixwidth)
-!     ipixmax = ipixmin + npixpart !!int((xi + radkern - xmin)/pixwidth) + 1
-!     jpixmax = jpixmin + npixpart !!int((yi + radkern - ymin)/pixwidth) + 1
     !
     !--loop over pixels, adding the contribution from this particle
     !  copy by quarters if all pixels within domain
@@ -420,9 +427,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
     else
        ipixmin = int((xi - radkern - xmin)/pixwidthx)
-       ipixmax = int((xi + radkern - xmin)/pixwidthx)
+       ipixmax = int((xi + radkern - xmin)/pixwidthx) + 1
        jpixmin = int((yi - radkern - ymin)/pixwidthy)
-       jpixmax = int((yi + radkern - ymin)/pixwidthy)
+       jpixmax = int((yi + radkern - ymin)/pixwidthy) + 1
 
        if (ipixmin < 1) ipixmin = 1  ! make sure they only contribute
        if (jpixmin < 1) jpixmin = 1  ! to pixels in the image
@@ -440,25 +447,50 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
           dy = ypix - yi
           dy2 = dy*dy*hi21
           do ipix = ipixmin,ipixmax
-             !xpix = xminpix + ipix*pixwidthx
-             !dx = xpix - xi
-             !rab2 = (xminpix + ipix*pixwidthx - xi)**2 + dy2
              q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
-             !
-             !--SPH kernel - integral through cubic spline
-             !  interpolate from a pre-calculated table
-             !
-             if (q2 < radkernel2) then
-                wab = wfromtable(q2)
+
+             if (exact_rendering .and. ipixmax-ipixmin <= 2 .and. q2 < radkernel2 + 3.*pixwidthx*pixwidthy*hi21) then
+                xpixi = xminpix + ipix*pixwidthx
+
+                ! Contribution of the cell walls in the xy-plane
+                pixint = 2.*wallint(0.5*pixwidthz,xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
+                !pixint = pixint + wallint(0.5*pixwidthz,xi,yi,xpixi,ypix,pixwidthx,pixwidthy,hi)
+
+                ! Contribution of the cell walls in the xz-plane
+                pixint = pixint + wallint(ypix-yi+0.5*pixwidthy,xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
+                pixint = pixint + wallint(yi-ypix+0.5*pixwidthy,xi,zi,xpixi,zpix,pixwidthx,pixwidthz,hi)
+
+                ! Contribution of the cell walls in the yz-plane
+                pixint = pixint + wallint(xpixi-xi+0.5*pixwidthx,zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
+                pixint = pixint + wallint(xi-xpixi+0.5*pixwidthx,zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
+
+                wab = pixint*dfac
                 !
                 !--calculate data value at this pixel using the summation interpolant
                 !
                 !$omp atomic
-                datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-
+                datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term_exact*wab
                 if (normalise) then
                    !$omp atomic
-                   datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                   datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm_exact*wab
+                endif
+             else
+                !
+                !--SPH kernel - integral through cubic spline
+                !  interpolate from a pre-calculated table
+                !
+                if (q2 < radkernel2) then
+                   wab = wfromtable(q2)
+                   !
+                   !--calculate data value at this pixel using the summation interpolant
+                   !
+                   !$omp atomic
+                   datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
+
+                   if (normalise) then
+                      !$omp atomic
+                      datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
+                   endif
                 endif
              endif
           enddo
