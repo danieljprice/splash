@@ -2428,14 +2428,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !--call routine which calculates pdf on the particles
                    !--compute PDF on raw (un-transformed) data
                    xplot(1:ntoti) = dat(1:ntoti,iplotx)
-                   if (irho > 0 .and. irho <= ndataplots .and. ipmass > 0 .and. ipmass <= ndataplots) then
-                      call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
-                         yminadapti,ymaxadapti,(npdfbins > 0),ierr, &
-                         icolourme(1:ntoti),dat(1:ntoti,irho),dat(1:ntoti,ipmass))
-                   else
-                      call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
+                   call pdf_calc(ntoti,xplot(1:ntoti),xmin,xmax,ngrid,xgrid,datpix1D, &
                          yminadapti,ymaxadapti,(npdfbins > 0),ierr,icolourme(1:ntoti))
-                   endif
                    !
                    !--write PDF to file
                    !
