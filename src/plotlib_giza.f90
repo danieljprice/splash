@@ -40,7 +40,7 @@ module plotlib
       plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
       plot_circ=>giza_circle, &
-      plot_close=>giza_close_device, &
+      plot_close=>giza_close, &
       plot_curs=>giza_get_key_press, &
       plot_ebuf=>giza_end_buffer, &
       plot_end=>giza_close_device, &
