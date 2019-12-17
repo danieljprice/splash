@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -149,17 +149,18 @@ end subroutine locate_nth_particle_of_type
 !   x0 : centre of mass position
 !   v0 : velocity of centre of mass
 !   angle : angle of binary about centre of mass (radians)
+!   omega : angular velocity of binary around centre of mass
 !----------------------------------------------------------
-subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
+subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
  integer,                  intent(in)  :: i1,i2,ndim,ndimV,ncolumns,ivx,ipmass,iverbose
  integer, dimension(ndim), intent(in)  :: ix
  real, dimension(:,:),     intent(in)  :: dat
  real, dimension(ndim),    intent(out) :: x0,v0
- real,                     intent(out) :: angle
+ real,                     intent(out) :: angle,omega
  integer,                  intent(out) :: ierr
  integer               :: max
- real, dimension(ndim) :: x1,x2,v1,v2,dx
- real                  :: m1,m2,dmtot
+ real, dimension(ndim) :: x1,x2,v1,v2,dx,dv
+ real                  :: m1,m2,dmtot,dR2
 
  ierr = 0
  max = size(dat(:,1))
@@ -198,9 +199,15 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iv
     v1 = dat(i1,ivx:ivx+ndimV-1)
     v2 = dat(i2,ivx:ivx+ndimV-1)
     v0 = (m1*v1 + m2*v2)*dmtot
+    dv = v2 - v0
+    dx = x2 - x0
+    dR2 = 1./dot_product(dx,dx)
+    omega = dv(1)*(-dx(2)*dR2) + dv(2)*(dx(1)*dR2)
     if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
+    if (iverbose >= 1) print "(a,3(1x,es10.3))",' ::      omega =',omega
  else
     v0 = 0.
+    omega = 0.
  endif
 
 end subroutine get_binary

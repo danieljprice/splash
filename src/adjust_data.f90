@@ -33,7 +33,7 @@ contains
 !
 !----------------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils,    only:renvironment,envlist,ienvironment,lenvironment
+ use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist
  use labels,          only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
  use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,fakedust
  use particle_data,   only:dat,npartoftype,iamtype
@@ -41,12 +41,12 @@ subroutine adjust_data_codeunits
  use filenames,       only:ifileopen,nstepsinfile
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary
  use settings_render, only:ifastrender
- real :: hmin,dphi
+ real :: hmin,dphi,domega
  real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
  integer :: i,j,nlist,nerr,ierr,isink,isinkpos,itype
- integer :: isink1,isink2,ntot
- logical :: centreonsink
+ integer :: ntot,isink1,isink2,isinklist(2)
+ logical :: centreonsink,got_sinks
 
  !
  !--environment variable setting to enforce a minimum h
@@ -107,22 +107,36 @@ subroutine adjust_data_codeunits
  if (ndim > 0) then
     !
     !--environment variable to corotate with first two sink particles
+    !  can be SPLASH_COROTATE=true (just picks first two sinks)
+    !      or SPLASH_COROTATE=1,3
     !
-    if (lenvironment('SPLASH_COROTATE')) then
+    isinklist = ienvlist('SPLASH_COROTATE',2)
+    got_sinks = all(isinklist > 0)
+    if (lenvironment('SPLASH_COROTATE') .or. got_sinks) then
        itype = get_sink_type(ntypes)
        if (itype > 0) then
           if (all(npartoftype(itype,:) < 2)) then
              print "(a)",' ERROR: SPLASH_COROTATE set but less than 2 sink particles'
           else
              if (iverbose >= 1) print*
-             print "(a,i3,a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from SPLASH_COROTATE setting'
+             if (got_sinks) then
+                print "(a,i3,a,i3,a)",' :: COROTATING FRAME WITH SINKS ',isinklist(1),&
+                                      ', ',isinklist(2),' from SPLASH_COROTATE setting'
+             else
+                print "(a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from SPLASH_COROTATE setting'
+             endif
              do j=1,nstepsinfile(ifileopen)
-                !  find first two sink particles in the data
-                call locate_first_two_of_type(isink1,isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
+                if (got_sinks) then
+                   call locate_nth_particle_of_type(isinklist(1),isink1,itype,iamtype(:,j),npartoftype(:,j),ntot)
+                   call locate_nth_particle_of_type(isinklist(2),isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
+                else
+                   !  find first two sink particles in the data
+                   call locate_first_two_of_type(isink1,isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
+                endif
                 !  get properties of the binary
-                call get_binary(isink1,isink2,dat(:,:,j),x0,v0,dphi,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
+                call get_binary(isink1,isink2,dat(:,:,j),x0,v0,dphi,domega,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
                 !  rotate all the particles into this frame
-                if (ierr==0) call rotate_particles(dat(:,:,j),ntot,dphi,x0(1:ndim),ndim,ndimV,v0)
+                if (ierr==0) call rotate_particles(dat(:,:,j),ntot,dphi,domega,x0(1:ndim),ndim,ndimV,v0)
              enddo
           endif
        else
@@ -191,10 +205,10 @@ end subroutine adjust_data_codeunits
 !-----------------------------------------------------------------
 ! routine to rotate particles with a given cylindrical angle dphi
 !-----------------------------------------------------------------
-pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,v0)
+pure subroutine rotate_particles(dat,np,dphi,domega,x0,ndim,ndimV,v0)
  use labels, only:ix,ivx
  integer, intent(in) :: np,ndim,ndimV
- real,    intent(in) :: dphi
+ real,    intent(in) :: dphi,domega
  real,    dimension(:,:), intent(inout) :: dat
  real, dimension(ndim), intent(in) :: x0
  real, dimension(ndimV), intent(in) :: v0
@@ -219,7 +233,7 @@ pure subroutine rotate_particles(dat,np,dphi,x0,ndim,ndimV,v0)
     if (ivx > 0) then
        vi = dat(i,ivx:ivx+ndimV-1) - v0
        vr = vi(1)*xi(1)/r + vi(2)*xi(2)/r
-       vphi = vi(1)*(-xi(2)/r) + vi(2)*xi(1)/r
+       vphi = (vi(1)*(-xi(2)/r) + vi(2)*xi(1)/r) - r*domega
        dat(i,ivx)   = vr*cosp - vphi*sinp
        dat(i,ivx+1) = vr*sinp + vphi*cosp
     endif
