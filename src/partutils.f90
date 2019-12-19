@@ -161,6 +161,7 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipm
  integer               :: max
  real, dimension(ndim) :: x1,x2,v1,v2,dx,dv
  real                  :: m1,m2,dmtot,dR2
+ real, parameter       :: pi = 4.*atan(1.)
 
  ierr = 0
  max = size(dat(:,1))
@@ -204,7 +205,8 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipm
     dR2 = 1./dot_product(dx,dx)
     omega = dv(1)*(-dx(2)*dR2) + dv(2)*(dx(1)*dR2)
     if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
-    if (iverbose >= 1) print "(a,3(1x,es10.3))",' ::      omega =',omega
+    if (iverbose >= 1) print "(a,1x,es10.3,a,g12.4,a)",' ::      omega =',omega,&
+                             ' angle =',-angle*180./pi,' degrees'
  else
     v0 = 0.
     omega = 0.
