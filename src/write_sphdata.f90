@@ -43,7 +43,7 @@ logical function issphformat(string)
  select case(trim(string))
  case('ascii','ASCII')
     issphformat = .true.
- case('binary','BINARY')
+ case('binary','BINARY','binarystream','BINARYSTREAM','stream')
     issphformat = .true.
  case('rsph','RSPH')
     issphformat = .true.
@@ -56,11 +56,17 @@ logical function issphformat(string)
  if (.not.issphformat) then
     print "(a)",' convert mode ("splash to X dumpfiles"): '
     print "(a,/)",' splash to ascii   : convert SPH data to ascii file dumpfile.ascii'
-    print "(a)",  '        to binary  : convert SPH data to simple unformatted binary dumpfile.binary '
-    print "(a)",  '                      write(1) time,npart,ncolumns'
-    print "(a)",  '                      do i=1,npart'
-    print "(a)",  '                         write(1) dat(1:ncolumns),itype'
+    print "(a)",  '        to binary  : convert SPH data to simple unformatted binary dumpfile.binary: '
+    print "(a)",  '                      write(1) time,np,ncols'
+    print "(a)",  '                      do i=1,np'
+    print "(a)",  '                         write(1) dat(1:ncols),itype'
     print "(a)",  '                      enddo'
+    print "(a)",  '        to stream  : convert SPH data to streamed binary format dumpfile.binarystream: '
+    if (kind(1.)==8) then
+       print "(a)",  '                      t,np,ncols,np*(dat(1:ncols),itype) [8,4,4,np*(ncols*8,4)] bytes'
+    else
+       print "(a)",  '                      t,np,ncols,np*(dat(1:ncols),itype) [4,4,4,np*(ncols*4,4)] bytes'
+    endif
     print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
     print "(a)",  '        to gadget  : convert SPH data to default GADGET snapshot file format'
  endif
@@ -68,7 +74,7 @@ logical function issphformat(string)
  return
 end function issphformat
 
-subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat)
+subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,ncolumns,filename,outformat,listofcolumns)
  use labels,         only:labeltype,label,unitslabel,irho,ipmass,ix,iBfirst,ih,iutherm,ivx
  use settings_units, only:units
  use settings_data,  only:ndim,icoords,icoordsnew,xorigin
@@ -85,29 +91,42 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  real, intent(in), dimension(npart,ncolumns)  :: dat
  real, intent(in), dimension(:)               :: masstype
  character(len=*), intent(in)                 :: filename,outformat
+ integer, intent(in), dimension(:), optional  :: listofcolumns
  integer, parameter :: iunit = 83
  integer, parameter :: maxline = 1000
- integer            :: ierr,i,idim,i1,i2
+ integer            :: ierr,i,idim,i1,i2,ncols
+ integer, dimension(ncolumns) :: iorder
  character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
  real(kind=doub_prec), dimension(maxplot) :: vals
  real(kind=doub_prec) :: udist,umass,utime,umagfd
  real, dimension(3) :: x0,v0
  logical :: change_coordsys
+ !
+ !--allow for the possibility of writing columns in a different order
+ !
+ if (present(listofcolumns)) then
+    call get_order_from_list(listofcolumns,iorder,ncols)
+ else
+    ncols = ncolumns
+    do i=1,ncols
+       iorder(i) = i
+    enddo
+ endif
 
  select case(trim(outformat))
  case ('ascii','ASCII')
-    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncolumns,' COLUMNS'
+    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncols,' COLUMNS'
 
     !--format the header lines to go in the ascii file
     if (kind(1.)==8) then
-       write(fmtstring,"(i10,a)") ncolumns,'(es23.15,1x)'
+       write(fmtstring,"(i10,a)") ncols,'(es23.15,1x)'
+       write(fmtstringlab,"(i10,a)") ncols,'(a23,1x),a'
     else
-       write(fmtstring,"(i10,a)") ncolumns,'(es15.7,1x)'
+       write(fmtstring,"(i10,a)") ncols,'(es15.7,1x)'
+       write(fmtstringlab,"(i10,a)") ncols,'(a15,1x),a'
     endif
     fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
     fmtstring = '('//trim(adjustl(fmtstring))//')'
-
-    write(fmtstringlab,"(i10,a)") ncolumns,'(a15,1x),a'
     fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
 
     open(unit=iunit,file=trim(filename)//'.ascii',status='replace',form='formatted',iostat=ierr)
@@ -115,17 +134,18 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
        print "(a)",' ERROR OPENING FILE FOR WRITING'
        return
     endif
-    write(iunit,"(a)",err=100) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
-    write(iunit,"('#')",err=100)
-    write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",err=100) trim(unitslabel(0))
-    write(iunit,"('#',2(1x,1pe15.7))",err=100) time,units(0)
-    write(iunit,"('#')",err=100)
-    write(iunit,"('#',1x,'npart:',6(1x,a12))",err=100) (trim(labeltype(i)),i=1,ntypes)
-    write(iunit,"('#',7x,6(1x,i12))",err=100) npartoftype(1:ntypes)
-    write(iunit,"('# units:')",err=100)
-    write(iunit,"('#'"//fmtstring(2:),err=100) units(1:ncolumns)
-    write(iunit,fmtstringlab,err=100) unitslabel(1:ncolumns)
-    write(iunit,"('#')",err=100)
+    write(iunit,"(a)",iostat=ierr) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
+    write(iunit,"('#')",iostat=ierr)
+    write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",iostat=ierr) trim(unitslabel(0))
+    write(iunit,"('#',2(1x,1pe15.7))",iostat=ierr) time,units(0)
+    write(iunit,"('#')",iostat=ierr)
+    write(iunit,"('#',1x,'npart:',30(1x,a12))",iostat=ierr) (trim(labeltype(i)),i=1,ntypes)
+    write(iunit,"('#',7x,30(1x,i12))",iostat=ierr) npartoftype(1:ntypes)
+    write(iunit,"('# units:')",iostat=ierr)
+    write(iunit,"('#'"//fmtstring(2:),iostat=ierr) units(iorder(1:ncols))
+    write(iunit,fmtstringlab,iostat=ierr) unitslabel(iorder(1:ncols))
+    write(iunit,"('#')",iostat=ierr)
+    if (ierr /= 0) print "(a)",' ERROR WRITING ASCII HEADER'
     !
     !--write body
     !
@@ -134,68 +154,67 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
     if (size(itype) > 1) then
-       write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns),'itype'
+       write(iunit,fmtstringlab,iostat=ierr) label(iorder(1:ncols)),'itype'
        do i=1,npart
           vals(1:ncolumns) = dat(i,1:ncolumns)
           if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
-          write(iunit,fmtstring2,err=100) vals(1:ncolumns),itype(i)
+          write(iunit,fmtstring2,iostat=ierr) vals(iorder(1:ncols)),itype(i)
        enddo
     else
-       write(iunit,fmtstringlab,iostat=ierr) label(1:ncolumns)
+       write(iunit,fmtstringlab,iostat=ierr) label(iorder(1:ncols))
        if (change_coordsys) then
           do i=1,npart
              vals(1:ncolumns) = dat(i,1:ncolumns)
              call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
-             write(iunit,fmtstring,err=100) vals(1:ncolumns)
+             write(iunit,fmtstring,iostat=ierr) vals(iorder(1:ncols))
           enddo
        else
           do i=1,npart
-             write(iunit,fmtstring,err=100) dat(i,1:ncolumns)
+             write(iunit,fmtstring,iostat=ierr) dat(i,iorder(1:ncols))
           enddo
        endif
     endif
     close(iunit)
-
-    return
-100 continue
-    close(iunit)
-    print*,'ERROR WRITING ASCII FILE'
+    if (ierr /= 0) then
+       print "(a)",' ERROR WRITING ASCII FILE'
+    endif
     return
 
- case ('binary','BINARY')
+ case ('binary','BINARY','binarystream','BINARYSTREAM','stream')
 !
 !--This is the most basic binary (ie. unformatted) file format I could think of,
 !  as an alternative to ascii for large files.
 !
-    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binary WITH ',ncolumns,' COLUMNS'
-    open(unit=iunit,file=trim(filename)//'.binary',status='replace',form='unformatted',iostat=ierr)
+    select case(trim(outformat))
+    case('binarystream','BINARYSTREAM','stream')
+       print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binarystream WITH ',ncolumns,' COLUMNS'
+       open(unit=iunit,file=trim(filename)//'.binarystream',status='replace',form='unformatted',access='stream',iostat=ierr)
+    case default
+       print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.binary WITH ',ncolumns,' COLUMNS'
+       open(unit=iunit,file=trim(filename)//'.binary',status='replace',form='unformatted',iostat=ierr)
+    end select
     if (ierr /= 0) then
        print "(a)",' ERROR OPENING FILE FOR WRITING'
        return
     endif
-    write(iunit,iostat=ierr) time,npart,ncolumns
-    if (ierr /= 0) then
-       print "(a)",' ERROR WRITING HEADER LINE TO BINARY FILE '
-    endif
+    write(iunit,iostat=ierr) time,npart,ncols
+    if (ierr /= 0) print "(a)",' ERROR WRITING HEADER LINE TO BINARY FILE '
     !
     !--write body
     !
     if (size(itype) > 1) then
        do i=1,npart
-          write(iunit,err=200) dat(i,1:ncolumns),int(itype(i))
+          write(iunit,iostat=ierr) dat(i,iorder(1:ncols)),int(itype(i))
        enddo
     else
        do i=1,npart
-          write(iunit,err=200) dat(i,1:ncolumns)
+          write(iunit,iostat=ierr) dat(i,iorder(1:ncols))
        enddo
     endif
     close(iunit)
+    if (ierr /= 0) print "(a)",' ERROR WRITING BINARY FILE'
+    return
 
-    return
-200 continue
-    close(iunit)
-    print*,'ERROR WRITING BINARY FILE'
-    return
  case ('rsph','RSPH')
 !
 !--Files for Steinar Borve's RSPH format
@@ -296,5 +315,37 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  end select
 
 end subroutine write_sphdump
+
+subroutine get_order_from_list(list_in,list_out,n)
+ integer, intent(in)  :: list_in(:)
+ integer, intent(out) :: list_out(:)
+ integer, intent(out) :: n
+ integer :: i
+ logical :: done
+ !
+ ! set list_out = list_in, but only while list_in 
+ ! is non-zero and numbers are in range
+ !
+ i = 1
+ done = .false.
+ list_out = 0
+ do while(.not.done .and. i <= size(list_in) .and. i <= size(list_out))
+    if (list_in(i) > 0 .and. list_in(i) <= size(list_out)) then
+       list_out(i) = list_in(i)
+    else
+       done = .true.
+    endif
+    i = i + 1
+ enddo
+ n = count(list_out > 0)
+ ! if no valid entries, set list_out to 1..n
+ if (n==0) then
+    n = min(size(list_out),size(list_in))
+    do i=1,n
+       list_out(i) = i
+    enddo
+ endif
+
+end subroutine get_order_from_list
 
 end module write_sphdata
