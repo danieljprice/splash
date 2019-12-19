@@ -789,7 +789,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('v')
        if (ivecx > 0 .and. ivecy > 0) then
           !print*,'decreasing vector arrow size'
-          vecmax = 1.2*zoomfac*vecmax
+          vecmax = zoomfac*scalefac*vecmax
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
@@ -797,7 +797,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('V')
        if (ivecx > 0 .and. ivecy > 0) then
           !print*,'increasing vector arrow size'
-          vecmax = vecmax/(1.2*zoomfac)
+          vecmax = vecmax/(zoomfac*scalefac)
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
@@ -815,9 +815,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !
     case('k')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
-          print*,'decreasing opacity by factor of ',1.5*zoomfac
+          print*,'decreasing opacity by factor of ',1.5*zoomfac*scalefac
           !--opacity goes like 1/taupartdepth
-          taupartdepth = 1.5*zoomfac*taupartdepth
+          taupartdepth = zoomfac*scalefac*taupartdepth
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -825,9 +825,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('K')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
-          print*,'increasing opacity by factor of ',1.5*zoomfac
+          print*,'increasing opacity by factor of ',1.5*zoomfac*scalefac
           !--opacity goes like 1/taupartdepth
-          taupartdepth = taupartdepth/(1.5*zoomfac)
+          taupartdepth = taupartdepth/(zoomfac*scalefac)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -895,7 +895,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case(',')
        if (rotation) then
           !print*,'changing z rotation angle by -15 degrees...'
-          anglez = anglez - 15.
+          if (int(scalefac) > 1) then
+             anglez = anglez - int(scalefac)
+          else
+             anglez = anglez - 15.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -904,7 +908,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('<')
        if (rotation) then
           !print*,'changing z rotation angle by -30 degrees...'
-          anglez = anglez - 30.
+          if (int(scalefac) > 1) then
+             anglez = anglez - int(scalefac)
+          else
+             anglez = anglez - 30.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -913,7 +921,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('.')
        if (rotation) then
           !print*,'changing z rotation angle by 15 degrees...'
-          anglez = anglez + 15.
+          if (int(scalefac) > 1) then
+             anglez = anglez + int(scalefac)
+          else
+             anglez = anglez + 15.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -922,7 +934,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('>')
        if (rotation) then
           !print*,'changing z rotation angle by 30 degrees...'
-          anglez = anglez + 30.
+          if (int(scalefac) > 1) then
+             anglez = anglez + int(scalefac)
+          else
+             anglez = anglez + 30.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -931,7 +947,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('/')
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by -15 degrees...'
-          angley = angley - 15.
+          if (int(scalefac) > 1) then
+             angley = angley - int(scalefac)
+          else
+             angley = angley - 15.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -940,7 +960,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('?')
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by -30 degrees...'
-          angley = angley - 30.
+          if (int(scalefac) > 1) then
+             angley = angley - int(scalefac)
+          else
+             angley = angley - 30.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -949,7 +973,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('\')
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by 15 degrees...'
-          angley = angley + 15.
+          if (int(scalefac) > 1) then
+             angley = angley + int(scalefac)
+          else
+             angley = angley + 15.
+          endif 
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -958,7 +986,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('|')
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by 30 degrees...'
-          angley = angley + 30.
+          !print*,'changing y rotation angle by 15 degrees...'
+          if (int(scalefac) > 1) then
+             angley = angley + int(scalefac)
+          else
+             angley = angley + 30.
+          endif 
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -967,7 +1000,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('[')
        if (rotation .and. ndim >= 3) then
           !print*,'changing x rotation angle by -15 degrees...'
-          anglex = anglex - 15.
+          if (int(scalefac) > 1) then
+             anglex = anglex - int(scalefac)
+          else
+             anglex = anglex - 15.
+          endif 
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -976,7 +1013,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('{')
        if (rotation .and. ndim >= 3) then
           !print*,'changing x rotation angle by -30 degrees...'
-          anglex = anglex - 30.
+          if (int(scalefac) > 1) then
+             anglex = anglex - int(scalefac)
+          else
+             anglex = anglex - 30.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -985,7 +1026,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case(']')
        if (rotation .and. ndim >= 3) then
           !print*,'changing x rotation angle by 15 degrees...'
-          anglex = anglex + 15.
+          if (int(scalefac) > 1) then
+             anglex = anglex + int(scalefac)
+          else
+             anglex = anglex + 15.
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -994,7 +1039,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('}')
        if (rotation .and. ndim >= 3) then
           !print*,'changing x rotation angle by 30 degrees...'
-          anglex = anglex + 30.
+          if (int(scalefac) > 1) then
+             anglex = anglex + int(scalefac)
+          else
+             anglex = anglex + 30.
+          endif 
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1067,8 +1116,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 print*,'resetting z position'
                 zobserver = 1.
              else
-                print*,'shifting perspective position up by 20%'
-                zobserver = 1.2*zobserver
+                print*,'shifting perspective position up by factor of ',scalefac
+                zobserver = scalefac*zoomfac*zobserver
              endif
              iadvance = 0
              interactivereplot = .true.
@@ -1091,7 +1140,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 zobserver = 1.
              else
                 print*,'shifting perspective position up by factor of 2'
-                zobserver = 2.*zobserver
+                zobserver = 2.*scalefac*zoomfac*zobserver
              endif
              iadvance = 0
              interactivereplot = .true.
@@ -1109,8 +1158,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 print*,'resetting z position'
                 zobserver = 1.
              else
-                print*,'shifting perspective position down by 20%'
-                zobserver = zobserver/1.2
+                print*,'shifting perspective position down'
+                zobserver = zobserver/(zoomfac*scalefac)
              endif
           endif
           iadvance = 0
@@ -1129,7 +1178,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 zobserver = 1.
              else
                 print*,'shifting perspective position down by factor of 2'
-                zobserver = zobserver/2.
+                zobserver = zobserver/(2.*zoomfac*scalefac)
              endif
           endif
           iadvance = 0
@@ -2016,7 +2065,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     case('v')
        if (ivecarr(ipanel) > 0) then
           !print*,'decreasing vector arrow size'
-          xmax(ivecarr(ipanel)) = 1.2*zoomfac*xmax(ivecarr(ipanel))
+          xmax(ivecarr(ipanel)) = zoomfac*scalefac*xmax(ivecarr(ipanel))
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.
@@ -2024,7 +2073,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
     case('V')
        if (ivecarr(ipanel) > 0) then
           !print*,'increasing vector arrow size'
-          xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(1.2*zoomfac)
+          xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(zoomfac*scalefac)
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.
