@@ -2349,7 +2349,7 @@ subroutine set_labels
        case('abco')
           label(i) = 'CO abundance'
        case('eta_{OR}')
-          units(i:i+2) = udist/utime**2
+          units(i:i+2) = udist**2/utime
           unitslabel(i:i+2) = ' [cm^2/s]'
        case('grainsize')
           igrainsize = i
