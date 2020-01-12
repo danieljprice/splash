@@ -1938,7 +1938,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        endif
        select case(char)
        case('-')
-          xlength = zoomfac**scalefac*xlength
+          xlength = zoomfac*scalefac*xlength
           ylength = zoomfac*scalefac*ylength
           renderlength = zoomfac*scalefac*renderlength
           contlength = zoomfac*scalefac*contlength
