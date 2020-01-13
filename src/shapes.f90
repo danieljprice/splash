@@ -625,12 +625,12 @@ end subroutine edit_shape
 ! utility routine to add a new text shape interactively
 !--------------------------------------------------------
 subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
- use plotlib, only:plot_qwin
+ use plotlib, only:plot_qwin,plot_qch
  real, intent(in)     :: xpt,ypt
  integer, intent(in)  :: itransx,itransy,ipanel
  integer, intent(out) :: ierr
  integer :: i
- real :: xmin,xmax,ymin,ymax,xposi,yposi
+ real :: xmin,xmax,ymin,ymax,xposi,yposi,charheight
 
  ierr = 0
  nshapes = nshapes + 1
@@ -658,7 +658,8 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
  shape(i)%xpos = xposi
  shape(i)%ypos = yposi
 
- shape(i)%xlen = 1.
+ call plot_qch(charheight)
+ shape(i)%xlen = charheight
  shape(i)%ylen = 1.
  shape(i)%angle = 0.
  shape(i)%text = 'click to edit'
