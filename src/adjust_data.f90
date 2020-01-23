@@ -34,19 +34,19 @@ contains
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist
- use labels,          only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho
- use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,fakedust
+ use labels,          only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho,labeltype
+ use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose
  use particle_data,   only:dat,npartoftype,iamtype
  use geometry,        only:labelcoord
  use filenames,       only:ifileopen,nstepsinfile
- use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary
+ use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
  use settings_render, only:ifastrender
  real :: hmin,dphi,domega
  real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
  integer :: i,j,nlist,nerr,ierr,isink,isinkpos,itype
  integer :: ntot,isink1,isink2,isinklist(2)
- logical :: centreonsink,got_sinks
+ logical :: centreonsink,got_sinks,no_dust_particles
 
  !
  !--environment variable setting to enforce a minimum h
@@ -193,10 +193,9 @@ subroutine adjust_data_codeunits
  !
  !--fake a set of dust particles from the one-fluid dust formulation
  !
- if (idustfrac > 0 .and. irho > 0 .and.            &
-          .not.(lenvironment('SPLASH_BARYCENTRIC')   &
-          .or. lenvironment('NSPLASH_BARYCENTRIC'))) then
-    fakedust = .true.
+ no_dust_particles = .not.got_particles_of_type('dust',labeltype,npartoftype)
+ if (idustfrac > 0 .and. irho > 0 .and. no_dust_particles .and. &
+          .not.lenvironment('SPLASH_BARYCENTRIC')) then
     call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
  endif
 

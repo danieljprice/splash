@@ -32,7 +32,7 @@ module part_utils
  public :: igettype,get_tracked_particle
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
- public :: get_binary
+ public :: get_binary,got_particles_of_type
  private
 
 contains
@@ -136,6 +136,23 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  endif
 
 end subroutine locate_nth_particle_of_type
+
+!-------------------------------------------------------------
+! check if any particles of type 'mytype' exist
+!-------------------------------------------------------------
+pure logical function got_particles_of_type(mytype,labeltype,npartoftype)
+ character(len=*), intent(in) :: mytype,labeltype(:)
+ integer, intent(in) :: npartoftype(:,:)
+ integer :: itype
+
+ got_particles_of_type = .false.
+ do itype=1,size(npartoftype(:,1))
+    if (index(labeltype(itype),mytype) > 0) then
+       if (any(npartoftype(itype,:) > 0)) got_particles_of_type = .true.
+    endif
+ enddo
+
+end function got_particles_of_type
 
 !----------------------------------------------------------
 ! routine to get properties of particle binary system

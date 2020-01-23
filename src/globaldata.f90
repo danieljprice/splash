@@ -135,7 +135,6 @@ module settings_data
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
  integer, dimension(10) :: isteplist
- logical :: fakedust = .false.
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  logical, parameter :: buffer_steps_in_file = .false.
