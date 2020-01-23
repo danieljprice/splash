@@ -429,21 +429,23 @@ subroutine print_dustgrid_info(ntags,tags,vals,mgas)
  integer, intent(in) :: ntags
  character(len=*), intent(in) :: tags(ntags)
  real, intent(in) :: vals(ntags),mgas
- integer :: i,j,nd
+ integer :: i,nd
 
  nd = 0
- if (match_tag(tags,'grainsize1') > 0) print "(/,a)",' Dust grid:'
- do i=1,ntags
-    if (index(tags(i),'grainsize') > 0) then
-       nd = nd + 1
-       if (vals(i)*1.e4 > 1000.) then
-          print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e1,'mm'
-       elseif (vals(i) > 0.) then
-          print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e4,'micron'
+ if (match_tag(tags,'grainsize1') > 0) then
+    print "(/,a)",' Dust grid:'
+    do i=1,ntags
+       if (index(tags(i),'grainsize') > 0) then
+          nd = nd + 1
+          if (vals(i)*1.e4 >= 1000.) then
+             print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e1,'mm'
+          elseif (vals(i) > 0.) then
+             print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e4,'micron'
+          endif
        endif
-    endif
- enddo
- if (nd > 0) print "(a)"
+    enddo
+    if (nd > 0) print "(a)"
+ endif
 
  ! nd = 0
  ! print *,' mgas = ',mgas/(2d33/umass)
@@ -519,7 +521,7 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
           if (ierr /= 0) return
        endif
        if (phantomdump .and. nints < 7) ntypes = nints - 1
-       if (iverbose >= 1) print *,'npart = ',npart,' MPI blocks = ',nblocks
+       if (iverbose >= 2 .or. debug) print *,'npart = ',npart,' MPI blocks = ',nblocks
        if (phantomdump) then
           n1 = npartoftypei(1)
        else
@@ -623,7 +625,7 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
     return
  endif
 !   print "(a,i3)",' ndoubles = ',nreal8s
- if (iverbose >= 1) print "(4(a,i3),a)",' header contains ',nints,' ints, ',&
+ if (iverbose >= 2 .or. debug) print "(4(a,i3),a)",' header contains ',nints,' ints, ',&
                            nreals,' reals,',nreal4s,' real4s, ',nreal8s,' doubles'
  if (tagged) then
     if (nreal8s > maxinblock) then
@@ -710,7 +712,7 @@ subroutine read_block_header(iunit,iblock,iarr,iverbose,debug,&
  endif
  if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
  if (isize(iarr) > 0 .and. iblock==1) then
-    if (iverbose >= 1) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
+    if (iverbose >= 2 .or. debug) print "(1x,a,i1,a,i12,a,5(i2,1x),a,3(i2,1x))", &
         'block ',iarr,' dim = ',isize(iarr),' nint =',nint,nint1,nint2,nint4,nint8,&
         'nreal =',nreal,nreal4,nreal8
  endif
@@ -741,7 +743,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
  real :: massoftypei(ntypes)
  integer :: i,ierrs(10)
  integer :: itype
- real,    parameter :: pi=3.141592653589
+ real, parameter :: pi=4.*atan(1.)
 
  if (phantomdump) then
     call extract('time',time,realarr,tags,nreals,ierrs(1))
@@ -852,7 +854,6 @@ subroutine guess_labels(ncolumns,iamvec,label,labelvec,istartmhd, &
  character(len=*), intent(inout) :: label(:),labelvec(:),unitslabel(:)
  real(doub_prec),  intent(in)    :: udist,utime
  real,    intent(inout) :: units(:)
- integer :: i
  real(doub_prec) :: uergg
 
 !--the following only for mhd small dumps or full dumps
@@ -1255,7 +1256,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        return
     endif
     if (int2 /= 780806 .and. int2 /= 060878) then
-       print "(a)",' single precision dump'
+       if (iverbose >= 1) print "(a)",' single precision dump'
        rewind(iunit)
        read(iunit,iostat=ierr) intg1,r4,int2,iversion,int3
        if (int2 /= 780806 .and. int2 /= 060878) then
