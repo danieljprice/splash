@@ -117,10 +117,10 @@ end subroutine initialise_coord_transforms
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
  use exact,           only:options_exact,submenu_exact
- use labels,          only:labeltype,ih,label,idustfracsum,ideltavsum
+ use labels,          only:labeltype,ih,label
  use limits,          only:lim
- use settings_data,   only:icoords,ntypes,ndim,ndimV,UseTypeInRenderings, &
-                            ndataplots,ndusttypes,idustfrac_plot,ideltav_plot,ncalc
+ use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings, &
+                            ndataplots,idustfrac_plot,ideltav_plot
  use settings_render, only:iplotcont_nomulti
  use particle_data,   only:npartoftype,iamtype
  use prompting,       only:prompt,print_logical
@@ -137,12 +137,10 @@ subroutine submenu_particleplots(ichoose)
  implicit none
  integer, intent(in) :: ichoose
  integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
- integer             :: idustfrac_prev
  character(len=2)    :: charntypes
  character(len=20)   :: substring1,substring2,substring3
  character(len=1000) :: fmtstring
  character(len=120)  :: contline
- character(len=3)    :: idustfracsum_string
  logical :: ians
 
  iaction = ichoose
