@@ -93,8 +93,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
  integer, dimension(3), intent(in) :: ix
  real,    dimension(3), intent(in) :: xorigin
  real, dimension(npixx,npixy) :: datnorm
- real, parameter :: pi = 3.1415926536
-
  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
  integer :: ixcoord,iycoord,izcoord,ierr,ncpus
  integer :: iprintinterval, iprintnext
