@@ -1982,7 +1982,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              itype = itypemap_phantom(iphase(i))
              iamtype(i,j) = itype
              select case(itype)
-             case(1,2,4) ! remove accreted particles
+             case(1,2,4:) ! remove accreted particles
                 if (ih > 0 .and. required(ih)) then
                    if (dat(i,ih,j) <= 0.) then
                       iamtype(i,j) = itypemap_unknown_phantom
