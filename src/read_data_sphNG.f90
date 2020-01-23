@@ -69,7 +69,7 @@ module sphNGread
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays
- logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header,onefluid_dust
+ logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
  logical :: batcode,tagged,debug
  integer, parameter :: maxarrsizes = 10
@@ -307,10 +307,10 @@ end subroutine extract_real4arr
  ! Extract various options from the fileident string
  !----------------------------------------------------------------------
 subroutine get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
-                       usingvecp,usingeulr,cleaning,h2chem,use_dustfrac,rt_in_header,batcode)
+                       usingvecp,usingeulr,cleaning,h2chem,rt_in_header,batcode)
  character(len=*), intent(in) :: fileident
  logical,          intent(out) :: smalldump,tagged,phantomdump,batcode
- logical,          intent(out) :: usingvecp,usingeulr,cleaning,h2chem,use_dustfrac,rt_in_header
+ logical,          intent(out) :: usingvecp,usingeulr,cleaning,h2chem,rt_in_header
 
  smalldump = .false.
  phantomdump = .false.
@@ -321,7 +321,6 @@ subroutine get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
  rt_in_header = .false.
  batcode = .false.
  tagged = .false.
- use_dustfrac = .false.
  if (fileident(1:1)=='S') then
     smalldump = .true.
  endif
@@ -347,9 +346,6 @@ subroutine get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
  endif
  if (index(fileident,'RT=on') /= 0) then
     rt_in_header = .true.
- endif
- if (index(fileident,'1dust') /= 0) then
-    use_dustfrac = .true.
  endif
  if (index(fileident,'This is a test') /= 0) then
     batcode = .true.
@@ -639,8 +635,8 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
     call extract('utime',utime,real8arr,tags,nreal8s,ierrs(3))
     call extract('umagfd',umagfd,real8arr,tags,nreal8s,ierrs(4))
 
-    ! extract the number of dust arrays are in the file
-    if (onefluid_dust) ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
+    ! extract the number of dustfrac arrays in the file
+    ndusttypes = extract_ndusttypes(tags,tagsreal,intarr,nints)
 !
 !--append real*8s to realarr so they can be used in
 !  legends and calculated quantities
@@ -1297,7 +1293,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
  mhddump = .false.
  rtdump = .false.
  call get_options_from_fileident(fileident,smalldump,tagged,phantomdump,&
-                                   usingvecp,usingeulr,cleaning,h2chem,onefluid_dust,rt_in_header,batcode)
+                                   usingvecp,usingeulr,cleaning,h2chem,rt_in_header,batcode)
  if (tagged .and. iversion < 1) print "(a)",'ERROR: got tagged format but iversion is ',iversion
 !
 !--read variables from header
@@ -1417,16 +1413,8 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        elseif (phantomdump .and. (nreal(1) < 3 .or. nreal4(1) < 1)) then
           print "(a)",' ERROR: x,y,z or h missing in phantom read'
        endif
-       if (onefluid_dust) then
-          if (ndusttypes>1) then
-             ndustarrays = 0
-             !ndustarrays = ndusttypes + 1      !--the extra column is for dustfracsum
-          else
-             ndustarrays = 1
-          endif
-       else
-          ndustarrays = 0
-       endif
+       ndustarrays = ndusttypes
+       if (debug) print*,' DEBUG: ndustarrays = ',ndustarrays
        if (narrsizes >= 4) then
           nmhdarrays = 3 ! Bx,By,Bz
           nmhd = nreal(4) + nreal4(4) + nreal8(4) - nmhdarrays ! how many "extra" mhd arrays
@@ -1441,9 +1429,9 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        if (narrsizes >= 4) mhddump = .true.
 
        if (.not.(mhddump.or.smalldump)) then
-          ivx = nhydroarrays+1
+          ivx = nhydroarrays+ndustarrays+1
        elseif (mhddump .and. .not.smalldump) then
-          ivx = nhydroarrays+nmhdarrays+1
+          ivx = nhydroarrays+ndustarrays+nmhdarrays+1
        else
           ivx = 0
        endif
@@ -2221,7 +2209,7 @@ subroutine set_labels
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label
  use params
- use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode,ndusttypes
+ use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
  use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
  use sphNGread
