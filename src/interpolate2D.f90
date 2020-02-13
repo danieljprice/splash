@@ -67,7 +67,7 @@ contains
 !
 !     Output: smoothed data            : datsmooth (npixx,npixy)
 !
-!     Written by Daniel Price 2003-2012
+!     Written by Daniel Price 2003-2020
 !     Exact rendering implemented by Maya Petkova and Daniel Price 2018
 !--------------------------------------------------------------------------
 
@@ -114,6 +114,16 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  !
  !--loop over particles
  !
+!$omp parallel do default(none) &
+!$omp shared(hh,x,y,weight,dat,datsmooth,datnorm,itype,npart) &
+!$omp shared(xmin,ymin,normalise,exact,radkernel,const) &
+!$omp shared(pixwidthx,pixwidthy,periodicx,periodicy,npixx,npixy) &
+!$omp private(hi,radkern,wab) &
+!$omp private(hi1,term,termnorm,jpixi,ipixi) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$omp private(q2,xpix,ypix,dx,dy,r0,d1,d2,pixint) &
+!$omp private(i,ipix,jpix) &
+!$omp schedule (guided, 2)
  over_parts: do i=1,npart
     !
     !--skip particles with itype < 0
@@ -178,8 +188,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              pixint = pint(r0, d1, d2, hi1)
 
              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-             if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             if (normalise) then
+                !$omp atomic
+                datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             endif
           enddo
        endif
 
@@ -206,8 +220,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              pixint = pint(r0, d1, d2, hi1)
 
              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-             if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             if (normalise) then
+                !$omp atomic
+                datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             endif
           enddo
        endif
 
@@ -235,15 +253,23 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              pixint = pint(r0, d1, d2, hi1)
 
              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-             if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             if (normalise) then
+                !$omp atomic
+                datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             endif
 
              if (jpix < jpixmax) then
                 jpixi = jpix+1
                 if (periodicy) jpixi = iroll(jpixi,npixy)
 
+                !$omp atomic
                 datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
-                if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+                if (normalise) then
+                   !$omp atomic
+                   datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+                endif
 
                 jpixi = jpix
                 if (periodicy) jpixi = iroll(jpix,npixy)
@@ -256,15 +282,23 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              pixint = pint(r0, d1, d2, hi1)
 
              wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-             if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             if (normalise) then
+                !$omp atomic
+                datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             endif
 
              if (ipix < ipixmax) then
                 ipixi = ipix+1
                 if (periodicx) ipixi = iroll(ipixi,npixx)
 
+                !$omp atomic
                 datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) - term*wab
-                if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+                if (normalise) then
+                   !$omp atomic
+                   datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) - termnorm*wab
+                endif
              endif
           enddo
        enddo
@@ -286,17 +320,23 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              !
              !--SPH kernel
              !
-             wab = wfunc(q2)
+             wab = wkernel(q2)
              !
              !--calculate data value at this pixel using the summation interpolant
              !
+             !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
-             if (normalise) datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             if (normalise) then
+                !$omp atomic
+                datnorm(ipixi,jpixi) = datnorm(ipixi,jpixi) + termnorm*wab
+             endif
           enddo
        enddo
     endif
 
  enddo over_parts
+ !$omp end parallel do
+
  if (exact) then
     print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy)
     print*, 'max of datpix = ', maxval(datsmooth)
