@@ -522,11 +522,8 @@ read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---FITS read ---
-fits: checksystem checkfits $(OBJECTS) read_data_fits_futils.o read_data_fits_utils.o read_data_fits.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) read_data_fits_futils.o read_data_fits_utils.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
-
-read_data_fits_utils.o: read_data_fits_utils.c
-	$(CC) $(CFLAGS) $(FITSINCLUDE) -c $< -o $@
+fits: checksystem checkfits $(OBJECTS) read_data_fits.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) read_data_fits.o $(LDFLAGS) $(FITSLIBS)
 
 #---PBOB read ---
 

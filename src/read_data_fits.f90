@@ -54,26 +54,26 @@
 !
 !-------------------------------------------------------------------------
 subroutine read_data(rootname,istepstart,ipos,nstepsread)
- use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
- use params,         only:doub_prec
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose,buffer_steps_in_file
- !use settings_page,  only:legendtext
- use mem_allocation, only:alloc
- ! use labels,         only:ih,irho,ipmass
- use asciiutils,     only:cstring
- use fitsutils,      only:read_fits_header,read_fits_data
+ use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart
+ use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
+ use mem_allocation,   only:alloc
+ use interpolations2D, only:interpolate2D
  implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
- integer               :: i,istep,ierr,nextra
- integer               :: nunknown,ignoretl
- integer               :: ncolstep,npart_max,nstep_max,nsteps_to_read,ntoti
- logical               :: iexist,reallocate,goterrors,ignore_time_levels
- real(doub_prec) :: timetemp,dx,vol
+ integer               :: i,j,k,n,ierr,nextra,naxes(2),nfound,ireadwrite,blocksize
+ integer               :: iunit,firstpix,nullval,group
+ integer               :: ncolstep,npixels,nsteps_to_read,its,niter
+ logical               :: iexist,reallocate,goterrors,anynull
+ real, dimension(:,:), allocatable :: image
+ real, dimension(:), allocatable :: weight
+ integer, dimension(:), allocatable :: itype
+ real :: dx,dy,imagemax,xmin,ymin
 
  nstepsread = 0
+ nsteps_to_read = 1
  goterrors  = .false.
 
  if (len_trim(rootname) > 0) then
@@ -101,9 +101,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--set parameters which do not vary between timesteps
 !
- ndim  = 3
- ndimV = 3
+ ndim  = 2
+ ndimV = 2
  nextra = 0
+ ncolstep = 4 ! x, y, h, rho
 !
 !--read data from snapshots
 !
@@ -112,57 +113,106 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- call read_fits_header(cstring(datfile),ntoti,ncolstep,ierr)
- print*,'got ',ntoti,ncolstep,ierr
+ ierr = 0
+ call ftgiou(iunit,ierr)
+
+ ireadwrite = 0
+ call ftopen(iunit,datfile,ireadwrite,blocksize,ierr)
+
+ call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
+ npixels = naxes(1)*naxes(2)
  !
  !--sanity check the header read
  !
- if (ntoti <= 0) then
+ if (npixels <= 0) then
+    print*,' ERROR: No pixels found'
     ierr = 1
     return
  endif
- read*
 
  ncolumns = ncolstep + nextra
- if (iverbose >= 1) print "(3(a,1x,i10))",' npart: ',ntoti,' ncolumns: ',ncolstep,' nsteps: ',nstep_max
-
+ if (iverbose >= 1) print "(3(a,1x,i10))",' npixels: ',npixels,' ncolumns: ',ncolstep,' nsteps: ',nsteps_to_read
  !
- !--reallocate memory for main data array
+ ! read image
  !
- if (reallocate .or. .not.(allocated(dat))) then
-    call alloc(npart_max,nsteps_to_read,max(ncolumns+ncalc,maxcol),mixedtypes=.true.)
+ firstpix = 1
+ nullval = -999
+ group = 1
+ allocate(image(naxes(1),naxes(2)),stat=ierr)
+ if (ierr /= 0) then
+    print*,' ERROR allocating memory'
+    return
  endif
  nstepsread = 1
+ ierr = 0
+ call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
+ call ftclos(iunit,ierr)
+ call ftfiou(iunit,ierr)
+
+ !
+ !--allocate or reallocate memory for main data array
+ !
+ reallocate = (npixels > maxpart)
+ if (reallocate .or. .not.(allocated(dat))) then
+    call alloc(npixels,nsteps_to_read,max(ncolumns+ncalc,maxcol),mixedtypes=.false.)
+ endif
 !
 !--now memory has been allocated, set arrays which are constant for all time
 !
  gamma = 5./3.
+ time = 0.
 !
 !--set flag to indicate that only part of this file has been read
 !
  ipartialread = .false.
 !
-!--call set labels to identify location of smoothing length
+! set smoothing length
 !
- !call set_labels
- call read_fits_data(ierr)
+  allocate(weight(npixels),itype(npixels))
+  masstype(1,i) = 0.0
+  npartoftype(1,i) = npixels
+  xmin = 0.
+  ymin = 0.
+  dy = 1.
+  dx = 1.
+  itype(:) = 1
+  imagemax = maxval(image)
+
+  niter = 4
+  h_iterations: do its=1,niter
+     n = 0
+     do k=1,naxes(2)
+        do j=1,naxes(1)
+           n = n + 1
+           dat(n,1,i) = j
+           dat(n,2,i) = k
+           dat(n,3,i) = min(0.4*sqrt(imagemax/image(j,k)),5.*(its+1))
+           if (its==1) dat(n,4,i) = image(j,k)
+        enddo
+     enddo
+
+     weight(:) = 1.
+     call interpolate2D(dat(1:npixels,1,i),dat(1:npixels,2,i),dat(1:npixels,3,i),&
+          weight,dat(1:npixels,4,i),itype,npixels, &
+          xmin,ymin,image,naxes(1),naxes(2),dx,dy,&
+          normalise=.true.,exact=.false.,periodicx=.false.,periodicy=.false.)
+
+  enddo h_iterations
+!
+! clean up
+!
+  deallocate(image,weight,itype)
 
 end subroutine read_data
 
-!!------------------------------------------------------------
-!! set labels for each column of data
-!!------------------------------------------------------------
-
+!------------------------------------------------------------
+! set labels for each column of data
+!------------------------------------------------------------
 subroutine set_labels
- use labels,         only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,iutherm,ih,irho
- use params
+ use labels,         only:label,labeltype,ix,ipmass,ih,irho
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,       only:labelcoord
- use system_utils,   only:envlist,ienvironment
-!  use cactushdf5read, only:blocklabel
- use asciiutils,     only:lcase
  implicit none
- integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
@@ -172,49 +222,22 @@ subroutine set_labels
     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
     return
  endif
- !blocklabel(1:5) = (/'x ','y ','z ','dx','m '/)
 
  ix(1) = 1
  ix(2) = 2
- ix(3) = 3
- ih = 4
- ipmass = 5
- iutherm = 0
- irho = 0
-!   !do icol=1,size(blocklabel)
-! !     select case(trim(blocklabel(icol)))
-!      case('vel[0]')
-!         ivx = icol
-!      case('dens','density')
-!         if (irho==0) irho = icol
-!      case('rho')
-!         irho = icol
-!      end select
-!      label(icol) = trim(blocklabel(icol))
-!   enddo
+ ih = 3
+ irho = 4
+ !ipmass = 5
 
  ! set labels of the quantities read in
  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
- !if (irho > 0)    label(irho)       = 'density'
- !if (iutherm > 0) label(iutherm)    = 'u'
+ if (irho > 0)    label(irho)       = 'intensity'
  !if (ipmass > 0)  label(ipmass)     = 'particle mass'
- !if (ih > 0)      label(ih)         = 'h'
-
- ! set labels for vector quantities
- if (ivx > 0) then
-    iamvec(ivx:ivx+ndimV-1) = ivx
-    labelvec(ivx:ivx+ndimV-1) = 'v'
-    do i=1,ndimV
-       label(ivx+i-1) = trim(labelvec(ivx))//'_'//labelcoord(i,1)
-    enddo
- endif
+ if (ih > 0)      label(ih)         = 'sigma'
 
  ! set labels for each particle type
- ntypes = 2
- labeltype(1) = 'gas'
- labeltype(2) = 'ghost'
+ ntypes = 1
+ labeltype(1) = 'pixel'
  UseTypeInRenderings(:) = .true.
- UseTypeInRenderings(2) = .false.
 
- return
 end subroutine set_labels
