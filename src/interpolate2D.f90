@@ -123,7 +123,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
 !$omp private(q2,xpix,ypix,dx,dy,r0,d1,d2,pixint) &
 !$omp private(i,ipix,jpix) &
-!$omp schedule (guided, 2)
+!$omp schedule (guided, 10)
  over_parts: do i=1,npart
     !
     !--skip particles with itype < 0
@@ -162,7 +162,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        if (jpixmax > npixy) jpixmax = npixy
     endif
 
-    if (exact) then
+    if (exact .and. ipixmax-ipixmin < 5) then
        !
        !--loop over pixels boundaries, adding the contribution from this particle
        !
