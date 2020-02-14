@@ -27,7 +27,7 @@
 !----------------------------------------------------------------------
 
 module interpolations2D
- use kernels,       only:radkernel2,radkernel,cnormk2D,wfunc,pint
+ use kernels,       only:radkernel2,radkernel,cnormk2D,wfunc,pint,select_kernel
  use timing,        only:wall_time,print_time
  use interpolation, only:iroll
  implicit none
@@ -93,6 +93,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  real :: pixint,d1,d2,r0
 
  call wall_time(t_start)
+ if (.not.associated(wfunc)) call select_kernel(0)
 
  datsmooth = 0.
  datnorm = 0.
@@ -337,11 +338,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  enddo over_parts
  !$omp end parallel do
 
- if (exact) then
-    print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy)
-    print*, 'max of datpix = ', maxval(datsmooth)
-    print*, 'min of datpix = ', minval(datsmooth)
- endif
+ !if (exact) then
+ !    print*, 'sum of datpix = ', sum(datsmooth)/(npixx*npixy)
+ !    print*, 'max of datpix = ', maxval(datsmooth)
+ !    print*, 'min of datpix = ', minval(datsmooth)
+ !endif
  !
  !--normalise dat array
  !
@@ -408,6 +409,7 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
     print*,'interpolate2D_vec: warning: ignoring some or all particles with h < 0'
  endif
  const = cnormk2D  ! normalisation constant
+ if (.not.associated(wfunc)) call select_kernel(0)
  !
  !--loop over particles
  !
@@ -573,6 +575,7 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
  datsmooth = 0.
  datnorm = 0.
  const = cnormk2D   ! normalisation constant
+ if (.not.associated(wfunc)) call select_kernel(0)
  !
  !--loop over particles
  !
@@ -832,6 +835,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     itsmax = 1
  endif
  call wall_time(t1)
+ if (.not.associated(wfunc)) call select_kernel(0)
 
  iterations: do its=1,itsmax
     datsmooth = 0.
