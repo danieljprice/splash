@@ -522,8 +522,8 @@ read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 #---FITS read ---
-fits: checksystem checkfits $(OBJECTS) read_data_fits.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) read_data_fits.o $(LDFLAGS) $(FITSLIBS)
+fits: checksystem checkfits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
 
 #---PBOB read ---
 
@@ -657,12 +657,18 @@ gasoline: tipsy
 
 myall: mhutch ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
+#
+# sources for the grid2pdf command-line utility
+#
 SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
 OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
+#
+# libsplash: library version of splash interpolation routines
+#
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
       interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
       interpolate3D_geom.F90 interpolate3D_projection.F90 \
@@ -677,6 +683,9 @@ libsplash: lib
 lib: $(OBJLIB)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIB) -o libsplash.so
 
+#
+# libexact: exact solution library
+#
 SRCLIBEXACT= plotlib_mock.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
@@ -690,6 +699,21 @@ OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 libexact: libexactcmd
 libexactcmd: checksystem $(OBJLIBEXACTALL)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+#
+# splash image manipulation utilities
+#
+SOURCESIMLIB= asciiutils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
+         imageutils.f90 write_fits.f90 splash_image.f90
+
+OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o) $(STATICLIBS)
+
+.PHONY: image
+image: splash-image
+
+splash-image: checksystem checkfits $(OBJECTSIMLIB)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(LDFLAGS) $(FITSLIBS)
+	@echo; echo ' splash-image utility successfully compiled! ';
+	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
@@ -829,7 +853,7 @@ install: destdircheck installcheck
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash; then echo; \
+	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash || test -e $(BINDIR)/splash-image; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\

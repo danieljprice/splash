@@ -57,8 +57,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
- use interpolations2D, only:interpolate2D
  use readwrite_fits,   only:read_fits_image,fits_error,write_fits_image
+ use imageutils,       only:image_denoise
  implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
@@ -68,9 +68,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  integer               :: ncolstep,npixels,nsteps_to_read,its,niter
  logical               :: iexist,reallocate
  real, dimension(:,:), allocatable :: image
- real, dimension(:), allocatable :: weight
- integer, dimension(:), allocatable :: itype
- real :: dx,dy,imagemax,xmin,ymin
+ real :: dx,dy
 
  nstepsread = 0
  nsteps_to_read = 1
@@ -103,7 +101,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  ndim  = 2
  ndimV = 2
  nextra = 0
- ncolstep = 4 ! x, y, h, rho
+ ncolstep = 5 ! x, y, h, I, m
 !
 !--read data from snapshots
 !
@@ -134,55 +132,36 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  gamma = 5./3.
  time = 0.
  ipartialread = .false.
+ masstype(1,i) = 0.0
+ npartoftype(1,i) = npixels
+!
+! set x,y and other things needed for splash
+!
+ n = 0
+ dx = 1.
+ dy = 1.
+ do k=1,naxes(2)
+    do j=1,naxes(1)
+       n = n + 1
+       dat(n,1,i) = j
+       dat(n,2,i) = k
+       dat(n,3,i) = 1.  ! smoothing length == pixel scale
+       dat(n,4,i) = image(j,k)
+       dat(n,5,i) = image(j,k)*dx*dy  ! flux==equivalent of "mass"
+    enddo
+ enddo
 !
 ! set smoothing length
 !
-  allocate(weight(npixels),itype(npixels))
-  masstype(1,i) = 0.0
-  npartoftype(1,i) = npixels
-  xmin = 0.
-  ymin = 0.
-  dy = 1.
-  dx = 1.
-  itype(:) = 1
-  imagemax = maxval(image)
-  print*,' total intensity =',sum(image)
-
-  niter = 4
-  h_iterations: do its=1,niter
-     n = 0
-     do k=1,naxes(2)
-        do j=1,naxes(1)
-           n = n + 1
-           dat(n,1,i) = j
-           dat(n,2,i) = k
-           if (image(j,k) > 0.) then
-              dat(n,3,i) = min(0.4*sqrt(imagemax/image(j,k)),5.*(its+1))
-           else
-              dat(n,3,i) = 0.
-           endif
-           if (its==1) dat(n,4,i) = max(image(j,k),0.)
-        enddo
-     enddo
-     if (its==1) print*,' total intensity(+ve)=',sum(dat(1:n,4,i))
-
-     weight(:) = 1.
-     call interpolate2D(dat(1:npixels,1,i),dat(1:npixels,2,i),dat(1:npixels,3,i),&
-          weight,dat(1:npixels,4,i),itype,npixels, &
-          xmin,ymin,image,naxes(1),naxes(2),dx,dy,&
-          normalise=.true.,exact=.false.,periodicx=.false.,periodicy=.false.)
-
-     print*,' total intensity =',sum(image)
-
-  enddo h_iterations
+! call image_denoise(naxes,image,dat(1:npixels,3,i))
 !
-! write fits image
+! write smoothed fits image
 !
-  call write_fits_image('splash-output.fits',image,naxes,ierr)
+! call write_fits_image('splash-output.fits',image,naxes,ierr)
 !
 ! clean up
 !
-  deallocate(image,weight,itype)
+ deallocate(image)
 
 end subroutine read_data
 
@@ -208,12 +187,12 @@ subroutine set_labels
  ix(2) = 2
  ih = 3
  irho = 4
- !ipmass = 5
+ ipmass = 5
 
  ! set labels of the quantities read in
  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
  if (irho > 0)    label(irho)       = 'intensity'
- !if (ipmass > 0)  label(ipmass)     = 'particle mass'
+ if (ipmass > 0)  label(ipmass)     = 'flux'
  if (ih > 0)      label(ih)         = 'sigma'
 
  ! set labels for each particle type
