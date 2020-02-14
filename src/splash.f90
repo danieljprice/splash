@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2019 Daniel Price
+!     Copyright (C) 2005-2020 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -49,14 +49,15 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     2.10.0  : (xx/xx/20)
-!             much improved splash to grid - bug fixes with pixel number and roundoff error; 
-!             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;  
+!             much improved splash to grid - bug fixes with pixel number and roundoff error;
+!             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
 !             added bytestream output formats for splash to grid and splash to ascii;
 !             can press number and -/+ to zoom out/in by that factor in interactive mode;
 !             use SPLASH_COROTATE=1,3 to corotate with arbitrary pair of sink particles;
 !             SPLASH_COROTATE also gives velocity field in corotating frame;
 !             splash to ascii can write particular columns by setting SPLASH_CONVERT=1,4;
 !             plasma beta correct in both code and physical units;
+!             working fits reader
 !     2.9.1  : (08/11/19)
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
@@ -415,7 +416,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v2.10.0beta [20th Dec 2019]'
+ character(len=*), parameter :: version = 'v2.10.0 [14th Feb 2020]'
 
  !
  ! initialise some basic code variables

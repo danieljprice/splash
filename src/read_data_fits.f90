@@ -58,15 +58,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
  use interpolations2D, only:interpolate2D
+ use readwrite_fits,   only:read_fits_image,fits_error,write_fits_image
  implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
- integer               :: i,j,k,n,ierr,nextra,naxes(2),nfound,ireadwrite,blocksize
- integer               :: iunit,firstpix,nullval,group
+ integer               :: i,j,k,n,ierr,nextra,naxes(2)
  integer               :: ncolstep,npixels,nsteps_to_read,its,niter
- logical               :: iexist,reallocate,goterrors,anynull
+ logical               :: iexist,reallocate
  real, dimension(:,:), allocatable :: image
  real, dimension(:), allocatable :: weight
  integer, dimension(:), allocatable :: itype
@@ -74,7 +74,6 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
  nstepsread = 0
  nsteps_to_read = 1
- goterrors  = .false.
 
  if (len_trim(rootname) > 0) then
     datfile = trim(rootname)
@@ -113,57 +112,27 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- ierr = 0
- call ftgiou(iunit,ierr)
-
- ireadwrite = 0
- call ftopen(iunit,datfile,ireadwrite,blocksize,ierr)
-
- call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
- npixels = naxes(1)*naxes(2)
- !
- !--sanity check the header read
- !
- if (npixels <= 0) then
-    print*,' ERROR: No pixels found'
-    ierr = 1
-    return
- endif
-
- ncolumns = ncolstep + nextra
- if (iverbose >= 1) print "(3(a,1x,i10))",' npixels: ',npixels,' ncolumns: ',ncolstep,' nsteps: ',nsteps_to_read
- !
- ! read image
- !
- firstpix = 1
- nullval = -999
- group = 1
- allocate(image(naxes(1),naxes(2)),stat=ierr)
+ call read_fits_image(datfile,image,naxes,ierr)
  if (ierr /= 0) then
-    print*,' ERROR allocating memory'
+    print*,'ERROR: '//trim(fits_error(ierr))
+    if (allocated(image)) deallocate(image)
     return
  endif
- nstepsread = 1
- ierr = 0
- call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
- call ftclos(iunit,ierr)
- call ftfiou(iunit,ierr)
-
+ npixels = product(naxes)
  !
  !--allocate or reallocate memory for main data array
  !
+ ncolumns = ncolstep + nextra
+ nstepsread = 1
  reallocate = (npixels > maxpart)
  if (reallocate .or. .not.(allocated(dat))) then
     call alloc(npixels,nsteps_to_read,max(ncolumns+ncalc,maxcol),mixedtypes=.false.)
  endif
 !
-!--now memory has been allocated, set arrays which are constant for all time
+!--now memory has been allocated, set information that splash needs
 !
  gamma = 5./3.
  time = 0.
-!
-!--set flag to indicate that only part of this file has been read
-!
  ipartialread = .false.
 !
 ! set smoothing length
@@ -177,6 +146,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
   dx = 1.
   itype(:) = 1
   imagemax = maxval(image)
+  print*,' total intensity =',sum(image)
 
   niter = 4
   h_iterations: do its=1,niter
@@ -186,10 +156,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
            n = n + 1
            dat(n,1,i) = j
            dat(n,2,i) = k
-           dat(n,3,i) = min(0.4*sqrt(imagemax/image(j,k)),5.*(its+1))
-           if (its==1) dat(n,4,i) = image(j,k)
+           if (image(j,k) > 0.) then
+              dat(n,3,i) = min(0.4*sqrt(imagemax/image(j,k)),5.*(its+1))
+           else
+              dat(n,3,i) = 0.
+           endif
+           if (its==1) dat(n,4,i) = max(image(j,k),0.)
         enddo
      enddo
+     if (its==1) print*,' total intensity(+ve)=',sum(dat(1:n,4,i))
 
      weight(:) = 1.
      call interpolate2D(dat(1:npixels,1,i),dat(1:npixels,2,i),dat(1:npixels,3,i),&
@@ -197,7 +172,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
           xmin,ymin,image,naxes(1),naxes(2),dx,dy,&
           normalise=.true.,exact=.false.,periodicx=.false.,periodicy=.false.)
 
+     print*,' total intensity =',sum(image)
+
   enddo h_iterations
+!
+! write fits image
+!
+  call write_fits_image('splash-output.fits',image,naxes,ierr)
 !
 ! clean up
 !
