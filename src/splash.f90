@@ -48,7 +48,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.10.0  : (xx/xx/20)
+!     2.10.0  : (14/02/20)
 !             much improved splash to grid - bug fixes with pixel number and roundoff error;
 !             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
 !             added bytestream output formats for splash to grid and splash to ascii;
@@ -57,7 +57,7 @@ program splash
 !             SPLASH_COROTATE also gives velocity field in corotating frame;
 !             splash to ascii can write particular columns by setting SPLASH_CONVERT=1,4;
 !             plasma beta correct in both code and physical units;
-!             working fits reader
+!             working fits reader and splash-denoise utility
 !     2.9.1  : (08/11/19)
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
