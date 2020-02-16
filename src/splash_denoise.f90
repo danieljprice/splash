@@ -19,7 +19,7 @@
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
-program splashimage
+program denoise
  use readwrite_fits, only:read_fits_image,write_fits_image
  use imageutils,     only:image_denoise
  implicit none
@@ -30,10 +30,10 @@ program splashimage
 
  nargs = command_argument_count()
 
- tagline = 'splash-image: a SPLASH imaging utility (c) 2020 Daniel Price'
+ tagline = 'splash-denoise: a SPLASH imaging utility (c) 2020 Daniel Price'
  if (nargs < 2) then
     print "(a)",trim(tagline)
-    print "(/,a,/)",'Usage: splash-image infile.fits outfile.fits [options]'
+    print "(/,a,/)",'Usage: splash-denoise infile.fits outfile.fits [options]'
     stop
  endif
 
@@ -57,4 +57,4 @@ program splashimage
 
  deallocate(image,hh)
 
-end program splashimage
+end program denoise
