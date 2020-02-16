@@ -855,7 +855,7 @@ install: destdircheck installcheck
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash || test -e $(BINDIR)/splash-image; then echo; \
+	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash || test -e $(BINDIR)/splash-*; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
