@@ -149,6 +149,21 @@ ifeq ($(SYSTEM), gfortran)
    KNOWN_SYSTEM=yes
 endif
 
+ifeq ($(SYSTEM), gfortran-catalina)
+#  gfortran compiler (part of gcc 4.x.x)
+   FC= gfortran
+   FFLAGS= -O3 -frecord-marker=4 -fPIC
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
+   SYSTEMFILE= system_f2003.f90
+   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
+              -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
+   OMPFLAGS= -fopenmp
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+   X11_DIR= /opt/X11/
+endif
+
 ifeq ($(SYSTEM),nagf95)
 #  NAG f95 compiler
    FC= f95
