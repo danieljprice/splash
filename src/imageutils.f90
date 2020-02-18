@@ -41,16 +41,19 @@ contains
 !----------------------------------------------------------------------
 subroutine image_denoise(naxes,image,hh,iterations,fac,err)
  use interpolations2D, only:interpolate2D
+ use kernels,          only:select_kernel
  integer, intent(in)    :: naxes(2)
  real,    intent(inout) :: image(naxes(1),naxes(2))
- real,    intent(out)   :: hh(naxes(1)*naxes(2))
+ real,    intent(inout) :: hh(naxes(1)*naxes(2))
  integer, intent(in), optional :: iterations
  real,    intent(in), optional :: fac
  integer, intent(out), optional :: err
  real, allocatable      :: x(:),y(:),weight(:),dat(:)
  integer, allocatable   :: mask(:)
  integer :: npixels,its,niter,i,j,n,ierr
- real :: fluxold,fluxnew,imagemax,dx,dy,scalefac,xmin,ymin
+ real :: imagemax,dx,dy,scalefac,xmin,ymin
+
+ call select_kernel(0)
 
  ! allocate memory for temporary arrays
  npixels = product(naxes)
@@ -58,14 +61,14 @@ subroutine image_denoise(naxes,image,hh,iterations,fac,err)
  if (present(err)) err = ierr
  if (ierr /= 0) return
 
- xmin = 0.
- ymin = 0.
  dy = 1.
  dx = 1.
+ xmin = 0.0
+ ymin = 0.0
  mask(:) = 1 ! do not mask any pixels
  imagemax = maxval(image)
- fluxold  = sum(image)
- print*,' total intensity =',fluxold
+ !fluxold  = sum(image)
+ !print*,' total intensity =',fluxold
 
  niter = 4
  if (present(iterations)) niter = iterations
@@ -74,18 +77,20 @@ subroutine image_denoise(naxes,image,hh,iterations,fac,err)
  if (present(fac)) scalefac = fac
 
  ! find the convolution length by iteration
- h_iterations: do its=1,niter
-    print "(' Iteration: ',i2,' of ',i2)",its,niter
+ h_iterations: do its=1,max(niter,1)
+    if (niter > 0) print "(' Iteration: ',i2,' of ',i2)",its,niter
     n = 0
     do j=1,naxes(2)
        do i=1,naxes(1)
           n = n + 1
-          x(n) = i
-          y(n) = j
-          if (abs(image(i,j)) > 0.) then
-             hh(n) = min(max(0.4*sqrt(scalefac*imagemax/abs(image(i,j))),1.),5.*(its+1))
-          else
-             hh(n) = 0.
+          x(n) = i - 0.5*dx
+          y(n) = j - 0.5*dy
+          if (niter > 0) then
+             if (abs(image(i,j)) > 0.) then
+                hh(n) = min(max(0.4*sqrt(scalefac*imagemax/abs(image(i,j))),1.),5.*(its+1))
+             else
+                hh(n) = 0.
+             endif
           endif
           if (its==1) dat(n) = image(i,j)
        enddo
@@ -95,10 +100,6 @@ subroutine image_denoise(naxes,image,hh,iterations,fac,err)
     call interpolate2D(x,y,hh,weight,dat,mask,npixels, &
          xmin,ymin,image,naxes(1),naxes(2),dx,dy,&
          normalise=.false.,exact=.true.,periodicx=.false.,periodicy=.false.)
-
-    fluxnew = sum(image)
-    print "(a,g16.8,a,1pg10.2,a)",' total intensity =',fluxnew,&
-                          ' err=',100.*abs(fluxold-fluxnew)/fluxold,' %'
 
  enddo h_iterations
 
