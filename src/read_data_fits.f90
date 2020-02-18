@@ -57,18 +57,18 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
- use readwrite_fits,   only:read_fits_image,fits_error,write_fits_image
+ use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image
  use imageutils,       only:image_denoise
  implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
- integer               :: i,j,k,n,ierr,nextra,naxes(2)
+ integer               :: i,j,k,l,n,ierr,nextra,naxes(3)
  integer               :: ncolstep,npixels,nsteps_to_read,its,niter
  logical               :: iexist,reallocate
- real, dimension(:,:), allocatable :: image
- real :: dx,dy
+ real, dimension(:,:,:), allocatable :: image,old_image
+ real :: dx,dy,dz
 
  nstepsread = 0
  nsteps_to_read = 1
@@ -101,7 +101,6 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  ndim  = 2
  ndimV = 2
  nextra = 0
- ncolstep = 5 ! x, y, h, I, m
 !
 !--read data from snapshots
 !
@@ -110,13 +109,25 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- call read_fits_image(datfile,image,naxes,ierr)
+ call read_fits_cube(datfile,image,naxes,ierr)
  if (ierr /= 0) then
     print*,'ERROR: '//trim(fits_error(ierr))
     if (allocated(image)) deallocate(image)
     return
  endif
  npixels = product(naxes)
+ if (naxes(3) > 1) then
+    ndim = 3
+    ndimV = 3
+ endif
+ ncolstep = ndim + 3 ! x, y, h, I, m
+ if (iverbose >= 1) then
+    if (ndim==3) then
+       print "(' image size: ',i5,' x ',i5,' x ',i4)",naxes
+    else
+       print "(' image size: ',i5,' x ',i5)",naxes(1:2)
+    endif
+ endif
  !
  !--allocate or reallocate memory for main data array
  !
@@ -140,28 +151,37 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  n = 0
  dx = 1.
  dy = 1.
- do k=1,naxes(2)
-    do j=1,naxes(1)
-       n = n + 1
-       dat(n,1,i) = j
-       dat(n,2,i) = k
-       dat(n,3,i) = 1.  ! smoothing length == pixel scale
-       dat(n,4,i) = image(j,k)
-       dat(n,5,i) = image(j,k)*dx*dy  ! flux==equivalent of "mass"
+ dz = 1.
+ do l=1,naxes(3)
+    do k=1,naxes(2)
+       do j=1,naxes(1)
+          n = n + 1
+          dat(n,1,i) = j
+          dat(n,2,i) = k
+          if (ndim >= 3) dat(n,3,i) = l
+          dat(n,ndim+1,i) = 1.  ! smoothing length == pixel scale
+          dat(n,ndim+2,i) = image(j,k,l)
+          dat(n,ndim+3,i) = image(j,k,l)*dx*dy*dz  ! flux==equivalent of "mass"
+       enddo
     enddo
  enddo
 !
 ! set smoothing length
 !
-! call image_denoise(naxes,image,dat(1:npixels,3,i))
+ !allocate(old_image(naxes(1),naxes(2)))
+ !old_image = image
+ !call image_denoise(naxes,image,dat(1:npixels,3,i))
+
+
 !
 ! write smoothed fits image
 !
-! call write_fits_image('splash-output.fits',image,naxes,ierr)
+ !image = image - old_image
+ !call write_fits_image('splash-output.fits',image,naxes,ierr)
 !
 ! clean up
 !
- deallocate(image)
+ deallocate(image) !,old_image)
 
 end subroutine read_data
 
@@ -185,9 +205,10 @@ subroutine set_labels
 
  ix(1) = 1
  ix(2) = 2
- ih = 3
- irho = 4
- ipmass = 5
+ if (ndim >= 3) ix(3) = 3
+ ih = ndim+1
+ irho = ndim+2
+ ipmass = ndim+3
 
  ! set labels of the quantities read in
  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)

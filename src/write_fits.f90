@@ -28,6 +28,7 @@
 module readwrite_fits
  implicit none
  public :: read_fits_image,write_fits_image,fits_error
+ public :: read_fits_cube
 
  private
 
@@ -44,6 +45,7 @@ subroutine read_fits_image(filename,image,naxes,ierr)
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,nfound
  logical :: anynull
+ integer :: naxis,ndim,myaxes(3)
  !
  !--open file and read header information
  !
@@ -83,7 +85,62 @@ subroutine read_fits_image(filename,image,naxes,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
 
- end subroutine read_fits_image
+end subroutine read_fits_image
+
+!---------------------------------------------------
+! subroutine to read spectral cube from FITS file
+! using cfitsio library
+!---------------------------------------------------
+subroutine read_fits_cube(filename,image,naxes,ierr)
+ character(len=*), intent(in)   :: filename
+ real, intent(out), allocatable :: image(:,:,:)
+ integer, intent(out) :: naxes(3),ierr
+ integer :: iunit,ireadwrite,npixels,blocksize
+ integer :: firstpix,nullval,group,nfound
+ logical :: anynull
+ integer :: naxis,ndim,myaxes(3)
+ !
+ !--open file and read header information
+ !
+ ierr = 0
+ call ftgiou(iunit,ierr)
+
+ ireadwrite = 0
+ call ftopen(iunit,filename,ireadwrite,blocksize,ierr)
+ if (ierr /= 0) then
+    ierr = -1
+    return
+ endif
+
+ call ftgidm(iunit,ndim,ierr) ! get_img_dim
+ call ftgisz(iunit,3,naxes,ierr)
+ if (naxes(3)==0) naxes(3) = 1
+ ! call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
+ npixels = product(naxes)
+ !
+ !--sanity check the header read
+ !
+ if (npixels <= 0) then
+    ierr = 1
+    return
+ endif
+ !
+ ! read images
+ !
+ firstpix = 1
+ nullval = -999
+ group = 1
+ allocate(image(naxes(1),naxes(2),naxes(3)),stat=ierr)
+ if (ierr /= 0) then
+    ierr = 2
+    return
+ endif
+ ierr = 0
+ call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
+ call ftclos(iunit,ierr)
+ call ftfiou(iunit,ierr)
+  
+end subroutine read_fits_cube
 
 !---------------------------------------------------
 ! error code handling
