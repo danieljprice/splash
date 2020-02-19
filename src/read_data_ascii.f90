@@ -248,7 +248,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        print*,'setting gamma = ',dummyreal,' from header line ',i
        gamma(j) = dummyreal
        gammaset = .true.
-    elseif (ierr==0 .and. .not. timeset .and. iheader_time==notset) then
+    elseif (ierr==0 .and. .not. timeset .and. iheader_time==notset .and. index(line,'.') /= 0) then
        time(j) = dummyreal
        timeset = .true.
        print*,'setting time = ',dummyreal,' from header line ',i
@@ -434,7 +434,7 @@ subroutine set_labels
 !--guess positions of various quantities from the column labels
 !
     if (.not.got_time) then
-       if (ndim <= 0 .and. (labeli(1:1)=='x' .or. trim(labeli)=='r' .or. labeli(1:3)=='rad')) then
+       if (ndim <= 0 .and. (trim(labeli)=='x' .or. trim(labeli)=='r' .or. labeli(1:3)=='rad')) then
           ndim = 1
           ix(1) = i
        endif
