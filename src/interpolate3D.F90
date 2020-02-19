@@ -75,7 +75,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  real, intent(in) :: xmin,ymin,zmin,pixwidthx,pixwidthy,pixwidthz
  real(doub_prec), intent(out), dimension(npixx,npixy,npixz) :: datsmooth
  logical, intent(in) :: normalise,periodicx,periodicy,periodicz
- real(doub_prec), dimension(npixx,npixy,npixz) :: datnorm
+ real(doub_prec), allocatable :: datnorm(:,:,:)
 
  integer :: i,j,ipix,jpix,kpix
  integer :: iprintinterval,iprintnext
@@ -96,8 +96,6 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$ integer :: omp_get_num_threads,omp_get_thread_num
  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
 
- datsmooth = 0.
- datnorm = 0.
  if (exact_rendering) then
     print "(1x,a)",'interpolating to 3D grid (exact/Petkova+2018 on subgrid) ...'
  elseif (normalise) then
@@ -112,7 +110,12 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  if (any(hh(1:npart) <= tiny(hh))) then
     print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
  endif
-
+ 
+ datsmooth = 0.
+ if (normalise) then
+    allocate(datnorm(npixx,npixy,npixz))
+    datnorm = 0.
+ endif
  !
  !--print a progress report if it is going to take a long time
  !  (a "long time" is, however, somewhat system dependent)
@@ -373,8 +376,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
        datsmooth = datsmooth/datnorm
     end where
  endif
+ if (allocated(datnorm)) deallocate(datnorm)
 
- print*, 'Number of particles in the volume: ', usedpart
+ !print*, 'Number of particles in the volume: ', usedpart
 
 end subroutine interpolate3D
 
