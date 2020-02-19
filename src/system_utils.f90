@@ -28,7 +28,7 @@ module system_utils
  use system_commands, only:get_environment
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
- public :: envlist,ienvlist,lenvlist
+ public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
 
  private
 
@@ -230,5 +230,51 @@ function lenvlist(variable,nlist)
  enddo
 
 end function lenvlist
+!
+!--find real-valued option from command line arguments
+!  as in --arg=blah
+!
+real function get_command_option(variable,default) result(val)
+ character(len=*), intent(in) :: variable
+ real, intent(in), optional   :: default
+ character(len=80) :: string
+ integer :: ierr,nargs,ieq,iarg
+
+ val = 0.
+ if (present(default)) val = default
+ nargs = command_argument_count()
+ do iarg=1,nargs
+    call get_command_argument(iarg,string)
+    ieq = index(string,'=')
+    if (string(1:1)=='-' .and. index(string,variable) > 0 .and. ieq > 0) then
+       read(string(ieq+1:),*,iostat=ierr) val
+    endif
+ enddo
+
+end function get_command_option
+
+!
+!--count the number of arguments matching a certain substring
+!  e.g. with particular filename extension
+!
+integer function count_matching_args(string,id) result(n)
+ character(len=*), intent(in) :: string
+ integer, intent(out), optional :: id(:)
+ character(len=80) :: myarg
+ integer :: ierr,nargs,ieq,iarg
+
+ n = 0
+ nargs = command_argument_count()
+ do iarg=1,nargs
+    call get_command_argument(iarg,myarg)
+    if (index(myarg,string) > 0) then
+       n = n + 1
+       if (present(id)) then
+          if (size(id) >= n) id(n) = iarg
+       endif
+    endif
+ enddo
+
+end function count_matching_args
 
 end module system_utils

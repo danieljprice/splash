@@ -717,8 +717,8 @@ libexactcmd: checksystem $(OBJLIBEXACTALL)
 #
 # splash image manipulation utilities
 #
-SOURCESIMLIB= asciiutils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
-         imageutils.f90 write_fits.f90 splash_denoise.f90
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
+              interpolate3D.f90 imageutils.f90 write_fits.f90 splash_denoise.f90
 
 OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o) $(STATICLIBS)
 
