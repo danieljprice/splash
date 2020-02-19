@@ -720,7 +720,7 @@ libexactcmd: checksystem $(OBJLIBEXACTALL)
 SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
               interpolate3D.f90 imageutils.f90 write_fits.f90 splash_denoise.f90
 
-OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o) $(STATICLIBS)
+OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o)
 
 .PHONY: denoise
 splash-image: splash-denoise
@@ -728,7 +728,7 @@ splash-image: splash-denoise
 denoise: splash-denoise
 
 splash-denoise: checksystem checkfits $(OBJECTSIMLIB)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(LDFLAGS) $(FITSLIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
 	@echo; echo ' splash-denoise utility successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
