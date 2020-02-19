@@ -162,6 +162,7 @@ subroutine image_denoise3D(naxes,image,hh,iterations,imax,err)
  
  niter = 4
  if (present(iterations)) niter = iterations
+ allocate(image_dp(naxes(1),naxes(2),naxes(3)))
 
  ! find the convolution length by iteration
  h_iterations: do its=1,max(niter,1)
@@ -187,7 +188,6 @@ subroutine image_denoise3D(naxes,image,hh,iterations,imax,err)
           enddo
        enddo
     enddo
-    allocate(image_dp(naxes(1),naxes(2),naxes(3)))
     weight(1:npixels) = dx*dy*dz/hh(1:npixels)**3
     call interpolate3D(x,y,z,hh,weight,dat,mask,npixels, &
          xmin,ymin,zmin,image_dp,naxes(1),naxes(2),naxes(3),dx,dy,dz,&
