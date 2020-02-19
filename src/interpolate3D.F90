@@ -77,10 +77,10 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  logical, intent(in) :: normalise,periodicx,periodicy,periodicz
  real(doub_prec), dimension(npixx,npixy,npixz) :: datnorm
 
- integer :: i,ipix,jpix,kpix
+ integer :: i,j,ipix,jpix,kpix
  integer :: iprintinterval,iprintnext
  integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
- integer :: ipixi,jpixi,kpixi,nxpix,nwarn
+ integer :: ipixi,jpixi,kpixi,nxpix,nwarn,threadid
  real :: xminpix,yminpix,zminpix,hmin !,dhmin3
  real, dimension(npixx) :: dx2i
  real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
@@ -93,11 +93,8 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  logical, parameter :: exact_rendering = .true.   ! use exact rendering y/n
  integer :: usedpart, negflag
 
-#ifdef _OPENMP
- integer :: omp_get_num_threads
-#else
+!$ integer :: omp_get_num_threads,omp_get_thread_num
  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
-#endif
 
  datsmooth = 0.
  datnorm = 0.
@@ -120,7 +117,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  !--print a progress report if it is going to take a long time
  !  (a "long time" is, however, somewhat system dependent)
  !
- iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000) .or. exact_rendering
+ iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000) !.or. exact_rendering
  !
  !--loop over particles
  !
@@ -147,6 +144,8 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
  const = cnormk3D  ! normalisation constant (3D)
  nwarn = 0
+ j = 0
+ threadid = 1
  !
  !--loop over particles
  !
@@ -156,13 +155,15 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(xminpix,yminpix,zminpix,pixwidthx,pixwidthy,pixwidthz) &
 !$omp shared(npixx,npixy,npixz,const) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
-!$omp shared(hmin,pixwidthmax) & !,dhmin3) &
+!$omp shared(hmin,pixwidthmax) &
+!$omp shared(iprintprogress,iprintinterval,j) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
-!$omp private(term,termnorm,xpixi) &
+!$omp private(term,termnorm,xpixi,iprogress) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
-!$omp private(pixint,wint,negflag,dfac) &
+!$omp private(pixint,wint,negflag,dfac,threadid) &
+!$omp firstprivate(iprintnext) &
 !$omp reduction(+:nwarn,usedpart)
 !$omp master
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
@@ -173,15 +174,16 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
-       iprogress = 100*i/npart
-       if (iprogress >= iprintnext) then
-          write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,i
+       !$omp atomic
+       j=j+1
+       !$ threadid = omp_get_thread_num()
+       iprogress = 100*j/npart
+       if (iprogress >= iprintnext .and. threadid==1) then
+          write(*,"(i3,'%.')",advance='no') iprogress
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !
