@@ -94,7 +94,7 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,fac,err)
              if (abs(image(i,j)) > 0.) then
                 hh(n) = min(max(0.4*sqrt(scalefac*imagemax/abs(image(i,j))),1.),5.*(its+1))
              else
-                hh(n) = 0.
+                hh(n) = 5.*(its+1)
              endif
           endif
           if (its==1) dat(n) = image(i,j)

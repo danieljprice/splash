@@ -25,8 +25,8 @@ program denoise
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args
  implicit none
- character(len=120) :: file1,file2,fileout,tagline
- integer :: ierr, nfiles, its, naxes(3), npixels, k, iarglist(3)
+ character(len=120) :: file1,file2,fileout,tagline,filek
+ integer :: ierr, nfiles, its, naxes(3), npixels, k, i, iarglist(3),kstart,kend,k1,k2
  real, allocatable :: hh(:)
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
@@ -42,10 +42,16 @@ program denoise
     print "(/,a)",'Usage: splash-denoise [options] infile.fits outfile.fits'
     print "(/,a)",'Options:  --imax=3.4e-2     [intensity value above which no smoothing is applied]'
     print "(a)",  '          --fac=1.0         [scaling factor to increase/decrease smoothing scale]'
-    print "(a,/)",'          --use3D=1         [denoise in 3D for spectral cubes]'
+    print "(a)",  '          --its=4           [maximum number of smoothing length iterations]'
+    print "(a)",  '          --use3D=1         [denoise in 3D for spectral cubes]'
+    print "(a)",  '          --start=1         [denoise from channel 1 onwards]'
+    print "(a,/)",'          --end=10          [denoise only up to channel 10]'
     stop
  endif
 
+ !
+ ! read filenames from the command line
+ !
  call get_command_argument(iarglist(1),file1)
  if (nfiles >= 3) then
     call get_command_argument(iarglist(2),file2)
@@ -53,9 +59,15 @@ program denoise
  else
     call get_command_argument(iarglist(2),fileout)
  endif
+ !
+ ! get options from the command line
+ !
  imax = get_command_option('imax',default=0.)
  fac  = get_command_option('fac',default=1.)
  use3D  = get_command_option('use3D',default=0.)
+ kstart = nint(get_command_option('start',default=0.))
+ kend   = nint(get_command_option('end',default=0.))
+ its    = nint(get_command_option('its',default=4.))
 
  !print*,' GOT imax=',imax,' fac =  ',fac,trim(file1),trim(file2),trim(fileout)
 
@@ -87,7 +99,6 @@ program denoise
 
  image_old = image
 
- its = 4
  use_3D = (naxes(3) > 1) .and. (use3D > 0.)
  if (use_3D) then
     npixels = naxes(1)*naxes(2)*naxes(3)
@@ -114,7 +125,11 @@ program denoise
     !
     ! denoise channel by channel in 2D
     !
-    do k=1,naxes(3)
+    k1 = 1
+    k2 = naxes(3)
+    if (kstart > 0) k1 = kstart
+    if (kend > 0 .and. kend <= naxes(3)) k2 = kend
+    do k=k1,k2
        if (naxes(3) > 1) print "(a,i3)",'>> channel ',k
        call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax)
        print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
@@ -135,11 +150,14 @@ program denoise
        fluxnew = sum(image(:,:,k))
        print "(a,g16.8,g16.8,a,1pg10.2,a)",'>> total intensity =',fluxold,fluxnew,&
                        ' err=',100.*abs(fluxold-fluxnew)/fluxold,' %'
+       if (naxes(3) > 1 .and. k2==k1) then
+          i = index(fileout,'.fits')
+          write(filek,*) k
+          filek = fileout(1:i-1)//'-c'//trim(adjustl(filek))//'.fits'
+          call write_fits_image(filek,image(:,:,k),naxes(1:2),ierr)
+       endif
     enddo
  endif
-
- !call write_fits_image('slice.fits',image(:,:,70),naxes(1:2),ierr)
- !call write_fits_image('sliceold.fits',image_old(:,:,70),naxes(1:2),ierr)
 
  image_residuals = image - image_old
  call write_fits_cube(fileout,image,naxes,ierr)
