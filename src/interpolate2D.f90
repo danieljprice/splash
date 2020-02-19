@@ -86,8 +86,9 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
  integer :: ipixi,jpixi
  real :: hi,hi1,radkern,q2,wab,const
- real :: term,termnorm,dx,dy,xpix,ypix
+ real :: term,termnorm,dx,dy,dy2,xpix,ypix,hi21
  real :: t_start,t_end,t_used
+ real, dimension(npixx) :: dx2i
 
 ! Maya
  real :: pixint,d1,d2,r0
@@ -120,9 +121,9 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 !$omp shared(xmin,ymin,normalise,exact,radkernel,const) &
 !$omp shared(pixwidthx,pixwidthy,periodicx,periodicy,npixx,npixy) &
 !$omp private(hi,radkern,wab) &
-!$omp private(hi1,term,termnorm,jpixi,ipixi) &
+!$omp private(hi1,hi21,term,termnorm,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
-!$omp private(q2,xpix,ypix,dx,dy,r0,d1,d2,pixint) &
+!$omp private(q2,xpix,ypix,dx,dy,dx2i,dy2,r0,d1,d2,pixint) &
 !$omp private(i,ipix,jpix) &
 !$omp schedule (guided, 10)
  over_parts: do i=1,npart
@@ -144,6 +145,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
     !--set kernel related quantities
     !
     hi1 = 1./hi
+    hi21 = hi1*hi1
     radkern = radkernel*hi  ! radius of the smoothing kernel
     term = termnorm*dat(i)
     !
@@ -305,6 +307,12 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        enddo
     else
        !
+       !--precalculate an array of dx2 for this particle (optimisation)
+       !
+       do ipix=ipixmin,ipixmax
+          dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidthx - x(i))**2)*hi21
+       enddo
+       !
        !--loop over pixels, adding the contribution from this particle
        !
        do jpix = jpixmin,jpixmax
@@ -312,12 +320,16 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
           if (periodicy) jpixi = iroll(jpix,npixy)
           ypix = ymin + (jpix-0.5)*pixwidthy
           dy = ypix - y(i)
+          dy2 = dy*dy*hi21
           do ipix = ipixmin,ipixmax
              ipixi = ipix
              if (periodicx) ipixi = iroll(ipix,npixx)
-             xpix = xmin + (ipix-0.5)*pixwidthx
-             dx = xpix - x(i)
-             q2 = (dx*dx + dy*dy)*hi1*hi1
+!             xpix = xmin + (ipix-0.5)*pixwidthx
+!             dx = xpix - x(i)
+             q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
+             !q2 = (dx*dx + dy*dy)*hi1*hi1
+
+                 
              !
              !--SPH kernel
              !
