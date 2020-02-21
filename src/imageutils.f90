@@ -83,7 +83,6 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,fac,err)
 
  ! find the convolution length by iteration
  h_iterations: do its=1,max(niter,1)
-    if (niter > 0) print "(' Iteration: ',i2,' of ',i2)",its,niter
     n = 0
     do j=1,naxes(2)
        do i=1,naxes(1)
@@ -100,6 +99,8 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,fac,err)
           if (its==1) dat(n) = image(i,j)
        enddo
     enddo
+    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g8.3))",its,niter,&
+                   'h min = ',minval(hh),' max = ',maxval(hh),' mean = ',sum(hh(1:npixels))/npixels
 
     weight(1:npixels) = dx*dy/hh(1:npixels)**2
     call interpolate2D(x,y,hh,weight,dat,mask,npixels, &
@@ -166,7 +167,6 @@ subroutine image_denoise3D(naxes,image,hh,iterations,imax,err)
 
  ! find the convolution length by iteration
  h_iterations: do its=1,max(niter,1)
-    if (niter > 0) print "(' Iteration: ',i2,' of ',i2)",its,niter
     n = 0
 
     do k=1,naxes(3)
@@ -181,13 +181,16 @@ subroutine image_denoise3D(naxes,image,hh,iterations,imax,err)
                 if (abs(image(i,j,k)) > 0.) then
                    hh(n) = min(max(0.4*sqrt(imagemax/abs(image(i,j,k))),1.),5.*(its+1))
                 else
-                   hh(n) = 0.
+                   hh(n) = 5.*(its+1)
                 endif
              endif
              if (its==1) dat(n) = image(i,j,k)
           enddo
        enddo
     enddo
+    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g8.3))",its,niter,&
+                   'h min = ',minval(hh),' max = ',maxval(hh),' mean = ',sum(hh(1:npixels))/npixels
+
     weight(1:npixels) = dx*dy*dz/hh(1:npixels)**3
     call interpolate3D(x,y,z,hh,weight,dat,mask,npixels, &
          xmin,ymin,zmin,image_dp,naxes(1),naxes(2),naxes(3),dx,dy,dz,&

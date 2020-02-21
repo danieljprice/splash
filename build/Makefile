@@ -138,7 +138,7 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    FC= gfortran
-   FFLAGS= -O3 -frecord-marker=4 -fPIC
+   FFLAGS= -O3 -fPIC
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
@@ -718,19 +718,19 @@ libexactcmd: checksystem $(OBJLIBEXACTALL)
 # splash image manipulation utilities
 #
 SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
-              interpolate3D.f90 imageutils.f90 write_fits.f90 splash_denoise.f90
+              interpolate3D.f90 imageutils.f90 write_fits.f90 denoise.f90
 
 OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o)
 
 .PHONY: denoise
-splash-image: splash-denoise
+splash-image: denoise
 
-denoise: splash-denoise
+splash-denoise: denoise
 
-splash-denoise: checksystem checkfits $(OBJECTSIMLIB)
+denoise: checksystem checkfits $(OBJECTSIMLIB)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
-	@echo; echo ' splash-denoise utility successfully compiled! ';
-	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+	@echo; echo ' Denoise utility successfully compiled! ';
+	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
@@ -846,7 +846,7 @@ checksilo: checkhdf5
 
 checkfits:
    ifeq (X${FITS_DIR}, X)
-	   @echo; echo "ERROR: FITS_DIR should be set before compiling splash with FITS reader"; echo; ${MAKE} err;
+	   @echo; echo "*** WARNING: Need FITS_DIR=/usr/local to set path to cfitsio library **"; echo;
    else
 	   @if [ -d $$FITS_DIR ]; then echo; echo "FITS_DIR=$$FITS_DIR"; echo; else echo; echo "ERROR: Directory given by FITS_DIR=$$FITS_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
@@ -866,15 +866,16 @@ checkpbob:
 # to do the two separately
 #
 install: destdircheck installcheck
-	@cd $(BINDIR); for x in *splash*; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done;
+	@cd $(BINDIR); if test -e *splash*; then for x in *splash*; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done; fi;
+	@cd $(BINDIR); x=denoise; if test -e $$x; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi;
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash || test -e $(BINDIR)/splash-*; then echo; \
+	@if test -e $(BINDIR)/*splash* || test -e $(BINDIR)/denoise; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
-        echo 'run "make" first, followed by "sudo make install"'; echo;\
+        echo 'run "make" first, followed by "make install"'; echo;\
         $(MAKE) err; fi
 
 destdircheck: installcheck
@@ -972,7 +973,7 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 include .depends
 
 clean:
-	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash libsplash.so libexact.so
+	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall

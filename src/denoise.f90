@@ -36,10 +36,10 @@ program denoise
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'splash-denoise: a SPLASH imaging utility (c) 2020 Daniel Price'
+ tagline = 'denoise: a SPLASH imaging utility (c) 2020 Daniel Price'
  if (nfiles < 2) then
     print "(a)",trim(tagline)
-    print "(/,a)",'Usage: splash-denoise [options] infile.fits outfile.fits'
+    print "(/,a)",'Usage: denoise [options] infile.fits outfile.fits'
     print "(/,a)",'Options:  --imax=3.4e-2     [intensity value above which no smoothing is applied]'
     print "(a)",  '          --fac=1.0         [scaling factor to increase/decrease smoothing scale]'
     print "(a)",  '          --its=4           [maximum number of smoothing length iterations]'
@@ -114,7 +114,7 @@ program denoise
     imagemax = image_max
  endif
  print "(3(a,g16.8))",'>> max intensity = ',imagemax,' of ',image_max,', using scaling factor ',fac
- imagemax = fac*imagemax
+ imagemax = fac**2*imagemax
 
  if (use_3D) then
     !
