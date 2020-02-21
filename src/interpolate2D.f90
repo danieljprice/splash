@@ -366,7 +366,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
  call wall_time(t_end)
  t_used = t_end - t_start
- if (t_used > 10. .or. .true.) call print_time(t_used)
+ if (t_used > 10.) call print_time(t_used)
 
  return
 end subroutine interpolate2D
