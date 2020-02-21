@@ -159,10 +159,10 @@ program denoise
     enddo
  endif
 
- image_residuals = image - image_old
  call write_fits_cube(fileout,image,naxes,ierr)
+ image_residuals = image - image_old
  !call write_fits_cube('old.fits',image_old,naxes,ierr)
- call write_fits_cube('residuals.fits',image_residuals,naxes,ierr)
+ !call write_fits_cube('residuals.fits',image_residuals,naxes,ierr)
 
  if (ierr /= 0) write(stderr,*) 'error writing output file(s)'
 
