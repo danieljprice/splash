@@ -350,7 +350,7 @@ pure real function full_2d_mod(phi,tphi,q0)
     elseif (q <= 2.0) then
        cphi1 = q0
        phi1 = acos(q0)
-       tphi1 = tan(phi1)
+       tphi1 = tan(phi1)  !  tan (acos x) = sqrt(1-x**2)/x
        full_2d_mod = F2_2d(phi,tphi,cphi,q0) - F2_2d(phi1,tphi1,cphi1,q0) &
                    + F1_2d(phi1,tphi1,cphi1,q0)
     else
@@ -608,14 +608,15 @@ subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi,tanphi)
  real(doub_prec), intent(in), optional :: phi,tanphi
  real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,fac
 
+ cosp2 = cosp*cosp
  if (present(phi)) then
     p = phi
     tanp = tanphi
  else
     p = acos(cosp)
-    tanp = tan(p)
+    tanp = sqrt(1.-cosp2)/cosp ! tan(p)
  endif
- cosp2 = cosp*cosp
+
  mu2_1 = 1. / (1. + cosp2/a2)
  I0  = p
  I_2 = p +    a2 * tanp
