@@ -1105,6 +1105,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('u') ! move cross section up by dxsec
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
+             if (int(scalefac) > 1) dzslice = scalefac
              print*,'shifting cross section position up by ',dzslice
              zslicepos = zslicepos + dzslice
              iadvance = 0
@@ -1151,6 +1152,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('d') ! move cross section down by dxsec
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
+             if (int(scalefac) > 1) dzslice = scalefac
              print*,'shifting cross section position down by ',dzslice
              zslicepos = zslicepos - dzslice
           elseif (use3Dperspective) then
