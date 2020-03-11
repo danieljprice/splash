@@ -198,7 +198,8 @@ subroutine submenu_particleplots(ichoose)
 !------------------------------------------------------------------------
  case(1)
     !          plot particles by type?
-    do itype=1,ntypes
+    over_types: do itype=1,ntypes
+       if (all(npartoftype(itype,:) == 0)) cycle over_types
        if (UseTypeinRenderings(itype) .and. ndim > 1) then
           call prompt('Plot '//trim(labeltype(itype))//' particles / use in renderings?',iplotpartoftype(itype))
           if (iplotcont_nomulti) then
@@ -217,7 +218,7 @@ subroutine submenu_particleplots(ichoose)
        elseif (.not.iplotpartoftype(itype)) then
           PlotonRenderings(itype) = .false.
        endif
-    enddo
+    enddo over_types
     return
 !------------------------------------------------------------------------
  case(2)
@@ -228,10 +229,12 @@ subroutine submenu_particleplots(ichoose)
            34,'outlined solid circle, size prop. to h'
 
     !print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
-    do itype=1,ntypes
+    over_types2: do itype=1,ntypes
+       if (all(npartoftype(itype,:) == 0)) cycle over_types2
+
        call prompt(' Enter marker to use for '//trim(labeltype(itype)) &
              //' particles:',imarktype(itype),-8,35)
-    enddo
+    enddo over_types2
     if (any(imarktype(1:ntypes) >= 32)) then
        print*
        call prompt(' Enter proportionality factor for scalable markers (radius = fac*h)',hfacmarkers)
@@ -247,10 +250,11 @@ subroutine submenu_particleplots(ichoose)
            '  0 = background ',&
            '  1 = foreground ',&
            '  2->10 = various colours (see default colour indices for plot library)'
-    do itype=1,ntypes
+    over_types3: do itype=1,ntypes
+       if (all(npartoftype(itype,:) == 0)) cycle over_types3
        call prompt(' Enter default colour for '//trim(labeltype(itype)) &
-             //' particles:',idefaultcolourtype(itype),-1,14)
-    enddo
+                //' particles:',idefaultcolourtype(itype),-1,14)
+    enddo over_types3
     return
 !------------------------------------------------------------------------
  case(4)
