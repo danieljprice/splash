@@ -68,7 +68,7 @@ module sphNGread
  real :: tfreefall
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
  integer :: nhydroreal4,istart_extra_real4
- integer :: nhydroarrays,nmhdarrays,ndustarrays
+ integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
  logical :: batcode,tagged,debug
@@ -78,7 +78,8 @@ module sphNGread
  character(len=lentag) :: tagarr(maxplot)
  integer, parameter :: itypemap_sink_phantom = 3
  integer, parameter :: itypemap_dust_phantom = 2
- integer, parameter :: itypemap_unknown_phantom = 9
+ integer, parameter :: itypemap_unknown_phantom = maxparttypes
+ real, allocatable  :: grainsize(:)
 
  !------------------------------------------
  ! generic interface to utilities for tagged
@@ -121,7 +122,7 @@ elemental integer function itypemap_phantom(iphase)
  select case(int(iphase))
  case(1:2)
     itypemap_phantom = iphase
- case(3:7) ! put sinks as type 3, everything else shifted by one
+ case(3:itypemap_unknown_phantom-1) ! put sinks as type 3, everything else shifted by one
     itypemap_phantom = iphase + 1
  case(-3) ! sink particles, either from external_binary or read from dump
     itypemap_phantom = itypemap_sink_phantom
@@ -416,12 +417,41 @@ subroutine fake_header_tags(nreals,realarr,tagsreal)
 
 end subroutine fake_header_tags
 
- !----------------------------------------------------------------------
- ! print information about dust grain sizes found in header
- !----------------------------------------------------------------------
+subroutine set_grain_sizes(ntags,tags,vals,udist)
+ integer, intent(in) :: ntags
+ character(len=*), intent(in) :: tags(ntags)
+ real, intent(inout) :: vals(ntags)
+ real(doub_prec), intent(in) :: udist
+ integer :: i,nd
+  
+ ! convert grain sizes to cm
+ nd = 0
+ do i=1,ntags
+    if (index(tags(i),'grainsize') > 0) then
+       nd = nd + 1
+       vals(i) = vals(i)*udist
+    endif
+ enddo
+
+ if (allocated(grainsize)) deallocate(grainsize)
+ allocate(grainsize(nd))
+
+ nd = 0
+ do i=1,ntags
+    if (index(tags(i),'grainsize') > 0) then
+       nd = nd + 1
+       grainsize(nd) = vals(i)
+    endif
+ enddo
+
+end subroutine set_grain_sizes
+
+!----------------------------------------------------------------------
+! print information about dust grain sizes found in header
+!----------------------------------------------------------------------
 subroutine print_dustgrid_info(ntags,tags,vals,mgas)
  use asciiutils,     only:match_tag
- use settings_units, only:get_nearest_length_unit
+ use labels,         only:get_label_grain_size
  integer, intent(in) :: ntags
  character(len=*), intent(in) :: tags(ntags)
  real, intent(in) :: vals(ntags),mgas
@@ -433,11 +463,7 @@ subroutine print_dustgrid_info(ntags,tags,vals,mgas)
     do i=1,ntags
        if (index(tags(i),'grainsize') > 0) then
           nd = nd + 1
-          if (vals(i)*1.e4 >= 1000.) then
-             print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e1,'mm'
-          elseif (vals(i) > 0.) then
-             print "(i3,a,1pg10.3,a)",nd,': ',vals(i)*1.e4,'micron'
-          endif
+          print "(i3,a)",nd,': '//get_label_grain_size(vals(i))
        endif
     enddo
     if (nd > 0) print "(a)"
@@ -455,10 +481,10 @@ subroutine print_dustgrid_info(ntags,tags,vals,mgas)
 
 end subroutine print_dustgrid_info
 
- !----------------------------------------------------------------------
- ! Routine to read the header of sphNG dump files and extract relevant
- ! information
- !----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! Routine to read the header of sphNG dump files and extract relevant
+! information
+!----------------------------------------------------------------------
 subroutine read_header(iunit,iverbose,debug,doubleprec,&
                         npart,npartoftypei,n1,ntypes,nblocks,&
                         narrsizes,realarr,tagsreal,nreals,ierr)
@@ -1094,7 +1120,7 @@ end function assign_column
 integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttypes)
  character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
  integer, intent(in) :: intarr(:),nints
- integer :: i,idust,ierr,ndustsmall,ndustlarge
+ integer :: i,idust,ierr,ndustsmall
  logical :: igotndusttypes = .false.
 
  ! Look for ndusttypes in the header
@@ -1124,6 +1150,63 @@ integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttype
  ndusttypes = idust
 
 end function extract_ndusttypes
+
+subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,hfact,dat,iphase)
+ integer,            intent(in)    :: i1,i2,ih,ipmass,irho
+ logical,            intent(in)    :: required(0:)
+ integer,            intent(inout) :: npartoftype(:)
+ real,               intent(in)    :: massoftype(:),hfact
+ real,               intent(inout) :: dat(:,:)
+ integer(kind=int1), intent(inout) :: iphase(:)
+ integer :: itype,k
+ real :: pmassi,hi,rhoi
+ !
+ !--dead particles have -ve smoothing lengths in phantom
+ !  so use abs(h) for these particles and hide them
+ !
+ if (any(npartoftype(2:) > 0)) then
+    if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
+    !--need masses for each type if not all gas
+    if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
+    if (debug) print*,'DEBUG: massoftype = ',massoftype(:)
+    do k=i1,i2
+       itype = itypemap_phantom(iphase(k))
+       pmassi = massoftype(itype)
+       hi = dat(k,ih)
+       if (hi > 0.) then
+         if (required(irho)) dat(k,irho) = pmassi*(hfact/hi)**3
+      elseif (hi < 0.) then
+         npartoftype(itype) = npartoftype(itype) - 1
+         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+         if (required(irho)) dat(k,irho) = pmassi*(hfact/abs(hi))**3
+      else
+         if (required(irho)) dat(k,irho) = 0.
+      endif
+   enddo
+else
+   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
+   if (debug) print*,'debug: phantom: setting rho for all types'
+   !--assume all particles are gas particles
+   do k=i1,i2
+      hi = dat(k,ih)
+      if (hi > 0.) then
+         rhoi = massoftype(1)*(hfact/hi)**3
+      elseif (hi < 0.) then
+         rhoi = massoftype(1)*(hfact/abs(hi))**3
+         npartoftype(1) = npartoftype(1) - 1
+         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+         iphase(k) = -1
+      else ! if h = 0.
+         rhoi = 0.
+         npartoftype(1) = npartoftype(1) - 1
+         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+         iphase(k) = -2
+      endif
+      if (required(irho)) dat(k,irho) = rhoi
+   enddo
+endif
+
+end subroutine get_rho_from_h
 
 end module sphNGread
 
@@ -1252,7 +1335,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        return
     endif
     if (int2 /= 780806 .and. int2 /= 060878) then
-       if (iverbose >= 1) print "(a)",' single precision dump'
+       if (iverbose >= 2) print "(a)",' single precision dump'
        rewind(iunit)
        read(iunit,iostat=ierr) intg1,r4,int2,iversion,int3
        if (int2 /= 780806 .and. int2 /= 060878) then
@@ -1438,6 +1521,13 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        !--need to force read of velocities e.g. for corotating frame subtraction
        if (any(required(ivx:ivx+ndimV-1))) required(ivx:ivx+ndimV-1) = .true.
 
+       !--force read of h and rho if dustfrac is required
+       if (ndustarrays > 0 .and. any(required(nhydroarrays+1:nhydroarrays+ndustarrays))) then
+          !print*,' dustfrac in columns ',nhydroarrays+1,nhydroarrays+ndustarrays
+          required(irho) = .true.
+          required(ih) = .true.
+       endif
+
        !--for phantom dumps, also make a column for density
        !  and divv, if a .divv file exists
        if (phantomdump) then
@@ -1486,12 +1576,10 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
        nhdr = min(nreals,maxhdr)
        headervals(1:nhdr,j) = dummyreal(1:nhdr)
        headertags(1:nhdr)   = tagsreal(1:nhdr)
-       ! convert grain sizes to cm
-       do i=1,nhdr
-          if (index(headertags(i),'grainsize') > 0) headervals(i,j) = headervals(i,j)*udist
-       enddo
+
+       call set_grain_sizes(nhdr,headertags,headervals(:,j),udist) ! get grain sizes in cm
        call make_tags_unique(nhdr,headertags)
-       if (iverbose > 0) call print_dustgrid_info(nhdr,headertags,headervals,masstype(1,j)*npartoftype(1,j))
+       if (iverbose > 0) call print_dustgrid_info(nhdr,headertags,headervals(:,j),masstype(1,j)*npartoftype(1,j))
 
        nstepsread = nstepsread + 1
        !
@@ -1770,7 +1858,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 !        set masses for equal mass particles (not dumped in small dump or in phantom)
 !
           if (((smalldump.and.nreal(1) < ipmass).or.phantomdump).and. iarr==1) then
-             if (abs(masstype(1,j)) > tiny(masstype)) then
+             if (any(abs(masstype(:,j)) > tiny(masstype))) then
                 icolumn = ipmass
                 if (required(ipmass) .and. ipmass > 0) then
                    if (phantomdump) then
@@ -1825,53 +1913,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              !--construct density for phantom dumps based on h, hfact and particle mass
              if (phantomdump .and. icolumn==ih) then
                 icolumn = irho ! density
-                !
-                !--dead particles have -ve smoothing lengths in phantom
-                !  so use abs(h) for these particles and hide them
-                !
-                if (any(npartoftypei(2:) > 0)) then
-                   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
-                   !--need masses for each type if not all gas
-                   if (debug) print*,'DEBUG: phantom: setting h for multiple types ',i1,i2
-                   if (debug) print*,'DEBUG: massoftype = ',masstype(:,j)
-                   do k=i1,i2
-                      itype = itypemap_phantom(iphase(k))
-                      pmassi = masstype(itype,j)
-                      hi = dat(k,ih,j)
-                      if (hi > 0.) then
-                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/hi)**3
-                      elseif (hi < 0.) then
-                         npartoftype(itype,j) = npartoftype(itype,j) - 1
-                         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
-                         if (required(irho)) dat(k,irho,j) = pmassi*(hfact/abs(hi))**3
-                      else
-                         if (required(irho)) dat(k,irho,j) = 0.
-                      endif
-                   enddo
-                else
-                   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
-                   if (debug) print*,'debug: phantom: setting rho for all types'
-                   !--assume all particles are gas particles
-                   do k=i1,i2
-                      hi = dat(k,ih,j)
-                      if (hi > 0.) then
-                         rhoi = massoftypei(1)*(hfact/hi)**3
-                      elseif (hi < 0.) then
-                         rhoi = massoftypei(1)*(hfact/abs(hi))**3
-                         npartoftype(1,j) = npartoftype(1,j) - 1
-                         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
-                         iphase(k) = -1
-                      else ! if h = 0.
-                         rhoi = 0.
-                         npartoftype(1,j) = npartoftype(1,j) - 1
-                         npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + 1
-                         iphase(k) = -2
-                      endif
-                      if (required(irho)) dat(k,irho,j) = rhoi
-                   enddo
-                endif
-
-                if (debug) print*,'debug: making density ',icolumn
+                call get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype(:,j),masstype(:,j),hfact,dat(:,:,j),iphase)
              endif
           enddo
 !        real 8's need converting
@@ -2207,7 +2249,7 @@ subroutine set_labels
  use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
-              ivrel,make_vector_label
+              ivrel,make_vector_label,get_label_grain_size,headertags
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
@@ -2217,7 +2259,7 @@ subroutine set_labels
  use system_commands, only:get_environment
  use system_utils,    only:lenvironment
  implicit none
- integer :: i,j
+ integer :: i,j,idustlast
  real(doub_prec)   :: unitx
  character(len=20) :: string,unitlabelx
  character(len=20) :: deltav_string
@@ -2494,8 +2536,18 @@ subroutine set_labels
     labeltype(5) = 'star'
     labeltype(6) = 'dark matter'
     labeltype(7) = 'bulge'
-    labeltype(8) = 'dust'
-    labeltype(9) = 'unknown/dead'
+    if (ndustlarge > 0) then
+       ! try to label dust particles as 1cm dust, 10cm dust etc.
+       idustlast = min(8+ndustlarge-1,size(labeltype)-1)
+       if (allocated(grainsize)) then
+          do i=1,ndustlarge
+             labeltype(8+i-1) = trim(get_label_grain_size(grainsize(i)))//' dust'
+          enddo
+       else
+          labeltype(8:idustlast) = 'dust'
+       endif
+    endif
+    labeltype(itypemap_unknown_phantom) = 'unknown/dead'
     UseTypeInRenderings(:) = .true.
     UseTypeInRenderings(3) = .false.
     if (lenvironment('SSPLASH_PLOT_DUST')) then
