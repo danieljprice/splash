@@ -61,6 +61,7 @@ subroutine defaults_set_data
  iCalcQuantities = .false.
  DataIsBuffered = .false.
  iRescale = .false.
+ iRescale_has_been_set = .false.
  ivegotdata = .false.
  ntypes = 1
  xorigin = 0.
@@ -82,7 +83,7 @@ subroutine submenu_data(ichoose)
  use getdata,        only:get_data,get_labels
  use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
                           isteplist,buffer_data,iCalcQuantities,iRescale, &
-                          DataIsBuffered,numplot,ncalc,ncolumns
+                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
  use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring
@@ -181,6 +182,7 @@ subroutine submenu_data(ichoose)
     endif
 !------------------------------------------------------------------------
  case(6)
+    iRescale_has_been_set = .true.
     print "(/,a)",' Current settings for physical units:'
     call get_labels ! reset labels for printing
     print "(2x,a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration

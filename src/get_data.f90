@@ -48,7 +48,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
                       DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
- use settings_data,  only:iexact,buffer_steps_in_file
+ use settings_data,  only:iexact,buffer_steps_in_file,iRescale_has_been_set,UseTypeInRenderings
  use particle_data,  only:dat,time,npartoftype,maxcol
  use prompting,      only:prompt
  use labels,         only:labeltype
@@ -255,6 +255,10 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        endif
     endif
 
+    if (isfirsttime .and. any(abs(units(0:ncolumns)-1.0) > tiny(units)) .and. .not.iRescale_has_been_set) then
+       iRescale = .true. ! turn physical units on if they have not been switched off
+    endif
+
     !
     !--assume there are the same number of steps in the other files
     !  which have not been read
@@ -325,15 +329,15 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  !--check for errors in data read / print warnings
  !
  if (ndim /= 0 .and. ncolumns > 0 .and. nsteps > 0 .and. iverbose==1) then
-    if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0) then
-       print "(a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
+    if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0 .and. .not.any(iplotpartoftype(2:))) then
+       print "(/,a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
        itype = 0
        nplot = 0
        do while (nplot==0 .and. itype < ntypes)
           itype = itype + 1
           if (npartoftype(itype,1) > 0) then
              iplotpartoftype(itype) = .true.
-             nplot = nplot + npartoftype(itype,1)
+             if (UseTypeInRenderings(itype)) nplot = nplot + npartoftype(itype,1)
              print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
           endif
        enddo
