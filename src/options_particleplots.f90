@@ -182,12 +182,12 @@ subroutine submenu_particleplots(ichoose)
  print "(a)",'------------- particle plot options -------------------'
  if (iaction <= 0 .or. iaction > 9) then
     if (iplotcont_nomulti) then
-       print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+       print fmtstring,(trim(print_logical(iplotpartoftype(i),mask=any(npartoftype(i,:) > 0))),i=1,ntypes), &
                  (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
     else
-       print fmtstring,(trim(print_logical(iplotpartoftype(i))),i=1,ntypes), &
+       print fmtstring,(trim(print_logical(iplotpartoftype(i),mask=any(npartoftype(i,:) > 0))),i=1,ntypes), &
                  imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
     endif

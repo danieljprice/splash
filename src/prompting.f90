@@ -720,7 +720,7 @@ function print_logical(lvalue,mask)
        print_logical = 'OFF'
     endif
  else
-    print_logical = '  -'
+    print_logical = '-'
  endif
 
 end function print_logical
