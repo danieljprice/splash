@@ -416,7 +416,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
-         write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
+         write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 \

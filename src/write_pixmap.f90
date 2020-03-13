@@ -45,18 +45,18 @@ contains
 ! utility to check if an output format selection is valid
 !-----------------------------------------------------------------
 logical function isoutputformat(string)
- implicit none
  character(len=*), intent(in) :: string
 
  isoutputformat = .false.
  select case(trim(string))
- case('ascii','ppm')
+ case('ascii','ppm','pfm')
     isoutputformat = .true.
  end select
 
  if (.not.isoutputformat) then
     print "(a)",' possible formats for -o option: '
-    print "(a)",' -o ppm   : dump pixel map to ppm file'
+    print "(a)",' -o ppm   : dump pixel map to portable pixel map file'
+    print "(a)",' -o pfm   : dump pixel map to portable float map file'
     print "(a)",' -o ascii : dump pixel map to ascii file'
     print "(a)",' use -p to change the prefix for the filenames'
  endif
@@ -68,7 +68,6 @@ end function isoutputformat
 ! utility to check if an input format selection is valid
 !-----------------------------------------------------------------
 logical function isinputformat(string)
- implicit none
  character(len=*), intent(in) :: string
 
  isinputformat = .false.
@@ -91,20 +90,37 @@ end function isinputformat
 !  wrapper routine for all output formats
 !-----------------------------------------------------------------
 subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
- implicit none
+ use write_pfm,     only:write_pixmap_pfm
+ use iso_c_binding, only:c_float
+ use labels,        only:shortlabel
  integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax
  logical, intent(in) :: xsec
  character(len=*), intent(in) :: label,labu,dumpfile
  integer, intent(in) :: istep
+ character(len=len(dumpfile)+10) :: filename
+ real(c_float), allocatable :: dattmp(:,:)
+ integer :: ierr
 
  select case(trim(pixmapformat))
  case('ascii')
     call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
  case('ppm')
     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
-! case('fits')
+ case('pfm')
+    call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pfm',xsec)
+    write(*,"(a)") '> writing pixel map to file '//trim(filename)//' ...'
+    if (kind(dattmp)==kind(datpix)) then
+       call write_pixmap_pfm(filename,npixx,npixy,datpix,ierr)
+    else ! convert to single precision
+       allocate(dattmp(npixx,npixy))
+       dattmp = real(datpix,kind=c_float)
+       call write_pixmap_pfm(filename,npixx,npixy,dattmp,ierr)
+       deallocate(dattmp)
+    endif
+    if (ierr /= 0) print "(a)",' ERROR writing '//trim(filename)
+  ! case('fits')
 !    call write_pixmap_fits(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label)
  case default
     print "(a)",' ERROR: invalid output format for pixel map '
@@ -117,7 +133,6 @@ end subroutine writepixmap
 !-----------------------------------------------------------------
 subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
  use labels, only:shortlabel
- implicit none
  integer, intent(in) :: npixx,npixy,istep
  real,    intent(in), dimension(npixx,npixy) :: datpix
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax
@@ -178,7 +193,6 @@ end subroutine write_pixmap_ascii
 !-----------------------------------------------------------------
 subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep,brightness)
  use colours, only:rgbtable,ncolours
- implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in), dimension(npixx,npixy) :: datpix
  real, intent(in), dimension(npixx,npixy), optional :: brightness
@@ -263,7 +277,6 @@ end subroutine write_pixmap_ppm
 !-----------------------------------------------------------------
 subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
  use asciiutils, only:nheaderlines
- implicit none
  real, intent(out), dimension(:,:), allocatable :: datpix
  integer, intent(out)            :: npixx,npixy,ierr
  character(len=*), intent(in)    :: dumpfile
@@ -379,7 +392,6 @@ end subroutine get_pixmap_filename
 !-----------------------------------------------------------------
 subroutine check_for_pixmap_files(filename,dumpfile,label,ext,istep,xsec,iexist)
  use asciiutils, only:safename,basename
- implicit none
  character(len=*), intent(out) :: filename
  character(len=*), intent(in)  :: dumpfile,label,ext
  integer,          intent(in)  :: istep
