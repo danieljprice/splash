@@ -111,14 +111,11 @@ subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,
  case('pfm')
     call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pfm',xsec)
     write(*,"(a)") '> writing pixel map to file '//trim(filename)//' ...'
-    if (kind(dattmp)==kind(datpix)) then
-       call write_pixmap_pfm(filename,npixx,npixy,datpix,ierr)
-    else ! convert to single precision
-       allocate(dattmp(npixx,npixy))
-       dattmp = real(datpix,kind=c_float)
-       call write_pixmap_pfm(filename,npixx,npixy,dattmp,ierr)
-       deallocate(dattmp)
-    endif
+    ! convert to single precision
+    allocate(dattmp(npixx,npixy))
+    dattmp = real(datpix,kind=c_float)
+    call write_pixmap_pfm(filename,npixx,npixy,dattmp,ierr)
+    deallocate(dattmp)
     if (ierr /= 0) print "(a)",' ERROR writing '//trim(filename)
   ! case('fits')
 !    call write_pixmap_fits(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label)
