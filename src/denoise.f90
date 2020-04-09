@@ -26,12 +26,12 @@ program denoise
  use system_utils,    only:get_command_option,count_matching_args
  implicit none
  character(len=120) :: file1,file2,fileout,tagline,filek
- integer :: ierr, nfiles, its, naxes(3), npixels, k, i, iarglist(3),kstart,kend,k1,k2
+ integer :: ierr, nfiles, its, naxes(4), npixels, k, i, iarglist(3),kstart,kend,k1,k2
  real, allocatable :: hh(:)
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
- real :: fac,fluxold,fluxnew,imax,imagemax,image_max,use3D
- character(len=12) :: string
+ character(len=:), allocatable :: fitsheader(:)
+ real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D
  logical :: iexist,use_3D
 
  nfiles = count_matching_args('.fits',iarglist)
@@ -41,7 +41,7 @@ program denoise
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: denoise [options] infile.fits outfile.fits'
     print "(/,a)",'Options:  --imax=3.4e-2     [intensity value above which no smoothing is applied]'
-    print "(a)",  '          --fac=1.0         [scaling factor to increase/decrease smoothing scale]'
+    print "(a)",  '          --beam=1.0        [beam size in pixels at max intensity]'
     print "(a)",  '          --its=4           [maximum number of smoothing length iterations]'
     print "(a)",  '          --use3D=1         [denoise in 3D for spectral cubes]'
     print "(a)",  '          --start=1         [denoise from channel 1 onwards]'
@@ -63,7 +63,7 @@ program denoise
  ! get options from the command line
  !
  imax = get_command_option('imax',default=0.)
- fac  = get_command_option('fac',default=1.)
+ beam   = get_command_option('beam',default=1.)
  use3D  = get_command_option('use3D',default=0.)
  kstart = nint(get_command_option('start',default=0.))
  kend   = nint(get_command_option('end',default=0.))
@@ -79,7 +79,7 @@ program denoise
  endif
 
  ! read original file
- call read_fits_cube(file1,image1,naxes,ierr)
+ call read_fits_cube(file1,image1,naxes,ierr,hdr=fitsheader)
  if (ierr /= 0) stop 'error reading file'
 
  if (nfiles >= 3) then
@@ -93,7 +93,7 @@ program denoise
  endif
 
  ! eliminate NaNs
- where (image /= image)
+ where (isnan(image))
     image = 0.
  end where
 
@@ -113,8 +113,8 @@ program denoise
  else
     imagemax = image_max
  endif
- print "(3(a,g16.8))",'>> max intensity = ',imagemax,' of ',image_max,', using scaling factor ',fac
- imagemax = fac**2*imagemax
+ print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', using beam size ',beam
+ imagemax = beam**2*imagemax
 
  if (use_3D) then
     !
@@ -154,12 +154,12 @@ program denoise
           i = index(fileout,'.fits')
           write(filek,*) k
           filek = fileout(1:i-1)//'-c'//trim(adjustl(filek))//'.fits'
-          call write_fits_image(filek,image(:,:,k),naxes(1:2),ierr)
+          call write_fits_image(filek,image(:,:,k),naxes(1:2),ierr,hdr=fitsheader)
        endif
     enddo
  endif
 
- call write_fits_cube(fileout,image,naxes,ierr)
+ call write_fits_cube(fileout,image,naxes,ierr,hdr=fitsheader)
  image_residuals = image - image_old
  !call write_fits_cube('old.fits',image_old,naxes,ierr)
  !call write_fits_cube('residuals.fits',image_residuals,naxes,ierr)

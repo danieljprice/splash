@@ -54,20 +54,22 @@
 !
 !-------------------------------------------------------------------------
 subroutine read_data(rootname,istepstart,ipos,nstepsread)
- use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart
+ use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
- use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image
+ use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,get_floats_from_fits_header
  use imageutils,       only:image_denoise
+ use labels,           only:headertags
  implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
- integer               :: i,j,k,l,n,ierr,nextra,naxes(3)
- integer               :: ncolstep,npixels,nsteps_to_read,its,niter
+ integer               :: i,j,k,l,n,ierr,nextra,naxes(4)
+ integer               :: ncolstep,npixels,nsteps_to_read
  logical               :: iexist,reallocate
- real, dimension(:,:,:), allocatable :: image,old_image
+ real, dimension(:,:,:), allocatable :: image
+ character(len=:), allocatable :: fitsheader(:)
  real :: dx,dy,dz
 
  nstepsread = 0
@@ -109,21 +111,21 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- call read_fits_cube(datfile,image,naxes,ierr)
+ call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader)
  if (ierr /= 0) then
     print*,'ERROR: '//trim(fits_error(ierr))
     if (allocated(image)) deallocate(image)
     return
  endif
- npixels = product(naxes)
  if (naxes(3) > 1) then
     ndim = 3
     ndimV = 3
  endif
+ npixels = product(naxes(1:ndim))
  ncolstep = ndim + 3 ! x, y, h, I, m
  if (iverbose >= 1) then
     if (ndim==3) then
-       print "(' image size: ',i5,' x ',i5,' x ',i4)",naxes
+       print "(' image size: ',i5,' x ',i5,' x ',i4)",naxes(1:ndim)
     else
        print "(' image size: ',i5,' x ',i5)",naxes(1:2)
     endif
@@ -140,6 +142,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--now memory has been allocated, set information that splash needs
 !
+ call get_floats_from_fits_header(fitsheader,headertags,headervals(:,i))
  gamma = 5./3.
  time = 0.
  ipartialread = .false.
