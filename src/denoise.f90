@@ -20,7 +20,7 @@
 !
 !-----------------------------------------------------------------
 program denoise
- use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image
+ use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image,get_from_header
  use imageutils,      only:image_denoise,image_denoise3D
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args
@@ -31,7 +31,7 @@ program denoise
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
  character(len=:), allocatable :: fitsheader(:)
- real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D
+ real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1
  logical :: iexist,use_3D
 
  nfiles = count_matching_args('.fits',iarglist)
@@ -63,7 +63,7 @@ program denoise
  ! get options from the command line
  !
  imax = get_command_option('imax',default=0.)
- beam   = get_command_option('beam',default=1.)
+ beam   = get_command_option('beam',default=0.)
  use3D  = get_command_option('use3D',default=0.)
  kstart = nint(get_command_option('start',default=0.))
  kend   = nint(get_command_option('end',default=0.))
@@ -113,14 +113,26 @@ program denoise
  else
     imagemax = image_max
  endif
- print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', using beam size ',beam
- imagemax = beam**2*imagemax
+ !
+ ! get beamsize from fits header, in units of pixels
+ !
+ if (beam <= tiny(beam)) then
+    bmaj = get_from_header('BMAJ',fitsheader,ierr)
+    bmin = get_from_header('BMIN',fitsheader,ierr)
+    cdelt1 = get_from_header('CDELT1',fitsheader,ierr)
+!    beam = sqrt(bmaj*bmin)/abs(cdelt1)
+    print*,' bmin = ',bmin/abs(cdelt1),' bmaj = ',bmaj/abs(cdelt1), ' mean = ',sqrt(bmin*bmaj)/abs(cdelt1)
+    if (abs(cdelt1) > 0.) beam = bmaj/abs(cdelt1) !sqrt(bmin*bmaj)/abs(cdelt1)
+    if (beam < 1. .or. beam > 20.) beam = 1. 
+ endif
+ print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', min pix per beam = ',beam
+ !imagemax = beam**2*imagemax
 
  if (use_3D) then
     !
     ! denoise all channels simultaneously in 3D
     !
-    call image_denoise3D(naxes,image,hh,iterations=its,imax=imagemax)
+    call image_denoise3D(naxes,image,hh,iterations=its,imax=imagemax,beam=beam)
  else
     !
     ! denoise channel by channel in 2D
@@ -130,9 +142,9 @@ program denoise
     if (kstart > 0) k1 = kstart
     if (kend > 0 .and. kend <= naxes(3)) k2 = kend
     do k=k1,k2
-       if (naxes(3) > 1) print "(a,i3)",'>> channel ',k
-       call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax)
-       print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
+       if (naxes(3) > 1) print "(a,i3,a,i3)",'>> channel ',k, ' of ',naxes(3)
+       call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam)
+       !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
 
        ! for polarised images, denoise individual polarisations
        ! using h computed from the total intensity
@@ -148,8 +160,8 @@ program denoise
 
        fluxold = sum(image_old(:,:,k))
        fluxnew = sum(image(:,:,k))
-       print "(a,g16.8,g16.8,a,1pg10.2,a)",'>> total intensity =',fluxold,fluxnew,&
-                       ' err=',100.*abs(fluxold-fluxnew)/fluxold,' %'
+       print "(a,g16.8,a,g16.8,a,1pg10.2,a)",'>> total intensity =',fluxnew,' was ',fluxold,&
+                       ' err=',100.*(fluxnew-fluxold)/abs(fluxold),' %'
        if (naxes(3) > 1 .and. k2==k1) then
           i = index(fileout,'.fits')
           write(filek,*) k

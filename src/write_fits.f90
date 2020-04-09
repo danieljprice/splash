@@ -30,7 +30,7 @@ module readwrite_fits
  public :: read_fits_image,write_fits_image,fits_error
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
- public :: get_floats_from_fits_header
+ public :: get_floats_from_fits_header,get_from_header
 
  private
 
@@ -339,34 +339,71 @@ end subroutine read_fits_cube
  
  end subroutine write_fits_cube
  
-!------------------------------------------------
-! Extract tag:val pairs from fits header
-! will extract anything readable as a floating
-! point number
-!------------------------------------------------
+!--------------------------------------------------
+! read all floating point variables from fits header
+!--------------------------------------------------
 subroutine get_floats_from_fits_header(hdr,tags,vals)
  character(len=80), intent(in) :: hdr(:)
  character(len=*),  intent(out) :: tags(:)
  real,              intent(out) :: vals(:)
- integer :: i, n, ierr, ieq
- real :: val
+ integer :: i, n, ierr
   
  n = 0
  do i=1,size(hdr)
-    ieq = index(hdr(i),'=')
-    if (ieq > 0) then
-       read(hdr(i)(ieq+1:),*,iostat=ierr) val
-       if (ierr == 0) then
-          n = n + 1
-          if (n <= size(vals)) then
-             tags(n) = hdr(i)(1:ieq-1)
-             vals(n) = val
-             !print*,'got ',tags(n),':',vals(n)
-          endif
-       endif
-    endif
+    n = n + 1
+    call get_fits_header_entry(hdr(i),tags(n),vals(n),ierr)
+    if (ierr /= 0) n = n - 1
  enddo
   
 end subroutine get_floats_from_fits_header
+
+!------------------------------------------------
+! get tag:val pairs from fits header record
+! will extract anything readable as a floating
+! point number
+!------------------------------------------------
+subroutine get_fits_header_entry(record,tag,val,ierr)
+ character(len=80), intent(in) :: record
+ character(len=*),  intent(out) :: tag
+ real, intent(out) :: val
+ integer, intent(out) :: ierr
+ integer :: ieq
+
+ tag = ''
+ val = 0.
+ ierr = -1
+ ! split on equals sign
+ ieq = index(record,'=')
+ if (ieq > 0) then
+    tag = record(1:ieq-1)
+    read(record(ieq+1:),*,iostat=ierr) val
+ endif
+
+end subroutine get_fits_header_entry
+
+!------------------------------------------------
+! search fits header to find a particular variable
+! e.g. bmaj = get_from_header('BMAJ',hdr,ierr)
+!------------------------------------------------
+function get_from_header(tag,hdr,ierr) result(val)
+ character(len=*),  intent(in) :: tag
+ character(len=80), intent(in) :: hdr(:)
+ integer,           intent(out) :: ierr
+ character(len=len(tag)) :: mytag
+ real :: val,myval
+ integer :: i
+
+ val = 0.
+ ierr = -1
+ do i=1,size(hdr)
+    call get_fits_header_entry(hdr(i),mytag,myval,ierr)
+    if (trim(adjustl(mytag))==trim(tag) .and. ierr==0) then
+       val = myval
+       ierr = 0
+       return
+    endif
+ enddo
+
+end function get_from_header
 
 end module readwrite_fits
