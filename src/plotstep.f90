@@ -695,7 +695,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use pagesetup,             only:redraw_axes
  use disc,                  only:disccalc,discplot
  use exactfromfile,         only:exact_fromfile
- use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec
+ use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec,iPlotExactUnder
  use write_pixmap,          only:iwritepixmap,writepixmap,readpixmap
  use pdfs,                  only:pdf_calc,pdf_write
  use plotutils,             only:plotline
@@ -744,7 +744,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  character(len=12) :: string
 
  logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
- logical :: dumxsec, isetrenderlimits, iscoordplot, inorm_label
+ logical :: dumxsec, isetrenderlimits, iscoordplot, inorm_label, plot_exact
  logical :: ichangesize, initx, inity, initz, isameweights, got_h
  logical, parameter :: isperiodicx = .false. ! feature not implemented
  logical, parameter :: isperiodicy = .false. ! feature not implemented
@@ -2060,10 +2060,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              !
              !--plot exact solution if relevant (before going interactive)
              !
-             if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
-               ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
-                iaxisy = iaxis
-                if (tile_plots .and. icolumn /= 1) iaxisy = -1
+             if (plot_exact) then
                 if (iexact==iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
                    isinktype = get_sink_type(ntypes)
                    call locate_first_two_of_type(isink1,isink2,isinktype,iamtype,npartoftype,ntoti)
@@ -2180,6 +2177,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           just = 0
           call page_setup
 
+          !
+          !--plot exact solution (UNDER particle plots)
+          !
+          if (plot_exact .and. iPlotExactUnder) then
+             call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
+                icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
+                xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
+                pmassmin,pmassmax,ntoti,imarktype(1), &
+                units(iplotx),units(iploty),irescale,iaxisy)
+          endif
           !--------------------------------
           ! now plot particles
           !--------------------------------
@@ -2247,10 +2254,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !
           !--plot exact solution (after redrawn axis for residual plots)
           !
-          if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
-            ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
-             iaxisy = iaxis
-             if (tile_plots .and. icolumn /= 1) iaxisy = -1
+          if (plot_exact .and. .not.iPlotExactUnder) then
              call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
@@ -2451,10 +2455,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              !
              !--plot exact solution (after redrawn axis for residual plots)
              !
-             if (iexact /= 0 .and.nyplot <= nacross*ndown .and. &
-               ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn)) then
-                iaxisy = iaxis
-                if (tile_plots .and. icolumn /= 1) iaxisy = -1
+             if (plot_exact) then
                 call exact_solution(iexact,iplotx,iploty,itrans(iplotx),itrans(iploty), &
                    icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
@@ -2906,6 +2907,10 @@ subroutine page_setup(dummy)
 
  lastplot = ((ipos==iendatstep .or. istep==nsteps) &
                 .and. nyplot==nyplots .and. k==nxsec)
+
+ plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
+ iaxisy = iaxis
+ if (tile_plots .and. icolumn /= 1) iaxisy = -1
 
  !--------------------------------------------------------------
  ! output some muff to the screen

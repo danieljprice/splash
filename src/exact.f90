@@ -41,7 +41,7 @@ module exact
  integer :: maxexactpts, iExactLineColour(maxexact), iExactLineStyle(maxexact),iPlotExactOnlyOnPanel
  integer :: iNormaliseErrors
  logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
- logical :: iApplyUnitsExactFile
+ logical :: iApplyUnitsExactFile,iPlotExactUnder
  real :: fracinsetResiduals,residualmax
  !
  !--declare all of the parameters required for the various exact solutions
@@ -106,7 +106,7 @@ module exact
  namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
        iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel,&
-       iApplyUnitsExactFile,iNormaliseErrors
+       iApplyUnitsExactFile,iNormaliseErrors,iPlotExactUnder
 
  namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -235,6 +235,7 @@ subroutine defaults_set_exact
  fracinsetResiduals = 0.15
  residualmax = 0.0
  iPlotExactOnlyOnPanel = 0
+ iPlotExactUnder = .false.
 
  return
 end subroutine defaults_set_exact
@@ -627,6 +628,7 @@ subroutine options_exact(iexact)
 
  call prompt('Enter selection ',iPlotExactOnlyOnPanel,-2)
 
+ call prompt('Plot exact solution under data (default is over)? ',iPlotExactUnder)
 
  return
 end subroutine options_exact
