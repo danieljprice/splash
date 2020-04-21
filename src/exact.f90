@@ -43,6 +43,7 @@ module exact
  logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
  logical :: iApplyUnitsExactFile,iPlotExactUnder
  real :: fracinsetResiduals,residualmax
+ character(len=60) :: ExactLegendText(maxexact)
  !
  !--declare all of the parameters required for the various exact solutions
  !
@@ -120,7 +121,7 @@ module exact
        const1,const2,ispiral,narms,spiral_params
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
- public :: exact_solution
+ public :: exact_solution,get_nexact
  public :: exactopts,exactparams
 
 contains
@@ -236,6 +237,7 @@ subroutine defaults_set_exact
  residualmax = 0.0
  iPlotExactOnlyOnPanel = 0
  iPlotExactUnder = .false.
+ ExactLegendText = ''
 
  return
 end subroutine defaults_set_exact
@@ -250,12 +252,13 @@ subroutine submenu_exact(iexact)
  use exactfunction, only:check_function
  use mhdshock,      only:nmhdshocksolns,mhdprob
  use planetdisc,    only:maxspirals,labelspiral
- use asciiutils,    only:get_ncolumns,get_nrows,string_replace
+ use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
  logical :: ians,iexist,ltmp,prompt_for_gamma
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
+ character(len=len(funcstring)) :: func_prev
 
  print 10
 10 format(' 0) none ',/,               &
@@ -291,6 +294,7 @@ subroutine submenu_exact(iexact)
     overfunc: do i=1,nfunc
        ierr = 1
        itry = 0
+       func_prev = funcstring(i)
        do while(ierr /= 0 .and. itry < 10)
           if (nfunc > 1) print "(/,a,i2,/,11('-'),/)",'Function ',i
           call prompt('enter function f(x,t) to plot ',funcstring(i),noblank=.true.)
@@ -312,6 +316,10 @@ subroutine submenu_exact(iexact)
        if (iexactploty(i) > 0) then
           call prompt('enter x axis of exact solution ',iexactplotx(i),1)
        endif
+       if (len_trim(ExactLegendText(i))==0 .or. trim(funcstring(i)) /= trim(func_prev)) then
+          ExactLegendText(i) = trim(funcstring(i))
+       endif
+       call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
     enddo overfunc
     if (ierr /= 0) nfunc = ierr
  case(2)
@@ -373,6 +381,8 @@ subroutine submenu_exact(iexact)
        enddo
        call prompt('enter y axis of exact solution ',iexactploty(i),1)
        call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+       if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
+       call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
     enddo over_files
     if (nadjust >= 0) then
        nfiles = nadjust
@@ -583,9 +593,26 @@ subroutine submenu_exact(iexact)
  return
 end subroutine submenu_exact
 
- !---------------------------------------------------
- ! sets options relating to exact solution plotting
- !---------------------------------------------------
+!---------------------------------------------------
+! return number of exact solutions being plotted
+!---------------------------------------------------
+integer function get_nexact(iexact) result(nexact)
+ integer, intent(in) :: iexact
+
+ select case(iexact)
+ case(2)
+    nexact = nfiles
+ case(1)
+    nexact = nfunc
+ case default
+    nexact = 1
+ end select
+
+end function get_nexact
+
+!---------------------------------------------------
+! sets options relating to exact solution plotting
+!---------------------------------------------------
 subroutine options_exact(iexact)
  use prompting, only:prompt
  use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
@@ -595,9 +622,7 @@ subroutine options_exact(iexact)
  integer :: nexact,i
 
  call prompt('enter number of exact solution points ',maxexactpts,10,1000000)
- nexact = 1
- if (iexact==1) nexact = nfunc
- if (iexact==2) nexact = nfiles
+ nexact = get_nexact(iexact)
  string = ''
  do i=1,nexact
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
@@ -607,6 +632,11 @@ subroutine options_exact(iexact)
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
     call prompt('enter line style '//trim(string),iExactLineStyle(i),1,plotlib_maxlinestyle)
  enddo
+ call prompt('Plot exact solution under data (default is over)? ',iPlotExactUnder)
+ do i=1,nexact
+    call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
+ enddo
+
  call prompt('calculate error norms?',iCalculateExactErrors)
  if (iCalculateExactErrors) then
     print "(/,' 0 : not normalised  L1 = 1/N \sum |y - y_exact|',/,"// &
@@ -627,8 +657,6 @@ subroutine options_exact(iexact)
            "'  n : plot exact solution on nth panel only ')"
 
  call prompt('Enter selection ',iPlotExactOnlyOnPanel,-2)
-
- call prompt('Plot exact solution under data (default is over)? ',iPlotExactUnder)
 
  return
 end subroutine options_exact

@@ -62,7 +62,7 @@ module timestep_plotting
  real, parameter, private :: pi = 3.1415926536
 
  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
- logical, private :: inewpage, tile_plots, lastplot
+ logical, private :: inewpage,tile_plots,lastplot,lastinpanel
  logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
  logical, private :: interactivereplot,ihavesetcolours,vectordevice,gotcontours
  logical, private :: OneColourBarPerRow,OneColourBarPerColumn
@@ -2908,6 +2908,8 @@ subroutine page_setup(dummy)
  lastplot = ((ipos==iendatstep .or. istep==nsteps) &
                 .and. nyplot==nyplots .and. k==nxsec)
 
+ lastinpanel = (istepsonpage==nstepsperpage .or. lastplot)
+
  plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
  iaxisy = iaxis
  if (tile_plots .and. icolumn /= 1) iaxisy = -1
@@ -2916,7 +2918,7 @@ subroutine page_setup(dummy)
  ! output some muff to the screen
  !--------------------------------------------------------------
  if (((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
-        .or. (iadapt .and. (istepsonpage==nstepsperpage .or. lastplot))) .and. .not.dum) then
+        .or. (iadapt .and. lastinpanel)) .and. .not.dum) then
     if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
           print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelx),xmin,xmax
     if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
@@ -3133,11 +3135,12 @@ subroutine legends_and_title
  use plotlib,       only:plot_qci,plot_sci,plot_annotate,plot_set_opacity
  use labels,        only:is_coord,headertags,count_non_blank
  use asciiutils,    only:add_escape_chars
+ use exact,         only:iExactLineColour,iExactLineStyle,ExactLegendText,get_nexact
  implicit none
  integer :: icoloursave
  character(len=lensteplegend) :: steplegendtext
  real :: xlabeloffsettemp
- integer :: ititle,nhdr
+ integer :: ititle,nhdr,k,kk,nexact
  logical :: usebox
 
  !--save colour index
@@ -3235,6 +3238,20 @@ subroutine legends_and_title
     else
        call legend_markers(istepsonpage,linecolourthisstep,imarktype(1),linestylethisstep, &
             iusetype(1),iplotline,trim(steplegendtext),hposlegend,vposlegend,1.0)
+    endif
+    !
+    ! add exact solution line to the legend
+    !
+    if (lastinpanel .and. plot_exact) then
+        nexact = get_nexact(iexact)
+        kk = 0
+        do k=1,nexact
+           if (len_trim(ExactLegendText(k)) > 0) then
+              kk = kk + 1
+              call legend_markers(istepsonpage+k,iExactLineColour(k),imarktype(1),iExactLineStyle(k), &
+                   .false.,.true.,ExactLegendText(k),hposlegend,vposlegend,1.0)
+           endif
+        enddo
     endif
  endif
 

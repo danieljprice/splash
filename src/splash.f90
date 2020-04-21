@@ -48,6 +48,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     2.10.1  : (xx/xx/20) exact solution can appear in legend; can also plot under data;
+!             further improvements to fits reader and denoise utility
 !     2.10.0  : (14/02/20)
 !             much improved splash to grid - bug fixes with pixel number and roundoff error;
 !             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
