@@ -467,6 +467,8 @@ subroutine set_labels
        ipr = i
     elseif (icoltype==0 .and. index(labeli,'type') /= 0) then
        icoltype = i
+    elseif (ivx==0 .and. ndim==1 .and. trim(labeli)=='v') then
+       ivx = i
     endif
  enddo
 !
