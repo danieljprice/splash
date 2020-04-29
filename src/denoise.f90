@@ -121,8 +121,10 @@ program denoise
     bmin = get_from_header('BMIN',fitsheader,ierr)
     cdelt1 = get_from_header('CDELT1',fitsheader,ierr)
 !    beam = sqrt(bmaj*bmin)/abs(cdelt1)
-    print*,' bmin = ',bmin/abs(cdelt1),' bmaj = ',bmaj/abs(cdelt1), ' mean = ',sqrt(bmin*bmaj)/abs(cdelt1)
-    if (abs(cdelt1) > 0.) beam = bmaj/abs(cdelt1) !sqrt(bmin*bmaj)/abs(cdelt1)
+    if (abs(cdelt1) > 0. .and. ierr /= 0) then
+       beam = bmaj/abs(cdelt1) !sqrt(bmin*bmaj)/abs(cdelt1)
+       print*,' bmin = ',bmin/abs(cdelt1),' bmaj = ',bmaj/abs(cdelt1), ' mean = ',sqrt(bmin*bmaj)/abs(cdelt1)
+    endif
     if (beam < 1. .or. beam > 20.) beam = 1. 
  endif
  print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', min pix per beam = ',beam
