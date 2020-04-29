@@ -411,15 +411,20 @@ end subroutine delete_shape
 !------------------------------------------------------------
 ! actual routine that implements plotting of various shapes
 !------------------------------------------------------------
-subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
+subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tags)
  use exactfunction, only:exact_function
  use transforms,    only:transform_inverse,transform
  use asciiutils,    only:string_replace
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
       plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb,&
       plotlib_supports_alpha,plot_set_opacity,plot_pt1,plot_sch,plot_qch
+ use parsetext,     only:parse_text,rn
+ use params,        only:ltag
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
- real,    intent(in) :: time
+ real,    intent(in) :: time 
+ integer, intent(in) :: nvar
+ real, intent(in), dimension(nvar) :: allvars
+ character(len=*), dimension(nvar), intent(in) :: tags
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
  integer :: i,j,ierr,iplotonthispanel,ndec,nc
  integer, parameter :: maxfuncpts = 1000
@@ -429,6 +434,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
  real, dimension(maxfuncpts) :: xfunc,yfunc
  character(len=lentext) :: text
  character(len=30)      :: string
+ real(kind=rn),       dimension(nvar+1) :: vals
+ character(len=ltag), dimension(nvar+1) :: vars
 !
 !--store current settings
 !
@@ -508,11 +515,16 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time)
        case(6) ! text
           text = trim(shape(i)%text)
           !--handle special characters in text strings (e.g. replace %t with time)
-          if (index(text,'%t') /= 0) then
-             ndec = 3
-             call plot_numb(nint(time/10.**(int(log10(time)-ndec))),int(log10(time)-ndec),1,string,nc)
-             call string_replace(text,'%t',string(1:nc))
+          if (index(text,'%') /= 0) then
+             vars = (/'t'/)
+             vals(1) = real(time,kind=rn)
+             if (nvar > 0) then
+                vars(2:1+nvar) = tags(1:nvar)
+                vals(2:1+nvar) = allvars(1:nvar)
+             endif
+             call parse_text(text,vars,vals)
           endif
+          !--plot text string
           call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(text))
        case(7) ! arbitrary function
           !--set x to be evenly spaced in transformed (plot) coordinates

@@ -3295,8 +3295,10 @@ subroutine legends_and_title
  endif
 
  !--plot shapes
- if (nshapes > 0 .and. istepsonpage==1) &
-       call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty),timei)
+ if (nshapes > 0 .and. istepsonpage==1) then
+    nhdr = count_non_blank(headertags)
+    call plot_shapes(ipanel,irow,icolumn,itrans(iplotx),itrans(iploty),timei,nhdr,headervalsi,headertags)
+ endif
 
  !--restore colour index
  call plot_sci(icoloursave)
