@@ -2315,51 +2315,68 @@ integer function getpanel(vptx,vpty)
  integer :: i,icol
 
  getpanel = 0
- icol = 0
+ !
+ ! first try the basic procedure of checking if the
+ ! cursor falls within the viewport of a particular panel
+ !
  do i=1,size(vptxmin)
-    icol = icol + 1
-    if (icol > nacross) icol = 1
-    if (icol > 1) then
-       ! if column>1 assign panel by being to the right of previous panel
-       vptxmini = vptxmax(i-1)+barwmulti(i-1)
-    else
-       vptxmini = -0.1 ! allow for some error
-    endif
-    !--if last column extend xmax to right of page
-    if (icol==nacross) then
-       vptxmaxi = 1.1
-    elseif (verticalbar) then ! otherwise use max of current panel + space containing the colour bar
-       vptxmaxi = vptxmax(i) + barwmulti(i)
-    else
-       vptxmaxi = vptxmax(i)
-    endif
-
-    !--if first row extend ymax to top of page
-    if (i <= nacross) then
-       vptymaxi = 1.1
-    else
-       vptymaxi = vptymax(i)
-    endif
-    !--if last row then allow ymin to extend to bottom of page
-    if (i > (size(vptxmin)-nacross)) then
-       vptymini = -0.1
-       ! if not last row assign panel by being above row below
-    elseif (i+nacross <= size(vptxmin)) then
-       vptymini = vptymax(i+nacross)
-    elseif (.not.verticalbar) then
-       vptymini = vptymin(i) - barwmulti(i)
-    else
-       vptymini = vptymin(i)
-    endif
-    if (vptx > vptxmini .and. vptx < vptxmaxi .and. &
-           vpty > vptymini .and. vpty < vptymaxi) then
-       if (getpanel /= 0) print*,'Warning: multiple matching panels found ',getpanel,i
-       getpanel = i
-    endif
+    if (vptx > vptxmin(i) .and. vptx < vptxmax(i) .and. &
+        vpty > vptymin(i) .and. vpty < vptymax(i)) getpanel = i
  enddo
+ !
+ ! if this fails, use more generous limits around the margins
+ !
+ icol = 0
+ if (getpanel==0) then
+    do i=1,size(vptxmin)
+       icol = icol + 1
+       if (icol > nacross) icol = 1
+       if (icol > 1) then
+          ! if column>1 assign panel by being to the right of previous panel
+          vptxmini = vptxmax(i-1)+barwmulti(i-1)
+       else
+          vptxmini = -0.1 ! allow for some error
+       endif
+       !--if last column extend xmax to right of page
+       if (icol==nacross) then
+          vptxmaxi = 1.1
+       elseif (verticalbar) then ! otherwise use max of current panel + space containing the colour bar
+          vptxmaxi = vptxmax(i) + barwmulti(i)
+       else
+          vptxmaxi = vptxmax(i)
+       endif
+
+       !--if first row extend ymax to top of page
+       if (i <= nacross) then
+          vptymaxi = 1.1
+       else
+          vptymaxi = vptymax(i)
+       endif
+       !--if last row then allow ymin to extend to bottom of page
+       if (i > (size(vptxmin)-nacross)) then
+          vptymini = -0.1
+          ! if not last row assign panel by being above row below
+       elseif (i+nacross <= size(vptxmin)) then
+          vptymini = vptymax(i+nacross)
+       elseif (.not.verticalbar) then
+          vptymini = vptymin(i) - barwmulti(i)
+       else
+          vptymini = vptymin(i)
+       endif
+       if (vptx > vptxmini .and. vptx < vptxmaxi .and. &
+              vpty > vptymini .and. vpty < vptymaxi) then
+          !print*,'matching panel ',i,vptx,vpty,vptxmini,vptxmaxi,vptymini,vptymaxi
+          !if (getpanel /= 0) print*,'Warning: multiple matching panels found ',getpanel,i,vptx,vpty
+          getpanel = i
+       endif
+    enddo
+ endif
+ !
+ ! if we still fail, just take the last panel
+ !
  if (getpanel <= 0 .or. getpanel > size(vptxmin)) then
     !print*,' vptx,y = ',vptx,vpty,vptxmin(:),vptxmax(:)
-    print*,'Error determining panel: assuming last '
+    !print*,'Error determining panel: assuming last '
     getpanel = size(vptxmin)
  endif
 
