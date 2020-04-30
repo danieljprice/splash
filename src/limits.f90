@@ -48,6 +48,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
  use settings_data, only:ndim,icoords,icoordsnew,iverbose,debugmode
  integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
  integer :: i,j,k,ntoti,itocoli
+ logical :: first
 
  if (iverbose > 1 .or. debugmode) print 100,ifromstep,itostep,ifromcol,itocol
 100 format(/' setting plot limits: steps ',i5,'->',i5,' cols ',i2,'->',i3)
@@ -71,8 +72,9 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
  !
  !--warn if limits are the same
  !
+ first = .true.
  do j=ifromcol,itocol
-    call warn_minmax(label(j),lim(j,1),lim(j,2))
+    call warn_minmax(label(j),lim(j,1),lim(j,2),first)
  enddo
 
  lim2(ifromcol:itocol,:) = 0.
@@ -355,11 +357,16 @@ end subroutine print_lim2info
 !----------------------------------------------------------
 ! prints warning if min=max in limits setting
 !----------------------------------------------------------
-subroutine warn_minmax(labelx,xmin,xmax)
+subroutine warn_minmax(labelx,xmin,xmax,first)
  character(len=*), intent(in) :: labelx
  real,             intent(in) :: xmin,xmax
+ logical,          intent(inout), optional :: first
 
  if (abs(xmin-xmax) < tiny(xmax)) then
+    if (present(first)) then
+       if (first) print "(a)"
+       first = .false.
+    endif
     print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
  endif
 

@@ -609,6 +609,8 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  indexinactive = 0
  i = 1
  if (present(incolumn)) incolumn(:) = 0
+
+ if (all(len_trim(calcstring(:))==0)) return
  if (isverbose) print "(/,a)", ' Current list of calculated quantities:'
  do while(i <= maxcalc .and. len_trim(calcstring(i)) /= 0)
     !

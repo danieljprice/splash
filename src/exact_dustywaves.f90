@@ -31,9 +31,8 @@ contains
 
 subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplot,yplot,ierr)
  use cubic,   only:cubicsolve_complex
- implicit none
  integer :: i
- real, parameter :: pi = 3.1415926536
+ real, parameter :: pi = 4.*atan(1.)
  integer, intent(in) :: iplot
  real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, rhog0, rhod0
  real, intent(in)    :: xplot(:)
@@ -51,8 +50,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 
  Kdrag = Kdragin
  if (mod(iplot,2)==1) then
-    print*,'plotting two-fluid gas/dust linear wave solution ... '
-    print*,' lambda = ',lambda,' ampl = ',ampl,' cs = ',cs,' Kdrag = ',Kdrag
+    print "(3(a,1pg10.3))",' >> gas/dust linear wave solution: ampl=',ampl,' Kdrag=',Kdrag,' cs=',cs
  endif
  !
 ! check for errors
@@ -94,17 +92,17 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 
  rhodeq  = rhod0 ! initial dust density
  rhogeq  = rhog0 ! initial gas density
- if (mod(iplot,2)==1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
- select case(iplot)
- case(4)
-    print*,'(dust density)'
- case(3)
-    print*,'(gas density)'
- case(2)
-    print*,'(dust velocity)'
- case default
-    print*,'(gas velocity)'
- end select
+ !if (mod(iplot,2)==1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
+ !select case(iplot)
+ !case(4)
+ !   print*,'(dust density)'
+ !case(3)
+ !   print*,'(gas density)'
+ !case(2)
+ !   print*,'(dust velocity)'
+ !case default
+ !   print*,'(gas velocity)'
+ !end select
 
 
  rhodsol = ampl*rhod0  ! amplitude of dust density perturbation

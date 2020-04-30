@@ -1590,7 +1590,7 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
        errL2 = sqrt(errL2/(nused))
     endif
  else
-    print "(a)",' error normalising errors'
+    !print "(a)",' error normalising errors'
     errL1 = 0.
     errL2 = 0.
     errLinf = 0.
