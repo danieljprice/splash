@@ -77,7 +77,12 @@ subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
        case('e')
           if (nobj > 0) then
              ipick = 0
-             call prompt(' pick a '//objname//' to edit ',ipick,0,nobj)
+             if (nobj > 1) then
+                call prompt(' pick a '//objname//' to edit ',ipick,0,nobj)
+             else ! if there is only one object, no need to ask which one
+                print "(/,a)",' >> editing '//objname//' #1'
+                ipick = 1
+             endif
              if (ipick > 0) then
                 istart = ipick - 1
                 iend   = istart + 1
