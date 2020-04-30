@@ -49,7 +49,7 @@
 
 subroutine read_data(rootname,indexstart,ipos,nstepsread)
  use exact,          only:hfact
- use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
+ use particle_data,  only:npartoftype,time,gamma,headervals,dat,maxpart,maxstep,maxcol,iamtype
  use params
  use filenames,      only:nfiles
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
@@ -57,7 +57,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use geometry,       only:labelcoordsys
  use system_utils,   only:lenvironment
- use labels,         only:labeltype,print_types
+ use labels,         only:labeltype,print_types,headertags
  implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
@@ -69,11 +69,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  integer, dimension(3) :: ibound
  logical :: reallocate, singleprecision
 
- real :: timein, gammain, hfactin
  real, dimension(3) :: xmin, xmax
- real(doub_prec) :: timeind,gammaind,hfactind
- real(doub_prec), dimension(3) :: xmind, xmaxd
+ integer, parameter :: max_header_vars = 9
+ real(doub_prec) :: header_dp(max_header_vars)
+ real(sing_prec) :: header_sp(max_header_vars)
+ real :: header(max_header_vars)
  real(doub_prec), dimension(:), allocatable :: dattempd
+ real(sing_prec), dimension(:), allocatable :: dattemp
  integer, dimension(:), allocatable :: itype
  character(len=20) :: geomfile
 
@@ -103,8 +105,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !--read first header line
 !
  singleprecision = .false.
- read(iunit,iostat=ierr,end=80) timeind,npartin,ntotin,gammaind, &
-       hfactind,ndim_max,ndimV_max,ncol_max,iformat
+ read(iunit,iostat=ierr,end=80) header_dp(1),npartin,ntotin,header_dp(2), &
+     header_dp(3),ndim_max,ndimV_max,ncol_max,iformat
 !  print*,'time = ',timeind,' hfact = ',hfactind,' ndim=',ndim_max,'ncol=',ncol_max
 !  print*,'npart = ',npartin,ntotin,geomfile
  if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
@@ -116,8 +118,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     !--try single precision
     !
     rewind(iunit)
-    read(iunit,iostat=ierr,end=80) timein,npartin,ntotin,gammain, &
-         hfactin,ndim_max,ndimV_max,ncol_max,iformat
+    read(iunit,iostat=ierr,end=80) header_sp(1),npartin,ntotin,header_sp(2), &
+         header_sp(3),ndim_max,ndimV_max,ncol_max,iformat
     singleprecision = .true.
     if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
         .or. ndimV_max <= 0 .or. ndimV_max > 3 &
@@ -126,7 +128,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
         .or. iformat < 0 .or. iformat > 10) then
 
        print "(a)",' *** Error reading first header ***'
-       print*,' time = ',timein,' hfact = ',hfactin,' ndim=',ndim_max,'ncol=',ncol_max
+       print*,' time = ',header_sp(1),' hfact = ',header_sp(3),' ndim=',ndim_max,'ncol=',ncol_max
        close(iunit)
        return
     endif
@@ -161,19 +163,16 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  !
  if (singleprecision) then
     if (debugmode) print "(a)",'DEBUG: single precision dump'
-    read(iunit,iostat=ierr) timein,nparti,ntoti,gammain, &
-          hfactin,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
-          xmin(1:ndim),xmax(1:ndim),ilen,geomfile(1:ilen)
+    read(iunit,iostat=ierr) header_sp(1),nparti,ntoti,header_sp(2), &
+          header_sp(3),ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
+          header_sp(4:3+2*ndim),ilen,geomfile(1:ilen)
+    header = real(header_sp)
  else
     if (debugmode) print "(a)",'DEBUG: double precision dump'
-    read(iunit,iostat=ierr) timeind,nparti,ntoti,gammaind, &
-          hfactind,ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
-          xmind(1:ndim),xmaxd(1:ndim),ilen,geomfile(1:ilen)
-    timein = real(timeind)
-    gammain = real(gammaind)
-    hfactin = real(hfactind)
-    xmin = real(xmind)
-    xmax = real(xmaxd)
+    read(iunit,iostat=ierr) header_dp(1),nparti,ntoti,header_dp(2), &
+          header_dp(3),ndim,ndimV,ncolstep,iformat,ibound(1:ndim), &
+          header_dp(4:3+2*ndim),ilen,geomfile(1:ilen)
+    header = real(header_dp)
  endif
  if (ierr /= 0) then
     print*,'*** error reading timestep header ***'
@@ -183,9 +182,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     nstepsread = nstepsread + 1
  endif
 
- time(i) = timein
- gamma(i) = gammain
- hfact = hfactin
+ time(i) = header(1)
+ gamma(i) = header(2)
+ hfact = header(3)
+ xmin(1:ndim) = header(4:3+ndim)
+ xmax(1:ndim) = header(4+ndim:4+2*ndim-1)
+ headertags(1:7) = (/'time ','npart','ntot ','gamma','hfact','ndim ','ndimV'/)
+ headervals(1:7,i) = (/time(i),real(nparti),real(ntoti),gamma(i),hfact,real(ndim),real(ndimV)/)
  npartoftype(1,i) = nparti
  npartoftype(3,i) = ntoti - nparti
  if (iverbose >= 1) then
@@ -254,17 +257,23 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
 
  if (ntoti > 0) then
-    if (.not.singleprecision) allocate(dattempd(ntoti))
+    if (singleprecision) then
+       allocate(dattemp(ntoti))
+    else
+       allocate(dattempd(ntoti))
+    endif
     do icol=1,ncolstep
        if (singleprecision) then
-          read (iunit,iostat=ierr,end=67) dat(1:ntoti,icol,i)
+          read (iunit,iostat=ierr) dattemp(1:ntoti)
+          dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
        else
-          read (iunit,iostat=ierr,end=67) dattempd(1:ntoti)
+          read (iunit,iostat=ierr) dattempd(1:ntoti)
           dat(1:ntoti,icol,i) = real(dattempd(1:ntoti))
        endif
        if (ierr /= 0) print "(a,i2,a)",'*** error reading column ',icol,' ***'
     enddo
     if (allocated(dattempd)) deallocate(dattempd)
+    if (allocated(dattemp)) deallocate(dattemp)
 
     allocate(itype(ntoti))
     read(iunit,iostat=ierr) itype(1:ntoti)
@@ -301,11 +310,6 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     npartoftype(1,i) = 1
     dat(:,:,i) = 0.
  endif
-
- goto 68
-67 continue
- print "(a)",' > end of file reached <'
-68 continue
  !
  !--close data file and return
  !
