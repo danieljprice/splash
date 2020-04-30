@@ -49,7 +49,9 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     2.10.1  : (xx/xx/20) exact solution can appear in legend; can also plot under data;
-!             further improvements to fits reader and denoise utility
+!             fits reader and denoise utility can read/write spectral cubes; text shapes can
+!             print header variables using %(var); can shift cross section by precise amounts
+!             in interactive mode using number followed by u/d
 !     2.10.0  : (14/02/20)
 !             much improved splash to grid - bug fixes with pixel number and roundoff error;
 !             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
@@ -418,7 +420,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v2.10.0 [14th Feb 2020]'
+ character(len=*), parameter :: version = 'v2.10.1 [30th Apr 2020]'
 
  !
  ! initialise some basic code variables
