@@ -517,7 +517,7 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
  else
     if (tagged) then
        if (nints > maxinblock) then
-          print*,'WARNING: number of ints in header exceeds splash array limit, ignoring some'
+          if (iverbose > 0) print*,'WARNING: number of ints in header exceeds splash array limit, ignoring some'
           nints = maxinblock
        endif
        read(iunit,iostat=ierr1) tags(1:nints)
@@ -536,7 +536,8 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
           call extract('ntypes',ntypes,intarr,tags,nints,ierr)
           if (ierr /= 0) return
           if (ntypes > maxparttypes) then
-             print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
+             if (iverbose > 0) &
+                print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
              ntypes = maxparttypes
           endif
           call extract('npartoftype',npartoftypei(1:ntypes),intarr,tags,nints,ierr)
@@ -840,23 +841,25 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
     npartoftype(2) = max(ntotal - npart,0)
  endif
  hfact = 1.2
- if (phantomdump) then
-    call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
-    print "(a,es12.4,a,f6.3,a,f5.2)", &
-           ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
- elseif (batcode) then
-    call extract('radL1',radL1,realarr,tags,nreals,ierrs(1))
-    call extract('PhiL1',PhiL1,realarr,tags,nreals,ierrs(2))
-    call extract('Er',Er,realarr,tags,nreals,ierrs(3))
-    print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
-           '   time: ',time,  '   gamma: ',gamma, '   tsph: ',realarr(2), &
-           '  radL1: ',radL1,'   PhiL1: ',PhiL1,'     Er: ',Er
- else
-    call extract('RK2',RK2,realarr,tags,nreals,ierrs(1))
-    call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
-    print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
-           '   time: ',time,  '   gamma: ',gamma, '   RK2: ',RK2, &
-           ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dtmax
+ if (iverbose > 0) then
+    if (phantomdump) then
+       call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
+       print "(a,es12.4,a,f6.3,a,f5.2)", &
+              ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
+    elseif (batcode) then
+       call extract('radL1',radL1,realarr,tags,nreals,ierrs(1))
+       call extract('PhiL1',PhiL1,realarr,tags,nreals,ierrs(2))
+       call extract('Er',Er,realarr,tags,nreals,ierrs(3))
+       print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
+              '   time: ',time,  '   gamma: ',gamma, '   tsph: ',realarr(2), &
+              '  radL1: ',radL1,'   PhiL1: ',PhiL1,'     Er: ',Er
+    else
+       call extract('RK2',RK2,realarr,tags,nreals,ierrs(1))
+       call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
+       print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
+              '   time: ',time,  '   gamma: ',gamma, '   RK2: ',RK2, &
+              ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dtmax
+    endif
  endif
 end subroutine extract_variables_from_header
 
@@ -1241,7 +1244,6 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
- real    :: pmassi,hi,rhoi
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
 
  character(len=len(rootname)+10) :: dumpfile
@@ -1371,7 +1373,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
     close(iunit)
     return
  else
-    print "(a)",' File ID: '//trim(fileident)
+    if (iverbose > 0) print "(a)",' File ID: '//trim(fileident)
  endif
  mhddump = .false.
  rtdump = .false.
@@ -2149,7 +2151,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
     npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
  endif
 
- call print_types(npartoftype(:,j),labeltype)
+ if (iverbose > 0) call print_types(npartoftype(:,j),labeltype)
 
  close(15)
  if (debug) print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
@@ -2249,7 +2251,7 @@ subroutine set_labels
  use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
-              ivrel,make_vector_label,get_label_grain_size,headertags
+              ivrel,make_vector_label,get_label_grain_size
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
