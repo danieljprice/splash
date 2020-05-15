@@ -841,26 +841,31 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
     npartoftype(2) = max(ntotal - npart,0)
  endif
  hfact = 1.2
- if (iverbose > 0) then
-    if (phantomdump) then
-       call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
+ if (phantomdump) then
+    call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
+    if (iverbose > 0) then
        print "(a,es12.4,a,f6.3,a,f5.2)", &
-              ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
-    elseif (batcode) then
-       call extract('radL1',radL1,realarr,tags,nreals,ierrs(1))
-       call extract('PhiL1',PhiL1,realarr,tags,nreals,ierrs(2))
-       call extract('Er',Er,realarr,tags,nreals,ierrs(3))
+           ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
+    endif
+ elseif (batcode) then
+    call extract('radL1',radL1,realarr,tags,nreals,ierrs(1))
+    call extract('PhiL1',PhiL1,realarr,tags,nreals,ierrs(2))
+    call extract('Er',Er,realarr,tags,nreals,ierrs(3))
+    if (iverbose > 0) then
        print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
-              '   time: ',time,  '   gamma: ',gamma, '   tsph: ',realarr(2), &
-              '  radL1: ',radL1,'   PhiL1: ',PhiL1,'     Er: ',Er
-    else
-       call extract('RK2',RK2,realarr,tags,nreals,ierrs(1))
-       call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
+           '   time: ',time,  '   gamma: ',gamma, '   tsph: ',realarr(2), &
+           '  radL1: ',radL1,'   PhiL1: ',PhiL1,'     Er: ',Er
+    endif
+ else
+    call extract('RK2',RK2,realarr,tags,nreals,ierrs(1))
+    call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
+    if (iverbose > 0) then
        print "(a,es12.4,a,f9.5,a,f8.4,/,a,es12.4,a,es9.2,a,es10.2)", &
-              '   time: ',time,  '   gamma: ',gamma, '   RK2: ',RK2, &
-              ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dtmax
+           '   time: ',time,  '   gamma: ',gamma, '   RK2: ',RK2, &
+           ' t/t_ff: ',tff,' rhozero: ',rhozero,' dtmax: ',dtmax
     endif
  endif
+
 end subroutine extract_variables_from_header
 
 !---------------------------------------------------------------
@@ -1525,7 +1530,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
 
        !--force read of h and rho if dustfrac is required
        if (ndustarrays > 0 .and. any(required(nhydroarrays+1:nhydroarrays+ndustarrays))) then
-          !print*,' dustfrac in columns ',nhydroarrays+1,nhydroarrays+ndustarrays
+          !print*,' dustfrac in columns ',nhydroarrays+1,nhydroarrays+ndustarrays,' required = ',required(nhydroarrays+1)
           required(irho) = .true.
           required(ih) = .true.
        endif
@@ -1843,7 +1848,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
              icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idustarr)
              if (tagged) tagarr(icolumn) = tagtmp
-             if (debug)  print*,' reading real ',icolumn,' tag = ',trim(tagtmp)
+             if (debug)  print*,' reading real to col:',icolumn,' tag = ',trim(tagtmp), ' required = ',required(icolumn)
              if (required(icolumn)) then
                 if (doubleprec) then
                    read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
@@ -1897,7 +1902,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              tagtmp = ''
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
              icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idustarr)
-             if (debug) print*,'reading real4 ',icolumn,' tag = ',trim(tagtmp)
+             if (debug) print*,'reading real4 to col:',icolumn,' tag = ',trim(tagtmp),' required = ',required(icolumn)
              if (tagged) tagarr(icolumn) = tagtmp
 
              if (phantomdump .and. icolumn==ih) required(ih) = .true. ! h always required for density
@@ -1923,7 +1928,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
              tagtmp = ''
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
              icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idustarr)
-             if (debug) print*,'reading real8 ',icolumn,' tag = ',trim(tagtmp)
+             if (debug) print*,'reading real8 to col:',icolumn,' tag = ',trim(tagtmp),' required = ',required(icolumn)
              if (tagged) tagarr(icolumn) = tagtmp
              if (required(icolumn)) then
                 read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
