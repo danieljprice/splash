@@ -41,7 +41,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst,get_sink_type
  use limits,               only:lim,get_particle_subset
  use settings_units,       only:units,unit_interp
- use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin
+ use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin,iverbose
  use settings_part,        only:iplotpartoftype
  use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation,exact_rendering
  use params,               only:int1
@@ -340,7 +340,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
          dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
          xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-         pixwidth,pixwidth,inormalise,exact_rendering,isperiodic(1),isperiodic(2))
+         pixwidth,pixwidth,inormalise,exact_rendering,isperiodic(1),isperiodic(2),iverbose)
     !
     !--set minimum density on the grid
     !
@@ -455,7 +455,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                      dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                      xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-                     pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2))
+                     pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2),iverbose)
              endif
           endif
 
@@ -542,7 +542,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                       call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                            xmin(1),xmin(2),datgrid2D,npixels(1),npixels(2),&
-                           pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2))
+                           pixwidth,pixwidth,.true.,exact_rendering,isperiodic(1),isperiodic(2),iverbose)
                    endif
                 endif
 
