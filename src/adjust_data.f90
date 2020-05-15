@@ -197,7 +197,7 @@ subroutine adjust_data_codeunits
  if (idustfrac > 0 .and. irho > 0 .and. no_dust_particles) then
     if (lenvironment('SPLASH_FAKE_DUST_PARTICLES')) then
        call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
-    else
+    elseif (iverbose >= 1) then
        print "(a)",' One fluid dust: use SPLASH_FAKE_DUST_PARTICLES=yes to make fake dust particles'
     endif
  endif
