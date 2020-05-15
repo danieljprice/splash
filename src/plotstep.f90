@@ -2903,13 +2903,12 @@ subroutine page_setup(dummy)
  npanels_remaining = (nsteps - istep)/nstepsperpage !nplots_remaining*nsteps_remaining
 
 !    npanels_remaining = (nsteps - istep)*nyplots/nstepsperpage
- lastrow  = (usecolumnorder .and. npanels_remaining < nacross)
+ lastrow  = (usecolumnorder .and. npanels_remaining < nacross .and. nacross > 1)
 
  lastplot = ((ipos==iendatstep .or. istep==nsteps) &
                 .and. nyplot==nyplots .and. k==nxsec)
 
  lastinpanel = (istepsonpage==nstepsperpage .or. lastplot)
-
  plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
  iaxisy = iaxis
  if (tile_plots .and. icolumn /= 1) iaxisy = -1
