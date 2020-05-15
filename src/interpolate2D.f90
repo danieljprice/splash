@@ -73,7 +73,7 @@ contains
 
 subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,&
-     normalise,exact,periodicx,periodicy)
+     normalise,exact,periodicx,periodicy,iverbose)
 
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,hh,weight,dat
@@ -81,6 +81,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy
  real, intent(out), dimension(npixx,npixy) :: datsmooth
  logical, intent(in) :: normalise,exact,periodicx,periodicy
+ integer, intent(in) :: iverbose
  real, dimension(npixx,npixy) :: datnorm
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
@@ -98,18 +99,20 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
 
  datsmooth = 0.
  datnorm = 0.
- if (exact) then
-    print "(1x,a)",'interpolating from particles to 2D grid (exact)...'
- elseif (normalise) then
-    print "(1x,a)",'interpolating from particles to 2D grid (normalised)...'
- else
-    print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
+ if (iverbose > 0) then
+    if (exact) then
+       print "(1x,a)",'interpolating from particles to 2D grid (exact)...'
+    elseif (normalise) then
+       print "(1x,a)",'interpolating from particles to 2D grid (normalised)...'
+    else
+       print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
+    endif
  endif
  if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
     print "(1x,a)",'interpolate2D: error: pixel width <= 0'
     return
  endif
- if (any(hh(1:npart) <= tiny(hh))) then
+ if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= 0) then
     print*,'interpolate2D: warning: ignoring some or all particles with h < 0'
  endif
  const = cnormk2D  ! normalisation constant

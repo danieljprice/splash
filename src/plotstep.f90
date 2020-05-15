@@ -1315,7 +1315,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                          hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
-                         pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy)
+                         pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                       !--also get contour plot data
                       if (icontourplot > 0 .and. icontourplot <= numplot) then
                          if (.not.isameweights) & ! set contouring weights as necessary
@@ -1324,7 +1324,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
-                            pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy)
+                            pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                          gotcontours = .true.
 
                          if (.not.isameweights) & ! reset weights
@@ -2917,8 +2917,8 @@ subroutine page_setup(dummy)
  !--------------------------------------------------------------
  ! output some muff to the screen
  !--------------------------------------------------------------
- if (((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
-        .or. (iadapt .and. lastinpanel)) .and. .not.dum) then
+ if ((((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
+        .or. (iadapt .and. lastinpanel)) .and. .not.dum).and. iverbose > 1) then
     if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
           print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelx),xmin,xmax
     if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
