@@ -194,9 +194,12 @@ subroutine adjust_data_codeunits
  !--fake a set of dust particles from the one-fluid dust formulation
  !
  no_dust_particles = .not.got_particles_of_type('dust',labeltype,npartoftype)
- if (idustfrac > 0 .and. irho > 0 .and. no_dust_particles .and. &
-          .not.lenvironment('SPLASH_BARYCENTRIC')) then
-    call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
+ if (idustfrac > 0 .and. irho > 0 .and. no_dust_particles) then
+    if (lenvironment('SPLASH_FAKE_DUST_PARTICLES')) then
+       call fake_twofluids(1,nstepsinfile(ifileopen),ndim,ndimV,dat,npartoftype,iamtype)
+    else
+       print "(a)",' One fluid dust: use SPLASH_FAKE_DUST_PARTICLES=yes to make fake dust particles'
+    endif
  endif
 
 end subroutine adjust_data_codeunits
@@ -417,7 +420,7 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
           endif
        enddo
        if (iverbose >= 1) then
-          print "(a,i8,a)",' Creating ',ndust,' fake dust particles (set SPLASH_BARYCENTRIC=yes to plot barycentric values)'
+          print "(a,i8,a)",' Creating ',ndust,' fake dust particles (set SPLASH_FAKE_DUST_PARTICLES=no to disable)'
           if (.not.use_vels .and. ivx > 0) print "(a)",' WARNING: deltav not found in one fluid dust data: cannot get vels'
        endif
        npartoftype(2,i) = npartoftype(2,i) + ndust
