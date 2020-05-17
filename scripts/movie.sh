@@ -4,9 +4,10 @@
 # by default, takes splash_*.png as inputs and movie.mp4 as output
 # requires ffmpeg utility
 #
-# DJP, Feb 2014. edited by KAH, Aug 2017
+# DJP, Feb 2014. edited by KAH, Aug 2017.
+# DP, Apr 2020: Added -pix_fmt yu420p and use default video codec
 #
-opts='-r 10 -vb 50M -bt 100M -vcodec mpeg4 -vf setpts=4.*PTS'
+opts='-r 10 -vb 50M -bt 100M -pix_fmt yuv420p -vf setpts=4.*PTS'
 if [ $# -le 0 ]; then
    ffmpeg -i splash_%04d.png $opts movie.mp4
 fi
