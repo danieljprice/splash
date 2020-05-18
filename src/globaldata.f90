@@ -143,12 +143,13 @@ module settings_data
  !  does nothing bad if icol = 0 (much safer that way)
  logical :: lowmemorymode
  logical :: debugmode
+ logical :: UseFakeDustParticles
  logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
-                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot
+                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot,UseFakeDustParticles
 
  public
 

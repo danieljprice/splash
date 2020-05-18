@@ -69,6 +69,7 @@ subroutine defaults_set_data
  itrackoffset = 0
  ipartialread = .false.  ! strictly unnecessary as set in get_data
  iverbose = 1
+ UseFakeDustParticles = .false.
 
  return
 end subroutine defaults_set_data
@@ -83,19 +84,20 @@ subroutine submenu_data(ichoose)
  use getdata,        only:get_data,get_labels
  use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
                           isteplist,buffer_data,iCalcQuantities,iRescale, &
-                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set
+                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set,&
+                          UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
- use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring
+ use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring,idustfrac
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  use fparser,        only:rn,mu0
  implicit none
  integer, intent(in) :: ichoose
- integer             :: ians, i, ncalcwas
+ integer             :: ians,i,ncalcwas,maxopt
  character(len=30)   :: fmtstring
  character(len=1)    :: charp
  character(len=lenlabel) :: labeli
- logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
+ logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile,oldval
 
  ians = ichoose
 
@@ -118,7 +120,14 @@ subroutine submenu_data(ichoose)
            ' 4) buffer snapshots into memory           (  ',a,' )',/, &
            ' 5) calculate extra quantities             (  ',a,' )',/, &
            ' 6) use physical units                     (  ',a,' )')
-    call prompt('enter option',ians,0,6)
+    if (idustfrac > 0) then
+        print &
+         "(' 7) use fake dust particles                (  ',a,' )')",print_logical(UseFakeDustParticles)
+       maxopt = 7
+    else
+       maxopt = 6
+    endif
+    call prompt('enter option',ians,0,maxopt)
  endif
 !
 !--options
@@ -226,8 +235,19 @@ subroutine submenu_data(ichoose)
           call get_data(1,.true.,firsttime=.true.)
        endif
     endif
-!------------------------------------------------------------------------
+ case(7)
+    oldval = UseFakeDustParticles
+    call prompt( 'Use fake dust particles?',UseFakeDustParticles)
+    ! re-read data if option has changed
+    if (UseFakeDustParticles .neqv. oldval) then
+       if (buffer_data) then
+          call get_data(-1,.true.)
+       else
+          call get_data(1,.true.,firsttime=.true.)
+       endif
+    endif
  end select
+!------------------------------------------------------------------------
 
  return
 end subroutine submenu_data

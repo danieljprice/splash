@@ -108,6 +108,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use system_utils,       only:renvironment
  use calcquantities,     only:get_calc_data_dependencies
  use filenames,          only:coloursfile
+ use adjustdata,         only:get_adjust_data_dependencies
  integer, intent(in) :: ipicky,ipickx,irender_nomulti,icontour_nomulti,ivecplot
  integer             :: i,j,ifirst,iplotzprev,ilen,ierr,irow,icolumn,ntries
  logical             :: iadapting,icoordplot,iallrendered,ians,iall_coord_plots,isamelimits
@@ -533,6 +534,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        if (iamvec(iploty) > 0) required(iamvec(iploty):iamvec(iploty)+ndimV-1) = .true.
     endif
  endif
+ call get_adjust_data_dependencies(required)
 
 !  endif
  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:ncolumns+ncalc)
