@@ -2548,7 +2548,14 @@ subroutine set_labels
        idustlast = min(8+ndustlarge-1,size(labeltype)-1)
        if (allocated(grainsize)) then
           do i=1,ndustlarge
-             labeltype(8+i-1) = trim(get_label_grain_size(grainsize(i)))//' dust'
+             j = 8 + i - 1
+             if (j < size(labeltype)) then
+                if (grainsize(i) > 0.) then
+                   labeltype(j) = trim(get_label_grain_size(grainsize(i)))//' dust'
+                else
+                   labeltype(j) = 'dust'
+                endif
+             endif
           enddo
        else
           labeltype(8:idustlast) = 'dust'
