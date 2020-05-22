@@ -1958,7 +1958,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot,datpix,npixx,npixy,rendermax)
+                      xmin,xmax,ymin,ymax,ifastparticleplot,interactive,datpix,npixx,npixy,rendermax)
 
                       call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,labelrender,&
                                      unitslabel(irenderplot),((istep-1)*nframesloop + iframe),x_sec,rootname(ifileopen))
@@ -1968,7 +1968,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot)
+                      xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
                    endif
 
                 elseif (ndim==2 .and. x_sec) then
@@ -1990,14 +1990,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),iusetype(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                   xmin,xmax,ymin,ymax,ifastparticleplot)
+                   xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
                 else
                    !!--plot non-gas particle types on top of vector plots (e.g. sinks)
                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                   xmin,xmax,ymin,ymax,ifastparticleplot)
+                   xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
 
                 endif
              endif
@@ -2222,7 +2222,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                 zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                 icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
-                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot)
+                zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
           endif
 
           !--deallocate memory

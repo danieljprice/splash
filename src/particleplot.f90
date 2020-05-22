@@ -36,7 +36,7 @@ contains
 !
 subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,iplot_type, &
                         use_zrange,zmin,zmax,labelz,xmin,xmax,ymin,ymax, &
-                        fast,datpix,nx,ny,dval,brightness)
+                        fast,verbose,datpix,nx,ny,dval,brightness)
  use params,           only:int1
  use labels,           only:labeltype, maxparttypes,is_coord
  use settings_data,    only:ndim,icoords,ntypes
@@ -56,7 +56,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
  integer,            intent(in) :: noftype(maxparttypes)
  real,               intent(in) :: x(:), y(:), z(:), h(:)
  real,               intent(in) :: zmin,zmax,xmin,xmax,ymin,ymax
- logical,            intent(in) :: use_zrange,fast
+ logical,            intent(in) :: use_zrange,fast,verbose
  logical,            intent(in) :: iplot_type(maxparttypes)
  character(len=*),   intent(in) :: labelz
 
@@ -83,22 +83,22 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
  !
  ntotplot = sum(noftype(1:ntypes))
  if (ntot < ntotplot) then
-    print "(a)",' ERROR: number of particles input < number of each type '
-    print*,ntot,noftype(1:ntypes)
+    if (verbose) print "(a)",' ERROR: number of particles input < number of each type '
+    if (verbose) print*,ntot,noftype(1:ntypes)
     return
  elseif (ntot /= ntotplot) then
-    print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
-    print*,' ntotal = ',ntot,' sum of types = ',ntotplot
+    if (verbose) print "(a)",' WARNING: particleplot: total not equal to sum of types on input'
+    if (verbose) print*,' ntotal = ',ntot,' sum of types = ',ntotplot
  endif
  maxz = size(z)
  if (maxz > ntot) maxz = ntot
  if (use_zrange .and. maxz < ntot) then
-    print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
+    if (verbose) print "(a)",' WARNING: particleplot: slice plot but z array too small - excluding particles > z array size'
  endif
  dxpix = 0.
  if (present(datpix)) then
     if (.not.(present(nx).and.present(ny).and.present(dval))) then
-       print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
+       if (verbose) print "(a)",' INTERNAL ERROR in call to particleplot: optional args not present'
        return
     else
        dxpix = (xmax - xmin)/real(nx)
@@ -200,10 +200,10 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
        do itype=1,ntypes
           if (iplot_type(itype) .and. nplottedtype(itype) > 0) then
              if (zmin < -0.1*huge(zmin)) then
-                print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+                if (verbose) print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
                   trim(labeltype(itype))//' particles with ', trim(labelz),' < ',zmax
              else
-                print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
+                if (verbose) print*,'plotted ',nplottedtype(itype),' of ',noftype(itype), &
                   trim(labeltype(itype))//' particles in range ', trim(labelz),' = ',zmin,' -> ',zmax
              endif
           endif
@@ -221,7 +221,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
           call plot_sci(icolourpart(index1))
           if (fast .and. (index2-index1) > 100) then
              !--fast-plotting only allows one particle per "grid cell" - avoids crowded fields
-             write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+            if (verbose) write(*,"(a,i8,1x,a)") ' fast-plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
              nincell = 0
              do j=index1,index2
                 if (in_cell(icellx,icelly,x(j),y(j),xmin,ymin,dx1,dy1,ncellx,ncelly)) then
@@ -242,7 +242,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
              enddo
           else
              !--plot all particles of this type
-             print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
+             if (verbose) print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
              select case(imarktype(itype))
              case(32:35)
                 do j=1,noftype(itype)
@@ -314,17 +314,19 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
              do itype=1,ntypes
                 if (iplot_type(itype)) then
                    if (fast .and. noftype(itype) > 100) then
-                      print*,' fast-plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
+                      if (verbose) print*,' fast-plotted ',nplottedtype(itype),&
+                                   ' of ',noftype(itype),trim(labeltype(itype))//' particles'
                    elseif (noftype(itype) > 0) then
-                      print*,' plotted ',nplottedtype(itype),' of ',noftype(itype),trim(labeltype(itype))//' particles'
+                      if (verbose) print*,' plotted ',nplottedtype(itype),&
+                                   ' of ',noftype(itype),trim(labeltype(itype))//' particles'
                    endif
                 endif
              enddo
           else
              if (fast .and. noftype(itype) > 100) then
-                print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+                if (verbose) print*,' fast-plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
              else
-                print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
+                if (verbose) print*,' plotted ',nplotted,' of ',index2-index1+1,trim(labeltype(itype))//' particles'
              endif
           endif
        endif
@@ -332,7 +334,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
 
        if (ilabelpart) then
           !!--plot particle labels
-          print*,'plotting particle labels ',index1,':',index2
+          if (verbose) print*,'plotting particle labels ',index1,':',index2
           do j=index1,index2
              call plot_numb(j,0,1,string,lenstring)
              call plot_text(x(j),y(j),string(1:lenstring))
@@ -389,10 +391,10 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
     if (ncircpart > 0) then
 
        if (is_coord(iplotx,ndim) .and. is_coord(iploty,ndim) .and. ncircpart > 0) then
-          print*,'plotting ',ncircpart,' circles of interaction'
+          if (verbose) print*,'plotting ',ncircpart,' circles of interaction'
           do n = 1,ncircpart
              if (icircpart(n) > ntot) then
-                print*,'error: particle index > number of particles'
+                if (verbose) print*,'error: particle index > number of particles'
              else
                 if (icoordsnew /= icoords) then
                    call plot_kernel_gr(icoordsnew,icoords,iplotx,iploty,&
@@ -405,8 +407,10 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
        else
           if (.not.allocated(herr)) then
              allocate(xerrb(ncircpart),yerrb(ncircpart),herr(ncircpart),stat=ierr)
-             if (ierr /= 0) &
-                 stop ' Error allocating memory in particleplot for circles of interaction'
+             if (ierr /= 0) then
+                print "(a)",' Error allocating memory in particleplot for circles of interaction'
+                return
+             endif
           endif
           !!--only on specified particles
           do n=1,ncircpart
@@ -422,10 +426,10 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
              endif
           enddo
           if (is_coord(iplotx,ndim)) then
-             print*,'plotting ',ncircpart,' error bars x axis '
+             if (verbose) print*,'plotting ',ncircpart,' error bars x axis '
              call plot_errb(5,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
           elseif (is_coord(iploty,ndim)) then
-             print*,'plotting ',ncircpart,' error bars y axis'
+             if (verbose) print*,'plotting ',ncircpart,' error bars y axis'
              call plot_errb(6,ncircpart,xerrb(1:ncircpart),yerrb(1:ncircpart),herr(1:ncircpart),1.0)
           endif
           if (allocated(herr)) deallocate(herr)
