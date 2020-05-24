@@ -68,7 +68,11 @@ HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
-FITSLIBS = -L$(FITS_DIR)/lib -lcfitsio
+ifdef FITS_DIR
+   FITSLIBS = -L$(FITS_DIR)/lib -lcfitsio
+else
+   FITSLIBS = -lcfitsio
+endif
 FITSINCLUDE = -I$(FITS_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
@@ -846,7 +850,7 @@ checksilo: checkhdf5
 
 checkfits:
    ifeq (X${FITS_DIR}, X)
-	   @echo; echo "*** WARNING: Need FITS_DIR=/usr/local to set path to cfitsio library **"; echo;
+	   @echo; echo "*** WARNING: May need FITS_DIR=/usr/local to find cfitsio library **"; echo;
    else
 	   @if [ -d $$FITS_DIR ]; then echo; echo "FITS_DIR=$$FITS_DIR"; echo; else echo; echo "ERROR: Directory given by FITS_DIR=$$FITS_DIR does not exist"; echo; ${MAKE} err; fi;
    endif

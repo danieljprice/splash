@@ -29,7 +29,7 @@ module imageutils
  implicit none
  real, parameter :: pi = 4.*atan(1.)
 
- public :: image_denoise, image_denoise3D, image_rotate, image_destripe
+ public :: image_denoise, image_denoise3D, image_rotate
  private
 
 contains
@@ -271,10 +271,7 @@ subroutine image_rotate(naxes,image,angle,err)
 
  ! rotate particles
  do i=1,n
-    xpos = (/x(n),y(n)/)
-    call rotate2D(xpos,anglerad)
-    x(n) = xpos(1)
-    y(n) = xpos(2)
+    call rotatez(x(n),y(n),anglerad)
  enddo
 
  ! set weights for interpolation
@@ -288,5 +285,20 @@ subroutine image_rotate(naxes,image,angle,err)
  deallocate(x,y,mask,weight,dat)
 
 end subroutine image_rotate
+
+subroutine rotatez(x,y,anglez)
+ real, intent(inout) :: x,y
+ real, intent(in) :: anglez
+ real :: r, phi
+!
+!--rotate about z
+!
+ r = sqrt(x**2 + y**2)
+ phi = atan2(y,x)
+ phi = phi - anglez
+ x = r*cos(phi)
+ y = r*sin(phi)
+
+end subroutine rotatez
 
 end module imageutils
