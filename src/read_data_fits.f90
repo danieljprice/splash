@@ -70,7 +70,8 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  logical               :: iexist,reallocate
  real, dimension(:,:,:), allocatable :: image
  character(len=:), allocatable :: fitsheader(:)
- real :: dx,dy,dz
+ real :: dx,dy,dz,j0,k0
+ logical :: centre_image
 
  nstepsread = 0
  nsteps_to_read = 1
@@ -122,10 +123,14 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
     ndimV = 3
  endif
  npixels = product(naxes(1:ndim))
+ if (npixels <= 0) then
+    print "(a)",' ERROR: got npixels = 0 from fits header (extension not supported?)'
+    return
+ endif
  ncolstep = ndim + 3 ! x, y, h, I, m
  if (iverbose >= 1) then
     if (ndim==3) then
-       print "(' image size: ',i5,' x ',i5,' x ',i4)",naxes(1:ndim)
+       print "(' image size: ',i5,' x ',i5,' x ',i5)",naxes(1:ndim)
     else
        print "(' image size: ',i5,' x ',i5)",naxes(1:2)
     endif
@@ -143,14 +148,15 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !--now memory has been allocated, set information that splash needs
 !
  call get_floats_from_fits_header(fitsheader,headertags,headervals(:,i))
- gamma = 5./3.
- time = 0.
  ipartialread = .false.
  masstype(1,i) = 0.0
  npartoftype(1,i) = npixels
 !
 ! set x,y and other things needed for splash
 !
+ centre_image = .true.
+ j0 = 0.5*naxes(1)
+ k0 = 0.5*naxes(2)
  n = 0
  dx = 1.
  dy = 1.
@@ -159,8 +165,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
     do k=1,naxes(2)
        do j=1,naxes(1)
           n = n + 1
-          dat(n,1,i) = j
-          dat(n,2,i) = k
+          if (centre_image) then
+             dat(n,1,i) = j - j0
+             dat(n,2,i) = k - k0
+          else
+             dat(n,1,i) = j
+             dat(n,2,i) = k
+          endif
           if (ndim >= 3) dat(n,3,i) = l
           dat(n,ndim+1,i) = 1.  ! smoothing length == pixel scale
           dat(n,ndim+2,i) = image(j,k,l)
