@@ -26,7 +26,7 @@ program denoise
  use system_utils,    only:get_command_option,count_matching_args
  implicit none
  character(len=120) :: file1,file2,fileout,tagline,filek
- integer :: ierr, nfiles, its, naxes(4), npixels, k, i, iarglist(3),kstart,kend,k1,k2
+ integer :: ierr,jext,nfiles,its,naxes(4),npixels,k,i,iarglist(3),kstart,kend,k1,k2
  real, allocatable :: hh(:)
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
@@ -37,9 +37,9 @@ program denoise
  nfiles = count_matching_args('.fits',iarglist)
 
  tagline = 'denoise: a SPLASH imaging utility (c) 2020 Daniel Price'
- if (nfiles < 2) then
+ if (nfiles < 1) then
     print "(a)",trim(tagline)
-    print "(/,a)",'Usage: denoise [options] infile.fits outfile.fits'
+    print "(/,a)",'Usage: denoise [options] infile.fits [outfile.fits]'
     print "(/,a)",'Options:  --imax=3.4e-2     [intensity value above which no smoothing is applied]'
     print "(a)",  '          --beam=1.0        [beam size in pixels at max intensity]'
     print "(a)",  '          --its=4           [maximum number of smoothing length iterations]'
@@ -56,8 +56,12 @@ program denoise
  if (nfiles >= 3) then
     call get_command_argument(iarglist(2),file2)
     call get_command_argument(iarglist(3),fileout)
- else
+ elseif (nfiles >= 2) then
     call get_command_argument(iarglist(2),fileout)
+ else
+    fileout = 'denoise.fits' ! if no .fits extension found in original file
+    jext = index(file1,'.fits')
+    fileout = file1(1:jext-1)//'_denoise.fits' ! default if no output filename given
  endif
  !
  ! get options from the command line
@@ -144,7 +148,7 @@ program denoise
     if (kstart > 0) k1 = kstart
     if (kend > 0 .and. kend <= naxes(3)) k2 = kend
     do k=k1,k2
-       if (naxes(3) > 1) print "(a,i3,a,i3)",'>> channel ',k, ' of ',naxes(3)
+       if (naxes(3) > 1) print "(a,i5,a,i5)",'>> channel ',k, ' of ',naxes(3)
        call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam)
        !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
 
