@@ -538,7 +538,7 @@ subroutine plot_pap(width,aspect,paperunits)
  if (present(paperunits)) then
     if (paperunits /= 1) print "(a)",' WARNING: units not valid for PGPLOT'
  endif
- call pgpap(papersizex,aspect)
+ call pgpap(width,aspect)
 
 end subroutine plot_pap
 
