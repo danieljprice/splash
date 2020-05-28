@@ -88,7 +88,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  ipartialread = .false.
  isfirsttime = .false.
  if (present(firsttime)) isfirsttime = firsttime
- if (isfirsttime) then
+ if (debugmode) then
+    iverbose = 2
+ elseif (isfirsttime) then
     iverbose = 1
  else
     iverbose = 0
