@@ -19,6 +19,12 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - name: Install gfortran for Linux
+      run: sudo apt-get install gfortran
+
+    - name: Check gfortran version
+      run: gfortran --version
+
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
