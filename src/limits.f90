@@ -406,11 +406,11 @@ subroutine assert_sensible_limits(xmin,xmax)
  call assert_range(xmin)
  call assert_range(xmax)
 
- if (xmax < xmin) then
-    xtmp = xmin
-    xmin = xmax
-    xmax = xtmp
- endif
+! if (xmax < xmin) then
+!    xtmp = xmin
+!    xmin = xmax
+!    xmax = xtmp
+! endif
 
  return
 end subroutine assert_sensible_limits

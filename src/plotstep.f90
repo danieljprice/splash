@@ -1261,7 +1261,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 if (just==1) then
                    pixwidthy = pixwidth
                 else
-                   pixwidthy = pixwidth*(ymax-ymin)/(xmax - xmin)
+                   pixwidthy = pixwidth*(ymax-ymin)/abs(xmax - xmin)
                 endif
              else
                 !!--automatically reset the pixel number to match the device
@@ -1661,7 +1661,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xmax = sqrt((xseclineY2-xseclineY1)**2 + (xseclineX2-xseclineX1)**2)
                 endif
                 dxgrid = (xmax-xmin)/REAL(npixx)
-                call set_grid1D(xmin,dxgrid,npixx)
+                call set_grid1D(xmin,xmax,dxgrid,npixx)
 
                 call interpolate2D_xsec( &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
@@ -2397,7 +2397,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    else  ! automatic number of bins determination
                       ngrid = int(0.75*ntoti**(1./3.))+1
                    endif
-                   call set_grid1D(xmin,1.,ngrid)
+                   call set_grid1D(xmin,xmax,1.,ngrid)
                    !--call routine which calculates pdf on the particles
                    !--compute PDF on raw (un-transformed) data
                    xplot(1:ntoti) = dat(1:ntoti,iplotx)
@@ -2556,7 +2556,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xmingrid = lim(ipowerspecx,1)
                    xmaxgrid = lim(ipowerspecx,2)
                    dxgrid = (xmaxgrid-xmingrid)/ngrid
-                   call set_grid1D(xmingrid,dxgrid,ngrid)
+                   call set_grid1D(xmingrid,xmaxgrid,dxgrid,ngrid)
 
                    ninterp = ntoti
                    !!--interpolate to 1D grid
@@ -2983,6 +2983,8 @@ subroutine page_setup(dummy)
     call fix_equal_limits(rendermin,rendermax)
  endif
  if (debugmode) print*,'DEBUG: calling setpage...',nstepsperpage
+ if (debugmode) print*,'DEBUG: xmin,xmax,ymin,ymax=',xmin,xmax,ymin,ymax
+
  if (nstepsperpage > 0 .or. inewpage) then
     if (dum) then !--fake the page setup, then return
        if (.not.(interactivereplot .and. .not.irerender)) then
@@ -2998,10 +3000,11 @@ subroutine page_setup(dummy)
           npixy = max(nint(ymaxpix-yminpix),1)
           if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
           if (debugmode) print*,'DEBUG: dxpix = ',xmaxpix-xminpix,' dypix = ',ymaxpix-yminpix
+          if (debugmode) print*,'DEBUG: nx,ny = ',npixx,npixy
           if (vectordevice .and. npixx > 1024) then
              npixx = 1024/nacross
              dxpix = (xmax-xmin)/npixx
-             npixy = int(0.999*(ymax-ymin)/real(dxpix)) + 1
+             npixy = int(0.999*abs((ymax-ymin)/real(dxpix))) + 1
              print "(a,i4,a,i4,a)",' auto-selecting resolution of ',npixx,' x ',npixy,' for vector device'
              print "(a)",' => set the number of pixels manually if you want more (or less) than this.'
           else
@@ -3312,10 +3315,10 @@ end subroutine legends_and_title
 ! sets up a one dimensional grid of pixels
 ! and allocates memory for datpix1D
 !--------------------------------------------
-subroutine set_grid1D(xmin1D,dxgrid1D,ngridpts)
+subroutine set_grid1D(xmin1D,xmax1D,dxgrid1D,ngridpts)
  implicit none
  integer, intent(in) :: ngridpts
- real, intent(in) :: xmin1D, dxgrid1D
+ real, intent(in) :: xmin1D,xmax1D,dxgrid1D
  integer :: igrid
 
  if (allocated(datpix1D)) deallocate(datpix1D)
@@ -3324,7 +3327,7 @@ subroutine set_grid1D(xmin1D,dxgrid1D,ngridpts)
  allocate (xgrid(ngridpts))
 
  do igrid = 1,ngridpts
-    xgrid(igrid) = xmin1D + (igrid-0.5)*dxgrid1D
+    xgrid(igrid) = min(xmin1D,xmax1D) + (igrid-0.5)*dxgrid1D
  enddo
 
 end subroutine set_grid1D

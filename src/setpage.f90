@@ -128,7 +128,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     call plot_qvsz(3,x1,x2,y1,y2)
     devaspectratio = (x2-x1)/(y2-y1)
     if (.not.adjustlimits) then
-       aspectratio = ((xmax-xmin)*nx)/((ymax-ymin)*ny)/devaspectratio
+       aspectratio = abs(((xmax-xmin)*nx)/((ymax-ymin)*ny))/devaspectratio
     else
        aspectratio = 1.0
     endif
@@ -255,7 +255,6 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
 !
 ! set viewport
 !
- !print*,'setting ',vptxmin,vptxmax,vptymin,vptymax
  call plot_svp(vptxmin,vptxmax,vptymin,vptymax)
 !
 ! set axes
@@ -264,7 +263,7 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     if (adjustlimits) then
        !--query viewport aspect ratio
        call plot_qvp(3,x1,x2,y1,y2)
-       devaspectratio = (x2-x1)/(y2-y1)
+       devaspectratio = abs((x2-x1)/(y2-y1))
 
        !--adjust limits to match viewport aspect ratio
        dx = (xmax - xmin)/nx
