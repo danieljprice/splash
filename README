@@ -1,6 +1,12 @@
     SPLASH - an interactive visualisation tool for SPH data
-    Copyright (C) 2005-2011 Daniel Price 
+    Copyright (C) 2005-2020 Daniel Price 
     daniel.price@monash.edu
+    
+    Usage:
+        splash mydata.txt
+    
+    Command line mode:
+        splash -y 2 -x 1 -dev myplot.pdf mydata.txt
     
     For installation instructions see the INSTALL file.
     For detailed descriptions of menu options and algorithms, 
