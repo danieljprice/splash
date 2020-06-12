@@ -52,11 +52,16 @@ module readdata
 contains 
 
 subroutine select_data_format(string,ierr)
- use readdata_sphNG,    only:read_data_sphNG,set_labels_sphNG
- use readdata_ascii,    only:read_data_ascii,set_labels_ascii
- use readdata_ndspmhd,  only:read_data_ndspmhd,set_labels_ndspmhd
- use readdata_gadget,  only:read_data_gadet,set_labels_gadet
- use readdata_VINE,  only:read_data_VINE,set_labels_VINE
+ use readdata_sphNG,    only:read_data_sphNG,   set_labels_sphNG
+ use readdata_ascii,    only:read_data_ascii,   set_labels_ascii
+ use readdata_ndspmhd,  only:read_data_ndspmhd, set_labels_ndspmhd
+ use readdata_gadget,   only:read_data_gadet,   set_labels_gadet
+ use readdata_VINE,     only:read_data_VINE,    set_labels_VINE
+ use readdata_sro,      only:read_data_sro,     set_labels_sro
+ use readdata_dragon,   only:read_data_dragon,  set_labels_dragon
+ use readdata_seren,    only:read_data_seren,   set_labels_seren
+ use readdata_tipsy,    only:read_data_tipsy,   set_labels_tipsy
+ use readdata_mhutch,   only:read_data_sro,     set_labels_mhutch
  
  
  use asciiutils,        only:lcase

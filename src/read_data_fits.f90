@@ -53,7 +53,7 @@
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
@@ -197,23 +197,23 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
  deallocate(image) !,old_image)
 
-end subroutine read_data
+end subroutine read_data_fits
 
 !------------------------------------------------------------
 ! set labels for each column of data
 !------------------------------------------------------------
-subroutine set_labels
+subroutine set_labels_fits
  use labels,         only:label,labeltype,ix,ipmass,ih,irho
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,       only:labelcoord
  implicit none
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_fits ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_fits ***'
     return
  endif
 
@@ -235,4 +235,4 @@ subroutine set_labels
  labeltype(1) = 'pixel'
  UseTypeInRenderings(:) = .true.
 
-end subroutine set_labels
+end subroutine set_labels_fits

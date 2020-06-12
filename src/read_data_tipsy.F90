@@ -52,7 +52,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_tipsy
+ implicit none
+ 
+ public :: read_data_tipsy, set_labels_tipsy
+ 
+ private 
+contains
+
+subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart
  use params
  use settings_data, only:ndim,ndimV,ncolumns
@@ -184,7 +192,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  time(j) = timei
 
  nread = 0
- call set_labels
+ call set_labels_tipsy
 
  if (iambinaryfile==1) then
     call read_tipsybody_binary(iunit,ierr,nread)
@@ -401,13 +409,13 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
 
 end subroutine read_tipsybody_binary
 
-end subroutine read_data
+end subroutine read_data_tipsy
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_tipsy
  use labels, only:label,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,ipmass !,iutherm
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
@@ -417,11 +425,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_tipsy ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_tipsy ***'
     return
  endif
 
@@ -462,4 +470,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_tipsy
+end module readdata_tipsy

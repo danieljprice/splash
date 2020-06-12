@@ -64,7 +64,7 @@ module h5partdataread
 
 end module h5partdataread
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  use particle_data,   only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data,   only:ndim,ndimV,ncolumns,ncalc,debugmode,ntypes,iverbose
@@ -226,10 +226,10 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  endif
 
  !
- !--call the set_labels routine to get the initial location of coords, smoothing length etc. given dataset labels
+ !--call the set_labels_h5part routine to get the initial location of coords, smoothing length etc. given dataset labels
  !
  warn_labels = .false.
- call set_labels()
+ call set_labels_h5part()
  warn_labels = .true.
 
  !
@@ -447,7 +447,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
     if (j==indexstart) then ! set labels based on the first step read from the file
        warn_labels = .false.
-       call set_labels()
+       call set_labels_h5part()
        warn_labels = .true.
     endif
 !
@@ -476,7 +476,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  ierr = h5pt_close(ifile)
 
  return
-end subroutine read_data
+end subroutine read_data_h5part
 
 !!-------------------------------------------------------------------
 !! set labels for each column of data
@@ -487,7 +487,7 @@ end subroutine read_data
 !!
 !!-------------------------------------------------------------------
 
-subroutine set_labels()
+subroutine set_labels_h5part()
  use asciiutils,      only:lcase
  use labels,          only:label,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel !,labeltype
@@ -612,7 +612,7 @@ subroutine set_labels()
  endif
  !
  !--set labels for each particle type
- !  (for h5part this is done in the read_data routine)
+ !  (for h5part this is done in the read_data_h5part routine)
  !
 
  !ntypes = 1 !!maxparttypes
@@ -626,4 +626,4 @@ subroutine set_labels()
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_h5part

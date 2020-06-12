@@ -85,7 +85,7 @@ end module pbobread
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+subroutine read_data_pbob(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params,         only:doub_prec
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread, &
@@ -201,7 +201,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        if (ierr == 0) then
           print "(a,i3,a,es10.3)",' time slice #',i,' time = ',timetemp
           time(i) = real(timetemp)
-          call set_labels ! sets ntypes and labeltype
+          call set_labels_pbob ! sets ntypes and labeltype
           if (size(iamtype(:,i)) > 1) then
              npartoftype(:,i) = 0
              do j=1,ntoti
@@ -234,7 +234,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
 
  return
-end subroutine read_data
+end subroutine read_data_pbob
 
 subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
@@ -285,7 +285,7 @@ end subroutine read_pbob_data_fromc
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_pbob
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iax!,iBfirst,idivB
  use params
@@ -298,11 +298,11 @@ subroutine set_labels
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_pbob ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_pbob ***'
     return
  endif
 
@@ -363,4 +363,4 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_pbob

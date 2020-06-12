@@ -47,7 +47,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_mhutch
+ implicit none
+ 
+ public :: read_data_mhutch, set_labels_hmutch
+ 
+ private 
+contains
+
+subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
  use params
  use filenames,      only:nfiles
@@ -302,7 +310,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  ilast = indexstart+nstepsinfile - 1
  ncolumns = ncol_max
 
- call set_labels
+ call set_labels_mhutch
 
  if ( fluidsw < 0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
     call fake_twofluids
@@ -433,14 +441,14 @@ subroutine fake_twofluids
 end subroutine fake_twofluids
 !--------------------------------------------
 !--------------------------------------------
-end subroutine read_data
+end subroutine read_data_mhutch
 
 
 !------------------------------------------------------------
 ! set labels for each column of data
 !------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_mhutch
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,    &
                   iamvec,labelvec,label,labeltype,  &
                   idustfrac,ideltav
@@ -463,11 +471,11 @@ subroutine set_labels
  integer :: itdiff
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_mhutch ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_mhutch ***'
     return
  endif
 
@@ -560,4 +568,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_mhutch
+end module readdata_mhutch

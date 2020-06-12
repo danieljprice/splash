@@ -415,9 +415,10 @@ program splash
  use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti
  use colours,            only:rgbtable,ncoltable,icustom
+ use readdata,           only:select_data_format,guess_format,print_available_formats
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
- logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
+ logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=*), parameter :: version = 'v2.10.1 [30th Apr 2020]'
@@ -426,7 +427,10 @@ program splash
  ! initialise some basic code variables
  !
  call defaults_set_initial
-
+ !
+ ! make default format ascii
+ !
+ call select_data_format('ascii',ierr)
  !
  !  default names for defaults file and limits file
  !
@@ -450,6 +454,7 @@ program splash
  doconvert = .false.
  useall = .false.
  nomenu = .false.
+ got_format = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -498,7 +503,7 @@ program splash
        case('l')
           i = i + 1
           call get_argument(i,limitsfile)
-       case('d','f')
+       case('d')
           i = i + 1
           call get_argument(i,defaultsfile)
        case('p')
@@ -539,15 +544,28 @@ program splash
           lowmemorymode = .true.
        case('nolowmem','nlm')
           lowmemorymode = .false.
+       case('f', '-format')
+          i = i + 1
+          call get_argument(i,string)
+          call select_data_format(string,ierr)
+          got_format = .true.
+          !if (ierr /= 0) then
+          !   print*, ierr
+          !   print "(/,a)",' Going to stop'
+          !   stop
+          !end if
        case('-help')
           call print_usage
           print "(/,a)",' Basic splash usage is explained in the userguide,'
           print "(a,/)",'  located in the directory splash/docs/splash.pdf'
           stop
        case default
-          call print_usage
-          if (string(2:2) /= 'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-          stop
+          if (.not. got_format) call select_data_format(string(2:),ierr)
+          if (ierr /= 0) then
+             call print_usage
+             print "(a)",'unknown command line argument '''//trim(string)//''''
+             stop
+          endif
        end select
     elseif (trim(string)=='to' .or. trim(string)=='allto') then
        !
@@ -649,6 +667,13 @@ program splash
     endif
  endif
  if (lowmemorymode) print "(a)",' << running in low memory mode >>'
+ 
+ !
+ ! Guess format if not already set
+ !
+ if (.not. got_format .and. ihavereadfilenames) then
+    call guess_format(nfiles,rootname)
+ endif
 
  if (ikernel==0) then
     !--if no kernel has been set
@@ -812,7 +837,7 @@ subroutine print_usage(quit)
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
  print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
-               '[-lowmem] [-o format] [-x col] [-y col] [-render col] [-cont col] file1 file2 ...'
+               '[-lowmem] [-o format] [-x col] [-y col] [-render col] [-cont col] [-f format] file1 file2 ...'
 
  print "(a,/)",'Command line options:'
  print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
@@ -822,6 +847,8 @@ subroutine print_usage(quit)
  print "(a)",' -360              : set default options suited to 360 video'
  print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
+ print "(a)",' -f                : input file format to be read (ascii is default)'
+ call print_available_formats
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : specify x plot on command line (ie. do not prompt for x)'
  print "(a)",' -y column         : specify y plot on command line (ie. do not prompt for y)'

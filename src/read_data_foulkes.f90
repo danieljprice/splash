@@ -46,7 +46,7 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+subroutine read_data_foulkes(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,xorigin
@@ -171,7 +171,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  close(iunit)
 
 !--set labels to get ih for setting smoothing length of stars
- call set_labels
+ call set_labels_foulkes
 
 !--copy star particle properties into main data array
  do i=nprint+1,nprint+nstar
@@ -193,7 +193,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
 
  return
-end subroutine read_data
+end subroutine read_data_foulkes
 
 !!-------------------------------------------------------------------
 !! set labels for each column of data
@@ -204,7 +204,7 @@ end subroutine read_data
 !!
 !!-------------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_foulkes
  use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec,make_vector_label
  use params
  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings
@@ -248,4 +248,4 @@ subroutine set_labels
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .false.
 
-end subroutine set_labels
+end subroutine set_labels_foulkes

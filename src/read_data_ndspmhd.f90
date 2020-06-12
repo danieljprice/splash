@@ -47,7 +47,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_ndspmhd
+ implicit none
+ 
+ public :: read_data_ndspmhd, set_labels_ndspmhd
+ 
+ private 
+contains
+
+subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  use exact,          only:hfact
  use particle_data,  only:npartoftype,time,gamma,headervals,dat,maxpart,maxstep,maxcol,iamtype
  use params
@@ -324,7 +332,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  ndim = ndim_max
  ndimV = ndimV_max
 
- call set_labels
+ call set_labels_ndspmhd
 
 !if (iformat==5 .and. .not.lenvironment('NSPLASH_BARYCENTRIC')) then
 !   call fake_twofluids
@@ -341,13 +349,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  print*,' *** data file empty : no timesteps ***'
  return
 
-end subroutine read_data
+end subroutine read_data_ndspmhd
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_ndspmhd
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              idivB,iJfirst,iamvec,labelvec,label,labeltype, &
              irhorestframe,idustfrac,ideltav
@@ -359,11 +367,11 @@ subroutine set_labels
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_ndspmhd ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_ndspmhd ***'
     return
  endif
 
@@ -490,4 +498,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_ndspmhd
+module readdata_ndspmhd

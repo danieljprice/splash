@@ -38,7 +38,7 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
@@ -303,13 +303,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
  return
 
-end subroutine read_data
+end subroutine read_data_egaburov
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_egaburov
  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm, idivb, iBfirst
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
@@ -319,11 +319,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_egaburov ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_egaburov ***'
     return
  endif
 
@@ -391,4 +391,4 @@ subroutine set_labels
 
 
  return
-end subroutine set_labels
+end subroutine set_labels_egaburov

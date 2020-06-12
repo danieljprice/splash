@@ -80,7 +80,16 @@ module gadgetread
 
 end module gadgetread
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_gadget
+ implicit none
+ 
+ public :: read_data_gadet, set_labels_gadet
+ 
+ private 
+contains
+
+subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,sing_prec,maxparttypes
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -334,7 +343,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        !--call set labels to get ih, ipmass, irho for use in the read routine
        !
        hsoft = 0. ! to avoid unset variable
-       call set_labels
+       call set_labels_gadget
     endif
 
     if (ifile==1) then
@@ -382,13 +391,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
              ncolumns = ncolumns + 1
              blocklabelgas(ncolumns) = 'HSML'
              ih = ncolumns
-             call set_labels
+             call set_labels_gadget
           endif
           if (irho==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
              ncolumns = ncolumns + 1
              blocklabelgas(ncolumns) = 'RHO '
              irho = ncolumns
-             call set_labels
+             call set_labels_gadget
           endif
        endif
 
@@ -913,7 +922,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        else
           print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget routine
     endif
 
     if (ierrrho==0) then
@@ -944,7 +953,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
           print "(a,i10,a,f5.2,a)", &
             ' SMOOTHING LENGTHS SET for ',index2-index1+1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget routine
     endif
  else
     !
@@ -1109,13 +1118,13 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
  return
 end subroutine read_blockheader
 
-end subroutine read_data
+end subroutine read_data_gadget
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_gadget
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
@@ -1129,11 +1138,11 @@ subroutine set_labels
  character(len=30), dimension(10) :: labelextra
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_gadget ***'
     return
  endif
 
@@ -1343,4 +1352,5 @@ subroutine set_labels
  endif
  UseTypeInRenderings(3:6) = .false.
 
-end subroutine set_labels
+end subroutine set_labels_gadget
+end module readdata_gadget

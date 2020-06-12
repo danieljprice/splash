@@ -89,7 +89,7 @@ end module siloread
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+subroutine read_data_silo(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -222,7 +222,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--call set labels to identify location of smoothing length
 !
- call set_labels
+ call set_labels_silo
 !
 !--cover the special case where no particles have been read
 !
@@ -236,7 +236,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
  return
 
-end subroutine read_data
+end subroutine read_data_silo
 
 subroutine read_silo_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -279,7 +279,7 @@ end subroutine read_silo_data_fromc
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_silo
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iBfirst,idivB,iax
  use params
@@ -292,11 +292,11 @@ subroutine set_labels
  integer :: i,j,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_silo ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_silo ***'
     return
  endif
 
@@ -355,7 +355,7 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_silo
 
 subroutine set_blocklabel(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char

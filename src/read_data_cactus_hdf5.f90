@@ -53,7 +53,7 @@
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+subroutine read_data_cactus_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params,         only:doub_prec
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose,buffer_steps_in_file
@@ -185,7 +185,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
        if (buffer_steps_in_file .or. ipos==istep) then
           call read_cactus_hdf5_data(cstring(datfile),istep,ntoti,timetemp,dx,ignoretl,ierr)
-          call set_labels
+          call set_labels_cactus_hdf5
           ! set smoothing length and particle mass
           !print*,' Setting h = ',dx, 'ndim = ',ndim,' in column ',ih,' step ',i
           if (ih > 0) dat(:,ih,i) = real(dx)
@@ -218,7 +218,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--call set labels to identify location of smoothing length
 !
-    call set_labels
+    call set_labels_cactus_hdf5
 
  enddo over_snapshots
 
@@ -231,7 +231,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !   file_is_open = .false.
  !endif
 
-end subroutine read_data
+end subroutine read_data_cactus_hdf5
 
 subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -298,7 +298,7 @@ end subroutine read_cactus_itype_fromc
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_cactus_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,iutherm,ih,irho
  use params
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
@@ -310,11 +310,11 @@ subroutine set_labels
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_cactus_hdf5 ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_cactus_hdf5 ***'
     return
  endif
  blocklabel(1:5) = (/'x ','y ','z ','dx','m '/)
@@ -364,5 +364,5 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_cactus_hdf5
 

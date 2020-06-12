@@ -58,6 +58,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use settings_part,  only:iplotpartoftype
  use geomutils,      only:set_coordlabels
  use adjustdata,     only:adjust_data_codeunits
+ use readdata,       only:read_data
  implicit none
  integer, intent(in) :: ireadfile
  logical, intent(in) :: gotfilenames
@@ -376,6 +377,7 @@ subroutine get_labels
  use settings_units, only:read_unitsfile
  use particle_data,  only:maxcol
  use params,         only:maxplot
+ use readdata,      only:set_labels
  implicit none
  logical :: iexist
  integer :: nlabelsread,ierr,i
