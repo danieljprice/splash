@@ -38,6 +38,14 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
+module readdata_egaburov
+ implicit none
+ 
+ public :: read_data_egaburov, set_labels_egaburov
+ 
+ private 
+contains
+
 subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
@@ -388,7 +396,7 @@ subroutine set_labels_egaburov
  labeltype(1) = 'gas'
  UseTypeInRenderings(1) = .true.
 
-
-
  return
 end subroutine set_labels_egaburov
+end module readdata_egaburov
+

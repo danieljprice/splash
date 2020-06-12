@@ -53,6 +53,14 @@ module sphysicsdata
 
 end module sphysicsdata
 
+module readdata_sphysics
+ implicit none
+ 
+ public :: read_data_sphysics, set_labels_sphysics
+ 
+ private 
+contains
+
 subroutine read_data_sphysics(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,masstype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
  use params
@@ -302,3 +310,4 @@ subroutine set_labels_sphysics
 
  return
 end subroutine set_labels_sphysics
+end module readdata_sphysics

@@ -55,6 +55,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_vanaverbeke
+ implicit none
+ 
+ public :: read_data_vanaverbeke, set_labels_vanaverbeke
+ 
+ private 
+contains
+
 subroutine read_data_vanaverbeke(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart
  use params
@@ -278,3 +286,4 @@ subroutine set_labels_vanaverbeke
 
  return
 end subroutine set_labels_vanaverbeke
+end module readdata_vanaverbeke

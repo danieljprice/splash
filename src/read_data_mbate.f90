@@ -49,6 +49,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_mbate
+ implicit none
+ 
+ public :: read_data_mbate, set_labels_mbate
+ 
+ private 
+contains
+
+
 subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -398,3 +407,4 @@ subroutine set_labels_mbate
 
  return
 end subroutine set_labels_mbate
+end module readdata_mbate

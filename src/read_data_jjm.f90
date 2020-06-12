@@ -48,6 +48,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_jjm
+ implicit none
+ 
+ public :: read_data_jjm, set_labels_jjm
+ 
+ private 
+contains
+
 subroutine read_data_jjm(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -220,3 +228,4 @@ subroutine set_labels_jjm
 
  return
 end subroutine set_labels_jjm
+end module readdata_jjm

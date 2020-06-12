@@ -48,6 +48,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_gadget_jsb
+ implicit none
+ 
+ public :: read_data_gadget_jsb, set_labels_gadget_jsb
+ 
+ private 
+contains
+
 subroutine read_data_gadget_jsb(rootname,istart,ipos,nstepsread)
  use particle_data
  use params
@@ -367,3 +375,4 @@ subroutine set_labels_gadget_jsb
 !-----------------------------------------------------------
  return
 end subroutine set_labels_gadget_jsb
+end module readdata_gadget_jsb

@@ -48,6 +48,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_jules
+ implicit none
+ 
+ public :: read_data_jules, set_labels_jules
+ 
+ private 
+contains
+
 subroutine read_data_jules(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -271,3 +279,4 @@ subroutine set_labels_jules
 
  return
 end subroutine set_labels_jules
+end module readdata_jules

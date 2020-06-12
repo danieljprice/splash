@@ -49,6 +49,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_spyros
+ implicit none
+ 
+ public :: read_data_spyros, set_labels_spyros
+ 
+ private 
+contains
+
 subroutine read_data_spyros(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -251,3 +259,4 @@ subroutine set_labels_spyros
 
  return
 end subroutine set_labels_spyros
+end module readdata_spyros

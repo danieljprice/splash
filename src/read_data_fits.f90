@@ -53,6 +53,15 @@
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+module readdata_fits
+ implicit none
+ 
+ public :: read_data_fits, set_labels_fits
+ 
+ private 
+contains
+
 subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
@@ -236,3 +245,4 @@ subroutine set_labels_fits
  UseTypeInRenderings(:) = .true.
 
 end subroutine set_labels_fits
+end module readdata_fits

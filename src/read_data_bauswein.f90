@@ -56,6 +56,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_bauswein
+ implicit none
+ 
+ public :: read_data_bauswein, set_labels_bauswein
+ 
+ private 
+contains
+
 subroutine read_data_bauswein(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol
  use params
@@ -258,3 +266,4 @@ subroutine set_labels_bauswein
 
  return
 end subroutine set_labels_bauswein
+end module readdata_bauswein

@@ -84,7 +84,7 @@ end module gadgetread
 module readdata_gadget
  implicit none
  
- public :: read_data_gadet, set_labels_gadet
+ public :: read_data_gadget, set_labels_gadget
  
  private 
 contains

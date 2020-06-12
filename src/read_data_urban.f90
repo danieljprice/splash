@@ -47,6 +47,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_urban
+ implicit none
+ 
+ public :: read_data_urban, set_labels_urban
+ 
+ private 
+contains
+
 subroutine read_data_urban(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,maxpart,maxcol,maxstep,time,gamma
  use params
@@ -304,3 +312,4 @@ subroutine set_labels_urban
 
  return
 end subroutine set_labels_urban
+end module readdata_urban

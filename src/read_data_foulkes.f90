@@ -46,6 +46,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+
+module readdata_foulkes
+ implicit none
+ 
+ public :: read_data_foulkes, set_labels_foulkes
+ 
+ private 
+contains
+
 subroutine read_data_foulkes(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
@@ -249,3 +258,4 @@ subroutine set_labels_foulkes
  UseTypeInRenderings(2) = .false.
 
 end subroutine set_labels_foulkes
+end module readdata_foulkes

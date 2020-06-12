@@ -499,4 +499,4 @@ subroutine set_labels_ndspmhd
 
  return
 end subroutine set_labels_ndspmhd
-module readdata_ndspmhd
+end module readdata_ndspmhd

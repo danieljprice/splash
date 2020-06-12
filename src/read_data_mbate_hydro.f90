@@ -49,6 +49,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_mbate_hydro
+ implicit none
+ 
+ public :: read_data_mbate_hydro, set_labels_mbate_hydro
+ 
+ private 
+contains
+
+
 subroutine read_data_mbate_hydro(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -302,7 +311,7 @@ subroutine set_labels_mbate_hydro
  if (ncolumns > 11) then
     label(12) = 'dgrav'
  endif
- )
+ 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  label(irho) = 'density (g/cm^3)'
@@ -324,3 +333,4 @@ subroutine set_labels_mbate_hydro
 
  return
 end subroutine set_labels_mbate_hydro
+end module readdata_mbate_hydro

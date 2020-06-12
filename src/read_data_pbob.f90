@@ -85,6 +85,16 @@ end module pbobread
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+module readdata_pbob
+ implicit none
+ 
+ public :: read_data_pbob, set_labels_pbob
+ 
+ private 
+contains
+
+
 subroutine read_data_pbob(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params,         only:doub_prec
@@ -248,6 +258,7 @@ subroutine read_pbob_data_fromc(icol,istep,np,temparr,itype,tag) bind(c)
  real(kind=c_double), intent(in) :: temparr(np)
  character(kind=c_char), intent(in) :: tag(256)
  integer(kind=c_int) :: i,icolput
+ integer             :: nmax
 
  icolput = icol
  if (debugmode) print "(a,i2,a,i2,a)",'DEBUG: reading column ',icol,' -> '//trim(label(icolput))
@@ -364,3 +375,4 @@ subroutine set_labels_pbob
 !-----------------------------------------------------------
  return
 end subroutine set_labels_pbob
+end module readdata_pbob

@@ -47,6 +47,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_kitp
+ implicit none
+ 
+ public :: read_data_kitp, set_labels_kitp
+ 
+ private 
+contains
+
+
 subroutine read_data_kitp(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol
  use params
@@ -201,3 +210,4 @@ subroutine set_labels_kitp
 
  return
 end subroutine set_labels_kitp
+end module readdata_kitp

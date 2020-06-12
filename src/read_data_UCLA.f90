@@ -46,6 +46,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_ucla
+ implicit none
+ 
+ public :: read_data_ucla, set_labels_ucla
+ 
+ private 
+contains
+
 subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
@@ -208,3 +216,4 @@ subroutine set_labels_UCLA
 
  return
 end subroutine set_labels_UCLA
+end module readdata_ucla

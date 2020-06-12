@@ -46,6 +46,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_rsph
+ implicit none
+ 
+ public :: read_data_rsph, set_labels_rsph
+ 
+ private 
+contains
+
+
 subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  use exact, only:hfact
  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
@@ -363,3 +372,4 @@ subroutine set_labels_rsph
 
  return
 end subroutine set_labels_rsph
+end module readdata_rsph

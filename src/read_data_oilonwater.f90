@@ -58,6 +58,15 @@ module oilonwaterread
 end module oilonwaterread
 
 
+module readdata_oilonwater
+ implicit none
+ 
+ public :: read_data_oilonwater, set_labels_oilonwater
+ 
+ private 
+contains
+
+
 subroutine read_data_oilonwater(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -411,3 +420,4 @@ subroutine set_labels_oilonwater
  UseTypeInRenderings(4) = .true.
 
 end subroutine set_labels_oilonwater
+end module readdata_oilonwater

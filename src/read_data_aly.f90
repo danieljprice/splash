@@ -54,6 +54,14 @@ module alydataread
 
 end module alydataread
 
+module readdata_aly
+ implicit none
+ 
+ public :: read_data_aly, set_labels_aly
+ 
+ private 
+contains
+
 subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,masstype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
  use params
@@ -304,3 +312,4 @@ subroutine set_labels_aly
 
  return
 end subroutine set_labels_aly
+end module readdata_aly

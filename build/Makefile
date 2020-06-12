@@ -414,6 +414,19 @@ endif
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
+READFILES= read_data_ascii.f90            read_data_sphNG.f90         read_data_ndspmhd.f90 \
+           read_data_gadget.f90           read_data_VINE.f90          read_data_sro.f90 \
+           read_data_dragon.f90           read_data_seren.f90         read_data_tipsy.f90 \
+           read_data_mhutch.f90           read_data_UCLA.f90          read_data_aly.f90 \
+           read_data_bauswein.f90         read_data_dansph_old.f90    read_data_egaburov.f90 \
+           read_data_gadget_jsb.f90       read_data_foulkes.f90       read_data_jjm.f90 \
+           read_data_jjm_multiphase.f90   read_data_kitp.f90          read_data_mbate.f90 \
+           read_data_mbate_hydro.f90      read_data_mbate_mhd.f90     read_data_oilonwater.f90 \
+           read_data_rsph.f90             read_data_scw.f90           read_data_jules.f90 \
+           read_data_urban.f90            read_data_vanaverbeke.f90   read_data_spyros.f90 \
+           read_data.F90       
+
+
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
@@ -435,12 +448,12 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          interpolate3D_projection.F90 legends.f90 \
          options_render.f90 options_particleplots.f90 \
-         adjust_data.f90 get_data.f90 \
-         options_data.f90 options_limits.f90 options_page.f90 \
-	    options_powerspec.f90 \
-	    options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
-         rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
+         options_limits.f90 options_page.f90 $(READFILES) adjust_data.f90 get_data.f90 \
+         options_data.f90   \
+	 options_powerspec.f90 \
+	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+	rotate.f90 interpolate1D.f90 interpolate2D.f90 \
+	interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
          particleplot.f90 interactive.f90 analysis.f90 \
@@ -458,13 +471,15 @@ OBJECTS= $(OBJECTS1:.F90=.o)
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
+
+ascii: checksystem $(OBJECTS) read_data.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
+
 all: mhutch ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
-ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/asplash $(OBJECTS) read_data_ascii.o $(LDFLAGS)
-	cp $(BINDIR)/asplash $(BINDIR)/splash
+
 
 mbatesph: checksystem $(OBJECTS) read_data_mbate.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
@@ -487,20 +502,6 @@ H5PartF.o: H5PartF.c
 H5PartAttribF.o: H5PartAttribF.c
 	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
 
-#------------------
-
-gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
-
-gadgetdualendian: checksystem $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
-
-read_data_gadget_otherendian.o: read_data_gadget.o
-	cat read_data_gadget.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_gadget_otherendian.f90
-	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
-
-gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 #---falcON HDF5 read ---
 falcon: falcON
@@ -651,20 +652,6 @@ read_data_sphNG_otherendian.o: read_data_sphNG.o
 jjmmulti: checksystem $(OBJECTS) read_data_multiphase.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm_multiphase.o $(LDFLAGS)
 
-tipsy: checksystem $(OBJECTS) read_data_tipsy.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
-
-vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS)
-
-ucla: checksystem $(OBJECTS) read_data_UCLA.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
-
-urban: checksystem $(OBJECTS) read_data_urban.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
-
-aly: checksystem $(OBJECTS) read_data_aly.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-aly $(OBJECTS) read_data_aly.o $(LDFLAGS)
 
 sky: ucla
 
@@ -975,6 +962,9 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
 #
 include .depends
+
+cleanread: 
+	rm -f read_data.* splash.o $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so
 
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise

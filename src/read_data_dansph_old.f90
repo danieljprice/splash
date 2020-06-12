@@ -48,6 +48,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_dansph_old
+ implicit none
+ 
+ public :: read_data_dansph_old, set_labels_dansph_old
+ 
+ private 
+contains
+
 subroutine read_data_dansph_old(rootname,indexstart,ipos,nstepsread)
  use exact, only:hfact
  use particle_data
@@ -522,3 +530,4 @@ subroutine set_labels_dansph_old
  UseTypeInRenderings(2) = .true.
 
 end subroutine set_labels_dansph_old
+end module readdata_dansph_old

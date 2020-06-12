@@ -46,6 +46,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_snsph
+ implicit none
+ 
+ public :: read_data_snsph, set_labels_snsph
+ 
+ private 
+contains
+
+
 subroutine read_data_snsph(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -193,3 +202,4 @@ subroutine set_labels_snsph
 
  return
 end subroutine set_labels_snsph
+end module readdata_snsph

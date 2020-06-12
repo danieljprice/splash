@@ -49,6 +49,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_mbate_mhd
+ implicit none
+ 
+ public :: read_data_mbate_mhd, set_labels_mbate_mhd
+ 
+ private 
+contains
+
+
 subroutine read_data_mbate_mhd(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -331,3 +340,4 @@ subroutine set_labels_mbate_mhd
  UseTypeInRenderings(3) = .true.
 
 end subroutine set_labels_mbate_mhd
+end module readdata_mbate_mhd

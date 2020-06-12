@@ -47,6 +47,14 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
+module readdata_scw
+ implicit none
+ 
+ public :: read_data_scw, set_labels_scw
+ 
+ private 
+contains
+
 subroutine read_data_scw(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
@@ -310,3 +318,4 @@ subroutine set_labels_scw
 
  return
 end subroutine set_labels_scw
+end module readdata_scw

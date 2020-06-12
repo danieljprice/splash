@@ -50,7 +50,7 @@
 module readdata_mhutch
  implicit none
  
- public :: read_data_mhutch, set_labels_hmutch
+ public :: read_data_mhutch, set_labels_mhutch
  
  private 
 contains
