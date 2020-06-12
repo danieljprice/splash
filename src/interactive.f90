@@ -102,7 +102,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  logical, intent(inout) :: x_sec
  logical, intent(out) :: irerender,interactivereplot
  logical, intent(in) :: use3Dopacity, double_rendering
- real,    parameter :: pi=3.141592653589
+ real,    parameter :: pi=4.*atan(1.)
  integer, parameter :: maxpts = 64
  integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,itype,npts
  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew,itypesink
@@ -377,8 +377,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           call save_itrackpart_recalcradius(itrackpart) ! set saved value to zero
        else
           print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
-          if (is_coord(iplotx,ndim)) call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
-          if (is_coord(iploty,ndim)) call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+          if (is_coord(iplotx,ndim)) then
+             call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
+          else
+             call save_limits(iplotx,xmin,xmax)
+          endif
+          if (is_coord(iploty,ndim)) then
+             call save_limits_track(iploty,ymin,ymax,ycoords(itrackpart))
+          else
+             call save_limits(iploty,ymin,ymax)
+          endif
           call save_itrackpart_recalcradius(itrackpart)
        endif
        if (irender > 0) call save_limits(irender,rendermin,rendermax)
@@ -977,7 +985,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              angley = angley + int(scalefac)
           else
              angley = angley + 15.
-          endif 
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -991,7 +999,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              angley = angley + int(scalefac)
           else
              angley = angley + 30.
-          endif 
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1004,7 +1012,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              anglex = anglex - int(scalefac)
           else
              anglex = anglex - 15.
-          endif 
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1043,7 +1051,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              anglex = anglex + int(scalefac)
           else
              anglex = anglex + 30.
-          endif 
+          endif
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
