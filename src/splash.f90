@@ -51,7 +51,9 @@ program splash
 !     2.10.1  : (xx/xx/20) exact solution can appear in legend; can also plot under data;
 !             fits reader and denoise utility can read/write spectral cubes; text shapes can
 !             print header variables using %(var); can shift cross section by precise amounts
-!             in interactive mode using number followed by u/d
+!             in interactive mode using number followed by u/d; fits reader includes header
+!             quantities; reduced verbosity for non-interactive plots; use of fake dust particles
+!             is now via menu option, not environment variable; max particle types = 24;
 !     2.10.0  : (14/02/20)
 !             much improved splash to grid - bug fixes with pixel number and roundoff error;
 !             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
