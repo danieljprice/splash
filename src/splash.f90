@@ -672,7 +672,7 @@ program splash
  ! Guess format if not already set
  !
  if (.not. got_format .and. ihavereadfilenames) then
-    call guess_format(nfiles,rootname)
+    call guess_format(nfiles,rootname,ierr)
  endif
 
  if (ikernel==0) then
