@@ -351,7 +351,9 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
  n = 0
  do i=1,size(hdr)
     n = n + 1
-    call get_fits_header_entry(hdr(i),tags(n),vals(n),ierr)
+    if (n <= size(tags) .and. n <= size(vals)) then
+       call get_fits_header_entry(hdr(i),tags(n),vals(n),ierr)
+    endif
     if (ierr /= 0) n = n - 1
  enddo
   

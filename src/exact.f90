@@ -34,7 +34,7 @@ module exact
  !
  !--maximum number of solutions in any one plot
  !
- integer, parameter :: maxexact=10
+ integer, parameter :: maxexact=32
  !
  !--options used to plot the exact solution line
  !
@@ -42,7 +42,7 @@ module exact
  integer :: iNormaliseErrors
  logical :: iApplyTransExactFile,iCalculateExactErrors,iPlotResiduals
  logical :: iApplyUnitsExactFile,iPlotExactUnder
- real :: fracinsetResiduals,residualmax
+ real :: fracinsetResiduals,residualmax,ExactAlpha
  character(len=60) :: ExactLegendText(maxexact)
  !
  !--declare all of the parameters required for the various exact solutions
@@ -107,7 +107,7 @@ module exact
  namelist /exactopts/ iexactplotx,iexactploty,filename_exact,maxexactpts, &
        iExactLineColour,iExactLineStyle,iApplyTransExactFile,iCalculateExactErrors, &
        iPlotResiduals,fracinsetResiduals,residualmax,iPlotExactOnlyOnPanel,&
-       iApplyUnitsExactFile,iNormaliseErrors,iPlotExactUnder
+       iApplyUnitsExactFile,iNormaliseErrors,iPlotExactUnder,ExactAlpha
 
  namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
@@ -238,6 +238,7 @@ subroutine defaults_set_exact
  iPlotExactOnlyOnPanel = 0
  iPlotExactUnder = .false.
  ExactLegendText = ''
+ ExactAlpha = 1.0
 
  return
 end subroutine defaults_set_exact
@@ -255,7 +256,7 @@ subroutine submenu_exact(iexact)
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
- logical :: ians,iexist,ltmp,prompt_for_gamma
+ logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
  character(len=len(funcstring)) :: func_prev
@@ -286,6 +287,7 @@ subroutine submenu_exact(iexact)
  !--enter parameters for various exact solutions
  !
  prompt_for_gamma = .false.
+ apply_to_all = .true.
  select case(iexact)
  case(1)
     call prompt('enter number of functions to plot ',nfunc,1,maxexact)
@@ -324,6 +326,8 @@ subroutine submenu_exact(iexact)
     if (ierr /= 0) nfunc = ierr
  case(2)
     call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
+    if (nfiles > 1) print "(2(/,a))",' Hint: create a file called '//trim(fileprefix)//'.exactfiles', &
+                                     ' with one filename per line to automatically read the filenames'
     nadjust = -1
     over_files: do i=1,nfiles
        iexist = .false.
@@ -348,9 +352,11 @@ subroutine submenu_exact(iexact)
                 endif
                 if (nrows > maxexactpts) maxexactpts = nrows
                 if (ncols > 2) then
-                   print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
-                   call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
-                   call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
+                   if (i==1 .or. .not.apply_to_all) then
+                      print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
+                      call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
+                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
+                   endif
                 elseif (ncols==2) then
                    print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
                 else
@@ -379,8 +385,20 @@ subroutine submenu_exact(iexact)
              endif
           endif
        enddo
-       call prompt('enter y axis of exact solution ',iexactploty(i),1)
-       call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+       if (i==1 .or. .not.apply_to_all) then
+          call prompt('enter y axis of exact solution ',iexactploty(i),1)
+          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+       endif
+       if (i==1) then
+          call prompt('Apply above settings to all files?',apply_to_all)
+          if (apply_to_all) then
+             iycolfile(:) = iycolfile(i)
+             ixcolfile(:) = ixcolfile(i)
+             iexactploty(:) = iexactploty(i)
+             iexactplotx(:) = iexactplotx(i)
+          endif
+       endif
+
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
        call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
     enddo over_files
@@ -633,6 +651,7 @@ subroutine options_exact(iexact)
     call prompt('enter line style '//trim(string),iExactLineStyle(i),1,plotlib_maxlinestyle)
  enddo
  call prompt('Plot exact solution under data (default is over)? ',iPlotExactUnder)
+ call prompt('Enter opacity for exact solution lines',ExactAlpha,0.0,1.0)
  do i=1,nexact
     call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
  enddo
@@ -724,7 +743,13 @@ subroutine read_exactparams(iexact,rootname,ierr)
        print "(a)",' *** NO FUNCTIONS READ: none will be plotted ***'
        ierr = 2
     endif
-
+ case(2)
+    filename = trim(fileprefix)//'.exactfiles'
+    call read_asciifile(trim(filename),nfiles,filename_exact,ierr)
+    if (ierr==-1) then
+       if (iverbose > 0) print "(a)",' no file '//trim(filename)
+       return
+    endif
  case(3,13)
     !
     !--shock tube parameters from .shk file
@@ -969,7 +994,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use planetdisc,      only:exact_planetdisc
  use bondi,           only:exact_bondi
  use transforms,      only:transform,transform_inverse
- use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle
+ use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle,plot_set_opacity
  integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
  integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
  real,    intent(in) :: time,xmin,xmax,gamma,unitsx,unitsy
@@ -980,6 +1005,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer,       intent(in) :: noftype(maxparttypes)
  logical,       intent(in) :: iplot_type(maxparttypes)
  logical,       intent(in) :: irescale
+ integer :: itrans
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
@@ -994,6 +1020,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  call plot_qls(iCurrentLineStyle)
  call plot_sci(iExactLineColour(1))
  call plot_sls(iExactLineStyle(1))
+ call plot_set_opacity(ExactAlpha)
  !
  !--allocate memory
  !
@@ -1086,8 +1113,12 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
              endif
              !--change line style between files
              LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
+             !--do not apply log or other transformations if option set for this
+             itrans = itransy
+             if (.not.iApplyTransExactFile) itrans = 0
+
              !--plot each solution separately and calculate errors
-             call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
+             call plot_exact_solution(itransx,itrans,iexactpts,npart,xexact,yexact,xplot,yplot,&
                                          itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
                                          ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
@@ -1419,6 +1450,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  !
  call plot_sci(iCurrentColour)
  call plot_sls(iCurrentLineStyle)
+ call plot_set_opacity(1.0)
  !
  !--deallocate memory
  !
@@ -1435,9 +1467,10 @@ end subroutine exact_solution
  ! and calculate errors with respect to the data
  !------------------------------------------------------------------
 subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
-                                 itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,ls,lc,matchtype,err)
+                               itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                               ls,lc,matchtype,err)
  use transforms, only:transform,transform_inverse
- use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci
+ use plotlib,    only:plot_line,plot_sls,plot_sci,plot_qci,plot_set_opacity
  use params,     only:int1,maxparttypes
  integer, intent(in)    :: itransx,itransy,iexactpts,np,imarker,iaxisy
  real,    intent(inout) :: xexact(:),yexact(:)
@@ -1456,11 +1489,13 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
 
  call plot_qci(iCurrentColour)
  if (present(lc)) call plot_sci(lc)
+ call plot_set_opacity(ExactAlpha)
 
  if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
  if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
 
  if (present(ls)) call plot_sls(ls)
+
  call plot_line(iexactpts,xexact(1:iexactpts),yexact(1:iexactpts))
  !
  !--calculate errors
@@ -1501,6 +1536,7 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
     endif
  endif
  call plot_sci(iCurrentColour)
+ call plot_set_opacity(1.0)
 
 end subroutine plot_exact_solution
 

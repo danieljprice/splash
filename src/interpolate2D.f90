@@ -88,7 +88,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  integer :: ipixi,jpixi
  real :: hi,hi1,radkern,q2,wab,const
  real :: term,termnorm,dx,dy,dy2,xpix,ypix,hi21
- real :: t_start,t_end,t_used
+ real :: t_start,t_end,t_used,xmini,ymini,denom
  real, dimension(npixx) :: dx2i
 
 ! Maya
@@ -108,10 +108,14 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        print "(1x,a)",'interpolating from particles to 2D grid (non-normalised)...'
     endif
  endif
- if (pixwidthx <= 0. .or. pixwidthy <= 0.) then
-    print "(1x,a)",'interpolate2D: error: pixel width <= 0'
+ if (abs(pixwidthx) < tiny(0.) .or. abs(pixwidthy) < tiny(0.)) then
+    print "(1x,a)",'interpolate2D: error: pixel size = 0'
     return
  endif
+ ! allow for negative pixel widths (just flips image)
+ xmini = min(xmin,xmin + npixy*pixwidthy)
+ ymini = min(ymin,ymin + npixy*pixwidthx)
+
  if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= 0) then
     print*,'interpolate2D: warning: ignoring some or all particles with h < 0'
  endif
@@ -121,11 +125,11 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  !
 !$omp parallel do default(none) &
 !$omp shared(hh,x,y,weight,dat,datsmooth,datnorm,itype,npart) &
-!$omp shared(xmin,ymin,normalise,exact,radkernel,const) &
+!$omp shared(xmini,ymini,normalise,exact,radkernel,const) &
 !$omp shared(pixwidthx,pixwidthy,periodicx,periodicy,npixx,npixy) &
 !$omp private(hi,radkern,wab) &
 !$omp private(hi1,hi21,term,termnorm,jpixi,ipixi) &
-!$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax,denom) &
 !$omp private(q2,xpix,ypix,dx,dy,dx2i,dy2,r0,d1,d2,pixint) &
 !$omp private(i,ipix,jpix) &
 !$omp schedule (guided, 10)
@@ -151,13 +155,18 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
     hi21 = hi1*hi1
     radkern = radkernel*hi  ! radius of the smoothing kernel
     term = termnorm*dat(i)
+    denom = 1./abs(pixwidthx*pixwidthy)/const*hi**2
     !
     !--for each particle work out which pixels it contributes to
     !
-    ipixmin = int((x(i) - radkern - xmin)/pixwidthx)
-    jpixmin = int((y(i) - radkern - ymin)/pixwidthy)
-    ipixmax = int((x(i) + radkern - xmin)/pixwidthx) + 1
-    jpixmax = int((y(i) + radkern - ymin)/pixwidthy) + 1
+    ipixmin = int((x(i) - radkern - xmini)/abs(pixwidthx))
+    jpixmin = int((y(i) - radkern - ymini)/abs(pixwidthy))
+    ipixmax = int((x(i) + radkern - xmini)/abs(pixwidthx)) + 1
+    jpixmax = int((y(i) + radkern - ymini)/abs(pixwidthy)) + 1
+    ipixmin = min(ipixmin,ipixmax)
+    ipixmax = max(ipixmin,ipixmax)
+    jpixmin = min(jpixmin,jpixmax)
+    jpixmax = max(jpixmin,jpixmax)
 
     if (.not.periodicx) then
        if (ipixmin < 1)     ipixmin = 1      ! make sure they only contribute
@@ -178,13 +187,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
           jpix = jpixmin
           jpixi = jpix
           if (periodicy) jpixi = iroll(jpix,npixy)
-          ypix = ymin + (jpix-0.5)*pixwidthy
+          ypix = ymini + (jpix-0.5)*pixwidthy
           dy = ypix - y(i)
 
           do ipix = ipixmin,ipixmax
              ipixi = ipix
              if (periodicx) ipixi = iroll(ipix,npixx)
-             xpix = xmin + (ipix-0.5)*pixwidthx
+             xpix = xmini + (ipix-0.5)*pixwidthx
              dx = xpix - x(i)
 
              !--top boundary
@@ -193,7 +202,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              d2 = 0.5*pixwidthx - dx
              pixint = pint(r0, d1, d2, hi1)
 
-             wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             wab = pixint*denom
              !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
              if (normalise) then
@@ -210,13 +219,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
           ipix = ipixmin
           ipixi = ipix
           if (periodicx) ipixi = iroll(ipix,npixx)
-          xpix = xmin + (ipix-0.5)*pixwidthx
+          xpix = xmini + (ipix-0.5)*pixwidthx
           dx = xpix - x(i)
 
           do jpix = jpixmin,jpixmax
              jpixi = jpix
              if (periodicy) jpixi = iroll(jpixi,npixy)
-             ypix = ymin + (jpix-0.5)*pixwidthy
+             ypix = ymini + (jpix-0.5)*pixwidthy
              dy = ypix - y(i)
 
              !--left boundary
@@ -225,7 +234,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              d2 = 0.5*pixwidthy + dy
              pixint = pint(r0, d1, d2, hi1)
 
-             wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             wab = pixint*denom
              !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
              if (normalise) then
@@ -241,13 +250,13 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        do jpix = jpixmin,jpixmax
           jpixi = jpix
           if (periodicy) jpixi = iroll(jpix,npixy)
-          ypix = ymin + (jpix-0.5)*pixwidthy
+          ypix = ymini + (jpix-0.5)*pixwidthy
           dy = ypix - y(i)
 
           do ipix = ipixmin,ipixmax
              ipixi = ipix
              if (periodicx) ipixi = iroll(ipix,npixx)
-             xpix = xmin + (ipix-0.5)*pixwidthx
+             xpix = xmini + (ipix-0.5)*pixwidthx
              dx = xpix - x(i)
              !
              !--Kernel integral
@@ -258,7 +267,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              d2 = 0.5*pixwidthx + dx
              pixint = pint(r0, d1, d2, hi1)
 
-             wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             wab = pixint*denom
              !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
              if (normalise) then
@@ -287,7 +296,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              d2 = 0.5*pixwidthy - dy
              pixint = pint(r0, d1, d2, hi1)
 
-             wab = pixint /pixwidthx/pixwidthy/const*hi**2
+             wab = pixint*denom
              !$omp atomic
              datsmooth(ipixi,jpixi) = datsmooth(ipixi,jpixi) + term*wab
              if (normalise) then
@@ -313,7 +322,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        !--precalculate an array of dx2 for this particle (optimisation)
        !
        do ipix=ipixmin,ipixmax
-          dx2i(ipix) = ((xmin + (ipix-0.5)*pixwidthx - x(i))**2)*hi21
+          dx2i(ipix) = ((xmini + (ipix-0.5)*pixwidthx - x(i))**2)*hi21
        enddo
        !
        !--loop over pixels, adding the contribution from this particle
@@ -321,7 +330,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
        do jpix = jpixmin,jpixmax
           jpixi = jpix
           if (periodicy) jpixi = iroll(jpix,npixy)
-          ypix = ymin + (jpix-0.5)*pixwidthy
+          ypix = ymini + (jpix-0.5)*pixwidthy
           dy = ypix - y(i)
           dy2 = dy*dy*hi21
           do ipix = ipixmin,ipixmax
