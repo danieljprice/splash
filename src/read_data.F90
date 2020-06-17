@@ -29,7 +29,7 @@
 module readdata
  implicit none
  public :: select_data_format, guess_format
- public :: print_available_formats_short, print_available_formats
+ public :: print_available_formats
  
  abstract interface
  subroutine set_labels_subroutine
@@ -52,6 +52,10 @@ module readdata
  
 contains 
 
+!----------------------------------------------------------------------
+! subroutine to select string specified data format 
+!----------------------------------------------------------------------
+
 subroutine select_data_format(string,ierr)
  ! This list is the reason why we really need a standard file format for SPH
  use readdata_sphNG,        only:read_data_sphNG,        set_labels_sphNG
@@ -67,37 +71,63 @@ subroutine select_data_format(string,ierr)
  use readdata_UCLA,         only:read_data_UCLA,         set_labels_UCLA
  use readdata_aly,          only:read_data_aly,          set_labels_aly
  use readdata_bauswein,     only:read_data_bauswein,     set_labels_bauswein
- use readdata_dansph_old,   only:read_data_dansph_old,   set_labels_dansph_old
  use readdata_egaburov,     only:read_data_egaburov,     set_labels_egaburov
-! !use readdata_fits,         only:read_data_fits,         set_labels_fits
  use readdata_foulkes,      only:read_data_foulkes,      set_labels_foulkes
  use readdata_gadget_jsb,   only:read_data_gadget_jsb,   set_labels_gadget_jsb
  use readdata_jjm,          only:read_data_jjm,          set_labels_jjm
  use readdata_jjmmulti,     only:read_data_jjmmulti,     set_labels_jjmmulti
- use readdata_kitp,         only:read_data_kitp,         set_labels_kitp
  use readdata_mbate,        only:read_data_mbate,        set_labels_mbate
- use readdata_mbate_hydro,  only:read_data_mbate_hydro,  set_labels_mbate_hydro
- use readdata_mbate_mhd,    only:read_data_mbate_mhd,    set_labels_mbate_mhd
  use readdata_oilonwater,   only:read_data_oilonwater,   set_labels_oilonwater
 ! use readdata_pbob,         only:read_data_pbob,         set_labels_pbob
  use readdata_rsph,         only:read_data_rsph,         set_labels_rsph
- use readdata_scw,         only:read_data_scw,         set_labels_scw
  use readdata_vanaverbeke,  only:read_data_vanaverbeke,  set_labels_vanaverbeke
 ! !use readdata_sphysics,     only:read_data_sphysics,     set_labels_sphysics
  use readdata_spyros,       only:read_data_spyros,       set_labels_spyros
  use readdata_urban,        only:read_data_urban,        set_labels_urban
- use readdata_jules,        only:read_data_jules,        set_labels_jules
 ! use readdata_snsph,        only:read_data_snsph,        set_labels_snsph
+
+ ! Make hdf5 fortran/c modules available if compiled with hdf5
+#ifdef HDF5
+ use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5
+ use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5
+! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
+ use readdata_flash_hdf5,   only:read_data_flash_hdf5,   set_labels_flash_hdf5
+ use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5
+#endif
+
+ ! Same for FITS files
+#ifdef FITS
+ use readdata_fits,         only:read_data_fits,         set_labels_fits
+#endif
 
  use asciiutils,        only:lcase
  
  character(len=*),  intent(in)  :: string
  integer,           intent(out) :: ierr
  
- logical  :: selected_format
  
- selected_format = .false.
- 
+ ! Check if SPLASH has been compiled with hdf5, if hdf5 format is requested
+ if ((index(string, 'hdf5') > 0) .or. (index(string, '.h5') > 0)) then
+#ifndef HDF5
+   print "(a)", '*** ERROR: hdf5 file format requested, but SPLASH'
+   print "(a)", '           has not been compiled with HDF5 ***   '
+   stop
+#else
+   continue
+#endif
+ end if
+
+ ! Check if SPLASH has been compiled with the fits library, if fits format is requested
+ if (string == 'fits') then
+#ifndef FITS
+   print "(a)", '*** ERROR: .fits file given, but SPLASH has not been compiled'
+   print "(a)", '           with the fits library. ***'
+   stop
+#else
+   continue
+#endif
+ end if
+
  !----------------------------------------------------
  ! Search input string for matching supported formats
  !----------------------------------------------------
@@ -107,221 +137,220 @@ subroutine select_data_format(string,ierr)
  case('sphng', 'phantom', 'phantomsph')
    read_data=>read_data_sphNG
    set_labels=>set_labels_sphNG
-   selected_format = .true.
-   
+
  case('ascii')
    read_data=>read_data_ascii
    set_labels=>set_labels_ascii
-   selected_format = .true.
- 
+
  case('ndspmhd')
    read_data=>read_data_ndspmhd
    set_labels=>set_labels_ndspmhd
-   selected_format = .true.
- 
+
  case('gadget')
    read_data=>read_data_gadget
    set_labels=>set_labels_gadget
-   selected_format = .true.
- 
+
  case('vine')
    read_data=>read_data_VINE
    set_labels=>set_labels_VINE
-   selected_format = .true.
-  
+
  case('sro', 'srosph')
    read_data=>read_data_sro
    set_labels=>set_labels_sro
-   selected_format = .true.
- 
+
  case('dragon')
    read_data=>read_data_dragon
    set_labels=>set_labels_dragon
-   selected_format = .true.
- 
+
  case('seren')
    read_data=>read_data_seren
    set_labels=>set_labels_seren
-   selected_format = .true.
- 
+
  case('tipsy', 'gasoline')
    read_data=>read_data_tipsy
    set_labels=>set_labels_tipsy
-   selected_format = .true.
-  
+
  case('mhutch')
    read_data=>read_data_mhutch
    set_labels=>set_labels_mhutch
-   selected_format = .true.
-   
+
  case('ucla', 'ascii_ucla', 'ucla_ascii')
    read_data=>read_data_ucla
    set_labels=>set_labels_ucla
-   selected_format = .true.
-   
+
  case('aly')
    read_data=>read_data_aly
    set_labels=>set_labels_aly
-   selected_format = .true.
-   
+
  case('bauswein')
    read_data=>read_data_bauswein
    set_labels=>set_labels_bauswein
-   selected_format = .true.
-   
-! case('fits')
-!   read_data=>read_data_fits
-!   set_labels=>set_labels_fits
-!   selected_format = .true.
-! 
- case('dansph_old')
-   read_data=>read_data_dansph_old
-   set_labels=>set_labels_dansph_old
-   selected_format = .true.
-   
+
  case('egaburov')
    read_data=>read_data_egaburov
    set_labels=>set_labels_egaburov
-   selected_format = .true.
- 
+
  case('foulkes')
    read_data=>read_data_foulkes
    set_labels=>set_labels_foulkes
-   selected_format = .true.
- 
+
  case('gadget_jsb', 'gadget-jsb')
    read_data=>read_data_gadget_jsb
    set_labels=>set_labels_gadget_jsb
-   selected_format = .true.
- 
+
  case('jjm')
    read_data=>read_data_jjm
    set_labels=>set_labels_jjm
-   selected_format = .true.
-   
+
  case('jjmmulti', 'jjm_multi', 'jjm_multiphase')
    read_data=>read_data_jjmmulti
    set_labels=>set_labels_jjmmulti
-   selected_format = .true.
-   
- case('jules')
-   read_data=>read_data_jules
-   set_labels=>set_labels_jules
-   selected_format = .true.
-!
-
- case('kitp')
-   read_data=>read_data_kitp
-   set_labels=>set_labels_kitp
-   selected_format = .true.
    
  case('mbate')
    read_data=>read_data_mbate
    set_labels=>set_labels_mbate
-   selected_format = .true.
-   
- case('mbate_hydro', 'mbate-hydro')
-   read_data=>read_data_mbate_hydro
-   set_labels=>set_labels_mbate_hydro
-   selected_format = .true.
-   
- case('mbate_mhd', 'mbate-mhd')
-   read_data=>read_data_mbate_mhd
-   set_labels=>set_labels_mbate_mhd
-   selected_format = .true.
-   
+
  case('oilonwater')
    read_data=>read_data_oilonwater
    set_labels=>set_labels_oilonwater
-   selected_format = .true.
-   
+
 ! case('pbob')
 !   read_data=>read_data_pbob
 !   set_labels=>set_labels_pbob
-!   selected_format = .true.
-   
+
  case('rsph')
    read_data=>read_data_rsph
    set_labels=>set_labels_rsph
-   selected_format = .true.
 
- case('scw')
-   read_data=>read_data_scw
-   set_labels=>set_labels_scw
-   selected_format = .true.
-      
 ! case('snsph')
 !   read_data=>read_data_snsph
 !   set_labels=>set_labels_snsph
-!   selected_format = .true.
-!   
+
 ! case('sphysics')
 !   read_data=>read_data_sphysics
 !   set_labels=>set_labels_sphysics
-!   selected_format = .true.
-!  
+
  case('spyros')
    read_data=>read_data_spyros
    set_labels=>set_labels_spyros
-   selected_format = .true.
-    
+
  case('urban')
    read_data=>read_data_urban
    set_labels=>set_labels_urban
-   selected_format = .true.
-    
+
  case('vanaverbeke')
    read_data=>read_data_vanaverbeke
    set_labels=>set_labels_vanaverbeke
-   selected_format = .true.
- end select
+
+ ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
+#ifdef HDF5
+ case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
+   print "(a)",  'Phantom HDF5 files are currently not supported :( '
+   stop
+
+ case('gadget_hdf5')
+   read_data=>read_data_gadget_hdf5
+   set_labels=>set_labels_gadget_hdf5
+   
+ case('amuse_hdf5')
+   read_data=>read_data_amuse_hdf5
+   set_labels=>set_labels_amuse_hdf5
+   
+! case('falcon_hdf5')
+!   read_data=>read_data_falcON_hdf5
+!   set_labels=>set_labels_falcON_hdf5
+   
+ case('flash_hdf5')
+   read_data=>read_data_flash_hdf5
+   set_labels=>set_labels_flash_hdf5
  
- 
- if (.not. selected_format) then
+ case('cactus', 'cactus_hdf5')
+   read_data=>read_data_cactus_hdf5
+   set_labels=>set_labels_cactus_hdf5
+#endif
+
+ ! Make fits routines available if SPLASH has been compiled with FITS
+#ifdef FITS
+ case('fits')
+   read_data=>read_data_fits
+   set_labels=>set_labels_fits
+#endif
+
+ case default
    print "(a)",' *** WARNING: file format '//trim(string)//' not found ***'
    ierr=1
- endif
+ end select
+ 
+
+ 
+ 
+
  
 end subroutine select_data_format
 
-subroutine print_available_formats_short
+!----------------------------------------------------------------------
+!  subroutine for printing help messages associated with reading data
+!----------------------------------------------------------------------
 
- print "(a)"
- print "(a)",'To select data formats, use the short cuts below, or'
- print "(a)",'use the -f or --format command line options'
- print "(a,/)",'Supported file formats:'
- print "(a)",' -ascii            : ascii file format (default)'
- print "(a)",' -phantom -sphng   : Phantom and sphNG '
- print "(a)",' -ndspmhd          : ndsphmd '
- print "(a)",' -gadet            : Gadget  '
- print "(a)",' -seren            : Seren '
- print "(a)",' ..plus many others. Type --help for a full list '
- print "(a)"
- 
-end subroutine print_available_formats_short
+subroutine print_available_formats(string)
+ character(len=*), intent(in), optional :: string
 
+ print "(/,a)",'To select data formats, use the short cuts below, or'
+ print "(a)"  ,'use the -f or --format command line options.'
+ print "(a)"  ,'Multiple data formats are not support in a single instance.'
+ print "(a,/)",'Supported data formats:'
+ print "(a)"  ,' -ascii            : ascii file format (default)'
+ print "(a)"  ,' -phantom -sphng   : Phantom and sphNG codes'
+ print "(a)"  ,' -ndspmhd          : ndsphmd code'
+ print "(a)"  ,' -gadget           : Gadget  code'
+ print "(a)"  ,' -seren            : Seren code'
+ 
+ if (string=='short') then
+   print "(a,/)",' ..plus many others. Type --help for a full list '
+ else
+   print "(a)"  ,' -flash            : FLASH code'
+   print "(a)"  ,' -tispy -gasoline  : Gasoline code'
+   print "(a)"  ,' -ucla             : UCLA ascii format'
+ end if
 
-subroutine print_available_formats
- 
- print "(a)"
- print "(a)",'To select data formats, use the short cuts below, or'
- print "(a)",'use the -f or --format command line options'
- print "(a,/)",'Supported file formats:'
- print "(a)",' -ascii            : ascii file format (default)'
- print "(a)",' -phantom -sphng   : Phantom and sphNG '
- print "(a)",' -ndspmhd          : ndsphmd '
- print "(a)",' -gadet            : Gadget  '
- print "(a)",' -seren            : Seren '
- print "(a)"
- 
+#ifdef HDF5
+ print "(a)"  ,'This build of SPLASH supports the HDF5 file format.'
+ print "(a)"  ,'HDF5 files will be automatically recognised if they'
+ print "(a)"  ,'end with .h5, however you must specify a supported'
+ print "(a)"  ,'data format from above.'
+#else
+ print "(a)"  ,'This build of SPLASH does not support HDF5. '
+#endif
+
 end subroutine print_available_formats
 
-subroutine guess_format(nfiles,filenames)
- integer, intent(in)          :: nfiles
- character(len=*), intent(in) :: filenames(:)
+!-----------------------------------------------------------------------------------
+! subroutine for guessing the file format if not specified, or full info not given
+!-----------------------------------------------------------------------------------
 
- print "(a)",' *** guess_format not yet implemented ***'
+subroutine guess_format(nfiles,filenames,ierr,string)
+ integer, intent(in)                     :: nfiles
+ character(len=*), intent(in)            :: filenames(:)
+ character(len=*), intent(in), optional  :: string
+ integer, intent(out)                    :: ierr
+ 
+ character(len=5), dimension(3), parameter :: extensions = &
+           (/'.fits','.h5  ','.pb  '/)
+ 
+ logical    :: selected_format
+ integer    :: i
+ 
+ 
+ selected_format = .false.
 
+ do i = 1, size(extensions)
+   
+   if (any((index(filenames, extensions(i)) > 0))) then
+     call select_data_format('fits',ierr)
+   end if
+   
+ end do
+ 
 end subroutine guess_format
 
 end module readdata

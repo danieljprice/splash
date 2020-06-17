@@ -94,6 +94,20 @@ end function icolshuffle
 
 end module flash_hdf5read
 
+!-------------------------------------------------------------------------
+!
+!  The routine that reads the data into splash's internal arrays
+!
+!-------------------------------------------------------------------------
+
+module readdata_flash_hdf5
+ implicit none
+ 
+ public :: read_data_flash_hdf5, set_labels_flash_hdf5
+ 
+ private 
+contains
+
 subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
  use params
@@ -293,3 +307,4 @@ subroutine set_labels_flash_hdf5
 
  return
 end subroutine set_labels_flash_hdf5
+end module readdata_flash_hdf5

@@ -90,6 +90,15 @@ end module amusehdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+module readdata_amuse_hdf5
+ implicit none
+ 
+ public :: read_data_amuse_hdf5, set_labels_amuse_hdf5
+ 
+ private 
+contains
+
 subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
@@ -408,3 +417,4 @@ subroutine set_blocklabel(icol,name) bind(c)
  !print*,icol,' name = ',trim(blocklabel(icol))
 
 end subroutine set_blocklabel
+end module readdata_amuse_hdf5

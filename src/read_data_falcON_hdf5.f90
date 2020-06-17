@@ -150,6 +150,15 @@ end module falcONhdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+module readdata_falcON_hdf5
+ implicit none
+ 
+ public :: read_data_falcON_hdf5, set_labels_falcON_hdf5
+ 
+ private 
+contains
+
 subroutine read_data_falcON_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
  use params,         only:doub_prec,maxparttypes !,maxplot
@@ -515,3 +524,4 @@ subroutine set_splash_particle_label(itypec,name) bind(c)
  labeltype(itypemap_falcON(itypec+1)) = trim(fstring(name))
 
 end subroutine set_splash_particle_label
+end module readdata_falcON_hdf5

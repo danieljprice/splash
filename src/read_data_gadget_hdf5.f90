@@ -159,6 +159,16 @@ end module gadgethdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+
+module readdata_gadget_hdf5
+ implicit none
+ 
+ public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
+ 
+ private 
+contains
+
 subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
@@ -893,7 +903,7 @@ subroutine set_labels_gadget_hdf5
  return
 end subroutine set_labels_gadget_hdf5
 
-subroutine set_blocklabel(icol,irank,name) bind(c)
+subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use gadgethdf5read, only:blocklabelgas,blocksize,fstring
  implicit none
@@ -904,4 +914,5 @@ subroutine set_blocklabel(icol,irank,name) bind(c)
  blocksize(icol+1) = irank
  !print*,icol+1,' name = ',trim(blocklabelgas(icol+1)),' x ',irank
 
-end subroutine set_blocklabel
+end subroutine set_blocklabel_gadget
+end module readdata_gadget_hdf5

@@ -53,6 +53,15 @@
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
+
+module readdata_cactus_hdf5
+ implicit none
+ 
+ public :: read_data_cactus_hdf5, set_labels_cactus_hdf5
+ 
+ private 
+contains
+
 subroutine read_data_cactus_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params,         only:doub_prec
@@ -365,4 +374,4 @@ subroutine set_labels_cactus_hdf5
 !-----------------------------------------------------------
  return
 end subroutine set_labels_cactus_hdf5
-
+end module readdata_cactus_hdf5
