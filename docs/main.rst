@@ -1006,7 +1006,7 @@ plots. Our choice of “5” at the (render) prompt corresponds to column 5,
 which in this case is the density, producing the plot shown in the
 screenshot in Figure \ `[fig:renderplot] <#fig:renderplot>`__.
 
-.. figure:: renderplot.jpg
+.. figure:: figs/renderplot.jpg
    :alt: Screenshot of 3D column density plot to an X-window
    :name: fig:renderplot
    :width: 80.0%
@@ -1037,7 +1037,7 @@ re-plot the rendered plot again (exactly as in the previous example
 which produces the plot shown in the screenshot in
 Figure \ `[fig:renderplot_xsec] <#fig:renderplot_xsec>`__.
 
-.. figure:: renderplot_xsec.jpg
+.. figure:: figs/renderplot_xsec.jpg
    :alt: Screenshot of 3D cross section slice plot to an X-window
    :width: 80.0%
 
@@ -1686,7 +1686,7 @@ instead of density). Use ’F’ to flip backwards.
 
    \centering
 
-.. figure:: colourparts.pdf
+.. figure:: figs/colourparts.pdf
    :alt: Example of particles coloured interactively using the mouse
    (left) and selection using a parameter range (right), which is the
    same as the plot on the left but showing only particles in a
@@ -1769,7 +1769,7 @@ one of the rendered examples in §\ `3 <#sec:basic>`__, selected half of
 the domain with the mouse and pressed ’p’ to plot only the selected
 particles. The result is the plot shown.
 
-.. figure:: rendersubset.pdf
+.. figure:: figs/rendersubset.pdf
    :alt: Example of rendering using only a subset of the particles. Here
    I have selected only particles on the right hand side of the plot
    using the mouse and hit ’p’ to plot only those particles.
@@ -2508,7 +2508,7 @@ Details of the calculation of the exact solutions are given in
 Appendix \ `10 <#sec:exact>`__. An example plot using the Sedov blast
 wave exact solution is shown in Figure \ `[fig:sedov] <#fig:sedov>`__.
 
-.. figure:: sedov_example.png
+.. figure:: figs/sedov_example.png
    :alt: Example of a plot utilising the Sedov blast wave exact
    solution. Taken from Rosswog & Price (2007).
    :name: fig:sedov
@@ -2781,7 +2781,7 @@ contours of the rendered quantity (assuming that plot contours is set to
 true). The colour schemes available are shown in
 Figure \ `[fig:colourschemes] <#fig:colourschemes>`__.
 
-.. figure:: colourschemes.pdf
+.. figure:: figs/colourschemes.pdf
    :alt: splash colour schemes
    :name: fig:colourschemes
 
@@ -3650,7 +3650,7 @@ a different PGPLOT device at the prompt:
 producing our final finished Figure shown in
 Figure \ `[fig:starfinal] <#fig:starfinal>`__.
 
-.. figure:: starpartfinal.png
+.. figure:: figs/starpartfinal.png
    :alt: Finished star formation plot
    :name: fig:starfinal
    :width: 50.0%
@@ -4101,7 +4101,7 @@ splash main menu. To save the settings to disk, press ‘S’ from the main
 menu to save both the ``splash.defaults`` file and the ``splash.limits``
 file.
 
-.. figure:: surfpartfinal.png
+.. figure:: figs/surfpartfinal.png
    :alt: Finished surface-rendered plot
    :name: fig:surfpartfinal
    :width: 50.0%
@@ -4222,7 +4222,7 @@ Then (in this example), select column 23 to plot surface density,
 ...and the plot will appear - an example surface density plot is shown
 in Figure \ `[fig:surfdens] <#fig:surfdens>`__.
 
-.. figure:: surfdens.pdf
+.. figure:: figs/surfdens.pdf
    :alt: Plot of azimuthally averaged surface density in a 3D accretion
    disk simulation
    :name: fig:surfdens
@@ -5383,4 +5383,3 @@ these columns.
 .. |Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively (left) and increasing the number of pixels and having turned the axes off (right)| image:: surfpart6.png
    :name: fig:surfpart3
    :width: 50.0%
-
