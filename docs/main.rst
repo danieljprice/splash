@@ -380,7 +380,7 @@ implemented but not compiled by default.
    +-----------------+-----------------+-----------------+-----------------+
 
 Further details on writing your own subroutine are given in
-appendix \ `11 <#sec:writeyourown>`__. The \*easiest\* way is to i)
+appendix \ :ref:`sec:writeyourown`. The \*easiest\* way is to i)
 email me a sample data file and ii) the subroutine you used to write it,
 and I will happily create a data read for your file format.
 
@@ -855,10 +855,10 @@ complete and up-to-date list of options. Currently these are:
 
 Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
-utility (‘splash to ascii’) see §\ `6.1 <#sec:convert>`__. For details
+utility (‘splash to ascii’) see :ref:`sec:convert`. For details
 of the ``-o ppm`` or ``-o ascii`` option see
-§\ `6.11 <#sec:writepixmap>`__. For details of the ``-ev`` option, see
-§\ `5.4 <#sec:evsplash>`__.
+:ref:`sec:writepixmap`. For details of the ``-ev`` option, see
+:ref:`sec:evsplash`.
 
 .. _sec:basic:
 
@@ -931,7 +931,7 @@ The ``default=`` refers to the default value assigned if you just press
 the return key. The last prompt asks for the device to which output
 should be directed. A full list of available graphics devices is given
 by typing ‘?’ at the prompt. Some of the most useful devices are given
-in Table tab:devices_. In the above we have selected
+in :ref:`tab:devices`. In the above we have selected
 the X-window driver which means that the output is sent to the screen
 (provided X-windows is running), as demonstrated in the screenshot shown
 in :numref:`fig:rhoh`.
@@ -942,7 +942,7 @@ mode”. Pressing ‘h’ in the plot window shows (in the terminal) the full
 list of commands. Of the more useful ones are: pressing ‘l’ with the
 mouse over the colour bar to use a logarithmic axis, press ’a’ on either
 the colour bar or inside the plot to adapt the plot limits, select an
-area with the mouse to zoom. See also §\ `4.3 <#sec:interactive>`__.
+area with the mouse to zoom. See also :ref:`sec:interactive`.
 
 To exit the plot, move the mouse to the plot window and press ’q’
 (quit). To exit splash altogether press ’q’ again from the splash main
@@ -956,6 +956,7 @@ menu (in the terminal).
    Screenshot of simple two column plot to an X-window
 
 .. table:: Commonly used graphics devices available in giza
+   :name: tab:devices
 
    +-----------------+-----------------+-----------------+-----------------+
    | ``/xw``,        | X-Window        | ``/png``        | Portable        |
@@ -1018,7 +1019,7 @@ To plot a cross section slice instead of a projection in 3D, type ’x’ at
 the main menu to open the ’cross section/3D plotting options’ menu and
 choose option 1 “switch between cross section and projection”. Then
 re-plot the rendered plot again (exactly as in the previous example
-§\ `3.2 <#sec:renderplot>`__), setting the slice position at the prompt:
+:ref:`sec:renderplot`), setting the slice position at the prompt:
 
 ::
 
@@ -1041,7 +1042,7 @@ Vector plots
 A prompt to plot vector arrows on top of rendered plots (or on top of
 particle plots) appears whenever vectors are present in the data (for
 details of how to specify this in your data read, see
-§\ `11 <#sec:writeyourown>`__), taking the form:
+:ref:`sec:writeyourown`), taking the form:
 
 ::
 
@@ -1058,7 +1059,7 @@ previously). In 2D vector plots simply show the vector arrows mapped to
 a pixel array using the SPH kernel.
 
 Settings related to vector plots can be changed via the v)ector plot
-submenu (§`4.9 <#sec:vectorplots>`__). The size of the arrows is set by
+submenu (:ref:`sec:vectorplots`). The size of the arrows is set by
 the maximum plot limit over all of the vector components. Alternatively
 the arrow size can be changed interactively using ’v’, ’V’ (to decrease
 and increase the arrow size respectively) and ’w’ (to automatically
@@ -1259,7 +1260,7 @@ compared to the default options. These are as follows:
    cursor and pressing ‘H’.
 
 #. Use physical units on the axes. These can be set via the d)ata
-   submenu. See §\ `4.2.10 <#sec:changingunits>`__ for more details.
+   submenu. See :ref:`sec:changingunits` for more details.
 
 #. Save settings to disk! Don’t waste your effort without being able to
    reproduce the plot you have been working on. Pressing ‘s’ in
@@ -1305,7 +1306,7 @@ Press ’m’ (“set multiplot”) from the main menu to set up a multiplot.
 Note that a “multiplot” (multiple columns plotted from the same file) is
 different to plotting “multiple plots per page” (divide the plotting
 page up into panels). The number of panels across and down on a page can
-be changed (see `4.4.10 <#sec:nacrossndown>`__) irrespective of whether
+be changed (see :ref:`sec:nacrossndown`) irrespective of whether
 or not you are also plotting multiple columns from the same file.
 
 Once you have gone through the options to set up a multiplot, to
@@ -1345,7 +1346,7 @@ should be used for this plot.
 Note that this is more specific than simply turning particle types on
 and off for *all* plots, which can be achieved via the “turn on/off
 particles by type” option in the o) menu (see
-§\ `4.6.1 <#sec:plotparticlesbytype>`__).
+:ref:`sec:plotparticlesbytype`).
 
 (d)ata options
 --------------
@@ -1392,8 +1393,7 @@ used”. This prompts something like:
 so that the beginning, end and frequency (e.g. 2 would mean read every
 second step) of dump files to use can be set.
 
-To plot a subset of the data files in \*any\* order, see
-§\ `4.2.3 <#sec:selectedstepsonly>`__.
+To plot a subset of the data files in \*any\* order, see :ref:`sec:selectedstepsonly`.
 
 Of course, another way to achieve the same thing is to explicitly order
 the files on the command line. A method I often use is to write all
@@ -1433,7 +1433,7 @@ which then prompts the user to enter something like the following:
 
 Note that only a limited number of steps can be selected in this way. An
 alternative way is to order the files on the command line before
-invoking splash (see §\ `4.2.2 <#sec:subsetofsteps>`__).
+invoking splash (see :ref:`sec:subsetofsteps`).
 
 .. _sec:buffering:
 
@@ -1485,20 +1485,19 @@ original data file.
 
 The origin for the calculation of radius can be changed via the
 “rotation on/off/settings” option in the x) submenu. If particle
-tracking limits are set (see §\ `4.7.4 <#sec:track>`__) the radius is
+tracking limits are set (see :ref:`sec:track`) the radius is
 calculated relative to the particle being tracked.
 
 Note that if you simply want to multiply a column by a fixed number
 (e.g. say you have sound speed squared and you want to plot temperature)
 - this can also be achieved by defining a unit for the column (i.e., a
-factor by which to multiply the column by) – see
-§\ `4.2.6 <#sec:physicalunits>`__ for details. The corresponding label
+factor by which to multiply the column by) – see :ref:`sec:physicalunits` for details. The corresponding label
 can be changed by creating a ``splash.columns`` file (or for the ascii
 read just a file called ‘columns’) containing labels which are used to
 override the default ones from the data read (one per line) – see
-§\ `4.2.8 <#sec:columnsfile>`__ for more details.
+:ref:`sec:columnsfile` for more details.
 
-See also §\ `4.6.19 <#sec:geom>`__ for how to transform vectors (and
+See also :ref:`sec:geom` for how to transform vectors (and
 positions) into different coordinate systems.
 
 .. _sec:physicalunits:
@@ -1509,19 +1508,18 @@ Plotting data in physical units
 Data can be plotted in physical units by turning on the “use physical
 units” option in the d)ata submenu. The settings for transforming the
 data into physical units may be changed via the “change physical unit
-settings” option in the d)ata menu. (see
-§\ `4.2.10 <#sec:changingunits>`__)
+settings” option in the d)ata menu. (see :ref:`sec:changingunits`)
 
 For some data reads (sphNG, srosph) the scalings required to transform
 the data into physical units are read from the dump file. These are used
 as the default values but are overridden as soon as changes are made by
 the user (that is, by the presence of a ‘splash.units’ file) (see
-§\ `4.2.10 <#sec:changingunits>`__).
+:ref:`sec:changingunits`).
 
 Rescaling data columns
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.2.6 <#sec:physicalunits>`__.
+See :ref:`sec:physicalunits`.
 
 .. _sec:columnsfile:
 
@@ -1549,13 +1547,13 @@ e.g.
 Note that the labels in the ``splash.columns`` file *will not* override
 the labels of coordinate axes or labels for vector quantities (as these
 require the ability to be changed by plotting in different coordinate
-systems – see §\ `4.6.19 <#sec:geom>`__).
+systems – see :ref:`sec:geom`).
 
 Plotting column density in g/cm\ :math:`^{2}` without having x,y,z in cm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.2.10 <#sec:changingunits>`__. In addition to units for each
-column (and a unit for time – see §\ `4.2.12 <#sec:timeunits>`__) a unit
+See :ref:`sec:changingunits`. In addition to units for each
+column (and a unit for time – see :ref:`sec:timeunits`) a unit
 can be set for the length scale added in 3D column integrated plots. The
 prompt for this appears after the units of either :math:`x`, :math:`y`,
 :math:`z` or :math:`h` has been changed via the “change physical unit
@@ -1563,7 +1561,7 @@ settings” option in the d)ata menu. The length unit for integration is
 saved in the first row of the splash.units file, after the units for
 time.
 
-See §\ `4.8.21 <#sec:setprojlabel>`__ for details on changing the
+See :ref:`sec:setprojlabel` for details on changing the
 default labelling scheme for 3D column integrated (projection) plots.
 
 .. _sec:changingunits:
@@ -1601,7 +1599,7 @@ rescale the data so that the numeric label reads :math:`1` (by setting
 Changing the axis label to something like :math:`x` :math:`[ \times 10^{4} ]`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.2.10 <#sec:changingunits>`__.
+See :ref:`sec:changingunits`.
 
 .. _sec:timeunits:
 
@@ -1650,7 +1648,7 @@ minimum and maximum of the quantity being plotted. With the mouse over
 the colour bar, this applies to the colour bar limits. Also works even
 when the page is subdivided into panels. To adapt the size of the arrows
 on a vector plot, press ‘w’. To use “adaptive plot limits” (where the
-limits change at every timestep), see §\ `4.7.1 <#sec:adapt>`__.
+limits change at every timestep), see :ref:`sec:adapt`.
 
 Making the axes logarithmic
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1658,7 +1656,7 @@ Making the axes logarithmic
 Press ’l’ in interactive mode with the mouse over either the x or y axis
 or the colour bar to use a logarithmic axis. Pressing ’l’ again changes
 back to linear axes. To use logarithmic labels as well as logarithmic
-axes, see §\ `4.4.7 <#sec:loglabels>`__.
+axes, see :ref:`sec:loglabels`.
 
 Cycling through data columns interactively
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1710,7 +1708,7 @@ particles (e.g. using only half of a box, or only high density
 particles). An example is shown in :numref:`fig:rendersubset`.
 
 To colour the particles according to the value of a particular quantity,
-see §\ `4.8.16 <#sec:colournotrender>`__.
+see :ref:`sec:colournotrender`.
 
 Note that selection in this way is based on the particle *identity*,
 meaning that the parameter range itself is not preserved for subsequent
@@ -1725,15 +1723,15 @@ Working out which particles formed a particular object in a simulation
 
 This can be achieved by selecting and colouring particles at a
 particular timestep and plotting the same selection at an earlier time.
-See §\ `4.3.4 <#sec:colourparts>`__ for details.
+See :ref:`sec:colourparts` for details.
 
 Plotting only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To turn plotting of certain particle *types* on and off, see
-§\ `4.6.1 <#sec:plotparticlesbytype>`__. To select a subset of the
+:ref:`sec:plotparticlesbytype`. To select a subset of the
 particles based on restrictions of a particular parameter or by spatial
-region see §\ `4.3.4 <#sec:colourparts>`__.
+region see :ref:`sec:colourparts`.
 
 .. _sec:rendersubset:
 
@@ -1741,10 +1739,10 @@ Rendering using only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be selected and ‘hidden’ interactively (see
-§\ `4.3.4 <#sec:colourparts>`__) – for rendered plots ‘hidden’ particles
+:ref:`sec:colourparts`) – for rendered plots ‘hidden’ particles
 are also not used in the interpolation calculation from the particles to
 the pixel array. An example is shown in :numref:`fig:rendersubset`, where I have taken
-one of the rendered examples in §\ `3 <#sec:basic>`__, selected half of
+one of the rendered examples in :ref:`sec:basic`, selected half of
 the domain with the mouse and pressed ’p’ to plot only the selected
 particles. The result is the plot shown.
 
@@ -1764,7 +1762,7 @@ Lagrangian evolution of a patch of gas). However splash also has the
 ability to select based on particular parameter ranges (i.e.,
 independent of time), called a ‘parameter range restriction’ which is
 also more powerful in the sense that it can be saved to the
-``splash.limits`` file – see §\ `4.7.15 <#sec:rangerestrict>`__ for more
+``splash.limits`` file – see :ref:`sec:rangerestrict` for more
 details. A range restriction can be set in interactive mode by selecting
 the restricted box using the mouse and pressing ‘x’, ‘y’ or ‘r’ to
 restrict the particles used to the x, y (or r for both x and y) range of
@@ -1774,7 +1772,7 @@ such range restrictions to the ``splash.limits`` file.
 Tracking a set of particles through multiple timesteps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.3.7 <#sec:rendersubset>`__.
+See :ref:`sec:rendersubset`.
 
 .. _sec:obliquexsec:
 
@@ -1810,7 +1808,7 @@ the page is not changed until :math:`n` steps have been plotted.
 Following the prompts, it is possible to change the colour of all
 particles between steps and the graph markers used and plot an
 associated legend (see below). Note that this option can also be used in
-combination with a multiplot (see §\ `4.1 <#sec:multiplot>`__) – for
+combination with a multiplot (see :ref:`sec:multiplot`) – for
 example plotting the density vs x and pressure vs x in separate panels,
 then with :math:`n > 1` all timesteps will be plotted in *each* panel).
 
@@ -1831,7 +1829,7 @@ for vector plots – press ’h’ in interactive mode for a full list).
 Plotting results from multiple files in the same panel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.4.1 <#sec:nstepsontopofeachother>`__.
+See :ref:`sec:nstepsontopofeachother`.
 
 Plotting more than one dump file on the same page
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1867,14 +1865,14 @@ Turning axes off
 
 Plot axes can be turned off by choosing “axes options” in the p)age
 submenu or by deleting them using the backspace key in interactive mode.
-See §\ `4.4.4 <#sec:axessettings>`__ for more details.
+See :ref:`sec:axessettings` for more details.
 
 Turning axes labels off
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Axes labels and numbering can be turned off via the “axes options”
 option in the p)age submenu or by deleting them using the backspace key
-in interactive mode. See §\ `4.4.4 <#sec:axessettings>`__ for more
+in interactive mode. See :ref:`sec:axessettings` for more
 details.
 
 .. _sec:loglabels:
@@ -1891,7 +1889,7 @@ reads :math:`log(x)` and the number next to the axis is :math:`-4` when
 label reads :math:`x` and the number next to the axis is :math:`10^{-4}`
 with a logarithmic scale) can be specified by choosing the “axes
 options” option in the p)age submenu and setting the axes option to 10,
-20 or 30 as necessary (see §\ `4.4.4 <#sec:axessettings>`__ for more
+20 or 30 as necessary (see :ref:`sec:axessettings` for more
 details).
 
 Plotting a second, rescaled y-axis on the right hand side of a plot
@@ -1899,7 +1897,7 @@ Plotting a second, rescaled y-axis on the right hand side of a plot
 
 A second y axis can be added by selecting the axis=4 option in the “axes
 option” in the p)age submenu (see
-§\ `[sec:axes settings] <#sec:axes settings>`__). This will prompt for
+:ref:`sec:axessettings`). This will prompt for
 the scaling and alternative label:
 
 ::
@@ -1939,7 +1937,7 @@ Tiling plots with the same :math:`x-` and :math:`y-` axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots with the same :math:`x-` and :math:`y-` axes are tiled if the
-tiling option from the (p)age options menu (§`4.4 <#sec:optionspage>`__)
+tiling option from the (p)age options menu (:ref:`sec:optionspage`)
 is set. Tiling means that only one axis is shown where multiple plots
 share the same x or y axis and that the plots are placed as close to
 each other as possible. For rendered plots a shared colour bar is
@@ -1957,7 +1955,7 @@ dimensions have same scale” option in the p)age submenu.
 Using non-square axes on coordinate plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.4.12 <#sec:squarexy>`__.
+See :ref:`sec:squarexy`.
 
 Changing the character height for axes, labels and legends
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1965,7 +1963,7 @@ Changing the character height for axes, labels and legends
 The character height used for axes, labels and legends can be changed
 via the p)age setup options submenu. Note that the character height is
 relative to the paper size (which can also be changed – see
-§\ `4.4.9 <#sec:papersize>`__).
+:ref:`sec:papersize`).
 
 Using a thicker line width on plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1983,7 +1981,7 @@ Changing the foreground and background colours
 The background and foreground colour of a plot can be changed vie the
 “set foreground/background colours” option in the p)age submenu. Note
 that the background colour setting has no effect on postscript devices
-(see §\ `3.8 <#sec:postscript>`__ for more details).
+(see :ref:`sec:postscript` for more details).
 
 Plotting axes, legends and titles in white even when the labels are plotted in black
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2066,16 +2064,16 @@ submenu.
 
 To rescale the *value* of the time displayed in the time legend (default
 value is as read from the dump file), see
-§\ `4.2.12 <#sec:timeunits>`__.
+:ref:`sec:timeunits`.
 
 Making the legend read “z=” instead of “t=”
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.5.3 <#sec:timelegendtext>`__. An option to change the legend text
+See :ref:`sec:timelegendtext`. An option to change the legend text
 is provided in the “time legend on/off/settings” option in the le(g)end
 submenu. The numeric value of the time legend is as read into the
 ``time`` array in the read_data routine. This value can be rescaled by
-setting a unit for time (see §\ `4.2.12 <#sec:timeunits>`__).
+setting a unit for time (see :ref:`sec:timeunits`).
 
 Plotting the time legend on the first row/column of panels / nth panel only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2101,7 +2099,7 @@ style, colour, angle and fill style.
 
 Text annotation can also be added/deleted in interactive mode using
 ``ctrl-t`` (to add) and the backspace key (to delete). Text can also be
-added to plots by adding titles (§`4.5.1 <#sec:title>`__) which can be
+added to plots by adding titles (:ref:`sec:title`) which can be
 different in different panels. Text labels added using shape annotation
 differ from titles by the fact that they must appear the same in each
 panel and are positioned according to the world co-ordinates of the plot
@@ -2153,19 +2151,19 @@ Plotting non-gas particles on top of rendered plots
 An option to plot non-SPH particles on top of rendered plots (e.g. sink
 particles) can be set when turning particle types on/off via the “turn
 on/off particles by type” option in the particle plot o)ptions submenu
-(see §\ `4.6.1 <#sec:plotparticlesbytype>`__).
+(see :ref:`sec:plotparticlesbytype`).
 
 Using ghost particles in the rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.6.1 <#sec:plotparticlesbytype>`__.
+See :ref:`sec:plotparticlesbytype`.
 
 Turn off plotting of gas particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be turned on or off by type via the “turn on/off particles
 by type” option in the particle plot o)ptions submenu. See
-`4.6.1 <#sec:plotparticlesbytype>`__.
+:ref:`sec:plotparticlesbytype`.
 
 .. _sec:darkmatter:
 
@@ -2200,7 +2198,7 @@ quantity A using
 
 For the GADGET data read you can define the smoothing length for dark
 matter particles by setting the environment variable
-GSPLASH_DARKMATTER_HSOFT (see §\ `2.2.5 <#sec:gsplash>`__ for details),
+GSPLASH_DARKMATTER_HSOFT (see :ref:`sec:gsplash` for details),
 which also triggers the creation of a fake density column as required.
 With this variable set dark matter particles are treated identically to
 SPH particles and can be rendered as usual (although the only meaningful
@@ -2231,7 +2229,7 @@ matter particles are present, SPH particles must be turned off.
 Plotting a column density plot of dark matter/N-body particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.6.5 <#sec:darkmatter>`__.
+See :ref:`sec:darkmatter`.
 
 .. _sec:plotsinks:
 
@@ -2242,7 +2240,7 @@ Sink particles will be plotted on particle plots once turned on via the
 “turn on/off particles by type” option in the particle plot o)ptions
 submenu. Setting this option also gives a prompt for whether or not to
 plot sink particles on top of rendered plots (to which the answer should
-be yes). See `4.6.1 <#sec:plotparticlesbytype>`__ for more details.
+be yes). See :ref:`sec:plotparticlesbytype` for more details.
 
 To plot sink particles as a circle scaled to the sink radius, select the
 appropriate marker type (32-35) in the “change graph markers for each
@@ -2257,12 +2255,12 @@ circles (marker 34) — these show up on both black or white backgrounds.
 Plotting sink particles with size proportional to the sink radius
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.6.7 <#sec:plotsinks>`__.
+See :ref:`sec:plotsinks`.
 
 Plotting a point mass particle with physical size
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See `4.6.7 <#sec:plotsinks>`__.
+See :ref:`sec:plotsinks`.
 
 Changing graph markers for each particle type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2321,12 +2319,12 @@ When multiple timesteps are plotted on the same physical page, the line
 style can be changed instead of the colour (this occurs when the change
 colour option is chosen for multiple steps per page – see the “change
 plots per page" option in the p)age options submenu
-[§`4.4 <#sec:optionspage>`__]).
+[:ref:`sec:optionspage`]).
 
 Joining the dots
 ~~~~~~~~~~~~~~~~~
 
-See `4.6.13 <#sec:lines>`__.
+See :ref:`sec:lines`.
 
 .. _sec:smoothingcircle:
 
@@ -2338,7 +2336,7 @@ around selected particles. This is primarily useful in debugging
 neighbour finding routines. Where only one of the axes is a coordinate
 this function plots an error bar of length :math:`2h` in either
 direction is plotted in the direction of the coordinate axis. See also
-§\ `4.6.17 <#sec:findingaparticle>`__ for more details.
+:ref:`sec:findingaparticle` for more details.
 
 .. _sec:findingaparticle:
 
@@ -2360,7 +2358,7 @@ submenu, e.g:
 then upon plotting a coordinate plot (e.g. x vs y), particle 868 will be
 plotted with a circle of size :math:`2h` which makes it easy to
 distinguish from the other particles. See also
-§\ `4.6.16 <#sec:smoothingcircle>`__.
+:ref:`sec:smoothingcircle`.
 
 Making sure absolutely all particles are plotted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2419,10 +2417,10 @@ cylindrical and spherical coordinates where the reverse transformation
 was necessary). For 3D SPH simulations, extra columns will appear in the
 menu in cylindrical or spherical coordinates allowing plots of
 azimuthally-averaged surface density and Toomre Q parameter. For more
-details see §\ `5.6 <#sec:surfdens>`__.
+details see :ref:`sec:surfdens`.
 
 Details of the coordinate transformations are given in
-§\ `9 <#sec:coordtransforms>`__.
+:ref:`sec:coordtransforms`.
 
 If you have a coordinate system you would like implemented, please email
 me the details!
@@ -2430,17 +2428,17 @@ me the details!
 Plotting vector components in different coordinate systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.6.19 <#sec:geom>`__.
+See :ref:`sec:geom`.
 
 Plotting orbital velocities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.6.19 <#sec:geom>`__.
+See :ref:`sec:geom`.
 
 Plotting against azimuthal angle/cylindrical radius/etc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.6.19 <#sec:geom>`__.
+See :ref:`sec:geom`.
 
 .. _sec:exactsolns:
 
@@ -2496,7 +2494,7 @@ wave exact solution is shown in :numref:`fig:sedov`.
 Plotting an exact solution from a file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.6.23 <#sec:exactsolns>`__. One of the options for exact
+See :ref:`sec:exactsolns`. One of the options for exact
 solution plotting is to read the exact solution from either one or a
 sequence of ascii files, such that the results are plotted alongside the
 particle data. The filename(s) can be specified by the user and will be
@@ -2510,7 +2508,7 @@ The line style and colour of the exact solution line can be changed via
 the “exact solution plot options” option in the o) submenu. This option
 can also be used to turn on/off calculation of various error norms
 together with an inset plot of the residual error on the particles. See
-Appendix \ `10 <#sec:exact>`__ for details of the error norms
+Appendix \ :ref:`sec:exact` for details of the error norms
 calculated.
 
 Setting the number of points used in an exact solution calculation
@@ -2545,7 +2543,7 @@ Using adaptive plot limits for the colour bar but not for the coordinates
 
 Adaptive plot limits can be set individually for coordinate axes and
 non-coordinate axes (e.g. the colour bar) via the “use adaptive/fixed
-limits” option in the l)imits submenu. See §\ `4.7.1 <#sec:adapt>`__.
+limits” option in the l)imits submenu. See :ref:`sec:adapt`.
 
 Setting plot limits manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2582,19 +2580,19 @@ A co-moving reference frame can be set using the “make xy limits
 relative to particle” option in the l)imits menu. Coordinate limits are
 then centred on the selected particle for all timesteps, with offsets as
 input by the user. This effectively gives the ‘Lagrangian’ perspective.
-See §\ `4.7.4 <#sec:track>`__ for more details. Centreing on a sink
+See :ref:`sec:track` for more details. Centreing on a sink
 particle can also be achieved using the SPLASH_CENTRE_ON_SINK
 environment variable.
 
 Setting the origin to correspond to a particular particle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.7.4 <#sec:track>`__.
+See :ref:`sec:track`.
 
 Tracking a particle
 ~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.7.4 <#sec:track>`__.
+See :ref:`sec:track`.
 
 .. _sec:tracksink:
 
@@ -2616,7 +2614,7 @@ particle we would proceed as follows:
 
 where 3:1 indicates the first particle of type 3. The origin is set to
 the position of this particle and limits are relative to its position.
-See §\ `4.7.4 <#sec:track>`__ for more details.
+See :ref:`sec:track` for more details.
 
 Plotting radial plots around sink particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2632,7 +2630,7 @@ Automatically adapting plot limits to match aspect ratio of output device
 An option to automatically adjust the plot limits to match the aspect
 ratio of the output device is given in the l)imits menu, and is also
 prompted for whenever the paper size is changed (via the “change paper
-size” option in the p)age menu, see §\ `4.4.9 <#sec:papersize>`__).
+size” option in the p)age menu, see :ref:`sec:papersize`).
 
 Plotting with log axes.
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2640,7 +2638,7 @@ Plotting with log axes.
 Log axes can be set either interactively (by pressing ’l’ with the
 cursor over the desired axis) or manually via the “apply log or inverse
 transformations to columns” option in the l)imits menu. To use
-logarithmic axes labels as well, see §\ `4.4.7 <#sec:loglabels>`__.
+logarithmic axes labels as well, see :ref:`sec:loglabels`.
 
 Plotting the square root, inverse or square of a quantity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2658,13 +2656,13 @@ Resetting limits for all columns
 
 Limits for all columns can be reset to their minimum and maximum values
 from the current dump file via the “reset limits for all columns” option
-in the l)imits menu. See §\ `4.3 <#sec:interactive>`__ for details of
+in the l)imits menu. See :ref:`sec:interactive` for details of
 resetting plot limits for a particular plot in interactive mode.
 
 Restoring all plot limits to their minimum and maximum values in the current dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.7.13 <#sec:resetlimits>`__.
+See :ref:`sec:resetlimits`.
 
 .. _sec:rangerestrict:
 
@@ -2677,7 +2675,7 @@ restrictions on any or all of the data columns (for example, using only
 particles with :math:`\rho > 10`, in the 3D box
 :math:`x,y,z  \in [-0.1, 0.1]`). Whilst this has always been possible by
 selecting, colouring and/or hiding particles in interactive mode (see
-§\ `4.3.7 <#sec:rendersubset>`__), the difference here is that the
+:ref:`sec:rendersubset`), the difference here is that the
 selection is based, for each timestep, strictly on the parameter range,
 rather than being a selection based on particle identity. This means
 that the parameter range is also saved to the ``splash.limits`` (i.e.,
@@ -2716,9 +2714,9 @@ Plotting only particles with :math:`\rho > 10`, :math:`u > 20` and :math:`-0.25 
 
 Plotting a subset of the particles restricted by a parameter can be
 achieved by setting a parameter range restriction (which does not change
-between timesteps – see §\ `4.7.15 <#sec:rangerestrict>`__), or
+between timesteps – see :ref:`sec:rangerestrict`), or
 alternatively by an interactive selection based on particle identity
-(see §\ `4.3.7 <#sec:rendersubset>`__).
+(see :ref:`sec:rendersubset`).
 
 (r)endering options
 -------------------
@@ -2736,7 +2734,7 @@ As of version 1.11.1, the number of pixels used in an image is, by
 default, automatically determined by the actual number of pixels
 available on the graphics device, which depends in turn on the size of
 the page (the page size can be set manually in the p)age menu – see
-§\ `4.4.9 <#sec:papersize>`__). For pixel devices use of the automatic
+:ref:`sec:papersize`). For pixel devices use of the automatic
 pixel number determination is *highly* recommended (hence why it is the
 default) to avoid interpolation artefacts in the image. For vector
 (non-pixel) devices such as postscript, svg or pdf, the number of pixels
@@ -2774,7 +2772,7 @@ quantity can be plotted on top of the rendered plot by setting the “plot
 contours” option from the r)ender menu. With this option set, an extra
 prompt will appear after the render prompt asking the user for a
 quantity to be contoured. The contoured quantity can also be set via the
-command line options (§`2.3 <#sec:commandline>`__). If the rendered and
+command line options (:ref:`sec:commandline`). If the rendered and
 contoured quantities are the same, further prompts appear which enable
 the limits for the contour plot to be set separately to the render plot.
 These limits are also saved separately in the ``splash.limits`` file
@@ -2797,7 +2795,7 @@ Changing the number of contour levels
 The number of contour levels used whenever contours are drawn can be set
 via the “change number of contours” option in the r)ender menu. The
 contour levels can also be manually specified (see
-§\ `4.8.6 <#sec:contoursmanual>`__).
+:ref:`sec:contoursmanual`).
 
 .. _sec:contoursmanual:
 
@@ -2827,7 +2825,7 @@ Adding arbitrary contour labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Contours can also be labelled manually by creating a ``splash.contours``
-file. See §\ `4.8.6 <#sec:contoursmanual>`__.
+file. See :ref:`sec:contoursmanual`.
 
 Turning the colour bar off/ moving the colour bar label
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2838,7 +2836,7 @@ to the bar itself, via the “colour bar options” option in the r)ender
 menu.
 
 To change the text in the colour bar label, see
-§\ `4.8.21 <#sec:setprojlabel>`__.
+:ref:`sec:setprojlabel`.
 
 .. _sec:colourbarstyle:
 
@@ -2860,22 +2858,22 @@ submenu.
 Using ‘plot-hugging’ colour bars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.8.10 <#sec:colourbarstyle>`__.
+See :ref:`sec:colourbarstyle`.
 
 Using floating/inset colour bars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.8.10 <#sec:colourbarstyle>`__.
+See :ref:`sec:colourbarstyle`.
 
 Plotting ticks on only one side of the colour bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.8.10 <#sec:colourbarstyle>`__.
+See :ref:`sec:colourbarstyle`.
 
 Changing the text in the colour bar label
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.8.21 <#sec:setprojlabel>`__.
+See :ref:`sec:setprojlabel`.
 
 .. _sec:colournotrender:
 
@@ -2927,7 +2925,7 @@ Selecting and rendering only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An example of how to render using only a selected subset of the
-particles was given in §\ `4.3.7 <#sec:rendersubset>`__.
+particles was given in :ref:`sec:rendersubset`.
 
 .. _sec:setprojlabel:
 
@@ -2955,7 +2953,7 @@ incorporated via format codes as follows:
 Changing “column density” to “surface density” on 3D plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.8.21 <#sec:setprojlabel>`__.
+See :ref:`sec:setprojlabel`.
 
 Changing the interpolation kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2979,7 +2977,7 @@ M\ :math:`_{6}` B-splines with support of 2h and 3h, respectively. See
 Changing the number of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See §\ `4.9.2 <#sec:vecpix>`__.
+See :ref:`sec:vecpix`.
 
 .. _sec:vecpix:
 
@@ -3039,7 +3037,7 @@ field to get the stream function, the contours of which are then plotted
 (note that the number of contours can be changed via the “change number
 of contours” option in the r)ender menu). It is generally advantageous
 to use a larger number of pixels for the vector interpolation (See
-§\ `4.9.2 <#sec:vecpix>`__) to get smooth contours.
+:ref:`sec:vecpix`) to get smooth contours.
 
 At present this option works quite well for smooth vector fields but can
 perform poorly for vector fields with strong gradients.
@@ -3086,9 +3084,9 @@ Plotting a cross section slice through 3D data
 When plotting a rendered plot of 3D data, the default option is to plot
 a column-integrated plot. To change this to a cross section slice, use
 option 1) in the x) menu (“switch between cross section/projection”).
-See §\ `3 <#sec:basic>`__ for examples of how this works. An oblique
+See :ref:`sec:basic` for examples of how this works. An oblique
 cross section slice can be set interactively using the ’x’ key, see
-§\ `4.3.9 <#sec:obliquexsec>`__ which works by setting a combination of
+:ref:`sec:obliquexsec` which works by setting a combination of
 rotation and a cross section slice position.
 
 Plotting a cross section line through 2D data
@@ -3246,13 +3244,13 @@ Plotting a sequence of frames rotating a data set through 360 degrees
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved by setting an animation sequence with a steady
-change of rotation angle. See §\ `4.10.8 <#sec:animseq>`__.
+change of rotation angle. See :ref:`sec:animseq`.
 
 Plotting a ‘fly-around’ of 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved by setting an animation sequence with a steady
-change of rotation angle. See §\ `4.10.8 <#sec:animseq>`__.
+change of rotation angle. See :ref:`sec:animseq`.
 
 Plotting a flythru of 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3260,13 +3258,13 @@ Plotting a flythru of 3D data
 A sequence of cross section slices progressively deeper into a 3D box or
 alternatively a steady movement of the 3D observer (on projection plots)
 can be plotted by setting up an animation sequence. See
-§\ `4.10.8 <#sec:animseq>`__ for details.
+:ref:`sec:animseq` for details.
 
 Adding a steady zoom sequence to a movie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A steady change of :math:`x-` and :math:`y-` limits can be added by
-setting up an animation sequence. See §\ `4.10.8 <#sec:animseq>`__ for
+setting up an animation sequence. See :ref:`sec:animseq` for
 details.
 
 Adding a steady change of colour bar limits
@@ -3274,7 +3272,7 @@ Adding a steady change of colour bar limits
 
 A steady change of limits on the colour bar over one or more dump files
 for a movie can be implemented by setting up an animation sequence. See
-§\ `4.10.8 <#sec:animseq>`__ for details.
+:ref:`sec:animseq` for details.
 
 .. _sec:move3Dobserver:
 
@@ -3283,7 +3281,7 @@ Adding steady movement of the 3D observer
 
 The position of the 3D observer can be steadily changed over several
 dump files (or several frames produced of the same dump file) by setting
-up an animation sequence. See §\ `4.10.8 <#sec:animseq>`__ for details.
+up an animation sequence. See :ref:`sec:animseq` for details.
 
 Miscellaneous other useful things
 ---------------------------------
@@ -3300,7 +3298,7 @@ useful for setting multiplots with many plots per page).
 The (S)ave option writes both the defaults file and also saves the
 current plot limits to a file called ‘splash.limits’ which is also read
 automatically at startup. If animation sequences have been set (see
-§\ `4.10.8 <#sec:animseq>`__), this also saves the ‘splash.anim’ file to
+:ref:`sec:animseq`), this also saves the ‘splash.anim’ file to
 disk.
 
 Typing “sa” or “Sa” gives a “save-as” option, whereby the prefix of
@@ -3315,7 +3313,7 @@ My attempt at in-built help
 
 The (h)elp option at the moment does nothing particularly useful apart
 from tell you about menu shortcuts (see
-§\ `4.11.3 <#sec:menushortcuts>`__). It seemed like a good idea at the
+:ref:`sec:menushortcuts`). It seemed like a good idea at the
 time…
 
 .. _sec:menushortcuts:
@@ -3651,18 +3649,18 @@ Pressing ‘S’ from the main menu saves all of the settings and plot
 limits to disk, so invoking splash again will produce the same plot. To
 produce the same plot on a sequence of dumps, simply put more than one
 file on the command line and plot to a non-interactive device (see
-`3.9 <#sec:movies>`__). Use the postscript devices /ps or /cps (for
+:ref:`sec:movies`). Use the postscript devices /ps or /cps (for
 colour) to make figures suitable for inclusion in a paper.
 
 Other things you may want to do with this plot include:
 
--  Turn the time legend off. See §\ `4.5.2 <#sec:legendoff>`__.
+-  Turn the time legend off. See :ref:`sec:legendoff`.
 
 -  Change the colour of sink particles. See
-   §\ `4.6.11 <#sec:partcolours>`__.
+   :ref:`sec:partcolours`.
 
 -  Change the foreground/background colour of the page. See
-   §\ `4.4.16 <#sec:pagecolours>`__.
+   :ref:`sec:pagecolours`.
 
 
 Multi-panelled figure
@@ -4122,6 +4120,7 @@ will cycle through all dump files producing a sequence of plots with
 names like ``splash_0000.png``, ``splash_0001.png`` etc. These can be
 easily converted into an animation.
 
+.. _sec:evsplash:
 
 Using asplash to plot energy vs time plots
 ------------------------------------------
@@ -4145,7 +4144,7 @@ modification to the preset options /limits are saved to files called
 this type of plot are saved separately to those for “normal” plots of
 SPH data.
 
-For other command line options, see §\ `2.3 <#sec:commandline>`__.
+For other command line options, see :ref:`sec:commandline`.
 
 Powerspectrum of 1D data
 ------------------------
@@ -4182,7 +4181,7 @@ density and, for self-gravitating discs, the Toomre Q parameter. Extra
 columns appear to plot both of these quantities when the simulation is
 3D and the coordinate system is changed to cylindrical or spherical
 co-ordinates (in the particle plot (o)ptions menu – see
-§\ `4.6.19 <#sec:geom>`__). For the Toomre Q parameter to appear it is
+:ref:`sec:geom`). For the Toomre Q parameter to appear it is
 also necessary to have read the thermal energy from the dump file. For
 example, having read a dump file, change the coordinate system to
 cylindricals:
@@ -4283,7 +4282,7 @@ such as the radius if these have been turned on [in the d) menu] and the
 settings saved to the ``splash.defaults`` file. Similarly the data will
 be output in physical units if a ``splash.units`` file is present.
 
-For other command line options, see §\ `2.3 <#sec:commandline>`__.
+For other command line options, see :ref:`sec:commandline`.
 
 .. _sec:converttogrid:
 
@@ -4321,7 +4320,7 @@ various aspects of the grid interpolation behaviour (e.g. setting
 ``SPLASH_TO_GRID_PERIODIC=yes`` enforces periodic boundary conditions).
 
 For all possible output formats, use ``splash --help`` or see the full
-list of command line options in §\ `2.3 <#sec:commandline>`__.
+list of command line options in :ref:`sec:commandline`.
 
 .. _sec:splashcalc:
 
@@ -4376,7 +4375,7 @@ Using splash to time average a series of files
 ----------------------------------------------
 
 The ‘splash calc timeaverage’ command line option (see
-§\ `6.3 <#sec:splashcalc>`__) can be used to produce a time average of a
+:ref:`sec:splashcalc`) can be used to produce a time average of a
 series of files from any splash-readable format. This computes the
 time-average of every individual entry in the file as represented in
 splash as a table of rows (or ‘particles’) and columns (or ‘quantities
@@ -4394,7 +4393,7 @@ function (PDF) from PDFs produced by splash .
 The resulting ascii file, called ``time_average.out`` can be plotted
 using the ascii splash binary (asplash).
 
-For other command line options, see §\ `2.3 <#sec:commandline>`__.
+For other command line options, see :ref:`sec:commandline`.
 
 .. _sec:batchmode:
 
@@ -4438,7 +4437,7 @@ or simply
 which will assume sensible default values (2 and 1 respectively) for the
 y and x axes. Similarly a vector plot can be specified with ``-vec`` and
 a contour plot with ``-cont``. The full list of command-line flags is
-given in §\ `2.3 <#sec:commandline>`__.
+given in :ref:`sec:commandline`.
 
 If plotting options have been only partially specified on the command
 line, then prompts will appear for only the remaining options. This can
@@ -4454,7 +4453,7 @@ which can inherently be done in parallel. Included in the splash/scripts
 directory is a perl wrapper for splash (“``splash_parallel.pl``”) which
 distributes multiple instances of splash across multiple machines,
 either via ssh or using Apple’s xgrid, with a common input file as
-described in §\ `6.5 <#sec:batchmode>`__. The limitation to this is that
+described in :ref:`sec:batchmode`. The limitation to this is that
 you need to have a disk which can be mounted from all client machines
 (i.e., they can read the data files) and preferably with password-less
 access (e.g. using an ssh key-exchange or Kerberos authentication). The
@@ -4489,7 +4488,7 @@ How does splash handle multiple particle types?
 -----------------------------------------------
 
 splash can handle up to 6 different particle types. These can be turned
-on and off in the particle plot o)ptions menu (§`4.6 <#sec:opts>`__).
+on and off in the particle plot o)ptions menu (:ref:`sec:opts`).
 These types are be specified in the set_labels part of the read_data
 routine, which contains some lines of code along the lines of:
 
@@ -4568,7 +4567,7 @@ characters are listed in the appendix to the pgplot user guide.
 Making movies
 -------------
 
-See §\ `3.9 <#sec:movies>`__ and the online FAQ
+See :ref:`sec:movies` and the online FAQ
 (http://users.monash.edu.au/~dprice/splash/faqs.html).
 
 .. _sec:writepixmap:
@@ -4589,7 +4588,7 @@ colours. The files are given default names such as “splash_00001.dat” or
 “splash_00001.ppm” where the number corresponds to the frame number as
 would be rendered to the graphics device.
 
-For other command line options, see §\ `2.3 <#sec:commandline>`__.
+For other command line options, see :ref:`sec:commandline`.
 
 User contributions
 ==================
@@ -4767,13 +4766,10 @@ code:
 |                                   | drives plotting of a single       |
 |                                   | timestep                          |
 +-----------------------------------+-----------------------------------+
-| powerspectrums.f90                | calculates power spectrum of 1D   |
-|                                   | data (2 methods)                  |
-+-----------------------------------+-----------------------------------+
 | read_data_dansph.f90              | reads data from my format of data |
 |                                   | files                             |
 +-----------------------------------+-----------------------------------+
-| read_data_mbate.f90               | reads data from matthew bate’s    |
+| read_data_mbate.f90               | reads data from Matthew Bate’s    |
 |                                   | format of data files              |
 +-----------------------------------+-----------------------------------+
 | read_data_xxx.f90                 | reads data from …                 |
