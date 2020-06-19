@@ -86,7 +86,7 @@ specified in the read_data routine, so all we have to do is turn
 physical units on. Pressing ‘q’ from interactive mode (that is, with the
 cursor in the plot window) returns us to the main menu.
 
-Physical units are turned on from the d)ata menu, as follows:
+Physical units are turned on from the :ref:`sec:menu-d`, as follows:
 
 ::
 
@@ -177,7 +177,7 @@ returns to the main menu.
 
 Next we want to turn on the plotting of sink particles (all particle
 types other than gas are turned off by default). This is done in the
-o)ptions submenu as follows:
+:ref:`sec:menu-o` as follows:
 
 ::
 
@@ -220,7 +220,7 @@ shown in :numref:`fig:starpart3`.
 
 The axes in [cm] are kind of ugly, so we could either change this to a
 sensible unit or plot a scale instead. We will do the latter. The axes
-can be turned off in the p)age submenu, as follows:
+can be turned off in the :ref:`sec:menu-p`, as follows:
 
 ::
 
@@ -244,7 +244,7 @@ can be turned off in the p)age submenu, as follows:
       axis =  -2
 
 The option to plot a scale of a particular length is also to be found in
-the le(g)end menu. We will choose to plot a scale of length 0.1 pc.
+the :ref:`sec:menu-g`. We will choose to plot a scale of length 0.1 pc.
 
 ::
 
@@ -281,7 +281,7 @@ saves both the current plot settings *and* the plot limits to disk:
 Plotting our figure again (2-1-6-0-/xw) produces the plot shown in :numref:`fig:starpart3`
 
 Nearly there...! To add the finishing touches we want to increase the
-number of pixels substantially. This is done in the r)ender menu, option
+number of pixels substantially. This is done in the :ref:`sec:menu-r`, option
 1, for which we can use the shortcut ‘r1’:
 
 ::
@@ -301,7 +301,7 @@ a different device at the prompt:
     (vector plot) (0=none, 7=v) ([0:7], default=0):
     Graphics device/type (? to see list, default /xw): starpartfinal.gif/gif
 
-producing our final finished Figure shown in :numref:`fig:starfinal`.
+producing our final finished :numref:`fig:starfinal`.
 
 .. figure:: figs/starpartfinal.png
    :alt: Finished star formation plot
@@ -338,7 +338,7 @@ plot uses sphNG data which contains sink particles, so I also want these
 to appear on the plots and be plotted in white. Basically I want the
 plots to be plotted such that as much of the plot is taken up by data
 and very little by axes and the like but still conveying all of the
-necessary infomation.
+necessary information.
 
 We proceed as follows: Firstly, each different run (corresponding in
 this case to a series of runs with different magnetic field strength)
@@ -452,8 +452,8 @@ colour bar and pressing ‘l’ results in the plot shown in :numref:`fig:multip
 
 Before we proceed any further, we will first change the axes to be in
 physical units rather than code units. Pressing ‘q’ in the plot window
-to exit interactive mode and return to the main menu, and from the d)ata
-menu, turn the “use physical units option” on:
+to exit interactive mode and return to the main menu, and from the :ref:`sec:menu-d`,
+turn the “use physical units option” on:
 
 ::
 
@@ -483,8 +483,8 @@ menu, turn the “use physical units option” on:
 
 The default transformations to physical units are in this case set in
 the data read. However it would be nicer in this case to set the x and y
-axis units to AU (Astronomical Units), rather than cm. From the d)ata
-menu we proceed as follows:
+axis units to AU (Astronomical Units), rather than cm.
+From the :ref:`sec:menu-d` we proceed as follows:
 
 ::
 
@@ -638,7 +638,7 @@ Then we obtain :numref:`fig:surfpart2`.
 Next, we need to turn the 3D surface rendering on. This cannot be done
 in interactive mode so we need to exit – pressing ‘s’ first to save what
 we have done so far, then ’q’ to quit interactive mode. Then, back at
-the splash main menu, we type x4 for the x)sec/3D plotting options menu,
+the splash main menu, we type x4 for the :ref:`sec:menu-x`,
 option 4 which is “3D surface rendering on/off” with prompts appearing
 as follows:
 
@@ -699,7 +699,7 @@ increase the number of pixels in the image and ii) turn the axes off,
 since they are no longer meaningful with 3D perspective set. The number
 of pixels can be increased by returning to the splash main menu
 (pressing ‘s’ in interactive mode before doing so to save what we have
-done so far), then typing ‘r1’ for render menu, option 1:
+done so far), then typing ‘r1’ for :ref:`sec:menu-r`, option 1:
 
 ::
 
@@ -707,7 +707,7 @@ done so far), then typing ‘r1’ for render menu, option 1:
    ----------------- rendering options -------------------
    enter number of pixels along x axis ([1:10000], default=200):1000
 
-Next, we turn the axes off using the p)age submenu:
+Next, we turn the axes off using the :ref:`sec:menu-p`:
 
 ::
 
@@ -741,7 +741,7 @@ blotchy. This is an indication that the surface is too shallow (that is
 we are only seeing particles on the very top). Thus we will adjust the
 opacity for a slightly deeper plot. We proceed as follows: Exiting
 interactive mode (pressing ‘s’ then ‘q’ in the plot window), we first
-set the foreground and background colours in the p)age submenu:
+set the foreground and background colours in the :ref:`sec:menu-p`:
 
 ::
 
@@ -762,7 +762,7 @@ Finally, moving the time legend by positioning the cursor and pressing
 ’G’ and zooming out slightly by pressing ‘-’ once, we arrive at our
 finished figure (or movie frame) shown in :numref:`fig:surfpartfinal`. Pressing ‘s’ in
 interactive mode saves the settings, then pressing ‘q’ returns to the
-splash main menu. To save the settings to disk, press ‘S’ from the main
+splash main menu. To :ref:`sec:menu-s` to disk, press ‘S’ from the main
 menu to save both the ``splash.defaults`` file and the ``splash.limits``
 file.
 
@@ -787,16 +787,15 @@ easily converted into an animation.
 
 .. _sec:evsplash:
 
-Using asplash to plot energy vs time plots
+Using splash to plot energy vs time plots
 ------------------------------------------
 
-asplash (that is, the compilation of splash which reads ascii files) can
-also be used for non-SPH data. For example I often use it to plot the
+splash can be used for all kinds of data. For example I often use it to plot the
 contents of the .ev file my SPH code dumps monitoring quantities like
 energy and angular momentum at every timestep. A shortcut way of setting
 options appropriate to reading such files (e.g. plotting lines instead
 of dots, plotting all files on the same page) is implemented by adding
-the “-e” option to the command line: e.g.
+the “-ev” option to the command line: e.g.
 
 ::
 
@@ -821,7 +820,7 @@ azimuthally averaged plots of the disc properties such as the surface
 density and, for self-gravitating discs, the Toomre Q parameter. Extra
 columns appear to plot both of these quantities when the simulation is
 3D and the coordinate system is changed to cylindrical or spherical
-co-ordinates (in the particle plot (o)ptions menu – see
+co-ordinates (in the :ref:`sec:menu-o` – see
 :ref:`sec:geom`). For the Toomre Q parameter to appear it is
 also necessary to have read the thermal energy from the dump file. For
 example, having read a dump file, change the coordinate system to

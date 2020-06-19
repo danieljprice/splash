@@ -1,3 +1,4 @@
+.. _sec:settings:
 
 Changing plot settings
 ======================
@@ -9,6 +10,7 @@ The plot settings may be changed in a series of submenus:
 Options can be saved using the (s)ave option from the
 menu:
 
+   .. image:: figs/menu.png
 
 .. _sec:menu-s:
 
@@ -881,14 +883,14 @@ Arbitrary text annotation can be added/removed in interactive mode using
 ``ctrl-t`` (to add) and the backspace key (to delete) or via the
 “annotate plot” option in the :ref:`sec:menu-g`.
 
-.. _sec:opts:
+.. _sec:menu-o:
 
 particle plot (o)ptions
 -----------------------
 
 .. image:: figs/menu-o.png
 
-The following are tasks which can be achieved via options in the :ref:`sec:opts` menu.
+The following are tasks which can be achieved via options in the :ref:`sec:menu-o` menu.
 
 .. _sec:plotparticlesbytype:
 
@@ -896,7 +898,7 @@ Plotting non-gas particles (e.g. ghosts, boundary, sink particles)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles of different types can be turned on or off (i.e., plotted or
-not) using the “turn on/off particles by type” option in :ref:`sec:opts`.
+not) using the “turn on/off particles by type” option in :ref:`sec:menu-o`.
 This option also prompts to allow particles of
 non-SPH types to be plotted on top of rendered plots (useful for sink or
 star particles - this option does not apply to SPH particle types).
@@ -915,7 +917,7 @@ Plotting non-gas particles on top of rendered plots
 
 An option to plot non-SPH particles on top of rendered plots (e.g. sink
 particles) can be set when turning particle types on/off via the “turn
-on/off particles by type” option in :ref:`sec:opts`
+on/off particles by type” option in :ref:`sec:menu-o`
 (see :ref:`sec:plotparticlesbytype`).
 
 Using ghost particles in the rendering
@@ -927,7 +929,7 @@ Turn off plotting of gas particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be turned on or off by type via the “turn on/off particles
-by type” option in :ref:`sec:opts`. See
+by type” option in :ref:`sec:menu-o`. See
 :ref:`sec:plotparticlesbytype`.
 
 .. _sec:darkmatter:
@@ -937,7 +939,7 @@ Plotting dark matter particles
 
 To plot dark matter particles (e.g. for the gadget read) the particle
 type corresponding to dark matter particles must be turned on via the
-“turn on/off particles by type” option in :ref:`sec:opts`. Turning this
+“turn on/off particles by type” option in :ref:`sec:menu-o`. Turning this
 option on means that dark matter particles will appear on particle
 plots.
 
@@ -1002,7 +1004,7 @@ Plotting sink particles
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sink particles will be plotted on particle plots once turned on via the
-“turn on/off particles by type” option in :ref:`sec:opts`.
+“turn on/off particles by type” option in :ref:`sec:menu-o`.
 Setting this option also gives a prompt for whether or not to
 plot sink particles on top of rendered plots (to which the answer should
 be yes). See :ref:`sec:plotparticlesbytype` for more details.
@@ -1046,13 +1048,13 @@ Plotting each particle type in a different colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each particle type can be plotted in a different colour via the “set
-colour for each particle type” option in the :ref:`sec:opts`.
+colour for each particle type” option in the :ref:`sec:menu-o`.
 
 Changing the order in which different particle types are plotted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The order in which particle types are plotted can be changed via the
-“change plotting order of types” option in :ref:`sec:opts`.
+“change plotting order of types” option in :ref:`sec:menu-o`.
 For example, it is possible to make dark matter particles
 be plotted on top of gas particles rather than the default which is
 vice-versa. Note that at present this is only implemented for particle
@@ -1065,7 +1067,7 @@ Plotting using lines instead of dots (e.g. for energy vs time plots)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot a line joining all of the points on a plot can be set
-via the “plot line joining particles” option in :ref:`sec:opts`.
+via the “plot line joining particles” option in :ref:`sec:menu-o`.
 When set, this option plots a line connecting the (gas
 only) particles in the order that they appear in the data array. Useful
 mainly in one dimension or when plotting ascii data, although can give
@@ -1074,7 +1076,7 @@ in physical space in higher dimensions. The line colours and styles can
 be changed.
 
 To plot the line only with no particles, turn off gas particles using
-the “turn on/off particles by type option” from :ref:`sec:opts`.
+the “turn on/off particles by type option” from :ref:`sec:menu-o`.
 
 Plotting multiple lines with different colours/line styles and a legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1107,7 +1109,7 @@ Locating a particular particle in the data set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The best way to locate a particular particle in the data set is to use
-the “plot smoothing circles” option in :ref:`sec:opts`, e.g:
+the “plot smoothing circles” option in :ref:`sec:menu-o`, e.g:
 
 ::
 
@@ -1129,7 +1131,7 @@ Plotting in different coordinate systems (e.g. cylindrical coordinates)
 
 The coordinates of position and of all vector components can be
 transformed into non-cartesian coordinate systems using the “change
-coordinate system” option in :ref:`sec:opts`. For
+coordinate system” option in :ref:`sec:menu-o`. For
 example, a dump file with columns as follows:
 
 ::
@@ -1145,7 +1147,7 @@ example, a dump file with columns as follows:
    -------------------------------------------------------
    Please enter your selection now (y axis or option):
 
-choosing :ref:`sec:opts`, option 7) and choosing cylindrical coordinates then
+choosing :ref:`sec:menu-o`, option 7) and choosing cylindrical coordinates then
 produces;
 
 ::
@@ -1195,7 +1197,7 @@ See :ref:`sec:geom`.
 
 Plotting the exact solution to common test problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Turn on `plot exact solution` in :ref:`sec:opts`
+Turn on `plot exact solution` in :ref:`sec:menu-o`
 
 The following exact solutions are provided
 
@@ -1257,7 +1259,7 @@ Changing the exact solution line style & colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The line style and colour of the exact solution line can be changed via
-the “exact solution plot options” option in :ref:`sec:opts`. This option
+the “exact solution plot options” option in :ref:`sec:menu-o`. This option
 can also be used to turn on/off calculation of various error norms
 together with an inset plot of the residual error on the particles. See
 :ref:`sec:exact` for details of the error norms
@@ -1267,14 +1269,14 @@ Setting the number of points used in an exact solution calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of points used in an exact solution calculation can be
-changed via the “exact solution plot options” option in :ref:`sec:opts`.
+changed via the “exact solution plot options” option in :ref:`sec:menu-o`.
 
 Plotting an inset plot of residual errors from an exact solution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An inset plot of residual errors between the plotted points and an exact
 solution calculation can be turned on via the “exact solution plot
-options” option in :ref:`sec:opts`.
+options” option in :ref:`sec:menu-o`.
 
 .. _sec:menu-l:
 
@@ -1376,7 +1378,7 @@ Plotting radial plots around sink particles
 
 First, set the origin to the location of the sink, as described above.
 Then simply change to spherical coordinates using the “change coordinate
-systems” option in :ref:`sec:opts`. Alternatively, compute the radius using
+systems” option in :ref:`sec:menu-o`. Alternatively, compute the radius using
 the “calculate extra quantities” option in the :ref:`sec:menu-d`.
 
 Automatically adapting plot limits to match aspect ratio of output device
@@ -1727,7 +1729,7 @@ and ‘quintic’ referring to the M\ :math:`_{4}`, M\ :math:`_{5}` and
 M\ :math:`_{6}` B-splines with support of 2h and 3h, respectively. See
 [Price12]_ for more details.
 
-.. _sec:vectorplots:
+.. _sec:menu-v:
 
 (v)ector plot options
 ---------------------
@@ -1745,7 +1747,7 @@ Changing the number of pixels in vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of pixels used on vector plots can be changed via the “change
-number of pixels” option in the :ref:`sec:vectorplots`. This controls the number
+number of pixels” option in the :ref:`sec:menu-v`. This controls the number
 and average size of the arrows which appear (i.e., one arrow is plotted
 at the centre of each pixel).
 
@@ -1772,26 +1774,26 @@ Plotting vector arrows in white instead of black or vice-versa
 Vector arrows are by default plotted using the current foreground colour
 index (i.e., as used for plotting the axes). To plot in the background
 colour index instead set the “use background colour for arrows” option
-in the :ref:`sec:vectorplots`.
+in the :ref:`sec:menu-v`.
 
 Turning off the legend for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The legend which appears on vector plots can be turned on or off via the
-“vector plot legend settings” option in the :ref:`sec:vectorplots`.
+“vector plot legend settings” option in the :ref:`sec:menu-v`.
 
 Moving the vector plot legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The position of the vector plot legend can be set either interactively
 by positioning the mouse and pressing ’H’ or manually via the “vector
-plot legend settings” option in the :ref:`sec:vectorplots`.
+plot legend settings” option in the :ref:`sec:menu-v`.
 
 Plotting stream/fieldlines instead of arrows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot a vector plot that uses stream/fieldlines instead of arrows, set
-the “plot stream/field lines instead of arrows” option in the :ref:`sec:vectorplots`.
+the “plot stream/field lines instead of arrows” option in the :ref:`sec:menu-v`.
 This option performs a simple integration of the interpolated vector
 field to get the stream function, the contours of which are then plotted
 (note that the number of contours can be changed via the “change number
@@ -1806,7 +1808,7 @@ Turning arrow heads off for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vector plots can be plotted using arrows without heads using the “turn
-arrow heads on/off” option in the :ref:`sec:vectorplots`.
+arrow heads on/off” option in the :ref:`sec:menu-v`.
 
 Hiding vector arrows where there are no SPH particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1815,7 +1817,7 @@ On rendered plots often arrows can appear where there are apparently no
 SPH particles because the interpolation is performed to all pixels
 within :math:`2h` of an SPH particle. Such arrows in regions of few or
 no particles can be hidden using the “hide arrows where there are no
-particles” option in the :ref:`sec:vectorplots`. A threshold number of particles for
+particles” option in the :ref:`sec:menu-v`. A threshold number of particles for
 each pixel can be specified, below which no arrow will be plotted on
 that pixel.
 
@@ -1833,7 +1835,7 @@ Making all arrow the same length (i.e., showing direction only, not magnitude)
 
 An option to plot all vector arrows of the same length (instead of the
 default option where the length of the arrow is proportional to the
-vector magnitude) can be set from the :ref:`sec:vectorplots`.
+vector magnitude) can be set from the :ref:`sec:menu-v`.
 
 .. _sec:menu-x:
 

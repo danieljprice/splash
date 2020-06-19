@@ -104,46 +104,9 @@ and please do so as it is my only form of thanks.
 Version History
 ---------------
 
-+-----------------------+-----------------------+-----------------------+
-| 2.9.0 & 05/04/19 &    |                       |                       |
-| general header        |                       |                       |
-| quantities are read   |                       |                       |
-| and available in      |                       |                       |
-| function parser; more |                       |                       |
-| robust label          |                       |                       |
-| detection and parsing |                       |                       |
-| during ascii data     |                       |                       |
-| read; splash to grid  |                       |                       |
-| works in              |                       |                       |
-| non-cartesian         |                       |                       |
-| geometries; added     |                       |                       |
-| flared and log-flared |                       |                       |
-| coordinate systems;   |                       |                       |
-| Doppler shift colour  |                       |                       |
-| bar; can customise    |                       |                       |
-| line style and colour |                       |                       |
-| when plotting         |                       |                       |
-| multiple exact        |                       |                       |
-| solutions; seg faults |                       |                       |
-| fixed; better plot    |                       |                       |
-| tiling decisions;     |                       |                       |
-| disappearing arrows   |                       |                       |
-| bug fix; Rafikov      |                       |                       |
-| disc-planet exact     |                       |                       |
-| solution added; atan2 |                       |                       |
-| implemented in        |                       |                       |
-| function parser;      |                       |                       |
-| various multigrain    |                       |                       |
-| phantom read fixes    |                       |                       |
-| (incl. seg faults);   |                       |                       |
-| exact rendering       |                       |                       |
-| implemented in 2D;    |                       |                       |
-| libsplash implemented |                       |                       |
-| for use as Python     |                       |                       |
-| splash backend        |                       |                       |
-+-----------------------+-----------------------+-----------------------+
+.. include:: version_history
 
-Licence
+License
 -------
 
 splash - a visualisation tool for SPH data ©2004-2020 Daniel Price. This
@@ -157,4 +120,3 @@ GNU General Public License for more details. You should have received a
 copy of the GNU General Public License along with this program; if not,
 write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 Boston, MA 02111-1307 USA.
-

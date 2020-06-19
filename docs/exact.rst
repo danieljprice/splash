@@ -52,7 +52,7 @@ problem is to determine the jump in pressure and velocity across the
 shock front given the initial left and right states. This is performed
 in a separate subroutine (riemannsolver) as there are many different
 methods by which this can be done (see e.g.
-Toro92_). The actual subroutine exact_shock
+[Toro92]_). The actual subroutine exact_shock
 reconstructs the shock profile (consisting of a rarefaction fan, contact
 discontinuity and shock, summarised in :numref:`fig:shocktube`), given the post-shock values of
 pressure and velocity.
@@ -254,4 +254,3 @@ where :math:`\nu` is the number of spatial dimensions. The parameter
 :math:`h_{fact}` is output by the code into the header of each timestep.
 For particles of different masses, a different curve is plotted for each
 different mass value.
-

@@ -74,17 +74,6 @@ the X-window driver which means that the output is sent to the screen
 (provided X-windows is running), as demonstrated in the screenshot shown
 in :numref:`fig:rhoh`.
 
-Many useful tasks can now be achieved by moving the mouse to the plot
-window and selecting areas or pressing keystrokes – this is “interactive
-mode”. Pressing ‘h’ in the plot window shows (in the terminal) the full
-list of commands. Of the more useful ones are: pressing ‘l’ with the
-mouse over the colour bar to use a logarithmic axis, press ’a’ on either
-the colour bar or inside the plot to adapt the plot limits, select an
-area with the mouse to zoom. See also :ref:`sec:interactive`.
-
-To exit the plot, move the mouse to the plot window and press ’q’
-(quit). To exit splash altogether press ’q’ again from the splash main
-menu (in the terminal).
 
 .. figure:: figs/rhoh.jpg
    :alt: Screenshot of simple two column plot to an X-window
@@ -113,6 +102,27 @@ menu (in the terminal).
    |                 | pages in one    |                 |                 |
    |                 | file)           |                 |                 |
    +-----------------+-----------------+-----------------+-----------------+
+
+Interactive mode
+-----------------
+
+Many useful tasks can now be achieved by moving the mouse to the plot
+window and selecting areas or pressing keystrokes – this is “interactive
+mode”. Most useful are:
+
+- press ``l`` with the mouse over the colour bar for a log axis
+
+- press ``a`` to adapt the plot limits (with mouse either on the colour bar or inside the plot)
+
+- select an area with the mouse to zoom
+
+- type ``q`` in the plot window to close the plotting window and return to the menu
+
+- type ``q`` again from the splash main menu to exit splash altogether.
+
+- press ``h`` in the plot window for the full list of commands
+
+See :ref:`sec:interactive` for more.
 
 .. _sec:renderplot:
 
@@ -194,10 +204,9 @@ been selected for 3D plots – see the rendering examples given
 previously). In 2D vector plots simply show the vector arrows mapped to
 a pixel array using the SPH kernel.
 
-Settings related to vector plots can be changed via the v)ector plot
-submenu (:ref:`sec:vectorplots`). The size of the arrows is set by
-the maximum plot limit over all of the vector components. Alternatively
-the arrow size can be changed interactively using ’v’, ’V’ (to decrease
+Settings related to vector plots can be changed via :ref:`sec:menu-v`.
+The size of the arrows is set by the maximum plot limit over all of the vector components.
+Alternatively the arrow size can be changed interactively using ’v’, ’V’ (to decrease
 and increase the arrow size respectively) and ’w’ (to automatically
 adjust the arrow size so that the longest arrow is of order one pixel
 width).
@@ -207,13 +216,13 @@ Contour plots
 
 To plot contours of a quantity instead of a rendered plot, simply set
 the colour scheme used for rendering to 0 (contours only) via the
-“change colour scheme” option in the r)ender menu (type “r2” from the
-main menu as a shortcut to option 2 in the render menu).
+“change colour scheme” option in the :ref:`sec:menu-r` (type “r2” from the
+main menu as a shortcut to option 2 in the :ref:`sec:menu-r`).
 
 Contours of an additional quantity can also be plotted on top of a
 render plot. However the prompt for an additional contour plot does not
 appear by default – it can be turned on via the “plot contours” option
-in the r)ender menu (type “r3” at the main menu as a shortcut). With
+in the :ref:`sec:menu-r` (type “r3” at the main menu as a shortcut). With
 this option set *and a non-zero response to the render prompt*, a prompt
 appears below the render prompt:
 
@@ -235,17 +244,25 @@ another particle type (with different limits) is shown by contours. This
 can be achieved because once contour plotting is turned on, the
 contribution of a given particle type to either the contours or rendered
 plots can be turned on or off via the “turn on/off particles by type”
-option in the particle plot o)ptions menu.
+option in the :ref:`sec:menu-o`.
 
 Moving forwards and backwards through data files
 ------------------------------------------------
 
 If you have put more than one file on the command line (or alternatively
 the file contains more than one dump), it is then possible to move
-forwards and backwards through the data by pressing the space bar with
-the cursor in the plot window (this is “interactive mode”). To see the
-keystrokes for moving backwards or moving forwards/backwards by a
-specified number of steps, press ’h’ in interactive mode. If you plot to
+forwards and backwards through the data:
+
+- press the space bar to move to the next file
+  (with the cursor in the plot window - this is “interactive mode”).
+
+- press ``b`` to load and plot the previous file
+
+- type `9` and press ``space`` to move forward by 9 files
+
+- type `10` and press ``b`` to move back by 10 files
+
+Press ’h’ in :ref:`sec:interactive` for more. If you plot to
 a non-interactive device, splash simply cycles through all the files on
 the command line automatically.
 
@@ -256,23 +273,36 @@ Having plotted to an interactive device (e.g. /xw), tasks such as
 zooming in and out, selecting, colouring and hiding particles, changing
 the limits of both the plot and the colour bar and many other things can
 be achieved using either the mouse (i.e., selecting an area on which to
-zoom in) or by a combination of the mouse and a keystroke (e.g. move the
-mouse over a particle and press ’c’ to see the size of the smoothing
-circle for that particle). One of the most useful commands in
-interactive mode is ’a’ (adapt plot limits) which can be used to restore
-the plot limits to the maximum values for the data currently plotted
-(similarly pressing ’a’ on the colour bar resets the colour bar limits
-to the minimum and maximum values of the rendered quantity). Pressing
-’h’ in interactive mode (that is, with your mouse in the plotting
-window) gives the full list of interactive commands (note that the text
-appears in the terminal from which splash was invoked). Press ’s’ in the
-plot window to save changes between timesteps, otherwise the settings
-will revert when you move to the next timestep.
+zoom in) or by a combination of the mouse and a keystroke. For example:
+
+- select an area and click to zoom in
+
+- click on the colour bar to change the rendering limits
+
+- select an area and press ``2`` to colour particles red (particle colours stick
+  between plots, so you can use this to find particles with unusual parameters)
+
+- select an area and press ``0`` to hide selected particles
+
+- Press ``-`` or ``+`` to zoom in or out
+
+- move the mouse over a particle and press ’c’ to see the size of the smoothing
+  circle for that particle
+
+- press ``a`` (adapt plot limits) to restore the plot limits to the maximum values for the data currently plotted
+  (similarly pressing ’a’ on the colour bar resets the colour bar limits
+  to the minimum and maximum values of the rendered quantity)
+
+- press ``h`` in interactive mode (that is, with your mouse in the plotting
+  window) for the full list of interactive commands (text
+  appears in the terminal from which splash was invoked)
+
+- press ``s`` in the plot window to save changes between timesteps, otherwise the settings
+  will revert when you move to the next timestep.
 
 These tasks can also be achieved non-interactively by a series of
-drop-down submenus invoked from the main menu by typing a single
-character. For example limits changing options are contained in the
-l)imits submenu, so to manually set plot limits we would type “l” from
+text-based menus (see :ref:`sec:settings`). For example limits changing options are contained in the
+:ref:`sec:menu-l`, so to manually set plot limits we would type “l” from
 the main menu, then “2” for option 2 (set manual limits) and follow the
 prompts to set the limits for a particular data column.
 
@@ -281,12 +311,12 @@ prompts to set the limits for a particular data column.
 Producing an encapsulated postscript figure for a paper
 -------------------------------------------------------
 
-Producing a postscript plot suitable for inclusion in a LaTeX file is
+Producing a postscript or pdf plot suitable for inclusion in a LaTeX file is
 simple: at the device prompt, type
 
 ::
 
-    Graphics device/type (? to see list, default /xw): /eps
+    Graphics device/type (? to see list, default /xw): myfile.eps
 
 that is, instead of “/xw” (for an X-window), simply type “/eps” or
 “.eps” to use the encapsulated postscript driver. This produces a file
@@ -294,41 +324,27 @@ which by default is called ``splash.eps``, or if multiple files have
 been read, a sequence of files called ``splash_0000.eps``,
 ``splash_0001.eps``, etc. To specify both the device and filename, type
 the full filename (e.g. ``myfile.eps``) as the device. Files produced in
-this way can be directly incorporated into LaTeX using standard packages
-such as graphicx, psfig or epsfig.
-
-Note that postscript devices do not have a ‘background’ colour, so plots
-with a ‘black’ background and ‘white’ foreground will have invisible
-axes labels when viewed in (e.g.) gv (actually, they are there in white
-but the background is transparent - try inserting the figure into
-Keynote or Powerpoint with a dark background). For plots in papers you
-will therefore need to use a ‘black’ or similarly dark foreground colour
-(set via the p)age submenu). When setting the foreground and background
-colours an option appears such that annotation drawn over the rendered
-region can be drawn in the opposite colour - thus enabling black axes
-labels (off the plot) but white text in the legend (over the rendered
-area).
+this way can be directly incorporated into LaTeX using standard packages.
 
 .. _sec:movies:
 
 Producing a sequence of plots for a movie
 -----------------------------------------
-
 To make a movie of your simulation, first specify all of the files you
 want to use on the command line:
 
 ::
 
-   > splash dump_*
+   splash dump_*
 
-and use an interactive device to adjust options until it looks right
-(hint: for the nicest movies, best thing is to delete nearly all of the
-annotation, e.g. using the backspace key in interactive mode). If in
-interactive mode type ’s’ to save the current settings, then plot the
+and use an interactive device to adjust options until it looks right.
+
+.. HINT:: movies look best with minimal annotation, e.g. using :ref:`sec:hollywood`
+   or the backspace key in interactive mode to manually delete annotation
+
+If in interactive mode type ’s’ to save the current settings, then plot the
 same thing again but to a non-interactive device. For example, to
-generate a sequence of png files:
-
-::
+generate a sequence of png files ::
 
     Graphics device/type (? to see list, default /xw): /png
 
@@ -338,67 +354,97 @@ plotting page generated (or enter “``myfile.png``” at the device prompt
 to generate ``myfile_0000.png``, ``myfile_0001.png``,
 ``myfile_0002.png``\ …).
 
+
+Producing a movie from a sequence of images
+--------------------------------------------
 Having obtained a sequence of images there are a variety of ways to make
-these into an animation using both free and commercial software.
-Suggestions on software packages to use for Mac, Linux and Windows can
-be found in the online faq
-(http://users.monash.edu.au/~dprice/splash/faqs.html). I generally use
-the application “graphic converter” on Mac OS/X which makes quicktime
-movies from a sequence of images.
+these into an animation using both free and commercial software. The simplest
+is to use `ffmpeg <ffmpeg.org>`_::
+
+  ffmpeg -i splash_%04d.png -r 10 -vb 50M -bt 100M -pix_fmt yuv420p -vf setpts=4.*PTS movie.mp4
+
+A simple script which executes the above command is included in the source file distribution
+::
+
+   ~/splash/scripts/movie.sh
+
+See the `online faq <http://users.monash.edu.au/~dprice/splash/faqs.html>`_ for more.
+
+.. _sec:hollywood:
+
+Hollywood mode
+---------------
+Press ``Enter`` or ``ctrl-h`` in the interactive plot window to start ``Hollywood mode``,
+which changes to plot settings better suited to movies.
+
+The following shows :ref:`fig:default`:
+
+.. figure:: figs/default-mode.png
+   :name: fig:default
+   :width: 80.0%
+
+   A circumbinary disc simulation viewed in default mode
+
+and :ref:`fig:hollywood`
+
+.. figure:: figs/hollywood-mode.png
+   :name: fig:hollywood
+   :width: 100.0%
+
+   The same simulation viewed in Hollywood mode
 
 Ten quick hints for producing good-looking plots
 ------------------------------------------------
 
-In this section I have listed ten quick suggestions for simple changes
-to settings which can improve the look of a visualisation substantially
-compared to the default options. These are as follows:
+These can improve the look of a visualisation substantially
+compared to the default options:
 
-#. Log the colour bar. To do this simply move the cursor over the colour
+#. **Log the colour bar**. To do this simply move the cursor over the colour
    bar and hit “l” (for log). Or non-interactively via the “apply log or
-   inverse transformations to columns” option in the l)imits menu.
+   inverse transformations to columns” option in the :ref:`sec:menu-l`.
 
-#. Adjust the colour bar limits. Position the mouse over the colour bar
+#. **Adjust the colour bar limits**. Position the mouse over the colour bar
    and left-click. To revert to the widest max/min possible for the data
    plotted, press ‘a’ with the cursor positioned over the colour bar.
-   Limits can also be set manually in the l)imits submenu.
+   Limits can also be set manually in the :ref:`sec:menu-l`.
 
-#. Try changing the colour scheme. Press ‘m’ or ‘M’ in interactive mode
+#. **Change the colour scheme**. Press ‘m’ or ‘M’ in interactive mode
    to cycle forwards or backwards through the available colour schemes.
 
-#. Change the paper size. To produce high-resolution images/movies, use
-   the “change paper size” option in the p)age menu to set the paper
+#. **Change the paper size**. To produce high-resolution images/movies, use
+   the “change paper size” option in the :ref:`sec:menu-p` to set the paper
    size in pixels.
 
-#. Try using normalised interpolations. If your simulation does *not*
+#. **Try normalised or exact interpolation**. If your simulation does *not*
    involve free surfaces (or alternatively if the free surfaces are not
    visible in the figure), turning the “normalise interpolations” option
-   on (in the r)ender submenu) may improve the smoothness of the
+   on (in the :ref:`sec:menu-r`) may improve the smoothness of the
    rendering. This is turned off by default because it leads to
-   funny-looking edges.
+   funny-looking edges. Exact rendering performs exact sub-pixel rendering
+   so is more accurate but slower.
 
-#. Remove annotation/axes. For movies, often axes are unnecessary and
-   detract from the visual appeal. Axes, the colour bar and the various
-   legends can be turned off in interactive mode by positioning the
-   cursor appropriately and pressing backspace. Alternatively each can
+#. **Remove annotation/axes**. For movies, often axes are unnecessary and
+   detract from the visual appeal. Use :ref:`sec:hollywood` or delete
+   annotation by pressing backspace in the interactive window. Alternatively each can
    be turned off manually – axes via the “axes options” option in the
-   p)age submenu; the colour bar by the “colour bar options” entry in
-   the r)ender menu and the legends via options in the leg)end menu.
+   :ref:`sec:menu-p`; the colour bar by the “colour bar options” entry in
+   the :ref:`sec:menu-r` and the legends via options in the :ref:`sec:menu-g`.
 
-#. Change axes/page colours. The background colour (colour of the page)
+#. **Change axes/page colours**. The background colour (colour of the page)
    and foreground colour (used for axes etc) can be changed vie the “set
-   foreground/background colours” option in the p)age submenu.
+   foreground/background colours” option in the :ref:`sec:menu-p`.
 
-#. Move the legend or turn it off. The time legend can be moved by
+#. **Move the legend or turn it off**. The time legend can be moved by
    positioning the mouse and pressing ‘G’ in interactive mode. The
-   legend can be turned off in the le(g)end submenu or by pressing
+   legend can be turned off in the :ref:`sec:menu-g` or by pressing
    backspace in interactive mode. Similarly the vector plot legend can
-   be turned on/off in the v)ector submenu and moved by positioning the
+   be turned on/off in the :ref:`sec:menu-v` and moved by positioning the
    cursor and pressing ‘H’.
 
-#. Use physical units on the axes. These can be set via the d)ata
-   submenu. See :ref:`sec:changingunits` for more details.
+#. **Use physical units on the axes**. These can be set via the :ref:`sec:menu-d`.
+   See :ref:`sec:changingunits` for more details.
 
-#. Save settings to disk! Don’t waste your effort without being able to
+#. **Save settings to disk**! Don’t waste your effort without being able to
    reproduce the plot you have been working on. Pressing ‘s’ in
    interactive mode only saves the current settings for subsequent
    timesteps. Pressing ‘s’ from the main menu saves these settings to

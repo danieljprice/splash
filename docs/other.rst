@@ -228,7 +228,7 @@ How does splash handle multiple particle types?
 -----------------------------------------------
 
 splash can handle up to 6 different particle types. These can be turned
-on and off in the particle plot o)ptions menu (:ref:`sec:opts`).
+on and off in the :ref:`sec:menu-o`.
 These types are be specified in the set_labels part of the read_data
 routine, which contains some lines of code along the lines of:
 
@@ -245,7 +245,7 @@ routine, which contains some lines of code along the lines of:
 which says that there are 3 particle types, with names as given, and
 that types 1 and 2 are SPH particles and should be used in the rendering
 where appropriate (i.e., only when plotting of this type is turned on in
-the o)pts menu). Particle types which are to be used in renderings
+the :ref:`sec:menu-o`). Particle types which are to be used in renderings
 should have masses, densities and smoothing lengths read. Non-SPH
 particle types (e.g. sink particles) can be optionally plotted on top of
 rendered plots.
@@ -329,4 +329,3 @@ colours. The files are given default names such as “splash_00001.dat” or
 would be rendered to the graphics device.
 
 For other command line options, see :ref:`sec:commandline`.
-

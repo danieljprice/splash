@@ -31,11 +31,12 @@ Both of these successfully compile splash and the giza library.
 Compiling and linking with giza
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A copy of giza is included in the splash distribution and is compiled
-automatically along with splash. giza is also available as a standalone
-project at:
+You can either install giza with your package manager, or in a subdirectory
+of splash. To install in a splash subdirectory, use:
 
-   http://github.com/danieljprice/giza
+   cd splash
+   git clone http://github.com/danieljprice/giza
+   make withgiza
 
 For detailed instructions on compiling and linking with giza (or the
 older pgplot library used in splash v1.x), refer to the INSTALL file in
@@ -49,7 +50,7 @@ Reading your data
 ~~~~~~~~~~~~~~~~~~
 
 The most important part is getting splash to read \*your\* data format.
-If you are using a publically available code, it is reasonably likely
+If you are using a publicly available code, it is reasonably likely
 that I have already written a read data subroutine which will read your
 dumps. If not it is best to look at some of the other examples and
 change the necessary parts to suit your data files. Note that reading
@@ -57,9 +58,9 @@ directly from unformatted data files is \*much\* faster than reading
 from formatted (ascii) output.
 
 A standard “make” will create the binaries listed in
-Table :ref:`tab:defaultreads` which read the
+:ref:`tab:defaultreads` which read the
 corresponding data formats listed in the third column.
-Table :ref:`tab:otherreads` lists other data reads
+:ref:`tab:otherreads` lists other data reads
 implemented but not compiled by default.
 
 .. table:: Binaries and data reads compiled by default
