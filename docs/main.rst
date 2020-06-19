@@ -147,7 +147,7 @@ Version History
 Licence
 -------
 
-splash - a visualisation tool for SPH data ©2004-2018Daniel Price. This
+splash - a visualisation tool for SPH data ©2004-2020 Daniel Price. This
 program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
 Software Foundation; either version 2 of the License, or (at your
@@ -173,26 +173,22 @@ The basic steps for installation are as follows:
 
 #. write a read_data subroutine so that splash can read your data format
 
- Fortran compilers
-~~~~~~~~~~~~~~~~~~
+Fortran compilers
+~~~~~~~~~~~~~~~~~~~
 
-By now, many Fortran 90/95/2003 compilers exist. The most widely
+Numerous Fortran 90/95/2003 compilers exist. The most widely
 available are:
 
--  | gfortran, the free Gnu Fortran Compiler
-   | http://gcc.gnu.org/wiki/GFortran
+-  gfortran, the free Gnu Fortran Compiler
+   http://gcc.gnu.org/wiki/GFortran
 
 -  ifort, one of the most widely available commercial compilers (and is
    very good) with (limited) free licence for Linux.
    http://software.intel.com/en-us/articles/intel-compilers/
 
--  | Oracle Solaris Studio (formerly Sun studio), which contains an
-     excellent free Fortran compiler for Linux and Solaris
-   | http://www.oracle.com/us/products/tools/050872.html
+Both of these successfully compile splash and the giza library.
 
-All of these successfully compile splash and the giza library.
-
- Compiling and linking with giza
+Compiling and linking with giza
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A copy of giza is included in the splash distribution and is compiled
@@ -212,7 +208,7 @@ SPH data formats – for example for ascii formats the binary is called
 ‘asplash’ (by convention the first letter refers to the data format for
 which splash has been compiled). Details of these are given below.
 
- Reading your data
+Reading your data
 ~~~~~~~~~~~~~~~~~~
 
 The most important part is getting splash to read \*your\* data format.
@@ -407,7 +403,7 @@ csh, the equivalent is
 
 or by putting the above in your ``.cshrc`` file.
 
- Changing the font
+Changing the font
 ~~~~~~~~~~~~~~~~~~
 
 Several environment variables affect the backend plotting library.
@@ -422,7 +418,7 @@ default is ‘Times’). In particular, if you are having trouble displaying
 unicode characters such as greek letters, you can just change the font
 until you find one that works.
 
- Endian changing
+Endian changing
 ~~~~~~~~~~~~~~~~
 
 On some compilers, the endian-ness (byte order) when reading unformatted
@@ -433,18 +429,13 @@ IBM/powerpc machines create big-endian). Environment variables for
 changing the endian-ness of the data read for some common compilers are
 given below:
 
-+-------------+-------------+-------------+-------------+-------------+
-| Compiler    | Environment | Setting for | Setting for | Other       |
-|             | variable    | big endian  | little      | options     |
-|             |             |             | endian      |             |
-+=============+=============+=============+=============+=============+
-| ``gfortran` | ``GFORTRAN_ | ``big_endia | ``little_en | ``swap``    |
-| `           | CONVERT_UNI | n``         | dian``      |             |
-|             | T``         |             |             |             |
-+-------------+-------------+-------------+-------------+-------------+
-| ``ifort``   | ``F_UFMTEND | ``big``     | ``little``  |             |
-|             | IAN``       |             |             |             |
-+-------------+-------------+-------------+-------------+-------------+
++-------------+----------------------------+----------------+-------------------+----------+
+| Compiler    | Environment variable       | Big endian     | Little endian     | Other    |
++=============+============================+================+===================+==========+
+| ``gfortran`` | ``GFORTRAN_CONVERT_UNIT`` | ``big_endian`` | ``little_endian`` | ``swap`` |
++-------------+----------------------------+----------------+-------------------+----------+
+| ``ifort``   | ``F_UFMTENDIAN``           | ``big``        | ``little``        |          |
++-------------+----------------------------+----------------+-------------------+----------+
 
 For compilers without this feature, almost all can change the
 endian-ness at compile time, and the appropriate flags for doing so can
@@ -458,7 +449,7 @@ or LITTLE before *compiling* splash (this adds the appropriate
 compile-time flags for the compiler selected using the SYSTEM
 environment variable in the splash Makefile).
 
- Variables affecting all data reads
+Variables affecting all data reads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Environment variables that affect all data reads are:
@@ -485,8 +476,8 @@ Environment variables that affect all data reads are:
 | SPLASH_CENTRE_ON_SINK             | if set to a number n, centres     |
 |                                   | coordinates and velocities on the |
 |                                   | nth sink/star particle (e.g.      |
-|                                   | ``export SPLASH_CENTRE_ON_SINK=2` |
-|                                   | `).                               |
+|                                   | ``export SPLASH_CENTRE_ON_SINK=2``|
+|                                   | ).                                |
 +-----------------------------------+-----------------------------------+
 | SPLASH_COROTATE                   | plot in corotating frame based on |
 |                                   | locations of two sink particles   |
@@ -533,7 +524,7 @@ Environment variables that affect all data reads are:
 
 .. _sec:asplash:
 
- Ascii data read
+Ascii data read
 ~~~~~~~~~~~~~~~~
 
 For several data reads there are environment variables which can be set
@@ -580,7 +571,7 @@ at runtime which are specific to the data read. For the ascii data read
 
 .. _sec:gsplash:
 
- GADGET data read
+GADGET data read
 ~~~~~~~~~~~~~~~~~
 
 For the GADGET read (‘gsplash’) the environment variable options are:
@@ -643,7 +634,7 @@ files called ``snapshot_xxx.hsml`` and/or ``snapshot_xxx.dens`` (where
 which contain smoothing lengths and/or a density estimate for dark
 matter particles (these should just be one-column ascii files).
 
- VINE data read
+VINE data read
 ~~~~~~~~~~~~~~~
 
 For the VINE read (‘vsplash’) the environment variable options are:
@@ -664,7 +655,7 @@ For the VINE read (‘vsplash’) the environment variable options are:
 |                                   | works).                           |
 +-----------------------------------+-----------------------------------+
 
- sphNG data read
+sphNG data read
 ~~~~~~~~~~~~~~~~
 
 For the sphNG and PHANTOM read (‘ssplash’) the environment variable
@@ -700,7 +691,7 @@ options are:
 |                                   | verbatim in legend).              |
 +-----------------------------------+-----------------------------------+
 
- dragon data read
+dragon data read
 ~~~~~~~~~~~~~~~~~
 
 For the dragon read (‘dsplash’) the environment variable options are:
@@ -711,7 +702,7 @@ For the dragon read (‘dsplash’) the environment variable options are:
 |                                   | dumped after the itype array      |
 +-----------------------------------+-----------------------------------+
 
- Stephan Rosswog data read
+Stephan Rosswog data read
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the srosph read (‘rsplash’) the environment variable options are:
@@ -739,7 +730,7 @@ For the srosph read (‘rsplash’) the environment variable options are:
 |                                   | Default is RSPLASH_HFACT=1.5      |
 +-----------------------------------+-----------------------------------+
 
- ndspmhd data read
+ndspmhd data read
 ~~~~~~~~~~~~~~~~~~
 
 For the ndspmhd read (‘nsplash’) the environment variable options are:
@@ -751,7 +742,7 @@ For the ndspmhd read (‘nsplash’) the environment variable options are:
 |                                   | particles                         |
 +-----------------------------------+-----------------------------------+
 
- H5Part data read
+H5Part data read
 ~~~~~~~~~~~~~~~~~
 
 For the H5PART read (‘h5splash’) the environment variable options are:
@@ -1308,7 +1299,7 @@ set (m)ultiplot
 
 .. _sec:multiplotsetup:
 
- Plotting more than one column from the same file on the same page (multiplot)
+Plotting more than one column from the same file on the same page (multiplot)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Press ’m’ (“set multiplot”) from the main menu to set up a multiplot.
@@ -1322,7 +1313,7 @@ Once you have gone through the options to set up a multiplot, to
 actually plot what you have set simply type the number of the column
 corresponding to “multiplot” at the :math:`y-`\ axis prompt.
 
- Plotting each particle type in a different panel (multiplot)
+Plotting each particle type in a different panel (multiplot)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make a plot using different particle types in each panel (e.g. gas
@@ -1364,7 +1355,7 @@ The following can all be achieved from the d)ata options menu:
 
 .. _sec:d1:
 
- Re-reading the initial data / changing the dump file
+Re-reading the initial data / changing the dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The data can be re-read from the dump file or a new dump file can be
@@ -1384,7 +1375,7 @@ automatically, plotting the same plot for each file/timestep.
 
 .. _sec:subsetofsteps:
 
- Using only a subset of data files / plotting every :math:`n-`\ th dump file
+Using only a subset of data files / plotting every :math:`n-`\ th dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When splash is invoked with more than one filename on the command line
@@ -1425,7 +1416,7 @@ file.
 
 .. _sec:selectedstepsonly:
 
- Plotting a subset of data files in non-sequential order
+Plotting a subset of data files in non-sequential order
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A subset of data files from the command line can be chosen in any order
@@ -1447,7 +1438,7 @@ invoking splash (see §\ `4.2.2 <#sec:subsetofsteps>`__).
 
 .. _sec:buffering:
 
- Plotting more than one file without re-reading the data from disk
+Plotting more than one file without re-reading the data from disk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For small data sets (or a small number of dump files) it is often useful
@@ -1458,7 +1449,7 @@ of data from disk. This is achieved by turning “buffering of data” on in
 the d)ata menu (provided you have the memory of course!!). Non-buffered
 data means that only one file at a time is read.
 
- Calculating additional quantities not dumped
+Calculating additional quantities not dumped
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Turn “calculate extra quantities” on in the d)ata menu. As of splash
@@ -1513,7 +1504,7 @@ positions) into different coordinate systems.
 
 .. _sec:physicalunits:
 
- Plotting data in physical units
+Plotting data in physical units
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Data can be plotted in physical units by turning on the “use physical
@@ -1528,14 +1519,14 @@ as the default values but are overridden as soon as changes are made by
 the user (that is, by the presence of a ‘splash.units’ file) (see
 §\ `4.2.10 <#sec:changingunits>`__).
 
- Rescaling data columns
+Rescaling data columns
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.2.6 <#sec:physicalunits>`__.
 
 .. _sec:columnsfile:
 
- Changing the default column labels
+Changing the default column labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The labelling of columns is usually specific to the data format read
@@ -1561,7 +1552,7 @@ the labels of coordinate axes or labels for vector quantities (as these
 require the ability to be changed by plotting in different coordinate
 systems – see §\ `4.6.19 <#sec:geom>`__).
 
- Plotting column density in g/cm\ :math:`^{2}` without having x,y,z in cm
+Plotting column density in g/cm\ :math:`^{2}` without having x,y,z in cm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.2.10 <#sec:changingunits>`__. In addition to units for each
@@ -1578,7 +1569,7 @@ default labelling scheme for 3D column integrated (projection) plots.
 
 .. _sec:changingunits:
 
- Changing physical unit settings
+Changing physical unit settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The settings for transforming the data into physical units may be
@@ -1608,14 +1599,14 @@ rescale the data so that the numeric label reads :math:`1` (by setting
 [\times 10^{-4}]` by setting the units label to
 :math:`[ \times 10^{-4}]`.
 
- Changing the axis label to something like :math:`x` :math:`[ \times 10^{4} ]`
+Changing the axis label to something like :math:`x` :math:`[ \times 10^{4} ]`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.2.10 <#sec:changingunits>`__.
 
 .. _sec:timeunits:
 
- Changing the time units
+Changing the time units
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Units for the time used in the legend can be changed using the “change
@@ -1652,7 +1643,7 @@ page.
 Many more commands could be added to the interactive mode, limited only
 by your imagination. Please send me your suggestions!
 
- Adapting the plot limits
+Adapting the plot limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Press ‘a’ in interactive mode to adapt the plot limits to the current
@@ -1662,7 +1653,7 @@ when the page is subdivided into panels. To adapt the size of the arrows
 on a vector plot, press ‘w’. To use “adaptive plot limits” (where the
 limits change at every timestep), see §\ `4.7.1 <#sec:adapt>`__.
 
- Making the axes logarithmic
+Making the axes logarithmic
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Press ’l’ in interactive mode with the mouse over either the x or y axis
@@ -1679,7 +1670,7 @@ instead of density). Use ’F’ to flip backwards.
 
 .. _sec:colourparts:
 
- Colouring a subset of the particles and retaining this colour through other timesteps
+Colouring a subset of the particles and retaining this colour through other timesteps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. raw:: latex
@@ -1687,11 +1678,7 @@ instead of density). Use ’F’ to flip backwards.
    \centering
 
 .. figure:: figs/colourparts.pdf
-   :alt: Example of particles coloured interactively using the mouse
-   (left) and selection using a parameter range (right), which is the
-   same as the plot on the left but showing only particles in a
-   particular density range (after an intermediate plot of density vs x
-   on which I selected a subset of particles and hit ’p’)
+   :alt: coloured particles
    :name: fig:colourparts
    :width: 80.0%
 
@@ -1740,14 +1727,14 @@ particular object in a simulation by selecting only particles in that
 object at the end time, and moving backwards through timesteps retaining
 that selection.
 
- Working out which particles formed a particular object in a simulation
+Working out which particles formed a particular object in a simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved by selecting and colouring particles at a
 particular timestep and plotting the same selection at an earlier time.
 See §\ `4.3.4 <#sec:colourparts>`__ for details.
 
- Plotting only a subset of the particles
+Plotting only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To turn plotting of certain particle *types* on and off, see
@@ -1757,7 +1744,7 @@ region see §\ `4.3.4 <#sec:colourparts>`__.
 
 .. _sec:rendersubset:
 
- Rendering using only a subset of the particles
+Rendering using only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be selected and ‘hidden’ interactively (see
@@ -1770,9 +1757,7 @@ the domain with the mouse and pressed ’p’ to plot only the selected
 particles. The result is the plot shown.
 
 .. figure:: figs/rendersubset.pdf
-   :alt: Example of rendering using only a subset of the particles. Here
-   I have selected only particles on the right hand side of the plot
-   using the mouse and hit ’p’ to plot only those particles.
+   :alt: rendering with subset of particles
    :name: fig:rendersubset
    :width: 50.0%
 
@@ -1794,14 +1779,14 @@ restrict the particles used to the x, y (or r for both x and y) range of
 the selected box respectively. Pressing ‘S’ at the main menu will save
 such range restrictions to the ``splash.limits`` file.
 
- Tracking a set of particles through multiple timesteps
+Tracking a set of particles through multiple timesteps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.3.7 <#sec:rendersubset>`__.
 
 .. _sec:obliquexsec:
 
- Taking an oblique cross section interactively
+Taking an oblique cross section interactively
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to take an oblique cross section through 3D data using a
@@ -1823,7 +1808,7 @@ Options related to the page setup are changed in the p)age submenu.
 
 .. _sec:nstepsontopofeachother:
 
- Overlaying timesteps/multiple dump files on top of each other
+Overlaying timesteps/multiple dump files on top of each other
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to over-plot data from one file on top of data from
@@ -1851,12 +1836,12 @@ p)age submenu, or by positioning the mouse in interactive mode and
 pressing ’G’ (similar keys apply for moving plot titles and the legend
 for vector plots – press ’h’ in interactive mode for a full list).
 
- Plotting results from multiple files in the same panel
+Plotting results from multiple files in the same panel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.4.1 <#sec:nstepsontopofeachother>`__.
 
- Plotting more than one dump file on the same page
+Plotting more than one dump file on the same page
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that this is slightly different to “plotting more than one dump
@@ -1864,7 +1849,7 @@ file on the same panel”
 
 .. _sec:axessettings:
 
- Changing axes settings
+Changing axes settings
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Axes settings can be changed in the p)age submenu, by choosing “axes
@@ -1885,14 +1870,14 @@ options”. The options are as follows:
     20 : draw box and label Y-axis logarithmically;
     30 : draw box and label both axes logarithmically.
 
- Turning axes off
+Turning axes off
 ~~~~~~~~~~~~~~~~~
 
 Plot axes can be turned off by choosing “axes options” in the p)age
 submenu or by deleting them using the backspace key in interactive mode.
 See §\ `4.4.4 <#sec:axessettings>`__ for more details.
 
- Turning axes labels off
+Turning axes labels off
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Axes labels and numbering can be turned off via the “axes options”
@@ -1902,7 +1887,7 @@ details.
 
 .. _sec:loglabels:
 
- Using logarithmic axes labels
+Using logarithmic axes labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Logarithmic axes (that is where the quantity plotted is logged) can be
@@ -1917,7 +1902,7 @@ options” option in the p)age submenu and setting the axes option to 10,
 20 or 30 as necessary (see §\ `4.4.4 <#sec:axessettings>`__ for more
 details).
 
- Plotting a second, rescaled y-axis on the right hand side of a plot
+Plotting a second, rescaled y-axis on the right hand side of a plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A second y axis can be added by selecting the axis=4 option in the “axes
@@ -1933,7 +1918,7 @@ the scaling and alternative label:
 
 .. _sec:papersize:
 
- Changing the size of the plotting surface
+Changing the size of the plotting surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The physical size of the viewing surface used for plotting can be
@@ -1945,7 +1930,7 @@ explicitly specified in inches or pixels.
 
 .. _sec:nacrossndown:
 
- Dividing the plotting page into panels
+Dividing the plotting page into panels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The plotting page can be divided into panels using the “subdivide page
@@ -1958,7 +1943,7 @@ turned off).
 
 .. _sec:tiling:
 
- Tiling plots with the same :math:`x-` and :math:`y-` axes
+Tiling plots with the same :math:`x-` and :math:`y-` axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots with the same :math:`x-` and :math:`y-` axes are tiled if the
@@ -1970,19 +1955,19 @@ plotted which spans the full length of the page.
 
 .. _sec:squarexy:
 
- Using non-proportional scales for spatial dimensions
+Using non-proportional scales for spatial dimensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default if the x and y axes are both spatial coordinates, the axes
 are scaled proportionately. This can be changed via the “spatial
 dimensions have same scale” option in the p)age submenu.
 
- Using non-square axes on coordinate plots
+Using non-square axes on coordinate plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.4.12 <#sec:squarexy>`__.
 
- Changing the character height for axes, labels and legends
+Changing the character height for axes, labels and legends
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The character height used for axes, labels and legends can be changed
@@ -1990,7 +1975,7 @@ via the p)age setup options submenu. Note that the character height is
 relative to the paper size (which can also be changed – see
 §\ `4.4.9 <#sec:papersize>`__).
 
- Using a thicker line width on plots
+Using a thicker line width on plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The line width used for axes and text can be changed via the p)age
@@ -2000,7 +1985,7 @@ non-interactive devices strongly.
 
 .. _sec:pagecolours:
 
- Changing the foreground and background colours
+Changing the foreground and background colours
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The background and foreground colour of a plot can be changed vie the
@@ -2008,7 +1993,7 @@ The background and foreground colour of a plot can be changed vie the
 that the background colour setting has no effect on postscript devices
 (see §\ `3.8 <#sec:postscript>`__ for more details).
 
- Plotting axes, legends and titles in white even when the labels are plotted in black
+Plotting axes, legends and titles in white even when the labels are plotted in black
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, axes, legends and titles are plotted in the foreground
@@ -2047,7 +2032,7 @@ le(g)end and title options
 
 .. _sec:title:
 
- Adding titles to plots / repositioning titles
+Adding titles to plots / repositioning titles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots may be titled individually by creating a file called
@@ -2069,7 +2054,7 @@ with one of these titles on each panel.
 
 .. _sec:legendoff:
 
- Turning off/moving the time legend
+Turning off/moving the time legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The position of the time legend can be set interactively by positioning
@@ -2080,7 +2065,7 @@ le(g)end submenu.
 
 .. _sec:timelegendtext:
 
- Changing the text in the time legend
+Changing the text in the time legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The text which appears the time legend (by default this is “t=”) can be
@@ -2091,7 +2076,7 @@ To rescale the *value* of the time displayed in the time legend (default
 value is as read from the dump file), see
 §\ `4.2.12 <#sec:timeunits>`__.
 
- Making the legend read “z=” instead of “t=”
+Making the legend read “z=” instead of “t=”
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.5.3 <#sec:timelegendtext>`__. An option to change the legend text
@@ -2100,13 +2085,13 @@ submenu. The numeric value of the time legend is as read into the
 ``time`` array in the read_data routine. This value can be rescaled by
 setting a unit for time (see §\ `4.2.12 <#sec:timeunits>`__).
 
- Plotting the time legend on the first row/column of panels / nth panel only
+Plotting the time legend on the first row/column of panels / nth panel only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot the time legend on the first row or column of panels
 or on a single panel only appears in the in the le(g)end submenu.
 
- Plotting a length scale on coordinate plots
+Plotting a length scale on coordinate plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot a length scale (i.e., ``|---|`` with a label below it
@@ -2114,7 +2099,7 @@ indicating the length) on coordinate plots (i.e., plots where both
 :math:`x-` and :math:`y-`\ axes refer to particle coordinates) is
 provided in the le(g)end submenu.
 
- Annotating a plot with squares, rectangles, arrows, circles and text
+Annotating a plot with squares, rectangles, arrows, circles and text
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the “annotate plot” option in the le(g)end submenu to annotate plots
@@ -2135,7 +2120,7 @@ An option to plot length scales (``|---|``) on coordinate plots is
 implemented separately via the “plot scale on coordinate plots” option
 in the le(g)end menu.
 
- Adding your name to a plot/movie
+Adding your name to a plot/movie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Arbitrary text annotation can be added/removed in interactive mode using
@@ -2152,7 +2137,7 @@ The following are tasks which can be achieved via options in the o) menu
 
 .. _sec:plotparticlesbytype:
 
- Plotting non-gas particles (e.g. ghosts, boundary, sink particles)
+Plotting non-gas particles (e.g. ghosts, boundary, sink particles)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles of different types can be turned on or off (i.e., plotted or
@@ -2170,7 +2155,7 @@ this menu option.
 specified by the ``UseTypeInRendering`` flags in the set_labels part of
 the read_data file).
 
- Plotting non-gas particles on top of rendered plots
+Plotting non-gas particles on top of rendered plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot non-SPH particles on top of rendered plots (e.g. sink
@@ -2178,12 +2163,12 @@ particles) can be set when turning particle types on/off via the “turn
 on/off particles by type” option in the particle plot o)ptions submenu
 (see §\ `4.6.1 <#sec:plotparticlesbytype>`__).
 
- Using ghost particles in the rendering
+Using ghost particles in the rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.6.1 <#sec:plotparticlesbytype>`__.
 
- Turn off plotting of gas particles
+Turn off plotting of gas particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be turned on or off by type via the “turn on/off particles
@@ -2192,7 +2177,7 @@ by type” option in the particle plot o)ptions submenu. See
 
 .. _sec:darkmatter:
 
- Plotting dark matter particles
+Plotting dark matter particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot dark matter particles (e.g. for the gadget read) the particle
@@ -2214,7 +2199,7 @@ the weight:
 
 .. math:: w_{part} = \frac{m_{part}}{\rho_{part} h_{part}^{\nu}},
 
- (see :raw-latex:`\citealt{splashpaper}`) and then interpolates for any
+(see `Price 2007 <https://ui.adsabs.harvard.edu/abs/2007PASA...24..159P>`_) and then interpolates for any
 quantity A using
 
 .. math:: A_{pixels} = \sum_{part} w_{part} A_{part} W_{kernel},
@@ -2233,7 +2218,7 @@ based on a local number density estimate from the relation
 
 .. math:: h \propto n^{-1/3}, \hspace{0.5cm} \textrm{where} \hspace{0.5cm} n_{i} = \sum_{j} W_{ij}.
 
- Actually, none of this should be necessary, as the gravity for dark
+Actually, none of this should be necessary, as the gravity for dark
 matter should be softened with smoothing lengths defined like this in
 the first place. The historical practise of fixed softening lengths has
 arisen only because of confusion about what softening really means (and
@@ -2241,7 +2226,7 @@ worries about energy conservation with adaptive softening lengths). What
 you are trying to do is solve Poisson’s equation for the dark matter
 density field, defined with a kernel density estimate and using fixed
 softening lengths is not a way to get a good density... but don’t get me
-started, read :raw-latex:`\citet{pm07}` instead.
+started, read [PM07]_ instead.
 
 Note that for simulations using both SPH and dark matter particles, dark
 matter particles will contribute (incorrectly) to the SPH rendering when
@@ -2251,14 +2236,14 @@ case, dark matter particles must be turned off [via the o) menu option],
 and similarly to plot just dark matter density if both SPH and dark
 matter particles are present, SPH particles must be turned off.
 
- Plotting a column density plot of dark matter/N-body particles
+Plotting a column density plot of dark matter/N-body particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.6.5 <#sec:darkmatter>`__.
 
 .. _sec:plotsinks:
 
- Plotting sink particles
+Plotting sink particles
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sink particles will be plotted on particle plots once turned on via the
@@ -2277,17 +2262,17 @@ to their accretion radius (or at least proportional to it).
 A good option for sinks (v1.15 onwards) is to print “outlined” filled
 circles (marker 34) — these show up on both black or white backgrounds.
 
- Plotting sink particles with size proportional to the sink radius
+Plotting sink particles with size proportional to the sink radius
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.6.7 <#sec:plotsinks>`__.
 
- Plotting a point mass particle with physical size
+Plotting a point mass particle with physical size
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `4.6.7 <#sec:plotsinks>`__.
 
- Changing graph markers for each particle type
+Changing graph markers for each particle type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The graph markers used to plot each particle type can be changed via the
@@ -2302,14 +2287,14 @@ menu.
 
 .. _sec:partcolours:
 
- Plotting each particle type in a different colour
+Plotting each particle type in a different colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each particle type can be plotted in a different colour via the “set
 colour for each particle type” option in the particle plot o)ptions
 submenu (press ‘o’ from the main menu).
 
- Changing the order in which different particle types are plotted
+Changing the order in which different particle types are plotted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The order in which particle types are plotted can be changed via the
@@ -2322,7 +2307,7 @@ read, rather than mixed in with each other.
 
 .. _sec:lines:
 
- Plotting using lines instead of dots (e.g. for energy vs time plots)
+Plotting using lines instead of dots (e.g. for energy vs time plots)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot a line joining all of the points on a plot can be set
@@ -2337,7 +2322,7 @@ be changed.
 To plot the line only with no particles, turn off gas particles using
 the “turn on/off particles by type option” from the o) submenu.
 
- Plotting multiple lines with different colours/line styles and a legend
+Plotting multiple lines with different colours/line styles and a legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When multiple timesteps are plotted on the same physical page, the line
@@ -2346,14 +2331,14 @@ colour option is chosen for multiple steps per page – see the “change
 plots per page" option in the p)age options submenu
 [§`4.4 <#sec:optionspage>`__]).
 
- Joining the dots
+Joining the dots
 ~~~~~~~~~~~~~~~~~
 
 See `4.6.13 <#sec:lines>`__.
 
 .. _sec:smoothingcircle:
 
- Plotting the size of the smoothing circle around selected particles
+Plotting the size of the smoothing circle around selected particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On coordinate plots this option plots a circle of radius :math:`2h`
@@ -2365,7 +2350,7 @@ direction is plotted in the direction of the coordinate axis. See also
 
 .. _sec:findingaparticle:
 
- Locating a particular particle in the data set
+Locating a particular particle in the data set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The best way to locate a particular particle in the data set is to use
@@ -2385,7 +2370,7 @@ plotted with a circle of size :math:`2h` which makes it easy to
 distinguish from the other particles. See also
 §\ `4.6.16 <#sec:smoothingcircle>`__.
 
- Making sure absolutely all particles are plotted
+Making sure absolutely all particles are plotted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default splash uses “fast particle plotting” for particle plots –
@@ -2398,7 +2383,7 @@ good reason to do so.
 
 .. _sec:geom:
 
- Plotting in different coordinate systems (e.g. cylindrical coordinates)
+Plotting in different coordinate systems (e.g. cylindrical coordinates)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The coordinates of position and of all vector components can be
@@ -2450,24 +2435,24 @@ Details of the coordinate transformations are given in
 If you have a coordinate system you would like implemented, please email
 me the details!
 
- Plotting vector components in different coordinate systems
+Plotting vector components in different coordinate systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.6.19 <#sec:geom>`__.
 
- Plotting orbital velocities
+Plotting orbital velocities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.6.19 <#sec:geom>`__.
 
- Plotting against azimuthal angle/cylindrical radius/etc
+Plotting against azimuthal angle/cylindrical radius/etc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.6.19 <#sec:geom>`__.
 
 .. _sec:exactsolns:
 
- Plotting the exact solution to common test problems
+Plotting the exact solution to common test problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following exact solutions are provided
@@ -2484,7 +2469,7 @@ The following exact solutions are provided
 -  Polytropes (with arbitrary :math:`\gamma`)
 
 -  One and two dimensional toy stars. This is a particularly simple test
-   problem for SPH codes described in :raw-latex:`\citet{mp04}`.
+   problem for SPH codes described in MP04_.
 
 -  Linear wave. This simply plots a sine wave of a specified amplitude,
    period and wavelength on the plot specified.
@@ -2509,15 +2494,14 @@ Appendix \ `10 <#sec:exact>`__. An example plot using the Sedov blast
 wave exact solution is shown in Figure \ `[fig:sedov] <#fig:sedov>`__.
 
 .. figure:: figs/sedov_example.png
-   :alt: Example of a plot utilising the Sedov blast wave exact
-   solution. Taken from Rosswog & Price (2007).
+   :alt: sedov exact solution
    :name: fig:sedov
    :width: 50.0%
 
    Example of a plot utilising the Sedov blast wave exact solution.
-   Taken from Rosswog & Price (2007).
+   Taken from [RP07]_.
 
- Plotting an exact solution from a file
+Plotting an exact solution from a file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.6.23 <#sec:exactsolns>`__. One of the options for exact
@@ -2527,7 +2511,7 @@ particle data. The filename(s) can be specified by the user and will be
 saved to the ‘splash.defaults’ file so that the solution(s) will be read
 and plotted on subsequent invocations of splash .
 
- Changing the exact solution line style & colour
+Changing the exact solution line style & colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The line style and colour of the exact solution line can be changed via
@@ -2537,13 +2521,13 @@ together with an inset plot of the residual error on the particles. See
 Appendix \ `10 <#sec:exact>`__ for details of the error norms
 calculated.
 
- Setting the number of points used in an exact solution calculation
+Setting the number of points used in an exact solution calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of points used in an exact solution calculation can be
 changed via the “exact solution plot options” option in the o) submenu.
 
- Plotting an inset plot of residual errors from an exact solution
+Plotting an inset plot of residual errors from an exact solution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An inset plot of residual errors between the plotted points and an exact
@@ -2555,7 +2539,7 @@ plot (l)imits
 
 .. _sec:adapt:
 
- Using plot limits which adapt automatically for each new plot
+Using plot limits which adapt automatically for each new plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adaptive plot limits can be set using option 1 of the l)imits menu
@@ -2564,14 +2548,14 @@ applied to coordinate axes and non-coordinate axes. Note that changing
 plot limits interactively and pressing ’s’ in interactive mode will
 change this option back to using fixed limits.
 
- Using adaptive plot limits for the colour bar but not for the coordinates
+Using adaptive plot limits for the colour bar but not for the coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adaptive plot limits can be set individually for coordinate axes and
 non-coordinate axes (e.g. the colour bar) via the “use adaptive/fixed
 limits” option in the l)imits submenu. See §\ `4.7.1 <#sec:adapt>`__.
 
- Setting plot limits manually
+Setting plot limits manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plot limits can be set manually using option 2) of the l)imits menu (or
@@ -2582,7 +2566,7 @@ limits for each column on consecutive lines).
 
 .. _sec:track:
 
- Making plot limits relative to a particular particle
+Making plot limits relative to a particular particle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particle tracking limits (i.e., where a chosen particle is always at the
@@ -2599,7 +2583,7 @@ particle.
 Centreing on a sink particle can also be achieved using the
 SPLASH_CENTRE_ON_SINK environment variable.
 
- Plotting in a comoving reference frame
+Plotting in a comoving reference frame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A co-moving reference frame can be set using the “make xy limits
@@ -2610,19 +2594,19 @@ See §\ `4.7.4 <#sec:track>`__ for more details. Centreing on a sink
 particle can also be achieved using the SPLASH_CENTRE_ON_SINK
 environment variable.
 
- Setting the origin to correspond to a particular particle
+Setting the origin to correspond to a particular particle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.7.4 <#sec:track>`__.
 
- Tracking a particle
+Tracking a particle
 ~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.7.4 <#sec:track>`__.
 
 .. _sec:tracksink:
 
- Setting the origin to the position of the :math:`n`\ th sink particle
+Setting the origin to the position of the :math:`n`\ th sink particle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved using the “make xy limits relative to particle”
@@ -2642,7 +2626,7 @@ where 3:1 indicates the first particle of type 3. The origin is set to
 the position of this particle and limits are relative to its position.
 See §\ `4.7.4 <#sec:track>`__ for more details.
 
- Plotting radial plots around sink particles
+Plotting radial plots around sink particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, set the origin to the location of the sink, as described above.
@@ -2650,7 +2634,7 @@ Then simply change to spherical coordinates using the “change coordinate
 systems” option in the o) menu. Alternatively, compute the radius using
 the “calculate extra quantities” option in the d)ata menu.
 
- Automatically adapting plot limits to match aspect ratio of output device
+Automatically adapting plot limits to match aspect ratio of output device
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to automatically adjust the plot limits to match the aspect
@@ -2658,7 +2642,7 @@ ratio of the output device is given in the l)imits menu, and is also
 prompted for whenever the paper size is changed (via the “change paper
 size” option in the p)age menu, see §\ `4.4.9 <#sec:papersize>`__).
 
- Plotting with log axes.
+Plotting with log axes.
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Log axes can be set either interactively (by pressing ’l’ with the
@@ -2666,7 +2650,7 @@ cursor over the desired axis) or manually via the “apply log or inverse
 transformations to columns” option in the l)imits menu. To use
 logarithmic axes labels as well, see §\ `4.4.7 <#sec:loglabels>`__.
 
- Plotting the square root, inverse or square of a quantity
+Plotting the square root, inverse or square of a quantity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Columns can be logged, inverted, sqrt-ed, squared or any combination of
@@ -2677,7 +2661,7 @@ add more.
 
 .. _sec:resetlimits:
 
- Resetting limits for all columns
+Resetting limits for all columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Limits for all columns can be reset to their minimum and maximum values
@@ -2685,14 +2669,14 @@ from the current dump file via the “reset limits for all columns” option
 in the l)imits menu. See §\ `4.3 <#sec:interactive>`__ for details of
 resetting plot limits for a particular plot in interactive mode.
 
- Restoring all plot limits to their minimum and maximum values in the current dump file
+Restoring all plot limits to their minimum and maximum values in the current dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.7.13 <#sec:resetlimits>`__.
 
 .. _sec:rangerestrict:
 
- Using a subset of data restricted by parameter range
+Using a subset of data restricted by parameter range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As of version 1.11.0, it is possible to use only a subset of the
@@ -2735,7 +2719,7 @@ way of setting manual range restrictions is simply to edit the
 limits for each column, followed optionally by a third and fourth column
 specifying, respectively, the min and max of the range restriction).
 
- Plotting only particles with :math:`\rho > 10`, :math:`u > 20` and :math:`-0.25 < x < 0.25`
+Plotting only particles with :math:`\rho > 10`, :math:`u > 20` and :math:`-0.25 < x < 0.25`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plotting a subset of the particles restricted by a parameter can be
@@ -2747,7 +2731,7 @@ alternatively by an interactive selection based on particle identity
 (r)endering options
 -------------------
 
- Changing the number of pixels in a rendered image
+Changing the number of pixels in a rendered image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of pixels in a rendered image can be set manually using the
@@ -2767,7 +2751,7 @@ default) to avoid interpolation artefacts in the image. For vector
 is set to :math:`1024/\textrm{n}`, where n is the number of panels
 across the page.
 
- Changing the colour scheme
+Changing the colour scheme
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The colour scheme used for rendered plots can be changed either by
@@ -2791,7 +2775,7 @@ User contributed colour schemes are eagerly invited (just send me
 either: a table of r,g,b colour indices [if you know them] or just an
 image of a colour bar you wish to reproduce and I will add it).
 
- Plotting contours as well as the rendered image
+Plotting contours as well as the rendered image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Contours of either the rendered pixel array or of another (separate)
@@ -2809,14 +2793,14 @@ To plot contours *instead* of the rendered image, use the “change colour
 scheme” option from the r)ender menu and choose colour scheme 0
 (contours only).
 
- Plotting contours instead of a rendered image
+Plotting contours instead of a rendered image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot contours instead of the rendered image, use the “change colour
 scheme” option from the r)ender menu and choose colour scheme 0
 (contours only).
 
- Changing the number of contour levels
+Changing the number of contour levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of contour levels used whenever contours are drawn can be set
@@ -2826,7 +2810,7 @@ contour levels can also be manually specified (see
 
 .. _sec:contoursmanual:
 
- Setting the contour levels manually
+Setting the contour levels manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As of v1.15.0, contour levels can be set manually by creating a file
@@ -2842,19 +2826,19 @@ optionally with a label for each contour, e.g.
    0.1    my really great contour
    1.0    hi mum
 
- Adding numeric labels to contours
+Adding numeric labels to contours
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to write numeric labels on contours appears as part of the
 “change number of contours” option in the r)ender menu.
 
- Adding arbitrary contour labels
+Adding arbitrary contour labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Contours can also be labelled manually by creating a ``splash.contours``
 file. See §\ `4.8.6 <#sec:contoursmanual>`__.
 
- Turning the colour bar off/ moving the colour bar label
+Turning the colour bar off/ moving the colour bar label
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The colour bar can be turned on or off and the style chosen (e.g.
@@ -2867,7 +2851,7 @@ To change the text in the colour bar label, see
 
 .. _sec:colourbarstyle:
 
- Changing the style of the colour bar
+Changing the style of the colour bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The colour bar style (i.e., vertical vs. horizontal, plot-hugging vs.
@@ -2875,36 +2859,36 @@ non plot-hugging, one-sided vs. two-sided, floating vs. fixed) can be
 changed via the “colour bar options” option in the r)ender submenu. If
 you want a different style implemented, email me!
 
- Using a horizontal colour bar
+Using a horizontal colour bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to use a horizontal colour bar instead of the default vertical
 arrangement is given in the “colour bar options” option in the r)ender
 submenu.
 
- Using ‘plot-hugging’ colour bars
+Using ‘plot-hugging’ colour bars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.8.10 <#sec:colourbarstyle>`__.
 
- Using floating/inset colour bars
+Using floating/inset colour bars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.8.10 <#sec:colourbarstyle>`__.
 
- Plotting ticks on only one side of the colour bar
+Plotting ticks on only one side of the colour bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.8.10 <#sec:colourbarstyle>`__.
 
- Changing the text in the colour bar label
+Changing the text in the colour bar label
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.8.21 <#sec:setprojlabel>`__.
 
 .. _sec:colournotrender:
 
- Using coloured particles instead of rendering to pixels
+Using coloured particles instead of rendering to pixels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As a simpler alternative to interpolating to a pixel array, particles
@@ -2917,7 +2901,7 @@ particles might be affecting results. Note that any colouring of the
 particles set in interactive mode will be overwritten by use of this
 option.
 
- Using normalised interpolations
+Using normalised interpolations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A normalised interpolation to pixels can be used by setting the
@@ -2929,7 +2913,7 @@ in the simulation. Note that in 3D this option only affects
 cross-section slices (as it is a bit meaningless to normalise a
 column-integrated or opacity-rendered plot).
 
- Speeding up the rendering on 3D column integrated plots
+Speeding up the rendering on 3D column integrated plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Interpolation on 3D column integrated plots can be made faster by
@@ -2942,13 +2926,13 @@ regular grid (e.g. as is often the case in initial conditions). Typical
 speed-ups range from :math:`\times 2` up to :math:`\times 4`, so it is
 highly recommended for interactive work.
 
- Using density weighted interpolation
+Using density weighted interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Density weighted interpolation (where a quantity is plotted times
 :math:`\rho`) can be turned on in the r)ender menu.
 
- Selecting and rendering only a subset of the particles
+Selecting and rendering only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An example of how to render using only a selected subset of the
@@ -2956,7 +2940,7 @@ particles was given in §\ `4.3.7 <#sec:rendersubset>`__.
 
 .. _sec:setprojlabel:
 
- Changing the label used for 3D projection plots
+Changing the label used for 3D projection plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The labelling scheme used to determine the colour bar label can be
@@ -2977,12 +2961,12 @@ incorporated via format codes as follows:
     %z  : label for 'z'
     %uz : units label for z (only if physical units applied)
 
- Changing “column density” to “surface density” on 3D plots
+Changing “column density” to “surface density” on 3D plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.8.21 <#sec:setprojlabel>`__.
 
- Changing the interpolation kernel
+Changing the interpolation kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The kernel used for the interpolations is by default the M\ :math:`_{4}`
@@ -2994,21 +2978,21 @@ listed in the render menu option, or something sensible resembling it.
 At present only a few kernels are implemented, with ‘cubic’ , ‘quartic’
 and ‘quintic’ referring to the M\ :math:`_{4}`, M\ :math:`_{5}` and
 M\ :math:`_{6}` B-splines with support of 2h and 3h, respectively. See
-:raw-latex:`\citet{price12}` for more details.
+[Price12]_ for more details.
 
 .. _sec:vectorplots:
 
 (v)ector plot options
 ---------------------
 
- Changing the number of arrows on vector plots
+Changing the number of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See §\ `4.9.2 <#sec:vecpix>`__.
 
 .. _sec:vecpix:
 
- Changing the number of pixels in vector plots
+Changing the number of pixels in vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of pixels used on vector plots can be changed via the “change
@@ -3016,7 +3000,7 @@ number of pixels” option in the v)ector menu. This controls the number
 and average size of the arrows which appear (i.e., one arrow is plotted
 at the centre of each pixel).
 
- Changing the size of arrows on vector plots
+Changing the size of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The size of the arrows on vector plots is proportional to the magnitude
@@ -3033,7 +3017,7 @@ pressing ‘v’ (to decrease) or ‘V’ (to increase) can be used to adjust
 the arrow lengths (the change can be multiplied by 10 or more by first
 pressing ‘z’ one or more times before pressing ’v’ or ’V’).
 
- Plotting vector arrows in white instead of black or vice-versa
+Plotting vector arrows in white instead of black or vice-versa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vector arrows are by default plotted using the current foreground colour
@@ -3041,20 +3025,20 @@ index (i.e., as used for plotting the axes). To plot in the background
 colour index instead set the “use background colour for arrows” option
 in the v) menu.
 
- Turning off the legend for vector plots
+Turning off the legend for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The legend which appears on vector plots can be turned on or off via the
 “vector plot legend settings” option in the v) menu.
 
- Moving the vector plot legend
+Moving the vector plot legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The position of the vector plot legend can be set either interactively
 by positioning the mouse and pressing ’H’ or manually via the “vector
 plot legend settings” option in the v) menu.
 
- Plotting stream/fieldlines instead of arrows
+Plotting stream/fieldlines instead of arrows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot a vector plot that uses stream/fieldlines instead of arrows, set
@@ -3069,13 +3053,13 @@ to use a larger number of pixels for the vector interpolation (See
 At present this option works quite well for smooth vector fields but can
 perform poorly for vector fields with strong gradients.
 
- Turning arrow heads off for vector plots
+Turning arrow heads off for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vector plots can be plotted using arrows without heads using the “turn
 arrow heads on/off” option in the v)ector plot options menu.
 
- Hiding vector arrows where there are no SPH particles
+Hiding vector arrows where there are no SPH particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On rendered plots often arrows can appear where there are apparently no
@@ -3086,7 +3070,7 @@ particles” option in the v) menu. A threshold number of particles for
 each pixel can be specified, below which no arrow will be plotted on
 that pixel.
 
- Plotting a vector plot in a cross section slice
+Plotting a vector plot in a cross section slice
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vector plots are either in a cross section slice or are column
@@ -3095,7 +3079,7 @@ cross section/projection” option in the x) menu. Setting this to cross
 section and plotting a vector plot produces a vector plot in a cross
 section slice.
 
- Making all arrow the same length (i.e., showing direction only, not magnitude)
+Making all arrow the same length (i.e., showing direction only, not magnitude)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot all vector arrows of the same length (instead of the
@@ -3105,7 +3089,7 @@ vector magnitude) can be set from the v) menu.
 (x) cross section/3D plotting options
 -------------------------------------
 
- Plotting a cross section slice through 3D data
+Plotting a cross section slice through 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When plotting a rendered plot of 3D data, the default option is to plot
@@ -3116,7 +3100,7 @@ cross section slice can be set interactively using the ’x’ key, see
 §\ `4.3.9 <#sec:obliquexsec>`__ which works by setting a combination of
 rotation and a cross section slice position.
 
- Plotting a cross section line through 2D data
+Plotting a cross section line through 2D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In 2D, setting the “switch between cross section/projection” option in
@@ -3126,7 +3110,7 @@ is completely arbitrary (i.e., can be set for oblique cross sections as
 well as straight lines) and is set interactively after the usual
 :math:`y-` and :math:`x-` axis prompts.
 
- Rotating the particles
+Rotating the particles
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 An angle of rotation about may be set each axis may be set in the
@@ -3144,7 +3128,7 @@ rotation. If you think about it long enough, it makes sense. If in
 doubt, do it interactively and set the angles in the order
 :math:`z-y-x`.
 
- Setting the origin about which particles are rotated
+Setting the origin about which particles are rotated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The origin about which particles are rotated and relative to which the
@@ -3154,7 +3138,7 @@ option in the x) menu.
 
 .. _sec:3Dperspective:
 
- Adding 3D perspective
+Adding 3D perspective
 ~~~~~~~~~~~~~~~~~~~~~~
 
 3D perspective can be turned on via the “3D perspective on/off” option
@@ -3184,7 +3168,7 @@ given by
    x' & = & x*dscreen/(zobs-z), \nonumber \\
    y' & = & y*dscreen/(zobs-z).\end{aligned}
 
- This means that objects at the screen distance will have unit
+This means that objects at the screen distance will have unit
 magnification, objects closer than the screen will appear larger (points
 diverge) and objects further away will appear smaller (points converge).
 The situation could be beautifully illustrated if I could be bothered
@@ -3198,7 +3182,7 @@ The position of the 3D observer in :math:`z` can also be changed in
 interactive mode using ’u’ or ’U’ (to move ’up’) and ’d’ or ’D’ (to move
 ’down’).
 
- Using 3D surface rendering
+Using 3D surface rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 3D surface rendering (turned on using the “3D surface rendering on/off”
@@ -3214,7 +3198,7 @@ movies of neutron star mergers:
 
    http://users.monash.edu.au/~dprice/research/nsmag.
 
- Plotting 3D box / 3D axes
+Plotting 3D box / 3D axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Rotated axes or boxes can be plotted using the “set axes for rotated/3D
@@ -3222,7 +3206,7 @@ plots” option in the x) menu.
 
 .. _sec:animseq:
 
- Setting up animation sequences
+Setting up animation sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Animation sequences can be set via the “set animation sequence” option
@@ -3267,19 +3251,19 @@ basis rather than simply ‘per frame’. This means that you can produce a
 multi-panelled movie (e.g.) showing the evolution of different runs side
 by side, with the same animation sequence applied to each.
 
- Plotting a sequence of frames rotating a data set through 360 degrees
+Plotting a sequence of frames rotating a data set through 360 degrees
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved by setting an animation sequence with a steady
 change of rotation angle. See §\ `4.10.8 <#sec:animseq>`__.
 
- Plotting a ‘fly-around’ of 3D data
+Plotting a ‘fly-around’ of 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved by setting an animation sequence with a steady
 change of rotation angle. See §\ `4.10.8 <#sec:animseq>`__.
 
- Plotting a flythru of 3D data
+Plotting a flythru of 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A sequence of cross section slices progressively deeper into a 3D box or
@@ -3287,14 +3271,14 @@ alternatively a steady movement of the 3D observer (on projection plots)
 can be plotted by setting up an animation sequence. See
 §\ `4.10.8 <#sec:animseq>`__ for details.
 
- Adding a steady zoom sequence to a movie
+Adding a steady zoom sequence to a movie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A steady change of :math:`x-` and :math:`y-` limits can be added by
 setting up an animation sequence. See §\ `4.10.8 <#sec:animseq>`__ for
 details.
 
- Adding a steady change of colour bar limits
+Adding a steady change of colour bar limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A steady change of limits on the colour bar over one or more dump files
@@ -3303,7 +3287,7 @@ for a movie can be implemented by setting up an animation sequence. See
 
 .. _sec:move3Dobserver:
 
- Adding steady movement of the 3D observer
+Adding steady movement of the 3D observer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The position of the 3D observer can be steadily changed over several
@@ -3313,7 +3297,7 @@ up an animation sequence. See §\ `4.10.8 <#sec:animseq>`__ for details.
 Miscellaneous other useful things
 ---------------------------------
 
- Saving plot settings / plot limits to disk
+Saving plot settings / plot limits to disk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The (s)ave option saves the default options to a file called
@@ -3335,7 +3319,7 @@ new prefix). The prefix to the configuration files which are written by
 splash can also be changed using the ``-p`` option on the command line
 (the default is “splash”, i.e., “splash.defaults”, “splash.limits” etc).
 
- My attempt at in-built help
+My attempt at in-built help
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The (h)elp option at the moment does nothing particularly useful apart
@@ -3345,7 +3329,7 @@ time…
 
 .. _sec:menushortcuts:
 
- Keyboard shortcuts to menu options
+Keyboard shortcuts to menu options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Menu options which normally require two keystrokes (e.g. x menu, option
@@ -3354,7 +3338,7 @@ the main menu prompt (so e.g. “x1” for x menu, option 1, “r2” for render
 menu, option 2, etc.). This can be quite useful if you are playing
 around with one particular option a lot.
 
- Exiting splash
+Exiting splash
 ~~~~~~~~~~~~~~~~
 
 (q)uit, unsurprisingly, quits. Typing a number greater than the number
@@ -3363,6 +3347,801 @@ exit).
 
 Advanced plotting examples
 ==========================
+
+Rendered plot of star formation data
+------------------------------------
+
+This is an example using data provided by Paul Clark. The data is from
+an SPH simulation of star formation in sphNG format. We read the dump
+file as follows:
+
+::
+
+   dprice/dustfrag> ssplash omuk162
+
+after which we get output along the lines of:
+
+::
+
+   ...
+    reading single dumpfile
+   >>>>>>>>>>>>>>>>>>>>>>>>>> omuk162 <<<<<<<<<<<<<<<<<<<<<<<<<<
+   double precision dump
+   File ID: FHydroRTMHD1
+    npart =  11744854
+   ...
+
+and arrive at the main menu:
+
+::
+
+    You may choose from a delectable sample of plots
+   -------------------------------------------------------
+     1) x                                7) v\dx
+     2) y                                8) v\dy
+     3) z                                9) v\dz
+     4) particle mass        10) u
+     5) h                              11) grad h
+     6) density
+   -------------------------------------------------------
+    12) multiplot [  4 ]      m) set multiplot
+   -------------------------------------------------------
+    d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
+    r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+   -------------------------------------------------------
+   Please enter your selection now (y axis or option):
+
+here we want to plot a rendered plot of column density (density is in
+column 6), so we type ‘2’ for column 2 (y) as the y axis, ‘1’ for column
+1 (x) as the x-axis and at the render prompt ‘6’, for density, ie:
+
+::
+
+   Please enter your selection now (y axis or option):2
+   (x axis) (default=1):
+    (render) (0=none) ([0:11], default=0):6
+    (vector plot) (0=none, 7=v) ([0:7], default=0):0
+    Graphics device/type (? to see list, default /xw): /xw
+
+producing the plot shown in
+Figure \ `[fig:starpart1] <#fig:starpart1>`__ – somewhat black! The main
+thing to note is the limits on the colour bar (extending from :math:`0`
+to :math:`10^{7}` on a linear scale) which is the main source of all the
+blackness. Moving the cursor over the colour bar and pressing ‘l’ for
+log produces the figure shown on the right hand side — a vast
+improvement!
+
+
+.. figure:: figs/starpart1.png
+   :alt: star formation tutorial part 1a
+   :name: fig:starpart1
+   :width: 50.0%
+
+   First stage in the star formation figure tutorial: a simple render plot of density
+
+.. figure:: figs/starpart2.png
+   :alt: star formation tutorial part 1b
+   :name: fig:starpart1b
+   :width: 50.0%
+
+   With a log axis after having placed cursor over colour bar and pressed ‘l’ (right)
+
+For this visualisation we will eventually want the data in physical
+units rather than code units. For the sphNG read these units are already
+specified in the read_data routine, so all we have to do is turn
+physical units on. Pressing ‘q’ from interactive mode (that is, with the
+cursor in the plot window) returns us to the main menu.
+
+Physical units are turned on from the d)ata menu, as follows:
+
+::
+
+   Please enter your selection now (y axis or option):d
+   ----------------- data read options -------------------
+    0) exit
+    1) read new data /re-read data
+    2) change number of timesteps used        (     1 )
+    3) plot selected steps only               (  OFF )
+    4) buffering of data on/off               (  OFF )
+    5) turn calculate extra quantities on/off (  OFF )
+    6) use physical units                     (  OFF )
+    7) change physical unit settings
+   enter option ([0:7], default=0):6
+    current settings for conversion to physical units are:
+   x [cm] = x x  1.000E+17
+   y [cm] = y x  1.000E+17
+   z [cm] = z x  1.000E+17
+   particle mass [g] = particle mass x  1.991E+33
+   h [cm] = h x  1.000E+17
+   density [g/cm\u3\d] = density x  1.991E-18
+   v\dx [cm/s] = v\dx x  3.645E+04
+   v\dy [cm/s] = v\dy x  3.645E+04
+   v\dz [cm/s] = v\dz x  3.645E+04
+   u [erg/g] = u x  1.328E+09
+   grad h = grad h x  1.000E+00
+   time = time x 1.69E+00
+   Use physical units? (default=yes):
+
+returning us to the main menu with labels changed as follows:
+
+::
+
+   You may choose from a delectable sample of plots
+   -------------------------------------------------------
+     1) x [cm]                7) v\dx [cm/s]
+     2) y [cm]                8) v\dy [cm/s]
+     3) z [cm]                9) v\dz [cm/s]
+     4) particle mass [g]    10) u [erg/g]
+     5) h [cm]               11) grad h
+     6) log density [g/cm\u3
+   -------------------------------------------------------
+    12) multiplot [  4 ]      m) set multiplot
+   -------------------------------------------------------
+    d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
+    r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+   -------------------------------------------------------
+   Please enter your selection now (y axis or option):
+
+at this stage we will save the current settings to file by pressing ‘s’
+from the main menu.
+
+::
+
+   Please enter your selection now (y axis or option):s
+    default options saved to file splash.defaults
+
+Actually we would prefer the column labels in AU, but we will come to
+that later. Replotting the same plot (that is 2, 1, 6, 0, /xw from the
+main menu) plots the same plot we had before, but with the axes in
+physical units. Zooming in (using the mouse) on the region of interest
+and adapting the colour bar limits by moving the mouse over the colour
+bar and pressing ‘a’ produces the plot shown in the left panel of
+Figure \ `[fig:starpart2] <#fig:starpart2>`__.
+
+
+.. figure:: figs/starpart3.png
+   :alt: star formation tutorial part 2a
+   :name: fig:starpart2
+   :width: 50.0%
+
+   Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar
+
+.. figure:: figs/starpart4.png
+   :alt: star formation tutorial part 2b
+   :name: fig:starpart2b
+   :width: 50.0%
+
+   having changed the colour scheme
+
+For this kind of plot, the Bate colour scheme looks better – pressing
+‘m’ with the mouse in the plot window changes the colour scheme,
+producing the plot shown in
+Figure \ `[fig:starpart2b] <#fig:starpart2b>`__. Pressing ‘s’ in
+interactive mode (that is, with the mouse in the plot window) saves the
+current zoom and colour bar settings (but not to disk until you also
+press ‘S’ from the main menu). Pressing ‘q’ from interactive mode
+returns to the main menu.
+
+Next we want to turn on the plotting of sink particles (all particle
+types other than gas are turned off by default). This is done in the
+o)ptions submenu as follows:
+
+::
+
+    Please enter your selection now (y axis or option):o
+   ------------- particle plot options -------------------
+    0) exit
+    1) turn on/off particles by type       ( ON, OFF, OFF, OFF )
+    2) change graph markers for each type  (  1,  4, 17,  1 )
+    3) set colour for each particle type   ( -1, -1, -1, -1 )
+    4) plot line joining particles         ( OFF )
+    5) plot smoothing circles              (   0 )
+    6) use fast particle plotting          ( ON  )
+    7) change coordinate systems           (  1 )
+    8) plot exact solution                 (  0 )
+    9) exact solution plot options
+   enter option ([0:9], default=0):1
+    Plot gas particles? (default=yes):
+    Plot ghost particles? (default=no):
+    Plot sink particles? (default=no):y
+    >> Plot sink particles on top of rendered plots? (default=no):y
+    Plot unknown/dead particles? (default=no):
+
+Repeating our previous plot (i.e., 2, 1, 6, 0, /xw) produces the plot
+shown in the left panel of
+Figure \ `[fig:starpart3] <#fig:starpart3>`__.
+
+.. figure:: figs/starpart5.png
+   :alt: star formation tutorial part 3a
+   :name: fig:starpart3
+   :width: 50.0%
+
+   Third stage in the star formation figure tutorial: having turned sink particle plotting on
+
+.. figure:: figs/starpart6.png
+   :alt: star formation tutorial part 3b
+   :name: fig:starpart3b
+   :width: 50.0%
+
+   replacing the axes with a scale
+
+
+The axes in [cm] are kind of ugly, so we could either change this to a
+sensible unit or plot a scale instead. We will do the latter. The axes
+can be turned off in the p)age submenu, as follows:
+
+::
+
+    Please enter your selection now (y axis or option):p
+   ---------------- page setup options -------------------
+   ...
+    2) axes options                      ( 0)
+   ...
+   enter option ([0:8], default=0):2
+     -4 : draw box and major tick marks only;
+    -3 : draw box and tick marks (major and minor) only;
+    -2 : draw no box, axes or labels;
+    -1 : draw box only;
+     0 : draw box and label it with coordinates;
+     1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
+     2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+    10 : draw box and label X-axis logarithmically;
+    20 : draw box and label Y-axis logarithmically;
+    30 : draw box and label both axes logarithmically.
+   enter axis option ([-4:30], default=0):-2
+      axis =  -2
+
+The option to plot a scale of a particular length is also to be found in
+the le(g)end menu. We will choose to plot a scale of length 0.1 pc.
+
+::
+
+   Please enter your selection now (y axis or option):g
+   ---------------- legend and title options -------------------
+
+    To set the plot titles, create a file called
+     'splash.titles' in the working directory, with one title per line
+
+    0) exit
+    1) time legend on/off/settings                ( ON   0.87  1.87  0.00 "t=")
+    2) titles on/off/settings                     ( ON   0.20 -0.92  0.00)
+    3) legend for multiple steps per page on/off  ( OFF )
+    4) plot scale on co-ordinate plots            ( OFF )
+    5) legend only on nth panel/first row/column  (  0 )
+   Enter option ([0:5], default=0):4
+    Plot scale on co-ordinate plots? (default=no):y
+    Enter length of scale in the current x,y,z units (default=1.000):3.0856e15
+    Enter text to appear below scale (e.g. '10 AU') (default=1 unit): 0.1 pc
+    Enter horizontal position as fraction of viewport ([0.000:1.000], default=0.5000):
+    Enter vertical position in character heights above bottom (default=1.000):
+
+Note that because the x axis units were already in cm, we simply entered
+the value for 0.1pc in these units. Before plotting again, we should
+save what we have done so far to disk: Pressing ‘S’ from the main menu
+saves both the current plot settings *and* the plot limits to disk:
+
+::
+
+   Please enter your selection now (y axis or option):S
+    default options saved to file splash.defaults
+    saving plot limits to file splash.limits
+
+Plotting our figure again (2-1-6-0-/xw) produces the plot shown in the
+right hand panel of Figure \ `[fig:starpart3] <#fig:starpart3>`__.
+
+Nearly there...! To add the finishing touches we want to increase the
+number of pixels substantially. This is done in the r)ender menu, option
+1, for which we can use the shortcut ‘r1’:
+
+::
+
+   Please enter your selection now (y axis or option):r1
+   ----------------- rendering options -------------------
+   enter number of pixels along x axis ([1:10000], default=200):1000
+
+then, to plot the figure to file instead of the screen, we simply choose
+a different PGPLOT device at the prompt:
+
+::
+
+   Please enter your selection now (y axis or option):2
+   (x axis) (default=1):
+    (render) (0=none) ([0:11], default=6):
+    (vector plot) (0=none, 7=v) ([0:7], default=0):
+    Graphics device/type (? to see list, default /xw): starpartfinal.gif/gif
+
+producing our final finished Figure shown in
+Figure \ `[fig:starfinal] <#fig:starfinal>`__.
+
+.. figure:: figs/starpartfinal.png
+   :alt: Finished star formation plot
+   :name: fig:starfinal
+   :width: 50.0%
+
+   Finished star formation plot
+
+Pressing ‘S’ from the main menu saves all of the settings and plot
+limits to disk, so invoking splash again will produce the same plot. To
+produce the same plot on a sequence of dumps, simply put more than one
+file on the command line and plot to a non-interactive device (see
+`3.9 <#sec:movies>`__). Use the postscript devices /ps or /cps (for
+colour) to make figures suitable for inclusion in a paper.
+
+Other things you may want to do with this plot include:
+
+-  Turn the time legend off. See §\ `4.5.2 <#sec:legendoff>`__.
+
+-  Change the colour of sink particles. See
+   §\ `4.6.11 <#sec:partcolours>`__.
+
+-  Change the foreground/background colour of the page. See
+   §\ `4.4.16 <#sec:pagecolours>`__.
+
+
+Multi-panelled figure
+---------------------
+The following is an example plot taken from [PB07]_.
+Here I will plot a sequence of plots tiled on the same page, so that
+columns correspond to dumps taken from different runs at the same time
+and rows correspond to an evolutionary sequence from a given run. The
+plot uses sphNG data which contains sink particles, so I also want these
+to appear on the plots and be plotted in white. Basically I want the
+plots to be plotted such that as much of the plot is taken up by data
+and very little by axes and the like but still conveying all of the
+necessary infomation.
+
+We proceed as follows: Firstly, each different run (corresponding in
+this case to a series of runs with different magnetic field strength)
+are in different subdirectories with names like ``mbossbod_f10.0/``,
+``mbossbod_f5.0/``, etc. which all contain a sequence of dump files with
+names like ``mbos001``, ``mbos002`` etc. To begin the plot, I start by
+creating a new, empty subdirectory so that the ``splash.defaults`` and
+``splash.limits`` files created by pressing ’S’ from the main menu will
+be in this directory such that running splash from that directory always
+produces this plot. So:
+
+::
+
+   dprice% mkdir plot1
+   dprice% cd plot1
+
+then having decided which dump files from each run to use, I create a
+text file listing these filenames (with the full relative pathname) in
+the order in which I will plot them. For example, calling this file
+(arbitrarily) ``filelistplot``, the contents should be something like
+the following:
+
+::
+
+   dprice% more filelistplot
+   ../mbossbod_f20.0/mbos259
+   ../mbossbod_f20.0/mbos263
+   ../mbossbod_f20.0/mbos268
+   ../mbossbod_f20.0/mbos275
+   ../mbossbod_f20.0/mbos294
+   ../mbossbod_f10.0/mbos259
+   ../mbossbod_f10.0/mbos263
+   ../mbossbod_f10.0/mbos268
+   ../mbossbod_f10.0/mbos275
+   ../mbossbod_f10.0/mbos294
+   ../mbossbod_f7.5/mbos259
+   ../mbossbod_f7.5/mbos263
+   ../mbossbod_f7.5/mbos268
+   ...
+
+Then invoke splash (ssplash for sphNG) with these filenames on the
+command line:
+
+::
+
+   ssplash `cat filelistplot`
+
+after which the first dump file should be read, indicated by output
+along the lines of:
+
+::
+
+    reading single dumpfile
+   >>>>>>>>>>>>>>>>>>>>>>>>>> ../mbossbod_f20.0/mbos259 <<<<<<<<<<<<<<<<<<<<<<<<<<
+   double precision dump
+   File ID: SHydroRTMHD1
+    npart =  491567
+   ...
+
+An alternative method is to rename the ‘filelistplot’ file
+``splash.filenames``, from which the filenames will be read if there are
+none specified on the command line (this feature was implemented as a
+workaround for a limit to the number of command line arguments on the
+some compilers).
+
+The first stage is to get a plot of a single panel looking good. So,
+from the main menu, we will plot a simple rendering of density and
+adjust the plot limits until we are happy:
+
+::
+
+    You may choose from a delectable sample of plots
+   -------------------------------------------------------
+     1) x                     6) density
+     2) y                     7) B\dx
+     3) z                     8) B\dy
+     4) particle mass         9) B\dz
+     5) h
+   -------------------------------------------------------
+    10) multiplot [  4 ]      m) set multiplot
+   -------------------------------------------------------
+    d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
+    r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+   -------------------------------------------------------
+   Please enter your selection now (y axis or option):2
+   (x axis) (default=1):
+    (render) (0=none) ([0:9], default=0):6
+    (vector plot) (0=none, 7=B) ([0:7], default=0):
+     Graphics device/type (? to see list, default /xw): /xw
+
+which should produce the plot shown in the left hand panel of
+Figure \ `[fig:multipart1] <#fig:multipart1>`__. Not much can be seen at
+first – just a few white dots. This is mainly a result of the density
+axis (i.e., the colour bar) not being logged. Moving the cursor over the
+colour bar and pressing ‘l’ results in the plot shown in the right hand
+panel of Figure \ `[fig:multipart1] <#fig:multipart1>`__.
+
+.. figure:: figs/multipart1.png
+   :alt: multi-panelled figure tutorial part 1
+   :name: fig:multipart1
+   :width: 50.0%
+
+   First stage in the multi-panelled figure tutorial: a simple render plot of density
+
+.. figure:: figs/multipart2.png
+   :alt: multi-panelled figure tutorial part 1b
+   :name: fig:multipart1b
+   :width: 50.0%
+
+   and with a log axis after having placed cursor over colour bar and pressed ‘l'
+
+Before we proceed any further, we will first change the axes to be in
+physical units rather than code units. Pressing ‘q’ in the plot window
+to exit interactive mode and return to the main menu, and from the d)ata
+menu, turn the “use physical units option” on:
+
+::
+
+   Please enter your selection now (y axis or option):d
+   ----------------- data read options -------------------
+    0) exit
+    1) read new data /re-read data
+    2) change number of timesteps used        (     1 )
+    3) plot selected steps only               (  OFF )
+    4) buffering of data on/off               (  OFF )
+    5) turn calculate extra quantities on/off (  OFF )
+    6) use physical units                     (  OFF )
+    7) change physical unit settings
+   enter option ([0:7], default=0):6
+    current settings for conversion to physical units are:
+   x [cm] = x x  1.000E+16
+   y [cm] = y x  1.000E+16
+   z [cm] = z x  1.000E+16
+   particle mass [g] = particle mass x  1.991E+33
+   h [cm] = h x  1.000E+16
+   density [g/cm\u3\d] = density x  1.991E-15
+   B\dx [G] = B\dx x  1.000E+00
+   B\dy [G] = B\dy x  1.000E+00
+   B\dz [G] = B\dz x  1.000E+00
+   time = time x 1.13E-01
+   Use physical units? (default=yes):yes
+
+The default transformations to physical units are in this case set in
+the data read. However it would be nicer in this case to set the x and y
+axis units to AU (Astronomical Units), rather than cm. From the d)ata
+menu we proceed as follows:
+
+::
+
+   enter option ([0:7], default=0):7
+    enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], default=-1):1
+    enter x [cm] units (new=old*units) (default=0.1000E+17):668.3893
+    enter label amendment (default=[cm]): [AU]
+    Apply these units to all coordinates and h? (default=yes):
+    Enter unit for 'z' in 3D column integrated plots (default=0.1000E+17):
+    Enter label for z integration unit (e.g. [cm]) (default=[cm]):
+
+   enter column to change units (-2=reset all,-1=quit,0=time) ([-2:9], default=-1):
+
+   save units to file? (default=yes):
+    saving plot limits to file splash.units
+
+where in the above I set the multiplicative factor such that the x axis
+will be in AU and correspondingly changed the units label to “[AU]”
+(note the preceding space). I was also prompted to change the unit for
+’z integration’ – this is the length unit added when integrating a
+quantity through z. Leaving this in cm means that, even though the
+coordinate axes are in AU, the density (in g/cm\ :math:`^{3}`) is
+integrated through z in cm, giving column density in g/cm\ :math:`^{2}`
+(as opposed to g /cm:math:`^{3}` AU).
+
+
+To save what we have done so far, press ‘s’ from the main menu to save
+the current settings to the ``splash.defaults`` file:
+
+::
+
+    Please enter your selection now (y axis or option):s
+    default options saved to file splash.defaults
+
+Having turned physical units on, we replot the same plot (i.e.,
+answering 2, 1, 6, 0, /xw to the prompts, as previously). First of all
+we find simply a white screen. This is a result of the colour bar axis
+now being wrong. Moving the mouse over the colour bar and pressing ‘a’
+(to adapt) results in the plot shown in the left hand panel of
+Figure \ `[fig:multipart3] <#fig:multipart3>`__. The plot looks
+basically identical to the previous plot, except that the axes are now
+in physical units (x and y are in AU and column density is in
+g/cm\ :math:`^{2}`).
+
+Next, we zoom in to the central region of interest using the mouse –
+selecting a region and clicking to zoom in. Pressing ‘o’ centres the
+plot on the origin and as we zoom in it we also press ‘a’ over the
+colour bar to readjust the colour bar limits to the max/min on the
+zoomed-in plot. Finishing with the adjustments (and pressing ‘s’ in the
+plot window to save the current settings) results in the plot shown in
+the right hand panel of Figure \ `[fig:multipart3] <#fig:multipart3>`__.
+
+.. figure:: figs/multipart3.png
+   :alt: multi-panelled figure tutorial part 2
+   :name: fig:multipart3
+   :width: 50.0%
+
+   Second stage in the multi-panelled figure tutorial: having changed the axes into physical units
+
+.. figure:: figs/multipart4.png
+   :alt: multi-panelled figure tutorial part 2b
+   :name: fig:multipart3b
+   :width: 50.0%
+
+   zooming in and adjusting the colour bar
+
+
+Surface rendering
+-----------------
+
+Here I will give an example of how to use the 3D surface rendering
+feature starting with a dump file kindly supplied by Giuseppe Lodato
+from an SPH simulation of a warped accretion disc. First we read the
+file (in sphNG format, so we use ssplash):
+
+::
+
+   dprice$ ssplash warp001
+
+after which we reach the main menu:
+
+::
+
+    You may choose from a delectable sample of plots
+   -------------------------------------------------------
+     1) x                     6) density
+     2) y                     7) v\dx
+     3) z                     8) v\dy
+     4) particle mass         9) v\dz
+     5) h
+   -------------------------------------------------------
+    10) multiplot [  4 ]      m) set multiplot
+   -------------------------------------------------------
+    d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
+    r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+   -------------------------------------------------------
+   Please enter your selection now (y axis or option):
+
+Firstly we want to plot just a simple render plot of density. Thus we
+choose:
+
+::
+
+    Please enter your selection now (y axis or option):2
+   (x axis) (default=1):
+    (render) (0=none) ([0:9], default=0):6
+    (vector plot) (0=none, 7=v) ([0:7], default=0):
+    Graphics device/type (? to see list, default /xwin): /xw
+
+producing the plot shown in the left panel of
+Figure \ `[fig:surfpart1] <#fig:surfpart1>`__ (I have used ``/png``
+instead of ``/xw`` to produce the figures for the userguide). Moving the
+cursor over the colour bar and pressing ‘l’ to log the colour bar axis
+produces the Figure in the right panel of
+Figure \ `[fig:surfpart1] <#fig:surfpart1>`__.
+
+.. figure:: figs/surfpart1.png
+   :alt: surface rendering tutorial part 1
+   :name: fig:surfpart1
+   :width: 50.0%
+
+   First stage in the surface rendering tutorial: a simple render plot of density
+
+.. figure:: figs/surfpart2.png
+   :alt: surface rendering tutorial part 1b
+   :name: fig:surfpart1b
+   :width: 50.0%
+
+   with a log axis after having placed cursor over colour bar and pressed ‘l’
+
+The next step is to adjust the viewing angle. Pressing ‘h’ in the plot
+window brings up the list of keystrokes which can be used to change the
+angle. Here we want to add a rotation about the :math:`x-` axis, so we
+press ``{`` three times to change the x angle by -90 degrees and then
+press ``[`` once to increment the angle by a further -15 degrees. The
+splash output in the terminal reads, amongst other things:
+
+::
+
+    rotating particles about z by   0.00
+    rotating particles about y by   0.00
+    rotating particles about x by 255.00
+
+Then we have the Figure shown in the left panel of
+Figure \ `[fig:surfpart2] <#fig:surfpart2>`__.
+
+.. figure:: figs/surfpart3.png
+   :alt: surface rendering tutorial part 2
+   :name: fig:surfpart2
+   :width: 50.0%
+
+   Second stage in the surface rendering tutorial: after adjusting the rotation angle
+
+.. figure:: figs/surfpart4.png
+   :alt: surface rendering tutorial part 2b
+   :name: fig:surfpart2b
+   :width: 50.0%
+
+   and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits
+
+Next, we need to turn the 3D surface rendering on. This cannot be done
+in interactive mode so we need to exit – pressing ‘s’ first to save what
+we have done so far, then ’q’ to quit interactive mode. Then, back at
+the splash main menu, we type x4 for the x)sec/3D plotting options menu,
+option 4 which is “3D surface rendering on/off” with prompts appearing
+as follows:
+
+::
+
+   Please enter your selection now (y axis or option):x4
+   ---------- cross section / 3D plotting options --------
+   Use 3D opacity rendering? (default=yes):y
+
+Now we replot the original plot with the new settings as follows:
+
+::
+
+   Please enter your selection now (y axis or option):2
+   (x axis) (default=1):
+    (render) (0=none) ([0:9], default=6):
+    (vector plot) (0=none, 7=v) ([0:7], default=0):
+    enter z coordinate of observer (default=53.58):
+    enter distance between observer and projection screen ([0.000:], default=5.358):
+    using current h and pmass limits to calculate kappa (cross section/unit mass)
+    min h =  0.1197254  min particle mass =  3.812551E-11
+    [ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]
+   enter approximate surface depth (number of smoothing lengths): ([0.000:], default=2.000):
+    kappa (particle cross section per unit mass) =  1.2369025E+9
+    Graphics device/type (? to see list, default /xwin):
+
+Note that several new prompts appear – for the moment I have just used
+the default answers by pressing return. The first result is rather
+frightening : just a black image with a black colour bar! This is
+because the limits we set for column density are several orders of
+magnitude away from the limits on density. Moving the cursor over the
+colour bar and pressing ‘a’ to adapt the limits produces the plot shown
+in the right panel of Figure \ `[fig:surfpart2] <#fig:surfpart2>`__.
+
+Note that the plot suddenly appears much smaller – this is a consequence
+of the 3D perspective settings. Moving the cursor into the plot window
+and pressing ‘a’ adapts the plot limits. After also clicking on the
+colour bar and adjusting the colour bar limits, we arrive at the plot
+shown in the left panel of
+Figure \ `[fig:surfpart3] <#fig:surfpart3>`__.
+
+.. figure:: figs/surfpart5.png
+   :alt: surface rendering tutorial part 3
+   :name: fig:surfpart3
+   :width: 50.0%
+
+   Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively
+
+
+Now that we are nearly there, to add the finishing touches we need to i)
+increase the number of pixels in the image and ii) turn the axes off,
+since they are no longer meaningful with 3D perspective set. The number
+of pixels can be increased by returning to the splash main menu
+(pressing ‘s’ in interactive mode before doing so to save what we have
+done so far), then typing ‘r1’ for render menu, option 1:
+
+::
+
+   Please enter your selection now (y axis or option):r1
+   ----------------- rendering options -------------------
+   enter number of pixels along x axis ([1:10000], default=200):1000
+
+Next, we turn the axes off using the p)age submenu:
+
+::
+
+   Please enter your selection now (y axis or option):p2
+   ---------------- page setup options -------------------
+    -4 : draw box and major tick marks only;
+    -3 : draw box and tick marks (major and minor) only;
+    -2 : draw no box, axes or labels;
+    -1 : draw box only;
+     0 : draw box and label it with coordinates;
+     1 : same as AXIS=0, but also draw the coordinate axes (X=0, Y=0);
+     2 : same as AXIS=1, but also draw grid lines at major increments of the coordinates;
+    10 : draw box and label X-axis logarithmically;
+    20 : draw box and label Y-axis logarithmically;
+    30 : draw box and label both axes logarithmically.
+   enter axis option ([-4:30], default=0):-2
+     axis =  -2
+
+Plotting the same plot again now results in the plot shown in the right
+panel of Figure \ `[fig:surfpart3b] <#fig:surfpart3b>`__.
+
+.. figure:: figs/surfpart6.png
+   :alt: surface rendering tutorial part 3b
+   :name: fig:surfpart3b
+   :width: 50.0%
+
+   and increasing the number of pixels and having turned the axes off
+
+Finally we will also set the background colour to black, adjust the
+opacity and move the time legend. Notice that in the right panel of
+Figure \ `[fig:surfpart3] <#fig:surfpart3>`__ the surface looks quite
+blotchy. This is an indication that the surface is too shallow (that is
+we are only seeing particles on the very top). Thus we will adjust the
+opacity for a slightly deeper plot. We proceed as follows: Exiting
+interactive mode (pressing ‘s’ then ‘q’ in the plot window), we first
+set the foreground and background colours in the p)age submenu:
+
+::
+
+   Please enter your selection now (y axis or option):p8
+   ---------------- page setup options -------------------
+   Enter background colour (by name, e.g. "black") (default=):black
+    Enter foreground colour (by name, e.g. "white") (default=):white
+    Do you want to plot axes and overlaid text in background colour (default is foreground) ? (default=no):
+
+Now, replotting the same plot again, but this time adjusting the opacity
+at the prompt:
+
+::
+
+   enter approximate surface depth (number of smoothing lengths): ([0.000:], default=2.000):200.0
+
+Finally, moving the time legend by positioning the cursor and pressing
+’G’ and zooming out slightly by pressing ‘-’ once, we arrive at our
+finished figure (or movie frame) shown in
+Figure \ `[fig:surfpartfinal] <#fig:surfpartfinal>`__. Pressing ‘s’ in
+interactive mode saves the settings, then pressing ‘q’ returns to the
+splash main menu. To save the settings to disk, press ‘S’ from the main
+menu to save both the ``splash.defaults`` file and the ``splash.limits``
+file.
+
+.. figure:: figs/surfpartfinal.png
+   :alt: Finished surface-rendered plot
+   :name: fig:surfpartfinal
+   :width: 50.0%
+
+   Finished surface-rendered plot
+
+To create a sequence of images with these settings, then simply invoke
+splash again with multiple files:
+
+::
+
+   ssplash warp???
+
+then plotting the same plot as previously to a non-interactive device
+will cycle through all dump files producing a sequence of plots with
+names like ``splash_0000.png``, ``splash_0001.png`` etc. These can be
+easily converted into an animation.
+
 
 Using asplash to plot energy vs time plots
 ------------------------------------------
@@ -3402,8 +4181,7 @@ irregularly sampled data which can have significant advantages over
 interpolation. Algorithms for both of these methods have been
 implemented. For the first, the SPH data is interpolated to a one
 dimensional grid using the kernel before calculating the (slow!) fourier
-transform. The second method computes a Lomb/Scargle periodogram as
-described in :raw-latex:`\citet{numericalrecipes}`.
+transform. The second method computes a Lomb/Scargle periodogram.
 
 It should be stressed, however, that *neither* of the subroutines for
 calculating the power spectrum is particularly fast and have *only* been
@@ -3465,8 +4243,7 @@ Then (in this example), select column 23 to plot surface density,
 in Figure \ `[fig:surfdens] <#fig:surfdens>`__.
 
 .. figure:: figs/surfdens.pdf
-   :alt: Plot of azimuthally averaged surface density in a 3D accretion
-   disk simulation
+   :alt: Azimuthally averaged surface density
    :name: fig:surfdens
    :width: 50.0%
 
@@ -3479,13 +4256,13 @@ calculated using
 
 .. math:: \Sigma(r_{ann}) = \frac{M_{ann}}{\pi [(r_{ann} + 0.5\Delta r)^{2} - (r_{ann} - 0.5\Delta r)^{2}]},
 
- that is, the total mass in the annulus (sum of the particle masses)
+that is, the total mass in the annulus (sum of the particle masses)
 divided by its area, where :math:`r_{ann}` is the radius (cylindrical or
 spherical) of the annulus. The Toomre Q parameter, defined as
 
 .. math:: Q_{Toomre}(r) = \frac{\bar{c}_{s}(r)\kappa(r)}{\pi \Sigma(r)},
 
- where :math:`\kappa` is the epicyclic frequency and :math:`\bar{c}_{s}`
+where :math:`\kappa` is the epicyclic frequency and :math:`\bar{c}_{s}`
 is the RMS sound speed, is calculated using the above surface density,
 assuming a Keplerian rotation profile and a central star mass of unity
 (i.e., :math:`\kappa(r) = \Omega(r)`, where
@@ -3500,7 +4277,7 @@ assuming a Keplerian rotation profile and a central star mass of unity
    (\gamma-1)\gamma u_i, & \gamma \neq 1;
    \end{array}\right.
 
- from which the RMS sound speed is calculated as the square root of the
+from which the RMS sound speed is calculated as the square root of the
 average of :math:`c_{s}^{2}` on the particles in the annulus.
 
 Other useful information
@@ -4076,7 +4853,7 @@ standalone Fortran module called ``geometry.f90`` and the precise
 details can be determined by looking in this file. For reference,
 however the transformations are given below.
 
- Cylindrical Polar Coordinates
+Cylindrical Polar Coordinates
 ------------------------------
 
 For cylindrical coordinates the transformations are:
@@ -4089,7 +4866,7 @@ For cylindrical coordinates the transformations are:
    z & = & z                             & & z & = & z\\
    \end{array}
 
- where vectors transform according to:
+where vectors transform according to:
 
 .. math::
 
@@ -4099,13 +4876,13 @@ For cylindrical coordinates the transformations are:
    v_z      & = & v_z & & v_z & = & v_z. \\
    \end{array}
 
- In the case where these vectors are velocities, the :math:`v_{\phi}`
+In the case where these vectors are velocities, the :math:`v_{\phi}`
 component corresponds to :math:`v_{\phi} = r\dot{\phi}`. At the origin
 we assume :math:`\phi = 0`, implying :math:`\cos\phi = 1` and therefore
 :math:`\frac{x}{R} = 1` and :math:`\frac{y}{R} = 0`. This ensures the
 transformations are reversible everywhere.
 
- Spherical Polar Coordinates
+Spherical Polar Coordinates
 ----------------------------
 
 For spherical coordinates the transformations are:
@@ -4118,7 +4895,7 @@ For spherical coordinates the transformations are:
    \theta & = & \cos^{-1}(z/r)             & & z & = & r\cos\theta \\
    \end{array}
 
- where vectors transform according to:
+where vectors transform according to:
 
 .. math::
 
@@ -4128,12 +4905,12 @@ For spherical coordinates the transformations are:
    v_\theta & = & v_{x}\frac{xz}{r \sqrt{x^{2} + y^{2}}} + v_{y}\frac{yz}{r \sqrt{x^{2} + y^{2}}} - v_{z}\frac{(x^{2} + y^{2})}{r\sqrt{x^{2} + y^{2}}}  & & v_z & = & v_r \cos\theta - v_\theta \sin\theta. \\
    \end{array}
 
- In the case where these vectors are velocities, the components
+In the case where these vectors are velocities, the components
 :math:`v_{\phi}` and :math:`v_{\theta}` correspond to
 :math:`v_{\phi} = r\sin{\theta}\dot{\phi}` and
 :math:`v_{\theta} = r\dot{\theta}` respectively.
 
- Toroidal Coordinates
+Toroidal Coordinates
 ---------------------
 
 Toroidal coordinates represent a local frame of reference inside a
@@ -4147,7 +4924,7 @@ torus. The coordinate transformations are given by
    \phi & = & \tan^{-1}(y/x)             & & z & = & r\sin\theta \\
    \end{array}
 
- where :math:`R` is the radius of the torus. The use of the inverse
+where :math:`R` is the radius of the torus. The use of the inverse
 tangent in :math:`\theta` instead of :math:`\theta = \sin^{-1}(z/r)` is
 necessary to get the quadrant correct (via the ``atan2`` function).
 Vectors transform according to:
@@ -4160,16 +4937,16 @@ Vectors transform according to:
    v_\phi & = & v_{x} \left(\frac{-y}{r_{cyl}}\right) + v_{y} \left(\frac{x}{r_{cyl}}\right) & & v_z & = & v_{r}\sin\theta + v_{\theta} \cos\theta \\
    \end{array}
 
- where we have defined, for convenience,
+where we have defined, for convenience,
 
 .. math:: r_{\rm cyl} = \sqrt{x^{2} + y^{2}} = r\cos\theta + R. \nonumber
 
- and the velocities :math:`v_\theta` and :math:`v_\phi` correspond to
+and the velocities :math:`v_\theta` and :math:`v_\phi` correspond to
 :math:`r \dot{\theta}` and :math:`r_{\rm cyl} \dot{\phi}`, respectively.
 The torus radius :math:`R` is a parameter in the ``geometry`` module and
 is set to :math:`1` by default.
 
- Flared Cylindrical Polar Coordinates
+Flared Cylindrical Polar Coordinates
 -------------------------------------
 
 For flared cylindrical coordinates the transformations are:
@@ -4182,7 +4959,7 @@ For flared cylindrical coordinates the transformations are:
    z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
    \end{array}
 
- where :math:`R_{\rm ref}` is the reference radius and :math:`\beta` is
+where :math:`R_{\rm ref}` is the reference radius and :math:`\beta` is
 the flaring index, both parameters that can be set by the user. Vectors
 transform according to:
 
@@ -4194,10 +4971,10 @@ transform according to:
    v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta v_R + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
    \end{array}
 
- In the case where these vectors are velocities, the :math:`v_{\phi}`
+In the case where these vectors are velocities, the :math:`v_{\phi}`
 component corresponds to :math:`v_{\phi} = r\dot{\phi}`.
 
- Logarithmic Flared Cylindrical Polar Coordinates
+Logarithmic Flared Cylindrical Polar Coordinates
 -------------------------------------------------
 
 For logarithmic flared cylindrical coordinates the transformations are:
@@ -4210,7 +4987,7 @@ For logarithmic flared cylindrical coordinates the transformations are:
    z' & = & z \left(R_{\rm ref}/{R}\right)^\beta  & & z & = & z' (R/R_{\rm ref})^\beta \\
    \end{array}
 
- where :math:`R_{\rm ref}` is the reference radius and :math:`\beta` is
+where :math:`R_{\rm ref}` is the reference radius and :math:`\beta` is
 the flaring index, both parameters that can be set by the user. Vectors
 transform according to:
 
@@ -4222,7 +4999,7 @@ transform according to:
    v_{z'}      & = & -\beta \frac{xz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_x  -\beta \frac{yz}{R^2} \left(\frac{R_{\rm ref}}{R}\right)^\beta v_y + \left(\frac{R_{\rm ref}}{R}\right)^\beta v_z & & v_z & = & \beta \frac{z'}{R} \left(\frac{R}{R_{\rm ref}}\right)^\beta f v_d + \left(\frac{R}{R_{\rm ref}}\right)^\beta  v_{z'}. \\
    \end{array}
 
- where :math:`R \equiv 10^d` and correspondingly :math:`d = \log_{10} R`
+where :math:`R \equiv 10^d` and correspondingly :math:`d = \log_{10} R`
 and :math:`f \equiv R \ln (10)`.
 
 .. _sec:exact:
@@ -4238,7 +5015,7 @@ follows: The error for each particle is given by
 
 .. math:: e_i = f_i - f_{exact},
 
- where the exact solution :math:`f_{exact}(x)` is the solution returned
+where the exact solution :math:`f_{exact}(x)` is the solution returned
 from the exact solution subroutines (with resolution adjustable in the
 exact solution options menu option) interpolated to the position of the
 current particle :math:`x_i` via a simple linear interpolation. The
@@ -4247,7 +5024,7 @@ across the domain, calculated according to
 
 .. math:: \Vert e \Vert_{L_1} = \frac{1}{N f_{max}} \sum_{i=1}^N \vert e_i \vert,
 
- where :math:`f_{max}` is the maximum value of the exact solution in the
+where :math:`f_{max}` is the maximum value of the exact solution in the
 region in which the particles lie (also only particles in the current
 plot are used) which is used to normalise the error estimate. A better
 error norm is the :math:`L_2` or *Root Mean Square* (RMS) norm given by
@@ -4257,12 +5034,12 @@ error norm is the :math:`L_2` or *Root Mean Square* (RMS) norm given by
    \Vert e \Vert_{L_2} = \left[\frac{1}{N} \left( \frac{1}{f_{max}^2} \sum_{i=1}^N \vert e_i
    \vert^2 \right)\right]^{1/2}.
 
- Finally the maximum error, or :math:`L_\infty` norm is calculated
+Finally the maximum error, or :math:`L_\infty` norm is calculated
 according to
 
 .. math:: \Vert e \Vert_{L_\infty} = \frac{1}{f_{max}} {\rm max}_i \vert e_i \vert.
 
- which is the most stringent error norm.
+which is the most stringent error norm.
 
 The inset plot of the individual particle errors shows the fractional
 deviation for each particle given by
@@ -4278,16 +5055,14 @@ problem is to determine the jump in pressure and velocity across the
 shock front given the initial left and right states. This is performed
 in a separate subroutine (riemannsolver) as there are many different
 methods by which this can be done (see e.g.
-:raw-latex:`\citealt{toro92}`). The actual subroutine exact_shock
+[Toro92]_). The actual subroutine exact_shock
 reconstructs the shock profile (consisting of a rarefaction fan, contact
 discontinuity and shock, summarised in Figure
 `[fig:shocktube] <#fig:shocktube>`__), given the post-shock values of
 pressure and velocity.
 
 .. figure:: figs/sodshock.pdf
-   :alt: Example of exact solution for one-dimensional shock tube
-   problem (red line) compared to the SPH solution (black
-   line/particles), utilising the exact solutions incorporated in splash
+   :alt: exact solution for one-dimensional shock tube
    :name: fig:shocktube
    :width: 80.0%
 
@@ -4308,11 +5083,11 @@ computed from the post shock velocity using the relation
 
 .. math:: \beta = \frac{\gamma - 1}{\gamma + 1}.
 
- Riemann solver
+Riemann solver
 ~~~~~~~~~~~~~~~
 
 The algorithm for determining the post-shock velocity and pressure is
-taken from :raw-latex:`\citet{toro92}`.
+taken from [Toro92]_.
 
 Polytrope
 ---------
@@ -4322,12 +5097,12 @@ static polytrope with arbitrary :math:`\gamma`. From Poisson’s equation
 
 .. math:: \nabla^2 \phi = 4\pi G \rho,
 
- assuming only radial dependence this is given by
+assuming only radial dependence this is given by
 
 .. math::
+   :label:eq_poissonsph
 
    \frac{1}{r^{2}} \frac{d}{dr} \left(r^{2} \frac{d\phi}{dr} \right) = 4\pi G \rho(r).
-   \label{eq:poissonsph}
 
 The momentum equation assuming an equilibrium state
 (:math:`{\bf v} = 0`) and a polytropic equation of state
@@ -4336,9 +5111,9 @@ The momentum equation assuming an equilibrium state
 .. math::
 
    \frac{d\phi}{dr} = - \frac{\gamma K}{\gamma-1}\frac{d}{dr} \left[\rho^{(\gamma -1)} \right]
-   \label{eq:polyk}
+   :label:eq_polyk
 
- Combining (`[eq:poissonsph] <#eq:poissonsph>`__) and
+Combining (`[eq:poissonsph] <#eq:poissonsph>`__) and
 (`[eq:polyk] <#eq:polyk>`__) we obtain an equation for the density
 profile
 
@@ -4348,18 +5123,18 @@ profile
    \frac{d}{dr}\left( \rho^{\gamma-1} \right) \right] + \rho(r) = 0.
    \label{eq:dens}
 
- This equation can be rearranged to give
+This equation can be rearranged to give
 
 .. math::
 
    \frac{\gamma K}{4\pi G (\gamma - 1)} \frac{d^2}{dr^2}
    \left[r\rho^{\gamma-1}\right] + r\rho = 0.
 
- The program solves this equation numerically by defining a variable
+The program solves this equation numerically by defining a variable
 
 .. math:: \mathcal{E} = r \rho^{\gamma-1}
 
- and finite differencing the equation according to
+and finite differencing the equation according to
 
 .. math::
 
@@ -4375,7 +5150,7 @@ graph. The function is of the form
 
 .. math:: y = \sin{(k x - \omega t)}
 
- where :math:`k` is the wavenumber and :math:`\omega` is the angular
+where :math:`k` is the wavenumber and :math:`\omega` is the angular
 frequency. These parameters are set via the input values of wavelength
 :math:`\lambda = 2\pi/k` and wave period :math:`P = 2\pi/\omega`.
 
@@ -4401,27 +5176,27 @@ Toy stars
 ---------
 
 The subroutine ``exact_toystar1D`` computes the exact solutions for the
-‘Toy Stars’ described in :raw-latex:`\citet{mp04}`. The system is one
+‘Toy Stars’ described in [MP04]_. The system is one
 dimensional with velocity :math:`v`, density :math:`\rho`, and pressure
 :math:`P`. The acceleration equation is
 
 .. math:: \frac{dv}{dt} = - \frac{1}{\rho} \frac{\partial P}{\partial x}  - \Omega^2 x,
 
- We assume the equation of state is
+We assume the equation of state is
 
 .. math:: P = K \rho^\gamma,
 
 The exact solutions provided assume the equations are scaled such that
 :math:`\Omega^2 = 1`.
 
- Static structure
+Static structure
 ~~~~~~~~~~~~~~~~~
 
 The static structure is given by
 
 .. math:: \bar \rho = 1- x^2,
 
- Linear solutions
+Linear solutions
 ~~~~~~~~~~~~~~~~~
 
 The linear solution for the velocity is given by
@@ -4432,22 +5207,22 @@ The linear solution for the velocity is given by
 
 .. math:: \rho = \bar{\rho} + \eta
 
- where
+where
 
 .. math:: \eta = 0.1 C_s \omega P_{n+1}(x) \sin{(\omega t)})
 
- Non-linear solution
+Non-linear solution
 ~~~~~~~~~~~~~~~~~~~~
 
 In this case the velocity is given by
 
 .. math:: v = A(t) x,
 
- whilst the density solution is
+whilst the density solution is
 
 .. math:: \rho^{\gamma -1} = H(t) - C(t) x^2.
 
- where the parameters A, H and C are determined by solving the ordinary
+where the parameters A, H and C are determined by solving the ordinary
 differential equations
 
 .. math::
@@ -4457,14 +5232,14 @@ differential equations
    \dot{A} & = & \frac{2K \gamma}{\gamma -1} C - 1 - A^2 \\
    \dot{C} & = & -AC(1+ \gamma),\end{aligned}
 
- The relation
+The relation
 
 .. math::
 
    A^2 = -1 - \frac{2 \sigma C}{\gamma -1} + kC^{\frac{2}{\gamma +1}},
    \label{eq:kconst}
 
- is used to check the quality of the solution of the differential
+is used to check the quality of the solution of the differential
 equations by evaluating the constant :math:`k` (which should remain
 close to its initial value).
 
@@ -4472,8 +5247,8 @@ MHD shock tubes
 ---------------
 
 These are some tabulated solutions for specific MHD shock tube problems
-at a given time taken from the tables given in :raw-latex:`\citet{dw94}`
-and :raw-latex:`\citet{rj95}`.
+at a given time taken from the tables given in [DW94]_
+and [RJ95]_.
 
 h vs :math:`\rho`
 -----------------
@@ -4483,7 +5258,7 @@ length and density, i.e.,
 
 .. math:: h = h_{fact} \left(\frac{m}{\rho}\right)^{1/\nu}
 
- where :math:`\nu` is the number of spatial dimensions. The parameter
+where :math:`\nu` is the number of spatial dimensions. The parameter
 :math:`h_{fact}` is output by the code into the header of each timestep.
 For particles of different masses, a different curve is plotted for each
 different mass value.
@@ -4524,104 +5299,20 @@ component of the vector of which this component is a part. So if column
 the string ``labelvec`` should be set, i.e., ``labelvec = 'v'`` for
 these columns.
 
-.. raw:: latex
 
-   \bibliographystyle{bibstyle}
+References
+===========
 
-.. |image| image:: hyperbolic.pdf
-.. |First stage in the star formation figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: starpart1.png
-   :name: fig:starpart1
-   :width: 50.0%
-.. |First stage in the star formation figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: starpart2.png
-   :name: fig:starpart1
-   :width: 50.0%
-.. |First stage in the star formation figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: starpart1.png
-   :name: fig:starpart1
-   :width: 50.0%
-.. |First stage in the star formation figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: starpart2.png
-   :name: fig:starpart1
-   :width: 50.0%
-.. |Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar (left) and having changed the colour scheme (right)| image:: starpart3.png
-   :name: fig:starpart2
-   :width: 50.0%
-.. |Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar (left) and having changed the colour scheme (right)| image:: starpart4.png
-   :name: fig:starpart2
-   :width: 50.0%
-.. |Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar (left) and having changed the colour scheme (right)| image:: starpart3.png
-   :name: fig:starpart2
-   :width: 50.0%
-.. |Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar (left) and having changed the colour scheme (right)| image:: starpart4.png
-   :name: fig:starpart2
-   :width: 50.0%
-.. |Third stage in the star formation figure tutorial: having turned sink particle plotting on (left) replacing the axes with a scale (right)| image:: starpart5.png
-   :name: fig:starpart3
-   :width: 50.0%
-.. |Third stage in the star formation figure tutorial: having turned sink particle plotting on (left) replacing the axes with a scale (right)| image:: starpart6.png
-   :name: fig:starpart3
-   :width: 50.0%
-.. |Third stage in the star formation figure tutorial: having turned sink particle plotting on (left) replacing the axes with a scale (right)| image:: starpart5.png
-   :name: fig:starpart3
-   :width: 50.0%
-.. |Third stage in the star formation figure tutorial: having turned sink particle plotting on (left) replacing the axes with a scale (right)| image:: starpart6.png
-   :name: fig:starpart3
-   :width: 50.0%
-.. |First stage in the multi-panelled figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: multipart1.png
-   :name: fig:multipart1
-   :width: 50.0%
-.. |First stage in the multi-panelled figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: multipart2.png
-   :name: fig:multipart1
-   :width: 50.0%
-.. |First stage in the multi-panelled figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: multipart1.png
-   :name: fig:multipart1
-   :width: 50.0%
-.. |First stage in the multi-panelled figure tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: multipart2.png
-   :name: fig:multipart1
-   :width: 50.0%
-.. |Second stage in the multi-panelled figure tutorial: having changed the axes into physical units (left) and zooming in and adjusting the colour bar (right).| image:: multipart3.png
-   :name: fig:multipart3
-   :width: 50.0%
-.. |Second stage in the multi-panelled figure tutorial: having changed the axes into physical units (left) and zooming in and adjusting the colour bar (right).| image:: multipart4.png
-   :name: fig:multipart3
-   :width: 50.0%
-.. |Second stage in the multi-panelled figure tutorial: having changed the axes into physical units (left) and zooming in and adjusting the colour bar (right).| image:: multipart3.png
-   :name: fig:multipart3
-   :width: 50.0%
-.. |Second stage in the multi-panelled figure tutorial: having changed the axes into physical units (left) and zooming in and adjusting the colour bar (right).| image:: multipart4.png
-   :name: fig:multipart3
-   :width: 50.0%
-.. |First stage in the surface rendering tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: surfpart1.png
-   :name: fig:surfpart1
-   :width: 50.0%
-.. |First stage in the surface rendering tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: surfpart2.png
-   :name: fig:surfpart1
-   :width: 50.0%
-.. |First stage in the surface rendering tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: surfpart1.png
-   :name: fig:surfpart1
-   :width: 50.0%
-.. |First stage in the surface rendering tutorial: a simple render plot of density (left) and with a log axis after having placed cursor over colour bar and pressed ‘l’ (right)| image:: surfpart2.png
-   :name: fig:surfpart1
-   :width: 50.0%
-.. |Second stage in the surface rendering tutorial: after adjusting the rotation angle (left) and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits (right)| image:: surfpart3.png
-   :name: fig:surfpart2
-   :width: 50.0%
-.. |Second stage in the surface rendering tutorial: after adjusting the rotation angle (left) and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits (right)| image:: surfpart4.png
-   :name: fig:surfpart2
-   :width: 50.0%
-.. |Second stage in the surface rendering tutorial: after adjusting the rotation angle (left) and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits (right)| image:: surfpart3.png
-   :name: fig:surfpart2
-   :width: 50.0%
-.. |Second stage in the surface rendering tutorial: after adjusting the rotation angle (left) and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits (right)| image:: surfpart4.png
-   :name: fig:surfpart2
-   :width: 50.0%
-.. |Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively (left) and increasing the number of pixels and having turned the axes off (right)| image:: surfpart5.png
-   :name: fig:surfpart3
-   :width: 50.0%
-.. |Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively (left) and increasing the number of pixels and having turned the axes off (right)| image:: surfpart6.png
-   :name: fig:surfpart3
-   :width: 50.0%
-.. |Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively (left) and increasing the number of pixels and having turned the axes off (right)| image:: surfpart5.png
-   :name: fig:surfpart3
-   :width: 50.0%
-.. |Third stage in the surface rendering tutorial: after adjusting the xy and colour bar limits interactively (left) and increasing the number of pixels and having turned the axes off (right)| image:: surfpart6.png
-   :name: fig:surfpart3
-   :width: 50.0%
+.. [DW94] `Dai & Woodward (1994), J. Comp. Phys. 111, 354 <http://adsabs.harvard.edu/abs/1994JCoPh.111..354D>`_
+
+.. [MP04] `Monaghan & Price (2004), MNRAS 350, 1449 <https://ui.adsabs.harvard.edu/abs/2004MNRAS.350.1449M/abstract>`_
+
+.. [PM07] `Price & Monaghan (2007), MNRAS 374, 1347 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.374.1347P/abstract>`_
+
+.. [Price12] `Price (2012), J. Comp. Phys. 231, 759 <https://ui.adsabs.harvard.edu/abs/2012JCoPh.231..759P/abstract>`_
+
+.. [RP07] `Rosswog & Price (2007), MNRAS 379, 915 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.379..915R/abstract>`_
+
+.. [RJ95] `Ryu & Jones (1995), ApJ 442, 228 <http://adsabs.harvard.edu/abs/1995ApJ...442..228R>`_
+
+.. [Toro92] `Toro (1992), Phil. Trans. Phys. Sci. Eng. 338, 43 <https://ui.adsabs.harvard.edu/abs/1992RSPTA.338...43T/abstract>`_
