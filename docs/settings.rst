@@ -6,22 +6,51 @@
 Changing plot settings
 ======================
 
+The plot settings may be changed in a series of submenus:
+
 .. image:: figs/menu.png
 
-The plot settings may be changed in a series of submenus. The options
-set using the submenus can be saved using the (s)ave option from the
-menu. This saves all of the current options to a file called
-``splash.defaults`` in the current directory, which is automatically
-read upon starting splash the next time. To revert to default options,
-simply delete this file. Pressing ‘S’ from the main menu saves both the
-``splash.defaults`` file and also saves the plot limits to a file called
-``splash.limits``. This file is a simple two-column ascii file
-corresponding to the minimum and maximum plot limits for each column of
-data. Thus saving using ’S’ means that exactly the same plot can be
-plotted next time splash is invoked, where saving using ’s’ means that
-the plot settings will be the same although the limits will be
-different. To reset the plot limits either adjust the limits and press
-’S’ again or simply delete the splash.limits file.
+Options can be saved using the (s)ave option from the
+menu:
+
+
+.. _sec:menu-s:
+
+(s)aving your settings
+----------------------
+
+.. image:: figs/menu-s.png
+
+- Pressing ``s`` saves current options to ``splash.defaults``.
+
+- Delete ``splash.defaults`` to revert all settings
+
+- Pressing ``S`` saves both ``splash.defaults`` and ``splash.limits`` (and any other files).
+
+- Typing ``sa`` or ``Sa`` gives a “save-as” option, changing the prefix of saved files
+
+- read defaults files saved with a different prefix using the ``-p`` option
+
+Example:
+
+::
+
+   Please enter your selection now (y axis or option):SA
+   enter prefix for filenames: (default="blah"):
+   default options saved to file blah.defaults
+   saving plot limits to file blah.limits
+   saving units to blah.units
+
+Read this back using:
+
+::
+
+   splash -p blah
+
+Files saved by splash can also be edited manually. For example,
+``splash.limits`` is a simple two-column ascii file
+containing minimum and maximum plot limits for each column.
+To reset the plot limits simply delete the ``splash.limits`` file.
 
 .. _sec:multiplot:
 
@@ -2023,32 +2052,6 @@ up an animation sequence. See :ref:`sec:animseq` for details.
 
 Miscellaneous other useful things
 ---------------------------------
-
-.. _sec:menu-s:
-
-Saving plot settings / plot limits to disk
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. image:: figs/menu-s.png
-
-The :ref:`sec:menu-s` option saves the default options to a file called
-‘splash.defaults’ in the current directory which is read automatically
-upon the next invocation of splash. This file uses namelist formatting
-and may be edited manually prior to startup if so desired (this is quite
-useful for setting multiplots with many plots per page).
-
-The (S)ave option writes both the defaults file and also saves the
-current plot limits to a file called ‘splash.limits’ which is also read
-automatically at startup. If animation sequences have been set (see
-:ref:`sec:animseq`), this also saves the ‘splash.anim’ file to
-disk.
-
-Typing “sa” or “Sa” gives a “save-as” option, whereby the prefix of
-files saved by splash can be changed (e.g. using “sa” the defaults file
-can be renamed, whereas using “Sa” all files saved by splash are given a
-new prefix). The prefix to the configuration files which are written by
-splash can also be changed using the ``-p`` option on the command line
-(the default is “splash”, i.e., “splash.defaults”, “splash.limits” etc).
 
 .. _sec:menu-h:
 
