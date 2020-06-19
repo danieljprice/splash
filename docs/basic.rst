@@ -164,7 +164,7 @@ Cross section slice
 -------------------
 
 To plot a cross section slice instead of a projection in 3D, type ’x’ at
-the main menu to open the ’cross section/3D plotting options’ menu and
+the main menu to open the :ref:`sec:menu-x` and
 choose option 1 “switch between cross section and projection”. Then
 re-plot the rendered plot again (exactly as in the previous example
 :ref:`sec:renderplot`), setting the slice position at the prompt:
