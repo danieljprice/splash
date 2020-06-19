@@ -156,6 +156,8 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
     endif
     if (ncolstep <= 1) then
        print "(a)",'*** ERROR: could not determine number of columns in file ***'
+       print "(a)",'Are you trying to read a non-ascii file?'
+       print "(a)",'Type --formats to see a list of supported data formats and their command line options.'
        return
     endif
 

@@ -550,12 +550,11 @@ program splash
           i = i + 1
           call get_argument(i,string)
           call select_data_format(string,ierr)
+          if (ierr/=0) call print_available_formats
           got_format = .true.
-          !if (ierr /= 0) then
-          !   print*, ierr
-          !   print "(/,a)",' Going to stop'
-          !   stop
-          !end if
+       case('-formats')
+          call print_available_formats
+          stop
        case('-help')
           call print_usage
           print "(/,a)",' Basic splash usage is explained in the userguide,'
@@ -850,7 +849,7 @@ subroutine print_usage(quit)
  print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(a)",' -f                : input file format to be read (ascii is default)'
- call print_available_formats
+ call print_available_formats('short')
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : specify x plot on command line (ie. do not prompt for x)'
  print "(a)",' -y column         : specify y plot on command line (ie. do not prompt for y)'
