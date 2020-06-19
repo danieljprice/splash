@@ -24,17 +24,7 @@ If you are \*really\* keen, you may also like to consider:
 
 For discussion, feel free to `raise an issue on the tracker <https://github.com/danieljprice/splash/issues>`_.
 
-Otherwise, you can send an email to the mailing list:
-
-::
-
-   splash-users@googlegroups.com
-
-or get in touch directly:
-
-::
-
-   daniel.price@monash.edu
+Otherwise, you can send an email to the `mailing list <mailto:splash-users@googlegroups.com>`_ or `get in touch directly <mailto:daniel.price@monash.edu>`_.
 
 Acknowledgements
 ================
@@ -47,11 +37,11 @@ wrote the prompting module which is used throughout the program and to
 Roland Schmehl who wrote the excellent function parser module (made
 available at http://fparser.sourceforge.net). Last but not least, a huge
 thanks especially to all the users who have given feedback which has
-helped to improve splash including, but not limited to: 
+helped to improve splash including, but not limited to:
 
- Stefan Adami, 
+ Stefan Adami,
  Craig Agnor,
- Richard Alexander, 
+ Richard Alexander,
  Gabe Altay,
  Pau Amaro-Seoane,
  Alessandro Atrani,
@@ -89,6 +79,7 @@ helped to improve splash including, but not limited to:
  Ben Lewis,
  David Liptai,
  Giuseppe Lodato,
+ Hayley Macpherson,
  David Madlener,
  John Mansour,
  Ruben Martin,

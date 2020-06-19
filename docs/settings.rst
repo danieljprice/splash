@@ -1,8 +1,4 @@
 
-.. figure:: figs/hyperbolic.pdf
-   :alt: splash: it splashes
-   :width: 100.0%
-
 Changing plot settings
 ======================
 

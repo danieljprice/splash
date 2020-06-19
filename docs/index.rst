@@ -4,6 +4,10 @@
 Visualisation of smoothed particle hydrodynamics data using splash
 ==================================================================
 
+.. figure:: figs/hyperbolic.pdf
+   :alt: splash: it splashes
+   :width: 100.0%
+
 .. toctree::
    :maxdepth: 3
 
@@ -17,7 +21,7 @@ Visualisation of smoothed particle hydrodynamics data using splash
    refs
 
    source
-   geometry   
+   geometry
    exact
    readdata
 
