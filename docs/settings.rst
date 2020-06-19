@@ -6,6 +6,8 @@
 Changing plot settings
 ======================
 
+.. image:: figs/menu.png
+
 The plot settings may be changed in a series of submenus. The options
 set using the submenus can be saved using the (s)ave option from the
 menu. This saves all of the current options to a file called
@@ -26,12 +28,14 @@ different. To reset the plot limits either adjust the limits and press
 set (m)ultiplot
 ---------------
 
+.. image:: figs/menu-m.png
+
 .. _sec:multiplotsetup:
 
 Plotting more than one column from the same file on the same page (multiplot)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Press ’m’ (“set multiplot”) from the main menu to set up a multiplot.
+Press ’m’ (:ref:`sec:multiplot`) from the main menu to set up a multiplot.
 Note that a “multiplot” (multiple columns plotted from the same file) is
 different to plotting “multiple plots per page” (divide the plotting
 page up into panels). The number of panels across and down on a page can
@@ -47,7 +51,7 @@ Plotting each particle type in a different panel (multiplot)
 
 To make a plot using different particle types in each panel (e.g. gas
 density in one panel, dust or dark matter density in another), use ’m’
-(“set multiplot”) from the main menu. If multiple types are present in
+:ref:`sec:multiplot` from the main menu. If multiple types are present in
 the data read, the option appears to specify the particular types you
 want to use for each plot.
 
@@ -77,8 +81,12 @@ and off for *all* plots, which can be achieved via the “turn on/off
 particles by type” option in the o) menu (see
 :ref:`sec:plotparticlesbytype`).
 
+.. _sec:menu-d:
+
 (d)ata options
 --------------
+
+.. image:: figs/menu-d.png
 
 The following can all be achieved from the d)ata options menu:
 
@@ -88,7 +96,7 @@ Re-reading the initial data / changing the dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The data can be re-read from the dump file or a new dump file can be
-selected by choosing the d)ata menu, option 1 (or just “d1” from the
+selected by choosing the :ref:`sec:menu-d`, option 1 (or just “d1” from the
 main menu). In practise it is usually faster to exit splash and restart
 with the new dump file name on the command line (remember to save by
 pressing ’S’ from the main menu before exiting to save both the current
@@ -110,7 +118,7 @@ Using only a subset of data files / plotting every :math:`n-`\ th dump file
 When splash is invoked with more than one filename on the command line
 (for example, where all files are selected with something like “splash
 DUMP\*”) it is often helpful to use only a subset of the files. This can
-be set in the d)ata menu, selecting option 2 “change number of timesteps
+be set in the :ref:`sec:menu-d`, selecting option 2 “change number of timesteps
 used”. This prompts something like:
 
 ::
@@ -148,7 +156,7 @@ Plotting a subset of data files in non-sequential order
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A subset of data files from the command line can be chosen in any order
-using the “plot selected steps only” option from the d)ata submenu,
+using the “plot selected steps only” option from the :ref:`sec:menu-d`
 which then prompts the user to enter something like the following:
 
 ::
@@ -174,13 +182,13 @@ to read all of the data into memory so that you can move rapidly
 forwards and backwards between dumps (e.g. in interactive mode, or where
 both dumps are plotted on the same page) without unnecessary re-reading
 of data from disk. This is achieved by turning “buffering of data” on in
-the d)ata menu (provided you have the memory of course!!). Non-buffered
+the :ref:`sec:menu-d` (provided you have the memory of course!!). Non-buffered
 data means that only one file at a time is read.
 
 Calculating additional quantities not dumped
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Turn “calculate extra quantities” on in the d)ata menu. As of splash
+Turn “calculate extra quantities” on in the :ref:`sec:menu-d`. As of splash
 version 1.13.0 it is possible to specify new columns of data as
 completely arbitrary functions of the data read from the SPH particles.
 Option d5 in the data menu leads, for a typical data read, to a prompt
@@ -213,7 +221,7 @@ splash menu as standard columns just as if they had been read from the
 original data file.
 
 The origin for the calculation of radius can be changed via the
-“rotation on/off/settings” option in the x) submenu. If particle
+“rotation on/off/settings” option in the :ref:`sec:menu-x`. If particle
 tracking limits are set (see :ref:`sec:track`) the radius is
 calculated relative to the particle being tracked.
 
@@ -235,9 +243,9 @@ Plotting data in physical units
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Data can be plotted in physical units by turning on the “use physical
-units” option in the d)ata submenu. The settings for transforming the
+units” option in the :ref:`sec:menu-d`. The settings for transforming the
 data into physical units may be changed via the “change physical unit
-settings” option in the d)ata menu. (see :ref:`sec:changingunits`)
+settings” option in the :ref:`sec:menu-d`. (see :ref:`sec:changingunits`)
 
 For some data reads (sphNG, srosph) the scalings required to transform
 the data into physical units are read from the dump file. These are used
@@ -299,9 +307,9 @@ Changing physical unit settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The settings for transforming the data into physical units may be
-changed via the “change physical unit settings” option in the d)ata
-menu. To apply the physical units to the data select the “use physical
-units” option in the d)ata submenu.
+changed via the “change physical unit settings” option in the :ref:`sec:menu-d`.
+To apply the physical units to the data select the “use physical
+units” option in the :ref:`sec:menu-d`.
 
 The transformation used is :math:`new= old*units` where “old” is the
 data as read from the dump file and “new” is the value actually plotted.
@@ -314,7 +322,7 @@ settings to a file called ``splash.units``. Another way of changing
 units is simply to edit this file yourself in any text editor (the
 format is fairly self-explanatory). To revert to the default unit
 settings simply delete this file. To revert to code units turn “use
-physical units” off in the d)ata menu.
+physical units” off in the :ref:`sec:menu-d`.
 
 A further example of where this option can be useful is where the
 :math:`y-`\ axis looks crowded because the numeric axis labels read
@@ -336,7 +344,7 @@ Changing the time units
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Units for the time used in the legend can be changed using the “change
-physical unit settings” in the d)ata menu. Changing the units of column
+physical unit settings” in the :ref:`sec:menu-d`. Changing the units of column
 zero corresponds to the time (appears as the first row in the
 ‘splash.units’ file).
 
@@ -345,8 +353,9 @@ zero corresponds to the time (appears as the first row in the
 (i)nteractive mode
 ------------------
 
-The menu option i) turns on/off interactive mode (alternatively use
-“interactive mode on/off” in the p)age submenu). With this option turned
+.. image:: figs/menu-i.png
+
+The menu option i) turns on/off interactive mode. With this option turned
 on (the default) and an appropriate device selected (i.e., the X-window,
 not /gif or /ps), after each plot the program waits for specific
 commands from the user. With the cursor positioned anywhere in the plot
@@ -518,10 +527,12 @@ even if the current plot is a 3D column integrated projection (in this
 case the setting “projection or cross section” changes to “cross
 section” in order to plot the slice).
 
-.. _sec:optionspage:
+.. _sec:menu-p:
 
 (p)age options
 --------------
+
+.. image:: figs/menu-p.png
 
 Options related to the page setup are changed in the p)age submenu.
 
@@ -532,7 +543,7 @@ Overlaying timesteps/multiple dump files on top of each other
 
 It is possible to over-plot data from one file on top of data from
 another using the “plot n steps on top of each other” option from the
-p)age submenu. Setting :math:`n` to a number greater than one means that
+:ref:`sec:menu-p`. Setting :math:`n` to a number greater than one means that
 the page is not changed until :math:`n` steps have been plotted.
 Following the prompts, it is possible to change the colour of all
 particles between steps and the graph markers used and plot an
@@ -543,7 +554,7 @@ then with :math:`n > 1` all timesteps will be plotted in *each* panel).
 
 When more than one timestep is plotted per page with different
 markers/colours, an additional legend can be plotted (turn this on in
-the le(g)end submenu, or when prompted whilst setting the "plot n steps
+the :ref:`sec:menu-g`, or when prompted whilst setting the "plot n steps
 on top of each other" option). The text for this legend is just the
 filename by default (if one timestep per file) or just something dull
 like ’step 1’ (if more than one timestep per file).
@@ -592,15 +603,15 @@ options”. The options are as follows:
 Turning axes off
 ~~~~~~~~~~~~~~~~~
 
-Plot axes can be turned off by choosing “axes options” in the p)age
-submenu or by deleting them using the backspace key in interactive mode.
+Plot axes can be turned off by choosing “axes options” in the :ref:`sec:menu-p`
+or by deleting them using the backspace key in interactive mode.
 See :ref:`sec:axessettings` for more details.
 
 Turning axes labels off
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Axes labels and numbering can be turned off via the “axes options”
-option in the p)age submenu or by deleting them using the backspace key
+option in the :ref:`sec:menu-p` or by deleting them using the backspace key
 in interactive mode. See :ref:`sec:axessettings` for more
 details.
 
@@ -610,8 +621,8 @@ Using logarithmic axes labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Logarithmic axes (that is where the quantity plotted is logged) can be
-set via the “apply log or inverse transformations” option in the l)imits
-submenu or simply by pressing ’l’ with the cursor over the desired axis
+set via the “apply log or inverse transformations” option in the :ref:`sec:menu-l`
+or simply by pressing ’l’ with the cursor over the desired axis
 (or the colour bar) in interactive mode. By default the axes labels
 reads :math:`log(x)` and the number next to the axis is :math:`-4` when
 :math:`x` is 10\ :math:`^{-4}`. Logarithmic axes labels (i.e., where the
@@ -625,7 +636,7 @@ Plotting a second, rescaled y-axis on the right hand side of a plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A second y axis can be added by selecting the axis=4 option in the “axes
-option” in the p)age submenu (see
+option” in the :ref:`sec:menu-p` (see
 :ref:`sec:axessettings`). This will prompt for
 the scaling and alternative label:
 
@@ -641,7 +652,7 @@ Changing the size of the plotting surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The physical size of the viewing surface used for plotting can be
-changed via the “change paper size” option in the p)age submenu. This
+changed via the “change paper size” option in the :ref:`sec:menu-p`. This
 affects the size of the X-window (if plotted to the screen) and the size
 of .png or images generated (if plotted to these devices). Several
 preset options are provided or the paper size in x and y can be
@@ -653,7 +664,7 @@ Dividing the plotting page into panels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The plotting page can be divided into panels using the “subdivide page
-into panels” option in the p)age submenu. Note that for multiple plots
+into panels” option in the :ref:`sec:menu-p`. For multiple plots
 per page (i.e., nacross :math:`\times` ndown :math:`> 1`) a more limited
 interactive mode applies (basically because the data used for the plots
 is no longer stored in memory if there is more than one plot on the same
@@ -666,8 +677,7 @@ Tiling plots with the same :math:`x-` and :math:`y-` axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots with the same :math:`x-` and :math:`y-` axes are tiled if the
-tiling option from the (p)age options menu (:ref:`sec:optionspage`)
-is set. Tiling means that only one axis is shown where multiple plots
+tiling option from the :ref:`sec:menu-p`. Tiling means that only one axis is shown where multiple plots
 share the same x or y axis and that the plots are placed as close to
 each other as possible. For rendered plots a shared colour bar is
 plotted which spans the full length of the page.
@@ -679,7 +689,7 @@ Using non-proportional scales for spatial dimensions
 
 By default if the x and y axes are both spatial coordinates, the axes
 are scaled proportionately. This can be changed via the “spatial
-dimensions have same scale” option in the p)age submenu.
+dimensions have same scale” option in :ref:`sec:menu-p`.
 
 Using non-square axes on coordinate plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -690,25 +700,22 @@ Changing the character height for axes, labels and legends
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The character height used for axes, labels and legends can be changed
-via the p)age setup options submenu. Note that the character height is
+via the :ref:`sec:menu-p`. Note that the character height is
 relative to the paper size (which can also be changed – see
 :ref:`sec:papersize`).
 
 Using a thicker line width on plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The line width used for axes and text can be changed via the p)age
-submenu. Note that line width changes are not always obvious when
-plotting to an interactive device (e.g. an X-window) but influence
-non-interactive devices strongly.
+The line width used for axes and text can be changed via the :ref:`sec:menu-p`.
 
 .. _sec:pagecolours:
 
 Changing the foreground and background colours
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The background and foreground colour of a plot can be changed vie the
-“set foreground/background colours” option in the p)age submenu. Note
+The background and foreground colour of a plot can be changed via the
+“set foreground/background colours” option in the :ref:`sec:menu-p`. Note
 that the background colour setting has no effect on postscript devices
 (see :ref:`sec:postscript` for more details).
 
@@ -721,7 +728,7 @@ colour (e.g. black). However if the plot itself is also largely black
 useful to overplot those parts of the axes and labelling which lie on
 top of the plotting surface in the background colour (e.g. white). A
 prompt for this is given when setting the “set foreground/background
-colours” option in the p)age submenu.
+colours” option in the :ref:`sec:menu-p`.
 
 The prompt appears as follows:
 
@@ -746,8 +753,12 @@ parts of the axes which lie on top of the viewing surface (and any
 labels) will be plotted in white (the background colour) instead of the
 foreground colour (black).
 
+.. _sec:menu-g:
+
 le(g)end and title options
 --------------------------
+
+.. image:: figs/menu-g.png
 
 .. _sec:title:
 
@@ -780,7 +791,7 @@ The position of the time legend can be set interactively by positioning
 the mouse in the plot window and pressing ’G’. To set the position
 non-interactively and/or change additional settings such as the
 justification, use the “time legend on/off/settings” option in the
-le(g)end submenu.
+:ref:`sec:menu-g`.
 
 .. _sec:timelegendtext:
 
@@ -788,8 +799,7 @@ Changing the text in the time legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The text which appears the time legend (by default this is “t=”) can be
-changed via the “time legend on/off/settings” option in the le(g)end
-submenu.
+changed via the “time legend on/off/settings” option in the :ref:`sec:menu-g`.
 
 To rescale the *value* of the time displayed in the time legend (default
 value is as read from the dump file), see
@@ -799,8 +809,8 @@ Making the legend read “z=” instead of “t=”
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See :ref:`sec:timelegendtext`. An option to change the legend text
-is provided in the “time legend on/off/settings” option in the le(g)end
-submenu. The numeric value of the time legend is as read into the
+is provided in the “time legend on/off/settings” option in :ref:`sec:menu-g`.
+The numeric value of the time legend is as read into the
 ``time`` array in the read_data routine. This value can be rescaled by
 setting a unit for time (see :ref:`sec:timeunits`).
 
@@ -808,7 +818,7 @@ Plotting the time legend on the first row/column of panels / nth panel only
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot the time legend on the first row or column of panels
-or on a single panel only appears in the in the le(g)end submenu.
+or on a single panel only appears in the :ref:`sec:menu-g`.
 
 Plotting a length scale on coordinate plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -816,12 +826,12 @@ Plotting a length scale on coordinate plots
 An option to plot a length scale (i.e., ``|---|`` with a label below it
 indicating the length) on coordinate plots (i.e., plots where both
 :math:`x-` and :math:`y-`\ axes refer to particle coordinates) is
-provided in the le(g)end submenu.
+provided in the :ref:`sec:menu-g`.
 
 Annotating a plot with squares, rectangles, arrows, circles and text
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the “annotate plot” option in the le(g)end submenu to annotate plots
+Use the “annotate plot” option in :ref:`sec:menu-g` to annotate plots
 with a range of geometric objects (squares, rectangles, arrows, circles
 and text) with full control over attributes such as line width, line
 style, colour, angle and fill style.
@@ -837,22 +847,23 @@ at arbitrary angles.
 
 An option to plot length scales (``|---|``) on coordinate plots is
 implemented separately via the “plot scale on coordinate plots” option
-in the le(g)end menu.
+in :ref:`sec:menu-g`.
 
 Adding your name to a plot/movie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Arbitrary text annotation can be added/removed in interactive mode using
 ``ctrl-t`` (to add) and the backspace key (to delete) or via the
-“annotate plot” option in the le(g)end menu.
+“annotate plot” option in the :ref:`sec:menu-g`.
 
 .. _sec:opts:
 
 particle plot (o)ptions
 -----------------------
 
-The following are tasks which can be achieved via options in the o) menu
-[particle plot o)ptions].
+.. image:: figs/menu-o.png
+
+The following are tasks which can be achieved via options in the :ref:`sec:opts` menu.
 
 .. _sec:plotparticlesbytype:
 
@@ -860,8 +871,8 @@ Plotting non-gas particles (e.g. ghosts, boundary, sink particles)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles of different types can be turned on or off (i.e., plotted or
-not) using the “turn on/off particles by type” option in the particle
-plot o)ptions submenu. This option also prompts to allow particles of
+not) using the “turn on/off particles by type” option in :ref:`sec:opts`.
+This option also prompts to allow particles of
 non-SPH types to be plotted on top of rendered plots (useful for sink or
 star particles - this option does not apply to SPH particle types).
 Turning SPH particle types on or off also determines whether or not they
@@ -879,7 +890,7 @@ Plotting non-gas particles on top of rendered plots
 
 An option to plot non-SPH particles on top of rendered plots (e.g. sink
 particles) can be set when turning particle types on/off via the “turn
-on/off particles by type” option in the particle plot o)ptions submenu
+on/off particles by type” option in :ref:`sec:opts`
 (see :ref:`sec:plotparticlesbytype`).
 
 Using ghost particles in the rendering
@@ -891,7 +902,7 @@ Turn off plotting of gas particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Particles can be turned on or off by type via the “turn on/off particles
-by type” option in the particle plot o)ptions submenu. See
+by type” option in :ref:`sec:opts`. See
 :ref:`sec:plotparticlesbytype`.
 
 .. _sec:darkmatter:
@@ -901,7 +912,7 @@ Plotting dark matter particles
 
 To plot dark matter particles (e.g. for the gadget read) the particle
 type corresponding to dark matter particles must be turned on via the
-“turn on/off particles by type” option in the o) submenu. Turning this
+“turn on/off particles by type” option in :ref:`sec:opts`. Turning this
 option on means that dark matter particles will appear on particle
 plots.
 
@@ -923,7 +934,7 @@ quantity A using
 
 .. math:: A_{pixels} = \sum_{part} w_{part} A_{part} W_{kernel},
 
- so if :math:`A = \rho` then the actual rho value cancels.
+so if :math:`A = \rho` then the actual rho value cancels.
 
 For the GADGET data read you can define the smoothing length for dark
 matter particles by setting the environment variable
@@ -966,8 +977,8 @@ Plotting sink particles
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sink particles will be plotted on particle plots once turned on via the
-“turn on/off particles by type” option in the particle plot o)ptions
-submenu. Setting this option also gives a prompt for whether or not to
+“turn on/off particles by type” option in :ref:`sec:opts`.
+Setting this option also gives a prompt for whether or not to
 plot sink particles on top of rendered plots (to which the answer should
 be yes). See :ref:`sec:plotparticlesbytype` for more details.
 
@@ -1010,15 +1021,14 @@ Plotting each particle type in a different colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each particle type can be plotted in a different colour via the “set
-colour for each particle type” option in the particle plot o)ptions
-submenu (press ‘o’ from the main menu).
+colour for each particle type” option in the :ref:`sec:opts`.
 
 Changing the order in which different particle types are plotted
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The order in which particle types are plotted can be changed via the
-“change plotting order of types” option in the particle plot o)ptions
-submenu. Thus for example it is possible to make dark matter particles
+“change plotting order of types” option in :ref:`sec:opts`.
+For example, it is possible to make dark matter particles
 be plotted on top of gas particles rather than the default which is
 vice-versa. Note that at present this is only implemented for particle
 types which are stored contiguously (one after the other) in the data
@@ -1030,8 +1040,8 @@ Plotting using lines instead of dots (e.g. for energy vs time plots)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot a line joining all of the points on a plot can be set
-via the “plot line joining particles” option in the particle plot
-o)ptions submenu. When set, this option plots a line connecting the (gas
+via the “plot line joining particles” option in :ref:`sec:opts`.
+When set, this option plots a line connecting the (gas
 only) particles in the order that they appear in the data array. Useful
 mainly in one dimension or when plotting ascii data, although can give
 an indication of the relative closeness of the particles in memory and
@@ -1039,7 +1049,7 @@ in physical space in higher dimensions. The line colours and styles can
 be changed.
 
 To plot the line only with no particles, turn off gas particles using
-the “turn on/off particles by type option” from the o) submenu.
+the “turn on/off particles by type option” from :ref:`sec:opts`.
 
 Plotting multiple lines with different colours/line styles and a legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1047,8 +1057,7 @@ Plotting multiple lines with different colours/line styles and a legend
 When multiple timesteps are plotted on the same physical page, the line
 style can be changed instead of the colour (this occurs when the change
 colour option is chosen for multiple steps per page – see the “change
-plots per page" option in the p)age options submenu
-[:ref:`sec:optionspage`]).
+plots per page" option in the :ref:`sec:menu-p`.
 
 Joining the dots
 ~~~~~~~~~~~~~~~~~
@@ -1073,8 +1082,7 @@ Locating a particular particle in the data set
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The best way to locate a particular particle in the data set is to use
-the “plot smoothing circles” option in the particle plot o)ptions
-submenu, e.g:
+the “plot smoothing circles” option in :ref:`sec:opts`, e.g:
 
 ::
 
@@ -1089,17 +1097,6 @@ plotted with a circle of size :math:`2h` which makes it easy to
 distinguish from the other particles. See also
 :ref:`sec:smoothingcircle`.
 
-Making sure absolutely all particles are plotted
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default splash uses “fast particle plotting” for particle plots –
-this is where the plotting surface is divided into pixels and only a
-limited number of particles per pixels is plotted (preventing slowdown
-due to lots of particles being plotted indistinguishably on top of each
-other). Use of this optimisation can be turned off *just in case* in the
-particle plot o)ptions submenu, although there should almost never be a
-good reason to do so.
-
 .. _sec:geom:
 
 Plotting in different coordinate systems (e.g. cylindrical coordinates)
@@ -1107,7 +1104,7 @@ Plotting in different coordinate systems (e.g. cylindrical coordinates)
 
 The coordinates of position and of all vector components can be
 transformed into non-cartesian coordinate systems using the “change
-coordinate system” option in the particle plot o)ptions submenu. For
+coordinate system” option in :ref:`sec:opts`. For
 example, a dump file with columns as follows:
 
 ::
@@ -1123,7 +1120,7 @@ example, a dump file with columns as follows:
    -------------------------------------------------------
    Please enter your selection now (y axis or option):
 
-choosing o), option 7) and choosing cylindrical coordinates then
+choosing :ref:`sec:opts`, option 7) and choosing cylindrical coordinates then
 produces;
 
 ::
@@ -1173,6 +1170,7 @@ See :ref:`sec:geom`.
 
 Plotting the exact solution to common test problems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Turn on `plot exact solution` in :ref:`sec:opts`
 
 The following exact solutions are provided
 
@@ -1188,7 +1186,7 @@ The following exact solutions are provided
 -  Polytropes (with arbitrary :math:`\gamma`)
 
 -  One and two dimensional toy stars. This is a particularly simple test
-   problem for SPH codes described in MP04_.
+   problem for SPH codes described in [MP04]_.
 
 -  Linear wave. This simply plots a sine wave of a specified amplitude,
    period and wavelength on the plot specified.
@@ -1234,36 +1232,39 @@ Changing the exact solution line style & colour
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The line style and colour of the exact solution line can be changed via
-the “exact solution plot options” option in the o) submenu. This option
+the “exact solution plot options” option in :ref:`sec:opts`. This option
 can also be used to turn on/off calculation of various error norms
 together with an inset plot of the residual error on the particles. See
-Appendix \ :ref:`sec:exact` for details of the error norms
+:ref:`sec:exact` for details of the error norms
 calculated.
 
 Setting the number of points used in an exact solution calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of points used in an exact solution calculation can be
-changed via the “exact solution plot options” option in the o) submenu.
+changed via the “exact solution plot options” option in :ref:`sec:opts`.
 
 Plotting an inset plot of residual errors from an exact solution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An inset plot of residual errors between the plotted points and an exact
 solution calculation can be turned on via the “exact solution plot
-options” option in the o) submenu.
+options” option in :ref:`sec:opts`.
 
-plot (l)imits
+.. _sec:menu-l:
+
+(l)imits menu
 -------------
+
+.. image:: figs/menu-l.png
 
 .. _sec:adapt:
 
 Using plot limits which adapt automatically for each new plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Adaptive plot limits can be set using option 1 of the l)imits menu
-(press ’l’ from the main menu, then ’1’). Different settings can be
-applied to coordinate axes and non-coordinate axes. Note that changing
+Adaptive plot limits can be set using option 1 of the :ref:`sec:menu-l`.
+Different settings can be applied to coordinate axes and non-coordinate axes. Note that changing
 plot limits interactively and pressing ’s’ in interactive mode will
 change this option back to using fixed limits.
 
@@ -1272,12 +1273,12 @@ Using adaptive plot limits for the colour bar but not for the coordinates
 
 Adaptive plot limits can be set individually for coordinate axes and
 non-coordinate axes (e.g. the colour bar) via the “use adaptive/fixed
-limits” option in the l)imits submenu. See :ref:`sec:adapt`.
+limits” option in the :ref:`sec:menu-l`. See :ref:`sec:adapt`.
 
 Setting plot limits manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plot limits can be set manually using option 2) of the l)imits menu (or
+Plot limits can be set manually using option 2) of the :ref:`sec:menu-l` (or
 simply “l2” from the main menu). Alternatively you can edit the
 ‘splash.limits’ file created by a S)ave from the main menu prior to
 invoking splash (this file simply contains the minimum and maximum
@@ -1290,8 +1291,8 @@ Making plot limits relative to a particular particle
 
 Particle tracking limits (i.e., where a chosen particle is always at the
 centre of the plot and limits are set relative to that position) can be
-set via the “make xy limits relative to particle” option in the l)imits
-menu. Alternatively particle tracking limits can be set interactively by
+set via the “make xy limits relative to particle” option in the :ref:`sec:menu-l`.
+Alternatively particle tracking limits can be set interactively by
 pressing ’t’ in interactive mode with the cursor over the particle you
 wish to track. Note that this option only works if particle identities
 are preserved between timesteps. Also note that, with particle tracking
@@ -1306,7 +1307,7 @@ Plotting in a comoving reference frame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A co-moving reference frame can be set using the “make xy limits
-relative to particle” option in the l)imits menu. Coordinate limits are
+relative to particle” option in the :ref:`sec:menu-l`. Coordinate limits are
 then centred on the selected particle for all timesteps, with offsets as
 input by the user. This effectively gives the ‘Lagrangian’ perspective.
 See :ref:`sec:track` for more details. Centreing on a sink
@@ -1329,7 +1330,7 @@ Setting the origin to the position of the :math:`n`\ th sink particle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This can be achieved using the “make xy limits relative to particle”
-option in the l)imits menu. For example, to track the first sink
+option in the :ref:`sec:menu-l`. For example, to track the first sink
 particle we would proceed as follows:
 
 ::
@@ -1350,8 +1351,8 @@ Plotting radial plots around sink particles
 
 First, set the origin to the location of the sink, as described above.
 Then simply change to spherical coordinates using the “change coordinate
-systems” option in the o) menu. Alternatively, compute the radius using
-the “calculate extra quantities” option in the d)ata menu.
+systems” option in :ref:`sec:opts`. Alternatively, compute the radius using
+the “calculate extra quantities” option in the :ref:`sec:menu-d`.
 
 Automatically adapting plot limits to match aspect ratio of output device
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1374,7 +1375,7 @@ Plotting the square root, inverse or square of a quantity
 
 Columns can be logged, inverted, sqrt-ed, squared or any combination of
 the above via the “apply log or inverse transformations to columns”
-option in the l)imits menu. If you have any additional transformations
+option in the :ref:`sec:menu-l`. If you have any additional transformations
 you would find useful please let me know, as it is straightforward to
 add more.
 
@@ -1385,7 +1386,7 @@ Resetting limits for all columns
 
 Limits for all columns can be reset to their minimum and maximum values
 from the current dump file via the “reset limits for all columns” option
-in the l)imits menu. See :ref:`sec:interactive` for details of
+in the :ref:`sec:menu-l`. See :ref:`sec:interactive` for details of
 resetting plot limits for a particular plot in interactive mode.
 
 Restoring all plot limits to their minimum and maximum values in the current dump file
@@ -1428,8 +1429,8 @@ or more usually:
 
    >> no current parameter range restrictions set
 
-Parameter range restrictions can be set either manually via the l)imits
-menu (option 7) or interactively by selecting a region in the plot and
+Parameter range restrictions can be set either manually via the :ref:`sec:menu-l`
+(option 7) or interactively by selecting a region in the plot and
 pressing ‘x’, ‘y’ or ‘r’ to restrict using the :math:`x`, :math:`y` or
 both :math:`x` and :math:`y` limits of the selected area respectively
 (pressing ‘R’ instead removes all currently set restrictions). Another
@@ -1447,14 +1448,18 @@ between timesteps – see :ref:`sec:rangerestrict`), or
 alternatively by an interactive selection based on particle identity
 (see :ref:`sec:rendersubset`).
 
+.. _sec:menu-r:
+
 (r)endering options
 -------------------
+
+.. image:: figs/menu-r.png
 
 Changing the number of pixels in a rendered image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of pixels in a rendered image can be set manually using the
-r)ender menu, option 1 (or simply type “r1” from the main menu). The
+:ref:`sec:menu-r`, option 1 (or simply type “r1” from the main menu). The
 number set is the number of pixels along the :math:`x-`\ axis. The
 number of pixels along the :math:`y-`\ axis is determined by the aspect
 ratio of the plot.
@@ -1476,7 +1481,7 @@ Changing the colour scheme
 The colour scheme used for rendered plots can be changed either by
 pressing ‘m’ or ‘M’ in interactive mode to cycle through the available
 schemes or manually by using the “change colour scheme” option in the
-r)ender menu.
+:ref:`sec:menu-r`.
 
 A demonstration of all the colour schemes can be also be invoked from
 this menu option. Setting the colour scheme to zero plots only the
@@ -1498,7 +1503,7 @@ Plotting contours as well as the rendered image
 
 Contours of either the rendered pixel array or of another (separate)
 quantity can be plotted on top of the rendered plot by setting the “plot
-contours” option from the r)ender menu. With this option set, an extra
+contours” option from the :ref:`sec:menu-r`. With this option set, an extra
 prompt will appear after the render prompt asking the user for a
 quantity to be contoured. The contoured quantity can also be set via the
 command line options (:ref:`sec:commandline`). If the rendered and
@@ -1508,21 +1513,21 @@ These limits are also saved separately in the ``splash.limits`` file
 when written.
 
 To plot contours *instead* of the rendered image, use the “change colour
-scheme” option from the r)ender menu and choose colour scheme 0
+scheme” option from the :ref:`sec:menu-r` and choose colour scheme 0
 (contours only).
 
 Plotting contours instead of a rendered image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot contours instead of the rendered image, use the “change colour
-scheme” option from the r)ender menu and choose colour scheme 0
+scheme” option from the :ref:`sec:menu-r` and choose colour scheme 0
 (contours only).
 
 Changing the number of contour levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of contour levels used whenever contours are drawn can be set
-via the “change number of contours” option in the r)ender menu. The
+via the “change number of contours” option in the :ref:`sec:menu-r`. The
 contour levels can also be manually specified (see
 :ref:`sec:contoursmanual`).
 
@@ -1548,7 +1553,7 @@ Adding numeric labels to contours
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to write numeric labels on contours appears as part of the
-“change number of contours” option in the r)ender menu.
+“change number of contours” option in the :ref:`sec:menu-r`.
 
 Adding arbitrary contour labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1574,15 +1579,14 @@ Changing the style of the colour bar
 
 The colour bar style (i.e., vertical vs. horizontal, plot-hugging vs.
 non plot-hugging, one-sided vs. two-sided, floating vs. fixed) can be
-changed via the “colour bar options” option in the r)ender submenu. If
+changed via the “colour bar options” option in the :ref:`sec:menu-r`. If
 you want a different style implemented, email me!
 
 Using a horizontal colour bar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to use a horizontal colour bar instead of the default vertical
-arrangement is given in the “colour bar options” option in the r)ender
-submenu.
+arrangement is given in the “colour bar options” option in the :ref:`sec:menu-r`.
 
 Using ‘plot-hugging’ colour bars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1611,8 +1615,8 @@ Using coloured particles instead of rendering to pixels
 
 As a simpler alternative to interpolating to a pixel array, particles
 can simply be coloured according to the value of a particular quantity
-by setting the “use particle colours not pixels” option in the r)ender
-menu. With this option set, rendered plots are simply plotted by
+by setting the “use particle colours not pixels” option in the :ref:`sec:menu-r`.
+With this option set, rendered plots are simply plotted by
 colouring the particles according to the rendered field. This is
 somewhat cruder but can be a good indication of where individual
 particles might be affecting results. Note that any colouring of the
@@ -1623,7 +1627,7 @@ Using normalised interpolations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A normalised interpolation to pixels can be used by setting the
-“normalise interpolations” option from the r)ender menu. In general this
+“normalise interpolations” option from the :ref:`sec:menu-r`. In general this
 leads to smoother rendering but also means that edges and surfaces
 appear more prominently (and a bit strange). The general rule-of-thumb I
 use is therefore to use this option whenever there are no free surfaces
@@ -1635,7 +1639,7 @@ Speeding up the rendering on 3D column integrated plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Interpolation on 3D column integrated plots can be made faster by
-setting the “use accelerated rendering” option in the r)ender menu. The
+setting the “use accelerated rendering” option in the :ref:`sec:menu-r`. The
 reason this is an option is that it makes a small approximation by
 assuming that each particle lies exactly in the centre of a pixel. In
 general this works very well but is not set by default because it can
@@ -1648,7 +1652,7 @@ Using density weighted interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Density weighted interpolation (where a quantity is plotted times
-:math:`\rho`) can be turned on in the r)ender menu.
+:math:`\rho`) can be turned on in the :ref:`sec:menu-r`.
 
 Selecting and rendering only a subset of the particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1690,7 +1694,7 @@ Changing the interpolation kernel
 The kernel used for the interpolations is by default the M\ :math:`_{4}`
 cubic B-spline, which has been standard in SPH calculations since the
 mid-1980’s. Other kernels can be selected via the “change kernel” option
-in the r)ender menu. The kernel can also be changed by setting the
+in the :ref:`sec:menu-r`. The kernel can also be changed by setting the
 ``SPLASH_KERNEL`` environment variable to either the kernel name as
 listed in the render menu option, or something sensible resembling it.
 At present only a few kernels are implemented, with ‘cubic’ , ‘quartic’
@@ -1703,6 +1707,8 @@ M\ :math:`_{6}` B-splines with support of 2h and 3h, respectively. See
 (v)ector plot options
 ---------------------
 
+.. image:: figs/menu-v.png
+
 Changing the number of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1714,7 +1720,7 @@ Changing the number of pixels in vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The number of pixels used on vector plots can be changed via the “change
-number of pixels” option in the v)ector menu. This controls the number
+number of pixels” option in the :ref:`sec:vectorplots`. This controls the number
 and average size of the arrows which appear (i.e., one arrow is plotted
 at the centre of each pixel).
 
@@ -1725,7 +1731,7 @@ The size of the arrows on vector plots is proportional to the magnitude
 of the vector quantity at that pixel, where the maximum size is set from
 the maximum plot limit for the x, y and z components of the vector
 quantity being plotted such that the longest arrow fills one pixel.
-These limits can be changed manually via the l)imits menu options. Where
+These limits can be changed manually via the :ref:`sec:menu-l` options. Where
 these limits are nowhere near the actual values of the vector field,
 arrows can appear either very big (just a line across the screen) or
 extremely small (appearing as just dots). Pressing ‘w’ in interactive
@@ -1741,30 +1747,30 @@ Plotting vector arrows in white instead of black or vice-versa
 Vector arrows are by default plotted using the current foreground colour
 index (i.e., as used for plotting the axes). To plot in the background
 colour index instead set the “use background colour for arrows” option
-in the v) menu.
+in the :ref:`sec:vectorplots`.
 
 Turning off the legend for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The legend which appears on vector plots can be turned on or off via the
-“vector plot legend settings” option in the v) menu.
+“vector plot legend settings” option in the :ref:`sec:vectorplots`.
 
 Moving the vector plot legend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The position of the vector plot legend can be set either interactively
 by positioning the mouse and pressing ’H’ or manually via the “vector
-plot legend settings” option in the v) menu.
+plot legend settings” option in the :ref:`sec:vectorplots`.
 
 Plotting stream/fieldlines instead of arrows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To plot a vector plot that uses stream/fieldlines instead of arrows, set
-the “plot stream/field lines instead of arrows” option in the v) menu.
+the “plot stream/field lines instead of arrows” option in the :ref:`sec:vectorplots`.
 This option performs a simple integration of the interpolated vector
 field to get the stream function, the contours of which are then plotted
 (note that the number of contours can be changed via the “change number
-of contours” option in the r)ender menu). It is generally advantageous
+of contours” option in the :ref:`sec:menu-r`). It is generally advantageous
 to use a larger number of pixels for the vector interpolation (See
 :ref:`sec:vecpix`) to get smooth contours.
 
@@ -1775,7 +1781,7 @@ Turning arrow heads off for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vector plots can be plotted using arrows without heads using the “turn
-arrow heads on/off” option in the v)ector plot options menu.
+arrow heads on/off” option in the :ref:`sec:vectorplots`.
 
 Hiding vector arrows where there are no SPH particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1784,7 +1790,7 @@ On rendered plots often arrows can appear where there are apparently no
 SPH particles because the interpolation is performed to all pixels
 within :math:`2h` of an SPH particle. Such arrows in regions of few or
 no particles can be hidden using the “hide arrows where there are no
-particles” option in the v) menu. A threshold number of particles for
+particles” option in the :ref:`sec:vectorplots`. A threshold number of particles for
 each pixel can be specified, below which no arrow will be plotted on
 that pixel.
 
@@ -1802,17 +1808,21 @@ Making all arrow the same length (i.e., showing direction only, not magnitude)
 
 An option to plot all vector arrows of the same length (instead of the
 default option where the length of the arrow is proportional to the
-vector magnitude) can be set from the v) menu.
+vector magnitude) can be set from the :ref:`sec:vectorplots`.
+
+.. _sec:menu-x:
 
 (x) cross section/3D plotting options
 -------------------------------------
+
+.. image:: figs/menu-x.png
 
 Plotting a cross section slice through 3D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When plotting a rendered plot of 3D data, the default option is to plot
 a column-integrated plot. To change this to a cross section slice, use
-option 1) in the x) menu (“switch between cross section/projection”).
+option 1) in the :ref:`sec:menu-x` (“switch between cross section/projection”).
 See :ref:`sec:basic` for examples of how this works. An oblique
 cross section slice can be set interactively using the ’x’ key, see
 :ref:`sec:obliquexsec` which works by setting a combination of
@@ -1822,7 +1832,7 @@ Plotting a cross section line through 2D data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In 2D, setting the “switch between cross section/projection” option in
-the x) menu to cross section means that rendered plots are in fact a 1D
+the :ref:`sec:menu-x` to cross section means that rendered plots are in fact a 1D
 cross section (i.e., a line) through 2D data. The position of the line
 is completely arbitrary (i.e., can be set for oblique cross sections as
 well as straight lines) and is set interactively after the usual
@@ -1832,11 +1842,11 @@ Rotating the particles
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 An angle of rotation about may be set each axis may be set in the
-x)sec/rotate submenu using the “rotation on/off/settings” option or
+:ref:`sec:menu-x` using the “rotation on/off/settings” option or
 interactively (press ’h’ in interactive mode to see the exact
 keystrokes). The position of the origin about which particles are
-rotated can be set from the “rotation on/off/settings” option in the x)
-menu. Rotated axes or boxes can be plotted using the “set axes for
+rotated can be set from the “rotation on/off/settings” option in the :ref:`sec:menu-x`.
+Rotated axes or boxes can be plotted using the “set axes for
 rotated/3D plots” option in the same menu.
 
 Rotations are performed in the order :math:`z-y-x`. This means that the
@@ -1851,8 +1861,8 @@ Setting the origin about which particles are rotated
 
 The origin about which particles are rotated and relative to which the
 radius is calculated when the “calculate extra quantities” option is set
-in the d)ata menu can be changed via the “rotation on/off/settings”
-option in the x) menu.
+in the :ref:`sec:menu-d` can be changed via the “rotation on/off/settings”
+option in the :ref:`sec:menu-x`.
 
 .. _sec:3Dperspective:
 
@@ -1860,7 +1870,7 @@ Adding 3D perspective
 ~~~~~~~~~~~~~~~~~~~~~~
 
 3D perspective can be turned on via the “3D perspective on/off” option
-in the x) menu. Prompts for setting the perspective position then appear
+in the :ref:`sec:menu-x`. Prompts for setting the perspective position then appear
 after the usual prompts for y and x axes, rendering and vector plots,
 i.e., something like the following:
 
@@ -1904,7 +1914,7 @@ Using 3D surface rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 3D surface rendering (turned on using the “3D surface rendering on/off”
-option in the x) menu) performs a ray-trace through the particle data,
+option in the :ref:`sec:menu-x`) performs a ray-trace through the particle data,
 thus visualising the "last scattering surface". When set, the user is
 prompted for an "optical depth" before plotting which determines the
 position of the surface. Only applies to 3D data. When set with
@@ -1920,7 +1930,7 @@ Plotting 3D box / 3D axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Rotated axes or boxes can be plotted using the “set axes for rotated/3D
-plots” option in the x) menu.
+plots” option in the :ref:`sec:menu-x`.
 
 .. _sec:animseq:
 
@@ -1928,7 +1938,7 @@ Setting up animation sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Animation sequences can be set via the “set animation sequence” option
-in the x) menu. At present the possible sequences that can be added are:
+in the :ref:`sec:menu-x`. At present the possible sequences that can be added are:
 
 ::
 
@@ -1987,14 +1997,13 @@ Plotting a flythru of 3D data
 A sequence of cross section slices progressively deeper into a 3D box or
 alternatively a steady movement of the 3D observer (on projection plots)
 can be plotted by setting up an animation sequence. See
-:ref:`sec:animseq` for details.
+:ref:`sec:animseq`.
 
 Adding a steady zoom sequence to a movie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A steady change of :math:`x-` and :math:`y-` limits can be added by
-setting up an animation sequence. See :ref:`sec:animseq` for
-details.
+setting up an animation sequence. See :ref:`sec:animseq`.
 
 Adding a steady change of colour bar limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2015,12 +2024,16 @@ up an animation sequence. See :ref:`sec:animseq` for details.
 Miscellaneous other useful things
 ---------------------------------
 
+.. _sec:menu-s:
+
 Saving plot settings / plot limits to disk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The (s)ave option saves the default options to a file called
+.. image:: figs/menu-s.png
+
+The :ref:`sec:menu-s` option saves the default options to a file called
 ‘splash.defaults’ in the current directory which is read automatically
-upon the next invocation of splash . This file uses namelist formatting
+upon the next invocation of splash. This file uses namelist formatting
 and may be edited manually prior to startup if so desired (this is quite
 useful for setting multiplots with many plots per page).
 
@@ -2037,10 +2050,14 @@ new prefix). The prefix to the configuration files which are written by
 splash can also be changed using the ``-p`` option on the command line
 (the default is “splash”, i.e., “splash.defaults”, “splash.limits” etc).
 
+.. _sec:menu-h:
+
 My attempt at in-built help
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The (h)elp option at the moment does nothing particularly useful apart
+.. image:: figs/menu-h.png
+
+The `(h)elp option <sec:menu-h>`_ at the moment does nothing particularly useful apart
 from tell you about menu shortcuts (see
 :ref:`sec:menushortcuts`). It seemed like a good idea at the
 time…
@@ -2050,14 +2067,17 @@ time…
 Keyboard shortcuts to menu options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. image:: figs/menu-x1.png
+
 Menu options which normally require two keystrokes (e.g. x menu, option
 1) can be shortcut to by simply typing the letter and number together at
 the main menu prompt (so e.g. “x1” for x menu, option 1, “r2” for render
-menu, option 2, etc.). This can be quite useful if you are playing
-around with one particular option a lot.
+menu, option 2, etc.).
 
 Exiting splash
 ~~~~~~~~~~~~~~~~
+
+.. image:: figs/menu-q.png
 
 (q)uit, unsurprisingly, quits. Typing a number greater than the number
 of data columns also exits the program (e.g. I often simply type 99 to

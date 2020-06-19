@@ -1,7 +1,7 @@
 .. _sec:coordtransforms:
 
-Coordinate transformation details
-=================================
+Coordinate transforms
+=====================
 
 Particle positions and vectors defined on the particles can be plotted
 in non-cartesian coordinate systems. The coordinate system can be set
