@@ -1,4 +1,8 @@
 
+.. figure:: figs/hyperbolic.pdf
+   :alt: splash: it splashes
+   :width: 100.0%
+
 Introduction
 ============
 
@@ -94,8 +98,7 @@ splash, the paper
 ------------------
 
 The algorithms implemented in splash are not described here, but instead
-described in a paper .. [http://www.publish.csiro.au/?paper=AS07022] (Price 2007) (Publications of
-the Astronomical Society of Australia, 24, 159-173), available from:
+described in a paper [Price07]_, available from:
 
 http://www.publish.csiro.au/?paper=AS07022
 
@@ -928,10 +931,10 @@ The ``default=`` refers to the default value assigned if you just press
 the return key. The last prompt asks for the device to which output
 should be directed. A full list of available graphics devices is given
 by typing ‘?’ at the prompt. Some of the most useful devices are given
-in table `[tab:devices] <#tab:devices>`__. In the above we have selected
+in Table tab:devices_. In the above we have selected
 the X-window driver which means that the output is sent to the screen
 (provided X-windows is running), as demonstrated in the screenshot shown
-in Figure `[fig:rhoh] <#fig:rhoh>`__.
+in :numref:`fig:rhoh`.
 
 Many useful tasks can now be achieved by moving the mouse to the plot
 window and selecting areas or pressing keystrokes – this is “interactive
@@ -951,10 +954,6 @@ menu (in the terminal).
    :width: 80.0%
 
    Screenshot of simple two column plot to an X-window
-
-.. raw:: latex
-
-   \centering
 
 .. table:: Commonly used graphics devices available in giza
 
@@ -995,7 +994,7 @@ refer to coordinates. For example
 Notice that in this case that options appeared for rendered and vector
 plots. Our choice of “5” at the (render) prompt corresponds to column 5,
 which in this case is the density, producing the plot shown in the
-screenshot in Figure \ `[fig:renderplot] <#fig:renderplot>`__.
+screenshot in :numref:`fig:renderplot`.
 
 .. figure:: figs/renderplot.jpg
    :alt: Screenshot of 3D column density plot to an X-window
@@ -1025,11 +1024,11 @@ re-plot the rendered plot again (exactly as in the previous example
 
    enter z position for cross-section slice: ([-8.328:8.327], default=0.000):
 
-which produces the plot shown in the screenshot in
-Figure \ `[fig:renderplot_xsec] <#fig:renderplot_xsec>`__.
+which produces the plot shown in the screenshot in :numref:`fig:renderplot_xsec`
 
 .. figure:: figs/renderplot_xsec.jpg
    :alt: Screenshot of 3D cross section slice plot to an X-window
+   :name: fig:renderplot_xsec
    :width: 80.0%
 
    Screenshot of 3D cross section slice plot to an X-window
@@ -1145,7 +1144,7 @@ prompts to set the limits for a particular data column.
 Producing an encapsulated postscript figure for a paper
 -------------------------------------------------------
 
-Producing a postscript plot suitable for inclusion in a LaTeXfile is
+Producing a postscript plot suitable for inclusion in a LaTeX file is
 simple: at the device prompt, type
 
 ::
@@ -1158,7 +1157,7 @@ which by default is called ``splash.eps``, or if multiple files have
 been read, a sequence of files called ``splash_0000.eps``,
 ``splash_0001.eps``, etc. To specify both the device and filename, type
 the full filename (e.g. ``myfile.eps``) as the device. Files produced in
-this way can be directly incorporated into LaTeXusing standard packages
+this way can be directly incorporated into LaTeX using standard packages
 such as graphicx, psfig or epsfig.
 
 Note that postscript devices do not have a ‘background’ colour, so plots
@@ -1673,10 +1672,6 @@ instead of density). Use ’F’ to flip backwards.
 Colouring a subset of the particles and retaining this colour through other timesteps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. raw:: latex
-
-   \centering
-
 .. figure:: figs/colourparts.pdf
    :alt: coloured particles
    :name: fig:colourparts
@@ -1694,14 +1689,13 @@ require), then press either 1-9 to colour the selected particles with
 colours corresponding to plotting library colour indices 1-9, press ’p’
 to plot only those particles selected (hiding all other particles), or
 ’h’ to hide the selected particles. An example is shown in the left
-panel of Figure \ `[fig:colourparts] <#fig:colourparts>`__. Particles
+panel of :numref:`fig:colourparts`. Particles
 retain these colours between timesteps and even between plots. This
 feature can therefore be used to find particles within a certain
 parameter range (e.g. by plotting density with x, selecting/colouring
 particles in a given density range, then plotting x vs y in which the
 particles will appear as previously selected/coloured). An example of
-this feature is shown in the right panel of
-Figure \ `[fig:colourparts] <#fig:colourparts>`__ where I have plotted
+this feature is shown in the right panel of :numref:`fig:colourparts` where I have plotted
 an intermediate plot of density vs x on which I selected a subset of
 particles and hit ’p’ (to plot only that subset), then re-plotted x vs y
 with the new particle selections.
@@ -1713,8 +1707,7 @@ index.
 Particles hidden in this manner are also no longer used in the rendering
 calculation. Thus it is possible to render using only a subset of the
 particles (e.g. using only half of a box, or only high density
-particles). An example is shown in
-Figure \ `[fig:rendersubset] <#fig:rendersubset>`__.
+particles). An example is shown in :numref:`fig:rendersubset`.
 
 To colour the particles according to the value of a particular quantity,
 see §\ `4.8.16 <#sec:colournotrender>`__.
@@ -1750,8 +1743,7 @@ Rendering using only a subset of the particles
 Particles can be selected and ‘hidden’ interactively (see
 §\ `4.3.4 <#sec:colourparts>`__) – for rendered plots ‘hidden’ particles
 are also not used in the interpolation calculation from the particles to
-the pixel array. An example is shown in
-Figure \ `[fig:rendersubset] <#fig:rendersubset>`__, where I have taken
+the pixel array. An example is shown in :numref:`fig:rendersubset`, where I have taken
 one of the rendered examples in §\ `3 <#sec:basic>`__, selected half of
 the domain with the mouse and pressed ’p’ to plot only the selected
 particles. The result is the plot shown.
@@ -2490,8 +2482,8 @@ The following exact solutions are provided
    exact solution to be plotted as a line on the plot specified.
 
 Details of the calculation of the exact solutions are given in
-Appendix \ `10 <#sec:exact>`__. An example plot using the Sedov blast
-wave exact solution is shown in Figure \ `[fig:sedov] <#fig:sedov>`__.
+:ref:`sec:exact`. An example plot using the Sedov blast
+wave exact solution is shown in :numref:`fig:sedov`.
 
 .. figure:: figs/sedov_example.png
    :alt: sedov exact solution
@@ -2762,8 +2754,7 @@ r)ender menu.
 A demonstration of all the colour schemes can be also be invoked from
 this menu option. Setting the colour scheme to zero plots only the
 contours of the rendered quantity (assuming that plot contours is set to
-true). The colour schemes available are shown in
-Figure \ `[fig:colourschemes] <#fig:colourschemes>`__.
+true). The colour schemes available are shown in :numref:`fig:colourschemes`.
 
 .. figure:: figs/colourschemes.pdf
    :alt: splash colour schemes
@@ -3403,14 +3394,7 @@ column 6), so we type ‘2’ for column 2 (y) as the y axis, ‘1’ for column
     (vector plot) (0=none, 7=v) ([0:7], default=0):0
     Graphics device/type (? to see list, default /xw): /xw
 
-producing the plot shown in
-Figure \ `[fig:starpart1] <#fig:starpart1>`__ – somewhat black! The main
-thing to note is the limits on the colour bar (extending from :math:`0`
-to :math:`10^{7}` on a linear scale) which is the main source of all the
-blackness. Moving the cursor over the colour bar and pressing ‘l’ for
-log produces the figure shown on the right hand side — a vast
-improvement!
-
+producing the plot shown in :numref:`fig:starpart1` – somewhat black!
 
 .. figure:: figs/starpart1.png
    :alt: star formation tutorial part 1a
@@ -3419,12 +3403,19 @@ improvement!
 
    First stage in the star formation figure tutorial: a simple render plot of density
 
+
+The main thing to note is the limits on the colour bar (extending from :math:`0`
+to :math:`10^{7}` on a linear scale) which is the main source of all the
+blackness. Moving the cursor over the colour bar and pressing ‘l’ for
+log produces :numref:`fig:starpart1b` — a vast
+improvement!
+
 .. figure:: figs/starpart2.png
    :alt: star formation tutorial part 1b
    :name: fig:starpart1b
    :width: 50.0%
 
-   With a log axis after having placed cursor over colour bar and pressed ‘l’ (right)
+   With a log axis after having placed cursor over colour bar and pressed ‘l’
 
 For this visualisation we will eventually want the data in physical
 units rather than code units. For the sphNG read these units are already
@@ -3495,8 +3486,7 @@ that later. Replotting the same plot (that is 2, 1, 6, 0, /xw from the
 main menu) plots the same plot we had before, but with the axes in
 physical units. Zooming in (using the mouse) on the region of interest
 and adapting the colour bar limits by moving the mouse over the colour
-bar and pressing ‘a’ produces the plot shown in the left panel of
-Figure \ `[fig:starpart2] <#fig:starpart2>`__.
+bar and pressing ‘a’ produces the plot shown in :numref:`fig:starpart2`.
 
 
 .. figure:: figs/starpart3.png
@@ -3506,6 +3496,10 @@ Figure \ `[fig:starpart2] <#fig:starpart2>`__.
 
    Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar
 
+For this kind of plot, the Bate colour scheme looks better – pressing
+‘m’ with the mouse in the plot window changes the colour scheme,
+producing the plot shown in :numref:`fig:starpart2b`.
+
 .. figure:: figs/starpart4.png
    :alt: star formation tutorial part 2b
    :name: fig:starpart2b
@@ -3513,11 +3507,7 @@ Figure \ `[fig:starpart2] <#fig:starpart2>`__.
 
    having changed the colour scheme
 
-For this kind of plot, the Bate colour scheme looks better – pressing
-‘m’ with the mouse in the plot window changes the colour scheme,
-producing the plot shown in
-Figure \ `[fig:starpart2b] <#fig:starpart2b>`__. Pressing ‘s’ in
-interactive mode (that is, with the mouse in the plot window) saves the
+Pressing ‘s’ in interactive mode (that is, with the mouse in the plot window) saves the
 current zoom and colour bar settings (but not to disk until you also
 press ‘S’ from the main menu). Pressing ‘q’ from interactive mode
 returns to the main menu.
@@ -3548,8 +3538,7 @@ o)ptions submenu as follows:
     Plot unknown/dead particles? (default=no):
 
 Repeating our previous plot (i.e., 2, 1, 6, 0, /xw) produces the plot
-shown in the left panel of
-Figure \ `[fig:starpart3] <#fig:starpart3>`__.
+shown in :numref:`fig:starpart3`.
 
 .. figure:: figs/starpart5.png
    :alt: star formation tutorial part 3a
@@ -3626,8 +3615,7 @@ saves both the current plot settings *and* the plot limits to disk:
     default options saved to file splash.defaults
     saving plot limits to file splash.limits
 
-Plotting our figure again (2-1-6-0-/xw) produces the plot shown in the
-right hand panel of Figure \ `[fig:starpart3] <#fig:starpart3>`__.
+Plotting our figure again (2-1-6-0-/xw) produces the plot shown in :numref:`fig:starpart3`
 
 Nearly there...! To add the finishing touches we want to increase the
 number of pixels substantially. This is done in the r)ender menu, option
@@ -3640,7 +3628,7 @@ number of pixels substantially. This is done in the r)ender menu, option
    enter number of pixels along x axis ([1:10000], default=200):1000
 
 then, to plot the figure to file instead of the screen, we simply choose
-a different PGPLOT device at the prompt:
+a different device at the prompt:
 
 ::
 
@@ -3650,8 +3638,7 @@ a different PGPLOT device at the prompt:
     (vector plot) (0=none, 7=v) ([0:7], default=0):
     Graphics device/type (? to see list, default /xw): starpartfinal.gif/gif
 
-producing our final finished Figure shown in
-Figure \ `[fig:starfinal] <#fig:starfinal>`__.
+producing our final finished Figure shown in :numref:`fig:starfinal`.
 
 .. figure:: figs/starpartfinal.png
    :alt: Finished star formation plot
@@ -3774,17 +3761,14 @@ adjust the plot limits until we are happy:
     r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
    -------------------------------------------------------
    Please enter your selection now (y axis or option):2
-   (x axis) (default=1):
+    (x axis) (default=1):
     (render) (0=none) ([0:9], default=0):6
     (vector plot) (0=none, 7=B) ([0:7], default=0):
      Graphics device/type (? to see list, default /xw): /xw
 
-which should produce the plot shown in the left hand panel of
-Figure \ `[fig:multipart1] <#fig:multipart1>`__. Not much can be seen at
+which should produce the plot shown in :numref:`fig:multipart1`. Not much can be seen at
 first – just a few white dots. This is mainly a result of the density
-axis (i.e., the colour bar) not being logged. Moving the cursor over the
-colour bar and pressing ‘l’ results in the plot shown in the right hand
-panel of Figure \ `[fig:multipart1] <#fig:multipart1>`__.
+axis (i.e., the colour bar) not being logged.
 
 .. figure:: figs/multipart1.png
    :alt: multi-panelled figure tutorial part 1
@@ -3792,6 +3776,9 @@ panel of Figure \ `[fig:multipart1] <#fig:multipart1>`__.
    :width: 50.0%
 
    First stage in the multi-panelled figure tutorial: a simple render plot of density
+
+Moving the cursor over the
+colour bar and pressing ‘l’ results in the plot shown in :numref:`fig:multipart1b`
 
 .. figure:: figs/multipart2.png
    :alt: multi-panelled figure tutorial part 1b
@@ -3873,19 +3860,10 @@ Having turned physical units on, we replot the same plot (i.e.,
 answering 2, 1, 6, 0, /xw to the prompts, as previously). First of all
 we find simply a white screen. This is a result of the colour bar axis
 now being wrong. Moving the mouse over the colour bar and pressing ‘a’
-(to adapt) results in the plot shown in the left hand panel of
-Figure \ `[fig:multipart3] <#fig:multipart3>`__. The plot looks
+(to adapt) results in the plot shown in :numref:`fig:multipart3`. The plot looks
 basically identical to the previous plot, except that the axes are now
 in physical units (x and y are in AU and column density is in
 g/cm\ :math:`^{2}`).
-
-Next, we zoom in to the central region of interest using the mouse –
-selecting a region and clicking to zoom in. Pressing ‘o’ centres the
-plot on the origin and as we zoom in it we also press ‘a’ over the
-colour bar to readjust the colour bar limits to the max/min on the
-zoomed-in plot. Finishing with the adjustments (and pressing ‘s’ in the
-plot window to save the current settings) results in the plot shown in
-the right hand panel of Figure \ `[fig:multipart3] <#fig:multipart3>`__.
 
 .. figure:: figs/multipart3.png
    :alt: multi-panelled figure tutorial part 2
@@ -3893,6 +3871,14 @@ the right hand panel of Figure \ `[fig:multipart3] <#fig:multipart3>`__.
    :width: 50.0%
 
    Second stage in the multi-panelled figure tutorial: having changed the axes into physical units
+
+Next, we zoom in to the central region of interest using the mouse –
+selecting a region and clicking to zoom in. Pressing ‘o’ centres the
+plot on the origin and as we zoom in it we also press ‘a’ over the
+colour bar to readjust the colour bar limits to the max/min on the
+zoomed-in plot. Finishing with the adjustments (and pressing ‘s’ in the
+plot window to save the current settings) results in the plot shown in
+:numref:`fig:multipart3b`.
 
 .. figure:: figs/multipart4.png
    :alt: multi-panelled figure tutorial part 2b
@@ -3944,12 +3930,8 @@ choose:
     (vector plot) (0=none, 7=v) ([0:7], default=0):
     Graphics device/type (? to see list, default /xwin): /xw
 
-producing the plot shown in the left panel of
-Figure \ `[fig:surfpart1] <#fig:surfpart1>`__ (I have used ``/png``
-instead of ``/xw`` to produce the figures for the userguide). Moving the
-cursor over the colour bar and pressing ‘l’ to log the colour bar axis
-produces the Figure in the right panel of
-Figure \ `[fig:surfpart1] <#fig:surfpart1>`__.
+producing the plot shown in :numref:`fig:surfpart1` (I have used ``/png``
+instead of ``/xw`` to produce the figures for the userguide).
 
 .. figure:: figs/surfpart1.png
    :alt: surface rendering tutorial part 1
@@ -3957,6 +3939,9 @@ Figure \ `[fig:surfpart1] <#fig:surfpart1>`__.
    :width: 50.0%
 
    First stage in the surface rendering tutorial: a simple render plot of density
+
+Moving the cursor over the colour bar and pressing ‘l’ to log the colour bar axis
+produces :numref:`fig:surfpart1b`.
 
 .. figure:: figs/surfpart2.png
    :alt: surface rendering tutorial part 1b
@@ -3978,8 +3963,7 @@ splash output in the terminal reads, amongst other things:
     rotating particles about y by   0.00
     rotating particles about x by 255.00
 
-Then we have the Figure shown in the left panel of
-Figure \ `[fig:surfpart2] <#fig:surfpart2>`__.
+Then we obtain :numref:`fig:surfpart2`.
 
 .. figure:: figs/surfpart3.png
    :alt: surface rendering tutorial part 2
@@ -3987,13 +3971,6 @@ Figure \ `[fig:surfpart2] <#fig:surfpart2>`__.
    :width: 50.0%
 
    Second stage in the surface rendering tutorial: after adjusting the rotation angle
-
-.. figure:: figs/surfpart4.png
-   :alt: surface rendering tutorial part 2b
-   :name: fig:surfpart2b
-   :width: 50.0%
-
-   and with 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits
 
 Next, we need to turn the 3D surface rendering on. This cannot be done
 in interactive mode so we need to exit – pressing ‘s’ first to save what
@@ -4031,14 +4008,20 @@ frightening : just a black image with a black colour bar! This is
 because the limits we set for column density are several orders of
 magnitude away from the limits on density. Moving the cursor over the
 colour bar and pressing ‘a’ to adapt the limits produces the plot shown
-in the right panel of Figure \ `[fig:surfpart2] <#fig:surfpart2>`__.
+in :numref:`fig:surfpart2b`.
+
+.. figure:: figs/surfpart4.png
+   :alt: surface rendering tutorial part 2b
+   :name: fig:surfpart2b
+   :width: 50.0%
+
+   With 3D surface rendering turned on (which also turns on 3D perspective) and having adjusted the colour bar limits
 
 Note that the plot suddenly appears much smaller – this is a consequence
 of the 3D perspective settings. Moving the cursor into the plot window
 and pressing ‘a’ adapts the plot limits. After also clicking on the
 colour bar and adjusting the colour bar limits, we arrive at the plot
-shown in the left panel of
-Figure \ `[fig:surfpart3] <#fig:surfpart3>`__.
+shown in :numref:`fig:surfpart3`.
 
 .. figure:: figs/surfpart5.png
    :alt: surface rendering tutorial part 3
@@ -4080,8 +4063,7 @@ Next, we turn the axes off using the p)age submenu:
    enter axis option ([-4:30], default=0):-2
      axis =  -2
 
-Plotting the same plot again now results in the plot shown in the right
-panel of Figure \ `[fig:surfpart3b] <#fig:surfpart3b>`__.
+Plotting the same plot again now results in the plot shown in :numref:`fig:surfpart3b`.
 
 .. figure:: figs/surfpart6.png
    :alt: surface rendering tutorial part 3b
@@ -4091,8 +4073,7 @@ panel of Figure \ `[fig:surfpart3b] <#fig:surfpart3b>`__.
    and increasing the number of pixels and having turned the axes off
 
 Finally we will also set the background colour to black, adjust the
-opacity and move the time legend. Notice that in the right panel of
-Figure \ `[fig:surfpart3] <#fig:surfpart3>`__ the surface looks quite
+opacity and move the time legend. Notice that in :numref:`fig:surfpart3b` the surface looks
 blotchy. This is an indication that the surface is too shallow (that is
 we are only seeing particles on the very top). Thus we will adjust the
 opacity for a slightly deeper plot. We proceed as follows: Exiting
@@ -4116,8 +4097,7 @@ at the prompt:
 
 Finally, moving the time legend by positioning the cursor and pressing
 ’G’ and zooming out slightly by pressing ‘-’ once, we arrive at our
-finished figure (or movie frame) shown in
-Figure \ `[fig:surfpartfinal] <#fig:surfpartfinal>`__. Pressing ‘s’ in
+finished figure (or movie frame) shown in :numref:`fig:surfpartfinal`. Pressing ‘s’ in
 interactive mode saves the settings, then pressing ‘q’ returns to the
 splash main menu. To save the settings to disk, press ‘S’ from the main
 menu to save both the ``splash.defaults`` file and the ``splash.limits``
@@ -4240,7 +4220,7 @@ Then (in this example), select column 23 to plot surface density,
     setting x axis to r for surface density plot
 
 ...and the plot will appear - an example surface density plot is shown
-in Figure \ `[fig:surfdens] <#fig:surfdens>`__.
+in :numref:`fig:surfdens`.
 
 .. figure:: figs/surfdens.pdf
    :alt: Azimuthally averaged surface density
@@ -4676,14 +4656,6 @@ Terry Tricco, Yusuke Tsukamoto, Sigfried Vanaverbeke, Enrique
 Vazquez-Semadeni Antonio Vazquez, Tim Waters, James Wurster, and Matt
 Young. And to everyone who has cited the splash paper!
 
-.. raw:: latex
-
-   \newpage
-
-.. raw:: latex
-
-   \appendix
-
 Source code overview
 ====================
 
@@ -4695,19 +4667,7 @@ code:
 +===================================+===================================+
 |                                   |                                   |
 +-----------------------------------+-----------------------------------+
-| .. raw:: latex                    | allocates memory for main arrays  |
-|                                   |                                   |
-|    \endfoot                       |                                   |
-|                                   |                                   |
-| .. raw:: latex                    |                                   |
-|                                   |                                   |
-|    \hline                         |                                   |
-|                                   |                                   |
-| .. raw:: latex                    |                                   |
-|                                   |                                   |
-|    \endlastfoot                   |                                   |
-|                                   |                                   |
-| allocate.f90                      |                                   |
+| allocate.f90                      | allocates memory for main arrays  |
 +-----------------------------------+-----------------------------------+
 | calc_quantities.f90               | calculates additional quantities  |
 |                                   | from particle data                |
@@ -5055,10 +5015,9 @@ problem is to determine the jump in pressure and velocity across the
 shock front given the initial left and right states. This is performed
 in a separate subroutine (riemannsolver) as there are many different
 methods by which this can be done (see e.g.
-[Toro92]_). The actual subroutine exact_shock
+Toro92_). The actual subroutine exact_shock
 reconstructs the shock profile (consisting of a rarefaction fan, contact
-discontinuity and shock, summarised in Figure
-`[fig:shocktube] <#fig:shocktube>`__), given the post-shock values of
+discontinuity and shock, summarised in :numref:`fig:shocktube`), given the post-shock values of
 pressure and velocity.
 
 .. figure:: figs/sodshock.pdf
@@ -5153,10 +5112,6 @@ graph. The function is of the form
 where :math:`k` is the wavenumber and :math:`\omega` is the angular
 frequency. These parameters are set via the input values of wavelength
 :math:`\lambda = 2\pi/k` and wave period :math:`P = 2\pi/\omega`.
-
-.. raw:: latex
-
-   \centering
 
 .. table:: Input parameters for the linear wave exact solution
 
@@ -5263,10 +5218,6 @@ where :math:`\nu` is the number of spatial dimensions. The parameter
 For particles of different masses, a different curve is plotted for each
 different mass value.
 
-.. raw:: latex
-
-   \newpage
-
 .. _sec:writeyourown:
 
 Writing your own read_data subroutine
@@ -5307,9 +5258,13 @@ References
 
 .. [MP04] `Monaghan & Price (2004), MNRAS 350, 1449 <https://ui.adsabs.harvard.edu/abs/2004MNRAS.350.1449M/abstract>`_
 
-.. [PM07] `Price & Monaghan (2007), MNRAS 374, 1347 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.374.1347P/abstract>`_
+.. [Price07] `Price (2007), PASA 24, 159 <https://ui.adsabs.harvard.edu/abs/2007PASA...24..159P/abstract>`_
 
 .. [Price12] `Price (2012), J. Comp. Phys. 231, 759 <https://ui.adsabs.harvard.edu/abs/2012JCoPh.231..759P/abstract>`_
+
+.. [PB07] `Price & Bate (2007), MNRAS 377, 77 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.377...77P/abstract>`_
+
+.. [PM07] `Price & Monaghan (2007), MNRAS 374, 1347 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.374.1347P/abstract>`_
 
 .. [RP07] `Rosswog & Price (2007), MNRAS 379, 915 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.379..915R/abstract>`_
 
