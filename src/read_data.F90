@@ -381,8 +381,12 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
  
  selected_format = .false.
  
- if (any((index(extensions, '.h5') > 0)) .and. present(informat)) then
-   call select_data_format(informat//"_hdf5",ierr) 
+ if (any((index(extensions, '.h5') > 0))) then
+    if (present(informat)) then
+       call select_data_format(informat//"_hdf5",ierr)
+    elseif (any((index(extensions, '.pb') > 0))) then
+       call select_data_format("phantom_hdf5", ierr)
+    endif
  
  elseif (any((index(extensions, '.fits') > 0))) then
    call select_data_format('fits',ierr)
