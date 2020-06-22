@@ -13,7 +13,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +22,7 @@ copyright = '2004-2020 Daniel Price'
 author = 'Daniel Price'
 
 # The full version, including alpha/beta/rc tags
-release = 'v3.0.0'
+release = 'v2.10.1'
 
 # -- General configuration ---------------------------------------------------
 
@@ -30,6 +30,7 @@ release = 'v3.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+'sphinx_rtd_theme'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -49,7 +50,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-##html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -61,3 +62,6 @@ numfig = True
 math_numfig = True
 numfig_secnum_depth = 2
 math_eqref_format = "Eq. {number}"
+
+def setup(app):
+    app.add_stylesheet('css/custom.css')

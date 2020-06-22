@@ -103,6 +103,8 @@ in :numref:`fig:rhoh`.
    |                 | file)           |                 |                 |
    +-----------------+-----------------+-----------------+-----------------+
 
+.. _sec:interactive:
+
 Interactive mode
 -----------------
 
@@ -110,19 +112,63 @@ Many useful tasks can now be achieved by moving the mouse to the plot
 window and selecting areas or pressing keystrokes – this is “interactive
 mode”. Most useful are:
 
-- press ``l`` with the mouse over the colour bar for a log axis
+- press ``l`` with the mouse over the colour bar for a *log axis*
 
-- press ``a`` to adapt the plot limits (with mouse either on the colour bar or inside the plot)
+- ``a`` to *adapt the plot limits* (with mouse on the colour bar, inside the plot, or positioned next to the x or y axes)
 
-- select an area with the mouse to zoom
+- ``left click`` to *select an area* with the mouse and ``click`` to *zoom*
 
-- type ``q`` in the plot window to close the plotting window and return to the menu
+- ``left click`` on the colour bar to *change the rendering limits*
 
-- type ``q`` again from the splash main menu to exit splash altogether.
+- ``space`` to *skip to the next file* (``right click`` or ``b`` to go back)
 
-- press ``h`` in the plot window for the full list of commands
+- ``-`` or ``+`` to *zoom in* or *out*
 
-See :ref:`sec:interactive` for more.
+- ``Enter`` for :ref:`sec:hollywood`
+
+- ``o`` to *recentre the plot* on the origin
+
+- ``r`` to *refresh* the plot (e.g. after changing the window size)
+
+- ``g`` to *plot a line and find its gradient*
+
+- ``m`` or ``M`` to *change the colour map*
+
+- ``f`` to *flip the rendering* to the next quantity
+
+- ``<``, ``>``, ``{``, ``}`` and ``/``, ``\`` to *rotate particles* around *z*, *y* and *x axes*, respectively
+
+- ``G`` to *move the legend*
+
+- ``ctrl-t`` to *annotate with text*
+
+- ``backspace`` to delete annotation
+
+- ``s`` in the plot window to *save changes* between timesteps, otherwise the settings
+  will revert when you move to the next timestep.
+
+- ``q`` in the plot window to *quit the plotting window* and return to the menu
+
+- ``q`` again from the splash main menu to *quit splash altogether*.
+
+- ``h`` in the plot window for the full list of commands
+
+On particle plots you can additionally:
+
+- select an area and press ``0``-``9`` to *colour particles* (particle colours stick
+  between plots, so you can use this to find particles with unusual parameters)
+
+- select an area and press ``0`` to *hide selected particles*
+
+- move the mouse over a particle and press ``c`` to see the size of the *smoothing
+  circle* for that particle
+
+These tasks can also be achieved non-interactively by a series of
+text-based menus (see :ref:`sec:settings`). For example limits changing options are contained in the
+:ref:`sec:menu-l`, so to manually set plot limits we would type ``l`` from
+the main menu, then ``2`` for option 2 (set manual limits) and follow the
+prompts to set the limits for a particular data column.
+See also :ref:`sec:menu-i`.
 
 .. _sec:renderplot:
 
@@ -249,12 +295,12 @@ option in the :ref:`sec:menu-o`.
 Moving forwards and backwards through data files
 ------------------------------------------------
 
-If you have put more than one file on the command line (or alternatively
+See :ref:`sec:interactive`. If you have put more than one file on the command line (or alternatively
 the file contains more than one dump), it is then possible to move
 forwards and backwards through the data:
 
-- press the space bar to move to the next file
-  (with the cursor in the plot window - this is “interactive mode”).
+- press the ``space bar`` to move to the next file
+  (with the cursor in the plot window - this is :ref:`sec:interactive`).
 
 - press ``b`` to load and plot the previous file
 
@@ -269,42 +315,11 @@ the command line automatically.
 Zooming in and out / changing plot limits
 -----------------------------------------
 
-Having plotted to an interactive device (e.g. /xw), tasks such as
+See :ref:`sec:interactive`. Having plotted to an interactive device (e.g. /xw), tasks such as
 zooming in and out, selecting, colouring and hiding particles, changing
 the limits of both the plot and the colour bar and many other things can
 be achieved using either the mouse (i.e., selecting an area on which to
-zoom in) or by a combination of the mouse and a keystroke. For example:
-
-- select an area and click to zoom in
-
-- click on the colour bar to change the rendering limits
-
-- select an area and press ``2`` to colour particles red (particle colours stick
-  between plots, so you can use this to find particles with unusual parameters)
-
-- select an area and press ``0`` to hide selected particles
-
-- Press ``-`` or ``+`` to zoom in or out
-
-- move the mouse over a particle and press ’c’ to see the size of the smoothing
-  circle for that particle
-
-- press ``a`` (adapt plot limits) to restore the plot limits to the maximum values for the data currently plotted
-  (similarly pressing ’a’ on the colour bar resets the colour bar limits
-  to the minimum and maximum values of the rendered quantity)
-
-- press ``h`` in interactive mode (that is, with your mouse in the plotting
-  window) for the full list of interactive commands (text
-  appears in the terminal from which splash was invoked)
-
-- press ``s`` in the plot window to save changes between timesteps, otherwise the settings
-  will revert when you move to the next timestep.
-
-These tasks can also be achieved non-interactively by a series of
-text-based menus (see :ref:`sec:settings`). For example limits changing options are contained in the
-:ref:`sec:menu-l`, so to manually set plot limits we would type “l” from
-the main menu, then “2” for option 2 (set manual limits) and follow the
-prompts to set the limits for a particular data column.
+zoom in) or by a combination of the mouse and a keystroke.
 
 .. _sec:postscript:
 
@@ -374,7 +389,7 @@ See the `online faq <http://users.monash.edu.au/~dprice/splash/faqs.html>`_ for 
 
 Hollywood mode
 ---------------
-Press ``Enter`` or ``ctrl-h`` in the interactive plot window to start ``Hollywood mode``,
+Press ``Enter`` or ``ctrl-m`` in the interactive plot window to start ``Hollywood mode``,
 which changes to plot settings better suited to movies.
 
 The following shows :ref:`fig:default`:
@@ -400,11 +415,11 @@ These can improve the look of a visualisation substantially
 compared to the default options:
 
 #. **Log the colour bar**. To do this simply move the cursor over the colour
-   bar and hit “l” (for log). Or non-interactively via the “apply log or
+   bar and hit ``l`` (for log) in :ref:`sec:interactive`. Or non-interactively via the “apply log or
    inverse transformations to columns” option in the :ref:`sec:menu-l`.
 
 #. **Adjust the colour bar limits**. Position the mouse over the colour bar
-   and left-click. To revert to the widest max/min possible for the data
+   and left-click in :ref:`sec:interactive`. To revert to the widest max/min possible for the data
    plotted, press ‘a’ with the cursor positioned over the colour bar.
    Limits can also be set manually in the :ref:`sec:menu-l`.
 

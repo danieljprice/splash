@@ -10,6 +10,7 @@ Visualisation of smoothed particle hydrodynamics data using splash
 
 .. toctree::
    :maxdepth: 3
+   :caption: Userguide
 
    intro
    getting-started
@@ -19,6 +20,10 @@ Visualisation of smoothed particle hydrodynamics data using splash
    other
    contribs
    refs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Appendices
 
    source
    geometry

@@ -124,7 +124,7 @@ Re-reading the initial data / changing the dump file
 
 The data can be re-read from the dump file or a new dump file can be
 selected by choosing the :ref:`sec:menu-d`, option 1 (or just “d1” from the
-main menu). In practise it is usually faster to exit splash and restart
+main menu). In practice it is usually faster to exit splash and restart
 with the new dump file name on the command line (remember to save by
 pressing ’S’ from the main menu before exiting to save both the current
 settings and the plot limits – then you can continue plotting with the
@@ -375,7 +375,7 @@ physical unit settings” in the :ref:`sec:menu-d`. Changing the units of column
 zero corresponds to the time (appears as the first row in the
 ‘splash.units’ file).
 
-.. _sec:interactive:
+.. _sec:menu-i:
 
 (i)nteractive mode
 ------------------
@@ -977,7 +977,7 @@ based on a local number density estimate from the relation
 
 Actually, none of this should be necessary, as the gravity for dark
 matter should be softened with smoothing lengths defined like this in
-the first place. The historical practise of fixed softening lengths has
+the first place. The historical practice of fixed softening lengths has
 arisen only because of confusion about what softening really means (and
 worries about energy conservation with adaptive softening lengths). What
 you are trying to do is solve Poisson’s equation for the dark matter

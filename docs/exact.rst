@@ -60,7 +60,7 @@ pressure and velocity.
 .. figure:: figs/sodshock.pdf
    :alt: exact solution for one-dimensional shock tube
    :name: fig:shocktube
-   :width: 80.0%
+   :width: 100.0%
 
    Example of exact solution for one-dimensional shock tube problem (red
    line) compared to the SPH solution (black line/particles), utilising
@@ -71,11 +71,11 @@ computed from the post shock velocity using the relation
 
 .. math:: v_{shock} = v_{post}\frac{(\rho_{post}/\rho_R)}{(\rho_{post}/\rho_R)- 1},
 
- where the jump conditions imply
+where the jump conditions imply
 
 .. math:: \frac{\rho_{post}}{\rho_R} = \frac{(P_{post}/P_R) + \beta}{1 + \beta (P_{post}/P_R)}
 
- with
+with
 
 .. math:: \beta = \frac{\gamma - 1}{\gamma + 1}.
 
@@ -96,7 +96,7 @@ static polytrope with arbitrary :math:`\gamma`. From Poisson’s equation
 assuming only radial dependence this is given by
 
 .. math::
-   :label:eq_poissonsph
+   :label: eq_poissonsph
 
    \frac{1}{r^{2}} \frac{d}{dr} \left(r^{2} \frac{d\phi}{dr} \right) = 4\pi G \rho(r).
 
@@ -105,19 +105,19 @@ The momentum equation assuming an equilibrium state
 :math:`P = K\rho^{\gamma}` gives
 
 .. math::
+   :label: eq_polyk
 
    \frac{d\phi}{dr} = - \frac{\gamma K}{\gamma-1}\frac{d}{dr} \left[\rho^{(\gamma -1)} \right]
-   :label:eq_polyk
 
-Combining (`[eq:poissonsph] <#eq:poissonsph>`__) and
-(`[eq:polyk] <#eq:polyk>`__) we obtain an equation for the density
+Combining (:eq:`eq_poissonsph`) and
+(:eq:`eq_polyk`) we obtain an equation for the density
 profile
 
 .. math::
+   :label: eq:dens
 
    \frac{\gamma K}{4\pi G (\gamma - 1)} \frac{1}{r^{2}} \frac{d}{dr} \left[r^{2}
    \frac{d}{dr}\left( \rho^{\gamma-1} \right) \right] + \rho(r) = 0.
-   \label{eq:dens}
 
 This equation can be rearranged to give
 
@@ -193,15 +193,15 @@ Linear solutions
 
 The linear solution for the velocity is given by
 
-.. math:: v = 0.05 C_s G_n(x) \cos{\omega t} )
+.. math:: v = 0.05 C_s G_n(x) \cos{\omega t} ).
 
- density is
+The density is
 
-.. math:: \rho = \bar{\rho} + \eta
+.. math:: \rho = \bar{\rho} + \eta,
 
 where
 
-.. math:: \eta = 0.1 C_s \omega P_{n+1}(x) \sin{(\omega t)})
+.. math:: \eta = 0.1 C_s \omega P_{n+1}(x) \sin{(\omega t)}.
 
 Non-linear solution
 ~~~~~~~~~~~~~~~~~~~~
@@ -210,7 +210,7 @@ In this case the velocity is given by
 
 .. math:: v = A(t) x,
 
-whilst the density solution is
+while the density solution is
 
 .. math:: \rho^{\gamma -1} = H(t) - C(t) x^2.
 
@@ -227,9 +227,9 @@ differential equations
 The relation
 
 .. math::
+   :label: eq:kconst
 
    A^2 = -1 - \frac{2 \sigma C}{\gamma -1} + kC^{\frac{2}{\gamma +1}},
-   \label{eq:kconst}
 
 is used to check the quality of the solution of the differential
 equations by evaluating the constant :math:`k` (which should remain
@@ -248,9 +248,9 @@ h vs :math:`\rho`
 The subroutine exact_hrho simply plots the relation between smoothing
 length and density, i.e.,
 
-.. math:: h = h_{fact} \left(\frac{m}{\rho}\right)^{1/\nu}
+.. math:: h = h_{\rm fact} \left(\frac{m}{\rho}\right)^{1/\nu}
 
 where :math:`\nu` is the number of spatial dimensions. The parameter
-:math:`h_{fact}` is output by the code into the header of each timestep.
+:math:`h_{\rm fact}` is output by the code into the header of each timestep.
 For particles of different masses, a different curve is plotted for each
 different mass value.
