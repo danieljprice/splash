@@ -33,7 +33,7 @@ Compiling and linking with giza
 
 You can either install giza with your package manager, or in a subdirectory
 of splash. To install in a splash subdirectory, use:
-
+.. :code:
    cd splash
    git clone http://github.com/danieljprice/giza
    make withgiza
@@ -57,9 +57,18 @@ change the necessary parts to suit your data files. Note that reading
 directly from unformatted data files is \*much\* faster than reading
 from formatted (ascii) output.
 
-A standard “make” will create the binaries listed in
-:ref:`tab:defaultreads` which read the
-corresponding data formats listed in the third column.
+A standard “make” will create a binary which supports the file formats listed in
+:ref:`tab:defaultreads`. 
+All data formats in the splash repository that do not
+have an additional dependencies (e.g. HDF5) will be
+supported in the splash binary as of version 3.0.0.
+This means that the user needs to specify the data type
+they are reading as a command line option. For example,
+the following will read a phantom dumpfile: 
+.. code: splash --format phantom disc_00000
+In some cases, the format of the file can be inferred if
+the the file has a known suffix. If splash is compiled with `HDF5=yes`,
+the 
 :ref:`tab:otherreads` lists other data reads
 implemented but not compiled by default.
 
@@ -67,9 +76,9 @@ implemented but not compiled by default.
    :name: tab:defaultreads
 
    +-----------------+-----------------+-----------------+-----------------+
-   | splash binary   | Formats read    | read_data file  | Comments        |
+   | splash call     | Formats read    | read_data file  | Comments        |
    +=================+=================+=================+=================+
-   | asplash, splash | ascii           | ``read_data_asc | Generic data    |
+   | splash          | ascii           | ``read_data_asc | Generic data    |
    |                 |                 | ii.f90``        | read for        |
    |                 |                 |                 | n-column ascii  |
    |                 |                 |                 | formats.        |
@@ -89,11 +98,11 @@ implemented but not compiled by default.
    |                 |                 |                 | (e.g. energy vs |
    |                 |                 |                 | time files).    |
    +-----------------+-----------------+-----------------+-----------------+
-   | dsplash         | dragon          | ``read_data_dra | see environment |
+   | splash -f dragon| dragon          | ``read_data_dra | see environment |
    |                 |                 | gon.f90``       | variable        |
    |                 |                 |                 | options.        |
    +-----------------+-----------------+-----------------+-----------------+
-   | gsplash         | gadget,         | ``read_data_gad | Handles both    |
+   | splash -f gadget| gadget,         | ``read_data_gad | Handles both    |
    |                 | gadget-2,       | get.f90``       | default and     |
    |                 | gadget-3        |                 | block-labelled  |
    |                 |                 |                 | formats (see    |
@@ -101,32 +110,32 @@ implemented but not compiled by default.
    |                 |                 |                 | variable        |
    |                 |                 |                 | options).       |
    +-----------------+-----------------+-----------------+-----------------+
-   | nsplash         | ndspmhd         | ``read_data_dan | Format for the  |
+   |splash -f ndspmhd| ndspmhd         | ``read_data_dan | Format for the  |
    |                 |                 | sph.f90``       | ndspmhd         |
    |                 |                 |                 | SPH/SPMHD code  |
    |                 |                 |                 | (publicly       |
    |                 |                 |                 | available from  |
    |                 |                 |                 | my website).    |
    +-----------------+-----------------+-----------------+-----------------+
-   | rsplash         | magma           | ``read_data_sro | Stephan         |
+   | splash -f magma | magma           | ``read_data_sro | Stephan         |
    |                 |                 | sph.f90``       | Rosswog’s code  |
    +-----------------+-----------------+-----------------+-----------------+
-   | ssplash         | sphNG, phantom  | ``read_data_sph | sphNG is        |
+   |splash -f phantom| sphNG, phantom  | ``read_data_sph | sphNG is        |
    |                 |                 | NG.f90``        | Matthew Bate’s  |
    |                 |                 |                 | SPH code.       |
    +-----------------+-----------------+-----------------+-----------------+
-   | srsplash        | seren           | ``read_data_ser | The SEREN SPH   |
+   | splash -f seren | seren           | ``read_data_ser | The SEREN SPH   |
    |                 |                 | en.f90``        | code (Hubber,   |
    |                 |                 |                 | McLeod et al.)  |
    +-----------------+-----------------+-----------------+-----------------+
-   | tsplash         | gasoline, tipsy | ``read_data_tip | Reads both      |
+   | splash -f gaseoline| gasoline, tipsy | ``read_data_tip | Reads both      |
    |                 |                 | sy.f90``        | binary and      |
    |                 |                 |                 | ascii TIPSY     |
    |                 |                 |                 | files           |
    |                 |                 |                 | (determined     |
    |                 |                 |                 | automatically). |
    +-----------------+-----------------+-----------------+-----------------+
-   | vsplash         | vine            | ``read_data_VIN | see environment |
+   | splash -f vine  | vine            | ``read_data_VIN | see environment |
    |                 |                 | E.f90``         | variable        |
    |                 |                 |                 | options.        |
    +-----------------+-----------------+-----------------+-----------------+
@@ -213,7 +222,8 @@ implemented but not compiled by default.
    | format          |                 | an.f90``        |                 |
    +-----------------+-----------------+-----------------+-----------------+
    | ``.pbob``       | psplash         | ``read_data_pbo | David Brown’s   |
-   | format          |                 | b.f90``         | SPH code        |
+   | format          |                 | b.f90``         | SPH code. To make available, you must specify |
+   |                 |                 |                 | `PBOB_DIR=\path\to\PBOB\lib`
    +-----------------+-----------------+-----------------+-----------------+
 
 Further details on writing your own subroutine are given in
