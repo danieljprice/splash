@@ -4,8 +4,8 @@ Other useful functionality
 
 .. _sec:convert:
 
-Converting binary dump files to ascii using splash
----------------------------------------------------
+Conversion of binary data files to ascii
+-----------------------------------------
 
 splash has a command line feature which can be used to convert binary
 SPH dump files into ascii format. The syntax is
@@ -26,8 +26,8 @@ For other command line options, see :ref:`sec:commandline`.
 
 .. _sec:converttogrid:
 
-Converting SPH data files to 3D gridded data using splash
-----------------------------------------------------------
+Interpolation of SPH data to 2D and 3D grids
+---------------------------------------------
 
 splash has a command line feature which can be used to read binary SPH
 dump files and output 3D gridded data in a variety of formats. The
