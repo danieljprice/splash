@@ -14,7 +14,7 @@ file(s) on the command line, e.g.
 
    splash myrun*.dat
 
-| where splash should be replaced with ‘asplash’, ‘gsplash’ etc.
+| where splash should be replaced with `ssplash`, `gsplash` etc.
   depending on the data format.
 | After a successful data read, the menu should appear as something like
   the following (the example given is for a “minidump” from Stephan
@@ -68,7 +68,7 @@ For example, to plot density vs smoothing length, type
 The ``default=`` refers to the default value assigned if you just press
 the return key. The last prompt asks for the device to which output
 should be directed. A full list of available graphics devices is given
-by typing ‘?’ at the prompt. Some of the most useful devices are given
+by typing ``?`` at the prompt. Some of the most useful devices are given
 in :ref:`tab:devices`. In the above we have selected
 the X-window driver which means that the output is sent to the screen
 (provided X-windows is running), as demonstrated in the screenshot shown
@@ -109,8 +109,8 @@ Interactive mode
 -----------------
 
 Many useful tasks can now be achieved by moving the mouse to the plot
-window and selecting areas or pressing keystrokes – this is “interactive
-mode”. Most useful are:
+window and selecting areas or pressing keystrokes – this is :ref:`sec:interactive`.
+Most useful are:
 
 - press ``l`` with the mouse over the colour bar for a *log axis*
 
@@ -164,7 +164,7 @@ On particle plots you can additionally:
   circle* for that particle
 
 These tasks can also be achieved non-interactively by a series of
-text-based menus (see :ref:`sec:settings`). For example limits changing options are contained in the
+text-based :ref:`sec:menu` (see :ref:`sec:settings`). For example limits changing options are contained in the
 :ref:`sec:menu-l`, so to manually set plot limits we would type ``l`` from
 the main menu, then ``2`` for option 2 (set manual limits) and follow the
 prompts to set the limits for a particular data column.
@@ -187,7 +187,7 @@ refer to coordinates. For example
    Graphics device/type (? to see list, default /xwin): /xw
 
 Notice that in this case that options appeared for rendered and vector
-plots. Our choice of “5” at the (render) prompt corresponds to column 5,
+plots. Our choice of ``5`` at the (render) prompt corresponds to column 5,
 which in this case is the density, producing the plot shown in the
 screenshot in :numref:`fig:renderplot`.
 
@@ -198,20 +198,21 @@ screenshot in :numref:`fig:renderplot`.
 
    Screenshot of 3D column density plot to an X-window
 
-Note that the render prompts only appear if, in the read_data
-subroutine, values are set for the integer parameters irho, ipmass and
-ih corresponding to the locations of density, particle mass and
-smoothing length in the data arrays and provided the number of
-coordinate dimensions is 2 or greater (splash can be used for SPH codes
-in 1, 2 and 3 dimensions and even for plotting ascii data where there
-are no “coordinates”).
+.. important::
+   Rendered plots only work if columns for density, particle mass and
+   smoothing length are correctly identified in the data, and provided the
+   number of coordinates is 2 or greater. Without these, rendering will
+   just colour the points according to the selected column.
+   See :ref:`sec:writeyourown` for internal details.
 
-Cross section slice
--------------------
+.. _sec:xsec:
 
-To plot a cross section slice instead of a projection in 3D, type ’x’ at
+Cross section
+--------------
+
+To plot a cross section slice instead of a projection in 3D, type ``x`` at
 the main menu to open the :ref:`sec:menu-x` and
-choose option 1 “switch between cross section and projection”. Then
+choose option ``1) switch between cross section and projection``. Then
 re-plot the rendered plot again (exactly as in the previous example
 :ref:`sec:renderplot`), setting the slice position at the prompt:
 
@@ -226,12 +227,14 @@ which produces the plot shown in the screenshot in :numref:`fig:renderplot_xsec`
    :name: fig:renderplot_xsec
    :width: 80.0%
 
-   Screenshot of 3D cross section slice plot to an X-window
+   Screenshot of 3D :ref:`sec:xsec` slice plot to an X-window
+
+.. _sec:vectorplots:
 
 Vector plots
 ------------
 
-A prompt to plot vector arrows on top of rendered plots (or on top of
+A prompt to plot vector arrows on top of :ref:`sec:renderplot` (or on top of
 particle plots) appears whenever vectors are present in the data (for
 details of how to specify this in your data read, see
 :ref:`sec:writeyourown`), taking the form:
@@ -252,23 +255,22 @@ a pixel array using the SPH kernel.
 
 Settings related to vector plots can be changed via :ref:`sec:menu-v`.
 The size of the arrows is set by the maximum plot limit over all of the vector components.
-Alternatively the arrow size can be changed interactively using ’v’, ’V’ (to decrease
-and increase the arrow size respectively) and ’w’ (to automatically
-adjust the arrow size so that the longest arrow is of order one pixel
-width).
+Alternatively the arrow size can be changed interactively using ``v``, ``V`` (*decrease
+/increase the arrow size*) and ``w`` (*automatically
+adjust arrow size so longest arrow is one pixel width*).
 
 Contour plots
 -------------
 
-To plot contours of a quantity instead of a rendered plot, simply set
+To plot contours of a quantity instead of :ref:`sec:renderplot`, simply set
 the colour scheme used for rendering to 0 (contours only) via the
 “change colour scheme” option in the :ref:`sec:menu-r` (type “r2” from the
 main menu as a shortcut to option 2 in the :ref:`sec:menu-r`).
 
-Contours of an additional quantity can also be plotted on top of a
-render plot. However the prompt for an additional contour plot does not
-appear by default – it can be turned on via the “plot contours” option
-in the :ref:`sec:menu-r` (type “r3” at the main menu as a shortcut). With
+Contours of an additional quantity can also be plotted on top of
+:ref:`sec:renderplot`. However the prompt for an additional contour plot does not
+appear by default – it can be turned on via the ``plot contours`` option
+in the :ref:`sec:menu-r` (type ``r3`` at the main menu as a shortcut). With
 this option set *and a non-zero response to the render prompt*, a prompt
 appears below the render prompt:
 
@@ -289,7 +291,7 @@ of one particle type is shown by the rendered plot and the density of
 another particle type (with different limits) is shown by contours. This
 can be achieved because once contour plotting is turned on, the
 contribution of a given particle type to either the contours or rendered
-plots can be turned on or off via the “turn on/off particles by type”
+plots can be turned on or off via the ``turn on/off particles by type``
 option in the :ref:`sec:menu-o`.
 
 Moving forwards and backwards through data files
@@ -308,14 +310,17 @@ forwards and backwards through the data:
 
 - type `10` and press ``b`` to move back by 10 files
 
-Press ’h’ in :ref:`sec:interactive` for more. If you plot to
-a non-interactive device, splash simply cycles through all the files on
-the command line automatically.
+Press ``h`` in :ref:`sec:interactive` for more.
+
+.. important::
+   If you plot to
+   a non-interactive device, splash simply cycles through all the files on
+   the command line automatically.
 
 Zooming in and out / changing plot limits
 -----------------------------------------
 
-See :ref:`sec:interactive`. Having plotted to an interactive device (e.g. /xw), tasks such as
+See :ref:`sec:interactive`. Having plotted to an interactive device (e.g. ``/xw``), tasks such as
 zooming in and out, selecting, colouring and hiding particles, changing
 the limits of both the plot and the colour bar and many other things can
 be achieved using either the mouse (i.e., selecting an area on which to
@@ -323,23 +328,40 @@ zoom in) or by a combination of the mouse and a keystroke.
 
 .. _sec:postscript:
 
-Producing an encapsulated postscript figure for a paper
--------------------------------------------------------
+Producing figures for LaTeX documents
+--------------------------------------
 
-Producing a postscript or pdf plot suitable for inclusion in a LaTeX file is
-simple: at the device prompt, type
+Producing a pdf or postscript plot suitable for inclusion in a LaTeX file is
+simple. At the device prompt, type
 
 ::
 
     Graphics device/type (? to see list, default /xw): myfile.eps
 
-that is, instead of “/xw” (for an X-window), simply type “/eps” or
-“.eps” to use the encapsulated postscript driver. This produces a file
+that is, instead of ``/xw`` (for an X-window), simply type ``/eps`` or
+``.eps`` to use the encapsulated postscript driver. This produces a file
 which by default is called ``splash.eps``, or if multiple files have
 been read, a sequence of files called ``splash_0000.eps``,
 ``splash_0001.eps``, etc. To specify both the device and filename, type
 the full filename (e.g. ``myfile.eps``) as the device. Files produced in
 this way can be directly incorporated into LaTeX using standard packages.
+
+.. danger::
+   Do **not** use the ``/png`` driver to produce files for LaTeX documents. Your
+   axes will appear pixellated and blurred.
+   Use a vector graphics device (eps or pdf) instead. These give clean, sharp
+   and infinitely scalable text and lines.
+
+.. hint::
+   Using ``eps`` format is recommended for LaTeX as it will always crop
+   to the exact boundaries of the plot. The inbuilt ``pdf`` driver may
+   require cropping of whitespace.  Encapsulated postscript can be easily
+   converted to pdf (for pdflatex) on the command line using::
+
+     epstopdf file.eps
+
+   Most pdflatex engines (including `Overleaf <http://overleaf.com>`_)
+   will handle/convert eps automatically.
 
 .. _sec:movies:
 
@@ -354,10 +376,11 @@ want to use on the command line:
 
 and use an interactive device to adjust options until it looks right.
 
-.. HINT:: movies look best with minimal annotation, e.g. using :ref:`sec:hollywood`
+.. hint::
+   Movies look best with minimal annotation, e.g. using :ref:`sec:hollywood`
    or the backspace key in interactive mode to manually delete annotation
 
-If in interactive mode type ’s’ to save the current settings, then plot the
+If in interactive mode type ``s`` to save the current settings, then plot the
 same thing again but to a non-interactive device. For example, to
 generate a sequence of png files ::
 
@@ -369,6 +392,14 @@ plotting page generated (or enter “``myfile.png``” at the device prompt
 to generate ``myfile_0000.png``, ``myfile_0001.png``,
 ``myfile_0002.png``\ …).
 
+
+.. hint::
+   Avoid prompts altogether using the :ref:`sec:commandline`. For example,
+   to produce the above sequence of files from the command line, use ::
+
+     splash -r 5 -dev /png
+
+   See also :ref:`sec:batchmode`.
 
 Producing a movie from a sequence of images
 --------------------------------------------
@@ -415,24 +446,24 @@ These can improve the look of a visualisation substantially
 compared to the default options:
 
 #. **Log the colour bar**. To do this simply move the cursor over the colour
-   bar and hit ``l`` (for log) in :ref:`sec:interactive`. Or non-interactively via the “apply log or
-   inverse transformations to columns” option in the :ref:`sec:menu-l`.
+   bar and hit ``l`` (for log) in :ref:`sec:interactive`. Or non-interactively via the
+   ``apply log or inverse transformations to columns`` option in the :ref:`sec:menu-l`.
 
 #. **Adjust the colour bar limits**. Position the mouse over the colour bar
    and left-click in :ref:`sec:interactive`. To revert to the widest max/min possible for the data
-   plotted, press ‘a’ with the cursor positioned over the colour bar.
+   plotted, press ``a`` with the cursor positioned over the colour bar.
    Limits can also be set manually in the :ref:`sec:menu-l`.
 
-#. **Change the colour scheme**. Press ‘m’ or ‘M’ in interactive mode
+#. **Change the colour scheme**. Press ``m`` or ``M`` in :ref:`sec:interactive`
    to cycle forwards or backwards through the available colour schemes.
 
 #. **Change the paper size**. To produce high-resolution images/movies, use
-   the “change paper size” option in the :ref:`sec:menu-p` to set the paper
+   the ``change paper size`` option in the :ref:`sec:menu-p` to set the paper
    size in pixels.
 
 #. **Try normalised or exact interpolation**. If your simulation does *not*
    involve free surfaces (or alternatively if the free surfaces are not
-   visible in the figure), turning the “normalise interpolations” option
+   visible in the figure), turning the ``normalise interpolations`` option
    on (in the :ref:`sec:menu-r`) may improve the smoothness of the
    rendering. This is turned off by default because it leads to
    funny-looking edges. Exact rendering performs exact sub-pixel rendering
@@ -440,33 +471,33 @@ compared to the default options:
 
 #. **Remove annotation/axes**. For movies, often axes are unnecessary and
    detract from the visual appeal. Use :ref:`sec:hollywood` or delete
-   annotation by pressing backspace in the interactive window. Alternatively each can
-   be turned off manually – axes via the “axes options” option in the
-   :ref:`sec:menu-p`; the colour bar by the “colour bar options” entry in
+   annotation by pressing backspace in :ref:`sec:interactive`. Alternatively each can
+   be turned off manually – axes via the ``axes options`` option in the
+   :ref:`sec:menu-p`; the colour bar by the ``colour bar options`` entry in
    the :ref:`sec:menu-r` and the legends via options in the :ref:`sec:menu-g`.
 
 #. **Change axes/page colours**. The background colour (colour of the page)
-   and foreground colour (used for axes etc) can be changed vie the “set
-   foreground/background colours” option in the :ref:`sec:menu-p`.
+   and foreground colour (used for axes etc) can be changed vie the
+   ``set foreground/background colours`` option in the :ref:`sec:menu-p`.
 
 #. **Move the legend or turn it off**. The time legend can be moved by
-   positioning the mouse and pressing ‘G’ in interactive mode. The
+   positioning the mouse and pressing ``G`` in interactive mode. The
    legend can be turned off in the :ref:`sec:menu-g` or by pressing
    backspace in interactive mode. Similarly the vector plot legend can
    be turned on/off in the :ref:`sec:menu-v` and moved by positioning the
-   cursor and pressing ‘H’.
+   cursor and pressing ``H``.
 
 #. **Use physical units on the axes**. These can be set via the :ref:`sec:menu-d`.
    See :ref:`sec:changingunits` for more details.
 
 #. **Save settings to disk**! Don’t waste your effort without being able to
-   reproduce the plot you have been working on. Pressing ‘s’ in
+   reproduce the plot you have been working on. Pressing ``s`` in
    interactive mode only saves the current settings for subsequent
-   timesteps. Pressing ‘s’ from the main menu saves these settings to
-   disk. Pressing ‘S’ from the main menu saves both the plot options
+   timesteps. Pressing ``s`` from the main menu saves these settings to
+   disk. Pressing ``S`` from the main menu saves both the plot options
    *and* the plot limits, so that the current plot can be reproduced
-   exactly when splash is next invoked. Adding an “a”, as in “SA”, “SA”
-   or “sa” to the save options gives a prompt for a different prefix to
+   exactly when splash is next invoked. Adding an ``a``, as in ``SA``, ``Sa``
+   or ``sa`` to the save options gives a prompt for a different prefix to
    the filenames (e.g. ``splash.defaults`` becomes ``myplot.defaults``),
    which splash can be invoked to use via the ``-p`` command line option
    (e.g. ``splash -p myplot file1 file2...``).

@@ -46,8 +46,8 @@ and arrive at the main menu:
    Please enter your selection now (y axis or option):
 
 here we want to plot a rendered plot of column density (density is in
-column 6), so we type ‘2’ for column 2 (y) as the y axis, ‘1’ for column
-1 (x) as the x-axis and at the render prompt ‘6’, for density, ie:
+column 6), so we type ``2`` for column 2 (y) as the y axis, ``1`` for column
+1 (x) as the x-axis and at the render prompt ``6``, for density, ie:
 
 ::
 
@@ -69,7 +69,7 @@ producing the plot shown in :numref:`fig:starpart1` – somewhat black!
 
 The main thing to note is the limits on the colour bar (extending from :math:`0`
 to :math:`10^{7}` on a linear scale) which is the main source of all the
-blackness. Moving the cursor over the colour bar and pressing ‘l’ for
+blackness. Moving the cursor over the colour bar and pressing ``l`` for
 log produces :numref:`fig:starpart1b` — a vast
 improvement!
 
@@ -78,12 +78,12 @@ improvement!
    :name: fig:starpart1b
    :width: 50.0%
 
-   With a log axis after having placed cursor over colour bar and pressed ‘l’
+   With a log axis after having placed cursor over colour bar and pressed ``l``
 
 For this visualisation we will eventually want the data in physical
 units rather than code units. For the sphNG read these units are already
 specified in the read_data routine, so all we have to do is turn
-physical units on. Pressing ‘q’ from interactive mode (that is, with the
+physical units on. Pressing ``q`` from interactive mode (that is, with the
 cursor in the plot window) returns us to the main menu.
 
 Physical units are turned on from the :ref:`sec:menu-d`, as follows:
@@ -136,7 +136,7 @@ returning us to the main menu with labels changed as follows:
    -------------------------------------------------------
    Please enter your selection now (y axis or option):
 
-at this stage we will save the current settings to file by pressing ‘s’
+at this stage we will save the current settings to file by pressing ``s``
 from the main menu.
 
 ::
@@ -149,7 +149,7 @@ that later. Replotting the same plot (that is 2, 1, 6, 0, /xw from the
 main menu) plots the same plot we had before, but with the axes in
 physical units. Zooming in (using the mouse) on the region of interest
 and adapting the colour bar limits by moving the mouse over the colour
-bar and pressing ‘a’ produces the plot shown in :numref:`fig:starpart2`.
+bar and pressing ``a`` produces the plot shown in :numref:`fig:starpart2`.
 
 
 .. figure:: figs/starpart3.png
@@ -157,10 +157,10 @@ bar and pressing ‘a’ produces the plot shown in :numref:`fig:starpart2`.
    :name: fig:starpart2
    :width: 50.0%
 
-   Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ‘a’ on the colour bar
+   Second stage in the star formation figure tutorial: having applied physical units, zooming in and pressing ``a`` on the colour bar
 
 For this kind of plot, the Bate colour scheme looks better – pressing
-‘m’ with the mouse in the plot window changes the colour scheme,
+``m`` with the mouse in the plot window changes the colour scheme,
 producing the plot shown in :numref:`fig:starpart2b`.
 
 .. figure:: figs/starpart4.png
@@ -170,9 +170,9 @@ producing the plot shown in :numref:`fig:starpart2b`.
 
    having changed the colour scheme
 
-Pressing ‘s’ in interactive mode (that is, with the mouse in the plot window) saves the
+Pressing ``s`` in interactive mode (that is, with the mouse in the plot window) saves the
 current zoom and colour bar settings (but not to disk until you also
-press ‘S’ from the main menu). Pressing ‘q’ from interactive mode
+press ``S`` from the main menu). Pressing ``q`` from interactive mode
 returns to the main menu.
 
 Next we want to turn on the plotting of sink particles (all particle
@@ -269,7 +269,7 @@ the :ref:`sec:menu-g`. We will choose to plot a scale of length 0.1 pc.
 
 Note that because the x axis units were already in cm, we simply entered
 the value for 0.1pc in these units. Before plotting again, we should
-save what we have done so far to disk: Pressing ‘S’ from the main menu
+save what we have done so far to disk: Pressing ``S`` from the main menu
 saves both the current plot settings *and* the plot limits to disk:
 
 ::
@@ -278,11 +278,11 @@ saves both the current plot settings *and* the plot limits to disk:
     default options saved to file splash.defaults
     saving plot limits to file splash.limits
 
-Plotting our figure again (2-1-6-0-/xw) produces the plot shown in :numref:`fig:starpart3`
+Plotting our figure again (``2``-``1``-``6``-``0``-``/xw``) produces the plot shown in :numref:`fig:starpart3`
 
 Nearly there...! To add the finishing touches we want to increase the
 number of pixels substantially. This is done in the :ref:`sec:menu-r`, option
-1, for which we can use the shortcut ‘r1’:
+1, for which we can use the shortcut ``r1``:
 
 ::
 
@@ -310,7 +310,7 @@ producing our final finished :numref:`fig:starfinal`.
 
    Finished star formation plot
 
-Pressing ‘S’ from the main menu saves all of the settings and plot
+Pressing ``S`` from the main menu saves all of the settings and plot
 limits to disk, so invoking splash again will produce the same plot. To
 produce the same plot on a sequence of dumps, simply put more than one
 file on the command line and plot to a non-interactive device (see
@@ -346,7 +346,7 @@ are in different subdirectories with names like ``mbossbod_f10.0/``,
 ``mbossbod_f5.0/``, etc. which all contain a sequence of dump files with
 names like ``mbos001``, ``mbos002`` etc. To begin the plot, I start by
 creating a new, empty subdirectory so that the ``splash.defaults`` and
-``splash.limits`` files created by pressing ’S’ from the main menu will
+``splash.limits`` files created by pressing ``S`` from the main menu will
 be in this directory such that running splash from that directory always
 produces this plot. So:
 
@@ -398,7 +398,7 @@ along the lines of:
     npart =  491567
    ...
 
-An alternative method is to rename the ‘filelistplot’ file
+An alternative method is to rename the ``filelistplot`` file
 ``splash.filenames``, from which the filenames will be read if there are
 none specified on the command line (this feature was implemented as a
 workaround for a limit to the number of command line arguments on the
@@ -441,19 +441,19 @@ axis (i.e., the colour bar) not being logged.
    First stage in the multi-panelled figure tutorial: a simple render plot of density
 
 Moving the cursor over the
-colour bar and pressing ‘l’ results in the plot shown in :numref:`fig:multipart1b`
+colour bar and pressing ``l`` results in the plot shown in :numref:`fig:multipart1b`
 
 .. figure:: figs/multipart2.png
    :alt: multi-panelled figure tutorial part 1b
    :name: fig:multipart1b
    :width: 50.0%
 
-   and with a log axis after having placed cursor over colour bar and pressed ‘l'
+   and with a log axis after having placed cursor over colour bar and pressed ``l``
 
 Before we proceed any further, we will first change the axes to be in
-physical units rather than code units. Pressing ‘q’ in the plot window
+physical units rather than code units. Pressing ``q`` in the plot window
 to exit interactive mode and return to the main menu, and from the :ref:`sec:menu-d`,
-turn the “use physical units option” on:
+turn the ``use physical units`` option on:
 
 ::
 
@@ -502,7 +502,7 @@ From the :ref:`sec:menu-d` we proceed as follows:
     saving plot limits to file splash.units
 
 where in the above I set the multiplicative factor such that the x axis
-will be in AU and correspondingly changed the units label to “[AU]”
+will be in AU and correspondingly changed the units label to ``[AU]``
 (note the preceding space). I was also prompted to change the unit for
 ’z integration’ – this is the length unit added when integrating a
 quantity through z. Leaving this in cm means that, even though the
@@ -511,7 +511,7 @@ integrated through z in cm, giving column density in g/cm\ :math:`^{2}`
 (as opposed to g /cm:math:`^{3}` AU).
 
 
-To save what we have done so far, press ‘s’ from the main menu to save
+To save what we have done so far, press ``s`` from the main menu to save
 the current settings to the ``splash.defaults`` file:
 
 ::
@@ -520,9 +520,9 @@ the current settings to the ``splash.defaults`` file:
     default options saved to file splash.defaults
 
 Having turned physical units on, we replot the same plot (i.e.,
-answering 2, 1, 6, 0, /xw to the prompts, as previously). First of all
+answering ``2``, ``1``, ``6``, ``0``, ``/xw`` to the prompts, as previously). First of all
 we find simply a white screen. This is a result of the colour bar axis
-now being wrong. Moving the mouse over the colour bar and pressing ‘a’
+now being wrong. Moving the mouse over the colour bar and pressing ``a``
 (to adapt) results in the plot shown in :numref:`fig:multipart3`. The plot looks
 basically identical to the previous plot, except that the axes are now
 in physical units (x and y are in AU and column density is in
@@ -536,10 +536,10 @@ g/cm\ :math:`^{2}`).
    Second stage in the multi-panelled figure tutorial: having changed the axes into physical units
 
 Next, we zoom in to the central region of interest using the mouse –
-selecting a region and clicking to zoom in. Pressing ‘o’ centres the
-plot on the origin and as we zoom in it we also press ‘a’ over the
+selecting a region and clicking to zoom in. Pressing ``o`` centres the
+plot on the origin and as we zoom in it we also press ``a`` over the
 colour bar to readjust the colour bar limits to the max/min on the
-zoomed-in plot. Finishing with the adjustments (and pressing ‘s’ in the
+zoomed-in plot. Finishing with the adjustments (and pressing ``s`` in the
 plot window to save the current settings) results in the plot shown in
 :numref:`fig:multipart3b`.
 
@@ -603,7 +603,7 @@ instead of ``/xw`` to produce the figures for the userguide).
 
    First stage in the surface rendering tutorial: a simple render plot of density
 
-Moving the cursor over the colour bar and pressing ‘l’ to log the colour bar axis
+Moving the cursor over the colour bar and pressing ``l`` to log the colour bar axis
 produces :numref:`fig:surfpart1b`.
 
 .. figure:: figs/surfpart2.png
@@ -611,9 +611,9 @@ produces :numref:`fig:surfpart1b`.
    :name: fig:surfpart1b
    :width: 50.0%
 
-   with a log axis after having placed cursor over colour bar and pressed ‘l’
+   with a log axis after having placed cursor over colour bar and pressed ``l``
 
-The next step is to adjust the viewing angle. Pressing ‘h’ in the plot
+The next step is to adjust the viewing angle. Pressing ``h`` in the plot
 window brings up the list of keystrokes which can be used to change the
 angle. Here we want to add a rotation about the :math:`x-` axis, so we
 press ``{`` three times to change the x angle by -90 degrees and then
@@ -636,8 +636,8 @@ Then we obtain :numref:`fig:surfpart2`.
    Second stage in the surface rendering tutorial: after adjusting the rotation angle
 
 Next, we need to turn the 3D surface rendering on. This cannot be done
-in interactive mode so we need to exit – pressing ‘s’ first to save what
-we have done so far, then ’q’ to quit interactive mode. Then, back at
+in interactive mode so we need to exit – pressing ``s`` first to save what
+we have done so far, then ``q`` to quit interactive mode. Then, back at
 the splash main menu, we type x4 for the :ref:`sec:menu-x`,
 option 4 which is “3D surface rendering on/off” with prompts appearing
 as follows:
@@ -670,7 +670,7 @@ the default answers by pressing return. The first result is rather
 frightening : just a black image with a black colour bar! This is
 because the limits we set for column density are several orders of
 magnitude away from the limits on density. Moving the cursor over the
-colour bar and pressing ‘a’ to adapt the limits produces the plot shown
+colour bar and pressing ``a`` to adapt the limits produces the plot shown
 in :numref:`fig:surfpart2b`.
 
 .. figure:: figs/surfpart4.png
@@ -682,7 +682,7 @@ in :numref:`fig:surfpart2b`.
 
 Note that the plot suddenly appears much smaller – this is a consequence
 of the 3D perspective settings. Moving the cursor into the plot window
-and pressing ‘a’ adapts the plot limits. After also clicking on the
+and pressing ``a`` adapts the plot limits. After also clicking on the
 colour bar and adjusting the colour bar limits, we arrive at the plot
 shown in :numref:`fig:surfpart3`.
 
@@ -698,8 +698,8 @@ Now that we are nearly there, to add the finishing touches we need to i)
 increase the number of pixels in the image and ii) turn the axes off,
 since they are no longer meaningful with 3D perspective set. The number
 of pixels can be increased by returning to the splash main menu
-(pressing ‘s’ in interactive mode before doing so to save what we have
-done so far), then typing ‘r1’ for :ref:`sec:menu-r`, option 1:
+(pressing ``s`` in interactive mode before doing so to save what we have
+done so far), then typing ``r1`` for :ref:`sec:menu-r`, option 1:
 
 ::
 
@@ -740,7 +740,7 @@ opacity and move the time legend. Notice that in :numref:`fig:surfpart3b` the su
 blotchy. This is an indication that the surface is too shallow (that is
 we are only seeing particles on the very top). Thus we will adjust the
 opacity for a slightly deeper plot. We proceed as follows: Exiting
-interactive mode (pressing ‘s’ then ‘q’ in the plot window), we first
+interactive mode (pressing ``s`` then ``q`` in the plot window), we first
 set the foreground and background colours in the :ref:`sec:menu-p`:
 
 ::
@@ -759,10 +759,10 @@ at the prompt:
    enter approximate surface depth (number of smoothing lengths): ([0.000:], default=2.000):200.0
 
 Finally, moving the time legend by positioning the cursor and pressing
-’G’ and zooming out slightly by pressing ‘-’ once, we arrive at our
-finished figure (or movie frame) shown in :numref:`fig:surfpartfinal`. Pressing ‘s’ in
-interactive mode saves the settings, then pressing ‘q’ returns to the
-splash main menu. To :ref:`sec:menu-s` to disk, press ‘S’ from the main
+’G’ and zooming out slightly by pressing ``-`` once, we arrive at our
+finished figure (or movie frame) shown in :numref:`fig:surfpartfinal`. Pressing ``s`` in
+interactive mode saves the settings, then pressing ``q`` returns to the
+splash main menu. To :ref:`sec:menu-s` to disk, press ``S`` from the main
 menu to save both the ``splash.defaults`` file and the ``splash.limits``
 file.
 

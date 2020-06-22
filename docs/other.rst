@@ -1,6 +1,6 @@
 
-Other useful information
-========================
+Other useful functionality
+==========================
 
 .. _sec:convert:
 
@@ -104,17 +104,17 @@ following options:
             calc ratio        : ratio of *all* entries in each file compared to first
                                 output to file called 'ratio.out'
 
-For the ‘energies’ and ‘massaboverho’ options to be successful, splash
+For the ``energies`` and ``massaboverho`` options to be successful, splash
 must be aware of the locations of the corresponding columns in the data
 (i.e., by the column identification given in the set_labels routine
-corresponding to the data read). For the ‘massaboverho’ option an input
+corresponding to the data read). For the ``massaboverho`` option an input
 file is required specifying the density thresholds (a default version is
 written if the appropriate file is not already present).
 
 Using splash to time average a series of files
 ----------------------------------------------
 
-The ‘splash calc timeaverage’ command line option (see
+The ``splash calc timeaverage`` command line option (see
 :ref:`sec:splashcalc`) can be used to produce a time average of a
 series of files from any splash-readable format. This computes the
 time-average of every individual entry in the file as represented in
@@ -211,7 +211,7 @@ care is needed to avoid disaster. You have been warned!
 What about boundaries? How does the rendering work near a boundary?
 -------------------------------------------------------------------
 
-Usual practise in SPH simulations near boundaries is to introduce ghost
+Usual practice in SPH simulations near boundaries is to introduce ghost
 particles which mirror the real particles. splash does not explicitly
 setup any ghost particles but will use any that are present in the data
 (see next question for how to specify multiple particle types).
@@ -248,7 +248,7 @@ where appropriate (i.e., only when plotting of this type is turned on in
 the :ref:`sec:menu-o`). Particle types which are to be used in renderings
 should have masses, densities and smoothing lengths read. Non-SPH
 particle types (e.g. sink particles) can be optionally plotted on top of
-rendered plots.
+:ref:`sec:renderplot`.
 
 Using special characters in the plot labels
 -------------------------------------------
@@ -280,9 +280,11 @@ where ``\gr`` is the pgplot escape sequence for :math:`\rho`.
 For other characters the procedure is similar. For example for the
 integral
 
-.. math:: \int v_x \mathrm{dx}
+.. math::
 
- we would use the TeX-like expression
+   \int v_x \mathrm{dx}
+
+we would use the TeX-like expression
 
 ::
 
@@ -324,8 +326,8 @@ dump file and ppm format). This is useful if you need to compare the
 image to the output from another code (e.g. using a different
 visualisation tool) or if you wish to have a “raw” rendering, that is
 without annotation on the plots, but which (in the ppm case) uses more
-colours. The files are given default names such as “splash_00001.dat” or
-“splash_00001.ppm” where the number corresponds to the frame number as
+colours. The files are given default names such as ``splash_00001.dat`` or
+``splash_00001.ppm`` where the number corresponds to the frame number as
 would be rendered to the graphics device.
 
 For other command line options, see :ref:`sec:commandline`.

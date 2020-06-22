@@ -44,7 +44,7 @@ the root directory of the splash distribution, or at:
 
    http://users.monash.edu.au/~dprice/splash/download/INSTALL.
 
-A successful ‘make’ will produce a binary called `splash`
+A successful ``make`` will produce a binary called ``splash``
 
 Reading your data
 ~~~~~~~~~~~~~~~~~~
@@ -305,5 +305,5 @@ Typing ``splash -v`` gives a complete and up-to-date list of options. Currently 
 
 Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
-utility (‘splash to ascii’) see :ref:`sec:convert`. For details
+utility (``splash to ascii``) see :ref:`sec:convert`. For details
 of the ``-o ppm`` or ``-o ascii`` option see :ref:`sec:writepixmap`. For details of the ``-ev`` option, see :ref:`sec:evsplash`.

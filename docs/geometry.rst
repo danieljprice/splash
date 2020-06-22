@@ -5,7 +5,7 @@ Coordinate transforms
 
 Particle positions and vectors defined on the particles can be plotted
 in non-cartesian coordinate systems. The coordinate system can be set
-via the particle plot o)ptions menu, via the “change coordinate system”
+via the :ref:`sec:menu-o`, via the ``change coordinate system``
 option. The actual coordinate transformations are defined in a
 standalone Fortran module called ``geometry.f90`` and the precise
 details can be determined by looking in this file. For reference,
@@ -159,4 +159,3 @@ transform according to:
 
 where :math:`R \equiv 10^d` and correspondingly :math:`d = \log_{10} R`
 and :math:`f \equiv R \ln (10)`.
-
