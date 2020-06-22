@@ -1,8 +1,11 @@
 
 .. _sec:exact:
 
-Exact solution details
-======================
+Exact solutions
+================
+splash contains a library of exact or analytic solutions to common
+test problems that have been used extensively in benchmarking
+codes (e.g. [PM04]_, [RP07]_, [Price12]_, [Priceetal18]_).
 
 Errors
 ------
