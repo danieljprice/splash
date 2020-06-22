@@ -28,13 +28,13 @@ What it does
 
 splash is a utility for visualisation of output from (astrophysical)
 simulations using the Smoothed Particle Hydrodynamics (SPH) method in
-one, two and three dimensions. It is written in Fortran 90/95/20xx and
-utilises giza , a custom-build backend graphics library to do the actual
-plotting. In particular the following features are included:
+one, two and three dimensions. It is written in modern Fortran and
+utilises `giza <github.com/danieljprice/giza>`_, a custom-build backend
+graphics library to do the actual plotting. The following features are included:
 
--  Rendering of particle data to an array of pixels using the SPH kernel
+-  :ref:`sec:renderplot` of particle data to an array of pixels using the SPH kernel
 
--  Cross-sections through 2D and 3D data (as both particle plots and
+-  :ref:`sec:xsec` slices through 2D and 3D data (as both particle plots and
    rendered images).
 
 -  Fast projections through 3D data (i.e., column density plots, or
@@ -42,26 +42,26 @@ plotting. In particular the following features are included:
 
 -  Surface renderings of 3D data.
 
--  Vector plots of the velocity (and other vector quantities), including
-   vector plots in a cross section slice in 3D.
+-  :ref:`sec:vectorplots` of the velocity (and other vector quantities), including
+   vector plots in a :ref:`sec:xsec` slice in 3D.
 
 -  Rotation and animation sequence generation for 3D data.
 
 -  Automatic stepping through timesteps, making animations simple to
    produce.
 
--  Interactive mode for detailed examination of timestep data (e.g.
+-  :ref:`sec:interactive` for detailed examination of timestep data (e.g.
    zooming, rotating, stepping forwards/backwards, log axes, adapting
    limits).
 
--  Remote visualisation via simple X-Windows forwarding
+-  :ref:`sec:remote` via simple X-Windows forwarding
 
 -  Multiple plots on page, including option to automatically tile plots
    if :math:`y-` and :math:`x-` limits are the same.
 
 -  Plot limits can be fixed, adaptive or particle tracking.
 
--  Exact solutions for common SPH test problems (e.g. shock tubes, sedov
+-  :ref:`sec:exact` for common SPH test problems (e.g. shock tubes, sedov
    blast wave).
 
 -  Calculation of quantities not dumped (e.g. pressure, entropy)

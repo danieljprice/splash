@@ -10,7 +10,11 @@ References
 
 .. [Price12] `Price (2012), J. Comp. Phys. 231, 759 <https://ui.adsabs.harvard.edu/abs/2012JCoPh.231..759P/abstract>`_
 
+.. [Price18] `Price et al. (2018), PASA 35, e031 <http://adsabs.harvard.edu/abs/2018PASA...35...31P>`_
+
 .. [PB07] `Price & Bate (2007), MNRAS 377, 77 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.377...77P/abstract>`_
+
+.. [PM04] `Price & Monaghan (2004), MNRAS 348, 123 <http://adsabs.harvard.edu/abs/2004MNRAS.348..123P>`_
 
 .. [PM07] `Price & Monaghan (2007), MNRAS 374, 1347 <https://ui.adsabs.harvard.edu/abs/2007MNRAS.374.1347P/abstract>`_
 
@@ -19,4 +23,3 @@ References
 .. [RJ95] `Ryu & Jones (1995), ApJ 442, 228 <http://adsabs.harvard.edu/abs/1995ApJ...442..228R>`_
 
 .. [Toro92] `Toro (1992), Phil. Trans. Phys. Sci. Eng. 338, 43 <https://ui.adsabs.harvard.edu/abs/1992RSPTA.338...43T/abstract>`_
-

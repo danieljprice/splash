@@ -439,6 +439,21 @@ and :ref:`fig:hollywood`
 
    The same simulation viewed in Hollywood mode
 
+.. _sec:remote:
+
+Remote visualisation
+--------------------
+Visualisation of data in-situ on a cluster or supercomputer is simple. Just
+log in using ssh with X-windows forwarding::
+
+   ssh -Y dprice@gadi.nci.org
+
+Then just plot to an interactive device (``/xw``) as usual and everything
+in :ref:`sec:interactive` should *just work*.
+
+splash has few dependencies, so is simple to install in your home space 
+on a remote machine, so you can avoid a
+
 Ten quick hints for producing good-looking plots
 ------------------------------------------------
 
