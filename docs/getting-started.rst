@@ -116,13 +116,12 @@ Compiling and linking with giza
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can either install giza with your package manager, or in a subdirectory
-
 of splash. To install in a splash subdirectory, use
 ::
 	cd splash
 	git clone http://github.com/danieljprice/giza
    	make withgiza
-=======
+
 of splash.
 
 With giza installed via your package manager (or previously compiled as below), use
