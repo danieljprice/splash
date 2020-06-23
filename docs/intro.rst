@@ -29,7 +29,7 @@ What it does
 splash is a utility for visualisation of output from (astrophysical)
 simulations using the Smoothed Particle Hydrodynamics (SPH) method in
 one, two and three dimensions. It is written in modern Fortran and
-utilises `giza <github.com/danieljprice/giza>`_, a custom-build backend
+utilises `giza <https://github.com/danieljprice/giza>`_, a custom-build backend
 graphics library to do the actual plotting. The following features are included:
 
 -  :ref:`sec:renderplot` of particle data to an array of pixels using the SPH kernel

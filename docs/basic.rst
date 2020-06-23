@@ -252,7 +252,7 @@ vector quantity.
 
 Vector plots in 3D show either the integral of each component along the
 line of sight or, for a :ref:`sec:xsec`, the vector arrows in a :ref:`sec:xsec`
- slice (depending on whether a projection or :ref:`sec:xsec` has
+slice (depending on whether a projection or :ref:`sec:xsec` has
 been selected for 3D plots – see the rendering examples given
 previously). In 2D vector plots simply show the vector arrows mapped to
 a pixel array using the SPH kernel.
@@ -420,7 +420,7 @@ A simple script which executes the above command is included in the source file 
 
    ~/splash/scripts/movie.sh
 
-See the `online faq <http://users.monash.edu.au/~dprice/splash/faqs.html>`_ for more.
+See :ref:`sec:moviemaking` for more.
 
 .. _sec:hollywood:
 
@@ -450,15 +450,15 @@ and :ref:`fig:hollywood`
 Remote visualisation
 --------------------
 Visualisation of data in-situ on a cluster or supercomputer is simple. Just
-log in using ssh with X-windows forwarding::
+log in using ssh with X-windows forwarding, e.g.::
 
-   ssh -Y dprice@gadi.nci.org
+   ssh -Y dprice@gadi.nci.org.au
 
 Then just plot to an interactive device (``/xw``) as usual and everything
 in :ref:`sec:interactive` should *just work*.
 
-splash has few dependencies, so is simple to install in your home space
-on a remote machine, so you can avoid a
+splash has few dependencies and is simple to install in your home space if necessary.
+That said, it is always a good idea to get admins to install a shared package for all users.
 
 Ten quick hints for producing good-looking plots
 ------------------------------------------------
