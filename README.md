@@ -14,7 +14,7 @@ SPLASH can also be used as a standalone plotting tool, though this is not its ma
 Status
 ------
 ![build](https://github.com/danieljprice/splash/workflows/build/badge.svg)
-![docs](https://readthedocs.org/projects/splash-viz/badge/?version=latest)](https://splash-viz.readthedocs.io/en/latest/?badge=latest)
+[![docs](https://readthedocs.org/projects/splash-viz/badge/?version=latest)](https://splash-viz.readthedocs.io/en/latest/?badge=latest)
 
 Links
 -----
