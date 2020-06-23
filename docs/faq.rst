@@ -1,6 +1,6 @@
 Frequently Asked Questions
 ==========================
-Here is a collection of the most common problems with using SPLASH. You may also wish to browse the archives of the `splash-users <http://groups.google.com/group/splash-users>`_ discussion list.
+Here is a collection of the most common problems with using SPLASH. You may also wish to browse the archives of the `splash-users <http://groups.google.com/group/splash-users>`_ discussion list. See also the old `pgplot faq <http://users.monash.edu.au/~dprice/splash/pgplot.html`.
 
 .. _sec:moviemaking:
 

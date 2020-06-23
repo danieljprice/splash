@@ -2,16 +2,73 @@
 Getting started
 ===============
 
-Compiling the code
-------------------
+.. _install:
+
+Installing from your package manager
+-------------------------------------
+Pre-packaged builds of splash exist for most operating systems.
+
+Stable version
+~~~~~~~~~~~~~~
+Mac OS via homebrew::
+
+  brew tap danieljprice/all
+  brew install splash
+
+Mac OS via Macports::
+
+  sudo port install splash
+
+Linux or Windows Linux Subsystem (Ubuntu)::
+
+  sudo apt-get install splash
+
+Development version
+~~~~~~~~~~~~~~~~~~~
+
+SPLASH and giza (the plotting backend) both have public repositories, so you can check out the latest and greatest code at any time. Just use:
+
+Mac OS via homebrew::
+
+  brew tap danieljprice/all
+  brew install --HEAD splash
+
+Compiling from source
+---------------------
+
+Basic instructions
+~~~~~~~~~~~~~~~~~~
+If you have admin (super user) permissions::
+
+   git clone https://github.com/danieljprice/giza.git; cd giza; ./configure; make; sudo make install; cd ..
+   git clone https://github.com/danieljprice/splash.git
+   cd splash; make SYSTEM=gfortran; sudo make install
+
+If you do not have admin permissions. That is, to install in your home space::
+
+   git clone https://github.com/danieljprice/splash.git
+   cd splash; git clone https://github.com/danieljprice/giza.git
+   make SYSTEM=gfortran withgiza
+
+Both the splash and giza repositories are generally stable, so it is usually safe to get the very latest version.
+
+.. important::
+   If you have installed splash in your home space, you will need to set the following environment variables for everything to work. Put the following commands in your ~/.bashrc file or equivalent, so they are set every time you log in::
+
+      export SPLASH_DIR=$HOME/splash
+      export PATH=$PATH:$SPLASH_DIR/bin
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
+
+Advanced installation guide
+---------------------------
 
 The basic steps for installation are as follows:
 
 #. make sure you have a recent Fortran compiler (such as gfortran)
 
-#. compile splash and giza
+#. make sure you have cairo on your system
 
-#. ensure that splash can read your data format
+#. compile splash and giza
 
 Fortran compilers
 ~~~~~~~~~~~~~~~~~~~
@@ -28,26 +85,56 @@ available are:
 
 Both of these successfully compile splash and the giza library.
 
+Cairo graphics library
+~~~~~~~~~~~~~~~~~~~~~~~
+Cairo is a low-level system library used in many applications. Thus it is highly
+likely that you already have a copy on your system and already in your library path.
+Look for the header file cairo.h, e.g. using::
+
+  "locate cairo.h"
+
+or have a look in the usual places (e.g. /usr/include/cairo, /usr/X11/include). If not,
+you can usually use your inbuilt package manager to install cairo as follows:
+
+   Debian/Ubuntu:
+      sudo apt-get install libcairo2-dev
+   Fedora/Red Hat/CentOS:
+      sudo yum install cairo-devel
+   OpenSUSE:
+      zypper install cairo-devel
+   MacPorts:
+      sudo port install cairo
+
+Alternatively, use the script provided in the root-level splash directory::
+
+   ./install-cairo.sh
+
+which downloads and installs both pixman and cairo into the giza/ subdirectory.
+Unlike the methods above, this does not require any admin/superuser permissions.
+
 Compiling and linking with giza
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can either install giza with your package manager, or in a subdirectory
-of splash. To install in a splash subdirectory, use:
+of splash.
+
+With giza installed via your package manager (or previously compiled as below), use::
+
+   cd splash
+   make GIZA_DIR=/usr/local
+
+where ``GIZA_DIR`` points to the directory where giza was installed.
+
+To install giza in a splash subdirectory, use::
 
    cd splash
    git clone http://github.com/danieljprice/giza
    make withgiza
 
-For detailed instructions on compiling and linking with giza (or the
-older pgplot library used in splash v1.x), refer to the INSTALL file in
-the root directory of the splash distribution, or at:
-
-   http://users.monash.edu.au/~dprice/splash/download/INSTALL.
-
 A successful ``make`` will produce a binary called ``splash``
 
 Reading your data
-~~~~~~~~~~~~~~~~~~
+-----------------
 
 The most important part is getting splash to read \*your\* data format.
 If you are using a publicly available code, it is reasonably likely
