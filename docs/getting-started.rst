@@ -237,15 +237,20 @@ For example,
 will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format,
 and will automatically select the correct ``read_data`` routine.
 
+Below is a list of other formats supported, but have additional library requirements.
+
 .. table:: Other supported file formats that require external libraries
    :name: tab:otherreads
-+---------------------------+--------------+--------------------------+--------------------------------------------------------------------------------------------------+
-| ``splash`` Command        | Read Format  | ``read_data`` File       | Comments                                                                                         |
-+===========================+==============+==========================+==================================================================================================+
-| ``splash -pbob <file>``   | PBOB Files   | ``read_data_pbob.f90``   | Requires the PBOB Library. Compile ``splash`` with ``PBOB_DIR=/path/to/pbob/``.                  |
-+---------------------------+--------------+--------------------------+--------------------------------------------------------------------------------------------------+
-| ``splash -h5part <file>`` | H5Part Files | ``read_data_h5part.f90`` | Requires the H5Part and HDF5 libraries. Compile ``splash`` with ``H5PART_DIR=/path/to/h5part/``. |
-+---------------------------+--------------+--------------------------+--------------------------------------------------------------------------------------------------+
++---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash`` Command        | Read Format  | ``read_data`` File       | Comments                                                                                                                                                                   |
++===========================+==============+==========================+============================================================================================================================================================================+
+| ``splash -pbob <file>``   | PBOB Files   | ``read_data_pbob.f90``   | Requires the PBOB Library. Compile ``splash`` with ``PBOB_DIR=/path/to/pbob/``.                                                                                            |
++---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -h5part <file>`` | H5Part Files | ``read_data_h5part.f90`` | Requires the H5Part and HDF5 libraries. Compile ``splash`` with ``H5PART_DIR=/path/to/h5part/``.                                                                           |
++---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -fits <file>``   | FITS files   | ``read_data_fits.f90``   | Requires FITS libraries. Try to compile ``splash`` with ``FITS=yes``. If this does not work, point to the location of your fits libraries with ``FITS_DIR=/path/to/fits``. |
++---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 Further details on writing your own subroutine are given in
 appendix :ref:`sec:writeyourown`. The \*easiest\* way is to i)
