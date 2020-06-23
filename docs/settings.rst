@@ -225,6 +225,8 @@ of data from disk. This is achieved by turning ``buffering of data`` on in
 the :ref:`sec:menu-d` (provided you have the memory of course!!). Non-buffered
 data means that only one file at a time is read.
 
+.. _sec:calc:
+
 Calculating additional quantities not dumped
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1355,7 +1357,7 @@ Alternatively particle tracking limits can be set interactively by
 pressing ``t`` in :ref:`sec:interactive` with the cursor over the particle you
 wish to track.
 
-.. important::
+.. warning::
    This option only works if particle identities
    are preserved between timesteps in the data files
 
@@ -1986,6 +1988,8 @@ default using the z plot limit as the ‘object size’.
    The position of the 3D observer in :math:`z` can also be changed in
    :ref:`sec:interactive` using ``u`` or ``U`` (to move ’up’) and ``d`` or ``D`` (to move
    ``down``).
+
+.. _sec:surface:
 
 Using 3D surface rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

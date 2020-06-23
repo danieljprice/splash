@@ -4,16 +4,45 @@
 Data reads and environment variables
 =====================================
 
-Writing your own data read
---------------------------
+Requesting a customised data reader
+------------------------------------
+The basic "splash" binary will read any ascii or csv data file where
+columns correspond to different quantities and rows correspond to each particle (actually
+I use splash to plot graphs for nearly all data in this form, whether SPH or not)
+-- it will also sensibly skip header lines which do not have the same number of columns.
 
-Writing your own data read is not recommended. The best way is just to email me a
-sample data file and a copy of the routine that wrote it. I am very
-happy to do this, will mean that your read is officially supported, will
-appear in the development repository, and will be updated with new
-features as necessary. It doesn’t matter if your code only has one user,
-I am still happy to do this as it makes splash more widely useable and
+However, it is ultimately desirable to use SPLASH to directly visualise the
+(binary) output of your code. If your format is not amongst those distributed,
+then BEFORE you start writing your own routine, please consider whether or not a routine
+to read your format would be of more general use (e.g. to other users of your code).
+If so, PLEASE email me to request a new read_data routine for your format, by sending an email attaching:
+
+a) an example dump
+
+and
+
+b) the source code from the routine which wrote the dump file.
+
+Then I can write a read for your format that can be added to the SPLASH repository
+and distributed in all future versions. Whilst I aim never to change the interface
+to the read_data routines, it is not impossible that some changes may occur
+somewhere down the line (or enhanced functionality -- for example the more advanced
+data reads are able to read only the required columns for a given plot from the
+file, rather than the whole file). It doesn’t matter if your code only has one user,
+we are still happy to do this as it makes splash more widely useable and
 saves trouble later.
+
+Writing your own data read
+---------------------------
+If you *really* want to hack one yourself it is best to look at some of the
+other examples and change the  necessary parts to suit your data files. Note
+that reading directly from unformatted data files is *much* faster than reading
+from formatted (ascii) data.
+
+If you do end up writing your own, again, please email me the end result so I
+can add it to the officially supported data reads. This also makes it much
+easier for you to upgrade to newer versions as you do not require a locally
+customised version.
 
 The second best way is to attempt to modify one of the existing data
 reads. Even then, there are some things to note: Most important is that,

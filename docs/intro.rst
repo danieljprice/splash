@@ -29,7 +29,7 @@ What it does
 splash is a utility for visualisation of output from (astrophysical)
 simulations using the Smoothed Particle Hydrodynamics (SPH) method in
 one, two and three dimensions. It is written in modern Fortran and
-utilises `giza <github.com/danieljprice/giza>`_, a custom-build backend
+utilises `giza <https://github.com/danieljprice/giza>`_, a custom-build backend
 graphics library to do the actual plotting. The following features are included:
 
 -  :ref:`sec:renderplot` of particle data to an array of pixels using the SPH kernel
@@ -40,15 +40,15 @@ graphics library to do the actual plotting. The following features are included:
 -  Fast projections through 3D data (i.e., column density plots, or
    integration of other quantities along the line of sight)
 
--  Surface renderings of 3D data.
+-  :ref:`Surface renderings <sec:surface>` of 3D data.
 
 -  :ref:`sec:vectorplots` of the velocity (and other vector quantities), including
    vector plots in a :ref:`sec:xsec` slice in 3D.
 
--  Rotation and animation sequence generation for 3D data.
+-  Rotation and :ref:`animation sequence <sec:animseq>` generation for 3D data.
 
--  Automatic stepping through timesteps, making animations simple to
-   produce.
+-  :ref:`Automatic stepping through timesteps <sec:movies>`, making
+   :ref:`animations <sec:animations>` simple to produce.
 
 -  :ref:`sec:interactive` for detailed examination of timestep data (e.g.
    zooming, rotating, stepping forwards/backwards, log axes, adapting
@@ -56,26 +56,27 @@ graphics library to do the actual plotting. The following features are included:
 
 -  :ref:`sec:remote` via simple X-Windows forwarding
 
--  Multiple plots on page, including option to automatically tile plots
+-  :ref:`Multiple plots on page <sec:multiplotsetup>`, including option to automatically tile plots
    if :math:`y-` and :math:`x-` limits are the same.
 
--  Plot limits can be fixed, adaptive or particle tracking.
+-  Plot limits can be fixed, adaptive or :ref:`particle tracking <sec:track>`.
 
 -  :ref:`sec:exact` for common SPH test problems (e.g. shock tubes, sedov
    blast wave).
 
--  Calculation of quantities not dumped (e.g. pressure, entropy)
+-  :ref:`Calculation of quantities not dumped <sec:calc>` (e.g. pressure, entropy)
 
--  Conversion of binary dump files to ascii format.
+-  :ref:`sec:convert`
 
--  Interpolation of SPH data to 2D and 3D grids.
+-  :ref:`sec:converttogrid`
 
--  Transformation to different coordinate systems (for both coordinates
-   and vector components) and rescaling of data into physical units.
+-  :ref:`sec:geom`, for both coordinates and vector components
 
--  Straightforward production of both bitmap (png) and vector (eps, pdf)
-   images which can then be converted into animations or inserted into
-   LaTeX documents.
+-  :ref:`Rescaling of data into physical units <sec:physicalunits>`.
+
+-  Straightforward production of both :ref:`bitmap <sec:movies>` (png) and :ref:`vector <sec:postscript>` (eps, pdf)
+   images which can then be :ref:`converted into animations <sec:animations>`
+   or :ref:`inserted into LaTeX documents <sec:postscript>`.
 
 What it doesn’t do
 ------------------

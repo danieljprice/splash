@@ -67,8 +67,12 @@ For example, to plot density vs smoothing length, type
 
 The ``default=`` refers to the default value assigned if you just press
 the return key. The last prompt asks for the device to which output
-should be directed. A full list of available graphics devices is given
-by typing ``?`` at the prompt. Some of the most useful devices are given
+should be directed.
+
+.. hint::
+   A full list of available graphics devices is given by typing ``?`` at the prompt.
+
+Some of the most useful devices are given
 in :ref:`tab:devices`. In the above we have selected
 the X-window driver which means that the output is sent to the screen
 (provided X-windows is running), as demonstrated in the screenshot shown
@@ -247,8 +251,8 @@ where the number refers to the column of the first component of the
 vector quantity.
 
 Vector plots in 3D show either the integral of each component along the
-line of sight or, for cross sections, the vector arrows in a cross
-section slice (depending on whether a projection or cross section has
+line of sight or, for a :ref:`sec:xsec`, the vector arrows in a :ref:`sec:xsec`
+slice (depending on whether a projection or :ref:`sec:xsec` has
 been selected for 3D plots – see the rendering examples given
 previously). In 2D vector plots simply show the vector arrows mapped to
 a pixel array using the SPH kernel.
@@ -401,6 +405,8 @@ to generate ``myfile_0000.png``, ``myfile_0001.png``,
 
    See also :ref:`sec:batchmode`.
 
+.. _sec:animations:
+
 Producing a movie from a sequence of images
 --------------------------------------------
 Having obtained a sequence of images there are a variety of ways to make
@@ -414,7 +420,7 @@ A simple script which executes the above command is included in the source file 
 
    ~/splash/scripts/movie.sh
 
-See the `online faq <http://users.monash.edu.au/~dprice/splash/faqs.html>`_ for more.
+See :ref:`sec:moviemaking` for more.
 
 .. _sec:hollywood:
 
@@ -444,15 +450,15 @@ and :ref:`fig:hollywood`
 Remote visualisation
 --------------------
 Visualisation of data in-situ on a cluster or supercomputer is simple. Just
-log in using ssh with X-windows forwarding::
+log in using ssh with X-windows forwarding, e.g.::
 
-   ssh -Y dprice@gadi.nci.org
+   ssh -Y dprice@gadi.nci.org.au
 
 Then just plot to an interactive device (``/xw``) as usual and everything
 in :ref:`sec:interactive` should *just work*.
 
-splash has few dependencies, so is simple to install in your home space 
-on a remote machine, so you can avoid a
+splash has few dependencies and is simple to install in your home space if necessary.
+That said, it is always a good idea to get admins to install a shared package for all users.
 
 Ten quick hints for producing good-looking plots
 ------------------------------------------------

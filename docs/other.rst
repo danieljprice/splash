@@ -4,8 +4,8 @@ Other useful functionality
 
 .. _sec:convert:
 
-Converting binary dump files to ascii using splash
----------------------------------------------------
+Conversion of binary data files to ascii
+-----------------------------------------
 
 splash has a command line feature which can be used to convert binary
 SPH dump files into ascii format. The syntax is
@@ -26,8 +26,8 @@ For other command line options, see :ref:`sec:commandline`.
 
 .. _sec:converttogrid:
 
-Converting SPH data files to 3D gridded data using splash
-----------------------------------------------------------
+Interpolation of SPH data to 2D and 3D grids
+---------------------------------------------
 
 splash has a command line feature which can be used to read binary SPH
 dump files and output 3D gridded data in a variety of formats. The
@@ -208,48 +208,6 @@ user to set a delay between launching jobs (preferably slightly longer
 than the length of time it takes to read a single dump file), but some
 care is needed to avoid disaster. You have been warned!
 
-What about boundaries? How does the rendering work near a boundary?
--------------------------------------------------------------------
-
-Usual practice in SPH simulations near boundaries is to introduce ghost
-particles which mirror the real particles. splash does not explicitly
-setup any ghost particles but will use any that are present in the data
-(see next question for how to specify multiple particle types).
-Additional particle types contribute to the rendering calculations but
-not to the determination of the plot limits. Note, however, that splash
-does *not* set up ghost particles itself, as this may depend on the type
-and location of the boundary. Thus if your simulation uses ghost
-particle boundaries, the ghost particles should be dumped alongside the
-gas particles in the output file so that their positions, masses,
-densities and smoothing lengths can be read into splash and used to
-render the image appropriately.
-
-How does splash handle multiple particle types?
------------------------------------------------
-
-splash can handle up to 6 different particle types. These can be turned
-on and off in the :ref:`sec:menu-o`.
-These types are be specified in the set_labels part of the read_data
-routine, which contains some lines of code along the lines of:
-
-::
-
-   ntypes = 3
-   labeltype(1) = 'gas'
-   labeltype(2) = 'ghost'
-   labeltype(3) = 'sink'
-   UseTypeInRenderings(1) = .true.
-   UseTypeInRenderings(2) = .true.
-   UseTypeInRenderings(3) = .false.
-
-which says that there are 3 particle types, with names as given, and
-that types 1 and 2 are SPH particles and should be used in the rendering
-where appropriate (i.e., only when plotting of this type is turned on in
-the :ref:`sec:menu-o`). Particle types which are to be used in renderings
-should have masses, densities and smoothing lengths read. Non-SPH
-particle types (e.g. sink particles) can be optionally plotted on top of
-:ref:`sec:renderplot`.
-
 Using special characters in the plot labels
 -------------------------------------------
 
@@ -305,12 +263,6 @@ characters are listed in the appendix to the pgplot user guide.
    WARNING: Note that the use of escape characters can be compiler
    dependent and may not therefore work on all compilers (for example
    the intel compiler needs the -nbs flag).
-
-Making movies
--------------
-
-See :ref:`sec:movies` and the online FAQ
-(http://users.monash.edu.au/~dprice/splash/faqs.html).
 
 .. _sec:writepixmap:
 
