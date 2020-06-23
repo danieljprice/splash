@@ -64,6 +64,14 @@ module h5partdataread
 
 end module h5partdataread
 
+module readdata_h5part
+ implicit none
+ 
+ public :: read_data_h5part, set_labels_h5part
+ 
+ private 
+contains
+
 subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  use particle_data,   only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
@@ -627,3 +635,4 @@ subroutine set_labels_h5part()
 
  return
 end subroutine set_labels_h5part
+end module readdata_h5part

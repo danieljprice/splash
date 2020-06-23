@@ -103,6 +103,10 @@ subroutine select_data_format(string,ierr)
  use readdata_pbob,         only:read_data_pbob,         set_labels_pbob
 #endif
 
+#ifdef H5PART_DIR
+ use readdata_h5part,       only:read_data_h5part,       set_labels_h5part
+#endif
+ 
 ! use readdata_snsph,        only:read_data_snsph,        set_labels_snsph
 
  use asciiutils,        only:lcase
@@ -110,6 +114,9 @@ subroutine select_data_format(string,ierr)
  character(len=*),  intent(in)  :: string
  integer,           intent(out) :: ierr
  
+ !----------------------------
+ !  Checks for dependencies   
+ !----------------------------
  
  ! Check if SPLASH has been compiled with hdf5, if hdf5 format is requested
  if ((index(string, 'hdf5') > 0) .or. (index(string, '.h5') > 0)) then
@@ -121,6 +128,17 @@ subroutine select_data_format(string,ierr)
    continue
 #endif
  end if
+ 
+ ! Check if H5PART is being requested
+ if (string == 'h5part') then
+#ifndef H5PART_DIR
+   print "(a)", ' *** ERROR: H5PART file given, but SPLASH has not been compiled with the H5PART library. ***'
+   print "(a)", '            Try make H5PART_DIR=/path/to/h5part/ Note: You must also compile with HDF5=yes'
+   stop
+#else
+   continue
+#endif
+ end if 
 
  ! Check if SPLASH has been compiled with the fits library, if fits format is requested
  if (string == 'fits') then
@@ -137,7 +155,7 @@ subroutine select_data_format(string,ierr)
  if (string == 'pbob') then
 #ifndef PBOB_DIR
    print "(a)", ' *** ERROR: .pbob file given, but SPLASH has not been compiled with the PBOB library. ***'
-   print "(a)", '            Try make PBOB_DIR=/path/to/pbob/lib '
+   print "(a)", '            Try make PBOB_DIR=/path/to/pbob/ '
 #else
    continue
 #endif
@@ -300,6 +318,13 @@ subroutine select_data_format(string,ierr)
    set_labels=>set_labels_pbob
 #endif
 
+ ! Make H5PART available of H5PART_DIR defined
+#ifdef H5PART_DIR
+ case('h5part')
+   read_data=>read_data_h5part
+   set_labels=>set_labels_h5part
+#endif
+
  case default
    !call guess_format()
    print "(a)",' *** WARNING: file format '//trim(string)//' not found ***'
@@ -370,6 +395,10 @@ subroutine print_available_formats(string)
 
 #ifdef PBOB_DIR
  print "(a)"  ,' This build of SPLASH supports the PBOB Library.
+#endif
+
+#ifdef H5PART_DIR
+ print "(a)"  ,' This build of SPLASH supports the H5PART Library.
 #endif
 
 end subroutine print_available_formats
