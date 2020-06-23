@@ -33,15 +33,17 @@ Compiling and linking with giza
 
 You can either install giza with your package manager, or in a subdirectory
 of splash. To install in a splash subdirectory, use:
-.. :code:
-   cd splash
-   git clone http://github.com/danieljprice/giza
-   make withgiza
+
+::
+	cd splash
+	git clone http://github.com/danieljprice/giza
+   	make withgiza
 
 For detailed instructions on compiling and linking with giza (or the
 older pgplot library used in splash v1.x), refer to the INSTALL file in
 the root directory of the splash distribution, or at:
 
+::
    http://users.monash.edu.au/~dprice/splash/download/INSTALL.
 
 A successful ``make`` will produce a binary called ``splash``
@@ -57,17 +59,19 @@ change the necessary parts to suit your data files. Note that reading
 directly from unformatted data files is \*much\* faster than reading
 from formatted (ascii) output.
 
-A standard “make” will create a binary which supports the file formats listed in
+A standard ``make`` will create a binary which supports the file formats listed in
 :ref:`tab:defaultreads`. 
 All data formats in the splash repository that do not
-have an additional dependencies (e.g. HDF5) will be
-supported in the splash binary as of version 3.0.0.
+have an additional dependencies (e.g. ``HDF5``) will be
+supported in the splash binary as of version ``3.0.0``.
 This means that the user needs to specify the data type
 they are reading as a command line option. For example,
 the following will read a phantom dumpfile: 
-.. code: splash --format phantom disc_00000
+::
+	splash --format phantom disc_00000
+
 In some cases, the format of the file can be inferred if
-the the file has a known suffix. If splash is compiled with `HDF5=yes`,
+the the file has a known suffix. If splash is compiled with ``HDF5=yes``,
 the 
 :ref:`tab:otherreads` lists other data reads
 implemented but not compiled by default.
