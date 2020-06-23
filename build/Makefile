@@ -433,10 +433,13 @@ READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   r
                 #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
                 
 
+RUN_CHECKS= 
+
 ifeq ($(HDF5),yes)
   READFILES += $(READFILES_HDF5)
   LDFLAGS+=$(HDF5LIBS)
   CFLAGS+=$(HDF5INCLUDE)
+  RUN_CHECKS+=checkhdf5
 endif
 
 READFILES_FITS= imageutils.f90 write_fits.f90 read_data_fits.f90
@@ -445,6 +448,7 @@ ifeq ($(FITS),yes)
   READFILES+= $(READFILES_FITS)
   LDFLAGS+=$(FITSLIBS)
   FFLAGS+=-DFITS
+  RUN_CHECKS+=checkfits
 endif
 
 READFILES_PBOB= read_data_pbob_utils.c read_data_pbob.f90 read_pbob.c read_particle.c
@@ -452,8 +456,16 @@ READFILES_PBOB= read_data_pbob_utils.c read_data_pbob.f90 read_pbob.c read_parti
 ifdef PBOB_DIR
    READFILES+=$(READFILES_PBOB)
    VPATH+=$(PBOB_DIR)
+   RUN_CHECKS+=checkpbob
 endif
 
+READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
+
+ifdef H5PART_DIR
+   READFILES+=$(READFILES_H5PART)
+   VPATH+=$(H5PART_LIBS) $(HDF5LIBS)
+   RUN_CHECKS+=checkh5part
+endif
 
 
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
@@ -496,8 +508,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
 
 OBJECTS1 = $(SOURCES:.f90=.o) $(STATICLIBS)
 OBJECTS2= $(OBJECTS1:.F90=.o)
-OBJECTS= $(OBJECTS2:.c=.o)
-!OBJECTS= $(OBJECTS3:.cc=.o)
+OBJECTS3= $(OBJECTS2:.c=.o)
+OBJECTS= $(OBJECTS3:.cc=.o)
 
 
 #
@@ -505,7 +517,7 @@ OBJECTS= $(OBJECTS2:.c=.o)
 # (move yours to the top so that you can simply type "make")
 #
 
-ascii: checksystem $(OBJECTS) read_data.o
+ascii: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
 	@echo; echo ' SPLASH successfully compiled! ';
 	@echo; echo ' Use "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin'; 
@@ -525,24 +537,7 @@ ascii: checksystem $(OBJECTS) read_data.o
 	@echo " alias tsplash='splash -f tipsy ' ";
 	@echo " alias msplash='splash -f mhutch ' "; echo;
 	
-#---h5part reader---
-H5PARTSRCC=H5PartF.c H5PartAttribF.c
-H5PARTSRCF90=H5Part.f90 H5PartAttrib.f90
-H5PARTOBJ=$(H5PARTSRCC:.c=.o) $(H5PARTSRCF90:.f90=.o)
-
-h5part: checksystem checkh5part $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/h5splash $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
-
-read_data_h5part.o: read_data_h5part.f90
-	$(FC) $(FFLAGS) $(H5PART_INCLUDE) -o $@ -c $<
-
-H5PartF.o: H5PartF.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
-
-H5PartAttribF.o: H5PartAttribF.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
-
-
+	
 #---falcON HDF5 read ---
 falcon: falcON
 
@@ -554,10 +549,6 @@ falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
-
-#---FITS read ---
-fits: checksystem checkfits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
 
 #---PBOB read ---
 
