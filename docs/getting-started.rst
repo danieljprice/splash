@@ -33,7 +33,6 @@ Compiling and linking with giza
 
 You can either install giza with your package manager, or in a subdirectory
 of splash. To install in a splash subdirectory, use:
-
 ::
 	cd splash
 	git clone http://github.com/danieljprice/giza
@@ -43,7 +42,6 @@ For detailed instructions on compiling and linking with giza (or the
 older pgplot library used in splash v1.x), refer to the INSTALL file in
 the root directory of the splash distribution, or at:
 
-::
    http://users.monash.edu.au/~dprice/splash/download/INSTALL.
 
 A successful ``make`` will produce a binary called ``splash``
@@ -78,75 +76,32 @@ implemented but not compiled by default.
 
 .. table:: Binaries and data reads compiled by default
    :name: tab:defaultreads
-
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash call     | Formats read    | read_data file  | Comments        |
-   +=================+=================+=================+=================+
-   | splash          | ascii           | ``read_data_asc | Generic data    |
-   |                 |                 | ii.f90``        | read for        |
-   |                 |                 |                 | n-column ascii  |
-   |                 |                 |                 | formats.        |
-   |                 |                 |                 | Automatically   |
-   |                 |                 |                 | determines      |
-   |                 |                 |                 | number of       |
-   |                 |                 |                 | columns and     |
-   |                 |                 |                 | skips header    |
-   |                 |                 |                 | lines. Can      |
-   |                 |                 |                 | recognise SPH   |
-   |                 |                 |                 | particle data   |
-   |                 |                 |                 | based on the    |
-   |                 |                 |                 | column labels.  |
-   |                 |                 |                 | Use ‘asplash    |
-   |                 |                 |                 | -e’ to plot     |
-   |                 |                 |                 | non-SPH data    |
-   |                 |                 |                 | (e.g. energy vs |
-   |                 |                 |                 | time files).    |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f dragon| dragon          | ``read_data_dra | see environment |
-   |                 |                 | gon.f90``       | variable        |
-   |                 |                 |                 | options.        |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f gadget| gadget,         | ``read_data_gad | Handles both    |
-   |                 | gadget-2,       | get.f90``       | default and     |
-   |                 | gadget-3        |                 | block-labelled  |
-   |                 |                 |                 | formats (see    |
-   |                 |                 |                 | environment     |
-   |                 |                 |                 | variable        |
-   |                 |                 |                 | options).       |
-   +-----------------+-----------------+-----------------+-----------------+
-   |splash -f ndspmhd| ndspmhd         | ``read_data_dan | Format for the  |
-   |                 |                 | sph.f90``       | ndspmhd         |
-   |                 |                 |                 | SPH/SPMHD code  |
-   |                 |                 |                 | (publicly       |
-   |                 |                 |                 | available from  |
-   |                 |                 |                 | my website).    |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f magma | magma           | ``read_data_sro | Stephan         |
-   |                 |                 | sph.f90``       | Rosswog’s code  |
-   +-----------------+-----------------+-----------------+-----------------+
-   |splash -f phantom| sphNG, phantom  | ``read_data_sph | sphNG is        |
-   |                 |                 | NG.f90``        | Matthew Bate’s  |
-   |                 |                 |                 | SPH code.       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f seren | seren           | ``read_data_ser | The SEREN SPH   |
-   |                 |                 | en.f90``        | code (Hubber,   |
-   |                 |                 |                 | McLeod et al.)  |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f gaseoline| gasoline, tipsy | ``read_data_tip | Reads both      |
-   |                 |                 | sy.f90``        | binary and      |
-   |                 |                 |                 | ascii TIPSY     |
-   |                 |                 |                 | files           |
-   |                 |                 |                 | (determined     |
-   |                 |                 |                 | automatically). |
-   +-----------------+-----------------+-----------------+-----------------+
-   | splash -f vine  | vine            | ``read_data_VIN | see environment |
-   |                 |                 | E.f90``         | variable        |
-   |                 |                 |                 | options.        |
-   +-----------------+-----------------+-----------------+-----------------+
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash`` command           | Format Read                | ``read_data`` File            | Comments                                                                                                                                                                                                                                         |
++==============================+============================+===============================+==================================================================================================================================================================================================================================================+
+| ``splash -gadget <file>``    | ascii                      | ``read_data_asci.f90``        | Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g. energy vs time files). |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable options.                                                                                                                                                                                                                |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -gadget <file>``    | gadget, gadget-2, gadget-3 | ``read_data_gadget.f90``      | Handles both default and block-labelled formats (see environment variable options).                                                                                                                                                              |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -ndspmhd <file>``   | ndspmhd                    | ``read_data_ndspmhd.f90``     | Format for the ndspmhd SPH/SPMHD code (publicly available from my website).                                                                                                                                                                      |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate’s SPH code. Option ``-sphng``also works.                                                                                                                                                                                   |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog’s code                                                                                                                                                                                                                           |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et al.)                                                                                                                                                                                                       |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined automatically). Option ``-tipsy`` also works.                                                                                                                                                |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable options.                                                                                                                                                                                                                |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ``splash -starsmasher <file> | StarSmasher                | ``read_data_starsmasher.f90`` | The StarSmasher code (Gaburov et al. 2018) `<jalombar.github.io/starsmasher/>`_                                                                                                                                                                  |
++------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 .. table:: Other data reads implemented but not compiled by default
    :name: tab:otherreads
-
    +-----------------+-----------------+-----------------+-----------------+
    | Format          | Binary          | read_data file  | Comments        |
    +=================+=================+=================+=================+
@@ -240,7 +195,7 @@ and I will happily create a data read for your file format.
 Command line options
 --------------------
 
-Typing ``splash -v`` gives a complete and up-to-date list of options. Currently these are:
+Typing ``splash --help`` gives a complete and up-to-date list of options. Currently these are:
 
 ::
 
@@ -252,6 +207,26 @@ Typing ``splash -v`` gives a complete and up-to-date list of options. Currently 
     -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
     -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]
     -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
+    -f                : input file format to be read (ascii is default)
+
+   To select data formats, use the shortcuts below, or use the -f or --format command line options
+   Multiple data formats are not support in a single instance.
+   Supported data formats:
+    -ascii            : ascii file format (default)
+    -phantom -sphng   : Phantom and sphNG codes
+    -ndspmhd          : ndsphmd code
+    -gadget           : Gadget code
+    -seren            : Seren code
+   ..plus many others. Type --formats for a full list
+  
+   The following formats support HDF5:
+    -flash            : FLASH code
+    -gadget           : Gadget code
+    -cactus           : Cactus SPH code
+    -falcon           : FalcON code
+    -amuse            : AMUSE Framework
+  
+   add a suffix "_hdf5" to the above command line options if your data files do not end with .h5.
 
    Command line plotting mode:
 
