@@ -263,7 +263,7 @@ subroutine select_data_format(string,ierr)
    read_data=>read_data_amuse_hdf5
    set_labels=>set_labels_amuse_hdf5
    
-! case('falcon_hdf5')
+! case('falcon_hdf5', 'falconhdf5', 'falcon')
 !   read_data=>read_data_falcON_hdf5
 !   set_labels=>set_labels_falcON_hdf5
    

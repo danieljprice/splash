@@ -181,9 +181,9 @@ previous version of ``splash``, one can add aliases into their `.bashrc`, or equ
  	alias msplash='splash -f mhutch '
 
 If splash is compiled with ``HDF5=yes``,
-the 
-:ref:`tab:hdf5reads` lists other data reads
-implemented but not compiled by default. Additional supported formats are listed in
+the formats listed in 
+:ref:`tab:hdf5reads` will also be available in the ``splash`` binary.
+ Other supported formats are listed in
 :ref:`tab:otherreads`, but these require additional libraries.
 
 .. table:: Binaries and data reads compiled by default
@@ -209,93 +209,36 @@ implemented but not compiled by default. Additional supported formats are listed
 +------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable options.                                                                                                                                                                                                                |
 +------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -starsmasher <file> | StarSmasher                | ``read_data_starsmasher.f90`` | The StarSmasher code (Gaburov et al. 2018) `<jalombar.github.io/starsmasher/>`_                                                                                                                                                                  |
+| ``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The StarSmasher code (Gaburov et al. 2018) `<jalombar.github.io/starsmasher/>`_                                                                                                                                                                  |
 +------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-.. table:: Other data reads implemented but not compiled by default
+.. table:: Supported HDf5 data formats
+   :name: tab:hdf5reads
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+| ``splash`` Command             | Read Format            | ``read_data`` File            | Comments                                                                                |
++================================+========================+===============================+=========================================================================================+
+| ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget code.                                                 |
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+| ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE framework.                                             |
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+| ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+| ``splash -flash_hdf5 <file>    | FLASH tracer particles | ``read_dataflash_hdf5.f90``   | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+| ``splash -falcon_hdf5 <file>   | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen’s SPH code format. The option ``-falcon`` will also work.                 |
++--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+
+If the ``HDF5`` read files end with ``.h5``, the suffix ``_hdf5`` from the ``splash`` command can be removed.
+For example, 
+::
+	splash -gadget dump_000.h5
+will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format,
+and will automatically select the correct ``read_data`` routine.
+
+.. table:: Other supported file formats that require external libraries
    :name: tab:otherreads
-   +-----------------+-----------------+-----------------+-----------------+
-   | Format          | Binary          | read_data file  | Comments        |
-   +=================+=================+=================+=================+
-   | h5part          | h5splash        | ``read_data_h5p | Reads general   |
-   |                 |                 | art.f90``       | files written   |
-   |                 |                 |                 | with the h5part |
-   |                 |                 |                 | library.        |
-   |                 |                 |                 | Requires        |
-   |                 |                 |                 | linking against |
-   |                 |                 |                 | H5PART and HDF5 |
-   |                 |                 |                 | libraries       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | gadget HDF5     | gsplash-hdf5    | ``read_data_gad | Reads HDF5      |
-   |                 |                 | get_hdf5.f90``  | format from the |
-   |                 |                 |                 | gadget code.    |
-   |                 |                 |                 | Requires        |
-   |                 |                 |                 | linking against |
-   |                 |                 |                 | HDF5 libraries  |
-   +-----------------+-----------------+-----------------+-----------------+
-   | amuse HDF5      | amsplash-hdf5   | ``read_data_amu | Reads HDF5      |
-   |                 |                 | se_hdf5.f90``   | format from the |
-   |                 |                 |                 | amuse           |
-   |                 |                 |                 | framework.      |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``.silo``       | silosplash      | ``read_data_sil | a nice          |
-   | format          |                 | o.f90``         | standardised    |
-   | (particle data  |                 |                 | HDF5 particle   |
-   | only)           |                 |                 | format.         |
-   |                 |                 |                 | Requires silo   |
-   |                 |                 |                 | libraries.      |
-   +-----------------+-----------------+-----------------+-----------------+
-   | SNSPH           | snsplash        | ``read_data_sns | Supernova SPH   |
-   |                 |                 | ph.f90``        | (Chris Fryer et |
-   |                 |                 |                 | al.). Requires  |
-   |                 |                 |                 | libsw.          |
-   +-----------------+-----------------+-----------------+-----------------+
-   | falcON          | fsplash         | ``read_data_fal | Walter Dehnen’s |
-   |                 |                 | cON.f90``       | SPH code format |
-   |                 |                 |                 | (uses HDF5)     |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Andreas         | bsplash         | ``read_data_bau |                 |
-   | Bauswein’s code |                 | swein.f90``     |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Sigfried        | vsplash         | ``read_data_van |                 |
-   | Vanaverbeke’s   |                 | averbeke.f90``  |                 |
-   | code            |                 |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Regularised SPH | rsplash         | ``read_data_rsp |                 |
-   | (Steinar Børve) |                 | h.f90``         |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | FLASH tracer    | fsplash         | ``read_data_fla | Reads tracer    |
-   | particles       |                 | sh_hdf5.f90``   | particle output |
-   |                 |                 |                 | from the FLASH  |
-   |                 |                 |                 | code. Requires  |
-   |                 |                 |                 | linking against |
-   |                 |                 |                 | HDF5 libraries  |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Sky King/Nikos  | usplash         | ``read_data_UCL | A good example  |
-   | Mastrodemos     |                 | A.f90``         | of a simple     |
-   |                 |                 |                 | ascii format    |
-   |                 |                 |                 | reader          |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Jamie Bolton    | gsplash_jsb     | ``read_data_gad | Reads extra     |
-   | GADGET          |                 | get_jsb.f90``   | arrays before   |
-   |                 |                 |                 | the SPH         |
-   |                 |                 |                 | smoothing       |
-   |                 |                 |                 | length          |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Old Matthew     | bsplash         | ``read_data_mba | similar to the  |
-   | Bate code       |                 | te.f90``        | original Benz   |
-   |                 |                 |                 | SPH code format |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Foulkes/Haswell | fsplash         | ``read_data_fou | An ascii format |
-   | /Murray         |                 | lkes.f90``      |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Andrea Urban    | usplash         | ``read_data_urb | An ascii format |
-   | format          |                 | an.f90``        |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``.pbob``       | psplash         | ``read_data_pbo | David Brown’s   |
-   | format          |                 | b.f90``         | SPH code. To make available, you must specify |
-   |                 |                 |                 | `PBOB_DIR=\path\to\PBOB\lib`
-   +-----------------+-----------------+-----------------+-----------------+
+
+
 
 Further details on writing your own subroutine are given in
 appendix :ref:`sec:writeyourown`. The \*easiest\* way is to i)
