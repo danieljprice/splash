@@ -441,7 +441,6 @@ endif
 
 READFILES_FITS= imageutils.f90 write_fits.f90 read_data_fits.f90
 
-
 ifeq ($(FITS),yes)
   READFILES+= $(READFILES_FITS)
   LDFLAGS+=$(FITSLIBS)
@@ -454,6 +453,7 @@ ifdef PBOB_DIR
    READFILES+=$(READFILES_PBOB)
    VPATH+=$(PBOB_DIR)
 endif
+
 
 
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \

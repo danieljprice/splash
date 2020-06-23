@@ -130,8 +130,8 @@ With giza installed via your package manager (or previously compiled as below), 
    make GIZA_DIR=/usr/local
 
 where ``GIZA_DIR`` points to the directory where giza was installed.
-
-To install giza in a splash subdirectory, use::
+To install giza in a splash subdirectory, use
+::
    cd splash
    git clone http://github.com/danieljprice/giza
    make withgiza
@@ -150,21 +150,41 @@ directly from unformatted data files is \*much\* faster than reading
 from formatted (ascii) output.
 
 A standard ``make`` will create a binary which supports the file formats listed in
-:ref:`tab:defaultreads`. 
+:ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports). 
 All data formats in the splash repository that do not
 have an additional dependencies (e.g. ``HDF5``) will be
 supported in the splash binary as of version ``3.0.0``.
 This means that the user needs to specify the data type
 they are reading as a command line option. For example,
-the following will read a phantom dumpfile: 
+the following will read a phantom dumpfile
 ::
 	splash --format phantom disc_00000
 
 In some cases, the format of the file can be inferred if
-the the file has a known suffix. If splash is compiled with ``HDF5=yes``,
+the the file has a known suffix. For example, the above line can be changed if the
+suffixe of the file is recognised
+::
+	splash disc_00000.pb
+This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
+previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent
+::
+ 	alias asplash='splash ' # Alias for ascii splash
+ 	alias ssplash='splash -f phantom '
+ 	alias gsplash='splash -f gadget '
+ 	alias vsplash='splash -f vine '
+ 	alias nsplash='splash -f ndspmhd '
+ 	alias rsplash='splash -f srosph '
+ 	alias dsplash='splash -f dragon '
+ 	alias srsplash='splash -f seren '
+ 	alias tsplash='splash -f tipsy '
+ 	alias tsplash='splash -f tipsy '
+ 	alias msplash='splash -f mhutch '
+
+If splash is compiled with ``HDF5=yes``,
 the 
-:ref:`tab:otherreads` lists other data reads
-implemented but not compiled by default.
+:ref:`tab:hdf5reads` lists other data reads
+implemented but not compiled by default. Additional supported formats are listed in
+:ref:`tab:otherreads`, but these require additional libraries.
 
 .. table:: Binaries and data reads compiled by default
    :name: tab:defaultreads
@@ -280,7 +300,7 @@ implemented but not compiled by default.
 Further details on writing your own subroutine are given in
 appendix :ref:`sec:writeyourown`. The \*easiest\* way is to i)
 email me a sample data file and ii) the subroutine you used to write it,
-and I will happily create a data read for your file format.
+and I will happily create a data read for your file format. 
 
 .. _sec:commandline:
 

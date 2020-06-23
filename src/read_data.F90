@@ -161,7 +161,7 @@ subroutine select_data_format(string,ierr)
    read_data=>read_data_VINE
    set_labels=>set_labels_VINE
 
- case('sro', 'srosph')
+ case('sro', 'srosph', 'magma')
    read_data=>read_data_sro
    set_labels=>set_labels_sro
 
@@ -322,7 +322,7 @@ subroutine print_available_formats(string)
    print "(a)"  ,'  -flash            : FLASH code'
    print "(a)"  ,'  -tispy -gasoline  : Gasoline code'
    print "(a)"  ,'  -vine             : VINE SPH code'
-   print "(a)"  ,'  -rsph             : RSPH code'
+   print "(a)"  ,'  -rsph             : Regularised SPH'
    print "(a)"  ,'  -starsmaher       : Star Smasher code'
    print "(a)"  ,'  -dragon           : DRAGON code'
    print "(a)"  ,'  -sro -srosph      : SRO SPH code'
@@ -331,15 +331,17 @@ subroutine print_available_formats(string)
    print "(a)"  ,"  -mbate            : Matthew Bate's code"
    print "(a)"  ,'  -oilonwater       : Oil-on-Water binary accretion SPH'
    print "(a)"  ,'  -ucla             : UCLA ascii format'
-   print "(a)"  ,'  -urban            : '
+   print "(a)"  ,'  -urban            : Andrea Urban ascii format'
    print "(a)"  ,'  -spyros           : '
    print "(a)"  ,'  -jjm              : '
    print "(a)"  ,'  -jjmmulti         : '
    print "(a)"  ,'  -bauswein         : '
    print "(a)"  ,'  -egaburov         : '
    print "(a)"  ,'  -aly              : '
-   print "(a)"  ,'  -foulkes          : '
-   print "(a,/)",'  -gadget_jsb       : '                 
+   print "(a)"  ,'  -foulkes          : Foulkes ascii format'
+   print "(a)"  ,"  -vanaverbeke      : Sigfried Vanaverbeke's code"
+   print "(a,/)",'  -gadget_jsb       : '       
+        
  end if
 
 #ifdef HDF5
