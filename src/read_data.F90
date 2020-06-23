@@ -88,7 +88,7 @@ subroutine select_data_format(string,ierr)
 #ifdef HDF5
  use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5
  use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5
-! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
+ use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
  use readdata_flash_hdf5,   only:read_data_flash_hdf5,   set_labels_flash_hdf5
  use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5
 #endif
@@ -128,6 +128,16 @@ subroutine select_data_format(string,ierr)
    print "(a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
    print "(a)", '            Try make FITS=yes '
    stop
+#else
+   continue
+#endif
+ end if
+ 
+ ! Check if PBOB is being requested
+ if (string == 'pbob') then
+#ifndef PBOB_DIR
+   print "(a)", ' *** ERROR: .pbob file given, but SPLASH has not been compiled with the PBOB library. ***'
+   print "(a)", '            Try make PBOB_DIR=/path/to/pbob/lib '
 #else
    continue
 #endif
@@ -263,9 +273,9 @@ subroutine select_data_format(string,ierr)
    read_data=>read_data_amuse_hdf5
    set_labels=>set_labels_amuse_hdf5
    
-! case('falcon_hdf5', 'falconhdf5', 'falcon')
-!   read_data=>read_data_falcON_hdf5
-!   set_labels=>set_labels_falcON_hdf5
+ case('falcon_hdf5', 'falconhdf5', 'falcon')
+   read_data=>read_data_falcON_hdf5
+   set_labels=>set_labels_falcON_hdf5
    
  case('flash_hdf5', 'flashhdf5', 'flash')
    read_data=>read_data_flash_hdf5
@@ -395,6 +405,9 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
    
  elseif (any((index(extensions, '.pb') > 0))) then
    call select_data_format('phantom', ierr)
+  
+ elseif (any((index(extensions, '.pbob') > 0))) then
+   call select_data_format('pbob', ierr)
    
  else
    print '(/,a)', " Could not guess file format. Please select a format from below"

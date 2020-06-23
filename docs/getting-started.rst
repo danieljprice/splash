@@ -183,7 +183,7 @@ previous version of ``splash``, one can add aliases into their `.bashrc`, or equ
 If splash is compiled with ``HDF5=yes``,
 the formats listed in 
 :ref:`tab:hdf5reads` will also be available in the ``splash`` binary.
- Other supported formats are listed in
+Other supported formats are listed in
 :ref:`tab:otherreads`, but these require additional libraries.
 
 .. table:: Binaries and data reads compiled by default
@@ -211,6 +211,8 @@ the formats listed in
 +------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The StarSmasher code (Gaburov et al. 2018) `<jalombar.github.io/starsmasher/>`_                                                                                                                                                                  |
 +------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Below is a list of the supported data formats that require ``HDF5``.
 
 .. table:: Supported HDf5 data formats
    :name: tab:hdf5reads
