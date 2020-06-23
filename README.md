@@ -14,7 +14,7 @@ SPLASH can also be used as a standalone plotting tool, though this is not its ma
 Status
 ------
 ![build](https://github.com/danieljprice/splash/workflows/build/badge.svg)
-![docs](https://github.com/danieljprice/splash/workflows/build/badge.svg)
+![docs](https://readthedocs.org/projects/splash-viz/badge/?version=latest)](https://splash-viz.readthedocs.io/en/latest/?badge=latest)
 
 Links
 -----
@@ -28,13 +28,16 @@ Install
 -------
 For installation instructions see the [download page](http://users.monash.edu.au/~dprice/splash/download) or the [userguide](http://users.monash.edu.au/~dprice/splash/userguide).
 
-Basic usage
+Usage
 ------------
-Usage:
-    splash mydata.txt
+```
+   splash mydata.txt
+```
 
 Command line mode:
+```
     splash -y 2 -x 1 -dev myplot.pdf mydata.txt
+```
 
 See the [userguide](http://users.monash.edu.au/~dprice/splash/userguide) for more.
 
