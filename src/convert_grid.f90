@@ -37,7 +37,7 @@ contains
 ! data output routines
 !-----------------------------------------------------------------
 subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,filename,&
-                           outformat,interpolateall)
+                           outformat,interpolateall,icols,rhogrid,dat3D)
  use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst,get_sink_type
  use limits,               only:lim,get_particle_subset
  use settings_units,       only:units,unit_interp
@@ -65,6 +65,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real, intent(in), dimension(:)               :: masstype
  character(len=*), intent(in)                 :: filename,outformat
  logical, intent(in)                          :: interpolateall
+ integer, intent(in),  optional               :: icols(:)
+ real,    intent(out), allocatable, optional  :: rhogrid(:,:,:),dat3D(:,:,:)
  integer, parameter :: iunit = 89
  integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
  integer            :: npixx,ntoti,ninterp,isinktype
@@ -86,12 +88,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer :: ncolstogrid,igeom
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
  real    :: mtot,mtotgrid,err,t2,t1
- logical :: inormalise,lowmem
+ logical :: inormalise,lowmem,do_output
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
  character(len=120) :: origin
 
  dtime = real(time,kind=doub_prec)
+ do_output = .not.(trim(filename)=='none' .or. trim(outformat)=='none')
  !
  !--check for errors in input settings
  !
@@ -113,7 +116,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--get environment variable options
  !
- call get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
+ if (present(icols)) then
+    icoltogrid(:) = 0
+    icoltogrid(1:size(icols)) = icols(:)
+    ncolstogrid = count(icols > 0)
+ else
+    call get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
+ endif
  !
  !--check for errors
  !
@@ -288,15 +297,16 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--open grid file for output (also checks format is OK)
  !
- origin='"splash to '//trim(outformat)//'" on file '//trim(filename)
-
- call open_gridfile_w(iunit,filename,outformat,ndim,ncolsgrid,npixels(1:ndim),dtime,ierr)
- if (ierr /= 0) then
-    print "(a)",' ERROR: could not open grid file for output, skipping...'
-    if (allocated(datgrid)) deallocate(datgrid)
-    if (allocated(datgrid)) deallocate(datgrid2D)
-    if (allocated(weight)) deallocate(weight)
-    return
+ if (do_output) then
+    origin='"splash to '//trim(outformat)//'" on file '//trim(filename)
+    call open_gridfile_w(iunit,filename,outformat,ndim,ncolsgrid,npixels(1:ndim),dtime,ierr)
+    if (ierr /= 0) then
+       print "(a)",' ERROR: could not open grid file for output, skipping...'
+       if (allocated(datgrid)) deallocate(datgrid)
+       if (allocated(datgrid)) deallocate(datgrid2D)
+       if (allocated(weight)) deallocate(weight)
+       return
+    endif
  endif
 
  fmtstring1 = "(12x,a20,1x,'    min    ',1x,'    max    ',1x,'    mean    ')"
@@ -330,6 +340,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
             isperiodic(1),isperiodic(2),isperiodic(3))
        mtotgrid = sum(datgrid)*product(pixwidthx)
     endif
+    if (present(rhogrid)) rhogrid = datgrid
     call wall_time(t2)
     if (t2 - t1 > 1.) call print_time(t2-t1)
     !
@@ -356,7 +367,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (mtotgrid > 0.) then
     print "(9x,a23,1x,es10.4,/)",'total mass on grid:',mtotgrid
     err = 100.*(mtotgrid - mtot)/mtot
-    if (abs(err) > 1) print "(/,a,f5.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
+    if (abs(err) > 1) print "(/,a,1pg7.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
     '% BY INTERPOLATION'
  endif
 
@@ -407,13 +418,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--write density to grid data file
  !
  print*
- if (ndim==3) then
+ if (ndim==3 .and. do_output) then
     if (lowmem .or. interpolateall .or. ncolstogrid > 0) then
        call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid,&
                        tagline=tagline,origin=origin)
     endif
- else
+ elseif (do_output) then
     call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
                     labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat2D=datgrid2D,&
                     tagline=tagline,origin=origin)
@@ -422,7 +433,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--interpolate remaining quantities to the 3D grid
  !
  if (interpolateall .or. ncolstogrid > 0) then
-    if (ncolstogrid > 0) then
+    if (ncolstogrid > 0 .and. .not.present(icols)) then
        print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from SPLASH_TO_GRID setting:'
        print "(' got SPLASH_TO_GRID=',10(i2,1x))",icoltogrid(1:ncolstogrid)
     endif
@@ -451,6 +462,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                         xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
                         pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
                 endif
+                if (present(dat3D)) dat3D = datgrid
              else
                 call interpolate2D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),&
                      dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
@@ -465,12 +477,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           if (ndim==3) then
              call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
-             call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
+             if (do_output) call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
                   labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid)
           else
              call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
-             call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
+             if (do_output) call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
                   labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat2D=datgrid2D)
           endif
        endif
@@ -602,11 +614,11 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !
              !--write result to grid file
              !
-             if (ndim==3) then
+             if (ndim==3 .and. do_output) then
                 call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
                                 label(irho),labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,&
                                 dat=datgrid,dat3D=datgridvec,label3D=label(iloc:iloc+ndimV),tagline=tagline,origin=origin)
-             else
+             elseif (do_output) then
                 do i=1,ndimV
                    call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
                                    label(iloc+i-1),labelcoordsys(igeom),xlab,dtime,pixwidthx,&
