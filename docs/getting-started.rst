@@ -26,12 +26,14 @@ Linux or Windows Linux Subsystem (Ubuntu)::
 Development version
 ~~~~~~~~~~~~~~~~~~~
 
-SPLASH and giza (the plotting backend) both have public repositories, so you can check out the latest and greatest code at any time. Just use:
+SPLASH and giza (the plotting backend) both have public repositories, so you can check out the latest and greatest code at any time. Both the splash and giza repositories are generally stable, so it is usually safe to get the very latest version. Just use:
 
 Mac OS via homebrew::
 
   brew tap danieljprice/all
   brew install --HEAD splash
+
+or compile from source following the instructions below.
 
 Compiling from source
 ---------------------
@@ -44,13 +46,15 @@ If you have admin (super user) permissions::
    git clone https://github.com/danieljprice/splash.git
    cd splash; make SYSTEM=gfortran; sudo make install
 
+.. _installhome:
+
+Installing in your home space
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you do not have admin permissions. That is, to install in your home space::
 
    git clone https://github.com/danieljprice/splash.git
    cd splash; git clone https://github.com/danieljprice/giza.git
    make SYSTEM=gfortran withgiza
-
-Both the splash and giza repositories are generally stable, so it is usually safe to get the very latest version.
 
 .. important::
    If you have installed splash in your home space, you will need to set the following environment variables for everything to work. Put the following commands in your ~/.bashrc file or equivalent, so they are set every time you log in::
