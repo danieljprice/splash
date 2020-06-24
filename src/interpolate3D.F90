@@ -30,6 +30,7 @@
 module interpolations3D
  use kernels,       only:radkernel2,radkernel,cnormk3D,wallint
  use interpolation, only:iroll
+ use timing,        only:wall_time,print_time
  implicit none
  integer, parameter :: doub_prec = kind(0.d0)
  public :: interpolate3D,interpolate3D_vec
@@ -77,7 +78,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  logical, intent(in) :: normalise,periodicx,periodicy,periodicz
  real(doub_prec), allocatable :: datnorm(:,:,:)
 
- integer :: i,j,ipix,jpix,kpix
+ integer :: i,ipix,jpix,kpix
  integer :: iprintinterval,iprintnext
  integer :: ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax
  integer :: ipixi,jpixi,kpixi,nxpix,nwarn,threadid
@@ -85,7 +86,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  real, dimension(npixx) :: dx2i
  real :: xi,yi,zi,hi,hi1,hi21,radkern,wab,q2,const,dyz2,dz2
  real :: term,termnorm,dy,dz,ypix,zpix,xpixi,pixwidthmax,dfac
- !real :: t_start,t_end
+ real :: t_start,t_end,t_used
  logical :: iprintprogress
 
 ! Exact rendering
@@ -94,7 +95,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  integer :: usedpart, negflag
 
 !$ integer :: omp_get_num_threads,omp_get_thread_num
- integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
+ integer(kind=selected_int_kind(10)) :: iprogress,j  ! up to 10 digits
 
  if (exact_rendering) then
     print "(1x,a)",'interpolating to 3D grid (exact/Petkova+2018 on subgrid) ...'
@@ -110,6 +111,8 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  if (any(hh(1:npart) <= tiny(hh))) then
     print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
  endif
+  
+ call wall_time(t_start)
  
  datsmooth = 0.
  if (normalise) then
@@ -147,7 +150,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 
  const = cnormk3D  ! normalisation constant (3D)
  nwarn = 0
- j = 0
+ j = 0_8
  threadid = 1
  !
  !--loop over particles
@@ -179,7 +182,7 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
     !
     if (iprintprogress) then
        !$omp atomic
-       j=j+1
+       j=j+1_8
        !$ threadid = omp_get_thread_num()
        iprogress = 100*j/npart
        if (iprogress >= iprintnext .and. threadid==1) then
@@ -377,6 +380,10 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
     end where
  endif
  if (allocated(datnorm)) deallocate(datnorm)
+
+ call wall_time(t_end)
+ t_used = t_end - t_start
+ if (t_used > 10.) call print_time(t_used)
 
  !print*, 'Number of particles in the volume: ', usedpart
 

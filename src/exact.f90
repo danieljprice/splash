@@ -253,7 +253,7 @@ subroutine submenu_exact(iexact)
  use exactfunction, only:check_function
  use mhdshock,      only:nmhdshocksolns,mhdprob
  use planetdisc,    only:maxspirals,labelspiral
- use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars
+ use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars,read_asciifile
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
@@ -326,8 +326,18 @@ subroutine submenu_exact(iexact)
     if (ierr /= 0) nfunc = ierr
  case(2)
     call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
-    if (nfiles > 1) print "(2(/,a))",' Hint: create a file called '//trim(fileprefix)//'.exactfiles', &
+    !
+    ! try to read filenames from .exactfiles if it exists
+    !
+    filename_tmp = trim(fileprefix)//'.exactfiles'
+    call read_asciifile(trim(filename_tmp),nfiles,filename_exact,ierr)
+    if (ierr==-1 .and. nfiles > 1) then
+       print "(2(/,a))",' Hint: create a file called '//trim(fileprefix)//'.exactfiles', &
                                      ' with one filename per line to automatically read the filenames'
+    else
+       print "(a,i2,a)",' got ',nfiles,' filenames from '//trim(fileprefix)//'.exactfiles'
+    endif
+
     nadjust = -1
     over_files: do i=1,nfiles
        iexist = .false.

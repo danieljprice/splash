@@ -98,13 +98,13 @@ subroutine print_gridformats
  print "(a)",'           to gridascii    : as above, grid data written in ascii format'
  print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
  print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
- print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time                 [ 4,4,4,4,8 bytes ]'
+ print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax [ 4x4,7x8 bytes ]'
  print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
  print "(a)",'           to gridstream   : grid data in byte-stream binary format (e.g. for python):'
- print "(a)",'                                nx,ny,nz,ncolumns,time,rho     [ 4,4,4,4,8,8*nx*ny*nz ]'
+ print "(a)",'                              nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax,rho [ 4,4,4,4,8*7,8*nx*ny*nz ]'
  print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
  print "(a)",'        allto gridascii    : as above, with ascii output'
  print "(a)",'        allto gridbinary   : as above, with binary output'
@@ -115,15 +115,17 @@ end subroutine print_gridformats
 !------------------------------------------------------
 ! open grid file for (write) output, write header
 !------------------------------------------------------
-subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time,ierr)
+subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,xmin,xmax,time,ierr)
  use asciiutils, only:lcase
  integer, intent(in)               :: iunit
  character(len=*), intent(in)      :: filenamein,outformat
  character(len=len(filenamein)+10) :: filename
  integer, intent(in)                  :: ndim,ncolumns
  integer, dimension(ndim), intent(in) :: npixels
+ real(doub_prec), intent(in)          :: xmin(ndim),xmax(ndim)
  real(doub_prec), intent(in)          :: time
  integer, intent(out)                 :: ierr
+ integer :: idim
 !
 !--Only have to do something here for formats
 !  that have all columns in the same file
@@ -148,7 +150,7 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
        return
     endif
 
-    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
+    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time,(xmin(idim),xmax(idim),idim=1,ndim)
     if (ierr /= 0) then
        print "(a)",' ERROR writing header to file'
        return
@@ -166,7 +168,7 @@ subroutine open_gridfile_w(iunit,filenamein,outformat,ndim,ncolumns,npixels,time
        return
     endif
 
-    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time
+    write(iunit,iostat=ierr) npixels(1:ndim),ncolumns,time,(xmin(idim),xmax(idim),idim=1,ndim)
     if (ierr /= 0) then
        print "(a)",' ERROR writing header to file'
        return
@@ -249,9 +251,8 @@ end subroutine open_gridfile_r
 ! write a particular column to the grid output file
 !------------------------------------------------------
 subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
-                      labelcoordsys,xlab,time,pixwidth,xmin,ierr,dat,dat3D,dat2D,label3D,tagline,origin)
+                      labelcoordsys,xlab,time,pixwidth,xmin,xmax,ierr,dat,dat3D,dat2D,label3D,tagline,origin)
  use asciiutils, only:ucase,lcase,safename
- implicit none
  integer, intent(in)                  :: iunit
  character(len=*), intent(in)         :: filenamein,outformat
  integer, intent(in)                  :: ndim,ncolgrid
@@ -259,14 +260,14 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
  character(len=*), intent(in)         :: label,labelcoordsys
  character(len=*), dimension(3), intent(in) :: xlab
  real(doub_prec), intent(in)          :: time
- real, dimension(3), intent(in)       :: xmin,pixwidth
+ real, dimension(3), intent(in)       :: xmin,xmax,pixwidth
  integer, intent(out)                 :: ierr
  character(len=len(filenamein)+20)    :: filename
  real(doub_prec), dimension(:,:,:),   intent(in), optional :: dat
  real(doub_prec), dimension(:,:,:,:), intent(in), optional :: dat3D
  real, dimension(:,:),     intent(in), optional :: dat2D
  character(len=*), intent(in), optional :: label3D(ncolgrid),tagline,origin
- integer :: i,j,k,n
+ integer :: i,j,k,n,idim
  real    :: xi,yi,zi
 
  ierr = 0
@@ -313,6 +314,10 @@ subroutine write_grid(iunit,filenamein,outformat,ndim,ncolgrid,npixels,label,&
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# time:'
     write(iunit,"(a,es15.7)",iostat=ierr) '# ',time
+    write(iunit,"(a)",err=100) '#'
+    write(iunit,"(a,5(a,','),a,':')",err=100) &
+                               '# ',(trim(xlab(idim))//'min',trim(xlab(idim))//'max',idim=1,ndim)
+    write(iunit,"(a,6(es15.7,1x))",iostat=ierr) '# ',(xmin(idim),xmax(idim),idim=1,ndim)
     write(iunit,"(a)",err=100) '#'
     write(iunit,"(a)",err=100) '# file contains:'
     write(iunit,"(a,i1,a)",err=100) '# '//trim(label)//' interpolated to ',ndim,'D '//trim(labelcoordsys)//' grid '

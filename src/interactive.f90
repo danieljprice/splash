@@ -378,8 +378,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        else
           print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
           if (is_coord(iplotx,ndim)) then
+             print*,' here, SAVING tracked',xmin,xmax
              call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
           else
+             print*,' here, SAVING non-track',xmin,xmax
              call save_limits(iplotx,xmin,xmax)
           endif
           if (is_coord(iploty,ndim)) then
@@ -2858,8 +2860,8 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
     xmintemp = xmin
     xmaxtemp = xmax
     call transform_limits_inverse(xmintemp,xmaxtemp,itrans(iplot))
-    xminoffset_track(iplot) = abs(xi - xmintemp)
-    xminoffset_track(iplot) = abs(xmaxtemp - xi)
+    xminoffset_track(iplot) = xi - xmintemp
+    xmaxoffset_track(iplot) = xmaxtemp - xi
  else
     xminoffset_track(iplot) = abs(xi - xmin)
     xmaxoffset_track(iplot) = abs(xmax - xi)
