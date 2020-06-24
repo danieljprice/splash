@@ -48,7 +48,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_jjmmulti
+ implicit none
+ 
+ public :: read_data_jjmmulti, set_labels_jjmmulti
+ 
+ private 
+contains
+
+subroutine read_data_jjmmulti(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
  use settings_data, only:ndim,ndimV,ncolumns
@@ -193,13 +201,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
  return
 
-end subroutine read_data
+end subroutine read_data_jjmmulti
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_jjmmulti
  use labels
  use params
  use settings_data
@@ -208,11 +216,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_jjmmulti ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_jjmmulti ***'
     return
  endif
 
@@ -254,4 +262,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_jjmmulti
+end module readdata_jjmmulti

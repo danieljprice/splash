@@ -90,7 +90,16 @@ end module amusehdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_amuse_hdf5
+ implicit none
+ 
+ public :: read_data_amuse_hdf5, set_labels_amuse_hdf5
+ 
+ private 
+contains
+
+subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -222,7 +231,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
 !--call set labels to identify location of smoothing length
 !
- call set_labels
+ call set_labels_amuse_hdf5
 !
 !--for read from multiple files, work out the next file in the sequence
 !
@@ -275,7 +284,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
  return
 
-end subroutine read_data
+end subroutine read_data_amuse_hdf5
 
 subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -318,7 +327,7 @@ end subroutine read_amuse_hdf5_data_fromc
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_amuse_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iBfirst,idivB,iax
  use params
@@ -331,11 +340,11 @@ subroutine set_labels
  integer :: i,j,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_amuse_hdf5 ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_amuse_hdf5 ***'
     return
  endif
 
@@ -394,7 +403,7 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_amuse_hdf5
 
 subroutine set_blocklabel(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
@@ -408,3 +417,4 @@ subroutine set_blocklabel(icol,name) bind(c)
  !print*,icol,' name = ',trim(blocklabel(icol))
 
 end subroutine set_blocklabel
+end module readdata_amuse_hdf5

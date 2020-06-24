@@ -98,7 +98,16 @@ module seren_data_store
 
 end module seren_data_store
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_seren
+ implicit none
+ 
+ public :: read_data_seren, set_labels_seren
+ 
+ private 
+contains
+
+subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
@@ -270,7 +279,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  print*,'gamma            : ',gammatemp
  print*,'n_total          : ',ptot
 
- call set_labels
+ call set_labels_seren
  !
  !--if successfully read header, increment the nstepsread counter
  !
@@ -1085,13 +1094,13 @@ subroutine set_types(itypei,ntotal,noftype)
  return
 end subroutine set_types
 
-end subroutine read_data
+end subroutine read_data_seren
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_seren
  use labels, only:label,iamvec,labelvec,labeltype,unitslabel,&
  &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel,make_vector_label
  use params
@@ -1107,11 +1116,11 @@ subroutine set_labels
  logical                      :: type_use_render(1:7)
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_seren ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_seren ***'
     return
  endif
 
@@ -1125,7 +1134,7 @@ subroutine set_labels
     unit_base = ""
     unit_string = ""
     if (unit_no < 0 .OR. unit_no > nunits) then
-       print*,'*** ERROR: unit_no = ',unit_no,' in set_labels ***'
+       print*,'*** ERROR: unit_no = ',unit_no,' in set_labels_seren ***'
     elseif (unit_no /= 0) then
        unit_base = trim(adjustl(unit_data(unit_no)))
        unit_string = unit_base
@@ -1252,7 +1261,7 @@ subroutine set_labels
  labeltype(1:ntypes) = type_names(1:ntypes)
  UseTypeInRenderings(1:ntypes) = type_use_render(1:ntypes)
 
-end subroutine set_labels
+end subroutine set_labels_seren
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
  use labels, only:lenunitslabel
@@ -1510,4 +1519,4 @@ subroutine translate_unit_names(unit_name)
 
  return
 end subroutine translate_unit_names
-
+end module readdata_seren

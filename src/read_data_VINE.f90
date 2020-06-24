@@ -103,7 +103,16 @@ module vineread
 
 end module vineread
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_VINE
+ implicit none
+ 
+ public :: read_data_VINE, set_labels_VINE
+ 
+ private 
+contains
+
+
+subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
  use params,         only:doub_prec
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
@@ -252,7 +261,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     if (allocated(dattemp)) deallocate(dattemp)
     allocate(dattemp(npart_max,ncolstep),stat=ierr)
     dattemp = 0.
-    if (ierr /= 0) print*,'not enough memory in read_data (dattemp)'
+    if (ierr /= 0) print*,'not enough memory in read_data_VINE (dattemp)'
 !
 !--allocate a temporary array for vectors
 !
@@ -263,14 +272,14 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        allocate(dattempvec(2*ndim+1,npart_max),stat=ierr)
     endif
     dattempvec = 0.
-    if (ierr /= 0) print*,'not enough memory in read_data (dattempvec)'
+    if (ierr /= 0) print*,'not enough memory in read_data_VINE (dattempvec)'
 !
 !--allocate a temporary array for particle index
 !
     if (allocated(ipindx)) deallocate(ipindx)
     allocate(ipindx(npart_max),stat=ierr)
     !ipindx = 0
-    if (ierr /= 0) print*,'not enough memory in read_data (ipindx)'
+    if (ierr /= 0) print*,'not enough memory in read_data_VINE (ipindx)'
 !
 !--allocate a temporary array for itstepbin (MHD or point masses only)
 !
@@ -278,7 +287,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        if (allocated(itstepbin)) deallocate(itstepbin)
        allocate(itstepbin(npart_max),stat=ierr)
        !itstepbin = 0
-       if (ierr /= 0) print*,'not enough memory in read_data (itstepbin)'
+       if (ierr /= 0) print*,'not enough memory in read_data_VINE (itstepbin)'
     endif
 !
 !--now read the timestep data in the dumpfile
@@ -416,7 +425,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        dat(ntoti+1:ntoti+nptmass,icol,j) = real(dattemp(ntoti+1:ntoti+nptmass,icol))
     endif
 
-    call set_labels
+    call set_labels_VINE
     if (ih > 0 .and. hfactor > 1.0) then
        dat(1:ntoti+nptmass,ih,j) = hfactor*dat(1:ntoti+nptmass,ih,j)
     endif
@@ -460,13 +469,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
  return
 
-end subroutine read_data
+end subroutine read_data_VINE
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_VINE
  use labels, only:label,ih,ipmass,ivx,iutherm,irho,ix,iBfirst, &
                    labelvec,iamvec,labeltype
  use params
@@ -476,11 +485,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_VINE ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_VINE ***'
     return
  endif
 
@@ -530,4 +539,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_VINE
+end module readdata_VINE

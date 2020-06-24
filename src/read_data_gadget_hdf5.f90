@@ -159,7 +159,17 @@ end module gadgethdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+
+module readdata_gadget_hdf5
+ implicit none
+ 
+ public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
+ 
+ private 
+contains
+
+subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
@@ -303,7 +313,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        !--call set labels to get ih, ipmass, irho for use in the read routine
        !
        hsoft = 0. ! to avoid unset variable
-       call set_labels
+       call set_labels_gadget_hdf5
     endif
 
     if (ifile==1) then
@@ -346,13 +356,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
           ncolumns = ncolumns + 1
           blocklabelgas(ncolumns) = 'SmoothingLength'
           ih = ncolumns
-          call set_labels
+          call set_labels_gadget_hdf5
        endif
        if (irho==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
           ncolumns = ncolumns + 1
           blocklabelgas(ncolumns) = 'Density'
           irho = ncolumns
-          call set_labels
+          call set_labels_gadget_hdf5
        endif
        !
        !--if successfully read header, increment the nstepsread counter
@@ -529,7 +539,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        else
           print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget_hdf5 routine
     endif
 
     if (ierrrho==0) then
@@ -560,7 +570,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
           print "(a,i10,a,f5.2,a)", &
             ' SMOOTHING LENGTHS SET for ',j-1-index1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget_hdf5 routine
     endif
  else
     !
@@ -690,7 +700,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
  return
 
-end subroutine read_data
+end subroutine read_data_gadget_hdf5
 
 subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -773,7 +783,7 @@ end subroutine read_gadgethdf5_data_fromc
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_gadget_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iBfirst,idivB,iax
  use params
@@ -786,11 +796,11 @@ subroutine set_labels
  integer :: i,j,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget_hdf5 ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_gadget_hdf5 ***'
     return
  endif
 
@@ -891,9 +901,9 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_gadget_hdf5
 
-subroutine set_blocklabel(icol,irank,name) bind(c)
+subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use gadgethdf5read, only:blocklabelgas,blocksize,fstring
  implicit none
@@ -904,4 +914,5 @@ subroutine set_blocklabel(icol,irank,name) bind(c)
  blocksize(icol+1) = irank
  !print*,icol+1,' name = ',trim(blocklabelgas(icol+1)),' x ',irank
 
-end subroutine set_blocklabel
+end subroutine set_blocklabel_gadget
+end module readdata_gadget_hdf5
