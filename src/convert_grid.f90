@@ -82,6 +82,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real, dimension(3)    :: partmin,partmax,partmean
  real, dimension(3)    :: datmin,datmax,datmean
  real(doub_prec)       :: dtime
+ real(doub_prec), dimension(3) :: xmind,xmaxd
  integer, dimension(3) :: npixels
  integer(kind=int8), dimension(3) :: npixels8
  integer, dimension(12) :: icoltogrid
@@ -299,7 +300,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  if (do_output) then
     origin='"splash to '//trim(outformat)//'" on file '//trim(filename)
-    call open_gridfile_w(iunit,filename,outformat,ndim,ncolsgrid,npixels(1:ndim),dtime,ierr)
+    xmind = xmin; xmaxd = xmax  ! convert to double precision
+    call open_gridfile_w(iunit,filename,outformat,ndim,ncolsgrid,npixels(1:ndim),&
+                         xmind(1:ndim),xmaxd(1:ndim),dtime,ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR: could not open grid file for output, skipping...'
        if (allocated(datgrid)) deallocate(datgrid)
@@ -421,12 +424,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (ndim==3 .and. do_output) then
     if (lowmem .or. interpolateall .or. ncolstogrid > 0) then
        call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
-                       labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid,&
+                       labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,dat=datgrid,&
                        tagline=tagline,origin=origin)
     endif
  elseif (do_output) then
     call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(irho)),&
-                    labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat2D=datgrid2D,&
+                    labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,dat2D=datgrid2D,&
                     tagline=tagline,origin=origin)
  endif
  !
@@ -478,12 +481,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
              if (do_output) call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                  labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid)
+                  labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,dat=datgrid)
           else
              call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)
              print fmtstring,' on grid :',gridmin,gridmax,gridmean
              if (do_output) call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                  labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat2D=datgrid2D)
+                  labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,dat2D=datgrid2D)
           endif
        endif
     enddo
@@ -565,12 +568,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                    call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat=datgrid,tagline=tagline,origin=origin)
+                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,&
+                        dat=datgrid,tagline=tagline,origin=origin)
                 else
                    call minmaxmean_grid2D(datgrid2D,npixels,gridmin,gridmax,gridmean,.false.)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
-                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,dat2D=datgrid2D,tagline=tagline,origin=origin)
+                        labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,&
+                        dat2D=datgrid2D,tagline=tagline,origin=origin)
                 endif
              enddo
           else
@@ -616,13 +621,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              !
              if (ndim==3 .and. do_output) then
                 call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
-                                label(irho),labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,ierr,&
+                                label(irho),labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,&
                                 dat=datgrid,dat3D=datgridvec,label3D=label(iloc:iloc+ndimV),tagline=tagline,origin=origin)
              elseif (do_output) then
                 do i=1,ndimV
                    call write_grid(iunit,filename,outformat,ndim,ndimV,npixels,&
                                    label(iloc+i-1),labelcoordsys(igeom),xlab,dtime,pixwidthx,&
-                                   xmin,ierr,dat2D=datgridvec2D(i,:,:),tagline=tagline,origin=origin)
+                                   xmin,xmax,ierr,dat2D=datgridvec2D(i,:,:),tagline=tagline,origin=origin)
                 enddo
              endif
           endif
