@@ -537,6 +537,7 @@ program splash
           evsplash = .true.
           fileprefix = 'evsplash'
           call set_filenames(trim(fileprefix))
+          got_format = .true.
        case('360','4pi','fourpi')
           use_360 = .true.
           ipickx = 2
