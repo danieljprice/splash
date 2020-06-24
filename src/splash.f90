@@ -54,7 +54,9 @@ program splash
 !             in interactive mode using number followed by u/d; fits reader includes header
 !             quantities; reduced verbosity for non-interactive plots; use of fake dust particles
 !             is now via menu option, not environment variable; max particle types = 24;
-!             userguide in readthedocs format; bug fix with save limits with particle tracking
+!             userguide in readthedocs format; bug fix with save limits with particle tracking;
+!             support for .pfm pixelmap format as output; physical units are ON by default;
+!             prompts only for particle types present in data
 !     2.10.0  : (14/02/20)
 !             much improved splash to grid - bug fixes with pixel number and roundoff error;
 !             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
@@ -423,7 +425,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v2.10.1 [30th Apr 2020]'
+ character(len=*), parameter :: version = 'v2.10.1 [24th June 2020]'
 
  !
  ! initialise some basic code variables
