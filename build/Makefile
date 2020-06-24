@@ -870,12 +870,12 @@ checkpbob:
 # to do the two separately
 #
 install: destdircheck installcheck
-	@cd $(BINDIR); if test -e *splash*; then for x in *splash*; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done; fi;
+	@cd $(BINDIR); for x in *splash*; do if [ -e $$x ]; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi; done;
 	@cd $(BINDIR); x=denoise; if test -e $$x; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi;
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e $(BINDIR)/*splash* || test -e $(BINDIR)/denoise; then echo; \
+	@if [ -e $(BINDIR)/splash ] || [ -e $(BINDIR)/denoise ]; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
