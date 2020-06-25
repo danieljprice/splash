@@ -106,7 +106,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  character(len=len(rootname)+10)    :: datfile,densfile,hfile
  character(len=4)                   :: blocklabel
  character(len=20)                  :: string
- integer, dimension(maxparttypes)   :: npartoftypei,Nall
+ integer, dimension(6) :: npartoftypei,Nall
  integer, dimension(:), allocatable :: iamtemp
  integer               :: i,j,k,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
  integer               :: index1,index2,indexstart,indexend,nmassesdumped,ntypesused
@@ -1365,7 +1365,7 @@ logical function file_format_is_gadget(filename) result(is_gadget)
  integer :: iunit,ierr
  real(doub_prec) :: time,z
  real(doub_prec) :: massoftypei(6)
- integer :: noftype(6),iFlagSfr
+ integer :: noftype(6),Nall(6),iFlagSfr,iFlagFeedback,iFlagcool,nfiles
 
  is_gadget = .false.
  !
@@ -1382,10 +1382,15 @@ logical function file_format_is_gadget(filename) result(is_gadget)
  z = -1.
  iFlagSfr = -1
 
- read(iunit,iostat=ierr) noftype(1:6),massoftypei(1:6),time,z,iFlagSfr
+ read(iunit,iostat=ierr) noftype(1:6),massoftypei(1:6),time,z,iFlagSfr,&
+      iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+! print*,' got ',ierr,noftype(1:6),massoftypei(1:6),time,z,iFlagSfr, &
+!         iFlagFeedback,Nall(1:6),iFlagCool,nfiles
 
  if (ierr==0 .and. all(noftype(1:6) >= 0) .and. all(massoftypei >= 0.) &
-     .and. time >= 0. .and. z >= 0. .and. iFlagSfr >= 0) is_gadget = .true.
+     .and. time >= 0. .and. z >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
+     .and. iFlagFeedback >= 0 .and. all(nall(1:6) >= 0) .and. nfiles >= 0 &
+     .and. nfiles <= 1e6) is_gadget = .true.
 
  close(iunit)    ! close the file
 
