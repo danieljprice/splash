@@ -83,10 +83,10 @@ end module gadgetread
 
 module readdata_gadget
  implicit none
- 
- public :: read_data_gadget, set_labels_gadget
- 
- private 
+
+ public :: read_data_gadget, set_labels_gadget, file_format_is_gadget
+
+ private
 contains
 
 subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
@@ -1353,4 +1353,42 @@ subroutine set_labels_gadget
  UseTypeInRenderings(3:6) = .false.
 
 end subroutine set_labels_gadget
+
+!-----------------------------------------------------------
+!
+! check if a file is in phantom/sphNG format
+!
+!-----------------------------------------------------------
+logical function file_format_is_gadget(filename) result(is_gadget)
+ use params, only:doub_prec
+ character(len=*), intent(in) :: filename
+ integer :: iunit,ierr
+ real(doub_prec) :: time,z
+ real(doub_prec) :: massoftypei(6)
+ integer :: noftype(6),iFlagSfr
+
+ is_gadget = .false.
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted')
+ if (ierr /= 0) return
+ !
+ ! attempt to read the first line of the header
+ !
+ noftype(:) = -1
+ massoftypei(:) = -1.
+ time = -1.
+ z = -1.
+ iFlagSfr = -1
+
+ read(iunit,iostat=ierr) noftype(1:6),massoftypei(1:6),time,z,iFlagSfr
+
+ if (ierr==0 .and. all(noftype(1:6) >= 0) .and. all(massoftypei >= 0.) &
+     .and. time >= 0. .and. z >= 0. .and. iFlagSfr >= 0) is_gadget = .true.
+
+ close(iunit)    ! close the file
+
+end function file_format_is_gadget
+
 end module readdata_gadget

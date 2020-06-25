@@ -31,7 +31,7 @@ module readdata
  use readdata_sphNG,        only:read_data_sphNG,        set_labels_sphNG,   file_format_is_sphNG
  use readdata_ascii,        only:read_data_ascii,        set_labels_ascii
  use readdata_ndspmhd,      only:read_data_ndspmhd,      set_labels_ndspmhd
- use readdata_gadget,       only:read_data_gadget,       set_labels_gadget
+ use readdata_gadget,       only:read_data_gadget,       set_labels_gadget,  file_format_is_gadget
  use readdata_VINE,         only:read_data_VINE,         set_labels_VINE
  use readdata_sro,          only:read_data_sro,          set_labels_sro
  use readdata_dragon,       only:read_data_dragon,       set_labels_dragon
@@ -474,6 +474,8 @@ subroutine guess_format_from_file_header(filename,ierr)
  ierr = 1
  if (file_format_is_sphNG(filename)) then
     call select_data_format('sphNG',ierr)
+ elseif (file_format_is_gadget(filename)) then
+    call select_data_format('gadget',ierr)
  endif
 
 end subroutine guess_format_from_file_header
