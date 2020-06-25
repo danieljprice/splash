@@ -21,6 +21,9 @@
 !  The plotting API for SPLASH 2.0 was written by James Wetter
 !  wetter.j@gmail.com
 !
+!  Work on the unified binary for SPLASH 3.0 was by Josh Calcino
+!  josh.calcino@gmail.com
+!
 !-----------------------------------------------------------------
 
 program splash
@@ -48,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.0.0   : (xx/06/20) Unified splash binary with -f flag to specify format;
+!             automated format recognition for hdf5 format variants and fits
 !     2.10.1  : (24/06/20) exact solution can appear in legend; can also plot under data;
 !             fits reader and denoise utility can read/write spectral cubes; text shapes can
 !             print header variables using %(var); can shift cross section by precise amounts
@@ -426,7 +431,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v2.10.1 [24th June 2020]'
+ character(len=*), parameter :: version = 'v3.0.0 [25th June 2020]'
 
  !
  ! initialise some basic code variables
@@ -550,19 +555,24 @@ program splash
           lowmemorymode = .true.
        case('nolowmem','nlm')
           lowmemorymode = .false.
-       case('f', '-format')
+       case('f','-format')
           i = i + 1
           call get_argument(i,string)
           call select_data_format(string,ierr)
-          if (ierr/=0) call print_available_formats
+          if (ierr/=0) then
+             if (len_trim(string) > 0) then
+                print "(a)",' *** file format '''//trim(string)//''' not found ***'
+             endif
+             call print_available_formats
+             stop
+          endif
           got_format = .true.
        case('-formats')
           call print_available_formats
           stop
        case('-help')
           call print_usage
-          print "(/,a)",' Basic splash usage is explained in the userguide,'
-          print "(a,/)",'  located in the directory splash/docs/splash.pdf'
+          print "(/,a,/)",'Userguide: https://splash-viz.readthedocs.io'
           stop
        case default
           if (.not. got_format) call select_data_format(string(2:),ierr)
@@ -586,7 +596,7 @@ program splash
           doconvert = .true.
           convertformat = trim(string)
        else
-          call print_gridformats()
+          call print_gridformats('all')
           stop
        endif
     elseif (trim(string)=='calc') then
@@ -672,7 +682,7 @@ program splash
     endif
  endif
  if (lowmemorymode) print "(a)",' << running in low memory mode >>'
- 
+
  !
  ! Guess format if not already set
  !
@@ -841,19 +851,18 @@ subroutine print_usage(quit)
  print "(a)",trim(tagline)
  print "(a,/)",trim(version)
  print "(a,/)",'Usage: splash file1 file2 file3...'
- print "(a,/,a,/)",'Usage with flags: splash [-p fileprefix] [-d defaultsfile] [-l limitsfile] [-ev] ', &
-               '[-lowmem] [-o format] [-x col] [-y col] [-render col] [-cont col] [-f format] file1 file2 ...'
+ print "(a,/,a,/)",'Usage with flags: splash [-f format] [-p fileprefix] [-ev] ', &
+               ' [-x col] [-y col] [-r col] [-cont col] file1 file2 ...'
 
  print "(a,/)",'Command line options:'
+ print "(a)",' -f format         : input file format to be read (default is ascii, --formats for full list)'
  print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
- print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
- print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
+ !print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
+ !print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
  print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
  print "(a)",' -360              : set default options suited to 360 video'
- print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
+ !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
- print "(a)",' -f                : input file format to be read (ascii is default)'
- call print_available_formats('short')
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : specify x plot on command line (ie. do not prompt for x)'
  print "(a)",' -y column         : specify y plot on command line (ie. do not prompt for y)'
@@ -862,9 +871,10 @@ subroutine print_usage(quit)
  print "(a)",' -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)'
  print "(a)",' -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)'
  print "(a)",' -dev device       : specify plotting device on command line (ie. do not prompt)'
+ call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
- call print_gridformats()
+ call print_gridformats('short')
  print "(a)"
  ltemp = isanalysis('none')
 
