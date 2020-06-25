@@ -120,22 +120,22 @@ Compiling and linking with giza
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can either install giza with your package manager, or in a subdirectory
-of splash. To install in a splash subdirectory, use
-::
+of splash. To install in a splash subdirectory, use::
+
 	cd splash
 	git clone http://github.com/danieljprice/giza
-   	make withgiza
+   make withgiza
 
 of splash.
 
-With giza installed via your package manager (or previously compiled as below), use
-::
+With giza installed via your package manager (or previously compiled as below), use::
+
    cd splash
    make GIZA_DIR=/usr/local
 
 where ``GIZA_DIR`` points to the directory where giza was installed.
-To install giza in a splash subdirectory, use
-::
+To install giza in a splash subdirectory, use::
+
    cd splash
    git clone http://github.com/danieljprice/giza
    make withgiza
@@ -154,90 +154,91 @@ directly from unformatted data files is \*much\* faster than reading
 from formatted (ascii) output.
 
 A standard ``make`` will create a binary which supports the file formats listed in
-:ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports). 
+:ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports).
 All data formats in the splash repository that do not
 have an additional dependencies (e.g. ``HDF5``) will be
 supported in the splash binary as of version ``3.0.0``.
 This means that the user needs to specify the data type
 they are reading as a command line option. For example,
-the following will read a phantom dumpfile
-::
+the following will read a phantom dumpfile::
+
 	splash --format phantom disc_00000
 
 In some cases, the format of the file can be inferred if
 the the file has a known suffix. For example, the above line can be changed if the
-suffixe of the file is recognised
-::
-	splash disc_00000.pb
-This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
-previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent
-::
- 	alias asplash='splash ' # Alias for ascii splash
- 	alias ssplash='splash -f phantom '
- 	alias gsplash='splash -f gadget '
- 	alias vsplash='splash -f vine '
- 	alias nsplash='splash -f ndspmhd '
- 	alias rsplash='splash -f srosph '
- 	alias dsplash='splash -f dragon '
- 	alias srsplash='splash -f seren '
- 	alias tsplash='splash -f tipsy '
- 	alias tsplash='splash -f tipsy '
- 	alias msplash='splash -f mhutch '
+suffixe of the file is recognised::
 
-If splash is compiled with ``HDF5=yes``,
-the formats listed in 
-:ref:`tab:hdf5reads` will also be available in the ``splash`` binary.
-Other supported formats are listed in
-:ref:`tab:otherreads`, but these require additional libraries.
+	splash disc_00000.pb
+
+This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
+previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent::
+
+   alias asplash='splash ' # Alias for ascii splash
+   alias ssplash='splash -f phantom '
+   alias gsplash='splash -f gadget '
+   alias vsplash='splash -f vine '
+   alias nsplash='splash -f ndspmhd '
+   alias rsplash='splash -f srosph '
+   alias dsplash='splash -f dragon '
+   alias srsplash='splash -f seren '
+   alias tsplash='splash -f tipsy '
+   alias tsplash='splash -f tipsy '
+   alias msplash='splash -f mhutch '
+
+If splash is compiled with ``HDF5=yes``, the formats listed in :ref:`tab:hdf5reads` will also be available in the ``splash`` binary.
+Other supported formats are listed in :ref:`tab:otherreads`, but these require additional libraries.
 
 .. table:: Binaries and data reads compiled by default
    :name: tab:defaultreads
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash`` command           | Format Read                | ``read_data`` File            | Comments                                                                                                                                                                                                                                         |
-+==============================+============================+===============================+==================================================================================================================================================================================================================================================+
-| ``splash -gadget <file>``    | ascii                      | ``read_data_asci.f90``        | Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g. energy vs time files). |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable options.                                                                                                                                                                                                                |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -gadget <file>``    | gadget, gadget-2, gadget-3 | ``read_data_gadget.f90``      | Handles both default and block-labelled formats (see environment variable options).                                                                                                                                                              |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -ndspmhd <file>``   | ndspmhd                    | ``read_data_ndspmhd.f90``     | Format for the ndspmhd SPH/SPMHD code (publicly available from my website).                                                                                                                                                                      |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate’s SPH code. Option ``-sphng``also works.                                                                                                                                                                                   |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog’s code                                                                                                                                                                                                                           |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et al.)                                                                                                                                                                                                       |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined automatically). Option ``-tipsy`` also works.                                                                                                                                                |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable options.                                                                                                                                                                                                                |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The StarSmasher code (Gaburov et al. 2018) `<http://jalombar.github.io/starsmasher/>`_                                                                                                                                                                  |
-+------------------------------+----------------------------+-------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash`` command           | Format Read                | ``read_data`` File            |  Comments                                                                                                                                                                                                                                         |
+   +==============================+============================+===============================+===================================================================================================================================================================================================================================================+
+   | ``splash -gadget <file>``    | ascii                      | ``read_data_asci.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable  options.                                                                                                                                                                                                                |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -gadget <file>``    | gadget, gadget-2, gadget-3 | ``read_data_gadget.f90``      | Handles both default and block-labelled formats (see  environment variable  options).                                                                                                                                                             |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -ndspmhd <file>``   | ndspmhd                    | ``read_data_ndspmhd.f90``     | Format for the ndspmhd SPH/SPMHD code (publicly available from  my  website).                                                                                                                                                                     |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate’s SPH code. Option ``-sphng`` also  works.                                                                                                                                                                                  |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog’s  code                                                                                                                                                                                                                           |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et  al.)                                                                                                                                                                                                       |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined  automatically). Option ``-tipsy`` also  works.                                                                                                                                               |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable  options.                                                                                                                                                                                                                |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   |``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The `StarSmasher <http://jalombar.github.io/starsmasher/>`_ code (Gaburov et al. 2018)                                                                                                                                                            |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Below is a list of the supported data formats that require ``HDF5``.
 
-.. table:: Supported HDf5 data formats
+.. table:: Supported HDF5 data formats
    :name: tab:hdf5reads
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-| ``splash`` Command             | Read Format            | ``read_data`` File            | Comments                                                                                |
-+================================+========================+===============================+=========================================================================================+
-| ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget code.                                                 |
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-| ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE framework.                                             |
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-| ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-| ``splash -flash_hdf5 <file>    | FLASH tracer particles | ``read_dataflash_hdf5.f90``   | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-| ``splash -falcon_hdf5 <file>   | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen’s SPH code format. The option ``-falcon`` will also work.                 |
-+--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash`` Command             | Read Format            | ``read_data`` File            |    Comments                                                                             |
+   +================================+========================+===============================+=========================================================================================+
+   | ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget    code.                                              |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE    framework.                                          |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash -flash_hdf5 <file>``  | FLASH tracer particles | ``read_dataflash_hdf5.f90``   | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash -falcon_hdf5 <file>`` | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen’s SPH code format. The option ``-falcon`` will also work.                 |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
 
 If the ``HDF5`` read files end with ``.h5``, the suffix ``_hdf5`` from the ``splash`` command can be removed.
-For example, 
-::
+For example::
+
 	splash -gadget dump_000.h5
+
 will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format,
 and will automatically select the correct ``read_data`` routine.
 
@@ -245,21 +246,22 @@ Below is a list of other formats supported, but have additional library requirem
 
 .. table:: Other supported file formats that require external libraries
    :name: tab:otherreads
-+---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash`` Command        | Read Format  | ``read_data`` File       | Comments                                                                                                                                                                   |
-+===========================+==============+==========================+============================================================================================================================================================================+
-| ``splash -pbob <file>``   | PBOB Files   | ``read_data_pbob.f90``   | Requires the PBOB Library. Compile ``splash`` with ``PBOB_DIR=/path/to/pbob/``.                                                                                            |
-+---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -h5part <file>`` | H5Part Files | ``read_data_h5part.f90`` | Requires the H5Part and HDF5 libraries. Compile ``splash`` with ``H5PART_DIR=/path/to/h5part/``.                                                                           |
-+---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| ``splash -fits <file>``   | FITS files   | ``read_data_fits.f90``   | Requires FITS libraries. Try to compile ``splash`` with ``FITS=yes``. If this does not work, point to the location of your fits libraries with ``FITS_DIR=/path/to/fits``. |
-+---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+   +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash`` Command        | Read Format  | ``read_data`` File       | Comments                                                                                                                                                                   |
+   +===========================+==============+==========================+============================================================================================================================================================================+
+   | ``splash -pbob <file>``   | PBOB Files   | ``read_data_pbob.f90``   | Requires the PBOB Library. Compile ``splash`` with ``PBOB_DIR=/path/to/pbob/``.                                                                                            |
+   +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -h5part <file>`` | H5Part Files | ``read_data_h5part.f90`` | Requires the H5Part and HDF5 libraries. Compile ``splash`` with ``H5PART_DIR=/path/to/h5part/``.                                                                           |
+   +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash -fits <file>``   | FITS files   | ``read_data_fits.f90``   | Requires FITS libraries. Try to compile ``splash`` with ``FITS=yes``. If this does not work, point to the location of your fits libraries with ``FITS_DIR=/path/to/fits``. |
+   +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
 Further details on writing your own subroutine are given in
 appendix :ref:`sec:writeyourown`. The \*easiest\* way is to i)
 email me a sample data file and ii) the subroutine you used to write it,
-and I will happily create a data read for your file format. 
+and I will happily create a data read for your file format.
 
 .. _sec:commandline:
 
@@ -289,14 +291,14 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     -gadget           : Gadget code
     -seren            : Seren code
    ..plus many others. Type --formats for a full list
-  
+
    The following formats support HDF5:
     -flash            : FLASH code
     -gadget           : Gadget code
     -cactus           : Cactus SPH code
     -falcon           : FalcON code
     -amuse            : AMUSE Framework
-  
+
    add a suffix "_hdf5" to the above command line options if your data files do not end with .h5.
 
    Command line plotting mode:
