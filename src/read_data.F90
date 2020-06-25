@@ -342,17 +342,21 @@ subroutine print_available_formats(string)
 
  !print "(/,a)",' To select data formats, use the shortcuts below, or use the -f or --format command line options'
  !print "(a)"  ,' Multiple data formats are not support in a single instance.'
- print "(/,a,/)",'Example data formats (type --formats for full list):'
+ if (string == 'short') then
+    print "(/,a,/)",'Example data formats (type --formats for full list):'
+ else
+    print "(/,a,/)",'Supported data formats:'
+ endif
  print "(a)"  ,' -ascii            : ascii file format (default)'
  print "(a)"  ,' -phantom -sphng   : Phantom and sphNG codes'
  print "(a)"  ,' -ndspmhd          : ndspmhd code'
  print "(a)"  ,' -seren            : Seren code'
 #ifdef HDF5
- print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code [hdf5 if .h5 extension]'
- print "(a)"  ,' -falcon              : FalcON code [hdf5]'
- print "(a)"  ,' -flash               : FLASH code [hdf5]'
- print "(a)"  ,' -cactus              : Cactus code [hdf5]'
- print "(a,/)",' -amuse               : AMUSE Framework [hdf5]'
+ print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code'
+ print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
+ print "(a)"  ,' -flash  -flash_hdf5  : FLASH code'
+ print "(a)"  ,' -cactus -cactus_hdf5 : Cactus code'
+ print "(a,/)",' -amuse  -amuse_hdf5  : AMUSE Framework'
 #else
  print "(a)"  ,' -gadget           : Gadget code'
 #endif
@@ -366,30 +370,37 @@ subroutine print_available_formats(string)
  print "(a)"  ,' -h5part           : H5PART format'
 #endif
 
- if (string=='short') then
-
- else
-   print "(a)"  ,' -tispy -gasoline  : Gasoline code'
-   print "(a)"  ,' -vine             : VINE SPH code'
-   print "(a)"  ,' -rsph             : Regularised SPH'
-   print "(a)"  ,' -starsmasher      : Star Smasher code'
-   print "(a)"  ,' -dragon           : DRAGON code'
-   print "(a)"  ,' -sro -magma       : Stephan Rosswog SPH code'
-   print "(a)"  ,' -gradsph          : GRADSPH code'
-   print "(a)"  ," -mhutch           : Mark Hutchison's code"
-   print "(a)"  ," -mbate            : Matthew Bate's code"
-   print "(a)"  ,' -oilonwater       : Oil-on-Water binary accretion SPH'
-   print "(a)"  ,' -ucla             : UCLA ascii format'
-   print "(a)"  ,' -urban            : Andrea Urban ascii format'
-   print "(a)"  ,' -spyros           : Spyros Kitsionas format'
-   print "(a)"  ,' -jjm  -jjmmulti   : Joe Monaghan format'
-   print "(a)"  ,' -bauswein         : Andreas Bauswein format'
-   print "(a)"  ,' -egaburov         : Evghenii Gaburov format'
-   print "(a)"  ,' -aly              : Aly Reheam format'
-   print "(a)"  ,' -foulkes          : Foulkes ascii format'
-   print "(a)"  ,' -vanaverbeke      : Sigfried Vanaverbeke code'
-   print "(a)",  ' -gadget_jsb       : GADGET Jamie Bolton variant'
-
+ if (string /= 'short') then
+    print "(a)",' -tipsy -gasoline  : Gasoline code'
+    print "(a)",' -vine             : VINE SPH code'
+    print "(a)",' -rsph             : Regularised SPH'
+    print "(a)",' -starsmasher      : Star Smasher code'
+    print "(a)",' -dragon           : DRAGON code'
+    print "(a)",' -sro -magma       : Stephan Rosswog SPH code'
+    print "(a)",' -gradsph          : GRADSPH code'
+    print "(a)"," -mhutch           : Mark Hutchison's code"
+    print "(a)"," -mbate            : Matthew Bate's code"
+    print "(a)",' -oilonwater       : Oil-on-Water binary accretion SPH'
+    print "(a)",' -ucla             : UCLA ascii format'
+    print "(a)",' -urban            : Andrea Urban ascii format'
+    print "(a)",' -spyros           : Spyros Kitsionas format'
+    print "(a)",' -jjm  -jjmmulti   : Joe Monaghan format'
+    print "(a)",' -bauswein         : Andreas Bauswein format'
+    print "(a)",' -egaburov         : Evghenii Gaburov format'
+    print "(a)",' -aly              : Aly Reheam format'
+    print "(a)",' -foulkes          : Foulkes ascii format'
+    print "(a)",' -vanaverbeke      : Sigfried Vanaverbeke code'
+    print "(a)",' -gadget_jsb       : GADGET Jamie Bolton variant'
+#ifndef HDF5
+    print "(a)",' -gadget_hdf5         : Gadget HDF5 [not compiled]'
+    print "(a)",' -falcon -falcon_hdf5 : FalcON code [not compiled]'
+    print "(a)",' -flash  -flash_hdf5  : FLASH code [not compiled]'
+    print "(a)",' -cactus -cactus_hdf5 : Cactus code [not compiled]'
+    print "(a)",' -amuse  -amuse_hdf5  : AMUSE Framework [not compiled]'
+#endif
+#ifndef FITS
+    print "(a)",' -fits              : FITS format [not compiled]'
+#endif
  end if
 
 #ifdef HDF5
@@ -398,6 +409,9 @@ subroutine print_available_formats(string)
  print "(a)",'  add a suffix "_hdf5" to above format if your data files do not end with .h5.'
 #else
  print "(/,a)",'This build does not support HDF5. Compile with HDF5=yes to change this.'
+#endif
+#ifndef FITS
+ print "(/,a)",'This build does not support FITS. Compile with FITS=yes to change this.'
 #endif
 
 end subroutine print_available_formats

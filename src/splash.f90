@@ -864,13 +864,12 @@ subroutine print_usage(quit)
  !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(/,a,/)",'Command line plotting mode:'
- print "(a)",' -x column         : specify x plot on command line (ie. do not prompt for x)'
- print "(a)",' -y column         : specify y plot on command line (ie. do not prompt for y)'
- print "(a)",' -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)'
- print "(a)",'                     (will take columns 1 and 2 as x and y if -x and/or -y not specified)'
- print "(a)",' -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)'
- print "(a)",' -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)'
- print "(a)",' -dev device       : specify plotting device on command line (ie. do not prompt)'
+ print "(a)",' -x column         : x axis'
+ print "(a)",' -y column         : y axis'
+ print "(a)",' -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)'
+ print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
+ print "(a)",' -c[ontour] column : contoured quantity'
+ print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
