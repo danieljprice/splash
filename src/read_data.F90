@@ -58,7 +58,7 @@ module readdata
 #ifdef HDF5
  use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5
  use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5
- use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
+! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
  use readdata_flash_hdf5,   only:read_data_flash_hdf5,   set_labels_flash_hdf5
  use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5
 #endif
@@ -290,10 +290,10 @@ subroutine select_data_format(string,ierr)
  case('amuse_hdf5')
    read_data=>read_data_amuse_hdf5
    set_labels=>set_labels_amuse_hdf5
-
- case('falcon_hdf5', 'falconhdf5', 'falcon')
-   read_data=>read_data_falcON_hdf5
-   set_labels=>set_labels_falcON_hdf5
+   
+! case('falcon_hdf5', 'falconhdf5', 'falcon')
+!   read_data=>read_data_falcON_hdf5
+!   set_labels=>set_labels_falcON_hdf5
 
  case('flash_hdf5', 'flashhdf5', 'flash')
    read_data=>read_data_flash_hdf5
