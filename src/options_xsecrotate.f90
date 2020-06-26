@@ -157,19 +157,18 @@ subroutine submenu_xsecrotate(ichoose)
     text = 'proj'
  endif
 
- if (ians <= 0 .or. ians > 6) then
+ if (ians <= 0 .or. ians > 5) then
     print 10,text,print_logical(irotate),anglex,angley,anglez, &
              print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
-             irotateaxes,nseq
+             nseq
 10  format( &
               ' 0) exit ',/,       &
               ' 1) switch between cross section/projection      ( ',a4,' )',/, &
-              ' 2) rotation on/off/settings (incl. origin pos)  ( ',a,3(1x,f5.1),' )',/, &
+              ' 2) rotation and origin settings                 ( ',a,3(1x,f5.1),' )',/, &
               ' 3) 3D perspective on/off                        ( ',a,' )',/, &
               ' 4) 3D surface rendering on/off                  ( ',a,' )',/, &
-              ' 5) set axes for rotated/3D plots                ( ',i2,' )',/, &
-              ' 6) set animation sequence (rotate,flythru etc.) ( ',i2,' )')
-    call prompt('enter option',ians,0,6)
+              ' 5) set animation sequence (rotate,flythru etc.) ( ',i2,' )')
+    call prompt('enter option',ians,0,5)
  endif
 !
 !--options

@@ -198,7 +198,7 @@ subroutine submenu_page(ichoose)
 
  print "(a)",'---------------- page setup options -------------------'
 
- if (iaction <= 0 .or. iaction > 9) then
+ if (iaction <= 0 .or. iaction > 8) then
     print "( "// &
           "' 0) exit ',/, "// &
           "' 1) plot n steps on top of each other   (n =',i4,')',/, "// &
@@ -208,14 +208,12 @@ subroutine submenu_page(ichoose)
           "' 5) spatial dimensions have same scale  ( ',a,' )',/,"// &
           "' 6) set character height                (',f4.1,')',/,"// &
           "' 7) adjust line width                   (',i2, ')',/,"// &
-          "' 8) adjust page margins                 ( ',f4.1,' )',/,"// &
-          "' 9) set page and line colours           ( ',a,' )')", &
+          "' 8) set page and line colours           ( ',a,' )')", &
           nstepsperpage,iaxis,nacross,ndown,print_logical(tile), &
           trim(print_logical(usesquarexy)),charheight,linewidth,&
-          xminpagemargin, &
           trim(pagecolourscheme(iPageColours,short=.true.))
 
-    call prompt('enter option ',iaction,0,9)
+    call prompt('enter option ',iaction,0,8)
  endif
 
  select case(iaction)
@@ -486,14 +484,6 @@ subroutine submenu_page(ichoose)
     return
 !------------------------------------------------------------------------
  case(8)
-    call prompt('Enter xmin page margin as fraction of viewport ',xminpagemargin,-1.,1.)
-    call prompt('Enter xmax page margin as fraction of viewport ',xmaxpagemargin,-1.,1.)
-    call prompt('Enter ymin page margin as fraction of viewport ',yminpagemargin,-1.,1.)
-    call prompt('Enter ymax page margin as fraction of viewport ',ymaxpagemargin,-1.,1.)
-    !interactive = .not.interactive
-    !print "(a)",' Interactive mode is '//print_logical(interactive)
-!------------------------------------------------------------------------
- case(9)
     print "(3(/,i1,')',1x,a))",(i,pagecolourscheme(i),i=0,maxpagecolours)
     call prompt(' Choose page colour scheme ',iPageColours,0,maxpagecolours)
 
@@ -591,16 +581,15 @@ subroutine submenu_legend(ichoose)
     !--print menu
     print 20,print_logical(iPlotLegend),hposlegend,vposlegend,fjustlegend,trim(legendtext), &
              print_logical(iPlotTitles),hpostitle,vpostitle,fjusttitle, &
-             print_logical(iPlotStepLegend), print_logical(iPlotScale),iPlotLegendOnlyOnPanel, &
+             print_logical(iPlotStepLegend), print_logical(iPlotScale), &
              nshapes,trim(string)
 
 20  format(' 0) exit ',/,                   &
-        ' 1) time legend on/off/settings                   (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
-        ' 2) titles on/off/settings                        (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
+        ' 1) time legend settings                          (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,1x,'"',a,'")',/, &
+        ' 2) title settings                                (',1x,a,1x,f5.2,1x,f5.2,1x,f5.2,')',/, &
         ' 3) legend for multiple steps per page on/off     (',1x,a,1x,')',/, &
         ' 4) plot scale |---| on coordinate plots          (',1x,a,1x,')',/, &
-        ' 5) legend only on nth panel/first row/column     (',1x,i2,1x,')',/, &
-        ' 6) annotate plot (e.g. arrow,square,circle,text) (',1x,i2,a,')')
+        ' 5) annotate plot (e.g. arrow,square,circle,text) (',1x,i2,a,')')
 
     iaction = 0
     call prompt(' Enter option ',iaction,0,6)
@@ -668,12 +657,9 @@ subroutine submenu_legend(ichoose)
        endif
     endif
  case(5)
-    call prompt_panelselect('legend',iPlotLegendOnlyOnPanel)
- case(6)
     call submenu_shapes()
  end select
 
- return
 end subroutine submenu_legend
 
 end module settings_page

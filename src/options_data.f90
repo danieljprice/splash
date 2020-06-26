@@ -38,7 +38,6 @@ contains
 subroutine defaults_set_data
  use settings_data
  use params, only:maxplot
- implicit none
  integer :: i
 
  numplot=maxplot   ! reset if read from file
@@ -91,7 +90,6 @@ subroutine submenu_data(ichoose)
  use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring,idustfrac
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  use fparser,        only:rn,mu0
- implicit none
  integer, intent(in) :: ichoose
  integer             :: ians,i,ncalcwas,maxopt
  character(len=30)   :: fmtstring
@@ -103,29 +101,18 @@ subroutine submenu_data(ichoose)
 
  print "(a)",'----------------- data read options -------------------'
 
- if (ians <= 0 .or. ians > 8) then
-    if (iUseStepList) then
-       print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
-                 print_logical(iCalcQuantities),print_logical(iRescale)
-    else
-       print 10, (iendatstep-istartatstep+1)/nfreq,print_logical(iUseStepList), &
-                 print_logical(buffer_data),print_logical(iCalcQuantities), &
-                 print_logical(iRescale)
-    endif
+ if (ians <= 0 .or. ians > 3) then
+    print 10, print_logical(iCalcQuantities), print_logical(iRescale)
 10  format( &
            ' 0) exit ',/,               &
-           ' 1) read new data /re-read data',/,      &
-           ' 2) change number of timesteps used        ( ',i5, ' )',/, &
-           ' 3) plot selected steps only               (  ',a,' )',/, &
-           ' 4) buffer snapshots into memory           (  ',a,' )',/, &
-           ' 5) calculate extra quantities             (  ',a,' )',/, &
-           ' 6) use physical units                     (  ',a,' )')
+           ' 1) calculate extra quantities             (  ',a,' )',/, &
+           ' 2) use physical units                     (  ',a,' )')
     if (idustfrac > 0) then
         print &
-         "(' 7) use fake dust particles                (  ',a,' )')",print_logical(UseFakeDustParticles)
-       maxopt = 7
+         "(' 3) use fake dust particles                (  ',a,' )')",print_logical(UseFakeDustParticles)
+       maxopt = 3
     else
-       maxopt = 6
+       maxopt = 2
     endif
     call prompt('enter option',ians,0,maxopt)
  endif
@@ -134,44 +121,44 @@ subroutine submenu_data(ichoose)
 !
  select case(ians)
 !------------------------------------------------------------------------
+!  case(1)
+!     if (buffer_data) then
+!        call get_data(-1,.false.)
+!     else
+!        call get_data(1,.false.,firsttime=.true.)
+!     endif
+! !------------------------------------------------------------------------
+!  case(2)
+!     iUseStepList = .false.
+!     call prompt('Start at timestep ',istartatstep,1,nsteps)
+!     call prompt('End at timestep   ',iendatstep,istartatstep,nsteps)
+!     call prompt(' Frequency of steps to read',nfreq,1,nsteps)
+!     print *,' Steps = ',(iendatstep-istartatstep+1)/nfreq
+! !------------------------------------------------------------------------
+!  case(3)
+!     iUseStepList = .true.
+!     istartatstep = 1
+!     nfreq = 1
+!     iendatstep = min(iendatstep,size(isteplist),nsteps)
+!     call prompt('Enter number of steps to plot ', &
+!          iendatstep,1,size(isteplist))
+!     do i=1,iendatstep
+!        if (isteplist(i) <= 0 .or. isteplist(i) > nsteps) isteplist(i) = i
+!        write(fmtstring,"(a,i2)") 'Enter step ',i
+!        call prompt(fmtstring,isteplist(i),1,nsteps)
+!     enddo
+! !------------------------------------------------------------------------
+!  case(4)
+!     buffer_data = .not.buffer_data
+!     print "(/a)",' Buffering of data = '//print_logical(buffer_data)
+!     if (buffer_data) then
+!        call prompt('Do you want to read all files into memory now?',ireadnow)
+!        if (ireadnow) then
+!           call get_data(-1,.true.)
+!        endif
+!     endif
+!------------------------------------------------------------------------
  case(1)
-    if (buffer_data) then
-       call get_data(-1,.false.)
-    else
-       call get_data(1,.false.,firsttime=.true.)
-    endif
-!------------------------------------------------------------------------
- case(2)
-    iUseStepList = .false.
-    call prompt('Start at timestep ',istartatstep,1,nsteps)
-    call prompt('End at timestep   ',iendatstep,istartatstep,nsteps)
-    call prompt(' Frequency of steps to read',nfreq,1,nsteps)
-    print *,' Steps = ',(iendatstep-istartatstep+1)/nfreq
-!------------------------------------------------------------------------
- case(3)
-    iUseStepList = .true.
-    istartatstep = 1
-    nfreq = 1
-    iendatstep = min(iendatstep,size(isteplist),nsteps)
-    call prompt('Enter number of steps to plot ', &
-         iendatstep,1,size(isteplist))
-    do i=1,iendatstep
-       if (isteplist(i) <= 0 .or. isteplist(i) > nsteps) isteplist(i) = i
-       write(fmtstring,"(a,i2)") 'Enter step ',i
-       call prompt(fmtstring,isteplist(i),1,nsteps)
-    enddo
-!------------------------------------------------------------------------
- case(4)
-    buffer_data = .not.buffer_data
-    print "(/a)",' Buffering of data = '//print_logical(buffer_data)
-    if (buffer_data) then
-       call prompt('Do you want to read all files into memory now?',ireadnow)
-       if (ireadnow) then
-          call get_data(-1,.true.)
-       endif
-    endif
-!------------------------------------------------------------------------
- case(5)
     ncalcwas = ncalc
     call setup_calculated_quantities(ncalc)
 
@@ -190,7 +177,7 @@ subroutine submenu_data(ichoose)
        print "(/a)",' Calculation of extra quantities is '//print_logical(iCalcQuantities)
     endif
 !------------------------------------------------------------------------
- case(6)
+ case(2)
     iRescale_has_been_set = .true.
     print "(/,a)",' Current settings for physical units:'
     call get_labels ! reset labels for printing
@@ -235,7 +222,7 @@ subroutine submenu_data(ichoose)
           call get_data(1,.true.,firsttime=.true.)
        endif
     endif
- case(7)
+ case(3)
     oldval = UseFakeDustParticles
     call prompt( 'Use fake dust particles?',UseFakeDustParticles)
     ! re-read data if option has changed
@@ -247,9 +234,7 @@ subroutine submenu_data(ichoose)
        endif
     endif
  end select
-!------------------------------------------------------------------------
 
- return
 end subroutine submenu_data
 
 end module options_data
