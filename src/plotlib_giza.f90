@@ -250,15 +250,25 @@ subroutine plot_ctab(l,r,g,b,nc,contra,bright)
 
 end subroutine plot_ctab
 
-subroutine plot_qvsz(units,x1,x2,y1,y2)
- use giza, only:giza_get_paper_size,giza_units_device
+subroutine plot_qvsz(paperunits,x1,x2,y1,y2)
+ use giza, only:giza_get_paper_size,giza_units_device,giza_units_inches,giza_units_pixels,giza_units_mm
  implicit none
-
  real, intent(out)   :: x1,x2,y1,y2
- integer, intent(in) :: units
+ integer, intent(in) :: paperunits
+ integer :: units
 
  x1 = 0.
  y1 = 0.
+ select case(paperunits)
+ case(0)
+    units = giza_units_pixels
+ case(1)
+    units = giza_units_inches
+ case(2)
+    units = giza_units_mm
+ case default
+    units = giza_units_device
+ end select
  call giza_get_paper_size(units,x2,y2)
 
 end subroutine plot_qvsz
@@ -318,7 +328,7 @@ subroutine plot_qinf(item,value,length)
 
  select case(item)
  case('VERSION','version')
-    value = 'giza-0.1'
+    value = 'giza-1.1'
  case('STATE','state')
     print*,' WARNING: query for STATE not yet implemented in giza'
  case('USER','user')
