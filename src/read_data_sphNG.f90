@@ -423,7 +423,7 @@ subroutine set_grain_sizes(ntags,tags,vals,udist)
  real, intent(inout) :: vals(ntags)
  real(doub_prec), intent(in) :: udist
  integer :: i,nd
-  
+
  ! convert grain sizes to cm
  nd = 0
  do i=1,ntags
@@ -1224,12 +1224,12 @@ end module sphNGread
 
 module readdata_sphNG
  implicit none
- 
- public :: read_data_sphNG, set_labels_sphNG
- 
- private 
+
+ public :: read_data_sphNG, set_labels_sphNG, file_format_is_sphNG
+
+ private
 contains
- 
+
 !----------------------------------------------------------------------
 !  Main read_data_sphNG routine for splash
 !----------------------------------------------------------------------
@@ -2601,8 +2601,31 @@ subroutine set_labels_sphNG
     UseTypeInRenderings(6) = .true.  ! only applies if turned on
  endif
 
-!-----------------------------------------------------------
-
  return
 end subroutine set_labels_sphNG
+
+!-----------------------------------------------------------
+!
+! check if a file is in phantom/sphNG format
+!
+!-----------------------------------------------------------
+logical function file_format_is_sphNG(filename) result(is_sphNG)
+ character(len=*), intent(in) :: filename
+ integer :: iunit,intg1,ierr
+
+ is_sphNG = .false.
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted')
+ if (ierr /= 0) return
+ !
+ ! check the magic integer to determine phantom/sphNG format
+ !
+ read(iunit,iostat=ierr) intg1
+ if (intg1==690706 .or. intg1==060769) is_sphNG = .true.
+ close(iunit)    ! close the file
+
+end function file_format_is_sphNG
+
 end module readdata_sphNG

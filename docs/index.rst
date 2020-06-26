@@ -21,6 +21,7 @@ Visualisation of smoothed particle hydrodynamics data using splash
    faq
    contribs
    refs
+   links
 
 .. toctree::
    :maxdepth: 2

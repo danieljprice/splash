@@ -23,6 +23,7 @@ present in my simulation results that I would not otherwise have noticed
 substantial. A key goal of splash is to eliminate the use of
 crap-looking particle plots as a means of representing SPH data.
 
+
 What it does
 ------------
 
@@ -78,6 +79,8 @@ graphics library to do the actual plotting. The following features are included:
    images which can then be :ref:`converted into animations <sec:animations>`
    or :ref:`inserted into LaTeX documents <sec:postscript>`.
 
+Examples of plots produced with splash can be found in the `gallery <http://users.monash.edu.au/~dprice/splash/gallery/>`_ or by looking at `papers with figures produced using splash <http://adsabs.harvard.edu/cgi-bin/nph-ref_query?bibcode=2007PASA...24..159P&amp;refs=CITATIONS&amp;db_key=AST">`_.
+
 What it doesn’t do
 ------------------
 
@@ -85,9 +88,7 @@ splash is geared towards gas dynamics simulations with SPH and has
 basically grown out of my visualisation needs. Thus it is not
 particularly useful for things like water and solids in SPH. An SPH
 visualisation tool geared towards the non-gaseous side of things you may
-want to have a look at is pv-meshless, by John Biddiscombe:
-
-https://twiki.cscs.ch/twiki/bin/view/ParaViewMeshless
+want to have a look at is `pv-meshless <https://twiki.cscs.ch/twiki/bin/view/ParaViewMeshless>`_, by John Biddiscombe.
 
 splash also doesn’t make coffee.
 

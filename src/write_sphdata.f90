@@ -36,10 +36,11 @@ contains
 ! utility to check if a format selection is valid
 !-----------------------------------------------------------------
 logical function issphformat(string)
- implicit none
  character(len=*), intent(in) :: string
+ logical :: verbose
 
  issphformat = .false.
+ verbose = .true.
  select case(trim(string))
  case('ascii','ASCII')
     issphformat = .true.
@@ -51,9 +52,11 @@ logical function issphformat(string)
     issphformat = .true.
  case('gadget','GADGET')
     issphformat = .true.
+ case('none')
+    verbose = .false.
  end select
 
- if (.not.issphformat) then
+ if (.not.issphformat .and. verbose) then
     print "(a)",' convert mode ("splash to X dumpfiles"): '
     print "(a,/)",' splash to ascii   : convert SPH data to ascii file dumpfile.ascii'
     print "(a)",  '        to binary  : convert SPH data to simple unformatted binary dumpfile.binary: '
@@ -69,6 +72,9 @@ logical function issphformat(string)
     endif
     print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
     print "(a)",  '        to gadget  : convert SPH data to default GADGET snapshot file format'
+ elseif (.not.issphformat) then
+    print "(a)",'Convert mode: '
+    print "(a)",'   splash to ascii     : convert to ascii; type "splash to" for other formats'
  endif
 
  return
@@ -323,7 +329,7 @@ subroutine get_order_from_list(list_in,list_out,n)
  integer :: i
  logical :: done
  !
- ! set list_out = list_in, but only while list_in 
+ ! set list_out = list_in, but only while list_in
  ! is non-zero and numbers are in range
  !
  i = 1

@@ -457,7 +457,7 @@ log in using ssh with X-windows forwarding, e.g.::
 Then just plot to an interactive device (``/xw``) as usual and everything
 in :ref:`sec:interactive` should *just work*.
 
-splash has few dependencies and is simple to install in your home space if necessary.
+splash has few dependencies and is simple to :ref:`install in your home space <installhome>` if necessary.
 That said, it is always a good idea to get admins to install a shared package for all users.
 
 Ten quick hints for producing good-looking plots

@@ -71,7 +71,7 @@ H5PART_INCLUDE = -I$(H5PART_DIR)/include
 ifdef FITS_DIR
    FITSLIBS = -L$(FITS_DIR)/lib -lcfitsio
 else
-   FITSLIBS = -lcfitsio -DFITS
+   FITSLIBS = -lcfitsio
 endif
 FITSINCLUDE = -I$(FITS_DIR)/include
 #
@@ -131,11 +131,8 @@ endif
 #  set the environment variable 'SYSTEM' to one of those
 #  listed to use the appropriate settings
 #
-#  e.g. in tcsh use
-#  setenv SYSTEM 'g95'
-#
 #  in bash the equivalent is
-#  export SYSTEM='g95'
+#  export SYSTEM='gfortran'
 #
 #--------------------------------------------------------------
 
@@ -151,21 +148,6 @@ ifeq ($(SYSTEM), gfortran)
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM), gfortran-catalina)
-#  gfortran compiler (part of gcc 4.x.x)
-   FC= gfortran
-   FFLAGS= -O3 -frecord-marker=4 -fPIC
-   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
-   SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
-              -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
-   OMPFLAGS= -fopenmp
-   ENDIANFLAGBIG= -fconvert=big-endian
-   ENDIANFLAGLITTLE= -fconvert=little-endian
-   KNOWN_SYSTEM=yes
-   X11_DIR= /opt/X11/
 endif
 
 ifeq ($(SYSTEM),nagf95)
@@ -194,7 +176,6 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
-#   FFLAGS= -O3 -nbs -i_dynamic
    FFLAGS= -O3 -nbs
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
@@ -206,20 +187,6 @@ ifeq ($(SYSTEM),ifort)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
-endif
-
-ifeq ($(SYSTEM),ifort8)
-#  this is for the intel fortran compiler (version 8)
-   FC= ifort
-   FFLAGS= -O3 -Vaxlib -nbs
-   OMPFLAGS= -openmp
-   DBLFLAGS= -r8
-   DEBUGFLAG= -C -g
-   SYSTEMFILE= system_unix.f90
-   ENDIANFLAGBIG= -convert big_endian
-   ENDIANFLAGLITTLE= -convert little_endian
-# or use setenv F_UFMTENDIAN=big or little at runtime
-   KNOWN_SYSTEM=yes
 endif
 
 ifeq ($(SYSTEM),pgf90)
@@ -251,40 +218,9 @@ endif
 
 #--------------------------------------------------------------
 #
-# the following presets are machine-specific
-# (ie. relate to both the compiler and a specific
-#      installation of pgplot)
+# the following presets are user or machine-specific
 #
 #--------------------------------------------------------------
-ifeq ($(SYSTEM),zen)
-#  this is for the intel fortran compiler
-   FC= ifort
-   FFLAGS= -O3 -mcmodel=medium -axT -warn all #-ipo #-assume nounderscore
-   OMPFLAGS= -openmp
-   DEBUGFLAG= -check all -traceback -g
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -convert big_endian
-   ENDIANFLAGLITTLE= -convert little_endian
-   X11_LIBS=-L/home/djp212/lib -lX11
-   PGPLOTLIBS= -lpng #-L${PGPLOT_DIR} -lpgplot -lpng
-   STATICLIBS= /home/djp212/pgplot/libpgplot.a
-# or use setenv F_UFMTENDIAN=big or little at runtime
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),intelmac)
-#  these are the settings for an Intel Macbook running Tiger
-#  using gfortran with pgplot installed via fink
-   FC= gfortran
-   FFLAGS= -O3 -ffast-math
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -frange-check
-   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -L/sw/lib -lpng \
-          -laquaterm -Wl,-framework -Wl,Foundation -lSystemStubs
-   SYSTEMFILE= system_f2003.f90
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),cody)
     FC= gfortran
     FFLAGS= -O3 -Wall
@@ -303,7 +239,7 @@ endif
 #
 # these are the flags used for linking
 #
-LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS) --verbose
+LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS)
 
 #
 # this is an option to change the endian-ness at compile time
@@ -334,13 +270,6 @@ endif
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     FFLAGS += $(DEBUGFLAG)
-endif
-
-# link with hdf5 libraries
-ifeq ($(HDF5),yes)
-    CFLAGS  += $(HDF5INCLUDE)
-    LDFLAGS += $(HDF5LIBS)
-    FPPFLAGS += -DHDF5
 endif
 
 #
@@ -423,48 +352,49 @@ READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspm
            read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
            read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
            read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90      \
-                  
+           read_data_vanaverbeke.f90
 
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
                 read_data_cactus_hdf5_utils.c   read_data_cactus_hdf5_futils.f90   read_data_cactus_hdf5.f90 \
-                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90 \
+                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90
                 #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
-                
 
-RUN_CHECKS= 
+READFILES_FITS= write_fits.f90 read_data_fits.f90
 
+READFILES_PBOB= read_data_pbob_utils.c read_data_pbob.f90 read_pbob.c read_particle.c
+
+READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
+
+RUN_CHECKS=
+
+# link with hdf5 libraries
 ifeq ($(HDF5),yes)
-  READFILES += $(READFILES_HDF5)
-  LDFLAGS+=$(HDF5LIBS)
+  READFILES+=$(READFILES_HDF5)
   CFLAGS+=$(HDF5INCLUDE)
+  LDFLAGS+=$(HDF5LIBS)
+  FPPFLAGS+=-DHDF5
   RUN_CHECKS+=checkhdf5
 endif
 
-READFILES_FITS= imageutils.f90 write_fits.f90 read_data_fits.f90
 
 ifeq ($(FITS),yes)
   READFILES+= $(READFILES_FITS)
   LDFLAGS+=$(FITSLIBS)
-  FFLAGS+=-DFITS
+  FPPFLAGS+=-DFITS
   RUN_CHECKS+=checkfits
 endif
 
-READFILES_PBOB= read_data_pbob_utils.c read_data_pbob.f90 read_pbob.c read_particle.c
-
 ifdef PBOB_DIR
-   READFILES+=$(READFILES_PBOB)
-   VPATH+=$(PBOB_DIR)
-   RUN_CHECKS+=checkpbob
+  READFILES+=$(READFILES_PBOB)
+  VPATH+=$(PBOB_DIR)
+  RUN_CHECKS+=checkpbob
 endif
 
-READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
-
 ifdef H5PART_DIR
-   READFILES+=$(READFILES_H5PART)
-   VPATH+=$(H5PART_LIBS) $(HDF5LIBS)
-   RUN_CHECKS+=checkh5part
+  READFILES+=$(READFILES_H5PART)
+  VPATH+=$(H5PART_LIBS) $(HDF5LIBS)
+  RUN_CHECKS+=checkh5part
 endif
 
 
@@ -474,13 +404,12 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
-	 interpolate3D.F90 \
+	      interpolate3D.F90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 \
-         fparser.f90 parsetext.f90 \
+         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
@@ -492,13 +421,12 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          options_render.f90 options_particleplots.f90 \
          options_limits.f90 options_page.f90 $(READFILES) read_data.F90\
          adjust_data.f90 get_data.f90 \
-         options_data.f90   \
-	 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
-	rotate.f90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
+         options_data.f90 options_powerspec.f90 \
+	      options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+	      rotate.f90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
-         particleplot.f90 interactive.f90  \
+         imageutils.f90 particleplot.f90 interactive.f90  \
          convert_grid.f90 lightcurve.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
@@ -506,7 +434,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          defaults.f90 menu.f90 \
          splash.f90
 
-OBJECTS1 = $(SOURCES:.f90=.o) $(STATICLIBS)
+OBJECTS1= $(SOURCES:.f90=.o) $(STATICLIBS)
 OBJECTS2= $(OBJECTS1:.F90=.o)
 OBJECTS3= $(OBJECTS2:.c=.o)
 OBJECTS= $(OBJECTS3:.cc=.o)
@@ -517,27 +445,26 @@ OBJECTS= $(OBJECTS3:.cc=.o)
 # (move yours to the top so that you can simply type "make")
 #
 
-ascii: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
+all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
-	@echo; echo ' SPLASH successfully compiled! ';
-	@echo; echo ' Use "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin'; 
-	@echo; echo ' If you do not have admin priveledges, add the following to your .bashrc or equialent:';
-	@echo ' export SPLASH_DIR=$$HOME/splash';
-	@echo ' export PATH=$$PATH:$$SPLASH_DIR/bin';
-	@echo; echo ' For backwards compatibility, add the following to your .bashrc or equivalent:';
-	@echo " alias asplash='splash ' # Alias for ascii splash";
-	@echo " alias ssplash='splash -f phantom '";
-	@echo " alias gsplash='splash -f gadget ' ";
-	@echo " alias vsplash='splash -f vine ' ";
-	@echo " alias nsplash='splash -f ndspmhd ' ";
-	@echo " alias rsplash='splash -f srosph ' ";
-	@echo " alias dsplash='splash -f dragon ' ";
-	@echo " alias srsplash='splash -f seren ' ";
-	@echo " alias tsplash='splash -f tipsy ' ";
-	@echo " alias tsplash='splash -f tipsy ' ";
-	@echo " alias msplash='splash -f mhutch ' "; echo;
-	
-	
+	@echo; echo ' SPLASH v3 successfully compiled! ';
+	@echo; echo '   "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin';
+	@echo; echo ' If you do not have admin privileges, add the following to your .bashrc or equialent:';
+	@echo; echo '   export SPLASH_DIR=$$HOME/splash';
+	@echo '   export PATH=$$PATH:$$SPLASH_DIR/bin';
+	@echo; echo ' For backwards compatibility with v2.x, add the following to your .bashrc or equivalent:';
+	@echo; echo "   alias asplash='splash ' # alias for ascii splash";
+	@echo "   alias ssplash='splash -f phantom'";
+	@echo "   alias gsplash='splash -f gadget' ";
+	@echo "   alias vsplash='splash -f vine' ";
+	@echo "   alias nsplash='splash -f ndspmhd' ";
+	@echo "   alias rsplash='splash -f srosph' ";
+	@echo "   alias dsplash='splash -f dragon' ";
+	@echo "   alias srsplash='splash -f seren' ";
+	@echo "   alias tsplash='splash -f tipsy' ";
+	@echo "   alias msplash='splash -f mhutch' "; echo;
+
+
 #---falcON HDF5 read ---
 falcon: falcON
 
@@ -572,14 +499,6 @@ silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
 
 read_data_silo_utils.o: read_data_silo_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-#------------------
-
-read_data_sphNG_otherendian.o: read_data_sphNG.o
-	@echo "!--This file is automatically generated during the make: do not edit" > $(SRCDIR)/${@:.o=.f90}
-	cat $(SRCDIR)/read_data_sphNG.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' >> $(SRCDIR)/${@:.o=.f90}
-	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c $(SRCDIR)/${@:.o=.f90} -o $@
-
 
 #
 # sources for the grid2pdf command-line utility
@@ -869,8 +788,8 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 #
 include .depends
 
-cleanread: 
-	rm -f read_data.* splash.o $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so
+cleanread:
+	rm -f read_data*.o splash.o $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so
 
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise
