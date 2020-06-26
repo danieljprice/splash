@@ -477,21 +477,6 @@ read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
 
-#---PBOB read ---
-
-OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
-pbob: checksystem checkpbob $(OBJECTS) $(OBJPBOB)
-	$(FC) $(FFLAGS) -I$(PBOB_DIR)/include -o $(BINDIR)/psplash $(OBJECTS) $(OBJPBOB) $(LDFLAGS)
-
-read_data_pbob_utils.o: read_data_pbob_utils.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_pbob.o: read_pbob.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_particle.o: read_particle.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
 
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
