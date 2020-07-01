@@ -325,13 +325,16 @@ subroutine submenu_exact(iexact)
     enddo overfunc
     if (ierr /= 0) nfunc = ierr
  case(2)
-    call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
     !
     ! try to read filenames from .exactfiles if it exists
     !
     filename_tmp = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename_tmp),nfiles,filename_exact,ierr)
-    if (ierr==-1 .and. nfiles > 1) then
+    !
+    ! then prompt user
+    !
+    call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
+    if (ierr /= 0 .and. nfiles > 1) then
        print "(2(/,a))",' Hint: create a file called '//trim(fileprefix)//'.exactfiles', &
                                      ' with one filename per line to automatically read the filenames'
     else
