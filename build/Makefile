@@ -404,10 +404,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
-	 rotate.f90 interpolate3D_projection.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
+         rotate.f90 interpolate3D_projection.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
-         interpolate3D_opacity.f90 interpolate_vec.f90 \
-              interpolate3D.F90 \
+         interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.F90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
@@ -420,13 +419,12 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
-          legends.f90 \
-         options_render.f90 options_particleplots.f90 \
-         options_limits.f90 options_page.f90 imageutils.f90 $(READFILES) read_data.F90\
+         legends.f90 options_render.f90 options_particleplots.f90 \
+         options_limits.f90 options_page.f90 imageutils.f90 $(READFILES) read_data.F90 \
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
-	 particleplot.f90 interactive.f90  \
+         options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+         particleplot.f90 interactive.f90  \
          convert_grid.f90 lightcurve.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
