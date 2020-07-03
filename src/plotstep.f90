@@ -89,9 +89,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use titles,             only:read_titles,read_steplegend
  use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
-                               idustfrac_plot,ideltav_plot
+                               idustfrac_plot,ideltav_plot,device
  use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
-                               iPageColours,iadapt,iadaptcoords,linewidth,linepalette,device,nomenu,&
+                               iPageColours,iadapt,iadaptcoords,linewidth,linepalette,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
  use pagecolours,        only:set_pagecolours,set_linecolours
  use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep, &

@@ -404,13 +404,14 @@ program splash
                       fileprefix,set_filenames
  use getdata,   only:get_data
  use geomutils, only:set_coordlabels
- use defaults,  only:defaults_set_initial,defaults_set,defaults_read,defaults_set_360
+ use defaults,  only:defaults_set,defaults_read,defaults_set_360
+ use initialise,only:defaults_set_initial
  use limits,    only:read_limits
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
- use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
+ use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots,device
  use system_commands,    only:get_number_arguments,get_argument,get_environment
  use system_utils,       only:lenvironment
  use asciiutils,         only:read_asciifile,basename
@@ -420,7 +421,7 @@ program splash
  use readwrite_griddata, only:isgridformat,print_gridformats
  use analysis,           only:isanalysis
  use timestepping,       only:timestep_loop
- use settings_page,      only:interactive,device,nomenu
+ use settings_page,      only:interactive,nomenu
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti

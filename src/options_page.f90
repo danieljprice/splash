@@ -40,7 +40,6 @@ module settings_page
  real    :: dxscale,hposscale,vposscale,yscalealt
  real    :: xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  character(len=lenlabel) :: legendtext, scaletext
- character(len=60)       :: device
  character(len=lenlabel) :: labelyalt
  integer, parameter :: maxc = 16
  real    :: colourpalette(3,maxc)
