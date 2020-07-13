@@ -45,7 +45,7 @@ subroutine check_argcv_f() bind(c)
 end subroutine check_argcv_f
 
 subroutine read_data_c(filename,fileformat,ierr) bind(c, name='read_data')
- character(kind=c_char), intent(in)   :: filename(*), fileformat(*)
+ character(kind=c_char), intent(in)   :: filename(:), fileformat(:)
  !real(c_double),         intent(out)  :: sph_dat(:,:)
  integer(c_int),         intent(out)  :: ierr
 
