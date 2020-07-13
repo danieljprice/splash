@@ -40,17 +40,16 @@
 
 module readdata_egaburov
  implicit none
- 
+
  public :: read_data_egaburov, set_labels_egaburov
- 
- private 
+
+ private
 contains
 
 subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
- use settings_page, only:legendtext
  use mem_allocation, only:alloc
  use labels, only:ih,irho
  use system_utils, only:renvironment,lenvironment
@@ -59,24 +58,10 @@ subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  character(len=len(rootname)+10) :: datfile
-!  integer, dimension(maxparttypes) :: npartoftypei,Nall
-!  integer, dimension(:), allocatable :: iamtemp
  integer :: i,j,ierr
-!  integer :: index1,index2,indexstart,indexend,Nmassesdumped
  integer :: ncolstep,npart_max,nstep_max
-!  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
  logical :: iexist,reallocate
-!   real(doub_prec) :: timetemp,ztemp, dummy
-!   real(doub_prec), dimension(6) :: massoftypei
-!   real, dimension(:), allocatable :: dattemp1
-!   real :: hsoft
-!   integer :: ntot, nnopt, nout, nit, nav, ngr, nrelax
-!   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
-!   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz
-!   real(doub_prec) :: duth, dmmu
-!   real(doub_prec) :: rscale, mscale
 
-!!!!!!!!!!!!!!!!
 
  integer         :: proc, nread
 
@@ -399,4 +384,3 @@ subroutine set_labels_egaburov
  return
 end subroutine set_labels_egaburov
 end module readdata_egaburov
-

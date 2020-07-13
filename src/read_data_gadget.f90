@@ -94,7 +94,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use params,         only:doub_prec,sing_prec,maxparttypes
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
- use settings_page,  only:legendtext
  use mem_allocation, only:alloc
  use labels,         only:ih,irho,ipmass,labeltype
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
@@ -115,7 +114,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  integer               :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
  integer, dimension(6) :: i0,i1all,i2all
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,checkids,usez,goterrors
+ logical               :: iexist,reallocate,checkids,goterrors
  logical, dimension(6) :: ireadtype
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
@@ -161,7 +160,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  idumpformat = 0
  idumpformat = ienvironment('GSPLASH_FORMAT')
  checkids    = lenvironment('GSPLASH_CHECKIDS')
- usez        = lenvironment('GSPLASH_USE_Z')
 !
 !--read data from snapshots
 !
@@ -348,11 +346,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 
     if (ifile==1) then
        print*,'time            : ',timetemp
-       if (usez) then
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
-       else
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
-       endif
+       print "(1x,a,f8.2)",'z (redshift)    : ',ztemp
     endif
     print*,'Npart (by type) : ',npartoftypei(1:6)
     if (ifile==1) print*,'Mass  (by type) : ',massoftypei(1:6)
@@ -460,20 +454,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     !--set time to be used in the legend
     !
     if (ifile==1) then
-       if (usez) then
-          !--use this line for redshift
-          legendtext = 'z='
-          time(i) = real(ztemp)
-       else
-          !--use this line for code time
-          time(i) = real(timetemp)
-       endif
+       time(i) = real(timetemp)
     else
-       if (usez) then
-          if (abs(real(ztemp)-time(i)) > tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
-       else
-          if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
-       endif
+       if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
        if (sum(Nall) /= ntotall) then
           print*,' ERROR: Nall differs between files'
           goterrors = .true.

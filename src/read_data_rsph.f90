@@ -48,15 +48,14 @@
 
 module readdata_rsph
  implicit none
- 
+
  public :: read_data_rsph, set_labels_rsph
- 
- private 
+
+ private
 contains
 
 
 subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
- use exact, only:hfact
  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
  use params
 !  use labels
@@ -215,9 +214,9 @@ subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
     print*,'kernel range = ',rheader(3)
     gamma(i) = rheader(4)
  endif
- hfact = 0.
+
  print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',npartoftype(1,i),'ntotal',ntoti
- print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i),'hfact',hfact
+ print "(a14,':',i8,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i)
  print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
 !
 !--read data arrays

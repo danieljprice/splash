@@ -49,14 +49,13 @@
 
 module readdata_ndspmhd
  implicit none
- 
+
  public :: read_data_ndspmhd, set_labels_ndspmhd
- 
- private 
+
+ private
 contains
 
 subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
- use exact,          only:hfact
  use particle_data,  only:npartoftype,time,gamma,headervals,dat,maxpart,maxstep,maxcol,iamtype
  use params
  use filenames,      only:nfiles
@@ -81,7 +80,7 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  integer, parameter :: max_header_vars = 9
  real(doub_prec) :: header_dp(max_header_vars)
  real(sing_prec) :: header_sp(max_header_vars)
- real :: header(max_header_vars)
+ real :: header(max_header_vars), hfact
  real(doub_prec), dimension(:), allocatable :: dattempd
  real(sing_prec), dimension(:), allocatable :: dattemp
  integer, dimension(:), allocatable :: itype

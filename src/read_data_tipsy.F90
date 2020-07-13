@@ -54,10 +54,10 @@
 
 module readdata_tipsy
  implicit none
- 
+
  public :: read_data_tipsy, set_labels_tipsy
- 
- private 
+
+ private
 contains
 
 subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
@@ -66,7 +66,6 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  use settings_data, only:ndim,ndimV,ncolumns
  use mem_allocation, only:alloc
  use labels, only:label,ih,ipmass,irho
- use exact, only:hfact
  implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
@@ -78,7 +77,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  logical :: iexist
  character(len=len(rootname)) :: dumpfile
  character(len=11) :: fmt
- real :: timei
+ real :: timei, hfact
 
  nstepsread = 0
  nstep_max = 0
@@ -211,6 +210,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  ! (and warn people about the evils of using fixed softening lengths for sph particles)
  !
  if (ngas >= 0 .and. nread >= irho .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)) <= tiny(dat))) then
+    hfact=1.2
     print "(a)",'WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
     print "(a,f5.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
     dat(1:ngas,ih,j) = hfact*(dat(1:ngas,ipmass,j)/(dat(1:ngas,irho,j) + tiny(dat)))**(1./ndim)

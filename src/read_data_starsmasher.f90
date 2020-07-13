@@ -2,48 +2,16 @@
 ! this subroutine reads from the data file(s)
 ! change this to change the format of data input
 !
-! THIS VERSION IS FOR OUTPUT FROM THE GADGET CODE
+! THIS VERSION IS FOR OUTPUT FROM THE STARSMASHER CODE
 !
-! NOTE THAT THIS ONLY "OFFICIALLY" WORKS WITH THE PARALLEL CODE AS WE
-! REQUIRE KNOWLEDGE OF THE PARTICLE SMOOTHING LENGTHS
-!
-! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
-!
-! GSPLASH_USE_Z if 'YES' uses redshift in the legend instead of time
-! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
-!  smoothing length to dark matter particles which can then be
-!  used in the rendering
-!
-! the data is stored in the global array dat
-!
-! >> this subroutine must return values for the following: <<
-!
-! ncolumns    : number of data columns
-! ndim, ndimV : number of spatial, velocity dimensions
-! nstepsread  : number of steps read from this file
-!
-! dat(maxpart,maxplot,maxstep) : main data array
-!
-! npartoftype(maxstep): number of particles of each type in each timestep
-!
-! time(maxstep)       : time at each step
-! gamma(maxstep)      : gamma at each step 
-!                      (used in calc_quantities for calculating the pressure)
-!
-! most of these values are stored in global arrays 
-! in the module 'particle_data'
-!
-! Partial data read implemented Nov 2006 means that columns with
-! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
 module readdata_starsmasher
  implicit none
- 
+
  public :: read_data_starsmasher, set_labels_starsmasher
- 
- private 
+
+ private
 contains
 
 
@@ -51,7 +19,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
-  use settings_page, only:legendtext
   use mem_allocation, only:alloc
   use labels, only:ih,irho
   use system_utils, only:renvironment,lenvironment
@@ -75,11 +42,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz, dudot
   real(doub_prec) :: duth, dmmu
-!  real(doub_prec) :: timeinit
-!  save timeinit
-!  real(doub_prec) :: timeinit
-!  save timeinit
-!  integer timeprompt
   integer frame
   data frame/-1/
   save frame
@@ -94,16 +56,11 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
 
   nstepsread = 0
   npart_max = maxpart
-!   if (maxparttypes.lt.6) then
-!      print*,' *** ERROR: not enough particle types for GADGET data read ***'
-!      print*,' *** you need to edit splash parameters and recompile ***'
-!      stop
-!   endif
-  
+
   if (len_trim(rootname).gt.0) then
      datfile = trim(rootname)
   else
-     print*,' **** no data read **** ' 
+     print*,' **** no data read **** '
      return
   endif
 !
@@ -111,7 +68,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
 !
   inquire(file=datfile,exist=iexist)
   if (.not.iexist) then
-     print "(a)",' *** error: '//trim(datfile)//': file not found ***'    
+     print "(a)",' *** error: '//trim(datfile)//': file not found ***'
      return
   endif
 !
@@ -121,7 +78,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   ndimV = 3
 !
 !--read data from snapshots
-!  
+!
   i = istepstart
 
   write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
@@ -136,12 +93,10 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   !
   !--read header for this timestep
   !
-!  read(11,iostat=ierr) npartoftypei(1:6),massoftypei,timetemp,ztemp, &
-!      iFlagSfr,iFlagFeedback,Nall(1:6),iFlagCool,nfiles
 
   read(11, iostat = ierr) &
        ntot, nnopt, hmin, hmax, sep0, tf, dtout, nout, nit, timetemp, &
-       nav, alpha, beta, eta2, ngr, nrelax, trelax, dt, omega2 
+       nav, alpha, beta, eta2, ngr, nrelax, trelax, dt, omega2
 
   if(omega2.ne.0.d0 .and. frame.eq.-1) then
      ! frame can equal -1 only the first time through, so this question
@@ -157,16 +112,9 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
      return
   endif
 
-!  iformat = 0
-!  if (iFlagCool.gt.0) then
-!     iformat = 1
-!     ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
-!     ncolumns = ncolstep
-!  else
-     iformat = 0
-     ncolstep = 13 ! 3 x pos, 3 x vel, pmass, rho, utherm, mean_mu, h, du/dt, temperature
-     ncolumns = ncolstep  
-!  endif
+  iformat = 0
+  ncolstep = 13 ! 3 x pos, 3 x vel, pmass, rho, utherm, mean_mu, h, du/dt, temperature
+  ncolumns = ncolstep
 
   irho = 8
   ih   = ncolstep
@@ -176,11 +124,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   print*,'N_total          : ',ntoti
   print*,'N data columns   : ',ncolstep
 
-!  if (nfiles.gt.1) then
-!     print*,' nfiles = ',nfiles
-!     print*,'*** ERROR: read from > 1 files not implemented'
-!     return
-!  endif
   !
   !--if successfully read header, increment the nstepsread counter
   !
@@ -200,19 +143,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
      else
         ! if first time, save on memory
         npart_max = int(ntoti)
-
-!        if(int(timetemp).gt.0) then
-!           print *,'Should the first data file reset to t=0? (1=yes)'
-!           read(5,*) timeprompt
-!           if(timeprompt.eq.1) then
-!              timeinit=timetemp
-!           else
-!              timeinit=0.d0
-!           endif
-!        else
-!           timeinit=0.d0
-!        endif
-
      endif
   endif
   if (i.ge.maxstep .and. i.ne.1) then
@@ -234,10 +164,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   !
   !--set time to be used in the legend
   !
-
-  !--use this line for code time
-!  time(i) = real(timetemp-timeinit) 
-  time(i) = real(timetemp) 
+  time(i) = real(timetemp)
 
   !
   !--read particle data
@@ -248,7 +175,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
      !
      do j=1,ntot
 
-        read(11, iostat = ierr) & 
+        read(11, iostat = ierr) &
              dx, dy, dz,                           &   ! positions
              dm,                                   &   ! mass
              dh, drho,                             &   ! h & rho
@@ -259,7 +186,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
              dummy, & ! dummy, dummy, dummy,           &   ! gx, gy, gz, gpot
              dmmu,                                 &   ! mean_mu
              dummy, dummy!, dummy, dummy                ! aa, bb, cc, divv
-        
+
         if(frame.eq.1) then
            theta=omega2**0.5d0*timetemp
 ! rotation is counterclockwise:
@@ -279,7 +206,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
 
         dat(j,7,i)  = dm
 
-        dat(j,8,i)  = drho 
+        dat(j,8,i)  = drho
         dat(j,9,i)  = duth
         dat(j,10,i) = dmmu
         dat(j,11,i) = dh
@@ -293,7 +220,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
            iamtype(j,i)=2
            npartoftype(2,i)=npartoftype(2,i)+1
         endif
-        
+
      end do
 !    pos = 1,2,3
 !    vel = 4,5,6
@@ -311,12 +238,12 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
 !
   gamma = 5./3.
 !
-!--set flag to indicate that only part of this file has been read 
+!--set flag to indicate that only part of this file has been read
 !
   if (.not.all(required(1:ncolstep))) ipartialread = .true.
 !
 !--close data file and return
-!                    
+!
   close(unit=11)
 
   if (nstepsread.gt.0) then
@@ -358,7 +285,7 @@ subroutine set_labels_starsmasher
   ipr = 0
   iutherm = 9     !  thermal energy
   ih  = 11
-  
+
   label(ix(1:ndim)) = labelcoord(1:ndim,1)
   label(irho) = 'density'
   label(iutherm) = 'specific internal energy u'
@@ -393,7 +320,7 @@ subroutine set_labels_starsmasher
 !   label(irho) = 'density'
 !   label(iutherm) = 'u'
 !   label(ipmass) = 'particle mass'
-  
+
 !   if (ncolumns.gt.10) then
 !      label(10) = 'Ne'
 !      label(11) = 'Nh'
@@ -410,7 +337,7 @@ subroutine set_labels_starsmasher
 !   do i=1,ndimV
 !      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
 !   enddo
-  
+
 !   !--set labels for each particle type
 !   !
 !   ntypes = 5
@@ -426,7 +353,7 @@ subroutine set_labels_starsmasher
 !   if (hsoft.gt.tiny(hsoft)) then
 !      UseTypeInRenderings(2) = .true.
 !   else
-!      UseTypeInRenderings(2) = .false.  
+!      UseTypeInRenderings(2) = .false.
 !   endif
 !   UseTypeInRenderings(3:5) = .false.
 

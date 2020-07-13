@@ -429,7 +429,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \
-         defaults.f90 menu.f90 \
+         defaults.f90 initialise.f90 menu.f90 \
          splash.f90
 
 OBJECTS1= $(SOURCES:.f90=.o) $(STATICLIBS)
@@ -475,21 +475,6 @@ read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
 
-#---PBOB read ---
-
-OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
-pbob: checksystem checkpbob $(OBJECTS) $(OBJPBOB)
-	$(FC) $(FFLAGS) -I$(PBOB_DIR)/include -o $(BINDIR)/psplash $(OBJECTS) $(OBJPBOB) $(LDFLAGS)
-
-read_data_pbob_utils.o: read_data_pbob_utils.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_pbob.o: read_pbob.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_particle.o: read_particle.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
 
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
@@ -514,9 +499,10 @@ SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolatio
       interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
       interpolate3D_geom.F90 interpolate3D_projection.F90 \
       interpolate3D_proj_geom.F90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
-      libsplash.f90
+      libsplash.f90 libread.f90
 OBJLIB1=${SRCLIB:.f90=.o}
-OBJLIB=${OBJLIB1:.F90=.o}
+# OBJLIB=${OBJLIB1:.F90=.o}
+OBJLIB=${OBJECTS:splash.o=} libread.o
 
 .PHONY: libsplash
 libsplash: lib
@@ -540,6 +526,24 @@ OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 libexact: libexactcmd
 libexactcmd: checksystem $(OBJLIBEXACTALL)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+
+
+#
+# libexact: read solution library
+#
+SRCLIBREAD= globaldata.f90 asciiutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+       system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
+			  geomutils.f90 partutils.f90 calc_quantities.f90\
+			  $(READFILES) \
+       read_data.F90 adjust_data.f90 limits.f90 get_data.f90 initialise.f90 libread.f90
+
+OBJLIBREAD=${SRCLIBREAD:.f90=.o}
+OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
+
+.PHONY: libread
+libread: checksystem $(OBJLIBREADALL)
+		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+
 #
 # splash image manipulation utilities
 #
