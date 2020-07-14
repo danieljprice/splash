@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -159,7 +159,7 @@ subroutine mhdshock_c(iplot,npart,ishk,time,gamma,xmin,xmax,xshock,&
 
 end subroutine mhdshock_c
 
-subroutine rhoh_(iplot,npart,ndim,hfact,pmassval,&
+subroutine rhoh_c(iplot,npart,ndim,hfact,pmassval,&
                  xplot,yplot,ierr) bind(c, name='rhoh')
  integer(c_int), intent(in)  :: iplot,ndim,npart
  integer(c_int), intent(out) :: ierr
