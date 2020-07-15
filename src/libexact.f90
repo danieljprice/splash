@@ -65,7 +65,7 @@ subroutine shock_c(&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call shock(iplot,time,gamma,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,&
+ call exact_shock(iplot,time,gamma,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,&
             rdust_to_gas,xplot,yplot,ierr)
 
 end subroutine shock_c
@@ -79,7 +79,7 @@ subroutine shock_sr_c(iplot,npart,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,&
  real(c_float),  intent(inout) :: xplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
+ call exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
 
 end subroutine shock_sr_c
 
@@ -92,7 +92,7 @@ subroutine sedov_c(iplot,npart,time,gamma,rhozero,energy,rmax,&
  real(c_float),  intent(inout) :: rplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call sedov(iplot,time,gamma,rhozero,energy,rmax,rplot,yplot,ierr)
+ call exact_sedov(iplot,time,gamma,rhozero,energy,rmax,rplot,yplot,ierr)
 
 end subroutine sedov_c
 
@@ -104,7 +104,7 @@ subroutine polytrope_c(npart,gamma,polyk,totmass,rplot,yplot,&
  real(c_float),  intent(inout) :: rplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call polytrope(gamma,polyk,totmass,rplot,yplot,npartout,ierr)
+ call exact_polytrope(gamma,polyk,totmass,rplot,yplot,npartout,ierr)
 
 end subroutine polytrope_c
 
@@ -116,7 +116,7 @@ subroutine toystar1D_c(iplot,npart,time,gamma,H0,A0,C0,sigma,norder,&
  real(c_float),  intent(inout) :: xplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call toystar1D(iplot,time,gamma,H0,A0,C0,sigma,&
+ call exact_toystar1D(iplot,time,gamma,H0,A0,C0,sigma,&
                 norder,xplot,yplot,npart,ierr)
 
 end subroutine toystar1D_c
@@ -132,7 +132,7 @@ subroutine toystar2D_c(iplot,npart,time,gamma,polyk,totmass,ampl,&
  real(c_float), intent(inout) :: xplot(npart)
  real(c_float), intent(out)   :: yplot(npart)
 
- call toystar2D(iplot,time,gamma,polyk,totmass, &
+ call exact_toystar2D(iplot,time,gamma,polyk,totmass, &
                 ampl,denscentre,C0,jorder,morder, &
                 V11,V22,V12,V21,xplot,yplot,ierr)
 
@@ -144,7 +144,7 @@ subroutine gresho_c(iplot,npart,xplot,yplot,ierr) bind(c, name='gresho')
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call gresho(iplot,xplot,yplot,ierr)
+ call exact_gresho(iplot,xplot,yplot,ierr)
 end subroutine gresho_c
 
 subroutine mhdshock_c(iplot,npart,ishk,time,gamma,xmin,xmax,xshock,&
@@ -155,7 +155,7 @@ subroutine mhdshock_c(iplot,npart,ishk,time,gamma,xmin,xmax,xshock,&
  real(c_float),  intent(inout) :: xplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xplot,yplot,npts,ierr)
+ call exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xplot,yplot,npts,ierr)
 
 end subroutine mhdshock_c
 
@@ -167,7 +167,7 @@ subroutine rhoh_c(iplot,npart,ndim,hfact,pmassval,&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
+ call exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
 
 end subroutine rhoh_c
 
@@ -180,7 +180,7 @@ subroutine densityprofiles_c(iplot,npart,iprofile,Mspherex,Mspherey,&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call densityprofiles(iplot,iprofile,[Mspherex,Mspherey],&
+ call exact_densityprofiles(iplot,iprofile,[Mspherex,Mspherey],&
       [rsoftx,rsofty],xplot,yplot,ierr)
 
 end subroutine densityprofiles_c
@@ -193,7 +193,7 @@ subroutine torus_c(iplot,npart,itorus,Mstar,Rtorus,AA,distortion,&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot,ierr)
+ call exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot,ierr)
 
 end subroutine torus_c
 
@@ -205,7 +205,7 @@ subroutine ringspread_c(iplot,npart,time,Mdisk,Rdisk,viscnu,&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
+ call exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 
 end subroutine ringspread_c
 
@@ -217,7 +217,7 @@ subroutine dustywave_c(iplot,npart,time,ampl,cs,Kdragin,lambda,x0,&
  real(c_float),  intent(in)  :: xplot(npart)
  real(c_float),  intent(out) :: yplot(npart)
 
- call dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,&
+ call exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,&
                 rhog0,rhod0,xplot,yplot,ierr)
 
 end subroutine dustywave_c
@@ -229,7 +229,7 @@ subroutine rochelobe_c(npart,x1,y1,x2,y2,m1,m2,&
  real(c_float),  intent(in)    :: x1,y1,x2,y2,m1,m2
  real(c_float),  intent(inout) :: xplot(npart),yplot(npart)
 
- call rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
+ call exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  ierr = 0
 
 end subroutine rochelobe_c
@@ -242,7 +242,7 @@ subroutine cshock_c(iplot,npart,time,gamma,machs,macha,xmin,xmax,&
  real(c_float),  intent(inout) :: xplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call cshock(iplot,time,gamma,machs,macha,xmin,xmax,xplot,yplot,ierr)
+ call exact_cshock(iplot,time,gamma,machs,macha,xmin,xmax,xplot,yplot,ierr)
 
 end subroutine cshock_c
 
@@ -254,7 +254,7 @@ subroutine planetdisc_c(iplot,npart,ispiral,time,HonR,rplanet,q,narms,&
  real(c_float),  intent(inout) :: rplot(npart)
  real(c_float),  intent(out)   :: yplot(npart)
 
- call planetdisc_f(iplot,ispiral,time,HonR,rplanet,q,narms,&
+ call exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,&
                    params,rplot,yplot,ierr)
  ierr = 0
 end subroutine planetdisc_c
@@ -274,7 +274,7 @@ subroutine bondi_c(iplot,npart,time,gamma,const1,const2,m,relativistic,&
  geodesic_flow_f = geodesic_flow
  is_wind_f       = is_wind
 
- call bondi(iplot,time,gamma,const1,const2,m,relativistic_f,&
+ call exact_bondi(iplot,time,gamma,const1,const2,m,relativistic_f,&
             geodesic_flow_f,is_wind_f,xplot,yplot,ierr)
 
 end subroutine bondi_c
