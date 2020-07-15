@@ -29,7 +29,7 @@ module libreaddata
  use readdata,         only:select_data_format
  use getdata,          only:get_data, get_labels
  use initialise,       only:defaults_set_initial
- use iso_c_binding,    only:c_float, c_int, c_bool, c_char
+ use iso_c_binding,    only:c_float, c_int, c_bool, c_char, c_double
  use asciiutils,       only:fstring
  use filenames,        only:rootname, tagline, nfiles
  use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype
@@ -44,14 +44,15 @@ subroutine check_argcv_f() bind(c)
  include 'libinclude.f90'
 end subroutine check_argcv_f
 
-subroutine read_data_c(filename,fileformat,ierr) bind(c, name='read_data')
- character(kind=c_char), intent(in)   :: filename(*), fileformat(*)
- !real(c_double),         intent(out)  :: sph_dat(:,:)
+subroutine read_data_c(filename,fileformat,sph_dat,np,nc,ierr) bind(c, name='read_data')
+ character(kind=c_char), intent(in)   :: filename(:), fileformat(:)
+ real(c_double),         intent(out)  :: sph_dat(:,:)
  integer(c_int),         intent(out)  :: ierr
+ integer(c_int),         intent(out)  :: nc, np
 
  character(len=120) :: filename_f
  character(len=20)   :: format_f
- integer :: np, nc
+ !integer :: np, nc
 
  print*, tagline
 
@@ -65,16 +66,18 @@ subroutine read_data_c(filename,fileformat,ierr) bind(c, name='read_data')
 
 call select_data_format(format_f,ierr)
 
-if (ierr /= 0) then
-  call get_data(1,.true.,.true.,1)
-  if (ivegotdata .and. maxpart>0) then
-    ! np = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
-    ! nc = min(ncolumns, size(sph_dat(1,:)))
-    if (nc > 0) then
-       !sph_dat(1:np,1:nc) = dat(1:np,1:nc,1)
-    endif
-  endif
-endif
+ if (ierr /= 0) then
+   call get_data(1,.true.,.true.,1)
+   if (ivegotdata .and. maxpart>0) then
+    np = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
+    nc = min(ncolumns, size(sph_dat(1,:)))
+     if (nc > 0) then
+       sph_dat(1:np,1:nc) = dat(1:np,1:nc,1)
+     endif
+   endif
+ else
+   print*, "Error in selecting the data format"
+ endif
 
 end subroutine read_data_c
 

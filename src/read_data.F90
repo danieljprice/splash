@@ -143,9 +143,9 @@ subroutine select_data_format(string,ierr)
  ! Check if SPLASH has been compiled with the fits library, if fits format is requested
  if (string == 'fits') then
 #ifndef FITS
-   print "(a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
-   print "(a)", '            Try make FITS=yes '
-   stop
+! print "(a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
+   ! print "(a)", '            Try make FITS=yes '
+   ! stop
 #else
    continue
 #endif
@@ -290,7 +290,7 @@ subroutine select_data_format(string,ierr)
  case('amuse_hdf5')
    read_data=>read_data_amuse_hdf5
    set_labels=>set_labels_amuse_hdf5
-   
+
 ! case('falcon_hdf5', 'falconhdf5', 'falcon')
 !   read_data=>read_data_falcON_hdf5
 !   set_labels=>set_labels_falcON_hdf5

@@ -412,8 +412,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
-         exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
+         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 plotlib_mock.f90 \
+				 exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
@@ -525,8 +525,7 @@ OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 
 .PHONY: libexact
-libexact: libexactcmd
-libexactcmd: checksystem $(OBJLIBEXACTALL)
+libexact: checksystem $(OBJLIBEXACTALL)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
 
 
@@ -544,7 +543,7 @@ OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
 
 .PHONY: libread
 libread: checksystem $(OBJLIBREADALL)
-		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+		$(FC) -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
 
 #
 # splash image manipulation utilities
