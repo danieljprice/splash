@@ -53,7 +53,7 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
  real(c_double),         intent(out)    :: sph_dat(ncol,npart)
  integer(c_int),         intent(out)    :: ierr
 
- character(len=f_length) :: filename_f
+ character(len=f_length)    :: filename_f
  character(len=ff_length)   :: format_f
 
  integer   :: i,j
