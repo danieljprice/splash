@@ -34,25 +34,29 @@ module libreaddata
  use filenames,        only:rootname, tagline, nfiles
  use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype
  use settings_data,    only:ncolumns, ivegotdata
+ use libutils,         only:ctypes_to_fstring, check_argcv
 
  implicit none
 
  public
 
 contains
-subroutine check_argcv_f() bind(c)
- include 'libinclude.f90'
-end subroutine check_argcv_f
+  subroutine check_argcv_c() bind(c, name='check_argcv')
+   call check_argcv()
+ end subroutine check_argcv_c
 
-subroutine read_data_c(filename,fileformat,sph_dat,np,nc,ierr) bind(c, name='read_data')
- character(kind=c_char), intent(in)   :: filename(:), fileformat(:)
- real(c_double),         intent(out)  :: sph_dat(:,:)
- integer(c_int),         intent(out)  :: ierr
- integer(c_int),         intent(out)  :: nc, np
+subroutine read_data_c(filename,fileformat,f_length, ff_length,&
+                       sph_dat,npart,ncol,ierr) bind(c, name='read_data')
+ integer(c_int),         intent(in)     :: f_length, ff_length
+ character(kind=c_char), intent(in)     :: filename(f_length), fileformat(ff_length)
+ integer(c_int),         intent(inout)  :: ncol, npart
+ real(c_double),         intent(out)    :: sph_dat(ncol,npart)
+ integer(c_int),         intent(out)    :: ierr
 
- character(len=120) :: filename_f
- character(len=20)   :: format_f
- !integer :: np, nc
+ character(len=f_length) :: filename_f
+ character(len=ff_length)   :: format_f
+
+ integer   :: i,j
 
  print*, tagline
 
@@ -61,18 +65,40 @@ subroutine read_data_c(filename,fileformat,sph_dat,np,nc,ierr) bind(c, name='rea
  call defaults_set_initial
 
  nfiles = 1
- rootname(1) = fstring(filename)
- format_f = fstring(fileformat)
+ rootname(1) = ctypes_to_fstring(filename)
+ format_f = ctypes_to_fstring(fileformat)
+
+ print*, "format_f is ", format_f
 
 call select_data_format(format_f,ierr)
+print*, "ierr is:", ierr
 
- if (ierr /= 0) then
+ if (ierr == 0) then
+   print*, "calling get_data"
    call get_data(1,.true.,.true.,1)
+   print*, "called get_data"
    if (ivegotdata .and. maxpart>0) then
-    np = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
-    nc = min(ncolumns, size(sph_dat(1,:)))
-     if (nc > 0) then
-       sph_dat(1:np,1:nc) = dat(1:np,1:nc,1)
+     print*, "setting ncol and npart"
+     print*, "sum(nartpartoftype(:,1))", sum(npartoftype(:,1))
+     print*, "size(sph_dat(:,1))", size(sph_dat(:,1))
+     print*, "ncolumns", ncolumns
+    npart = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
+    ncol = min(ncolumns, size(sph_dat(1,:)))
+    print*, "npart and ncol in fortran are", npart, ncol
+     if (ncol > 0) then
+       do i=1,ncol
+         do j=1,npart
+           print*, "trying to write to sph_dat"
+           print*, "sph_dat(i,j) is", sph_dat(i,j)
+           print*, "dat(i,j,1) is", dat(i,j,1)
+           sph_dat(i,j) = dat(i,j,1)
+           print*,""
+         end do
+      end do
+       ! print*, "attempting to write to sph_dat"
+       ! print*, "dat(1:1,1:1,1)", dat(1:1,1:1,1)
+       ! print*, "sph_dat(1:1,1:1)", sph_dat(1:1,1:1)
+       ! sph_dat(1:npart,1:ncol) = dat(1:npart,1:ncol,1)
      endif
    endif
  else

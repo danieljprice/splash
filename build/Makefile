@@ -532,7 +532,7 @@ libexact: checksystem $(OBJLIBEXACTALL)
 #
 # libexact: read solution library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
        system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
 			  geomutils.f90 partutils.f90 calc_quantities.f90\
 			  $(READFILES) \
@@ -543,7 +543,7 @@ OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
 
 .PHONY: libread
 libread: checksystem $(OBJLIBREADALL)
-		$(FC) -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
 
 #
 # splash image manipulation utilities
