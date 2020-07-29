@@ -53,6 +53,7 @@ subroutine defaults_set_data
  icoords = 1       ! coordinate system of simulation
  iformat = 0       ! file format
  buffer_data = .false.
+ buffer_steps_in_file = .false.
  iUseStepList = .false.
  do i=1,size(isteplist)
     isteplist(i) = i
