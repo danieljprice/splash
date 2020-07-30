@@ -174,11 +174,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,npixpartx,npixparty
  integer :: iprintinterval, iprintnext,ipixi,jpixi,jpixcopy
  integer :: nsubgrid,nfull,nok,ncpus
-#ifdef _OPENMP
- integer :: omp_get_num_threads,i
-#else
+ !$ integer :: omp_get_num_threads
  integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
-#endif
  real :: hi,hi1,hi21,radkern,wab,q2,xi,yi,xminpix,yminpix
  real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
@@ -232,6 +229,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  !  (a "long time" is, however, somewhat system dependent)
  !
  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000) .and. iverbose >= 0
+ !$ iprintprogress = .false.
  !
  !--loop over particles
  !
@@ -266,7 +264,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  hminall = huge(hminall)
 
 !$omp parallel default(none) &
-!$omp shared(hh,z,x,y,weight,dat,itype,npart) &
+!$omp shared(hh,z,x,y,weight,dat,itype,npart,iprintprogress,iprintinterval) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
 !$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm,cnormk3D,exact_rendering) &
@@ -276,6 +274,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$omp private(dx2i,row,q2,ypix,dy,dy2,wab,termnorm_exact,term_exact) &
 !$omp private(i,ipix,jpix,jpixcopy,fac,dfac,pixwidthz,pixint,zi,xpixi,zpix) &
+!$omp private(iprogress,iprintnext) &
 !$omp reduction(+:nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !$omp do schedule (guided, 2)
@@ -283,7 +282,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
        iprogress = 100*i/npart
        if (iprogress >= iprintnext) then
@@ -291,7 +289,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !

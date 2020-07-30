@@ -111,9 +111,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
  if (any(hh(1:npart) <= tiny(hh))) then
     print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
  endif
-  
+
  call wall_time(t_start)
- 
+
  datsmooth = 0.
  if (normalise) then
     allocate(datnorm(npixx,npixy,npixz))
@@ -413,11 +413,8 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
  real, dimension(3) :: term
  !real :: t_start,t_end
  logical :: iprintprogress
-#ifdef _OPENMP
- integer :: omp_get_num_threads
-#else
+ !$ integer :: omp_get_num_threads
  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
-#endif
 
  datsmooth = 0.
  datnorm = 0.
@@ -439,6 +436,7 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
  !  (a "long time" is, however, somewhat system dependent)
  !
  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000)
+ !$ iprintprogress = .false.
  !
  !--loop over particles
  !
@@ -462,9 +460,11 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp shared(xmin,ymin,zmin,radkernel,radkernel2) &
 !$omp shared(xminpix,yminpix,zminpix,pixwidthx,pixwidthy,pixwidthz) &
 !$omp shared(npixx,npixy,npixz,const) &
+!$omp shared(iprintprogress,iprintinterval) &
 !$omp shared(datnorm,normalise,periodicx,periodicy,periodicz) &
 !$omp private(hi,xi,yi,zi,radkern,hi1,hi21) &
 !$omp private(term,termnorm,xpixi) &
+!$omp private(iprogress,iprintnext) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,kpixmin,kpixmax) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
@@ -480,7 +480,6 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
        iprogress = 100*i/npart
        if (iprogress >= iprintnext) then
@@ -488,7 +487,6 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !
