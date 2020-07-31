@@ -149,6 +149,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        allocate(headervalstemp(maxhdr,maxstep))
        if (ierr /= 0) stop 'error allocating memory (hdrvalstemp)'
        headervalstemp = headervals
+       deallocate(headervals)
     endif
 
  else

@@ -33,7 +33,7 @@ module libreaddata
  use asciiutils,       only:fstring
  use filenames,        only:rootname, tagline, nfiles
  use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype
- use settings_data,    only:ncolumns, ivegotdata
+ use settings_data,    only:ncolumns, ivegotdata, required
  use libutils,         only:ctypes_to_fstring, check_argcv
 
  implicit none
@@ -46,11 +46,12 @@ contains
  end subroutine check_argcv_c
 
 subroutine read_data_c(filename,fileformat,f_length, ff_length,&
-                       sph_dat,npart,ncol,ierr) bind(c, name='read_data')
+                       sph_dat,npart,ncol,read_header,verbose,ierr) bind(c, name='read_data')
  integer(c_int),         intent(in)     :: f_length, ff_length
  character(kind=c_char), intent(in)     :: filename(f_length), fileformat(ff_length)
  integer(c_int),         intent(inout)  :: ncol, npart
- real(c_double),         intent(out)    :: sph_dat(ncol,npart)
+ real(c_double),         intent(out)    :: sph_dat(npart,ncol)
+ integer(c_int),         intent(in)     :: read_header, verbose
  integer(c_int),         intent(out)    :: ierr
 
  character(len=f_length)    :: filename_f
@@ -58,43 +59,36 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
 
  integer   :: i,j
 
- print*, tagline
+ if (verbose==1) print*, tagline
 
  ierr = 0
 
  call defaults_set_initial
 
+ if (read_header==1) required = .false.
+
  nfiles = 1
  rootname(1) = ctypes_to_fstring(filename)
  format_f = ctypes_to_fstring(fileformat)
 
- print*, "format_f is ", format_f
-
- print*, "size of sph_dat is ", size(sph_dat)
+ if (verbose==1) then
+   print*, "Received file format f ", format_f
+   print*, "Size of sph_dat is ", size(sph_dat)
+ endif
 
 call select_data_format(format_f,ierr)
 
  if (ierr == 0) then
-   print*, "calling get_data"
+   if (verbose==1) print*, "Calling get_data"
    call get_data(1,.true.,.true.,1)
-   print*, "called get_data"
    if (ivegotdata .and. maxpart>0) then
      npart = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
      ncol = min(ncolumns, size(sph_dat(1,:)))
+
    if (ncol > 0) then
-   ! if (ncol==ncolumns .and. npart==sum(npartoftype(:,1))) then
-       ! do i=1,npart
-         ! do j=1,ncol
-           ! print*, "trying to write to sph_dat"
-           ! print*, "sph_dat(i,j) is", sph_dat(i,j)
-           ! print*, "dat(i,j,1) is", dat(i,j,1)
-           ! sph_dat(:,:) = dat(:,:,1)
-           sph_dat(1:npart,1:ncol) = dat(1:npart,1:ncol,1)
-           ! print*,""
-         ! end do
-      ! end do
+       sph_dat(1:npart,1:ncol) = dat(1:npart,1:ncol,1)
     else
-        print*, "Setting npart and ncol as", sum(npartoftype(:,1)), ncolumns
+        if (verbose==1) print*, "Updating values for npart and ncol."
         npart = sum(npartoftype(:,1))
         ncol = ncolumns
      endif
@@ -104,69 +98,5 @@ call select_data_format(format_f,ierr)
  endif
 
 end subroutine read_data_c
-
-! subroutine select_data_format_c(string, ierr) bind(c, name='select_data_format')
-!
-!  integer(c_int), intent(out)   :: ierr
-!
-!  call select_data_format(string, ierr)
-!
-! end subroutine select_data_format_c
-
-
-subroutine read_data_test_c(filename,fileformat,f_length, ff_length,&
-                       sph_dat,npart,ncol,ierr) bind(c, name='read_data_test')
- integer(c_int),              intent(in)     :: f_length, ff_length
- character(kind=c_char), intent(in)     :: filename(f_length), fileformat(ff_length)
- integer(c_int),         intent(out)           :: ncol, npart
- real(c_double), allocatable,   intent(out)    :: sph_dat(:,:)
- integer(c_int),         intent(out)    :: ierr
-
- character(len=f_length)    :: filename_f
- character(len=ff_length)   :: format_f
-
- integer   :: i,j
-
- print*, tagline
-
- ierr = 0
-
- call defaults_set_initial
-
- nfiles = 1
- rootname(1) = ctypes_to_fstring(filename)
- format_f = ctypes_to_fstring(fileformat)
-
- print*, "format_f is ", format_f
-
- print*, "size of sph_dat is ", size(sph_dat)
-
-call select_data_format(format_f,ierr)
-
- if (ierr == 0) then
-   print*, "calling get_data"
-   call get_data(1,.true.,.true.,1)
-   print*, "called get_data"
-   if (ivegotdata .and. maxpart>0) then
-       if (ncol/=ncolumns .and. npart/=sum(npartoftype(:,1))) then
-         print*, "updating ncol and npart"
-         npart = sum(npartoftype(:,1))
-         ncol = ncolumns
-   if (ncol > 0) then
-        allocate(sph_dat(npart, ncol))
-        print*, "npart and ncol are ", npart, ncol
-      end if
-        sph_dat(1:npart, 1:ncol) = dat(1:npart,1:ncol,1)
-        ! print*, sph_dat(1:10, 1:10)
-    endif
-   endif
- else
-   print*, "Error in selecting the data format"
- endif
-
-end subroutine read_data_test_c
-
-
-! function read_data_func()
 
 end module libreaddata
