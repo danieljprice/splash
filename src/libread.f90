@@ -32,7 +32,7 @@ module libreaddata
  use iso_c_binding,    only:c_float, c_int, c_bool, c_char, c_double
  use asciiutils,       only:fstring
  use filenames,        only:rootname, tagline, nfiles
- use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype
+ use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype, iamtype
  use settings_data,    only:ncolumns, ivegotdata, required
  use libutils,         only:ctypes_to_fstring, check_argcv
 
@@ -57,7 +57,7 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
  character(len=f_length)    :: filename_f
  character(len=ff_length)   :: format_f
 
- integer   :: i,j
+ integer   :: i,j,ncolr,npartr
 
  if (verbose==1) print*, tagline
 
@@ -82,15 +82,24 @@ call select_data_format(format_f,ierr)
    if (verbose==1) print*, "Calling get_data"
    call get_data(1,.true.,.true.,1)
    if (ivegotdata .and. maxpart>0) then
-     npart = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
-     ncol = min(ncolumns, size(sph_dat(1,:)))
+      npartr = sum(npartoftype(:,1))
+      ncolr = ncolumns
+      if (ncol/=0 .or. npart/=0) then
+        if (ncol/=ncolr+1 .or. npart/=npartr) then
+          print*, "WARNING: Array size given in libread is not equal to read array."
+        endif
+      else if (ncol==0 .or. npart==0) then
+        ncol = ncolr
+        npart = npartr
+    endif
 
-   if (ncol > 0) then
+   if (ncol > 0 .and. read_header/=1) then
        sph_dat(1:npart,1:ncol) = dat(1:npart,1:ncol,1)
+       sph_dat(1:npart,ncol) = iamtype(1:npart,1)
     else
         if (verbose==1) print*, "Updating values for npart and ncol."
         npart = sum(npartoftype(:,1))
-        ncol = ncolumns
+        ncol = ncolumns + 1
      endif
    endif
  else
