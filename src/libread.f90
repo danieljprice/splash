@@ -47,8 +47,8 @@ contains
  end subroutine check_argcv_c
 
 subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
-  character(kind=c_char, len=24),  intent(out) :: labels_out(ncol)
   integer(c_int), intent(in)   :: ncol
+  character(kind=c_char, len=80),  intent(out) :: labels_out(ncol)
 
   integer :: i
 
@@ -75,9 +75,9 @@ subroutine get_header_vals_size(taglength, vallength) bind(c)
 end subroutine get_header_vals_size
 
 subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bind(c)
+  integer(c_int), intent(in)   :: taglength, vallength
   character(kind=c_char, len=24),  intent(out) :: headertags_out(taglength)
   real(c_double),                  intent(out) :: headervals_out(vallength)
-  integer(c_int), intent(in)   :: taglength, vallength
   integer :: i
 
 ! print*, headertags
@@ -99,10 +99,9 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
  integer(c_int),         intent(in)     :: read_header, verbose
  integer(c_int),         intent(out)    :: ierr
 
- character(len=f_length)    :: filename_f
  character(len=ff_length)   :: format_f
 
- integer   :: i,j,ncolr,npartr
+ integer   :: ncolr,npartr
 
  if (verbose==1) print*, tagline
 
