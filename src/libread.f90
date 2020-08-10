@@ -139,7 +139,7 @@ call select_data_format(format_f,ierr)
     endif
 
    if (ncol > 0 .and. read_header/=1) then
-       sph_dat(1:npart,1:ncol) = dat(1:npart,1:ncol,1)
+       sph_dat(1:npart,1:ncol-1) = dat(1:npart,1:ncol-1,1)
        sph_dat(1:npart,ncol) = iamtype(1:npart,1)
     else
         if (verbose==1) print*, "Updating values for npart and ncol."
