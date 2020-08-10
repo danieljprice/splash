@@ -398,16 +398,16 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90\
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
          plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
-	 rotate.f90 interpolate3D_projection.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
+	 		   rotate.f90 interpolate3D_projection.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
-              interpolate3D.F90 \
+         interpolate3D.F90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
@@ -420,13 +420,13 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
-          legends.f90 \
+         legends.f90 \
          options_render.f90 options_particleplots.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 $(READFILES) read_data.F90\
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
-	 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
-	 particleplot.f90 interactive.f90  \
+	  		 options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
+   	 	   particleplot.f90 interactive.f90  \
          convert_grid.f90 lightcurve.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
@@ -495,6 +495,11 @@ grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
 #
+#
+#
+liball: lib libexact libread
+
+#
 # libsplash: library version of splash interpolation routines
 #
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
@@ -515,7 +520,7 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
+SRCLIBEXACT= plotlib_mock.f90 libutils.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
 	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
@@ -530,13 +535,13 @@ libexact: checksystem $(OBJLIBEXACTALL)
 
 
 #
-# libexact: read solution library
+# libexact: read library
 #
 SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
-       system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
-			  geomutils.f90 partutils.f90 calc_quantities.f90 read.f90\
-			  $(READFILES) \
-       read_data.F90 adjust_data.f90 limits.f90 get_data.f90 initialise.f90 libread.f90
+            system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
+			      geomutils.f90 partutils.f90 calc_quantities.f90 read.f90\
+			      $(READFILES) \
+            read_data.F90 adjust_data.f90 limits.f90 get_data.f90 initialise.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
 OBJLIBREADALL=${OBJLIBREAD:.F90=.o}

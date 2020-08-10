@@ -27,14 +27,15 @@
 module libreaddata
 
  use readdata,         only:select_data_format
- use getdata,          only:get_data, get_labels
+ use getdata,          only:get_data,get_labels
+ use labels,           only:label,unitslabel,headertags,shortstring
  use initialise,       only:defaults_set_initial
- use iso_c_binding,    only:c_float, c_int, c_bool, c_char, c_double
- use asciiutils,       only:fstring
+ use iso_c_binding,    only:c_float,c_int,c_bool,c_char,c_double
+ use asciiutils,       only:fstring,cstring
  use filenames,        only:rootname, tagline, nfiles
- use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype, iamtype
- use settings_data,    only:ncolumns, ivegotdata, required
- use libutils,         only:ctypes_to_fstring, check_argcv
+ use particle_data,    only:dat,maxpart,maxcol,maxstep,npartoftype,iamtype,headervals
+ use settings_data,    only:ncolumns,ivegotdata,required
+ use libutils,         only:ctypes_to_fstring,check_argcv
 
  implicit none
 
@@ -44,6 +45,50 @@ contains
   subroutine check_argcv_c() bind(c, name='check_argcv')
    call check_argcv()
  end subroutine check_argcv_c
+
+subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
+  character(kind=c_char, len=24),  intent(out) :: labels_out(ncol)
+  integer(c_int), intent(in)   :: ncol
+
+  integer :: i
+
+  call get_labels
+
+do i = 1, ncol
+  labels_out(i) = shortstring(label(i), unitslabel(i))
+end do
+
+  print*, labels_out
+
+end subroutine get_labels_c
+
+subroutine get_header_vals_size(taglength, vallength) bind(c)
+  ! Need to get the correct size of the header array to allocate
+  ! memory in Python
+  integer(c_int), intent(out)  :: taglength, vallength
+  ! taglength is the size of the tag array
+  ! vallength is the length of the headerval array
+
+  taglength = size(headertags)
+  vallength = size(headervals)
+
+end subroutine get_header_vals_size
+
+subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bind(c)
+  character(kind=c_char, len=24),  intent(out) :: headertags_out(taglength)
+  real(c_double),                  intent(out) :: headervals_out(vallength)
+  integer(c_int), intent(in)   :: taglength, vallength
+  integer :: i
+
+! print*, headertags
+! print*, headervals
+  do i = 1, taglength
+    headertags_out(i) = headertags(i)
+  enddo
+
+  headervals_out(1:vallength) = headervals(1:vallength, 1)
+
+end subroutine get_headers
 
 subroutine read_data_c(filename,fileformat,f_length, ff_length,&
                        sph_dat,npart,ncol,read_header,verbose,ierr) bind(c, name='read_data')
