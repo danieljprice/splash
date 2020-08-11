@@ -28,7 +28,8 @@ module libreaddata
 
  use readdata,         only:select_data_format
  use getdata,          only:get_data,get_labels
- use labels,           only:label,unitslabel,headertags,shortstring
+ use labels,           only:label,unitslabel,headertags,shortstring,lenlabel,lenunitslabel
+ use params,           only:ltag
  use initialise,       only:defaults_set_initial
  use iso_c_binding,    only:c_float,c_int,c_bool,c_char,c_double
  use asciiutils,       only:fstring,cstring
@@ -47,15 +48,22 @@ contains
  end subroutine check_argcv_c
 
 subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
-  integer(c_int), intent(in)   :: ncol
-  character(kind=c_char),  intent(out) :: labels_out(24, ncol)
-
-  integer :: i
+  integer(c_int),          intent(in)  :: ncol
+  character(kind=c_char),  intent(out) :: labels_out(lenlabel, ncol)
+  character(len=lenlabel)    :: temp_string
+  integer :: i,j
 
   call get_labels
 
 do i = 1, ncol
-  labels_out(:, i) = shortstring(label(i), unitslabel(i))
+  temp_string = shortstring(label(i), unitslabel(i))
+  do j = 1, lenlabel
+    if (j .le. len(temp_string)) then
+      labels_out(j, i) = temp_string(j)
+    else
+      labels_out(j, i) = ' '
+    endif
+  enddo
 end do
 
   print*, labels_out
@@ -75,14 +83,20 @@ end subroutine get_header_vals_size
 
 subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bind(c)
   integer(c_int),                  intent(in)  :: taglength, vallength
-  character(kind=c_char),          intent(out) :: headertags_out(24, taglength)
+  character(kind=c_char),          intent(out) :: headertags_out(ltag, taglength)
   real(c_double),                  intent(out) :: headervals_out(vallength)
-  integer :: i
+  integer :: i,j
 
 ! print*, headertags
 ! print*, headervals
   do i = 1, taglength
-    headertags_out(:, i) = headertags(i)
+    do j = 1, ltag
+      if (j .le. len(headertags(i))) then
+        headertags_out(j, i) = headertags(i)(j)
+      else
+        headertags_out(j, i) = ' '
+      endif
+    enddo
   enddo
 
   headervals_out(1:vallength) = headervals(1:vallength, 1)
