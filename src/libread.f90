@@ -48,14 +48,14 @@ contains
 
 subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
   integer(c_int), intent(in)   :: ncol
-  character(kind=c_char, len=80),  intent(out) :: labels_out(ncol)
+  character(kind=c_char),  intent(out) :: labels_out(24, ncol)
 
   integer :: i
 
   call get_labels
 
 do i = 1, ncol
-  labels_out(i) = shortstring(label(i), unitslabel(i))
+  labels_out(:, i) = shortstring(label(i), unitslabel(i))
 end do
 
   print*, labels_out
@@ -63,8 +63,7 @@ end do
 end subroutine get_labels_c
 
 subroutine get_header_vals_size(taglength, vallength) bind(c)
-  ! Need to get the correct size of the header array to allocate
-  ! memory in Python
+  ! Need to get the correct size of the header array to allocate memory in Python
   integer(c_int), intent(out)  :: taglength, vallength
   ! taglength is the size of the tag array
   ! vallength is the length of the headerval array
@@ -75,15 +74,15 @@ subroutine get_header_vals_size(taglength, vallength) bind(c)
 end subroutine get_header_vals_size
 
 subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bind(c)
-  integer(c_int), intent(in)   :: taglength, vallength
-  character(kind=c_char, len=24),  intent(out) :: headertags_out(taglength)
+  integer(c_int),                  intent(in)  :: taglength, vallength
+  character(kind=c_char),          intent(out) :: headertags_out(24, taglength)
   real(c_double),                  intent(out) :: headervals_out(vallength)
   integer :: i
 
 ! print*, headertags
 ! print*, headervals
   do i = 1, taglength
-    headertags_out(i) = headertags(i)
+    headertags_out(:, i) = headertags(i)
   enddo
 
   headervals_out(1:vallength) = headervals(1:vallength, 1)
