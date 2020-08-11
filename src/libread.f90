@@ -51,6 +51,7 @@ subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
   integer(c_int),          intent(in)  :: ncol
   character(kind=c_char),  intent(out) :: labels_out(lenlabel, ncol)
   character(len=lenlabel)    :: temp_string
+  character(kind=c_char)     :: temp_cstring
   integer :: i,j
 
   call get_labels
@@ -59,7 +60,7 @@ do i = 1, ncol
   temp_string = shortstring(label(i), unitslabel(i))
   do j = 1, lenlabel
     if (j .le. len(temp_string)) then
-      labels_out(j, i) = temp_string(j)
+      labels_out(j, i) = temp_string(j:j)
     else
       labels_out(j, i) = ' '
     endif
@@ -87,12 +88,11 @@ subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bin
   real(c_double),                  intent(out) :: headervals_out(vallength)
   integer :: i,j
 
-! print*, headertags
-! print*, headervals
+print*, taglength
   do i = 1, taglength
     do j = 1, ltag
       if (j .le. len(headertags(i))) then
-        headertags_out(j, i) = headertags(i)(j)
+        headertags_out(j, i) = headertags(i)(j:j)
       else
         headertags_out(j, i) = ' '
       endif
