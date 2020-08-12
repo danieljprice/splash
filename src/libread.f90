@@ -47,11 +47,10 @@ contains
    call check_argcv()
  end subroutine check_argcv_c
 
-subroutine get_labels_c(labels_out, ncol) bind(c, name='get_labels')
+subroutine get_labels_c(labels_out, ncol) bind(c, name='getlabels')
   integer(c_int),          intent(in)  :: ncol
   character(kind=c_char),  intent(out) :: labels_out(lenlabel, ncol)
   character(len=lenlabel)    :: temp_string
-  character(kind=c_char)     :: temp_cstring
   integer :: i,j
 
   call get_labels
