@@ -50,12 +50,12 @@ module asciiutils
 ! or an array of real numbers
 !--------------------------------------------------
  interface read_asciifile
-   module procedure read_asciifile_char, read_asciifile_real,&
+  module procedure read_asciifile_char, read_asciifile_real,&
                     read_asciifile_real_string, read_asciifile_realarr
  end interface read_asciifile
 
  interface string_delete
-   module procedure string_delete1,string_delete_array
+  module procedure string_delete1,string_delete_array
  end interface string_delete
 
 contains
@@ -99,7 +99,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
  !--end of array limits
  !  check to see if there is anything more in the file. Report error if there is.
  read(iunit,"(a)",iostat=ierr)
- if (ierr.eq.0) then
+ if (ierr==0) then
     print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
  endif
  nlinesread = maxlines
@@ -108,17 +108,17 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  nlinesread = i-1
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ nlinesread = i-1
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  nlinesread = i-1
-  close(unit=iunit)
-  return
+ nlinesread = i-1
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_char
 
@@ -136,6 +136,7 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  integer :: ierr,i,maxlines
  logical :: iexist
 
+ i = 0
  nlinesread = 0
  if (present(ierror)) ierror = 0
 
@@ -168,21 +169,21 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  do i=1,maxlines
-     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  do i=1,maxlines
-     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_real
 
@@ -286,22 +287,22 @@ subroutine read_asciifile_real_string(filename,nlinesread,realarr,charline,ierro
 
  !--error encountered
 66 continue
-  print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
-  if (present(ierror)) ierror = 1
-  do i=1,maxlines
-     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
-  enddo
-  close(unit=iunit)
-  return
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
 
  !--reached end of file (the expected behaviour)
 99 continue
-  do i=1,maxlines
-     if (abs(realarr(i)+666.).gt.tiny(0.)) nlinesread = nlinesread + 1
-  enddo
+ do i=1,maxlines
+    if (abs(realarr(i)+666.) > tiny(0.)) nlinesread = nlinesread + 1
+ enddo
 
-  close(unit=iunit)
-  return
+ close(unit=iunit)
+ return
 
 end subroutine read_asciifile_real_string
 
@@ -336,16 +337,16 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
- do while ((len_trim(line).eq.0 .or. ncolsthisline.ne.ncolprev .or. ncolumns.le.0) &
-           .and. ierr.eq.0 .and. nheaderlines <= maxlines)
+ do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns <= 0) &
+           .and. ierr==0 .and. nheaderlines <= maxlines)
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
-    if (index(line,'NaN').gt.0) nansinfile = .true.
-    if (index(line,'Inf').gt.0) infsinfile = .true.
-    if (len_trim(line).eq.0) then
+    if (index(line,'NaN') > 0) nansinfile = .true.
+    if (index(line,'Inf') > 0) infsinfile = .true.
+    if (len_trim(line)==0) then
        ncolsthisline = -1
     else
-       if (ierr.eq.0) ncolsthisline = ncolumnsline(line)
+       if (ierr==0) ncolsthisline = ncolumnsline(line)
        ncolumns = ncolsthisline
     endif
     nheaderlines = nheaderlines + 1
@@ -353,16 +354,16 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
- if (ierr .gt.0 .or. ncolumns.le.0) then
+ if (ierr  > 0 .or. ncolumns <= 0) then
     ncolumns = 0
- elseif (ierr .lt. 0) then
+ elseif (ierr  <  0) then
     !print*,ncolumns,ncolprev
  endif
  if (nansinfile) print "(a)",' INDIAN BREAD WARNING!! NaNs in file!!'
  if (infsinfile) print "(a)",' WARNING!! Infs in file!!'
  rewind(lunit)
 
- if (ncolumns.eq.0) print "(a)",' ERROR: no columns of real numbers found'
+ if (ncolumns==0) print "(a)",' ERROR: no columns of real numbers found'
 
 end subroutine get_ncolumns
 
@@ -404,10 +405,10 @@ integer function ncolumnsline(line)
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666666.).gt.tiny(0.) .or. dummyreal(i).ne.dummyreal(i))
+ do while(abs(dummyreal(i)+666666.) > tiny(0.) .or. dummyreal(i) /= dummyreal(i))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
-    if (i.gt.size(dummyreal)) then
+    if (i > size(dummyreal)) then
        print "(a)",'*** ERROR: too many columns in file'
        ncolumnsline = size(dummyreal)
        return
@@ -436,7 +437,7 @@ integer function nheaderlines(lunit)
  dum = -666.
  nheaderlines = 0
  ierr = -1
- do while (abs(dum+666.).lt.tiny(0.) .or. ierr.ne.0)
+ do while (abs(dum+666.) < tiny(0.) .or. ierr /= 0)
     nheaderlines = nheaderlines + 1
     read(lunit,*,iostat=ierr) dum
  enddo
@@ -480,7 +481,7 @@ function safename(string)
 
  !--remove escape sequences: remove '\' and position following
  ipos = index(trim(safename),'\')
- do while (ipos.ne.0)
+ do while (ipos /= 0)
     safename = safename(1:ipos-1)//safename(ipos+2:len_trim(safename))
     ipos = index(trim(safename),'\')
  enddo
@@ -531,9 +532,9 @@ function basename(string)
  !--find the last forward slash
  iposmax = 0
  i = len_trim(string)
- do while(i.ge.2 .and. iposmax.eq.0)
+ do while(i >= 2 .and. iposmax==0)
     i = i - 1
-    if (string(i:i).eq.'/') iposmax = i
+    if (string(i:i)=='/') iposmax = i
  enddo
  basename = trim(string(iposmax+1:))
 
@@ -567,7 +568,7 @@ function fstring(array)
 
  fstring = ''
  do i=1,size(array)
-    if (array(i).eq.achar(0)) exit
+    if (array(i)==achar(0)) exit
     fstring(i:i) = array(i)
  enddo
 
@@ -587,7 +588,7 @@ subroutine string_replace(string,skey,sreplacewith)
 
  ipos = index(trim(string),skey)
  lensub = len(skey)
- do while(ipos.gt.0)
+ do while(ipos > 0)
     remstring = string(ipos+lensub:len_trim(string))
     ioffset = ipos - 1 + len(sreplacewith)
     string = string(1:ipos-1)//sreplacewith//remstring
@@ -630,7 +631,7 @@ pure subroutine string_delete1(string,skey)
 
  ipos = index(string,skey)
  lensub = len(skey)
- do while(ipos.gt.0)
+ do while(ipos > 0)
     string = string(1:ipos-1)//string(ipos+lensub:len_trim(string))
     ipos = index(trim(string),skey)
  enddo
@@ -735,10 +736,10 @@ integer function get_line_containing(filename,string)
  get_line_containing = 0
  open(unit=lu,file=filename,status='old',iostat=ierr)
  i = 0
- do while(ierr.eq.0)
+ do while(ierr==0)
     i = i + 1
     read(lu,"(a)",iostat=ierr) line
-    if (index(line,string).ne.0) get_line_containing = i
+    if (index(line,string) /= 0) get_line_containing = i
  enddo
  close(lu)
 
@@ -835,28 +836,28 @@ subroutine get_column_labels(line,nlabels,labels,method)
  i2 = i1
 
  if (index(nospaces(line),'][') > 0) then
- !
- ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
- !
+    !
+    ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
+    !
     istyle = 1
     call split(line(i1:),']',labels,nlabels)
  elseif (index(line,',') > 1) then
- !
- ! format style 2: mylabel1,mylabel2,mylabel3
- !
+    !
+    ! format style 2: mylabel1,mylabel2,mylabel3
+    !
     istyle = 2
     call split(line(i1:),',',labels,nlabelstmp)
     nlabels = count_sensible_labels(nlabelstmp,labels)
  else
- !
- ! format style 3: #     mylabel1     mylabel2     mylabel3
- !
+    !
+    ! format style 3: #     mylabel1     mylabel2     mylabel3
+    !
     istyle = 3
     call split(line(i1:),'  ',labels,nlabelstmp)
- !
- ! this style is dangerous, so perform sanity checks
- ! on the labels to ensure they are sensible
- !
+    !
+    ! this style is dangerous, so perform sanity checks
+    ! on the labels to ensure they are sensible
+    !
     nlabels = count_sensible_labels(nlabelstmp,labels)
     if (nlabels <= 1) then
        !
@@ -1011,17 +1012,17 @@ subroutine make_tags_unique(ntags,tags)
  j = 0
  tagprev = tags(1)
  do i=2,ntags
-     if (tags(i)==tagprev) then
-        j = j + 1
-        if (j==1) then
-           call append_number(tags(i-1),j)
-           j = j + 1
-        endif
-        call append_number(tags(i),j)
-     else
-        tagprev = tags(i)
-        j = 0
-     endif
+    if (tags(i)==tagprev) then
+       j = j + 1
+       if (j==1) then
+          call append_number(tags(i-1),j)
+          j = j + 1
+       endif
+       call append_number(tags(i),j)
+    else
+       tagprev = tags(i)
+       j = 0
+    endif
  enddo
 
 end subroutine make_tags_unique

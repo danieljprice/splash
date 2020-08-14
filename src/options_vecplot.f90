@@ -45,27 +45,27 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_vecplot
-  implicit none
+ implicit none
 
-  npixvec = 40        ! pixels in x direction on vector plots
-  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
-  iplotpartvec = .true.   ! whether to plot particles on vector plot
-  iVecplotLegend = .true.
-  iVecLegendOnPanel = 0   ! all panels
-  hposlegendvec = 0.02
-  vposlegendvec = -1.5
-  iplotstreamlines = .false. ! plot stream lines instead of arrows
-  iplotarrowheads = .true.
-  iplotsynchrotron = .false.
-  zcrit = 2.5 ! kpc
-  rcrit = 13. ! kpc
-  synchrotronspecindex = 0.8
-  uthermcutoff = -1. ! flags this as uninitialised
-  ihidearrowswherenoparts = .false.
-  minpartforarrow = 1
-  iallarrowssamelength = .false.
+ npixvec = 40        ! pixels in x direction on vector plots
+ UseBackgndColorVecplot = .false. ! plot vector plot using black/white
+ iplotpartvec = .true.   ! whether to plot particles on vector plot
+ iVecplotLegend = .true.
+ iVecLegendOnPanel = 0   ! all panels
+ hposlegendvec = 0.02
+ vposlegendvec = -1.5
+ iplotstreamlines = .false. ! plot stream lines instead of arrows
+ iplotarrowheads = .true.
+ iplotsynchrotron = .false.
+ zcrit = 2.5 ! kpc
+ rcrit = 13. ! kpc
+ synchrotronspecindex = 0.8
+ uthermcutoff = -1. ! flags this as uninitialised
+ ihidearrowswherenoparts = .false.
+ minpartforarrow = 1
+ iallarrowssamelength = .false.
 
-  return
+ return
 end subroutine defaults_set_vecplot
 
 !----------------------------------------------------------------------
@@ -84,7 +84,7 @@ subroutine submenu_vecplot(ichoose)
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
- if (ians.le.0 .or. ians.gt.7) then
+ if (ians <= 0 .or. ians > 7) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
              print_logical(iVecplotLegend),print_logical(iplotstreamlines), &
              print_logical(iplotarrowheads), &
@@ -134,19 +134,19 @@ subroutine submenu_vecplot(ichoose)
  case(5)
     iplotarrowheads = .not.iplotarrowheads
     call prompt('plot arrow heads? ',iplotarrowheads)
-    if (ndim.eq.3 .and. .not.iplotarrowheads) then
+    if (ndim==3 .and. .not.iplotarrowheads) then
        call prompt(' plot synchrotron map? ',iplotsynchrotron)
        if (iplotsynchrotron) then
-          if (iutherm.lt.0 .or. iutherm.gt.numplot) then
+          if (iutherm < 0 .or. iutherm > numplot) then
              print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots'
              print "(a)",' (could not locate thermal energy in data columns)'
           endif
           call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
           call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
           call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
-          if (iutherm.gt.0 .and. iutherm.le.numplot) then
+          if (iutherm > 0 .and. iutherm <= numplot) then
              !--set sensible default value for uthermcutoff
-             if (uthermcutoff.lt.-tiny(uthermcutoff)) then
+             if (uthermcutoff < -tiny(uthermcutoff)) then
                 uthermcutoff = 0.5*(lim(iutherm,1) + lim(iutherm,2))
              endif
              call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.)

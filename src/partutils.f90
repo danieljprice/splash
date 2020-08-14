@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,7 +32,7 @@ module part_utils
  public :: igettype,get_tracked_particle
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
- public :: get_binary
+ public :: get_binary,got_particles_of_type
  private
 
 contains
@@ -51,7 +51,7 @@ pure integer function igettype(i,noftype)
  igettype = 1 ! so even if in error, will not lead to seg fault
  over_types: do jtype=1,maxparttypes
     ntot1 = ntot + noftype(jtype)
-    if (i.gt.ntot .and. i.le.ntot1) then
+    if (i > ntot .and. i <= ntot1) then
        igettype = jtype
        exit over_types
     endif
@@ -70,7 +70,7 @@ integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer :: ntot
 
- if (itype.le.0 .or. itype.gt.size(noftype)) then
+ if (itype <= 0 .or. itype > size(noftype)) then
     !--type not set, itrackpart = itrackoffset
     get_tracked_particle = ioffset
  else
@@ -90,10 +90,10 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer, dimension(:), intent(in) :: noftype
  integer :: i,nfound
- 
+
  !--locate first two sink particles in the data
  ntot = sum(noftype)
- if (size(iamtype(:)).eq.1) then
+ if (size(iamtype(:))==1) then
     i1 = sum(noftype(1:itype-1)) + 1
     i2 = i1 + 1
  else
@@ -101,11 +101,11 @@ subroutine locate_first_two_of_type(i1,i2,itype,iamtype,noftype,ntot)
     i2 = 0
     i = 0
     nfound = 0
-    do while ((i1.eq.0 .or. i2.eq.0) .and. i.le.ntot)
+    do while ((i1==0 .or. i2==0) .and. i <= ntot)
        i = i + 1
-       if (iamtype(i).eq.itype) nfound = nfound + 1
-       if (nfound.eq.1) i1 = i
-       if (nfound.eq.2) i2 = i
+       if (iamtype(i)==itype) nfound = nfound + 1
+       if (nfound==1) i1 = i
+       if (nfound==2) i2 = i
     enddo
  endif
 
@@ -122,20 +122,37 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  integer :: i,nfound
 
  ntot = sum(noftype)
- if (size(iamtype(:)).eq.1) then
+ if (size(iamtype(:))==1) then
     ipos = sum(noftype(1:itype-1)) + n
  else
     ipos = 0
     i = 0
     nfound = 0
-    do while (ipos.eq.0 .and. i.le.ntot)
+    do while (ipos==0 .and. i <= ntot)
        i = i + 1
-       if (iamtype(i).eq.itype) nfound = nfound + 1
-       if (nfound.eq.n) ipos = i
+       if (iamtype(i)==itype) nfound = nfound + 1
+       if (nfound==n) ipos = i
     enddo
  endif
 
 end subroutine locate_nth_particle_of_type
+
+!-------------------------------------------------------------
+! check if any particles of type 'mytype' exist
+!-------------------------------------------------------------
+pure logical function got_particles_of_type(mytype,labeltype,npartoftype)
+ character(len=*), intent(in) :: mytype,labeltype(:)
+ integer, intent(in) :: npartoftype(:,:)
+ integer :: itype
+
+ got_particles_of_type = .false.
+ do itype=1,size(npartoftype(:,1))
+    if (index(labeltype(itype),mytype) > 0) then
+       if (any(npartoftype(itype,:) > 0)) got_particles_of_type = .true.
+    endif
+ enddo
+
+end function got_particles_of_type
 
 !----------------------------------------------------------
 ! routine to get properties of particle binary system
@@ -149,17 +166,19 @@ end subroutine locate_nth_particle_of_type
 !   x0 : centre of mass position
 !   v0 : velocity of centre of mass
 !   angle : angle of binary about centre of mass (radians)
+!   omega : angular velocity of binary around centre of mass
 !----------------------------------------------------------
-subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
+subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipmass,iverbose,ierr)
  integer,                  intent(in)  :: i1,i2,ndim,ndimV,ncolumns,ivx,ipmass,iverbose
  integer, dimension(ndim), intent(in)  :: ix
  real, dimension(:,:),     intent(in)  :: dat
  real, dimension(ndim),    intent(out) :: x0,v0
- real,                     intent(out) :: angle
+ real,                     intent(out) :: angle,omega
  integer,                  intent(out) :: ierr
  integer               :: max
- real, dimension(ndim) :: x1,x2,v1,v2,dx
- real                  :: m1,m2,dmtot
+ real, dimension(ndim) :: x1,x2,v1,v2,dx,dv
+ real                  :: m1,m2,dmtot,dR2
+ real, parameter       :: pi = 4.*atan(1.)
 
  ierr = 0
  max = size(dat(:,1))
@@ -192,15 +211,22 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,ndim,ndimV,ncolumns,ix,ivx,ipmass,iv
  !--work out angle needed to rotate into corotating frame
  dx   = x0 - x1
  angle = -atan2(dx(2),dx(1))
- 
+
  !--get velocities
  if (ivx > 0 .and. ivx + ndimV <= ncolumns) then
     v1 = dat(i1,ivx:ivx+ndimV-1)
     v2 = dat(i2,ivx:ivx+ndimV-1)
     v0 = (m1*v1 + m2*v2)*dmtot
+    dv = v2 - v0
+    dx = x2 - x0
+    dR2 = 1./dot_product(dx,dx)
+    omega = dv(1)*(-dx(2)*dR2) + dv(2)*(dx(1)*dR2)
     if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: vel c of m =',v0(1:ndimV)
+    if (iverbose >= 1) print "(a,1x,es10.3,a,g12.4,a)",' ::      omega =',omega,&
+                             ' angle =',-angle*180./pi,' degrees'
  else
     v0 = 0.
+    omega = 0.
  endif
 
 end subroutine get_binary

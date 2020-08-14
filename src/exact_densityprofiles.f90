@@ -31,36 +31,36 @@
 !  Added by D. Price 5/9/05
 ! ----------------------------------------------------------------------
 module densityprofiles
-  implicit none
+ implicit none
 
 contains
 
 subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
-  implicit none
-  real, parameter :: pi = 3.1415926536
-  integer, intent(in) :: iplot,iprofile
-  real, intent(in), dimension(2) :: Msphere,rsoft
-  real, intent(in), dimension(:) :: xplot
-  real, intent(out), dimension(size(xplot)) :: yplot
-  integer, intent(out) :: ierr
-  integer :: i
+ implicit none
+ real, parameter :: pi = 3.1415926536
+ integer, intent(in) :: iplot,iprofile
+ real, intent(in), dimension(2) :: Msphere,rsoft
+ real, intent(in), dimension(:) :: xplot
+ real, intent(out), dimension(size(xplot)) :: yplot
+ integer, intent(out) :: ierr
+ integer :: i
 !
 ! check for errors
 !
-  ierr = 0
-  if (all(Msphere.le.0.)) then
-     print*,'error: mass <= 0 in exact_densityprofile'
-     ierr = 2
-     return
-  endif
-  if (any(rsoft.lt.0.)) then
-     print*,'error: rsoft < 0 in exact_densityprofile'
-     ierr = 3
-     return
-  endif
+ ierr = 0
+ if (all(Msphere <= 0.)) then
+    print*,'error: mass <= 0 in exact_densityprofile'
+    ierr = 2
+    return
+ endif
+ if (any(rsoft < 0.)) then
+    print*,'error: rsoft < 0 in exact_densityprofile'
+    ierr = 3
+    return
+ endif
 
-  select case(iprofile)
-  case(1)
+ select case(iprofile)
+ case(1)
 !
 !--Plummer sphere
 !
@@ -85,7 +85,7 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
        enddo
     end select
 
-  case(2)
+ case(2)
 !
 !--Hernquist model (use tiny to prevent divergences in cusp)
 !
@@ -112,11 +112,11 @@ subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
        enddo
     end select
 
-  case default
-     ierr = 1
-  end select
+ case default
+    ierr = 1
+ end select
 
-  return
+ return
 end subroutine exact_densityprofiles
 
 end module densityprofiles

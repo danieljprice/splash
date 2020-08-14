@@ -69,12 +69,12 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
 !
  nincell(:,:) = 0
  do j=1,npart
-    if (itype(j).ge.0) then ! exclude not-plotted particles
+    if (itype(j) >= 0) then ! exclude not-plotted particles
        icellx = int((xplot(j) - xmin)*dxcell1) + 1
        icelly = int((yplot(j) - ymin)*dycell1) + 1
        !--count number of particles in each cell
-       if (icellx.gt.0 .and. icellx.le.npixvecx &
-          .and. icelly.gt.0 .and. icelly.le.npixvecy) then
+       if (icellx > 0 .and. icellx <= npixvecx &
+          .and. icelly > 0 .and. icelly <= npixvecy) then
           nincell(icellx,icelly) = nincell(icellx,icelly) + 1
        endif
     endif
@@ -82,7 +82,7 @@ subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
 !
 !--set vector arrow lengths to zero in cells where there are no particles
 !
- where (nincell.lt.minincell)
+ where (nincell < minincell)
     vecpixx = blankval
     vecpixy = blankval
  end where
@@ -112,71 +112,71 @@ end subroutine mask_vectors
 subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
      xmin,ymin,dx,dy,vecpixx,vecpixy,npart,npixx,npixy,z,zmin,zmax)
 
-  implicit none
-  integer, intent(in) :: npart,npixx,npixy
-  real, intent(in), dimension(npart) :: x,y,vecx,vecy
-  integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,ymin,dx,dy
-  real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
-  real, intent(in), optional :: z(npart),zmin,zmax
-  integer :: i,j,k,ix,iy
-  integer, dimension(npixx,npixy) :: ihoc,numcell
-  integer, dimension(npart) :: ll
-  logical :: xsec
+ implicit none
+ integer, intent(in) :: npart,npixx,npixy
+ real, intent(in), dimension(npart) :: x,y,vecx,vecy
+ integer, intent(in), dimension(npart) :: itype
+ real, intent(in) :: xmin,ymin,dx,dy
+ real, intent(out), dimension(npixx,npixy) :: vecpixx, vecpixy
+ real, intent(in), optional :: z(npart),zmin,zmax
+ integer :: i,j,k,ix,iy
+ integer, dimension(npixx,npixy) :: ihoc,numcell
+ integer, dimension(npart) :: ll
+ logical :: xsec
 
-  !print "(a,i3,a,i3,a)",' averaging vector field onto ',npixx,'x',npixy,' pixels...'
-  if (dx <= 0. .or. dy <= 0.) then
-     print*,'interpolate_vec: error: pixel width <= 0'
-     return
-  endif
-  !
-  !--interpolation is to a coarser grid, so just average
-  !  bin particles into cells using a link list
-  !
-  ihoc(:,:) = -1   ! head of chain
-  numcell(:,:) = 0
-  xsec = present(z) .and. present(zmin) .and. present(zmax)
-  over_parts: do i=1,npart
-     if (xsec) then
-        if (z(i) < zmin .or. z(i) > zmax) cycle over_parts
-     endif
-     if (itype(i).ge.0) then
-        ix = int((x(i)-xmin)/dx)+1
-        iy = int((y(i)-ymin)/dy)+1
-        if ((ix.ge.1).and.(ix.le.npixx).and.(iy.ge.1).and.(iy.le.npixy)) then
-           ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
-           ihoc(ix,iy) = i            ! set head of chain to this particle
-        endif
-     endif
-  enddo over_parts
-  !
-  !--add up total vx,vy in each cell
-  !
-  vecpixx(:,:) = 0.
-  vecpixy(:,:) = 0.
-  do j=1,npixy
-     do i=1,npixx
-        k = ihoc(i,j)
-        do while (k.ne.-1)
-           vecpixx(i,j) = vecpixx(i,j) + vecx(k)
-           vecpixy(i,j) = vecpixy(i,j) + vecy(k)
-           numcell(i,j) = numcell(i,j) + 1
-           k = ll(k)
-        enddo
-     enddo
-  enddo
-  !
-  !--divide by number of particles in that cell to get average vx,vy
-  !
-  do j=1,npixy
-     do i=1,npixx
-        if (numcell(i,j).ne.0) then
-           vecpixx(i,j) = vecpixx(i,j)/float(numcell(i,j))
-           vecpixy(i,j) = vecpixy(i,j)/float(numcell(i,j))
-        endif
-     enddo
-  enddo
-  return
+ !print "(a,i3,a,i3,a)",' averaging vector field onto ',npixx,'x',npixy,' pixels...'
+ if (dx <= 0. .or. dy <= 0.) then
+    print*,'interpolate_vec: error: pixel width <= 0'
+    return
+ endif
+ !
+ !--interpolation is to a coarser grid, so just average
+ !  bin particles into cells using a link list
+ !
+ ihoc(:,:) = -1   ! head of chain
+ numcell(:,:) = 0
+ xsec = present(z) .and. present(zmin) .and. present(zmax)
+ over_parts: do i=1,npart
+    if (xsec) then
+       if (z(i) < zmin .or. z(i) > zmax) cycle over_parts
+    endif
+    if (itype(i) >= 0) then
+       ix = int((x(i)-xmin)/dx)+1
+       iy = int((y(i)-ymin)/dy)+1
+       if ((ix >= 1).and.(ix <= npixx).and.(iy >= 1).and.(iy <= npixy)) then
+          ll(i)=ihoc(ix,iy)   ! set link list of this particle to old head of list
+          ihoc(ix,iy) = i            ! set head of chain to this particle
+       endif
+    endif
+ enddo over_parts
+ !
+ !--add up total vx,vy in each cell
+ !
+ vecpixx(:,:) = 0.
+ vecpixy(:,:) = 0.
+ do j=1,npixy
+    do i=1,npixx
+       k = ihoc(i,j)
+       do while (k /= -1)
+          vecpixx(i,j) = vecpixx(i,j) + vecx(k)
+          vecpixy(i,j) = vecpixy(i,j) + vecy(k)
+          numcell(i,j) = numcell(i,j) + 1
+          k = ll(k)
+       enddo
+    enddo
+ enddo
+ !
+ !--divide by number of particles in that cell to get average vx,vy
+ !
+ do j=1,npixy
+    do i=1,npixx
+       if (numcell(i,j) /= 0) then
+          vecpixx(i,j) = vecpixx(i,j)/float(numcell(i,j))
+          vecpixy(i,j) = vecpixy(i,j)/float(numcell(i,j))
+       endif
+    enddo
+ enddo
+ return
 
 end subroutine interpolate_vec_average
 

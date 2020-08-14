@@ -89,7 +89,7 @@ subroutine exact_bondi(iplot,time,gamma,const1,const2,m,relativistic,geodesic_fl
        elseif (.not. geodesic_flow) then
           call get_bondi_sonicpoint(rhor,vr,ur,r,m,gamma)
        endif
-     endif
+    endif
 
     select case(iplot)
     case(1)
@@ -193,15 +193,15 @@ subroutine get_bondi_sonicpoint(rho,v,u,r,m,gamma)
  real :: T,uvel,term,u0,dens,sqrtg
  real :: uc2,vc2
 
-  n     = 1./(gamma-1.)
-  mass1 = m
+ n     = 1./(gamma-1.)
+ mass1 = m
 
-  uc2 = mass1/(2.*rcrit)
-  vc2 = uc2/(1.-3.*uc2)
+ uc2 = mass1/(2.*rcrit)
+ vc2 = uc2/(1.-3.*uc2)
 
-  Tc  = vc2*n/(1.+n-vc2*n*(1.+n))
-  C1  = sqrt(uc2) * Tc**n * rcrit**2
-  C2  = (1. + (1.+n)*Tc)**2 * (1. - 2.*mass1/rcrit + C1**2/(rcrit**4*Tc**(2.*n)))
+ Tc  = vc2*n/(1.+n-vc2*n*(1.+n))
+ C1  = sqrt(uc2) * Tc**n * rcrit**2
+ C2  = (1. + (1.+n)*Tc)**2 * (1. - 2.*mass1/rcrit + C1**2/(rcrit**4*Tc**(2.*n)))
 
  ! Given an r, solve eq 76 for T numerically (Hawley, Smarr and Wilson 1976a)
  call Tsolve(T,r)
@@ -247,7 +247,7 @@ subroutine Tsolve(T,r)
     its = its+1
  enddo
 
- if(.not.converged) print*,'Bondi exact solution not converged at r = ',r
+ if (.not.converged) print*,'Bondi exact solution not converged at r = ',r
 
 end subroutine Tsolve
 

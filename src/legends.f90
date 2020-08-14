@@ -86,7 +86,7 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  endif
  call parse_text(label,vars,vals)
 
- if (index(label,'%ut').gt.0) then
+ if (index(label,'%ut') > 0) then
     call string_replace(label,'%ut',trim(unitslabel))
  else
     label = trim(label)//trim(unitslabel)
@@ -190,7 +190,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
  vecmaxnew = adjustlength*vecmax
  ndec = 2
- if (vecmaxnew.lt.tiny(vecmaxnew)) then
+ if (vecmaxnew < tiny(vecmaxnew)) then
     string = '0'
     nc = 1
  else
@@ -282,75 +282,75 @@ end subroutine legend_vec
 !-------------------------------------------------------------------------
 subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
            iplotpts,iplotline,text,hposlegend,vposlegend,alphalegend)
-  use plotlib, only:plot_qwin,plot_qcs,plot_qci,plot_qls,plot_sci,plot_sls, &
+ use plotlib, only:plot_qwin,plot_qcs,plot_qci,plot_qls,plot_sci,plot_sls, &
                     plot_line,plot_pt,plot_text,plot_stbg,plot_slc,plot_qlc,plot_set_opacity
-  implicit none
-  integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
-  logical, intent(in) :: iplotpts,iplotline
-  character(len=*), intent(in) :: text
-  real, intent(in) :: hposlegend,vposlegend,alphalegend
-  integer :: icolourprev, ilinestyleprev,ilinecapprev
-  real, dimension(3) :: xline,yline
-  real :: xch, ych, xmin, xmax, ymin, ymax
-  real :: vspace, vpos
+ implicit none
+ integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
+ logical, intent(in) :: iplotpts,iplotline
+ character(len=*), intent(in) :: text
+ real, intent(in) :: hposlegend,vposlegend,alphalegend
+ integer :: icolourprev, ilinestyleprev,ilinecapprev
+ real, dimension(3) :: xline,yline
+ real :: xch, ych, xmin, xmax, ymin, ymax
+ real :: vspace, vpos
 !
 !--do not plot anything if string is blank
 !
-  if (len_trim(text).le.0) return
-  !call pgstbg(0)           ! opaque text to overwrite previous
+ if (len_trim(text) <= 0) return
+ !call pgstbg(0)           ! opaque text to overwrite previous
 !
 !--set horizontal and vertical position and spacing
 !  in units of the character height
 !
-  vspace = 1.5  ! (in units of character heights)
-  vpos = vposlegend + icall*vspace + 0.5 ! distance from top, in units of char height
+ vspace = 1.5  ! (in units of character heights)
+ vpos = vposlegend + icall*vspace + 0.5 ! distance from top, in units of char height
 
-  call plot_qwin(xmin,xmax,ymin,ymax) ! query xmax, ymax
-  call plot_qcs(4,xch,ych) ! query character height in x and y units
-  call plot_qci(icolourprev)     ! save current colour index
-  call plot_qls(ilinestyleprev)  ! save current line style
-  call plot_qlc(ilinecapprev)    ! save the current line cap
+ call plot_qwin(xmin,xmax,ymin,ymax) ! query xmax, ymax
+ call plot_qcs(4,xch,ych) ! query character height in x and y units
+ call plot_qci(icolourprev)     ! save current colour index
+ call plot_qls(ilinestyleprev)  ! save current line style
+ call plot_qlc(ilinecapprev)    ! save the current line cap
 
 
-  yline(:) = ymax - ((vpos - 0.5)*ych)
-  xline(1) = xmin + hposlegend*(xmax-xmin)
-  xline(2) = xline(1) + 1.5*xch
-  xline(3) = xline(1) + 3.*xch
+ yline(:) = ymax - ((vpos - 0.5)*ych)
+ xline(1) = xmin + hposlegend*(xmax-xmin)
+ xline(2) = xline(1) + 1.5*xch
+ xline(3) = xline(1) + 3.*xch
 
-  call plot_sci(icolour)
-  call plot_set_opacity(alphalegend)
-  call plot_sls(ilinestyle)
+ call plot_sci(icolour)
+ call plot_set_opacity(alphalegend)
+ call plot_sls(ilinestyle)
 !
 !--set round caps
 !
-  !call plot_slc(1)
+ !call plot_slc(1)
 !
 !--draw a small line segment
 !
-  if (iplotline) call plot_line(3,xline,yline)
+ if (iplotline) call plot_line(3,xline,yline)
 
-  call plot_slc(ilinecapprev)
-  call plot_sls(ilinestyleprev)
+ call plot_slc(ilinecapprev)
+ call plot_sls(ilinestyleprev)
 !
 !--draw points, only two if line is also plotted so that you can see the line
 !               three otherwise
 !
-  if (iplotpts .and. iplotline) then
-     xline(2) = xline(3)
-     call plot_pt(2,xline(1:2),yline(1:2),imarkerstyle)
-  elseif (iplotpts) then
-     call plot_pt(3,xline,yline,imarkerstyle)
-  endif
+ if (iplotpts .and. iplotline) then
+    xline(2) = xline(3)
+    call plot_pt(2,xline(1:2),yline(1:2),imarkerstyle)
+ elseif (iplotpts) then
+    call plot_pt(3,xline,yline,imarkerstyle)
+ endif
 !
 !--add text
 !
-  if (iplotline .or. iplotpts .and. len_trim(text).gt.0) then
-     call plot_text(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
-  endif
+ if (iplotline .or. iplotpts .and. len_trim(text) > 0) then
+    call plot_text(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
+ endif
 
-  call plot_sci(icolourprev)    ! reset colour index
-  call plot_set_opacity(1.0)
-  call plot_stbg(-1) ! reset text background to transparent
+ call plot_sci(icolourprev)    ! reset colour index
+ call plot_set_opacity(1.0)
+ call plot_stbg(-1) ! reset text background to transparent
 
 end subroutine legend_markers
 
@@ -370,25 +370,25 @@ end subroutine legend_markers
 !        text : label to print above scale
 !-----------------------------------------------------------------
 subroutine legend_scale(dxscale,hpos,vpos,text)
-  use plotlib, only:plot_qwin,plot_qcs,plot_err1,plot_annotate
-  implicit none
-  real, intent(in) :: dxscale,hpos,vpos
-  character(len=*), intent(in) :: text
-  real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
+ use plotlib, only:plot_qwin,plot_qcs,plot_err1,plot_annotate
+ implicit none
+ real, intent(in) :: dxscale,hpos,vpos
+ character(len=*), intent(in) :: text
+ real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
 
-  call plot_qwin(xmin,xmax,ymin,ymax)
-  if (dxscale.gt.(xmax-xmin)) then
-     print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
-  else
-     call plot_qcs(4,xch,ych)
-     !--draw horizontal "error bar" above text
-     ypos = ymin + (vpos+1.25)*ych
-     xpos = xmin + hpos*(xmax-xmin)
-     call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ if (dxscale > (xmax-xmin)) then
+    print "(a)",'Error: scale size exceeds x dimensions: scale not plotted'
+ else
+    call plot_qcs(4,xch,ych)
+    !--draw horizontal "error bar" above text
+    ypos = ymin + (vpos+1.25)*ych
+    xpos = xmin + hpos*(xmax-xmin)
+    call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
 
-     !--write text at the position specified
-     call plot_annotate('B',-vpos,hpos,0.5,trim(text))
-  endif
+    !--write text at the position specified
+    call plot_annotate('B',-vpos,hpos,0.5,trim(text))
+ endif
 
 end subroutine legend_scale
 
@@ -420,10 +420,10 @@ logical function ipanelselect(iselect,ipanel,irow,icolumn)
  implicit none
  integer,       intent(in) :: iselect,ipanel,irow,icolumn
 
- ipanelselect = ((iselect.gt.0 .and. ipanel.eq.iselect) &
-              .or.(iselect.eq.-1 .and. irow.eq.1) &
-              .or.(iselect.eq.-2 .and. icolumn.eq.1) &
-              .or.(iselect.eq.0))
+ ipanelselect = ((iselect > 0 .and. ipanel==iselect) &
+              .or.(iselect==-1 .and. irow==1) &
+              .or.(iselect==-2 .and. icolumn==1) &
+              .or.(iselect==0))
 
 end function ipanelselect
 

@@ -1,3 +1,12 @@
+2.10.1:
+exact solution can appear in legend; can also plot under data; fits reader and denoise utility can read/write spectral cubes; text shapes can print header variables using %(var); can shift cross section by precise amounts in interactive mode using number followed by u/d; fits reader includes header quantities; reduced verbosity for non-interactive plots; use of fake dust particles is now via menu option, not environment variable; max particle types = 24; userguide in readthedocs format; bug fix with save limits with particle tracking; support for .pfm pixelmap format as output; physical units are ON by default; prompts only for particle types present in data
+ 
+2.10.0:
+much improved splash to grid - bug fixes with pixel number and roundoff error; use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections; added bytestream output formats for splash to grid and splash to ascii; can press number and -/+ to zoom out/in by that factor in interactive mode; use SPLASH_COROTATE=1,3 to corotate with arbitrary pair of sink particles; SPLASH_COROTATE also gives velocity field in corotating frame; splash to ascii can write particular columns by setting SPLASH_CONVERT=1,4; plasma beta correct in both code and physical units; working fits reader and splash-denoise utility
+ 
+2.9.1:
+cleaner menu options for units and calculated quantities; surface rendering allowed with 3D perspective turned off; automatic labelling of grain sizes in density and column density plots; adaptive limits on log colour bars show 3 dex range by default; auto-adjust limits to device aspect ratio works with multiple panels; bug fixes with r-z rendering; Toomre Q prompts for mass
+ 
 2.9.0:
 general header quantities are read and available in function parser; more robust label detection and parsing during ascii data read; splash to grid works in non-cartesian geometries; added flared and log-flared coordinate systems; Doppler shift colour bar; can customise line style and colour when plotting multiple exact solutions; seg faults fixed; better plot tiling decisions; disappearing arrows bug fix; Rafikov disc-planet exact solution added; atan2 implemented in function parser; various multigrain phantom read fixes (incl. seg faults); exact rendering implemented in 2D; libsplash implemented for use as Python splash backend
  

@@ -56,22 +56,22 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
 !
 !--handle all trivial cases (quadratic, linear, all zero)
 !
- if (abs(a).lt.eps) then
+ if (abs(a) < eps) then
     det = c**2 - 4.*b*d
-    if (det.lt.0.) then ! no solutions to quadratic
+    if (det < 0.) then ! no solutions to quadratic
        nreal = 0
     else
-       if (abs(b).lt.eps) then
-       !--no solutions if a = 0, b = 0, c = 0
-          if (abs(c).lt.eps) then
+       if (abs(b) < eps) then
+          !--no solutions if a = 0, b = 0, c = 0
+          if (abs(c) < eps) then
              nreal = 0
           else
-       !--solve linear equation if a = 0, b = 0
+             !--solve linear equation if a = 0, b = 0
              nreal = 1
              x(1) = -d/c
           endif
        else
-       !--solve quadratic for a = 0
+          !--solve quadratic for a = 0
           nreal = 2
           sqrtdet = sqrt(det)
           x(1) = 0.5*(-c + sqrtdet)/b
@@ -90,19 +90,19 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
 !
 !--determine number of solutions
 !
-    if (det.lt.0.) then
-    !--3 distinct real roots
+    if (det < 0.) then
+       !--3 distinct real roots
        nreal = 3
        term = sqrt(abs(p)/3.)
-       phi = ACOS(-0.5*q*term**(-3))
+       phi = acos(-0.5*q*term**(-3))
 
        !--these are the solutions to the reduced cubic
        !  y^3 + py + q = 0
-       y1 = 2.*term*COS(phi/3.)
-       y2 = -2.*term*COS((phi + pi)/3.)
-       y3 = -2.*term*COS((phi - pi)/3.)
+       y1 = 2.*term*cos(phi/3.)
+       y2 = -2.*term*cos((phi + pi)/3.)
+       y3 = -2.*term*cos((phi - pi)/3.)
     else
-    !--1 real, 2 complex roots
+       !--1 real, 2 complex roots
        term = -0.5*q + sqrt(det)
        !--must take cube root of positive quantity, then give sign later
        !  (otherwise gives NaNs)
@@ -111,8 +111,8 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        v = (abs(term))**(1/3.)*SIGN(1.0,term)
        nreal = 1
        y1 = u + v
-    !--if det=0, 3 real roots, but at least 2 equal, so max of 2 unique roots)
-       if (abs(det).lt.tiny(det)) then
+       !--if det=0, 3 real roots, but at least 2 equal, so max of 2 unique roots)
+       if (abs(det) < tiny(det)) then
           nreal = 2
           y2 = -(u + v)/2.
        endif
@@ -120,9 +120,9 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
     endif
     !--return solutions to original cubic, not reduced cubic
     term = b/(3.*a)
-    if (nreal.ge.1) x(1) = y1 - term
-    if (nreal.ge.2) x(2) = y2 - term
-    if (nreal.ge.3) x(3) = y3 - term
+    if (nreal >= 1) x(1) = y1 - term
+    if (nreal >= 2) x(2) = y2 - term
+    if (nreal >= 3) x(3) = y3 - term
 
  endif
 
@@ -132,7 +132,7 @@ subroutine cubicsolve(a,b,c,d,x,nreal,check)
        print*,'verifying: ',a,'x^3 + ',b,'x^2 + ',c,'x + ',d
        do i=1,nreal
           term = a*x(i)**3 + b*x(i)**2 + c*x(i) + d
-          if (abs(term).lt.eps) then
+          if (abs(term) < eps) then
              print*,'root ',i,':',x(i),'f=',term,': OK'
           else
              print*,'root ',i,':',x(i),'f=',term,': FAILED',eps
@@ -185,20 +185,20 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
  q2 = q*q
  det = (p*p*p)/27. + 0.25*q2
  if (det < 0) then
- !--3 distinct real roots
+    !--3 distinct real roots
     nroots = 3
     term = sqrt(abs(p)/3.)
-    phi = ACOS(-0.5*q*term**(-3))
+    phi = acos(-0.5*q*term**(-3))
 
     !--these are the solutions to the reduced cubic
     !  y^3 + py + q = 0
-    x(1) = real(2.d0*term*COS(phi/3.d0))
-    x(2) = real(-2.d0*term*COS((phi + pi)/3.d0))
-    x(3) = real(-2.d0*term*COS((phi - pi)/3.d0))
+    x(1) = real(2.d0*term*cos(phi/3.d0))
+    x(2) = real(-2.d0*term*cos((phi + pi)/3.d0))
+    x(3) = real(-2.d0*term*cos((phi - pi)/3.d0))
  else
- !--1 real, two complex
+    !--1 real, two complex
     nroots = 1
-    if (abs(det).lt.tiny(det)) nroots = 2
+    if (abs(det) < tiny(det)) nroots = 2
     term = -0.5*q + sqrt(det)
     termA = (abs(term))**(1.d0/3.d0)*SIGN(1.0d0,term)
 
@@ -214,13 +214,13 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
 
  !--if determinant is small, take a couple of Newton-Raphson iterations
  !  to beat down the error
- if (abs(det).lt.eps) then
+ if (abs(det) < eps) then
     do i=1,nroots
        xi = dble(x(i))
        do j=1,3
           fx = xi*(xi*(xi + b) + c) + d
           dfx = xi*(3.d0*xi + 2.d0*b) + c
-          if (abs(dfx).gt.0.) xi = xi - fx/dfx
+          if (abs(dfx) > 0.) xi = xi - fx/dfx
        enddo
        x(i) = real(xi)
     enddo
@@ -235,7 +235,7 @@ subroutine cubicsolve_complex(b,c,d,x,nreal,check)
        print*,'verifying: x^3 + ',b,'x^2 + ',c,'x + ',d
        do i=1,3
           term = real(x(i)**3 + b*x(i)**2 + c*x(i) + d)
-          if (abs(term).lt.eps) then
+          if (abs(term) < eps) then
              print*,'root ',i,':',x(i),'f=',term,': OK'
           else
              print*,'root ',i,':',x(i),'f=',term,': FAILED',eps

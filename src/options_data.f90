@@ -36,40 +36,42 @@ contains
 ! (most should be set upon call to read_data)
 !---------------------------------------------
 subroutine defaults_set_data
-  use settings_data
-  use params, only:maxplot
-  implicit none
-  integer :: i
+ use settings_data
+ use params, only:maxplot
+ implicit none
+ integer :: i
 
-  numplot=maxplot   ! reset if read from file
-  ncalc = 0         ! number of columns to calculate(e.g. radius)
-  nextra = 0        ! extra plots aside from particle data
-  ncolumns=maxplot-ncalc        ! number of columns in data file
-  ndataplots = ncolumns
-  ndim = 0          ! number of coordinate dimensions
-  ndimV = ndim      ! default velocity same dim as coords
-  istartatstep = 1        ! timestep to start from
-  iendatstep = 1000      ! timestep to finish on
-  nfreq = 1         ! frequency of timesteps to read
-  icoords = 1       ! coordinate system of simulation
-  iformat = 0       ! file format
-  buffer_data = .false.
-  iUseStepList = .false.
-  do i=1,size(isteplist)
-     isteplist(i) = i
-  enddo
-  iCalcQuantities = .false.
-  DataIsBuffered = .false.
-  iRescale = .false.
-  ivegotdata = .false.
-  ntypes = 1
-  xorigin = 0.
-  itracktype = 0 ! particle tracking limits (none)
-  itrackoffset = 0
-  ipartialread = .false.  ! strictly unnecessary as set in get_data
-  iverbose = 1
+ numplot=maxplot   ! reset if read from file
+ ncalc = 0         ! number of columns to calculate(e.g. radius)
+ nextra = 0        ! extra plots aside from particle data
+ ncolumns=maxplot-ncalc        ! number of columns in data file
+ ndataplots = ncolumns
+ ndim = 0          ! number of coordinate dimensions
+ ndimV = ndim      ! default velocity same dim as coords
+ istartatstep = 1        ! timestep to start from
+ iendatstep = 1000      ! timestep to finish on
+ nfreq = 1         ! frequency of timesteps to read
+ icoords = 1       ! coordinate system of simulation
+ iformat = 0       ! file format
+ buffer_data = .false.
+ iUseStepList = .false.
+ do i=1,size(isteplist)
+    isteplist(i) = i
+ enddo
+ iCalcQuantities = .false.
+ DataIsBuffered = .false.
+ iRescale = .false.
+ iRescale_has_been_set = .false.
+ ivegotdata = .false.
+ ntypes = 1
+ xorigin = 0.
+ itracktype = 0 ! particle tracking limits (none)
+ itrackoffset = 0
+ ipartialread = .false.  ! strictly unnecessary as set in get_data
+ iverbose = 1
+ UseFakeDustParticles = .false.
 
-  return
+ return
 end subroutine defaults_set_data
 
 !----------------------------------------------------------------------
@@ -82,24 +84,26 @@ subroutine submenu_data(ichoose)
  use getdata,        only:get_data,get_labels
  use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
                           isteplist,buffer_data,iCalcQuantities,iRescale, &
-                          DataIsBuffered,numplot,ncalc,ncolumns
+                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set,&
+                          UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
- use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring
+ use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring,idustfrac
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
+ use fparser,        only:rn,mu0
  implicit none
  integer, intent(in) :: ichoose
- integer             :: ians, i, ncalcwas
+ integer             :: ians,i,ncalcwas,maxopt
  character(len=30)   :: fmtstring
  character(len=1)    :: charp
  character(len=lenlabel) :: labeli
- logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile
+ logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile,oldval
 
  ians = ichoose
 
  print "(a)",'----------------- data read options -------------------'
 
- if (ians.le.0 .or. ians.gt.8) then
+ if (ians <= 0 .or. ians > 8) then
     if (iUseStepList) then
        print 10, iendatstep,print_logical(iUseStepList),print_logical(buffer_data), &
                  print_logical(iCalcQuantities),print_logical(iRescale)
@@ -116,7 +120,14 @@ subroutine submenu_data(ichoose)
            ' 4) buffer snapshots into memory           (  ',a,' )',/, &
            ' 5) calculate extra quantities             (  ',a,' )',/, &
            ' 6) use physical units                     (  ',a,' )')
-    call prompt('enter option',ians,0,6)
+    if (idustfrac > 0) then
+        print &
+         "(' 7) use fake dust particles                (  ',a,' )')",print_logical(UseFakeDustParticles)
+       maxopt = 7
+    else
+       maxopt = 6
+    endif
+    call prompt('enter option',ians,0,maxopt)
  endif
 !
 !--options
@@ -145,7 +156,7 @@ subroutine submenu_data(ichoose)
     call prompt('Enter number of steps to plot ', &
          iendatstep,1,size(isteplist))
     do i=1,iendatstep
-       if (isteplist(i).le.0 .or. isteplist(i).gt.nsteps) isteplist(i) = i
+       if (isteplist(i) <= 0 .or. isteplist(i) > nsteps) isteplist(i) = i
        write(fmtstring,"(a,i2)") 'Enter step ',i
        call prompt(fmtstring,isteplist(i),1,nsteps)
     enddo
@@ -170,7 +181,7 @@ subroutine submenu_data(ichoose)
           call calc_quantities(1,nsteps)
           call set_limits(1,nsteps,ncolumns+ncalcwas+1,ncolumns+ncalc)
        else
-          if (ifileopen.gt.0) then
+          if (ifileopen > 0) then
              call calc_quantities(1,nstepsinfile(ifileopen))
              call set_limits(1,nstepsinfile(ifileopen),ncolumns+ncalcwas+1,ncolumns+ncalc)
           endif
@@ -180,6 +191,7 @@ subroutine submenu_data(ichoose)
     endif
 !------------------------------------------------------------------------
  case(6)
+    iRescale_has_been_set = .true.
     print "(/,a)",' Current settings for physical units:'
     call get_labels ! reset labels for printing
     print "(2x,a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
@@ -212,14 +224,30 @@ subroutine submenu_data(ichoose)
 
     if ((iRescale .and..not. iRescaleprev) .or. (iRescaleprev .and..not.iRescale) &
         .or. UnitsHaveChanged) then
+       if (iRescale) then
+          mu0 = 12.566370614359_rn
+       else
+          mu0 = 1.0_rn
+       endif
        if (buffer_data) then
           call get_data(-1,.true.)
        else
           call get_data(1,.true.,firsttime=.true.)
        endif
     endif
-!------------------------------------------------------------------------
+ case(7)
+    oldval = UseFakeDustParticles
+    call prompt( 'Use fake dust particles?',UseFakeDustParticles)
+    ! re-read data if option has changed
+    if (UseFakeDustParticles .neqv. oldval) then
+       if (buffer_data) then
+          call get_data(-1,.true.)
+       else
+          call get_data(1,.true.,firsttime=.true.)
+       endif
+    endif
  end select
+!------------------------------------------------------------------------
 
  return
 end subroutine submenu_data

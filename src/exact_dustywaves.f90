@@ -25,136 +25,134 @@
 ! plots a sine function with a given amplitude, period and wavelength
 ! ----------------------------------------------------------------------
 module dustywaves
-  implicit none
+ implicit none
 
 contains
 
 subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplot,yplot,ierr)
-  use cubic,   only:cubicsolve_complex
-  implicit none
-  integer :: i
-  real, parameter :: pi = 3.1415926536
-  integer, intent(in) :: iplot
-  real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, rhog0, rhod0
-  real, intent(in)    :: xplot(:)
-  real, intent(out)   :: yplot(size(xplot))
-  integer, intent(out) :: ierr
-  real :: rhodeq,rhogeq,rhodsol,rhogsol,vdeq,vgeq,vgsol,vdsol
-  real :: aa,bb,cc,w1r,w2r,w3r,w1i,w2i,w3i
-  real :: k,xk,arg1,arg2,arg3,vgas,vdust,rhogas,rhodust
-  real :: vd1r,vd1i,vd2r,vd2i,vd3r,vd3i
-  real :: vg1r,vg1i,vg2r,vg2i,vg3r,vg3i
-  real :: rhod1r,rhod1i,rhod2r,rhod2i,rhod3r,rhod3i
-  real :: rhog1r,rhog1i,rhog2r,rhog2i,rhog3r,rhog3i
-  real :: tgas1,tdust1,Kdrag
-  complex :: xc(3)
+ use cubic,   only:cubicsolve_complex
+ integer :: i
+ real, parameter :: pi = 4.*atan(1.)
+ integer, intent(in) :: iplot
+ real, intent(in)    :: time, ampl, cs, Kdragin, lambda, x0, rhog0, rhod0
+ real, intent(in)    :: xplot(:)
+ real, intent(out)   :: yplot(size(xplot))
+ integer, intent(out) :: ierr
+ real :: rhodeq,rhogeq,rhodsol,rhogsol,vdeq,vgeq,vgsol,vdsol
+ real :: aa,bb,cc,w1r,w2r,w3r,w1i,w2i,w3i
+ real :: k,xk,arg1,arg2,arg3,vgas,vdust,rhogas,rhodust
+ real :: vd1r,vd1i,vd2r,vd2i,vd3r,vd3i
+ real :: vg1r,vg1i,vg2r,vg2i,vg3r,vg3i
+ real :: rhod1r,rhod1i,rhod2r,rhod2i,rhod3r,rhod3i
+ real :: rhog1r,rhog1i,rhog2r,rhog2i,rhog3r,rhog3i
+ real :: tgas1,tdust1,Kdrag
+ complex :: xc(3)
 
-  Kdrag = Kdragin
-  if (mod(iplot,2).eq.1) then
-     print*,'plotting two-fluid gas/dust linear wave solution ... '
-     print*,' lambda = ',lambda,' ampl = ',ampl,' cs = ',cs,' Kdrag = ',Kdrag
-  endif
+ Kdrag = Kdragin
+ if (mod(iplot,2)==1) then
+    print "(3(a,1pg10.3))",' >> gas/dust linear wave solution: ampl=',ampl,' Kdrag=',Kdrag,' cs=',cs
+ endif
  !
 ! check for errors
 !
-  ierr = 0
-  if (ampl.lt.0.) then
-     print*,'error: amplitude < 0 on input'
-     ierr = 1
-     return
-  endif
-  if (lambda <= 0.) then
-     print*,'error: lambda <= 0 on input'
-     ierr = 2
-     return
-  endif
-  if (cs <= 0) then
-     print*,'error: sound speed <= 0 on input'
-     ierr = 3
-     return
-  endif
-  if (rhog0 < 0) then
-     print*,'error: gas density < 0 on input'
-     ierr = 4
-     return
-  endif
-  if (rhod0 < 0) then
-     print*,'error: dust density < 0 on input'
-     ierr = 4
-     return
-  endif
-  if (Kdrag < 0) then
-     print*,'error: drag coefficient < 0 on input'
-     ierr = 5
-     return
-  elseif (abs(Kdrag).lt.1.e-8) then
-     print*,' WARNING: Kdrag = 0 on input; using tiny to avoid divergence '
-     Kdrag = 0.
-  endif
+ ierr = 0
+ if (ampl < 0.) then
+    print*,'error: amplitude < 0 on input'
+    ierr = 1
+    return
+ endif
+ if (lambda <= 0.) then
+    print*,'error: lambda <= 0 on input'
+    ierr = 2
+    return
+ endif
+ if (cs <= 0) then
+    print*,'error: sound speed <= 0 on input'
+    ierr = 3
+    return
+ endif
+ if (rhog0 < 0) then
+    print*,'error: gas density < 0 on input'
+    ierr = 4
+    return
+ endif
+ if (rhod0 < 0) then
+    print*,'error: dust density < 0 on input'
+    ierr = 4
+    return
+ endif
+ if (Kdrag < 0) then
+    print*,'error: drag coefficient < 0 on input'
+    ierr = 5
+    return
+ elseif (abs(Kdrag) < 1.e-8) then
+    print*,' WARNING: Kdrag = 0 on input; using tiny to avoid divergence '
+    Kdrag = 0.
+ endif
 
-  rhodeq  = rhod0 ! initial dust density
-  rhogeq  = rhog0 ! initial gas density
-  if (mod(iplot,2).eq.1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
-  select case(iplot)
-  case(4)
-     print*,'(dust density)'
-  case(3)
-     print*,'(gas density)'
-  case(2)
-     print*,'(dust velocity)'
-  case default
-     print*,'(gas velocity)'  
-  end select
+ rhodeq  = rhod0 ! initial dust density
+ rhogeq  = rhog0 ! initial gas density
+ !if (mod(iplot,2)==1) print*,' rho(dust),0 = ',rhod0,' rho(gas),0 = ',rhog0
+ !select case(iplot)
+ !case(4)
+ !   print*,'(dust density)'
+ !case(3)
+ !   print*,'(gas density)'
+ !case(2)
+ !   print*,'(dust velocity)'
+ !case default
+ !   print*,'(gas velocity)'
+ !end select
 
 
-  rhodsol = ampl*rhod0  ! amplitude of dust density perturbation
-  rhogsol = ampl*rhog0  ! amplitude of gas density perturbation
-  vdeq    = 0.
-  vgeq    = 0.
-  vgsol   = ampl  ! amplitude of gas velocity perturbation
-  vdsol   = ampl  ! amplitude of dust velocity perturbation
-  k       = 2.*pi/lambda ! wavenumber
+ rhodsol = ampl*rhod0  ! amplitude of dust density perturbation
+ rhogsol = ampl*rhog0  ! amplitude of gas density perturbation
+ vdeq    = 0.
+ vgeq    = 0.
+ vgsol   = ampl  ! amplitude of gas velocity perturbation
+ vdsol   = ampl  ! amplitude of dust velocity perturbation
+ k       = 2.*pi/lambda ! wavenumber
 
-  vd1r = 0.
-  vd1i = 0.
-  vd2r = 0.
-  vd2i = 0.
-  vd3r = 0.
-  vd3i = 0.
-  rhod1r = 0.
-  rhod1i = 0.
-  rhod2r = 0.
-  rhod2i = 0.
-  rhod3r = 0.
-  rhod3i = 0.
-  !
-  !--solve cubic to get the 3 solutions for omega
-  !  (these each have both real and imaginary components,
-  !   labelled w1r, w1i etc.)
-  !
-  tdust1 = Kdrag/rhodeq
-  tgas1  = Kdrag/rhogeq
-  aa = (tdust1 + tgas1)
-  bb = k**2*cs**2
-  cc = bb*tdust1
+ vd1r = 0.
+ vd1i = 0.
+ vd2r = 0.
+ vd2i = 0.
+ vd3r = 0.
+ vd3i = 0.
+ rhod1r = 0.
+ rhod1i = 0.
+ rhod2r = 0.
+ rhod2i = 0.
+ rhod3r = 0.
+ rhod3i = 0.
+ !
+ !--solve cubic to get the 3 solutions for omega
+ !  (these each have both real and imaginary components,
+ !   labelled w1r, w1i etc.)
+ !
+ tdust1 = Kdrag/rhodeq
+ tgas1  = Kdrag/rhogeq
+ aa = (tdust1 + tgas1)
+ bb = k**2*cs**2
+ cc = bb*tdust1
 
-  call cubicsolve_complex(aa,bb,cc,xc)
-  !--get solutions for (w = iy instead of y)
-  xc = xc*cmplx(0.,1.)
-  !print*,' roots are ',xc
+ call cubicsolve_complex(aa,bb,cc,xc)
+ !--get solutions for (w = iy instead of y)
+ xc = xc*cmplx(0.,1.)
+ !print*,' roots are ',xc
 
-  w1r = real(xc(1))
-  w2r = real(xc(2))
-  w3r = real(xc(3))
+ w1r = real(xc(1))
+ w2r = real(xc(2))
+ w3r = real(xc(3))
 
-  w1i = aimag(xc(1))
-  w2i = aimag(xc(2))
-  w3i = aimag(xc(3))
+ w1i = aimag(xc(1))
+ w2i = aimag(xc(2))
+ w3i = aimag(xc(3))
 
 !-------------------------------
 ! G A S  V E L O C I T I E S
 !-------------------------------
-  vg3r =(k*Kdrag*vdsol*w3r**2*w2r + k*Kdrag*vdsol*w3r**2*w1r - k*Kdrag*vdsol*w3r*w2r*w1r - k*Kdrag*vdsol*w3r*w3i**2 +&
+ vg3r =(k*Kdrag*vdsol*w3r**2*w2r + k*Kdrag*vdsol*w3r**2*w1r - k*Kdrag*vdsol*w3r*w2r*w1r - k*Kdrag*vdsol*w3r*w3i**2 +&
         k*Kdrag*vdsol*w2i*w1i*w3r - k*Kdrag*vdsol*w2r*w1i*w3i + k*Kdrag*vdsol*w2r*w3i**2 - k*Kdrag*vdsol*w2i*w3i*w1r +&
         k*Kdrag*vdsol*w3i**2*w1r - k*Kdrag*vgsol*w3r**2*w2r - k*Kdrag*vgsol*w3r**2*w1r + k*Kdrag*vgsol*w3r*w2r*w1r +&
         k*Kdrag*vgsol*w3r*w3i**2 - k*Kdrag*vgsol*w2i*w1i*w3r + k*Kdrag*vgsol*w2r*w1i*w3i - k*Kdrag*vgsol*w2r*w3i**2 +&
@@ -175,7 +173,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogsol*w3r**2*w3i*w2r*w1r - rhogsol*w3r**2*w2i*w3i*w1i)/rhogeq/k/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 -&
         2*w2i*w3i + w3r**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)
 
-  vg3i = - 1/rhogeq/k*( - w3r*w3i**2*cs**2*k**2*rhogsol - w3r**3*rhogsol*k**2*cs**2 + w3r**3*w2i*rhogsol*w1i +&
+ vg3i = - 1/rhogeq/k*( - w3r*w3i**2*cs**2*k**2*rhogsol - w3r**3*rhogsol*k**2*cs**2 + w3r**3*w2i*rhogsol*w1i +&
         w3r**2*w3i*w2i*rhogeq*k*vgsol - w3r**2*w2i*w3i*w1r*rhogsol - w2r*w3r**2*w3i*rhogsol*w1i -&
         w2r*w1i*w3i**3*rhogsol - w2r*w3r**3*w1r*rhogsol - w3r**2*w1i*k*Kdrag*vgsol + w3r**2*w2i*k*Kdrag*vdsol +&
         w3r*w3i**2*k*rhogeq*w1r*vgsol + w3r*w1i*w3i**2*rhogsol*w2i - w3r**2*w2i*k*Kdrag*vgsol +&
@@ -202,7 +200,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w2r*w3i**2*w1r**2*rhogsol)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/(w1i**2 - 2*w3i*w1i +&
         w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)
 
-  vg2r = - (w2r**2*rhogsol*w2i*w3i*w1i + w2r**2*rhogsol*k**2*cs**2*w1i + k*Kdrag*vdsol*w3r*w2r*w1r +&
+ vg2r = - (w2r**2*rhogsol*w2i*w3i*w1i + w2r**2*rhogsol*k**2*cs**2*w1i + k*Kdrag*vdsol*w3r*w2r*w1r +&
         k*Kdrag*vdsol*w2i*w1i*w3r - k*Kdrag*vdsol*w2r*w1i*w3i + k*Kdrag*vdsol*w2i*w3i*w1r - k*Kdrag*vgsol*w3r*w2r*w1r -&
         k*Kdrag*vgsol*w2i*w1i*w3r + k*Kdrag*vgsol*w2r*w1i*w3i - k*Kdrag*vgsol*w2i*w3i*w1r - rhogsol*w3r**2*w2r**2*w1i -&
         rhogsol*w3r**2*w1i*w2i**2 + rhogsol*w3r**2*w2i*w1r**2 + rhogsol*w3r**2*w2i*w1i**2 - rhogsol*w2r**2*w1i**2*w3i -&
@@ -224,7 +222,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w2r**2*rhogsol*k**2*cs**2*w2i)/rhogeq/k/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/(w2r**2 +&
         w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)
 
-  vg2i =(w1r**2*w2i**2*k*rhogeq*vgsol - w2r**2*w2i*k*Kdrag*vgsol + w2i**2*w1i**2*k*rhogeq*vgsol -&
+ vg2i =(w1r**2*w2i**2*k*rhogeq*vgsol - w2r**2*w2i*k*Kdrag*vgsol + w2i**2*w1i**2*k*rhogeq*vgsol -&
         w1i*w2i**3*rhogeq*k*vgsol - w2i**3*w3i*rhogeq*k*vgsol - w3r**2*k*w2i*rhogeq*w1i*vgsol -&
         w3i**2*k*w2i*rhogeq*w1i*vgsol + w3r*w2i*w1i*w2r**2*rhogsol + w3r**2*w2i**2*rhogeq*k*vgsol -&
         w2i**2*w1r*cs**2*k**2*rhogsol - w2i*w1i**2*w3i*rhogeq*k*vgsol + w2i*w3i*w1i*k*Kdrag*vdsol -&
@@ -250,7 +248,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w2r*w3i**2*w1r**2*rhogsol)/rhogeq/k/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/(w2r**2 +&
         w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)
 
-  vg1r =( - rhogsol*w1i**3*w3i*w2i + rhogsol*k**2*cs**2*w1i**3 - rhogsol*w3i*w2r*w1r**3 - k*Kdrag*vgsol*w2r*w1r**2 +&
+ vg1r =( - rhogsol*w1i**3*w3i*w2i + rhogsol*k**2*cs**2*w1i**3 - rhogsol*w3i*w2r*w1r**3 - k*Kdrag*vgsol*w2r*w1r**2 +&
         k*Kdrag*vdsol*w2r*w1r**2 - k*Kdrag*vdsol*w1r*w1i**2 - k*Kdrag*vgsol*w2r*w1i**2 + k*Kdrag*vdsol*w2r*w1i**2 +&
         k*Kdrag*vgsol*w1r*w1i**2 - k*Kdrag*vdsol*w1r**3 + k*Kdrag*vgsol*w1r**3 - w3r*rhogsol*w2i*w1r**3 -&
         w3r*Kdrag*w1i**2*k*vgsol + w3r*k*Kdrag*vdsol*w1r**2 + w3r*k*Kdrag*vdsol*w1i**2 - w3r*Kdrag*w1r**2*k*vgsol -&
@@ -272,7 +270,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w1r*k*rhogeq*vgsol*w2i*w1i**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)/(w2r**2 + w1r**2 +&
         w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/rhogeq/k
 
-  vg1i = - ( - w1r**2*w2i**2*k*rhogeq*vgsol - w2i**2*w1i**2*k*rhogeq*vgsol - w3r**2*w1i**2*k*rhogeq*vgsol -&
+ vg1i = - ( - w1r**2*w2i**2*k*rhogeq*vgsol - w2i**2*w1i**2*k*rhogeq*vgsol - w3r**2*w1i**2*k*rhogeq*vgsol -&
         w3r**2*w1r**2*rhogeq*k*vgsol - w3r*w2r*w1r**3*rhogsol - w3r*w1i**2*w2r*rhogsol*w1r -&
         w3i**2*k*rhogeq*w1r**2*vgsol + w3r**2*k*w2i*rhogeq*w1i*vgsol - w1i**2*rhogeq*k*vgsol*w3i**2 +&
         w3i**2*k*w2i*rhogeq*w1i*vgsol + w1i**3*k*rhogeq*vgsol*w3i - w3r*w2i*w1i*rhogsol*w1r**2 - w1i**3*k*Kdrag*vdsol -&
@@ -302,9 +300,9 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 !-------------------------------
 ! D U S T  V E L O C I T I E S
 !-------------------------------
-  if (Kdrag.gt.0.) then
+ if (Kdrag > 0.) then
 
-  vd3r = - (rhogeq*cs**2*k**2*w2r**2*w1r**2*rhogsol + rhogeq**2*w3i**4*k*w1r*vgsol -&
+    vd3r = - (rhogeq*cs**2*k**2*w2r**2*w1r**2*rhogsol + rhogeq**2*w3i**4*k*w1r*vgsol -&
         w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w2r - w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w1r +&
         w3i*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r + w3i*cs**2*k**3*rhogeq*Kdrag*vgsol*w1r -&
         rhogeq**2*cs**2*k**3*w2i**2*w1r*vgsol + rhogeq*cs**4*k**4*w2r*w1r*rhogsol -&
@@ -389,7 +387,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         - w3i**2*rhogeq*cs**4*k**4*rhogsol + w3i**2*rhogeq*w1i**2*w2r**2*rhogsol)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2&
         + w3i**2 - 2*w3r*w1r)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/k/rhogeq/Kdrag
 
-  vd3i = - (cs**2*k**3*rhogeq*w3i**2*Kdrag*vgsol - cs**2*k**3*rhogeq*w3i**2*Kdrag*vdsol -&
+    vd3i = - (cs**2*k**3*rhogeq*w3i**2*Kdrag*vgsol - cs**2*k**3*rhogeq*w3i**2*Kdrag*vdsol -&
         2*cs**4*k**4*rhogeq*w3r*w3i*rhogsol - 4*cs**2*k**2*rhogeq*w3r*w3i*w2r*w1r*rhogsol +&
         4*cs**2*k**2*rhogeq*w3r*w3i*w2i*rhogsol*w1i - cs**2*k**3*rhogeq*w3r**2*Kdrag*vgsol +&
         cs**2*k**3*rhogeq*w3r**2*Kdrag*vdsol - 2*cs**2*k**3*rhogeq**2*w3i*w2r*w1r*vgsol +&
@@ -475,7 +473,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq**2*cs**2*k**3*vgsol*w1i*w2i**2)/Kdrag/rhogeq/k/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i +&
         w3r**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)
 
-  vd2r = - ( - rhogeq*w1i*rhogsol*k**2*cs**2*w3i**2*w2i + rhogeq*w1i**2*rhogsol*k**2*cs**2*w3r**2 +&
+    vd2r = - ( - rhogeq*w1i*rhogsol*k**2*cs**2*w3i**2*w2i + rhogeq*w1i**2*rhogsol*k**2*cs**2*w3r**2 +&
         rhogeq*w1i**2*rhogsol*k**2*cs**2*w3i**2 - rhogeq*w1i*rhogsol*k**2*cs**2*w3r**2*w2i +&
         rhogeq**2*w1i**2*k*vgsol*w3r*w2r**2 - rhogeq**2*w1i**2*k*vgsol*w3r*w2i**2 - rhogeq**2*w2r**3*k*vgsol*w3i**2 +&
         rhogeq*w2r**3*w3i**2*w1r*rhogsol + 2*rhogeq**2*w1r*w2r**2*w2i**2*k*vgsol - rhogeq**2*w1r**2*w2r*k*vgsol*w2i**2&
@@ -559,7 +557,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq**2*w1r*w2r**4*k*vgsol - rhogeq**2*w1r**2*w2r**3*k*vgsol)/k/rhogeq/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2&
         - 2*w2i*w3i + w3r**2)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/Kdrag
 
-  vd2i =1/k*(w3r*rhogeq*k*Kdrag*vdsol*w2r**2*w1r - w3r*rhogeq*k*Kdrag*vdsol*w2r*w2i**2 -&
+    vd2i =1/k*(w3r*rhogeq*k*Kdrag*vdsol*w2r**2*w1r - w3r*rhogeq*k*Kdrag*vdsol*w2r*w2i**2 -&
         w3r*rhogeq*k*Kdrag*vdsol*w2r**3 - w3r*Kdrag*rhogsol*w2r**2*w1r**2 - w3r*Kdrag*rhogsol*w2r**2*w1i**2 +&
         w3r*rhogeq*rhogsol*w2r**4*w1i - w3r*Kdrag*k*rhogeq*vgsol*w2r*w1i**2 - w3r*Kdrag*k*rhogeq*vgsol*w2r*w1r**2 -&
         2*w3r*rhogeq*cs**2*k**2*rhogsol*w2r**2*w1i - w3r*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r -&
@@ -645,7 +643,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3r*Kdrag*cs**2*k**2*rhogsol*w2i**2 - rhogeq**2*cs**2*k**3*vgsol*w1i*w2i**2)/(w2r**2 - 2*w3r*w2r + w2i**2 +&
         w3i**2 - 2*w2i*w3i + w3r**2)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/rhogeq/Kdrag
 
-  vd1r =(w3r*Kdrag*rhogsol*w1i**3*w2r - w3r*w1r**2*k*Kdrag**2*vgsol - w3r*w1r**3*rhogeq*rhogsol*w2i**2 -&
+    vd1r =(w3r*Kdrag*rhogsol*w1i**3*w2r - w3r*w1r**2*k*Kdrag**2*vgsol - w3r*w1r**3*rhogeq*rhogsol*w2i**2 -&
         w3r*rhogeq*w2r**2*w1r**3*rhogsol - w3r*w1i**2*k*Kdrag**2*vgsol + w3r*rhogeq*w1i**4*w2r*rhogsol +&
         w3r*Kdrag*rhogsol*w1i*w2r*w1r**2 - 2*w3r*rhogeq*w1i*k*Kdrag*vdsol*w2r*w1r +&
         2*w3r*rhogeq*w2r*w1i*k*Kdrag*vgsol*w1r - w3r*rhogeq*w1i**2*w2r**2*rhogsol*w1r + w3r*w1i**2*k*Kdrag**2*vdsol +&
@@ -729,7 +727,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         + 2*w1r**3*rhogeq**2*k*vgsol*w2i*w3i + w3r**2*rhogeq*rhogsol*k**2*cs**2*w2r*w1r)/(w1i**2 - 2*w3i*w1i + w3r**2 +&
         w1r**2 + w3i**2 - 2*w3r*w1r)/Kdrag/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/rhogeq/k
 
-  vd1i = - (w3r**2*rhogeq*rhogsol*w1i**3*w2r + w3r*Kdrag*rhogsol*k**2*cs**2*w1i**2 +&
+    vd1i = - (w3r**2*rhogeq*rhogsol*w1i**3*w2r + w3r*Kdrag*rhogsol*k**2*cs**2*w1i**2 +&
         w3r*rhogeq*rhogsol*k**2*cs**2*w1i**3 - 2*w3r*rhogeq*rhogsol*w2i*w1i**2*w1r**2 +&
         w3r*rhogeq*rhogsol*w1i*w2i**2*w1r**2 + w3r*rhogeq*rhogsol*w2r**2*w1i*w1r**2 -&
         2*w3r*w2r*rhogeq**2*k*vgsol*w1i*w1r**2 - 2*w3r*w2r*rhogeq**2*cs**2*k**3*vgsol*w1i -&
@@ -815,12 +813,12 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3r*Kdrag*rhogsol*w2i**2*w1i**2 - w3i*rhogeq*cs**2*k**2*rhogsol*w2i**2*w1r - w3i**2*Kdrag*rhogsol*w2i**2*w1r -&
         w3r**2*Kdrag*rhogsol*w2i**2*w1r - rhogeq**2*cs**2*k**3*vgsol*w1i*w2i**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2&
         + w3i**2 - 2*w3r*w1r)/Kdrag/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/rhogeq/k
-  endif
+ endif
 
 !-------------------------------
 ! G A S  D E N S I T I E S
 !-------------------------------
-  rhog3r =(w3r**2*k*rhogeq*vgsol*w1i + w3r**2*w2i*rhogeq*k*vgsol - w3r**2*w2r*w1i*rhogsol - w3i**2*w2i*rhogeq*k*vgsol +&
+ rhog3r =(w3r**2*k*rhogeq*vgsol*w1i + w3r**2*w2i*rhogeq*k*vgsol - w3r**2*w2r*w1i*rhogsol - w3i**2*w2i*rhogeq*k*vgsol +&
         w3i**2*w2r*w1i*rhogsol - w3i*w1i**2*w2r*rhogsol - w3i*w2i**2*w1r*rhogsol - w3i*w2r**2*w1r*rhogsol -&
         w3i*w2r*w1r**2*rhogsol + w3i**2*rhogsol*w2i*w1r - w3i*w1i*k*Kdrag*vdsol + k*Kdrag*vdsol*w2i*w1i -&
         k*Kdrag*vgsol*w2i*w1i + w3i*w1i**2*k*rhogeq*vgsol + w3i*w1r**2*rhogeq*k*vgsol - w3i*w1r*cs**2*k**2*rhogsol -&
@@ -836,7 +834,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w3r*w3i*w2r*vgsol*k*rhogeq - 2*w3r*w3i*k*rhogeq*w1r*vgsol)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i&
         + w3r**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)
 
-  rhog3i = - ( - rhogsol*w1i**2*w2r**2 - rhogsol*w1i**2*w2i**2 - rhogsol*w1r**2*w2r**2 - rhogsol*w1r**2*w2i**2 -&
+ rhog3i = - ( - rhogsol*w1i**2*w2r**2 - rhogsol*w1i**2*w2i**2 - rhogsol*w1r**2*w2r**2 - rhogsol*w1r**2*w2i**2 -&
         2*w3r*rhogeq*k*vgsol*w2i*w1i + rhogsol*w2i**2*w3i*w1i + rhogsol*k**2*cs**2*w1r*w3r - rhogsol*k**2*cs**2*w3i*w1i&
         - vgsol*k*rhogeq*w3r*w2i**2 - vgsol*Kdrag*k*w3r*w1i - vgsol*Kdrag*k*w3r*w2i + 2*w3r*rhogeq*k*vgsol*w3i*w1i +&
         rhogsol*w1i**2*w2i*w3i + rhogsol*w1i*w2i*w3r**2 + rhogsol*w2i*w3i*w1r**2 - rhogsol*w1i*w2i*w3i**2 +&
@@ -853,7 +851,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         vdsol*Kdrag*k*w2r*w3i - vdsol*Kdrag*k*w1i*w2r)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i +&
         w3r**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)
 
-  rhog2r =( - w3r**2*k*rhogeq*vgsol*w1i + w3r**2*w2i*rhogeq*k*vgsol + w3r**2*w2r*w1i*rhogsol +&
+ rhog2r =( - w3r**2*k*rhogeq*vgsol*w1i + w3r**2*w2i*rhogeq*k*vgsol + w3r**2*w2r*w1i*rhogsol +&
         w3i**2*w2i*rhogeq*k*vgsol + w3i**2*w2r*w1i*rhogsol + w3i*w1i**2*w2r*rhogsol + w3i*w2i**2*w1r*rhogsol -&
         w3i*w2r**2*w1r*rhogsol + w3i*w2r*w1r**2*rhogsol + 2*rhogsol*w3r*w2i*w1r*w2r + 2*cs**2*k**2*rhogsol*w2r*w2i -&
         k*Kdrag*vgsol*w2i**2 + k*Kdrag*vgsol*w2r**2 - 2*rhogsol*w2r*w2i*w3i*w1i + k*Kdrag*vdsol*w2i**2 -&
@@ -869,7 +867,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3r*rhogsol*w1i*w2i**2 - w3r**2*rhogsol*w2i*w1r + 2*w3i*k*w2i*rhogeq*w1i*vgsol)/(w2r**2 - 2*w3r*w2r + w2i**2 +&
         w3i**2 - 2*w2i*w3i + w3r**2)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)
 
-  rhog2i =( - 2*w2i*w2r*vgsol*k*rhogeq*w1i + 2*w3r*w2i*rhogsol*w1i*w2r - 2*w2i*k*rhogeq*vgsol*w2r*w3i +&
+ rhog2i =( - 2*w2i*w2r*vgsol*k*rhogeq*w1i + 2*w3r*w2i*rhogsol*w1i*w2r - 2*w2i*k*rhogeq*vgsol*w2r*w3i +&
         rhogsol*w2i**2*w3i*w1i + rhogsol*k**2*cs**2*w1r*w3r - rhogsol*k**2*cs**2*w3i*w1i + vgsol*k*rhogeq*w3r*w2i**2 -&
         vgsol*Kdrag*k*w3r*w1i + vgsol*Kdrag*k*w3r*w2i - rhogsol*w1i**2*w2i*w3i - rhogsol*w1i*w2i*w3r**2 -&
         rhogsol*w2i*w3i*w1r**2 - rhogsol*w1i*w2i*w3i**2 - rhogsol*w2i**2*w3r*w1r + rhogsol*k**2*cs**2*w2i*w3i -&
@@ -886,7 +884,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         vdsol*Kdrag*k*w2r*w3i - vdsol*Kdrag*k*w1i*w2r)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i +&
         w3r**2)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)
 
-  rhog1r = - ( - w3r**2*k*rhogeq*vgsol*w1i - 2*rhogsol*k**2*cs**2*w1i*w1r + 2*k*rhogeq*vgsol*w1i*w2r*w1r +&
+ rhog1r = - ( - w3r**2*k*rhogeq*vgsol*w1i - 2*rhogsol*k**2*cs**2*w1i*w1r + 2*k*rhogeq*vgsol*w1i*w2r*w1r +&
         2*rhogsol*w2i*w1r*w3i*w1i + 2*w3r*k*rhogeq*vgsol*w1i*w1r - 2*w3r*w2r*k*rhogeq*vgsol*w1i -&
         2*w3r*w2r*w1i*rhogsol*w1r + w3r**2*w2i*rhogeq*k*vgsol + w3r**2*w2r*w1i*rhogsol + w3i**2*w2i*rhogeq*k*vgsol +&
         w3i**2*w2r*w1i*rhogsol - w3i*w1i**2*w2r*rhogsol - w3i*w2i**2*w1r*rhogsol - w3i*w2r**2*w1r*rhogsol +&
@@ -902,7 +900,7 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3r**2*rhogsol*w2i*w1r - k*Kdrag*vdsol*w1i**2 - 2*w3i*k*w2i*rhogeq*w1i*vgsol)/(w1i**2 - 2*w3i*w1i + w3r**2 +&
         w1r**2 + w3i**2 - 2*w3r*w1r)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)
 
-  rhog1i = - ( - 2*vdsol*Kdrag*k*w1i*w1r + rhogsol*w2i**2*w3i*w1i + rhogsol*k**2*cs**2*w1i**2 -&
+ rhog1i = - ( - 2*vdsol*Kdrag*k*w1i*w1r + rhogsol*w2i**2*w3i*w1i + rhogsol*k**2*cs**2*w1i**2 -&
         rhogsol*k**2*cs**2*w1r**2 + rhogsol*k**2*cs**2*w1r*w3r - rhogsol*k**2*cs**2*w3i*w1i + vgsol*k*rhogeq*w3r*w2i**2&
         + 2*vgsol*Kdrag*k*w1i*w1r - vgsol*Kdrag*k*w3r*w1i + vgsol*Kdrag*k*w3r*w2i - rhogsol*w1i**2*w2i*w3i +&
         rhogsol*w1i*w2i*w3r**2 - 2*rhogsol*w1i*w2i*w3r*w1r + rhogsol*w2i*w3i*w1r**2 + rhogsol*w1i*w2i*w3i**2 +&
@@ -922,9 +920,9 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
 !-------------------------------
 ! D U S T  D E N S I T I E S
 !-------------------------------
-  if (Kdrag.gt.0.) then
+ if (Kdrag > 0.) then
 
-  rhod3r = - rhodeq*( - w3r**3*rhogeq*w1i**2*w2r**2*rhogsol - w3r**2*Kdrag**2*k*vgsol*w2r*w1r +&
+    rhod3r = - rhodeq*( - w3r**3*rhogeq*w1i**2*w2r**2*rhogsol - w3r**2*Kdrag**2*k*vgsol*w2r*w1r +&
         w3r**2*Kdrag**2*k*vgsol*w2i*w1i - w3r**2*Kdrag**2*k*vdsol*w2i*w1i + w3r**2*Kdrag*k*rhogeq*vgsol*w2i*w1i**2 +&
         w3r**2*Kdrag**2*k*vdsol*w2r*w1r - w3r**2*Kdrag*rhogsol*k**2*cs**2*w2i*w1r +&
         w3r**2*Kdrag*k*rhogeq*vgsol*w2i*w1r**2 - w3r**2*Kdrag*rhogsol*k**2*cs**2*w1i*w2r +&
@@ -976,8 +974,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         - w2i*w3i**3*k*Kdrag**2*vgsol + 2*w3r*rhogeq*w3i**3*k*Kdrag*vgsol*w2r + w2i*w3i**3*k*Kdrag**2*vdsol -&
         w1i*w3i**3*k*Kdrag**2*vgsol - w3r*rhogeq*w3i**4*cs**2*k**2*rhogsol -&
         2*w3r*w3i*cs**2*k**2*rhogeq*rhogsol*w1i*w2i**2 - 2*w3r*w3i*cs**2*k**2*rhogeq*rhogsol*w2r**2*w1i)
- !--break to avoid too many continuation lines
- rhod3r = rhod3r - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod3r = rhod3r - rhodeq*( &
         2*w3r*w3i**3*Kdrag*rhogsol*w2i*w1i - 2*w3r*w3i**3*Kdrag*rhogsol*w2r*w1r - 2*w3r*w3i**3*Kdrag*rhogsol*k**2*cs**2&
         + w3r*w3i**2*Kdrag**2*k*vgsol*w1r + 2*w3r*w3i*cs**4*k**4*rhogeq*rhogsol*w1i +&
         w3r*rhogeq*cs**2*k**2*w1i**2*w2r**2*rhogsol + w3r*rhogeq*cs**2*k**2*w2r**2*w1r**2*rhogsol -&
@@ -1017,8 +1015,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w2i*w1i - rhogeq**2*w3i**4*w2r**2*k*vgsol +&
         w3i*cs**2*k**3*rhogeq**2*vgsol*w2i**2*w1i + w3i*cs**2*k**3*rhogeq**2*vgsol*w2i*w1r**2 +&
         w3i*cs**2*k**3*rhogeq**2*vgsol*w2i*w1i**2 + rhogeq*w3i**4*w1i**2*w2r*rhogsol - rhogeq**2*w3i**4*w2i**2*k*vgsol)
- !--break to avoid too many continuation lines
- rhod3r = rhod3r - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod3r = rhod3r - rhodeq*( &
         rhogeq**2*w3i**5*w2i*k*vgsol + rhogeq*w3i**3*w2r*w1r*k*Kdrag*vdsol + rhogeq*w3i**4*w2i*k*Kdrag*vdsol +&
         rhogeq**2*w3i**3*w2i*k*vgsol*w1r**2 - 2*rhogeq**2*w3i**4*w2r*k*w1r*vgsol +&
         w3r*rhogeq*cs**2*k**2*w1r**2*rhogsol*w2i**2 + w3r*rhogeq*cs**2*k**2*w1i**2*rhogsol*w2i**2 -&
@@ -1055,11 +1053,11 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3i*rhogeq**2*w3r**4*k*vgsol*w1i + w3i*w3r**2*Kdrag*rhogsol*w2r**2*w1r + w3i*w3r**2*Kdrag*rhogsol*w2r*w1i**2 +&
         w3i*w3r**2*Kdrag*rhogsol*w2i**2*w1r + 2*w3i*w3r**2*cs**2*k**2*rhogeq*rhogsol*w2r*w1i -&
         w3i*w3r**2*Kdrag*rhogeq*k*vgsol*w2r**2 + 2*w3i*w3r**2*rhogeq*cs**2*k**2*rhogsol*w2i*w1r)
-  rhod3r = rhod3r/(w3r**2 +&
+    rhod3r = rhod3r/(w3r**2 +&
         w3i**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 -&
         2*w2i*w3i + w3r**2)/rhogeq/Kdrag
 
-  rhod3i = - rhodeq*(w3r*cs**2*k**3*rhogeq**2*vgsol*w2i**2*w1i + w2r*w3i*cs**2*k**3*rhogeq**2*vgsol*w1i**2 +&
+    rhod3i = - rhodeq*(w3r*cs**2*k**3*rhogeq**2*vgsol*w2i**2*w1i + w2r*w3i*cs**2*k**3*rhogeq**2*vgsol*w1i**2 +&
         w2r*w3i*cs**2*k**3*rhogeq**2*vgsol*w1r**2 - w3r**2*cs**2*k**2*rhogeq*rhogsol*w2r**2*w1i +&
         rhogeq*w2r**2*w3i**2*cs**2*k**2*rhogsol*w1i - w3i**2*Kdrag*rhogsol*w2i**2*w1r**2 -&
         w3i**2*Kdrag*rhogsol*w2i**2*w1i**2 - w3r**2*Kdrag*rhogsol*w2i**2*w1i**2 +&
@@ -1100,8 +1098,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w3r**2*rhogeq**2*w3i**3*k*w1r*vgsol + 2*w3r**2*rhogeq*w2r*w3i**3*w1r*rhogsol +&
         w3r*rhogeq*w2i*w3i**2*w1i*k*Kdrag*vdsol - w3i**3*rhogeq*w2i*w1r*k*Kdrag*vdsol -&
         w3i**3*Kdrag*rhogsol*k**2*cs**2*w2i - w3i**2*cs**2*k**3*rhogeq*Kdrag*vgsol*w1r)
- !--break to avoid too many continuation lines
- rhod3i = rhod3i - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod3i = rhod3i - rhodeq*( &
         w3i**3*Kdrag*rhogsol*w2i*w1i**2 - w3i**2*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r + w3i**3*Kdrag**2*k*vdsol*w1r +&
         w3i**3*rhogeq**2*w2r*w1i**2*k*vgsol - w3i**3*rhogeq*w2r**2*w1r**2*rhogsol - 2*rhogeq*w3i**4*k*Kdrag*vgsol*w2r -&
         Kdrag*w3r**4*rhogsol*k**2*cs**2 - w3i**3*Kdrag**2*k*vgsol*w2r - rhogeq*w3r**5*rhogsol*w2i*w1r +&
@@ -1137,8 +1135,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w3i*w3r*rhogeq**2*cs**2*k**3*w1r**2*vgsol - 3*w3i*w3r**2*rhogeq*cs**4*k**4*rhogsol +&
         w3i*w3r**2*rhogeq**2*w2r**2*k*w1r*vgsol - w3i*w3r**2*rhogeq*w2r*w1i*k*Kdrag*vdsol -&
         2*w3i*w3r**3*Kdrag*rhogsol*w1i*w2r + 2*w3i*w3r**3*rhogeq*w1i*k*Kdrag*vgsol)
- !--break to avoid too many continuation lines
- rhod3i = rhod3i - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod3i = rhod3i - rhodeq*( &
         w3i*w3r**2*rhogeq*w2r*w1i*k*Kdrag*vgsol + w3i*w3r**2*Kdrag*rhogsol*w2i*w1i**2 +&
         rhogeq*rhogsol*w2r**2*w1i*w3i**4 - rhogeq*w3r**5*k*Kdrag*vdsol + rhogeq*w3r**3*k*Kdrag*vdsol*w2i*w1i -&
         rhogeq*w3r**3*k*Kdrag*vdsol*w2r*w1r + 2*rhogeq*w3r**2*rhogsol*w2r**2*w1i*w3i**2 +&
@@ -1182,10 +1180,10 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         Kdrag*k*rhogeq*vgsol*w2r*w1i**2*w3i**2 + w3r**2*Kdrag**2*k*vgsol*w2i*w1r +&
         Kdrag*cs**2*k**2*rhogsol*w1i*w2i*w3i**2 + w3r**3*Kdrag*rhogsol*w2i**2*w1r -&
         w3r**3*vgsol*rhogeq**2*k**3*cs**2*w2i)
-  rhod3i = rhod3i/(w3r**2 + w3i**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 -&
+    rhod3i = rhod3i/(w3r**2 + w3i**2)/(w1i**2 - 2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 -&
         2*w3r*w1r)/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/rhogeq/Kdrag
 
-  rhod2r = - rhodeq*(k*Kdrag**2*vdsol*w2i**3*w1i - k*Kdrag**2*vgsol*w2i**3*w1i -&
+    rhod2r = - rhodeq*(k*Kdrag**2*vdsol*w2i**3*w1i - k*Kdrag**2*vgsol*w2i**3*w1i -&
         2*w3r*rhogeq**2*cs**2*k**3*w1r*vgsol*w2i**2 + w3r*Kdrag*rhogsol*w2i**3*w1i**2 -&
         Kdrag*k*rhogeq*vgsol*w2i**3*w1i**2 + w3r*Kdrag*rhogsol*w2i**3*w1r**2 - Kdrag*k*rhogeq*vgsol*w2i**3*w1r**2 -&
         2*w2i*w3r**2*cs**2*k**2*rhogeq*rhogsol*w2r*w1i + w2i*w3r**2*rhogeq**2*k*vgsol*w2r**2*w1i -&
@@ -1224,8 +1222,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq*w2r*w3i*w1r*k*Kdrag*vdsol*w2i**2 + rhogeq*cs**2*k**3*w3i*Kdrag*vdsol*w2r*w1r -&
         rhogeq*w2i*w3i*w1i*k*Kdrag*vdsol*w2r**2 - rhogeq*w3i**2*cs**2*k**2*rhogsol*w1r*w2r**2 -&
         2*w3r*rhogeq**2*w2r**4*k*w1r*vgsol - 2*w3r*rhogeq*w2r**3*w1r*rhogsol*w2i**2)
-  !--break to avoid too many continuation lines
-  rhod2r = rhod2r - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod2r = rhod2r - rhodeq*( &
         2*w3r*rhogeq**2*w2i**2*k*vgsol*w2r**3 - w3r**2*rhogeq**2*w2r**4*vgsol*k -&
         w3r**2*rhogeq*rhogsol*k**2*cs**2*w2r**2*w1r + w3r**2*rhogeq*w2r**4*w1r*rhogsol +&
         w2r*w3r**2*cs**2*k**2*rhogeq*rhogsol*w1r**2 - w2r*w3r*rhogeq*rhogsol*w2i**4*w1r +&
@@ -1271,8 +1269,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         Kdrag*k*rhogeq*vgsol*w2r**2*w1i**2*w3i + w2r**2*k*Kdrag**2*vgsol*w3i*w1i - w2r**2*k*Kdrag**2*vdsol*w3i*w1i +&
         rhogeq**2*k*vgsol*w2r**5*w1r - 2*w3i*cs**2*k**2*rhogeq*rhogsol*w2i*w2r*w1i**2 -&
         2*w3i*cs**2*k**2*rhogeq*rhogsol*w2i*w2r*w1r**2 - 2*rhogeq**2*k*vgsol*w2i**2*w2r**2*w1r**2)
-  !--break to avoid too many continuation lines
-  rhod2r = rhod2r - rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod2r = rhod2r - rhodeq*( &
         rhogeq**2*k*vgsol*w2r*w2i**4*w1r - Kdrag*w2r**2*k*rhogeq*vgsol*w2i*w3i*w1i -&
         Kdrag*w2r**2*k*rhogeq*vgsol*w2i*w1i**2 + Kdrag*w2r**3*k*rhogeq*vgsol*w3i*w1r -&
         Kdrag*w2i*vgsol*k*rhogeq*w1r**2*w2r**2 + Kdrag*w2i**2*k*rhogeq*vgsol*w2r*w3i*w1r + w2r**3*k*Kdrag**2*vgsol*w1r&
@@ -1315,11 +1313,11 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3i**2*rhogeq**2*cs**2*k**3*vgsol*w2i*w1i - 2*w3i*cs**2*k**2*rhogeq*rhogsol*w2i**3*w1r +&
         w3r*rhogeq*rhogsol*w2i**4*w1r**2 + w3r*rhogeq*rhogsol*w2i**4*w1i**2 - rhogeq**2*k*vgsol*w2r**4*w1r**2 +&
         Kdrag*w2i**2*k*rhogeq*vgsol*w3i**2*w1i + Kdrag*w2i**2*k*rhogeq*vgsol*w3i*w1r**2)
-  rhod2r = rhod2r/(w2i**2 +&
+    rhod2r = rhod2r/(w2i**2 +&
         w2r**2)/rhogeq/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i + w3r**2)/(w2r**2 + w1r**2 + w2i**2 -&
         2*w2i*w1i - 2*w2r*w1r + w1i**2)/Kdrag
 
-  rhod2i =rhodeq*( - w3r**2*Kdrag*rhogsol*w1i*w2i**3 - w2r*w3i*vdsol*k*Kdrag**2*w2i**2 +&
+    rhod2i =rhodeq*( - w3r**2*Kdrag*rhogsol*w1i*w2i**3 - w2r*w3i*vdsol*k*Kdrag**2*w2i**2 +&
         w2r*w3i**2*vgsol*k*rhogeq*Kdrag*w2i**2 + 3*w2r*w3i*vgsol*k*rhogeq*Kdrag*w2i**2*w1i +&
         w2r*w3r*vgsol*k*rhogeq*Kdrag*w2i**2*w1r + w2r*w3r**2*vgsol*k*rhogeq*Kdrag*w2i**2 -&
         3*w2r*cs**2*k**3*rhogeq*vgsol*Kdrag*w2i**2 - w2r*w3r*rhogsol*k**2*cs**2*Kdrag*w2i**2 +&
@@ -1362,8 +1360,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w2r*k*Kdrag**2*vdsol*w2i**3 - rhogeq*cs**2*k**3*Kdrag*vdsol*w2r**3 - w2r**2*w3r*w2i*k*Kdrag**2*vdsol +&
         2*w2r**2*Kdrag*w3r*w2i**2*k*rhogeq*vgsol + rhogeq*w2r**2*w3i**2*w1r**2*rhogsol*w2i +&
         rhogeq**2*k*vgsol*w3i*w1r**2*w2r**3 - rhogeq*cs**4*k**4*w2r**2*rhogsol*w1i)
-  !--break to avoid too many continuation lines
-  rhod2i = rhod2i + rhodeq*(&
+    !--break to avoid too many continuation lines
+    rhod2i = rhod2i + rhodeq*(&
         rhogeq*cs**2*k**3*Kdrag*vgsol*w2r**3 + rhogeq*w2r**2*w3i**2*cs**2*k**2*rhogsol*w1i +&
         w3i**2*Kdrag*rhogsol*w2i**2*w1r**2 + rhogeq**2*cs**2*k**3*w3i*vgsol*w2r**3 +&
         2*w3i*rhogeq*rhogsol*w2r**2*w2i**3*w1i + w3i*rhogeq*rhogsol*w2r**5*w1r + w3i*rhogeq*rhogsol*w2i*w2r**4*w1i +&
@@ -1402,8 +1400,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq*w1i*rhogsol*k**2*cs**2*w3r**2*w2i**2 - w3r*w2i**3*k*Kdrag**2*vdsol +&
         w3r*Kdrag*rhogsol*k**2*cs**2*w1r*w2r**2 - w3r*Kdrag*k*rhogeq*vgsol*w2i**2*w1r**2 -&
         w3r*Kdrag*k*rhogeq*vgsol*w1r**2*w2r**2 - w3i*cs**2*k**2*rhogeq*rhogsol*w2i**2*w1i**2)
-  !--break to avoid too many continuation lines
-  rhod2i = rhod2i + rhodeq*( &
+    !--break to avoid too many continuation lines
+    rhod2i = rhod2i + rhodeq*( &
         w3i*cs**4*k**4*rhogeq*rhogsol*w2i**2 + rhogeq*cs**4*k**4*w2i**2*w1i*rhogsol -&
         w3r*Kdrag*k*rhogeq*vgsol*w1i**2*w2r**2 + w3r*Kdrag**2*k*vdsol*w2i**2*w1i + w3r*Kdrag**2*k*vdsol*w1i*w2r**2 +&
         w3r*Kdrag*rhogsol*k**2*cs**2*w2i**2*w1r - w3r*rhogeq*cs**2*k**3*w1i*Kdrag*vgsol*w2i -&
@@ -1445,10 +1443,10 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*Kdrag*w3r*w2i**4*k*rhogeq*vgsol - w3i**2*rhogeq**2*w2i**3*w1r*k*vgsol + Kdrag**2*k*vdsol*w2i**2*w3i*w1r +&
         Kdrag**2*k*vdsol*w3i*w1r*w2r**2 - Kdrag**2*k*vgsol*w3i*w1r*w2r**2 + rhogeq*cs**2*k**3*w2i**2*w1r*Kdrag*vgsol +&
         rhogeq**2*w1r*w2i**5*k*vgsol)
-  rhod2i = rhod2i/(w2i**2 + w2r**2)/rhogeq/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i +&
+    rhod2i = rhod2i/(w2i**2 + w2r**2)/rhogeq/(w2r**2 - 2*w3r*w2r + w2i**2 + w3i**2 - 2*w2i*w3i +&
            w3r**2)/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r + w1i**2)/Kdrag
 
-  rhod1r =(2*w2i*w3r*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r*w3i**2 - w3r*rhogeq*cs**2*k**3*w2i*Kdrag*vgsol*w1r*w3i**2 +&
+    rhod1r =(2*w2i*w3r*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r*w3i**2 - w3r*rhogeq*cs**2*k**3*w2i*Kdrag*vgsol*w1r*w3i**2 +&
         rhogeq*w2r*w3i*w1r*k*Kdrag*vdsol*w2i**2*w3r**2 + w3r*rhogeq*cs**2*k**3*w2i*Kdrag*vdsol*w1r*w3i**2 -&
         w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w2i*w1i*w3r**2 - Kdrag*w2i**2*k*rhogeq*vgsol*w2r*w3i*w1r*w3r**2 +&
         Kdrag*w2r**2*k*rhogeq*vgsol*w2i*w3i*w1i*w3r**2 + 4*w3i*cs**2*k**2*rhogeq*rhogsol*w2i*w2r*w1i**2*w3r**2 -&
@@ -1481,8 +1479,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w3i**2*cs**2*k**3*rhogeq**2*vgsol*w2r**4 + 2*rhogeq**2*cs**2*k**3*w3i*w1i*vgsol*w2r**2*w2i**2 -&
         rhogeq*cs**2*k**3*w3i*Kdrag*vgsol*w2r**3*w1r - 2*w3r*w3i**2*Kdrag*rhogsol*w2r**2*w1i*w2i**2 -&
         rhogeq*cs**2*k**3*w3i*Kdrag*vgsol*w2r*w1r*w2i**2 + rhogeq**2*cs**2*k**3*w3i*w1i*vgsol*w2r**4)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         2*w2r*w3r**2*cs**2*k**2*rhogeq*rhogsol*w1r**2*w2i**2 + 2*w2r**3*w3r**2*cs**2*k**2*rhogeq*rhogsol*w1r**2 -&
         2*rhogeq*w2r*w3i**2*cs**2*k**2*rhogsol*w1r**2*w2i**2 - 2*rhogeq*w2r**3*w3i**2*cs**2*k**2*rhogsol*w1r**2 +&
         rhogeq*cs**2*k**3*w3i*Kdrag*vdsol*w2r*w1r*w2i**2 + rhogeq*cs**2*k**3*w3i*Kdrag*vdsol*w2r**3*w1r +&
@@ -1521,8 +1519,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1i**2*w2r*rhogeq**2*cs**2*k**3*w1r*vgsol*w2i*w3i - w1i**2*w2r*rhogeq**2*cs**2*k**3*w1r*vgsol*w3i**2 -&
         w3r**3*w2r**3*k*Kdrag**2*vdsol + 2*Kdrag*k*rhogeq*vgsol*w2i**3*w1r**2*w3r**2 +&
         w1r**2*w2i*rhogeq**2*k*vgsol*w2r**2*w1i*w3i**2 + k*Kdrag**2*vgsol*w2i**3*w1i*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         k*Kdrag**2*vgsol*w2i**3*w1i*w3r**2 + w3r**3*w2r**3*k*Kdrag**2*vgsol +&
         2*w1i**2*w2r*cs**2*k**2*rhogeq*rhogsol*w1r**2*w3i**2 - w3r**3*rhogeq*w2r**4*w1r**2*rhogsol -&
         rhogeq*w1i**2*w3r**3*w2r**4*rhogsol - w3r**4*rhogeq*w2r**3*w1r**2*rhogsol - k*Kdrag**2*vdsol*w2i**3*w1i*w3i**2&
@@ -1567,8 +1565,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w1r*Kdrag*rhogsol*k**2*cs**2*w2i**3*w3r**2 - 2*w3r*rhogeq**2*k*vgsol*w2r*w2i**2*w1r**2*w3i**2 -&
         w3i**4*rhogeq**2*vgsol*k*w2i**4 + w3r**4*Kdrag*rhogsol*w2i**3*w1r - w3r**4*rhogeq**2*vgsol*k*w2i**4 +&
         w3i**4*Kdrag*rhogsol*w2i**3*w1r - w3r*rhogeq*cs**4*k**4*w2r**2*rhogsol*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         2*w3r*rhogeq**2*k*vgsol*w2r*w2i**2*w1i**2*w3i**2 + w3i**4*rhogeq*rhogsol*w2i**4*w1r +&
         3*w3r**3*w2r*Kdrag*rhogeq*k*vgsol*w2i**2*w1i + 2*w3r**3*rhogeq**2*k*vgsol*w2r**2*w2i**2*w1r -&
         2*w3r**3*rhogeq**2*k*vgsol*w2r*w2i**2*w1r**2 + 2*w3r**3*rhogeq**2*k*vgsol*w2r*w2i**2*w1i**2 -&
@@ -1611,8 +1609,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq*cs**2*k**2*w2r**4*w1r*rhogsol*w3r**2 + 2*rhogeq**2*cs**2*k**3*w2r**2*vgsol*w2i*w1i*w3i**2 -&
         2*w2i*w3r*cs**2*k**3*rhogeq*Kdrag*vdsol*w2r*w3i**2 + rhogeq*cs**2*k**3*w3i*Kdrag*vgsol*w2r**2*w3r**2 -&
         rhogeq*cs**2*k**3*w3i**3*Kdrag*vgsol*w2r*w1r + w2r*w3r**3*w2i**2*k*Kdrag**2*vgsol)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         rhogeq**2*w3i*w2r**4*w1i*k*vgsol*w3r**2 + rhogeq**2*w2r**3*w3i**4*k*w1r*vgsol +&
         2*rhogeq*w2r**2*w3i**4*w1r*rhogsol*w2i**2 + rhogeq**2*w3i**3*w2r**4*w1i*k*vgsol -&
         2*rhogeq*w2r*w3i**4*cs**2*k**2*rhogsol*w2i*w1i - w2r*w3r**3*w2i**2*k*Kdrag**2*vdsol -&
@@ -1655,8 +1653,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w3r*w1i**2*w2i*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r + w3r*rhogeq*w1i**2*w2r**3*rhogsol*w3i**2*w1r -&
         2*w3r*rhogeq**2*cs**2*k**3*w3i*w2i*vgsol*w2r**2*w1r + w3r**3*rhogeq*w2r**3*w1r**3*rhogsol -&
         2*w3r**3*rhogeq*w2r**2*w1i*k*Kdrag*vgsol*w1r - w3i*rhogsol*k**4*cs**4*rhogeq*w2r*w1i*w3r**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         w3i*vdsol*k*Kdrag**2*w2i*w2r**2*w3r**2 + 2*rhogeq*w2r**2*w3i**3*w1r**2*k*Kdrag*vgsol -&
         4*w3r*rhogeq**2*cs**2*k**3*w2r*w1i**2*vgsol*w2i*w3i - w3r*w1r**4*w2r*rhogeq**2*cs**2*k**3*vgsol +&
         4*w3r*w2i**2*cs**2*k**2*rhogeq*rhogsol*w2r*w1i*w1r*w3i + w3r*w1r**3*w2r*rhogeq*cs**4*k**4*rhogsol -&
@@ -1697,8 +1695,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*Kdrag*w2i*vgsol*k*rhogeq*w1r**2*w2r**2*w3r**2 - Kdrag*w2r**3*k*rhogeq*vgsol*w3i*w1r*w3r**2 -&
         2*rhogeq**2*w2r**2*w3i**4*k*vgsol*w2i**2 - Kdrag*w2i**2*rhogsol*w1i*w2r*w3i**4 -&
         rhogeq*w1i**2*w2i**2*rhogsol*w2r*w3i**4 - Kdrag*w2r**3*rhogsol*w3i*w1r**2*w3r**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         Kdrag*w2r**2*k*rhogeq*vgsol*w2i*w3i**3*w1i - 2*rhogeq*w1i**2*w2r**3*rhogsol*w3i**2*w3r**2 -&
         w2r**2*k*Kdrag**2*vdsol*w3i*w1i*w3r**2 + Kdrag*w2r**2*rhogsol*w2i*w1r*w3i**4 +&
         w2r**2*k*Kdrag**2*vgsol*w3i*w1i*w3r**2 - w2r**3*k*Kdrag**2*vgsol*w1r*w3i**2 +&
@@ -1738,8 +1736,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w1r**2*w3r**3*rhogeq*rhogsol*w2i**3*w1i + 2*w3i*cs**2*k**3*rhogeq**2*vgsol*w2i*w1i**2*w1r**2 -&
         2*w3r**2*vgsol*k*rhogeq*Kdrag*w2i**3*w3i**2 + w3r**4*rhogeq**2*cs**2*k**3*vgsol*w2i*w1i +&
         w1r**2*vgsol*k*rhogeq**2*w2i**3*w1i*w3r**2 + w1r**2*vgsol*k*rhogeq**2*w2i**3*w1i*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         w1r**2*w3r*rhogeq*rhogsol*w2i**3*w1i*w3i**2 - 2*w2i*Kdrag*rhogsol*w2r**2*w1r*w3i**3*w1i +&
         rhogeq*rhogsol*w2r*w2i**2*w1r**2*w3i**3*w1i + w3r*rhogeq**2*k*vgsol*w2i**4*w1r*w3i**2 -&
         2*w3r*rhogeq*cs**2*k**3*w1i*Kdrag*vdsol*w2i**2*w1r + 2*w3r*rhogeq*cs**2*k**3*w1i*Kdrag*vgsol*w2i**2*w1r +&
@@ -1778,8 +1776,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         rhogeq*cs**2*k**3*w1i*Kdrag*vgsol*w2i**2*w3r**2 + w3i*cs**2*k**3*rhogeq*Kdrag*vdsol*w2i**2*w3r**2 -&
         w3i*cs**2*k**3*rhogeq*Kdrag*vgsol*w2i**2*w3r**2 - w3i**3*cs**4*k**4*rhogeq*rhogsol*w2i*w1r -&
         w3r**3*Kdrag*rhogsol*k**2*cs**2*w1i*w2i**2 - w3r*rhogeq*cs**4*k**4*rhogsol*w2i*w1i*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         w3r*rhogeq*cs**4*k**4*rhogsol*w2i**2*w3i**2 - 2*w3r**2*rhogeq**2*w1i**2*k*vgsol*w2r**2*w1r**2 +&
         w3r**2*w1r**3*rhogeq**2*w2r**3*k*vgsol - 2*w3r**3*rhogeq*cs**2*k**2*w1r**2*rhogsol*w2i**2 -&
         w3r**2*w3i*rhogeq*rhogsol*w2i*w1r*w2r**2*w1i**2 - w3r**2*w3i*rhogeq*k*Kdrag*vdsol*w2r**2*w1i**2 -&
@@ -1816,8 +1814,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1r**2*rhogeq*cs**2*k**3*w2i*Kdrag*vdsol*w3r**2 - w3r**2*w2i*rhogeq*k*Kdrag*vdsol*w2r**2*w1r**2 -&
         w3r**2*rhogeq**2*w1r**4*k*vgsol*w2r**2 + w3r**2*w1r**4*w2r*cs**2*k**2*rhogeq*rhogsol -&
         w1i**3*Kdrag*k*rhogeq*vgsol*w2i**2*w3r**2 - w1i**3*Kdrag*k*rhogeq*vgsol*w2i**2*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1r = rhod1r + (&
+    !--break to avoid too many continuation lines
+    rhod1r = rhod1r + (&
         rhogeq**2*w3i**3*w1i*k*vgsol*w2r**2*w1r**2 + w3r**2*rhogeq*w1i*k*Kdrag*vdsol*w2r**2*w1r**2 +&
         w3r**2*rhogeq*rhogsol*w2r*w2i**2*w1r**2*w3i*w1i + w3r**2*w1i**2*rhogeq**2*k*vgsol*w2r*w2i**2*w1r -&
         4*w3r**2*rhogeq**2*w2r**3*k*w1r*vgsol*w3i*w1i - 2*w3r**2*w1r**2*w2i*cs**2*k**2*rhogeq*rhogsol*w2r*w1i +&
@@ -1853,11 +1851,11 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w2i**2*w1r**3*w3r*rhogeq**2*k*vgsol*w3i**2 + w2i**2*w1r**2*rhogeq**2*w3i**3*w1i*k*vgsol +&
         w2i**2*w1r**2*rhogeq**2*w3i*w1i*k*vgsol*w3r**2 - 4*w3r*w2i*cs**2*k**3*rhogeq*Kdrag*vgsol*w2r*w3i*w1i +&
         w3r*w1r**4*rhogeq*cs**2*k**2*w2r**2*rhogsol + rhogeq*w1i**3*w2r**3*rhogsol*w3i**3)
-  rhod1r = rhod1r*rhodeq/(w1i**2 - 2*w3i*w1i +&
+    rhod1r = rhod1r*rhodeq/(w1i**2 - 2*w3i*w1i +&
         w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)/(w3r**2 + w3i**2)/Kdrag/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i - 2*w2r*w1r&
         + w1i**2)/rhogeq/(w2i**2 + w2r**2)
 
-  rhod1i = - ( - 2*rhogsol*Kdrag*w1i**3*rhodeq*w3r**2*w2i**3 - 2*rhodsol*rhogeq*Kdrag*w3i**4*w2i**2*w2r**2 -&
+    rhod1i = - ( - 2*rhogsol*Kdrag*w1i**3*rhodeq*w3r**2*w2i**3 - 2*rhodsol*rhogeq*Kdrag*w3i**4*w2i**2*w2r**2 -&
         rhodsol*rhogeq*Kdrag*w2r**4*w3i**4 - rhodsol*rhogeq*Kdrag*w3i**4*w2i**4 -&
         2*rhogsol*Kdrag*w1i**3*rhodeq*w3r**2*w2i*w2r**2 - 2*rhodsol*rhogeq*Kdrag*w2r**4*w3i**2*w3r**2 -&
         2*rhogsol*Kdrag*w1i**3*rhodeq*w3r**2*w2r**2*w3i - 2*rhogsol*Kdrag*w1i**3*rhodeq*w3r**2*w2i**2*w3i -&
@@ -1898,8 +1896,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1i*w1r**2*rhogsol*rhogeq*k**2*cs**2*rhodeq*w2i*w3i*w2r**2 +&
         2*w1i*w1r**2*rhogsol*rhogeq*k**2*cs**2*rhodeq*w3r**2*w2r**2 -&
         2*w1i*w1r**2*rhogsol*rhogeq*k**2*cs**2*rhodeq*w3i**3*w2i)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - (&
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - (&
         w1r*vdsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2r**2*w3i**2 + cs**2*k**2*rhogsol*w1i**2*rhogeq*rhodeq*w3r**4*w2i +&
         w1r*vdsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2i**3*w3i + w1r*vdsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w3i**2*w2i**2 +&
         w1r*vdsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w3i**3*w2i + w1r*vdsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2i*w3i*w2r**2 -&
@@ -1937,8 +1935,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w3r**3*w2i**2 +&
         4*w1r*rhogsol*rhogeq*k**4*cs**4*rhodeq*w3i*w3r*w2r**2 -&
         2*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w3r*w2r**2*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w3r*w2i**2*w3i**2 +&
         4*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w2r*w2i*w3r**2*w3i +&
         4*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w2i*w3i*w3r*w2r**2 +&
@@ -1979,8 +1977,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w1i*vdsol*k*Kdrag**2*rhodeq*w3r**3*w2r**2 + w1i*vdsol*k*Kdrag**2*rhodeq*w2r**3*w3r**2 +&
         w1i*vdsol*k*Kdrag**2*rhodeq*w2r*w2i**2*w3r**2 + w1i*vdsol*k*Kdrag**2*rhodeq*w3r*w2i**2*w3i**2 +&
         w1i*vdsol*k*Kdrag**2*rhodeq*w3r*w2r**2*w3i**2 + w1i*vdsol*k*Kdrag**2*rhodeq*w2r**3*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         w1i*vdsol*k*Kdrag**2*rhodeq*w2r*w2i**2*w3i**2 + Kdrag*cs**2*k**2*rhogsol*w1i**2*rhodeq*w2r**2*w3i**2 -&
         rhogsol*w1r**3*rhogeq*rhodeq*w2r*w2i**2*w3i**3 - rhogsol*w1r**3*rhogeq*rhodeq*w3i**3*w2r**3 +&
         w1i*vdsol*k*Kdrag**2*rhodeq*w3r**3*w2i**2 - rhogsol*w1r**3*rhogeq*rhodeq*w3r*w2r**2*w2i*w3i**2 +&
@@ -2026,8 +2024,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         w1r*rhogsol*rhogeq*w1i**2*rhodeq*w3r*w2r**2*w2i*w3i**2 - w1r*rhogsol*rhogeq*w1i**2*rhodeq*w3r**3*w2i*w2r**2 -&
         w1r*rhogsol*rhogeq*w1i**2*rhodeq*w2i**3*w3r**3 + rhogsol*rhogeq*k**2*cs**2*w1i**4*rhodeq*w2r**2*w3i -&
         w1r*rhogsol*rhogeq*w1i**2*rhodeq*w3i*w2i**2*w3r**2*w2r - w1r*rhogsol*rhogeq*w1i**2*rhodeq*w2r*w2i**2*w3i**3)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         rhogsol*w1r*k**4*cs**4*rhogeq*w1i**2*rhodeq*w2r*w3i - vgsol*Kdrag*rhogeq*k**3*cs**2*w1i**3*rhodeq*w2i*w3r -&
         w1i*rhogsol*Kdrag*rhodeq*w2i*w2r**2*w3i**4 - w1i*rhogsol*Kdrag*rhodeq*w2i**4*w3i**3 -&
         w1i*rhogsol*Kdrag*rhodeq*w3i**4*w2i**3 + rhogsol*rhogeq*k**2*cs**2*w1i**4*rhodeq*w2i*w3r**2 -&
@@ -2067,8 +2065,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         4*w1r**2*Kdrag*rhogeq*rhodsol*w2r*w3r*w2i**2*w3i**2 - w1r**2*Kdrag*rhogeq*rhodsol*w3r**4*w2i**2 -&
         w1r**2*Kdrag*rhogeq*rhodsol*w3r**4*w2r**2 - 4*w1r**2*Kdrag*rhogeq*rhodsol*w2r*w3r**3*w2i**2 -&
         4*w1r**2*Kdrag*rhogeq*rhodsol*w3r**3*w2r**3 + 2*w1r*Kdrag*rhogeq*rhodsol*w2r*w3i**4*w2i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         4*w1r*Kdrag*rhogeq*rhodsol*w3r**3*w2r**2*w2i**2 + 4*w1r*Kdrag*rhogeq*rhodsol*w2r**3*w3i**2*w3r**2 +&
         4*w1r*Kdrag*rhogeq*rhodsol*w2r*w3i**2*w2i**2*w3r**2 + 2*w1r*Kdrag*rhogeq*rhodsol*w2r*w2i**2*w3r**4 +&
         2*w1r*Kdrag*rhogeq*rhodsol*w3r**3*w2i**4 - 4*w1i*w1r*Kdrag*rhogeq*rhodsol*w3r*w2r**2*w2i*w3i**2 -&
@@ -2103,8 +2101,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*rhogsol*k**4*cs**4*rhogeq*w1r**2*rhodeq*w2i*w3r**2 + 2*vgsol*k**3*cs**2*rhogeq**2*w1r**3*rhodeq*w3r*w2r*w3i +&
         2*vgsol*k**3*cs**2*rhogeq**2*w1r**3*rhodeq*w3r*w2r*w2i + vgsol*k**3*cs**2*rhogeq**2*w1r**3*rhodeq*w2r**2*w3i +&
         w1i*vdsol*Kdrag*rhogeq*k**3*cs**2*w1r**2*rhodeq*w2r*w3i)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         w1i*vdsol*Kdrag*rhogeq*k**3*cs**2*w1r**2*rhodeq*w2i*w3r + vgsol*k**3*cs**2*rhogeq**2*w1r**3*rhodeq*w2i*w3r**2 -&
         vgsol*k**3*cs**2*rhogeq**2*w1r**3*rhodeq*w2i**2*w3i - w1i*vgsol*Kdrag*rhogeq*k**3*cs**2*w1r**2*rhodeq*w2i*w3r -&
         w1i*vgsol*Kdrag*rhogeq*k**3*cs**2*w1r**2*rhodeq*w2r*w3i - w1r*rhogsol*Kdrag*rhodeq*w2r**3*w3i**4 -&
@@ -2150,8 +2148,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         vgsol*k*w1r*rhogeq**2*rhodeq*w2i*w2r**2*w3i**4 - vgsol*k*w1r*rhogeq**2*rhodeq*w2r**2*w2i*w3r**4 -&
         2*vgsol*k*w1r*rhogeq**2*rhodeq*w3i**2*w2r**2*w2i*w3r**2 - 2*vgsol*k*w1r*rhogeq**2*rhodeq*w2i**3*w3i**2*w3r**2 +&
         rhogsol*w1i*k**4*cs**4*rhogeq*w1r**2*rhodeq*w3r*w2r - rhogsol*w1i*k**4*cs**4*rhogeq*w1r**2*rhodeq*w2i*w3i)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*w1i**2*rhogsol*Kdrag*rhodeq*w3i**2*w2i**2*w2r**2 - vgsol*k*w1r*rhogeq**2*rhodeq*w2i**3*w3r**4 +&
         2*w1i**2*rhogsol*Kdrag*rhodeq*w3r**2*w2r**2*w3i**2 + w1i**2*rhogsol*Kdrag*rhodeq*w3r**2*w2r**4 +&
         2*w1i**2*rhogsol*Kdrag*rhodeq*w3r**2*w2i**2*w2r**2 + w1i**2*rhogsol*Kdrag*rhodeq*w3r*w2r**3*w3i**2 +&
@@ -2193,8 +2191,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         + 2*w1i*w1r*vgsol*k*Kdrag**2*rhodeq*w3i**2*w2i**2 + 2*w1i*w1r*vgsol*k*Kdrag**2*rhodeq*w3r**2*w2i**2 +&
         2*w1i*w1r*vgsol*k*Kdrag**2*rhodeq*w2r**2*w3i**2 + vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w2r*w3i**3 -&
         2*vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w2r*w2i*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w3i*w3r*w2r**2 - vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w2r**3*w3i&
         - vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w2r*w3i*w2i**2 + vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w3r*w2i**3&
         - 2*vgsol*k**3*cs**2*rhogeq**2*w1i**2*rhodeq*w3i*w3r*w2i**2 -&
@@ -2237,8 +2235,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         + vgsol*k**3*cs**2*rhogeq**2*rhodeq*w3i**3*w2r**3 + 2*vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2r*w2i*w3r**2*w3i -&
         vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w3r*w2r**2*w3i**2 - vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2r*w2i**2*w3r**2&
         + vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w3r*w2i**2*w3i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2i*w3i*w3r*w2r**2 +&
         2*vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2i**3*w3i*w3r + vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2r**3*w3i**2 +&
         2*vgsol*Kdrag*rhogeq*k**3*cs**2*rhodeq*w2r*w2i*w3i**3 - vdsol*Kdrag**2*k*rhodeq*w3r*w2r**2*w2i*w3i**2 -&
@@ -2281,8 +2279,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1i**2*rhogsol*rhogeq*rhodeq*w2i**3*w3i**2*w3r**2 + w1i**2*rhogsol*rhogeq*rhodeq*w2i**4*w3r**2*w3i +&
         w1i**2*rhogsol*rhogeq*rhodeq*w2r**4*w3r**2*w3i + w1i**2*rhogsol*rhogeq*rhodeq*w2r**4*w3i**3 +&
         2*w1i**2*rhogsol*rhogeq*rhodeq*w3i**2*w2r**2*w2i*w3r**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*w1i**2*rhogsol*rhogeq*rhodeq*w2r**2*w3i*w3r**2*w2i**2 + w1i**2*rhogsol*rhogeq*rhodeq*w2i*w2r**2*w3i**4 +&
         w1i**2*rhogsol*rhogeq*rhodeq*w2i**4*w3i**3 + w1i**2*rhogsol*rhogeq*rhodeq*w3i**4*w2i**3 +&
         2*w1i**2*rhogsol*rhogeq*rhodeq*w2r**2*w2i**2*w3i**3 - w1r**4*Kdrag*rhogeq*rhodsol*w3r**2*w2i**2 -&
@@ -2319,8 +2317,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1i*w1r*rhogsol*rhogeq*k**4*cs**4*rhodeq*w2r*w3r**2 - 2*w1i*w1r*rhogsol*rhogeq*k**4*cs**4*rhodeq*w2i**2*w3r -&
         2*w1i*w1r*rhogsol*rhogeq*k**4*cs**4*rhodeq*w2r**2*w3r - 2*w1i*w1r*rhogsol*rhogeq*k**4*cs**4*rhodeq*w2r*w3i**2 -&
         w1i*rhogsol*k**4*cs**4*rhogeq*rhodeq*w2i**3*w3i - 3*w1i*rhogsol*k**4*cs**4*rhogeq*rhodeq*w3i**2*w2i**2)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         w1i*rhogsol*k**4*cs**4*rhogeq*rhodeq*w2r**2*w3i**2 + 2*w1r**2*rhogsol*Kdrag*w1i**2*rhodeq*w3r**2*w2r**2 +&
         2*w1r**2*rhogsol*Kdrag*w1i**2*rhodeq*w3i**2*w2i**2 + 2*w1r**2*rhogsol*Kdrag*w1i**2*rhodeq*w2r**2*w3i**2 -&
         w1i*rhogsol*k**4*cs**4*rhogeq*rhodeq*w3i*w2i*w3r**2 + w1i*rhogsol*k**4*cs**4*rhogeq*rhodeq*w3r**2*w2r**2 +&
@@ -2363,8 +2361,8 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w2r*w2i*w3i**2 -&
         2*vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w3i*w3r*w2r**2 + vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w2r**3*w3i&
         - vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w3r*w2i**3)
-  !--break to avoid too many continuation lines
-  rhod1i = rhod1i - ( &
+    !--break to avoid too many continuation lines
+    rhod1i = rhod1i - ( &
         2*vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w3i*w3r*w2i**2 +&
         2*w1r*cs**2*k**2*rhogsol*w1i*rhogeq*rhodeq*w2r**3*w3i**2 -&
         vgsol*w1r**2*k**3*cs**2*rhogeq**2*rhodeq*w2r*w3i*w3r**2 -&
@@ -2403,66 +2401,66 @@ subroutine exact_dustywave(iplot,time,ampl,cs,Kdragin,lambda,x0,rhog0,rhod0,xplo
         2*w1i*vgsol*k**3*cs**2*rhogeq**2*rhodeq*w2r**3*w3r**2 - w1i*vgsol*k**3*cs**2*rhogeq**2*rhodeq*w2r*w3r**4 -&
         w1i*vgsol*Kdrag**2*k*rhodeq*w3r*w2i**2*w3i**2 - w1i*vgsol*Kdrag**2*k*rhodeq*w3r*w2r**2*w3i**2 -&
         w1i*vgsol*Kdrag**2*k*rhodeq*w2r**3*w3i**2 - w1r*Kdrag*rhogeq*k*vgsol*rhodeq*w3r*w2r**3*w3i**2)
-  rhod1i = rhod1i/(w1i**2 -&
+    rhod1i = rhod1i/(w1i**2 -&
         2*w3i*w1i + w3r**2 + w1r**2 + w3i**2 - 2*w3r*w1r)/(w3r**2 + w3i**2)/Kdrag/(w2r**2 + w1r**2 + w2i**2 - 2*w2i*w1i&
         - 2*w2r*w1r + w1i**2)/rhogeq/(w2i**2 + w2r**2)
-  endif
+ endif
 
-  !print*,'w1 = ',w1r,w1i
-  !print*,'w2 = ',w2r,w2i
-  !print*,'w3 = ',w3r,w3i
-  !if (iplot.eq.2) then
-  !  print "(a,3('(',es10.3,',',es10.3,') '))",'  vgas = ',vg1r,vg1i,vg2r,vg2i,vg3r,vg3i
-  !   if (Kdrag.gt.0.) then
-  !      print "(a,3('(',es10.3,',',es10.3,') '))",' vdust = ',vd1r,vd1i,vd2r,vd2i,vd3r,vd3i
-  !   endif
-  !else
-  !   print "(a,3('(',es10.3,',',es10.3,') '))",' rhog = ',rhog1r,rhog1i,rhog2r,rhog2i,rhog3r,rhog3i
-  !   if (Kdrag.gt.0.) then
-  !      print "(a,3('(',es10.3,',',es10.3,') '))",' rhod = ',rhod1r,rhod1i,rhod2r,rhod2i,rhod3r,rhod3i
-  !   endif
-  !endif
+ !print*,'w1 = ',w1r,w1i
+ !print*,'w2 = ',w2r,w2i
+ !print*,'w3 = ',w3r,w3i
+ !if (iplot==2) then
+ !  print "(a,3('(',es10.3,',',es10.3,') '))",'  vgas = ',vg1r,vg1i,vg2r,vg2i,vg3r,vg3i
+ !   if (Kdrag > 0.) then
+ !      print "(a,3('(',es10.3,',',es10.3,') '))",' vdust = ',vd1r,vd1i,vd2r,vd2i,vd3r,vd3i
+ !   endif
+ !else
+ !   print "(a,3('(',es10.3,',',es10.3,') '))",' rhog = ',rhog1r,rhog1i,rhog2r,rhog2i,rhog3r,rhog3i
+ !   if (Kdrag > 0.) then
+ !      print "(a,3('(',es10.3,',',es10.3,') '))",' rhod = ',rhod1r,rhod1i,rhod2r,rhod2i,rhod3r,rhod3i
+ !   endif
+ !endif
 !-------------------------------
 ! F I N A L  S O L U T I O N
 !-------------------------------
-  do i=1,size(xplot)
-     xk =  2.*pi/lambda*(xplot(i)-x0)
-     arg1 = xk - w1r*time
-     arg2 = xk - w2r*time
-     arg3 = xk - w3r*time
-     vgas = vgeq &
+ do i=1,size(xplot)
+    xk =  2.*pi/lambda*(xplot(i)-x0)
+    arg1 = xk - w1r*time
+    arg2 = xk - w2r*time
+    arg3 = xk - w3r*time
+    vgas = vgeq &
           + vg1r*exp(w1i*time)*cos(arg1) - vg1i*exp(w1i*time)*sin(arg1) &
           + vg2r*exp(w2i*time)*cos(arg2) - vg2i*exp(w2i*time)*sin(arg2) &
           + vg3r*exp(w3i*time)*cos(arg3) - vg3i*exp(w3i*time)*sin(arg3)
 
-     vdust = vdeq &
+    vdust = vdeq &
             + vd1r*exp(w1i*time)*cos(arg1) - vd1i*exp(w1i*time)*sin(arg1) &
             + vd2r*exp(w2i*time)*cos(arg2) - vd2i*exp(w2i*time)*sin(arg2) &
             + vd3r*exp(w3i*time)*cos(arg3) - vd3i*exp(w3i*time)*sin(arg3)
 
-     rhogas = rhogeq &
+    rhogas = rhogeq &
             + rhog1r*exp(w1i*time)*cos(arg1) - rhog1i*exp(w1i*time)*sin(arg1) &
             + rhog2r*exp(w2i*time)*cos(arg2) - rhog2i*exp(w2i*time)*sin(arg2) &
             + rhog3r*exp(w3i*time)*cos(arg3) - rhog3i*exp(w3i*time)*sin(arg3)
 
-     rhodust = rhodeq &
+    rhodust = rhodeq &
              + rhod1r*exp(w1i*time)*cos(arg1) - rhod1i*exp(w1i*time)*sin(arg1) &
              + rhod2r*exp(w2i*time)*cos(arg2) - rhod2i*exp(w2i*time)*sin(arg2) &
              + rhod3r*exp(w3i*time)*cos(arg3) - rhod3i*exp(w3i*time)*sin(arg3)
 
-     select case(iplot)
-     case(4)
-        yplot(i) = rhodust
-     case(3)
-        yplot(i) = rhogas
-     case(2)
-        yplot(i) = vdust
-     case default
-        yplot(i) = vgas
-     end select
-  enddo
+    select case(iplot)
+    case(4)
+       yplot(i) = rhodust
+    case(3)
+       yplot(i) = rhogas
+    case(2)
+       yplot(i) = vdust
+    case default
+       yplot(i) = vgas
+    end select
+ enddo
 
-  return
+ return
 end subroutine exact_dustywave
 
 end module dustywaves

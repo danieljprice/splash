@@ -36,59 +36,59 @@ contains
 !! this should only be called at code start
 !!
 subroutine defaults_set_initial
-  use filenames, only:rootname
-  use labels, only:label,labeltype,iamvec,labelvec,labeldefault,reset_columnids
-  use limits, only:lim,range
-  use particle_data, only:maxpart,maxstep,maxcol
-  use settings_data, only:UseTypeInRenderings
-  use settings_page, only:device
-  implicit none
-  integer :: i
+ use filenames, only:rootname
+ use labels, only:label,labeltype,iamvec,labelvec,labeldefault,reset_columnids
+ use limits, only:lim,range
+ use particle_data, only:maxpart,maxstep,maxcol
+ use settings_data, only:UseTypeInRenderings
+ use settings_page, only:device
+ implicit none
+ integer :: i
 !
 !--limits (could set them to anything but min & max must be different
 !          to enable them to be reset interactively if not set elsewhere)
 !
-  lim(:,1) = 0.
-  lim(:,2) = 1.
-  range(:,:) = 0.
-  call reset_columnids()
-  !
-  !--filenames
-  !
-  rootname = ' '
-  !
-  !--data array sizes
-  !
-  maxpart = 0
-  maxcol = 0
-  maxstep = 0
-  !
-  !--labels
-  !
-  !  column labels
-  do i=1,size(label)
-     write(label(i),"(a,1x,i3)") trim(labeldefault),i
-  enddo
-  !  particle types
-  labeltype(1) = 'gas'
-  do i=2,size(labeltype)
-     if (i > 9) then
-        write(labeltype(i),"(a,1x,i2)") 'type',i
-     else
-        write(labeltype(i),"(a,1x,i1)") 'type',i
-     endif
-  enddo
-  UseTypeInRenderings(:) = .false.
-  UseTypeInRenderings(1) = .true.
+ lim(:,1) = 0.
+ lim(:,2) = 1.
+ range(:,:) = 0.
+ call reset_columnids()
+ !
+ !--filenames
+ !
+ rootname = ' '
+ !
+ !--data array sizes
+ !
+ maxpart = 0
+ maxcol = 0
+ maxstep = 0
+ !
+ !--labels
+ !
+ !  column labels
+ do i=1,size(label)
+    write(label(i),"(a,1x,i3)") trim(labeldefault),i
+ enddo
+ !  particle types
+ labeltype(1) = 'gas'
+ do i=2,size(labeltype)
+    if (i > 9) then
+       write(labeltype(i),"(a,1x,i2)") 'type',i
+    else
+       write(labeltype(i),"(a,1x,i1)") 'type',i
+    endif
+ enddo
+ UseTypeInRenderings(:) = .false.
+ UseTypeInRenderings(1) = .true.
 
-  !  vector labels
-  iamvec(:) = 0
-  labelvec = ' '
+ !  vector labels
+ iamvec(:) = 0
+ labelvec = ' '
 
-  !  device from command line
-  device = ' '
+ !  device from command line
+ device = ' '
 
-  return
+ return
 end subroutine defaults_set_initial
 
 !!
@@ -96,70 +96,70 @@ end subroutine defaults_set_initial
 !! these are used if no defaults file is found
 !!
 subroutine defaults_set(use_evdefaults)
-  use exact,              only:defaults_set_exact
-  use multiplot
-  use settings_limits,    only:defaults_set_limits
-  use options_data,       only:defaults_set_data
-  use settings_part,      only:defaults_set_part,defaults_set_part_ev
-  use settings_page,      only:defaults_set_page,defaults_set_page_ev
-  use settings_render,    only:defaults_set_render
-  use settings_vecplot,   only:defaults_set_vecplot
-  use settings_xsecrot,   only:defaults_set_xsecrotate
-  use settings_powerspec, only:defaults_set_powerspec
-  use settings_units,     only:defaults_set_units
-  use titles,             only:pagetitles,steplegend
-  implicit none
-  logical, intent(in) :: use_evdefaults
-  integer :: i
+ use exact,              only:defaults_set_exact
+ use multiplot
+ use settings_limits,    only:defaults_set_limits
+ use options_data,       only:defaults_set_data
+ use settings_part,      only:defaults_set_part,defaults_set_part_ev
+ use settings_page,      only:defaults_set_page,defaults_set_page_ev
+ use settings_render,    only:defaults_set_render
+ use settings_vecplot,   only:defaults_set_vecplot
+ use settings_xsecrot,   only:defaults_set_xsecrotate
+ use settings_powerspec, only:defaults_set_powerspec
+ use settings_units,     only:defaults_set_units
+ use titles,             only:pagetitles,steplegend
+ implicit none
+ logical, intent(in) :: use_evdefaults
+ integer :: i
 !
 !--set defaults for submenu options
 !
-  call defaults_set_data
-  call defaults_set_limits
-  call defaults_set_page
-  call defaults_set_part
-  call defaults_set_render
-  call defaults_set_xsecrotate
-  call defaults_set_vecplot
-  call defaults_set_exact
-  call defaults_set_powerspec
-  call defaults_set_units
+ call defaults_set_data
+ call defaults_set_limits
+ call defaults_set_page
+ call defaults_set_part
+ call defaults_set_render
+ call defaults_set_xsecrotate
+ call defaults_set_vecplot
+ call defaults_set_exact
+ call defaults_set_powerspec
+ call defaults_set_units
 !
 !--if using evsplash, override some default options
 !
-  if (use_evdefaults) then
-     print "(a)",' ** ev mode: using default settings for .ev files **'
-     call defaults_set_page_ev
-     call defaults_set_part_ev
-  endif
+ if (use_evdefaults) then
+    print "(a)",' ** ev mode: using default settings for .ev files **'
+    call defaults_set_page_ev
+    call defaults_set_part_ev
+ endif
 
-  itrans(:) = 0
+ itrans(:) = 0
 !
 !--multiplot
 !
-  nyplotmulti = 4           ! number of plots in multiplot
-  multiploty(:) = 0
-  do i=1,4
-     multiploty(i) = 1+i       ! first plot : y axis
-  enddo
-  multiplotx(:) = 1          ! first plot : x axis
-  irendermulti(:) = 0        ! rendering
-  ivecplotmulti(:) = 0       ! vector plot
-  x_secmulti(:) = .false.    ! take cross section?
-  xsecposmulti(:) = 0.0      ! position of cross section
-  icontourmulti(:) = 0       ! contour plot
-  iplotpartoftypemulti(:,:) = .false.
-  do i=1,size(iplotpartoftypemulti(:,1))
-     iplotpartoftypemulti(i,i) = .true.
-  enddo
-  iusealltypesmulti(:) = .true.
-  !
-  !--titles
-  !
-  pagetitles = ' '
-  steplegend = ' '
+ nyplotmulti = 4           ! number of plots in multiplot
+ multiploty(:) = 0
+ do i=1,4
+    multiploty(i) = 1+i       ! first plot : y axis
+ enddo
+ multiplotx(:) = 1          ! first plot : x axis
+ irendermulti(:) = 0        ! rendering
+ ivecplotmulti(:) = 0       ! vector plot
+ x_secmulti(:) = .false.    ! take cross section?
+ xsecposmulti(:) = 0.0      ! position of cross section
+ icontourmulti(:) = 0       ! contour plot
+ iplotpartoftypemulti(:,:) = .false.
+ do i=1,size(iplotpartoftypemulti(:,1))
+    iplotpartoftypemulti(i,i) = .true.
+ enddo
+ iusealltypesmulti(:) = .true.
+ !
+ !--titles
+ !
+ pagetitles = ' '
+ steplegend = ' '
 
-  return
+ return
 end subroutine defaults_set
 
 !
@@ -199,27 +199,27 @@ subroutine defaults_write(filename)
 
  open(unit=iunit,file=trim(adjustl(filename)),status='replace',form='formatted', &
       delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
-    if (ierr /= 0) then
-       print*,'ERROR: cannot write file '//trim(filename)
-       close(unit=iunit)
-       return
-    endif
-    write(iunit,NML=dataopts)
-    write(iunit,NML=plotopts)
-    write(iunit,NML=pageopts)
-    write(iunit,NML=renderopts)
-    write(iunit,NML=vectoropts)
-    write(iunit,NML=xsecrotopts)
-    write(iunit,NML=powerspecopts)
-    write(iunit,NML=exactopts)
-    write(iunit,NML=exactparams)
-    write(iunit,NML=multi)
-    write(iunit,NML=shapeopts)
-    write(iunit,NML=calcopts)
-    write(iunit,NML=animopts)
-    do i=1,nfiles
-       write(iunit,"(a)") trim(rootname(i))
-    enddo
+ if (ierr /= 0) then
+    print*,'ERROR: cannot write file '//trim(filename)
+    close(unit=iunit)
+    return
+ endif
+ write(iunit,NML=dataopts)
+ write(iunit,NML=plotopts)
+ write(iunit,NML=pageopts)
+ write(iunit,NML=renderopts)
+ write(iunit,NML=vectoropts)
+ write(iunit,NML=xsecrotopts)
+ write(iunit,NML=powerspecopts)
+ write(iunit,NML=exactopts)
+ write(iunit,NML=exactparams)
+ write(iunit,NML=multi)
+ write(iunit,NML=shapeopts)
+ write(iunit,NML=calcopts)
+ write(iunit,NML=animopts)
+ do i=1,nfiles
+    write(iunit,"(a)") trim(rootname(i))
+ enddo
  close(unit=iunit)
  print "(a)",'default options saved to file '//trim(filename)
 
@@ -233,7 +233,7 @@ end subroutine defaults_write
 subroutine defaults_read(filename)
  use filenames,          only:rootname,maxfile
  use multiplot,          only:multi
- use settings_data,      only:dataopts,idustfrac_plot
+ use settings_data,      only:dataopts,idustfrac_plot,iRescale_has_been_set
  use settings_part,      only:plotopts
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
@@ -256,6 +256,7 @@ subroutine defaults_read(filename)
 
     ierr = 0
     read(iunit,NML=dataopts,iostat=ierr)
+    iRescale_has_been_set = .true.
     if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
@@ -306,7 +307,7 @@ subroutine defaults_read(filename)
     read(iunit,NML=animopts,iostat=ierr)
     if (ierr /= 0) nerr = nerr + 1
 
-    if (len_trim(rootname(1)).eq.0) then
+    if (len_trim(rootname(1))==0) then
        do i=1,maxfile
           read(iunit,*,end=66,iostat=ierr) rootname(i)
        enddo

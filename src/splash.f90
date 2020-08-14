@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -27,7 +27,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2019 Daniel Price
+!     Copyright (C) 2005-2020 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -48,13 +48,32 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     2.9.1  : (xx/xx/19)
+!     2.10.1  : (24/06/20) exact solution can appear in legend; can also plot under data;
+!             fits reader and denoise utility can read/write spectral cubes; text shapes can
+!             print header variables using %(var); can shift cross section by precise amounts
+!             in interactive mode using number followed by u/d; fits reader includes header
+!             quantities; reduced verbosity for non-interactive plots; use of fake dust particles
+!             is now via menu option, not environment variable; max particle types = 24;
+!             userguide in readthedocs format; bug fix with save limits with particle tracking;
+!             support for .pfm pixelmap format as output; physical units are ON by default;
+!             prompts only for particle types present in data
+!     2.10.0  : (14/02/20)
+!             much improved splash to grid - bug fixes with pixel number and roundoff error;
+!             use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections;
+!             added bytestream output formats for splash to grid and splash to ascii;
+!             can press number and -/+ to zoom out/in by that factor in interactive mode;
+!             use SPLASH_COROTATE=1,3 to corotate with arbitrary pair of sink particles;
+!             SPLASH_COROTATE also gives velocity field in corotating frame;
+!             splash to ascii can write particular columns by setting SPLASH_CONVERT=1,4;
+!             plasma beta correct in both code and physical units;
+!             working fits reader and splash-denoise utility
+!     2.9.1  : (08/11/19)
 !             cleaner menu options for units and calculated quantities;
 !             surface rendering allowed with 3D perspective turned off;
 !             automatic labelling of grain sizes in density and column density plots;
 !             adaptive limits on log colour bars show 3 dex range by default;
 !             auto-adjust limits to device aspect ratio works with multiple panels;
-!             bug fixes with r-z rendering
+!             bug fixes with r-z rendering; Toomre Q prompts for mass
 !     2.9.0  : (05/04/19)
 !             general header quantities are read and available in function parser;
 !             more robust label detection and parsing during ascii data read;
@@ -308,13 +327,13 @@ program splash
 !     allocate           : allocates memory for main arrays
 !     calc_quantities    : calculates additional quantities from particle data
 !     colours            : colour schemes for rendering
-!     colourparts	 : colours particles
+!     colourparts         : colours particles
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
 !     exact_mhdshock     : some tabulated solutions for mhd shocks
 !     exact_polytrope    : exact solution for a polytrope
-!     exact_rhoh	 : exact relation between density and smoothing length
+!     exact_rhoh         : exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
 !     exact_shock        : exact solution for hydrodynamic shocks
 !     exact_wave         : exact solution for a propagating sine wave
@@ -325,11 +344,11 @@ program splash
 !     geometry           : module handling different coordinate systems
 !     globaldata         : various modules containing "global" variables
 !     interactive        : drives interactive mode
-!     interpolate1D	 : interpolation of 1D SPH data to grid using kernel
-!     interpolate2D	 : interpolation of 2D SPH data to grid
+!     interpolate1D         : interpolation of 1D SPH data to grid using kernel
+!     interpolate2D         : interpolation of 2D SPH data to grid
 !     interpolate3D_xsec : 3D cross section interpolations
-!     interpolate3D_projection	 : 3D interpolation integrated through domain
-!     legends		       : plots (time) legend on plot
+!     interpolate3D_projection         : 3D interpolation integrated through domain
+!     legends                       : plots (time) legend on plot
 !     limits                   : sets initial plot limits and writes to/reads from limits file
 !     menu               : main menu
 !     options_data       : sets options relating to current data
@@ -337,21 +356,21 @@ program splash
 !     options_page       : sets options relating to page setup
 !     options_particleplots : sets options relating to particle plots
 !     options_powerspec  : sets options for power spectrum plotting
-!     options_render	 : sets options for render plots
-!     options_vector	 : sets options for vector plots
+!     options_render         : sets options for render plots
+!     options_vector         : sets options for vector plots
 !     options_xsecrotate : sets options for cross sections and rotation
 !     particleplot       : subroutines for particle plotting
 !     plotstep           : main subroutines which drive plotting of a single timestep
 !     powerspectrums     : calculates power spectrum of 1D data (2 methods)
 !     read_data_dansph   : reads data from my format of data files
 !     read_data_mbate    : reads data from matthew bate's format of data files
-!     render	 	 : takes array of pixels and plots render map/contours etc
+!     render                  : takes array of pixels and plots render map/contours etc
 !     rotate             : subroutines controlling rotation of particles
 !     setpage            : sets up the PGPLOT page (replaces call to PGENV/PGLAB)
 !     splash             : main program, drives menu loop
 !     timestepping       : controls stepping through timesteps
 !     titles             : reads a list of titles to be used to label each timestep
-!     transform	 	 : applies various transformations to data (log10, 1/x, etc)
+!     transform                  : applies various transformations to data (log10, 1/x, etc)
 !
 !     File format is specified in the subroutine read_data
 !
@@ -376,384 +395,384 @@ program splash
 !      multiplot enables you to set up multiple plots per page, mixing from any type.
 !
 !----------------------------------------------------------------------------------
-  use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile, &
+ use filenames, only:rootname,nfiles,maxfile,defaultsfile,limitsfile, &
                       fileprefix,set_filenames
-  use getdata,   only:get_data
-  use geomutils, only:set_coordlabels
-  use defaults,  only:defaults_set_initial,defaults_set,defaults_read,defaults_set_360
-  use limits,    only:read_limits
-  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
-  use mainmenu,  only:menu,allowrendering,set_extracols
-  use mem_allocation,     only:deallocate_all
-  use projections3D,      only:setup_integratedkernel
-  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
-  use system_commands,    only:get_number_arguments,get_argument,get_environment
-  use system_utils,       only:lenvironment
-  use asciiutils,         only:read_asciifile,basename
-  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
-  use convert,            only:convert_all
-  use write_sphdata,      only:issphformat
-  use readwrite_griddata, only:isgridformat,print_gridformats
-  use analysis,           only:isanalysis
-  use timestepping,       only:timestep_loop
-  use settings_page,      only:interactive,device,nomenu
-  use settings_part,      only:initialise_coord_transforms
-  use settings_render,    only:icolours,rgbfile
-  use settings_xsecrot,   only:xsec_nomulti
-  use colours,            only:rgbtable,ncoltable,icustom
-  implicit none
-  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
-  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
-  character(len=120) :: string
-  character(len=12)  :: convertformat
-  character(len=*), parameter :: version = 'v2.9.1beta [27th May 2019]'
+ use getdata,   only:get_data
+ use geomutils, only:set_coordlabels
+ use defaults,  only:defaults_set_initial,defaults_set,defaults_read,defaults_set_360
+ use limits,    only:read_limits
+ use kernels,   only:ikernel,select_kernel_by_name,select_kernel
+ use mainmenu,  only:menu,allowrendering,set_extracols
+ use mem_allocation,     only:deallocate_all
+ use projections3D,      only:setup_integratedkernel
+ use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots
+ use system_commands,    only:get_number_arguments,get_argument,get_environment
+ use system_utils,       only:lenvironment
+ use asciiutils,         only:read_asciifile,basename
+ use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
+ use convert,            only:convert_all
+ use write_sphdata,      only:issphformat
+ use readwrite_griddata, only:isgridformat,print_gridformats
+ use analysis,           only:isanalysis
+ use timestepping,       only:timestep_loop
+ use settings_page,      only:interactive,device,nomenu
+ use settings_part,      only:initialise_coord_transforms
+ use settings_render,    only:icolours,rgbfile
+ use settings_xsecrot,   only:xsec_nomulti
+ use colours,            only:rgbtable,ncoltable,icustom
+ implicit none
+ integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
+ logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360
+ character(len=120) :: string
+ character(len=12)  :: convertformat
+ character(len=*), parameter :: version = 'v2.10.1 [24th June 2020]'
 
-  !
-  ! initialise some basic code variables
-  !
-  call defaults_set_initial
+ !
+ ! initialise some basic code variables
+ !
+ call defaults_set_initial
 
-  !
-  !  default names for defaults file and limits file
-  !
-  fileprefix = 'splash'
-  call set_filenames(trim(fileprefix))
+ !
+ !  default names for defaults file and limits file
+ !
+ fileprefix = 'splash'
+ call set_filenames(trim(fileprefix))
 
-  evsplash = .false.
-  lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
-  debugmode = lenvironment('SPLASH_DEBUG')
-  !
-  !  read all arguments off command line
-  !
-  call get_number_arguments(nargs)
-  !
-  !  extract command line arguments and filenames
-  !
-  i = 0
-  nfiles = 0
-  iwritepixmap = .false.
-  ireadpixmap  = .false.
-  doconvert = .false.
-  useall = .false.
-  nomenu = .false.
-  ipickx = 0
-  ipicky = 0
-  irender = 0
-  icontour = 0
-  ivecplot = 0
-  use_360 = .false.
+ evsplash = .false.
+ lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
+ debugmode = lenvironment('SPLASH_DEBUG')
+ !
+ !  read all arguments off command line
+ !
+ call get_number_arguments(nargs)
+ !
+ !  extract command line arguments and filenames
+ !
+ i = 0
+ nfiles = 0
+ iwritepixmap = .false.
+ ireadpixmap  = .false.
+ doconvert = .false.
+ useall = .false.
+ nomenu = .false.
+ ipickx = 0
+ ipicky = 0
+ irender = 0
+ icontour = 0
+ ivecplot = 0
+ use_360 = .false.
 
-  do while (i < nargs)
-     i = i + 1
-     call get_argument(i,string)
+ do while (i < nargs)
+    i = i + 1
+    call get_argument(i,string)
 
-     if (string(1:1).eq.'-') then
-        select case(trim(string(2:)))
-        case('x')
-           i = i + 1
-           call get_argument(i,string)
-           read(string,*,iostat=ierr) ipickx
-           if (ierr /= 0 .or. ipickx <= 0) call print_usage(quit=.true.)
-           nomenu = .true.
-        case('y')
-           i = i + 1
-           call get_argument(i,string)
-           read(string,*,iostat=ierr) ipicky
-           if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
-           nomenu = .true.
-        case('render','r','ren')
-           i = i + 1
-           call get_argument(i,string)
-           read(string,*,iostat=ierr) irender
-           if (ierr /= 0 .or. irender < 0) call print_usage(quit=.true.)
-           nomenu = .true.
-        case('contour','c','cont','con')
-           i = i + 1
-           call get_argument(i,string)
-           read(string,*,iostat=ierr) icontour
-           if (ierr /= 0 .or. icontour < 0) call print_usage(quit=.true.)
-        case('vec','vecplot')
-           i = i + 1
-           call get_argument(i,string)
-           read(string,*,iostat=ierr) ivecplot
-           if (ierr /= 0 .or. ivecplot < 0) call print_usage(quit=.true.)
-           nomenu = .true.
-        case('dev','device')
-           i = i + 1
-           call get_argument(i,device)
-        case('l')
-           i = i + 1
-           call get_argument(i,limitsfile)
-        case('d','f')
-           i = i + 1
-           call get_argument(i,defaultsfile)
-        case('p')
-           i = i + 1
-           call get_argument(i,string)
-           if (len_trim(string).gt.0) then
-              fileprefix = trim(string)
-              call set_filenames(trim(fileprefix))
-           endif
-        case('o','writepix','wpix')
-           i = i + 1
-           call get_argument(i,string)
-           if (isoutputformat(string)) then
-              iwritepixmap = .true.
-              pixmapformat = trim(string)
-           else
-              stop
-           endif
-        case('readpix','rpix')
-           i = i + 1
-           call get_argument(i,string)
-           if (isinputformat(string)) then
-              ireadpixmap = .true.
-              readpixformat = trim(string)
-           else
-              stop
-           endif
-        case('e','ev')
-           evsplash = .true.
-           fileprefix = 'evsplash'
-           call set_filenames(trim(fileprefix))
-        case('360','4pi','fourpi')
-           use_360 = .true.
-           ipickx = 2
-           ipicky = 3
-           nomenu = .true.
-        case('lowmem','lm')
-           lowmemorymode = .true.
-        case('nolowmem','nlm')
-           lowmemorymode = .false.
-        case('-help')
-           call print_usage
-           print "(/,a)",' Basic splash usage is explained in the userguide,'
-           print "(a,/)",'  located in the directory splash/docs/splash.pdf'
-           stop
-        case default
-           call print_usage
-           if (string(2:2).ne.'v') print "(a)",'unknown command line argument '''//trim(string)//''''
-           stop
-        end select
-     elseif (trim(string).eq.'to' .or. trim(string).eq.'allto') then
-     !
-     !--for converting SPH formats
-     !
-           if (trim(string).eq.'allto') useall = .true.
-           i = i + 1
-           call get_argument(i,string)
-           if (isgridformat(string)) then
-              doconvert = .true.
-              convertformat = trim(string)
-           elseif (issphformat(string)) then
-              doconvert = .true.
-              convertformat = trim(string)
-           else
-              call print_gridformats()
-              stop
-           endif
-     elseif (trim(string).eq.'calc') then
-     !
-     !--for performing analysis on a sequence of dump files
-     !
-           i = i + 1
-           call get_argument(i,string)
-           if (isanalysis(string)) then
-              doconvert = .true.
-              convertformat = trim(string)
-           else
-              stop
-           endif
-     elseif (len_trim(string).gt.0) then
-        nfiles = nfiles + 1
-        if (nfiles.le.maxfile) then
-           rootname(nfiles) = trim(string)
-        endif
-     endif
-  enddo
+    if (string(1:1)=='-') then
+       select case(trim(string(2:)))
+       case('x')
+          i = i + 1
+          call get_argument(i,string)
+          read(string,*,iostat=ierr) ipickx
+          if (ierr /= 0 .or. ipickx <= 0) call print_usage(quit=.true.)
+          nomenu = .true.
+       case('y')
+          i = i + 1
+          call get_argument(i,string)
+          read(string,*,iostat=ierr) ipicky
+          if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
+          nomenu = .true.
+       case('render','r','ren')
+          i = i + 1
+          call get_argument(i,string)
+          read(string,*,iostat=ierr) irender
+          if (ierr /= 0 .or. irender < 0) call print_usage(quit=.true.)
+          nomenu = .true.
+       case('contour','c','cont','con')
+          i = i + 1
+          call get_argument(i,string)
+          read(string,*,iostat=ierr) icontour
+          if (ierr /= 0 .or. icontour < 0) call print_usage(quit=.true.)
+       case('vec','vecplot')
+          i = i + 1
+          call get_argument(i,string)
+          read(string,*,iostat=ierr) ivecplot
+          if (ierr /= 0 .or. ivecplot < 0) call print_usage(quit=.true.)
+          nomenu = .true.
+       case('dev','device')
+          i = i + 1
+          call get_argument(i,device)
+       case('l')
+          i = i + 1
+          call get_argument(i,limitsfile)
+       case('d','f')
+          i = i + 1
+          call get_argument(i,defaultsfile)
+       case('p')
+          i = i + 1
+          call get_argument(i,string)
+          if (len_trim(string) > 0) then
+             fileprefix = trim(string)
+             call set_filenames(trim(fileprefix))
+          endif
+       case('o','writepix','wpix')
+          i = i + 1
+          call get_argument(i,string)
+          if (isoutputformat(string)) then
+             iwritepixmap = .true.
+             pixmapformat = trim(string)
+          else
+             stop
+          endif
+       case('readpix','rpix')
+          i = i + 1
+          call get_argument(i,string)
+          if (isinputformat(string)) then
+             ireadpixmap = .true.
+             readpixformat = trim(string)
+          else
+             stop
+          endif
+       case('e','ev')
+          evsplash = .true.
+          fileprefix = 'evsplash'
+          call set_filenames(trim(fileprefix))
+       case('360','4pi','fourpi')
+          use_360 = .true.
+          ipickx = 2
+          ipicky = 3
+          nomenu = .true.
+       case('lowmem','lm')
+          lowmemorymode = .true.
+       case('nolowmem','nlm')
+          lowmemorymode = .false.
+       case('-help')
+          call print_usage
+          print "(/,a)",' Basic splash usage is explained in the userguide,'
+          print "(a,/)",'  located in the directory splash/docs/splash.pdf'
+          stop
+       case default
+          call print_usage
+          if (string(2:2) /= 'v') print "(a)",'unknown command line argument '''//trim(string)//''''
+          stop
+       end select
+    elseif (trim(string)=='to' .or. trim(string)=='allto') then
+       !
+       !--for converting SPH formats
+       !
+       if (trim(string)=='allto') useall = .true.
+       i = i + 1
+       call get_argument(i,string)
+       if (isgridformat(string)) then
+          doconvert = .true.
+          convertformat = trim(string)
+       elseif (issphformat(string)) then
+          doconvert = .true.
+          convertformat = trim(string)
+       else
+          call print_gridformats()
+          stop
+       endif
+    elseif (trim(string)=='calc') then
+       !
+       !--for performing analysis on a sequence of dump files
+       !
+       i = i + 1
+       call get_argument(i,string)
+       if (isanalysis(string)) then
+          doconvert = .true.
+          convertformat = trim(string)
+       else
+          stop
+       endif
+    elseif (len_trim(string) > 0) then
+       nfiles = nfiles + 1
+       if (nfiles <= maxfile) then
+          rootname(nfiles) = trim(string)
+       endif
+    endif
+ enddo
 
-  !
-  ! print header
-  !
-  call print_header
-  !
-  ! set default options (used if defaults file does not exist)
-  !
-  call defaults_set(evsplash)
-  if (use_360) call defaults_set_360()
+ !
+ ! print header
+ !
+ call print_header
+ !
+ ! set default options (used if defaults file does not exist)
+ !
+ call defaults_set(evsplash)
+ if (use_360) call defaults_set_360()
 
-  !
-  ! read default options from file if it exists
-  !
-  call defaults_read(defaultsfile)
-  !
-  ! look for a system-wide defaults file if the environment
-  ! variable SPLASH_DEFAULTS is set, no local file is present
-  ! and no alternative prefix has been set.
-  !
-  inquire(file=defaultsfile,exist=iexist)
-  if (.not.iexist .and. trim(fileprefix).eq.'splash') then
-     call get_environment('SPLASH_DEFAULTS',string)
-     if (len_trim(string).ne.0) then
-        i = index(string,'.defaults')
-        if (i.gt.0) then
-           defaultsfile = trim(string)
-        else
-           defaultsfile = trim(string)//'.defaults'
-        endif
-        print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
-        call defaults_read(defaultsfile)
-        call set_filenames(trim(fileprefix))
-     endif
-  endif
+ !
+ ! read default options from file if it exists
+ !
+ call defaults_read(defaultsfile)
+ !
+ ! look for a system-wide defaults file if the environment
+ ! variable SPLASH_DEFAULTS is set, no local file is present
+ ! and no alternative prefix has been set.
+ !
+ inquire(file=defaultsfile,exist=iexist)
+ if (.not.iexist .and. trim(fileprefix)=='splash') then
+    call get_environment('SPLASH_DEFAULTS',string)
+    if (len_trim(string) /= 0) then
+       i = index(string,'.defaults')
+       if (i > 0) then
+          defaultsfile = trim(string)
+       else
+          defaultsfile = trim(string)//'.defaults'
+       endif
+       print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
+       call defaults_read(defaultsfile)
+       call set_filenames(trim(fileprefix))
+    endif
+ endif
 
-  !
-  ! check that we have got filenames
-  !
-  if (nfiles.gt.0) then
-     if (nfiles.gt.maxfile) then
-        print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile
-        nfiles = maxfile
-     endif
-  endif
-  if (nfiles.ge.1 .and. rootname(1)(1:1).ne.' ') then
-     ihavereadfilenames = .true.
-     if (nfiles.gt.1) print*,nfiles,' filenames read from command line'
-  else
-     ihavereadfilenames = .false.
-     !print "(a)",' no filenames read from command line'
-     call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
-     !print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
-     if (nfiles.gt.0) then
-        ihavereadfilenames = .true.
-     else
-        call get_argument(0,string)
-        print "(/,a/,/,5x,a)",' Usage: ',trim(basename(string))//' snap_0*  (or use '&
+ !
+ ! check that we have got filenames
+ !
+ if (nfiles > 0) then
+    if (nfiles > maxfile) then
+       print*,' WARNING: number of files >= array size: setting nfiles = ',maxfile
+       nfiles = maxfile
+    endif
+ endif
+ if (nfiles >= 1 .and. rootname(1)(1:1) /= ' ') then
+    ihavereadfilenames = .true.
+    if (nfiles > 1) print*,nfiles,' filenames read from command line'
+ else
+    ihavereadfilenames = .false.
+    !print "(a)",' no filenames read from command line'
+    call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
+    !print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
+    if (nfiles > 0) then
+       ihavereadfilenames = .true.
+    else
+       call get_argument(0,string)
+       print "(/,a/,/,5x,a)",' Usage: ',trim(basename(string))//' snap_0*  (or use '&
                                 //trim(fileprefix)//'.filenames to list files)'
-        print "(5x,a,/)",trim(basename(string))//' --help   (for all command line options)'
-        stop
-     endif
-  endif
-  if (lowmemorymode) print "(a)",' << running in low memory mode >>'
+       print "(5x,a,/)",trim(basename(string))//' --help   (for all command line options)'
+       stop
+    endif
+ endif
+ if (lowmemorymode) print "(a)",' << running in low memory mode >>'
 
-  if (ikernel.eq.0) then
-     !--if no kernel has been set
-     call get_environment('SPLASH_KERNEL',string)
-     if (len_trim(string).gt.0) then
-        call select_kernel_by_name(string)
-     else
-        call select_kernel(0)
-     endif
-  else
-     call select_kernel(ikernel)
-  endif
+ if (ikernel==0) then
+    !--if no kernel has been set
+    call get_environment('SPLASH_KERNEL',string)
+    if (len_trim(string) > 0) then
+       call select_kernel_by_name(string)
+    else
+       call select_kernel(0)
+    endif
+ else
+    call select_kernel(ikernel)
+ endif
 
-  ! set geometry defaults
-  call initialise_coord_transforms
+ ! set geometry defaults
+ call initialise_coord_transforms
 
-  if (doconvert) then
+ if (doconvert) then
 
-     !
-     ! batch convert all dump files into the output format
-     !
-     call convert_all(convertformat,ihavereadfilenames,useall)
+    !
+    ! batch convert all dump files into the output format
+    !
+    call convert_all(convertformat,ihavereadfilenames,useall)
 
-  else
-     !
-     ! read data from file
-     !
-     if (buffer_data) then
-        call get_data(-1,ihavereadfilenames)
-     else
-        call get_data(1,ihavereadfilenames,firsttime=.true.)
-     endif
+ else
+    !
+    ! read data from file
+    !
+    if (buffer_data) then
+       call get_data(-1,ihavereadfilenames)
+    else
+       call get_data(1,ihavereadfilenames,firsttime=.true.)
+    endif
 
-     ! read tabulated colour table, if necessary
-     if (abs(icolours)==icustom) then
-        call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
-        if (ierr /= 0 .or. ncoltable <= 0) then
-           print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
-        else
-           print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
-        endif
-     endif
-     !
-     ! setup kernel table for fast column density plots in 3D
-     !
-     call setup_integratedkernel
+    ! read tabulated colour table, if necessary
+    if (abs(icolours)==icustom) then
+       call read_asciifile(rgbfile,ncoltable,rgbtable,ierr)
+       if (ierr /= 0 .or. ncoltable <= 0) then
+          print "(a)",'ERROR: could not read colours from '//trim(rgbfile)
+       else
+          print "(a,i3,a)",'read ',ncoltable,' colours from '//trim(rgbfile)
+       endif
+    endif
+    !
+    ! setup kernel table for fast column density plots in 3D
+    !
+    call setup_integratedkernel
 
-     !
-     ! read plot limits from file (overrides get_data limits settings)
-     !
-     call read_limits(trim(limitsfile),ierr)
+    !
+    ! read plot limits from file (overrides get_data limits settings)
+    !
+    call read_limits(trim(limitsfile),ierr)
 
-     if (nomenu) then
-     !
-     !  initialise the things we would need if we called menu directly
-     !
-        call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
-        call set_coordlabels(numplot)
-        interactive = .false.
-     !
-     ! check command line plot invocation
-     !
+    if (nomenu) then
+       !
+       !  initialise the things we would need if we called menu directly
+       !
+       call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
+       call set_coordlabels(numplot)
+       interactive = .false.
+       !
+       ! check command line plot invocation
+       !
 
-        if (ipicky.gt.0 .and. ipicky.le.numplot+1) then
-           if (ipicky.le.numplot .and. (ipickx.eq.0 .or. ipickx.gt.numplot)) then
-              print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
-              stop
-           endif
-           if (irender.gt.0) then
-              if (.not.allowrendering(ipicky,ipickx,xsec_nomulti)) then
-                 print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
-                 stop
-              endif
-              if (icontour.gt.numplot .or. icontour.lt.0) then
-                 print "(a)",' ERROR: contour plot choice out of bounds'
-                 stop
-              endif
-           elseif (icontour.gt.0) then
-              print "(a)",' ERROR: -cont also requires -render setting'
-              stop
-           elseif (use_360) then
-              print "(a)",' ERROR -360 also requires -render setting (e.g. -r 6)'
-              stop
-           endif
-        else
-           if (irender.gt.0 .and. ndim.ge.2) then
-              ipicky = 2
-              ipickx = 1
-              if (.not.allowrendering(ipicky,ipickx)) then
-                 print "(a)",' ERROR: cannot render'
-                 stop
-              endif
-              if (icontour.gt.numplot .or. icontour.lt.0) then
-                 print "(a)",' ERROR: contour plot choice out of bounds'
-                 stop
-              endif
-           else
-              print "(a)",' ERROR: y plot not set or out of bounds (use -y col)'
-              stop
-           endif
-        endif
+       if (ipicky > 0 .and. ipicky <= numplot+1) then
+          if (ipicky <= numplot .and. (ipickx==0 .or. ipickx > numplot)) then
+             print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
+             stop
+          endif
+          if (irender > 0) then
+             if (.not.allowrendering(ipicky,ipickx,xsec_nomulti)) then
+                print "(a)",' ERROR: cannot render with x, y choice (must be coords)'
+                stop
+             endif
+             if (icontour > numplot .or. icontour < 0) then
+                print "(a)",' ERROR: contour plot choice out of bounds'
+                stop
+             endif
+          elseif (icontour > 0) then
+             print "(a)",' ERROR: -cont also requires -render setting'
+             stop
+          elseif (use_360) then
+             print "(a)",' ERROR -360 also requires -render setting (e.g. -r 6)'
+             stop
+          endif
+       else
+          if (irender > 0 .and. ndim >= 2) then
+             ipicky = 2
+             ipickx = 1
+             if (.not.allowrendering(ipicky,ipickx)) then
+                print "(a)",' ERROR: cannot render'
+                stop
+             endif
+             if (icontour > numplot .or. icontour < 0) then
+                print "(a)",' ERROR: contour plot choice out of bounds'
+                stop
+             endif
+          else
+             print "(a)",' ERROR: y plot not set or out of bounds (use -y col)'
+             stop
+          endif
+       endif
 
-        call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
-        !
-        ! if we invoked an interactive device, enter the menu as usual, otherwise finish
-        !
-        if (interactive) call menu
-     else
-     !
-     ! enter main menu
-     !
-        call menu
-     endif
-  endif
+       call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
+       !
+       ! if we invoked an interactive device, enter the menu as usual, otherwise finish
+       !
+       if (interactive) call menu
+    else
+       !
+       ! enter main menu
+       !
+       call menu
+    endif
+ endif
 
-  !
-  ! deallocate all memory (not strictly necessary)
-  !
-  call deallocate_all
+ !
+ ! deallocate all memory (not strictly necessary)
+ !
+ call deallocate_all
 
 contains
 
@@ -775,7 +794,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2019 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2020 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &

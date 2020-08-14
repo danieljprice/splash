@@ -55,7 +55,7 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
 
  npts = (size(xplot)-1)/2
  if (npts < 1) return
- 
+
  sep = sqrt((x2 - x1)**2 + (y2 - y1)**2)
  print "(4(a,es10.3))",' plotting Roche potential, m1 = ',m1,' m2 = ',m2,' sep = ',sep
 
@@ -92,7 +92,7 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  if (m1 < m2) then
     xplot(:) = 1. - xplot(:)
  endif
- 
+
  ! scale to actual separation
  xplot = xplot*sep
  yplot = yplot*sep
@@ -103,12 +103,11 @@ subroutine exact_rochelobe(x1,y1,x2,y2,m1,m2,xplot,yplot,ierr)
  angle = -atan2(dy,dx)
  cosangle = cos(angle)
  sinangle = sin(angle)
- 
+
  ! lobes are computed assuming primary is at the origin, so shift to xprim,yprim
  ! unrotated, this is just plot_line(xplot,yplot) and plot_line(xplot,-yplot)
  call plot_line(2*npts+1,xplot*cosangle + yplot*sinangle + x1,-xplot*sinangle + yplot*cosangle + y1)
  call plot_line(2*npts+1,xplot*cosangle - yplot*sinangle + x1,-xplot*sinangle - yplot*cosangle + y1)
-
  !--return non-zero ierr value as we do the plotting here
  ierr = 1
 
@@ -145,9 +144,9 @@ real function rtsafe(func,q,L,x1,x2,xll,xacc)
  call func(q,L,x2,fh,df,xll)
 
  if ((fl > 0.0 .and. fh > 0.0) .or. (fl < 0.0 .and. fh < 0.0)) then
-   !print*,'Error occured in rtsafe, exiting...',q,L,x1,x2,fl,fh
-   rtsafe = 0.
-   return
+    !print*,'Error occured in rtsafe, exiting...',q,L,x1,x2,fl,fh
+    rtsafe = 0.
+    return
  endif
 
  if (abs(fl) < tiny(fl)) then
@@ -252,10 +251,10 @@ real function first_Lagrangian_point(qinv)
 
  dL = 1.e7
  do while (abs(dL)>1.e-6)
-   fL = qinv/L**2- 1./(1.-L)**2 - (1.+qinv)*L + 1.
-   dfL=-2*qinv/L**3 - 2./(1.-L)**3 - (1.+qinv)
-   dL = -fL/(dfL*L)
-   L = L*(1.+dL)
+    fL = qinv/L**2- 1./(1.-L)**2 - (1.+qinv)*L + 1.
+    dfL=-2*qinv/L**3 - 2./(1.-L)**3 - (1.+qinv)
+    dL = -fL/(dfL*L)
+    L = L*(1.+dL)
  enddo
 
  first_Lagrangian_point = L

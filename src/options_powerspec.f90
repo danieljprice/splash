@@ -40,19 +40,19 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_powerspec
-  use settings_data, only:ndim
-  implicit none
+ use settings_data, only:ndim
+ implicit none
 
-  idisordered = .true.
-  ipowerspecy = max(ndim+1,2)
-  ipowerspecx = 0 ! reset later
-  nwavelengths = 128
-  freqmin = 1.0
-  freqmax = nwavelengths*freqmin
-  nfreqspec = 1
-  npdfbins  = 0
+ idisordered = .true.
+ ipowerspecy = max(ndim+1,2)
+ ipowerspecx = 0 ! reset later
+ nwavelengths = 128
+ freqmin = 1.0
+ freqmax = nwavelengths*freqmin
+ nfreqspec = 1
+ npdfbins  = 0
 
-  return
+ return
 end subroutine defaults_set_powerspec
 
 !----------------------------------------------------------------------
@@ -66,25 +66,25 @@ subroutine options_powerspec
  implicit none
  real :: boxsize
 
- if (ipowerspecy.lt.ndim+1) ipowerspecy = ndim+1
- if (ipowerspecy.gt.ndataplots) ipowerspecy = ndataplots
+ if (ipowerspecy < ndim+1) ipowerspecy = ndim+1
+ if (ipowerspecy > ndataplots) ipowerspecy = ndataplots
  call prompt('enter data to take power spectrum of',ipowerspecy,ndim+1,ndataplots)
- if (ipowerspecx.ne.1) then
-    if (ipowerspecx.lt.1) ipowerspecx = 1
-    if (ipowerspecx.gt.ndataplots) ipowerspecx = ndataplots
+ if (ipowerspecx /= 1) then
+    if (ipowerspecx < 1) ipowerspecx = 1
+    if (ipowerspecx > ndataplots) ipowerspecx = ndataplots
     call prompt('enter column to use as "time" or "space"',ipowerspecx,1,ndataplots)
  endif
 !
 !--if box size has not been set then use x limits
 !
- if (abs(freqmin-1.0).lt.tiny(1.)) then
+ if (abs(freqmin-1.0) < tiny(1.)) then
     boxsize = abs(lim(1,2) - lim(1,1))
-    if (boxsize.gt.tiny(boxsize)) freqmin = 1./boxsize
+    if (boxsize > tiny(boxsize)) freqmin = 1./boxsize
  endif
  call prompt('enter min frequency (default=1/box size)',freqmin,0.0)
  call prompt('enter max frequency ',freqmax,min=freqmin)
 
- if (ipowerspec.le.ndataplots .or. ipowerspec.gt.numplot) then
+ if (ipowerspec <= ndataplots .or. ipowerspec > numplot) then
     !--this should never happen
     print*,'*** ERROR: something wrong in powerspectrum limit setting'
  else
@@ -92,7 +92,7 @@ subroutine options_powerspec
     lim(ipowerspec,1) = freqmin
     lim(ipowerspec,2) = freqmax
     print*,' frequency range ',lim(ipowerspec,1),'->',lim(ipowerspec,2)
-    if (nfreqspec.le.1) nfreqspec = 2*nwavelengths
+    if (nfreqspec <= 1) nfreqspec = 2*nwavelengths
     call prompt('how many frequency points between these limits? ',nfreqspec,nwavelengths)
  endif
 

@@ -38,7 +38,8 @@ module disc
 contains
 
 subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
-                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,unit_u,u,u_is_spsound)
+                    itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,mstar,&
+                    unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes,doub_prec
  use part_utils, only:igettype
@@ -47,7 +48,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
  real(doub_prec),                  intent(in)  :: unit_mass,unit_r,unit_dz
- real,                             intent(in)  :: rminin,rmaxin,gamma
+ real,                             intent(in)  :: rminin,rmaxin,gamma,mstar
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
  integer(kind=int1), dimension(:), intent(in)  :: iamtype
@@ -70,7 +71,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  spsound(:) = 0.
 
  pmassi = 0
- if (npmass.le.0) then
+ if (npmass <= 0) then
     print*,' INTERNAL ERROR in discplot: dimension of mass array <= 0'
     return
  endif
@@ -89,9 +90,9 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
     print "(a,i4,a)",' calculating disc surface density profile using',nbins,' bins'
  case(2)
     if (present(u)) then
-       print "(a)",' calculating Toomre Q parameter (assuming Mstar=1 and a Keplerian rotation profile)'
+       print "(a,es10.3,a)",' calculating Toomre Q parameter (assuming Mstar=',mstar,' and Keplerian rotation)'
        if (.not.gotspsound) then
-          if (gamma.lt.1.00001) then
+          if (gamma < 1.00001) then
              print "(a)",' isothermal equation of state: using cs^2 = 2/3*utherm'
           else
              print "(a,f6.3,a,f6.3,a)",' ideal gas equation of state: using cs^2 = ',gamma*(gamma-1),'*u (gamma = ',gamma,')'
@@ -112,7 +113,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !
  rmin = rminin
  rmax = rmaxin
- if (itransx.gt.0) call transform_limits_inverse(rmin,rmax,itransx)
+ if (itransx > 0) call transform_limits_inverse(rmin,rmax,itransx)
 !
 !--try to get appropriate value for nbins
 !
@@ -124,13 +125,13 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  do ibin=1,nbins
     radius(ibin) = rmin + (ibin-0.5)*deltar
  enddo
- mixedtypes = size(iamtype).ge.npart
+ mixedtypes = size(iamtype) >= npart
 !
 !--calculate surface density in each radial bin
 !
  np = 0
 !$omp parallel do default(none) &
-!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins) &
+!$omp shared(npart,rpart,sigma,npmass,pmass,itransx,icolourpart,rmin,deltar,nbins,mstar) &
 !$omp shared(ninbin,spsound,gamma,u,iamtype,mixedtypes,usetype,noftype,gotspsound,unit_cs2) &
 !$omp private(i,rad,pmassi,ibin,rbin,area,itype) &
 !$omp reduction(+:np)
@@ -145,19 +146,19 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
     if (.not.usetype(itype)) cycle over_parts
     np = np + 1
 
-    if (itransx.eq.0) then
+    if (itransx==0) then
        rad(1) = rpart(i)
     else
        rad(1) = rpart(i)
        call transform_inverse(rad,itransx)
     endif
-    if (npmass.ge.npart) then
+    if (npmass >= npart) then
        pmassi = pmass(i)
     else
        pmassi = pmass(1)
     endif
     ibin = int((rad(1) - rmin)/deltar) + 1
-    if (ibin.gt.0 .and. ibin.le.nbins) then
+    if (ibin > 0 .and. ibin <= nbins) then
        rbin = rmin + (ibin-0.5)*deltar
 
        area = pi*((rbin + 0.5*deltar)**2 - (rbin - 0.5*deltar)**2)
@@ -168,7 +169,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
              !$omp atomic
              spsound(ibin) = spsound(ibin) + real((u(i))**2/unit_cs2)
           else
-             if (gamma.lt.1.00001) then
+             if (gamma < 1.00001) then
                 !$omp atomic
                 spsound(ibin) = spsound(ibin) + real(2./3.*(u(i)/unit_cs2))
              else
@@ -188,7 +189,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !
 !--calculate Toomre Q parameter in each bin using surface density
 !
- if (iplot.eq.2) then
+ if (iplot==2) then
     epicyclic = 0.
     do ibin=1,nbins
        sigmai = sigma(ibin)*(unit_r**2/unit_mass)  ! convert back to code units
@@ -196,12 +197,12 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !--for Toomre Q need the epicyclic frequency
 !  in a Keplerian disc kappa = Omega
 !
-       Omegai = sqrt(1./(radius(ibin)/unit_r)**3)
+       Omegai = sqrt(mstar/(radius(ibin)/unit_r)**3)
        epicyclic = Omegai
 !
 !--spsound is RMS sound speed for all particles in the annulus
 !
-       if (ninbin(ibin).gt.0) then
+       if (ninbin(ibin) > 0) then
           spsoundi = sqrt(spsound(ibin)/real(ninbin(ibin))) ! unit conversion already done
        else
           spsoundi = 0.
@@ -224,13 +225,13 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  endif
  sigma(1:nbins) = max(sigma(1:nbins),epsilon(0.))
 
- if (itransx.gt.0) call transform(radius,itransx)
- if (itransy.gt.0) call transform(sigma,itransy)
+ if (itransx > 0) call transform(radius,itransx)
+ if (itransy > 0) call transform(sigma,itransy)
 !
 !--return min and max of y axis so adaptive plot limits can be set
 !
- ymin = minval(sigma(1:nbins),mask=(sigma(1:nbins).ne.0.))
- ymax = maxval(sigma(1:nbins),mask=(sigma(1:nbins).ne.0.))
+ ymin = minval(sigma(1:nbins),mask=(sigma(1:nbins) /= 0.))
+ ymax = maxval(sigma(1:nbins),mask=(sigma(1:nbins) /= 0.))
 
  return
 end subroutine disccalc

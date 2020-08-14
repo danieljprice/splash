@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -35,7 +35,7 @@ module params
  integer, parameter :: int1 = selected_int_kind(1)
  integer, parameter :: int8 = selected_int_kind(10)
  integer, parameter :: maxplot=512   ! maximum number of plots (for multiplot arrays)
- integer, parameter :: maxparttypes = 12  ! max # of different particle types
+ integer, parameter :: maxparttypes = 24  ! max # of different particle types
  integer, parameter :: ltag = 16     ! length of header tags
  integer, parameter :: maxhdr = 256  ! maximum number of header variables stored
 
@@ -71,13 +71,13 @@ module particle_data
 
 contains
 
- logical function time_was_read(t)
-  real, intent(in) :: t
+logical function time_was_read(t)
+ real, intent(in) :: t
 
-  time_was_read = .true.
-  if (t <= time_not_read_val) time_was_read = .false.
+ time_was_read = .true.
+ if (t <= time_not_read_val) time_was_read = .false.
 
- end function time_was_read
+end function time_was_read
 
 end module particle_data
 !
@@ -91,28 +91,28 @@ module filenames
  character(len=100) :: fileprefix
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
- character(len=68)  :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2019 Daniel Price'
+ character(len=*), parameter :: tagline = &
+  'SPLASH: A visualisation tool for SPH data (c)2004-2020 Daniel Price and contributors'
 
  public
 
 contains
 
- subroutine set_filenames(prefix)
-  implicit none
-  character(len=*), intent(in) :: prefix
+subroutine set_filenames(prefix)
+ implicit none
+ character(len=*), intent(in) :: prefix
 
-  fileprefix   = trim(adjustl(prefix))
-  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix)).eq.'.') then
-     fileprefix = fileprefix(1:len_trim(fileprefix)-1)
-  endif
-  defaultsfile = trim(adjustl(fileprefix))//'.defaults'
-  limitsfile   = trim(adjustl(fileprefix))//'.limits'
-  unitsfile    = trim(adjustl(fileprefix))//'.units'
-  coloursfile  = trim(adjustl(fileprefix))//'.colours'
+ fileprefix   = trim(adjustl(prefix))
+ if (fileprefix(len_trim(fileprefix):len_trim(fileprefix))=='.') then
+    fileprefix = fileprefix(1:len_trim(fileprefix)-1)
+ endif
+ defaultsfile = trim(adjustl(fileprefix))//'.defaults'
+ limitsfile   = trim(adjustl(fileprefix))//'.limits'
+ unitsfile    = trim(adjustl(fileprefix))//'.units'
+ coloursfile  = trim(adjustl(fileprefix))//'.colours'
 
-  return
- end subroutine set_filenames
+ return
+end subroutine set_filenames
 
 end module filenames
 
@@ -135,20 +135,21 @@ module settings_data
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
  integer, dimension(10) :: isteplist
- logical :: fakedust = .false.
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
+ logical :: iRescale_has_been_set
  logical, parameter :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)
  logical :: lowmemorymode
  logical :: debugmode
+ logical :: UseFakeDustParticles
  logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
-                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot
+                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot,UseFakeDustParticles
 
  public
 

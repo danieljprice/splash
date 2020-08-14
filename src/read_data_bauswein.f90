@@ -57,145 +57,145 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,indexstart,ipos,nstepsread)
-  use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol
-  use params
-  use settings_data, only:ndim,ndimV,ncolumns
-  use mem_allocation, only:alloc
-  use system_utils, only:lenvironment,ienvironment
-  implicit none
-  integer, intent(in) :: indexstart,ipos
-  integer, intent(out) :: nstepsread
-  character(len=*), intent(in) :: rootname
-  integer :: i,j,k,ierr
-  integer :: nprint,n1,npart_max,nstep_max
-  integer :: ncol,nread,nerr,ncoltemp
-  logical :: iexist,doubleprec
-  character(len=len(rootname)) :: dumpfile
-  real :: timei,dti
-  real(doub_prec), dimension(maxcol) :: datdb
-  real(doub_prec) :: timedb,dtdb
+ use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol
+ use params
+ use settings_data, only:ndim,ndimV,ncolumns
+ use mem_allocation, only:alloc
+ use system_utils, only:lenvironment,ienvironment
+ implicit none
+ integer, intent(in) :: indexstart,ipos
+ integer, intent(out) :: nstepsread
+ character(len=*), intent(in) :: rootname
+ integer :: i,j,k,ierr
+ integer :: nprint,n1,npart_max,nstep_max
+ integer :: ncol,nread,nerr,ncoltemp
+ logical :: iexist,doubleprec
+ character(len=len(rootname)) :: dumpfile
+ real :: timei,dti
+ real(doub_prec), dimension(maxcol) :: datdb
+ real(doub_prec) :: timedb,dtdb
 
-  nstepsread = 0
-  nstep_max = 0
-  npart_max = maxpart
-  dumpfile = trim(rootname)
-  !
-  !--check if first data file exists
-  !
-  inquire(file=dumpfile,exist=iexist)
-  if (.not.iexist) then
-     print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
-     return
-  endif
-  !
-  !--fix number of spatial dimensions
-  !
-  ndim = 3
-  ndimV = 3
+ nstepsread = 0
+ nstep_max = 0
+ npart_max = maxpart
+ dumpfile = trim(rootname)
+ !
+ !--check if first data file exists
+ !
+ inquire(file=dumpfile,exist=iexist)
+ if (.not.iexist) then
+    print "(a)",' *** error: '//trim(dumpfile)//': file not found ***'
+    return
+ endif
+ !
+ !--fix number of spatial dimensions
+ !
+ ndim = 3
+ ndimV = 3
 
-  !--number of columns to read from file
-  ncol = 21
-  doubleprec = .false.
+ !--number of columns to read from file
+ ncol = 21
+ doubleprec = .false.
 
-  !--can override these settings with environment variables
-  if (lenvironment('BSPLASH_R8')) doubleprec = .true.
-  ncoltemp = ienvironment('BSPLASH_NCOL')
-  if (ncoltemp.gt.0) ncol = ncoltemp
-  !
-  !--allocate memory initially
-  !
-  nstep_max = max(nstep_max,indexstart,1)
-  j = indexstart
-  nstepsread = 0
+ !--can override these settings with environment variables
+ if (lenvironment('BSPLASH_R8')) doubleprec = .true.
+ ncoltemp = ienvironment('BSPLASH_NCOL')
+ if (ncoltemp > 0) ncol = ncoltemp
+ !
+ !--allocate memory initially
+ !
+ nstep_max = max(nstep_max,indexstart,1)
+ j = indexstart
+ nstepsread = 0
 
-  print "(1x,a)",'reading Andreas Bauswein format'
-  write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
-  !
-  !--open the (unformatted) binary file and read the number of particles
-  !
-  open(unit=15,file=dumpfile,status='old',form='unformatted',iostat=ierr)
-  if (ierr /= 0) then
-     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
-     return
-  else
-     !
-     !--read the number of particles in the header and allocate memory
-     !
-     if (doubleprec) then
-        read(15,end=55,iostat=ierr) nprint,n1,timedb,dtdb
-        timei = real(timedb)
-        dti = real(dtdb)
-     else
-        read(15,end=55,iostat=ierr) nprint,n1,timei,dti
-     endif
-     print "(a,f10.2,a,i10,a,i10,a,f10.4)",' time: ',timei,' npart: ',nprint,' n1: ',n1,' dt = ',dti
-     !--barf if stupid values read
-     if (nprint.le.0 .or. nprint.gt.1e10) then
-        print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
-        close(15)
-        return
-     elseif (ierr /= 0) then
-        print "(a)",'*** WARNING: ERRORS READING HEADER ***'
-     endif
-     if (timei.lt.0. .or. dti.lt.0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
-     ncolumns = ncol
+ print "(1x,a)",'reading Andreas Bauswein format'
+ write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+ !
+ !--open the (unformatted) binary file and read the number of particles
+ !
+ open(unit=15,file=dumpfile,status='old',form='unformatted',iostat=ierr)
+ if (ierr /= 0) then
+    print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+    return
+ else
+    !
+    !--read the number of particles in the header and allocate memory
+    !
+    if (doubleprec) then
+       read(15,end=55,iostat=ierr) nprint,n1,timedb,dtdb
+       timei = real(timedb)
+       dti = real(dtdb)
+    else
+       read(15,end=55,iostat=ierr) nprint,n1,timei,dti
+    endif
+    print "(a,f10.2,a,i10,a,i10,a,f10.4)",' time: ',timei,' npart: ',nprint,' n1: ',n1,' dt = ',dti
+    !--barf if stupid values read
+    if (nprint <= 0 .or. nprint > 1e10) then
+       print "(a)",' *** ERRORS IN TIMESTEP HEADER: WRONG ENDIAN? ***'
+       close(15)
+       return
+    elseif (ierr /= 0) then
+       print "(a)",'*** WARNING: ERRORS READING HEADER ***'
+    endif
+    if (timei < 0. .or. dti < 0.) print "(a)",'*** ERROR: t < 0: use setenv BSPLASH_R8=TRUE for double precision'
+    ncolumns = ncol
 
-     if (.not.allocated(dat) .or. nprint.gt.npart_max) then
-        npart_max = max(npart_max,nprint)
-        call alloc(npart_max,nstep_max,ncolumns)
-     endif
-     !
-     !--now read the timestep data in the dumpfile
-     !
-     dat(:,:,j) = 0.
-     time(j) = timei
+    if (.not.allocated(dat) .or. nprint > npart_max) then
+       npart_max = max(npart_max,nprint)
+       call alloc(npart_max,nstep_max,ncolumns)
+    endif
+    !
+    !--now read the timestep data in the dumpfile
+    !
+    dat(:,:,j) = 0.
+    time(j) = timei
 
-     if (doubleprec) then
-        nread = 0
-        nerr = 0
-        do i=1,nprint
-           nread = nread + 1
-           read(15,end=44,iostat=ierr) (datdb(k),k=1,ncol)
-           if (ierr /= 0) nerr = nerr + 1
-           dat(i,4,j) = real(datdb(1))
-           dat(i,1:3,j) = real(datdb(2:4))
-           dat(i,5:ncol,j) = real(datdb(5:ncol))
-        enddo
-     else
-        nread = 0
-        nerr = 0
-        do i=1,nprint
-           nread = nread + 1
-           read(15,end=44,iostat=ierr) dat(i,4,j),dat(i,1:3,j),(dat(i,k,j),k=5,ncol)
-           if (ierr /= 0) nerr = nerr + 1
-        enddo
-     endif
+    if (doubleprec) then
+       nread = 0
+       nerr = 0
+       do i=1,nprint
+          nread = nread + 1
+          read(15,end=44,iostat=ierr) (datdb(k),k=1,ncol)
+          if (ierr /= 0) nerr = nerr + 1
+          dat(i,4,j) = real(datdb(1))
+          dat(i,1:3,j) = real(datdb(2:4))
+          dat(i,5:ncol,j) = real(datdb(5:ncol))
+       enddo
+    else
+       nread = 0
+       nerr = 0
+       do i=1,nprint
+          nread = nread + 1
+          read(15,end=44,iostat=ierr) dat(i,4,j),dat(i,1:3,j),(dat(i,k,j),k=5,ncol)
+          if (ierr /= 0) nerr = nerr + 1
+       enddo
+    endif
 
-44   continue
-     if (nerr.gt.0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
+44  continue
+    if (nerr > 0) print *,'*** WARNING: ERRORS DURING READ ON ',nerr,' LINES'
 
-     if (nread.lt.nprint) then
-        print "(a)",' WARNING: END OF FILE: read to particle ',nread
-        nprint = nread
-     endif
+    if (nread < nprint) then
+       print "(a)",' WARNING: END OF FILE: read to particle ',nread
+       nprint = nread
+    endif
 
-     nstepsread = nstepsread + 1
-     npartoftype(1,j) = nprint
-     gamma(j) = 1.666666666667
-     j = j + 1
+    nstepsread = nstepsread + 1
+    npartoftype(1,j) = nprint
+    gamma(j) = 1.666666666667
+    j = j + 1
 
-  endif
+ endif
 
 55 continue
-  !
-  !--reached end of file during header read
-  !
-  close(15)
+ !
+ !--reached end of file during header read
+ !
+ close(15)
 
-  if (allocated(npartoftype)) then
-     print*,'>> end of dump file: nsteps =',j-1,'ntot = ',sum(npartoftype(:,j-1))
-  endif
-return
+ if (allocated(npartoftype)) then
+    print*,'>> end of dump file: nsteps =',j-1,'ntot = ',sum(npartoftype(:,j-1))
+ endif
+ return
 
 end subroutine read_data
 
@@ -204,70 +204,57 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,iutherm,ipmass
-  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
-  use geometry, only:labelcoord
-  !use settings_units, only:units,unitslabel
-  implicit none
-  integer :: i,ipmom
+ use labels, only:label,labelvec,labeltype,iamvec,&
+              ix,ivx,ih,irho,iutherm,ipmass,make_vector_label
+ use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
+ use geometry, only:labelcoord
+ !use settings_units, only:units,unitslabel
+ implicit none
+ integer :: i,ipmom
 
-  if (ndim.le.0 .or. ndim.gt.3) then
-     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
-     return
-  endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
-     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
-     return
-  endif
+ if (ndim <= 0 .or. ndim > 3) then
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    return
+ endif
+ if (ndimV <= 0 .or. ndimV > 3) then
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    return
+ endif
 
-  do i=1,ndim
-     ix(i) = i
-  enddo
-  ih = 4
-  ivx = 5
-  ipmom = 8
-  iutherm = 11
-  ipmass = 14
-  irho = 17
+ do i=1,ndim
+    ix(i) = i
+ enddo
+ ih = 4
+ ivx = 5
+ ipmom = 8
+ iutherm = 11
+ ipmass = 14
+ irho = 17
 
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(ih) = 'h'
-  if (iutherm.gt.0) label(iutherm) = 'u'
-  label(12) = 'psi\dpot\u'
-  label(13) = 'alpha\dpot\u'
-  label(ipmass) = 'particle mass'
-  label(15) = '\gr'
-  label(16) = 'P\deff'
-  label(irho) = '\gr*'
-  label(18) = 'tau'
-  label(19) = '\ga\dvisc'
-  label(20) = 'Ye'
-  label(21) = 'temperature'
+ label(ix(1:ndim)) = labelcoord(1:ndim,1)
+ label(ih) = 'h'
+ if (iutherm > 0) label(iutherm) = 'u'
+ label(12) = 'psi_{pot}'
+ label(13) = 'alpha_{pot}'
+ label(ipmass) = 'particle mass'
+ label(15) = '\gr'
+ label(16) = 'P\deff'
+ label(irho) = '\gr*'
+ label(18) = 'tau'
+ label(19) = '\ga_{visc}'
+ label(20) = 'Ye'
+ label(21) = 'temperature'
 
-  if (ivx.ne.0) then
-     iamvec(ivx:ivx+ndimV-1) = ivx
-     labelvec(ivx:ivx+ndimV-1) = 'v'
-     do i=1,ndimV
-        label(ivx+i-1) = labelvec(ivx)//'\d'//labelcoord(i,1)
-     enddo
-  endif
-
-  if (ipmom.ne.0) then
-     iamvec(ipmom:ipmom+ndimV-1) = ipmom
-     labelvec(ipmom:ipmom+ndimV-1) = 'momentum'
-     do i=1,ndimV
-        label(ipmom+i-1) = labelvec(ipmom)//'\d'//labelcoord(i,1)
-     enddo
-  endif
-  !
-  !--set labels for each particle type
-  !
-  ntypes = 1
-  labeltype(1) = 'gas'
-  UseTypeInRenderings(1) = .true.
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('momentum',ipmom,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ !
+ !--set labels for each particle type
+ !
+ ntypes = 1
+ labeltype(1) = 'gas'
+ UseTypeInRenderings(1) = .true.
 
 !-----------------------------------------------------------
 
-  return
+ return
 end subroutine set_labels

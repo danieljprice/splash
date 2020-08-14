@@ -92,8 +92,8 @@ subroutine parse_text(string,vars,vals)
     select case(ch)
     case('%')
        in_variable = .true.
-       if (i.gt.1) then
-          if (newstring(i-1:i-1).eq.'\') in_variable = .false.
+       if (i > 1) then
+          if (newstring(i-1:i-1)=='\') in_variable = .false.
        endif
        if (in_variable) then
           istart = i
@@ -108,12 +108,12 @@ subroutine parse_text(string,vars,vals)
     case(')')
        if (in_variable) then
           npar = max(npar - 1,0)
-          if (i.ge.lenstr) then
+          if (i >= lenstr) then
              iend = i
              if (i2 < i1) i2 = iend
              parse = .true.
-          elseif (npar.eq.0) then
-             if (newstring(i+1:i+1).ne.'.') then
+          elseif (npar==0) then
+             if (newstring(i+1:i+1) /= '.') then
                 iend = i
                 if (i2 <= i1) i2 = iend
                 parse = .true.
@@ -123,7 +123,7 @@ subroutine parse_text(string,vars,vals)
     case('.')
        if (in_variable .and. npar <= 0 .and. i < lenstr) then
           read(newstring(i+1:i+1),"(i1)",iostat=ierr) ndecimal
-          if (ierr.ne.0) ndecimal = 3
+          if (ierr /= 0) ndecimal = 3
           iend = i+1
           if (i2 < i1) i2 = i - 1
           parse = .true.
@@ -131,9 +131,9 @@ subroutine parse_text(string,vars,vals)
     case default
        if ((.not.((iachar(ch) >= ia .and. iachar(ch) <= iz)  &
               .or.(iachar(ch) >= i0 .and. iachar(ch) <= i9)) &
-            .or. i.eq.lenstr) .and. npar <= 0) then
+            .or. i==lenstr) .and. npar <= 0) then
           if (in_variable) then
-             if (i.eq.lenstr) then
+             if (i==lenstr) then
                 iend = i
              else
                 iend = i - 1
@@ -148,7 +148,7 @@ subroutine parse_text(string,vars,vals)
        !print*,'variable = ',newstring(istart:iend), ', ndecimal = ',ndecimal
        !print*,'formula = ',newstring(i1:i2),i1,i2
        r = parse_formula(newstring(i1:i2),vars,vals,ierr)
-       if (ierr.eq.0) then
+       if (ierr==0) then
           !print*,' r = ',r,' ierr = ',ierr
           call get_varstring(r,ndecimal,varstring)
           !print*,'varstring: "',varstring,'"'
@@ -217,10 +217,10 @@ real function parse_formula(string,vars,vals,ierr)
  character(len=*), dimension(:), intent(in) :: vars
  real(kind=rn),    dimension(:), intent(in) :: vals
  integer, intent(out) :: ierr
- 
+
  call initf(1)
  ierr = checkf(string,vars,verbose=.false.)
- if (ierr.eq.0) then
+ if (ierr==0) then
     call parsef(1,string,vars)
     parse_formula = real(evalf(1,vals))
  else

@@ -98,7 +98,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
 !
 !--return on style 0
 !
- if (istyle.le.0) return
+ if (istyle <= 0) return
 !
 !--set colour bar displacement and width in character heights
 !
@@ -132,66 +132,66 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  disp = dispall
 
  select case(istyle)
- !------------------------
- ! horizontal colour bar
- !------------------------
+    !------------------------
+    ! horizontal colour bar
+    !------------------------
  case(2,4,6,8,10,12)
 
-   if (istyle.eq.4) disp = 0. ! plot-hugging
-   !
-   !--set viewport for the wedge
-   !
-   if (isfloating(istyle)) then
-      vptxminp = vptxmini  ! to
-      vptxmaxp = vptxmaxi  ! avoid
-      vptyminp = vptymini  ! compiler
-      vptymaxp = vptymaxi  ! warnings
-      call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
-      call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
-      vptymaxi = vptymini + width*ych
-   elseif (istyle.eq.10) then
-      ! on top of plot
-      vptymini = vptymaxi + (disp+0.1)*ych
-      vptymaxi = vptymini + width*ych
-   else
-      vptymaxi = vptymini - (disp + xlabeloffset)*ych
-      vptymini = vptymaxi - width*ych
-   endif
-   call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
-   call plot_set_exactpixelboundaries()
-   !--check number of pixels in colour bar
-   call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
-   npixwedg = max(min(int(xmaxpix-xminpix),maxpixwedg),2)
-   !
-   !--fill array with all values from datmin to datmax
-   !
+    if (istyle==4) disp = 0. ! plot-hugging
+    !
+    !--set viewport for the wedge
+    !
+    if (isfloating(istyle)) then
+       vptxminp = vptxmini  ! to
+       vptxmaxp = vptxmaxi  ! avoid
+       vptyminp = vptymini  ! compiler
+       vptymaxp = vptymaxi  ! warnings
+       call barlimits(vptxmini,vptxmaxi,vptxminp,vptxmaxp,ColourBarPosx,ColourBarLen)
+       call barlimits(vptymini,vptymaxi,vptyminp,vptymaxp,ColourBarPosy,ColourBarLen)
+       vptymaxi = vptymini + width*ych
+    elseif (istyle==10) then
+       ! on top of plot
+       vptymini = vptymaxi + (disp+0.1)*ych
+       vptymaxi = vptymini + width*ych
+    else
+       vptymaxi = vptymini - (disp + xlabeloffset)*ych
+       vptymini = vptymaxi - width*ych
+    endif
+    call plot_svp(vptxmini,vptxmaxi,vptymini,vptymaxi)
+    call plot_set_exactpixelboundaries()
+    !--check number of pixels in colour bar
+    call plot_qvp(3,xminpix,xmaxpix,yminpix,ymaxpix)
+    npixwedg = max(min(int(xmaxpix-xminpix),maxpixwedg),2)
+    !
+    !--fill array with all values from datmin to datmax
+    !
     dx = (datmax-datmin)/real(npixwedg-1)
     do i=1,npixwedg
        samplex(i,:) = datmin + (i-1)*dx
     enddo
-   !
-   !--draw colour bar, by cleverly setting window size
-   !
-   call plot_swin(1.0,real(npixwedg),0.0,1.0)
+    !
+    !--draw colour bar, by cleverly setting window size
+    !
+    call plot_swin(1.0,real(npixwedg),0.0,1.0)
 
-   if (abs(icolours).gt.0) then        ! colour
-   !--check if the colour bar will be more than 1024 pixels
-       if ((xmaxpix-xminpix).le.1024 .or. .not.plotlib_is_pgplot) then
-    !
-    !--the standard way is to use the default line below
-    !
-          if (icolours.eq.1) then
+    if (abs(icolours) > 0) then        ! colour
+       !--check if the colour bar will be more than 1024 pixels
+       if ((xmaxpix-xminpix) <= 1024 .or. .not.plotlib_is_pgplot) then
+          !
+          !--the standard way is to use the default line below
+          !
+          if (icolours==1) then
              call plot_gray(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           else
              call plot_imag(samplex,npixwedg,1,1,npixwedg,1,1,datmin,datmax,trans,iextend=plotlib_extend_pad)
           endif
        else
-    !
-    !--if > 1024 pixels, we instead use the following:
-    !  this is a workaround for a PGPLOT bug with large colour bars
-    !  (> 1024 device pixels long) - plot colour bar in two halves.
-    !  this works up to 2048 pixels, really should divide by n.
-    !
+          !
+          !--if > 1024 pixels, we instead use the following:
+          !  this is a workaround for a PGPLOT bug with large colour bars
+          !  (> 1024 device pixels long) - plot colour bar in two halves.
+          !  this works up to 2048 pixels, really should divide by n.
+          !
           call plot_svp(vptxmini,vptxmaxi-0.5*(vptxmaxi-vptxmini),vptymini,vptymaxi)
           call plot_swin(1.0,real(npixwedg/2),0.0,1.0)
           call plot_set_exactpixelboundaries()
@@ -206,27 +206,27 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        endif
     endif
     call plot_swin(datmin,datmax,0.0,1.0)
-   !
-   !--draw labelled frame around the wedge
-   !
-    if (istyle.eq.12) then
+    !
+    !--draw labelled frame around the wedge
+    !
+    if (istyle==12) then
        call plot_box(ColourBarFmtStr,0.0,0,'BC',0.0,0)
-    elseif (istyle.eq.10) then
+    elseif (istyle==10) then
        call plot_box('BCSMT',0.0,0,'BC',0.0,0)
-    elseif (istyle.eq.4 .or. istyle.eq.6 .or. istyle.eq.8) then
+    elseif (istyle==4 .or. istyle==6 .or. istyle==8) then
        call plot_box('BNST',0.0,0,'BC',0.0,0)
-       if (istyle.eq.6 .or. istyle.eq.8) call plot_box('C',0.0,0,' ',0.0,0)
+       if (istyle==6 .or. istyle==8) call plot_box('C',0.0,0,' ',0.0,0)
     else
        call plot_box('BCNST',0.0,0,'BC',0.0,0)
     endif
-   !
-   !--write the units label: the position is relative to the bottom of
-   !  the wedge because of the way we have defined the viewport.
-   !  For the horizontal colour bar this never needs to change
-   !  (0.25 space + 1 character height for numeric labels + 0.25 space
-   !   + 1 character height for actual label = 2.5 character heights)
-   !
-    if (len_trim(label).gt.0 .and. iplotcolourbarlabel) then
+    !
+    !--write the units label: the position is relative to the bottom of
+    !  the wedge because of the way we have defined the viewport.
+    !  For the horizontal colour bar this never needs to change
+    !  (0.25 space + 1 character height for numeric labels + 0.25 space
+    !   + 1 character height for actual label = 2.5 character heights)
+    !
+    if (len_trim(label) > 0 .and. iplotcolourbarlabel) then
        if (istyle==10) then
           call plot_annotate('T',2.5,0.5,0.5,trim(label))
        else
@@ -234,14 +234,14 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        endif
     endif
 
- !-------------------------------
- ! vertical colour bar (default)
- !-------------------------------
+    !-------------------------------
+    ! vertical colour bar (default)
+    !-------------------------------
  case default
-    if (istyle.eq.3) disp = 0. ! plot-hugging
-   !
-   !--set viewport for the wedge
-   !
+    if (istyle==3) disp = 0. ! plot-hugging
+    !
+    !--set viewport for the wedge
+    !
     if (isfloating(istyle)) then
        vptxminp = vptxmini  ! to
        vptxmaxp = vptxmaxi  ! avoid
@@ -267,40 +267,40 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
     do i=1,npixwedg
        sampley(:,i) = datmin + (i-1)*dx
     enddo
-   !
-   !--draw colour bar, by cleverly setting window size
-   !
+    !
+    !--draw colour bar, by cleverly setting window size
+    !
     call plot_swin(0.0,1.0,0.0,real(npixwedg))
-    if (icolours.eq.1) then        ! greyscale
+    if (icolours==1) then        ! greyscale
        call plot_gray(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
-    elseif (abs(icolours).gt.0) then        ! colour
+    elseif (abs(icolours) > 0) then        ! colour
        call plot_imag(sampley,1,npixwedg,1,1,1,npixwedg,datmin,datmax,trans,iextend=plotlib_extend_pad)
     endif
     call plot_swin(0.0,1.0,datmin,datmax)
-   !
-   !--draw labelled frame around the wedge
-   !
-    if (istyle.eq.11) then
+    !
+    !--draw labelled frame around the wedge
+    !
+    if (istyle==11) then
        call plot_box('BC',0.0,0,ColourBarFmtStr,0.0,0)
-    elseif (istyle.eq.9) then
+    elseif (istyle==9) then
        call plot_box('BC',0.0,0,'BCNSTV',0.0,0)
-    elseif (istyle.eq.3 .or. istyle.eq.5 .or. istyle.eq.7) then
+    elseif (istyle==3 .or. istyle==5 .or. istyle==7) then
        call plot_box('BC',0.0,0,'CMSTV',0.0,0)
-       if (istyle.eq.5 .or. istyle.eq.7) call plot_box(' ',0.0,0,'B',0.0,0)
+       if (istyle==5 .or. istyle==7) call plot_box(' ',0.0,0,'B',0.0,0)
     else
        call plot_box('BC',0.0,0,'BCMSTV',0.0,0)
     endif
-   !
-   !--write the units label: the position is relative to the edge of
-   !  the wedge because of the way we have defined the viewport.
-   !  For the vertical colour bar ColourBarDisp is a set by default to
-   !  the maximum size for the numeric label (written horizontally) -
-   !  this is about 4 character heights for something like "-5 x 10^10"
-   !  We allow the user to adjust this parameter to bring the label
-   !  closer where the numeric labels are smaller (e.g. "-5").
-   !
-    if (len_trim(label).gt.0 .and. iplotcolourbarlabel) then
-       if (istyle.eq.9) then
+    !
+    !--write the units label: the position is relative to the edge of
+    !  the wedge because of the way we have defined the viewport.
+    !  For the vertical colour bar ColourBarDisp is a set by default to
+    !  the maximum size for the numeric label (written horizontally) -
+    !  this is about 4 character heights for something like "-5 x 10^10"
+    !  We allow the user to adjust this parameter to bring the label
+    !  closer where the numeric labels are smaller (e.g. "-5").
+    !
+    if (len_trim(label) > 0 .and. iplotcolourbarlabel) then
+       if (istyle==9) then
           call plot_annotate('L',ColourBarDisp+0.75,1.0,1.0,trim(label))
        else
           call plot_annotate('R',ColourBarDisp+0.75,1.0,1.0,trim(label))
@@ -326,7 +326,7 @@ logical function barisvertical(istyle)
  integer, intent(in) :: istyle
 
  barisvertical = .true.
- if (istyle.le.0) return
+ if (istyle <= 0) return
 
  select case(istyle)
  case(2,4,6,8,10,12)
@@ -349,7 +349,7 @@ logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
  real :: xminbar,xmaxbar,yminbar,ymaxbar,xch,ych,barwidth
 
  incolourbar = .false.
- if (istyle.le.0) return
+ if (istyle <= 0) return
 
  select case(istyle)
  case(8,12)
@@ -362,8 +362,8 @@ logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
     else
        yminbar = yminbar - 2.0*ych
     endif
-    if ((xpt.ge.xminbar .and. xpt.le.xmaxbar) .and. &
-        (ypt.ge.yminbar .and. ypt.le.ymaxbar)) then
+    if ((xpt >= xminbar .and. xpt <= xmaxbar) .and. &
+        (ypt >= yminbar .and. ypt <= ymaxbar)) then
        incolourbar = .true.
     endif
  case(7,11)
@@ -376,18 +376,18 @@ logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
        barwidth = (2.*ColourBarWidth+0.75 + 5.0)*xch
     endif
     xmaxbar = xminbar + barwidth
-    if ((xpt.ge.xminbar .and. xpt.le.xmaxbar) .and. &
-        (ypt.ge.yminbar .and. ypt.le.ymaxbar)) then
+    if ((xpt >= xminbar .and. xpt <= xmaxbar) .and. &
+        (ypt >= yminbar .and. ypt <= ymaxbar)) then
        incolourbar = .true.
     endif
  case(9)  ! colour bar on left
-    if (xpt.lt.xmin) incolourbar = .true. 
+    if (xpt < xmin) incolourbar = .true.
  case(10) ! colour bar on top
-    if (ypt.gt.ymax) incolourbar = .true.
+    if (ypt > ymax) incolourbar = .true.
  case(2,4,6)
-    if (ypt.lt.ymin) incolourbar = .true.
+    if (ypt < ymin) incolourbar = .true.
  case default
-    if (xpt.gt.xmax) incolourbar = .true.
+    if (xpt > xmax) incolourbar = .true.
  end select
 
  return
@@ -408,30 +408,30 @@ logical function incolourbarlabel(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
  if (iplotcolourbarlabel) then
     call plot_qcs(iunits,xch,ych)
     disp = dispall
-    if (istyle.eq.3 .or. istyle.eq.4) disp = 0.
+    if (istyle==3 .or. istyle==4) disp = 0.
     select case(istyle)
     case(8,12)
        call barlimits(xminbar,xmaxbar,xmin,xmax,ColourBarPosx,ColourBarLen)
-       if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
-           ypt.gt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych) .and. &
-           xpt.gt.xminbar .and. xpt.lt.xmaxbar) incolourbarlabel = .true.
+       if (ypt < (ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
+           ypt > (ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych) .and. &
+           xpt > xminbar .and. xpt < xmaxbar) incolourbarlabel = .true.
     case(7,11)
        call barlimits(yminbar,ymaxbar,ymin,ymax,ColourBarPosy,ColourBarLen)
-       if (xpt.gt.(xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
-           xpt.lt.(xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch) .and. &
-           ypt.gt.yminbar .and. ypt.lt.ymaxbar) incolourbarlabel = .true.
+       if (xpt > (xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
+           xpt < (xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch) .and. &
+           ypt > yminbar .and. ypt < ymaxbar) incolourbarlabel = .true.
     case(2,4,6)
-       if (ypt.lt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
-           ypt.gt.(ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
+       if (ypt < (ymin-(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
+           ypt > (ymin-(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
     case(9)
-       if (xpt.lt.(xmin-(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
-           xpt.gt.(xmin-(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
+       if (xpt < (xmin-(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
+           xpt > (xmin-(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
     case(10)
-       if (ypt.gt.(ymax+(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
-           ypt.lt.(ymax+(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
+       if (ypt > (ymax+(disp + xlabeloffsetsave + ColourBarWidth+2.0)*ych) .and. &
+           ypt < (ymax+(disp + xlabeloffsetsave + ColourBarWidth+3.0)*ych)) incolourbarlabel = .true.
     case default
-       if (xpt.gt.(xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
-           xpt.lt.(xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
+       if (xpt > (xmax+(disp + ColourBarWidth-0.25 + max(ColourBarDisp-0.25,0.0))*xch) .and. &
+           xpt < (xmax+(disp + ColourBarWidth+0.75 + max(ColourBarDisp+0.75,0.0))*xch)) incolourbarlabel = .true.
     end select
  endif
 
@@ -446,7 +446,7 @@ subroutine barlimits(barmin,barmax,posmin,posmax,pos,barlen)
  real, intent(out) :: barmin,barmax
  real, intent(in)  :: posmin,posmax,pos,barlen
  real :: dpos
- 
+
  dpos = (posmax - posmin) ! in case posmin and barmin are same variable
  barmin = posmin +    pos*dpos
  barmax = barmin + barlen*dpos
@@ -467,7 +467,7 @@ subroutine get_colourbarmargins(istyle,xminmargin,xmaxmargin,yminmargin,ymaxmarg
  real :: xch,ych,vptxmin,vptxmax,vptymin,vptymax
 
  barwidth = 0.
- if (istyle.le.0) return
+ if (istyle <= 0) return
  call plot_qcs(0,xch,ych)
  call plot_qvp(0,vptxmin,vptxmax,vptymin,vptymax)
 
@@ -512,9 +512,9 @@ logical function isfloating(istyle)
 
  select case(istyle)
  case(7,8,11,12)
-   isfloating = .true.
+    isfloating = .true.
  case default
-   isfloating = .false.
+    isfloating = .false.
  end select
 
 end function isfloating
@@ -525,7 +525,7 @@ end function isfloating
 logical function iscustombar(istyle)
  integer, intent(in) :: istyle
 
- if (istyle.eq.12 .or. istyle.eq.11) then
+ if (istyle==12 .or. istyle==11) then
     iscustombar = .true.
  else
     iscustombar = .false.
@@ -544,7 +544,7 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
  real,    intent(inout) :: barmin,barmax
  real :: dbar,xminbar,xmaxbar,yminbar,ymaxbar
 
- if (istyle.eq.8 .or. istyle.eq.12) then
+ if (istyle==8 .or. istyle==12) then
     !--floating horizontal bar
     xminbar = xmin    + ColourBarPosx*(xmax - xmin)
     xmaxbar = xminbar + ColourBarLen*(xmax - xmin)
@@ -552,17 +552,17 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
     xminbar = xmin
     xmaxbar = xmax
  endif
- if (istyle.eq.7 .or. istyle.eq.11) then
+ if (istyle==7 .or. istyle==11) then
     !--floating vertical bar
     yminbar = ymin    + ColourBarPosy*(ymax - ymin)
-    ymaxbar = yminbar + ColourBarLen*(ymax - ymin) 
+    ymaxbar = yminbar + ColourBarLen*(ymax - ymin)
  else
     yminbar = ymin
     ymaxbar = ymax
  endif
 
  if (barisvertical(istyle)) then
-    if ((ymaxbar-yminbar).gt.0.) then
+    if ((ymaxbar-yminbar) > 0.) then
        dbar = (barmax-barmin)/(ymaxbar-yminbar)
     else
        dbar = 0.
@@ -570,13 +570,13 @@ subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
     barmax = barmin + (max(ypt1,ypt2)-yminbar)*dbar
     barmin = barmin + (min(ypt1,ypt2)-yminbar)*dbar
  else
-    if ((xmaxbar-xminbar).gt.0.) then
+    if ((xmaxbar-xminbar) > 0.) then
        dbar = (barmax-barmin)/(xmaxbar-xminbar)
     else
        dbar = 0.
     endif
     barmax = barmin + (max(xpt1,xpt2)-xminbar)*dbar
-    barmin = barmin + (min(xpt1,xpt2)-xminbar)*dbar  
+    barmin = barmin + (min(xpt1,xpt2)-xminbar)*dbar
  endif
 
 end subroutine adjustcolourbar

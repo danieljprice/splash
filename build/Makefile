@@ -68,6 +68,12 @@ HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
+ifdef FITS_DIR
+   FITSLIBS = -L$(FITS_DIR)/lib -lcfitsio
+else
+   FITSLIBS = -lcfitsio
+endif
+FITSINCLUDE = -I$(FITS_DIR)/include
 #
 # this file contains system-dependent routines like getarg, iargc etc.
 #
@@ -136,7 +142,7 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    FC= gfortran
-   FFLAGS= -O3 -frecord-marker=4
+   FFLAGS= -O3 -fPIC
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
@@ -145,6 +151,21 @@ ifeq ($(SYSTEM), gfortran)
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
+endif
+
+ifeq ($(SYSTEM), gfortran-catalina)
+#  gfortran compiler (part of gcc 4.x.x)
+   FC= gfortran
+   FFLAGS= -O3 -frecord-marker=4 -fPIC
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
+   SYSTEMFILE= system_f2003.f90
+   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
+              -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
+   OMPFLAGS= -fopenmp
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+   X11_DIR= /opt/X11/
 endif
 
 ifeq ($(SYSTEM),nagf95)
@@ -399,7 +420,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          interpolation.f90 plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
-         write_data_gadget.f90 write_data_phantom.f90 write_pixmap.f90 \
+         write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 \
@@ -422,9 +443,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
          interpolate3D_proj_geom.F90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 \
-         particleplot.f90 interactive.f90 analysis.f90 \
-         convert_grid.f90 convert.f90 \
-         fieldlines.f90 \
+         particleplot.f90 interactive.f90  \
+         convert_grid.f90 lightcurve.f90 \
+         analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \
          defaults.f90 menu.f90 \
@@ -522,6 +543,10 @@ cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o rea
 
 read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
+
+#---FITS read ---
+fits: checksystem checkfits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
 
 #---PBOB read ---
 
@@ -663,12 +688,18 @@ phantom_hdf5: checksystem checkhdf5 $(OBJECTS) hdf5_utils.o read_data_phantom_hd
 
 myall: mhutch ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
+#
+# sources for the grid2pdf command-line utility
+#
 SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
 OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
+#
+# libsplash: library version of splash interpolation routines
+#
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
       interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
       interpolate3D_geom.F90 interpolate3D_projection.F90 \
@@ -682,6 +713,40 @@ libsplash: lib
 
 lib: $(OBJLIB)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIB) -o libsplash.so
+
+#
+# libexact: exact solution library
+#
+SRCLIBEXACT= plotlib_mock.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
+	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
+	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
+	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
+	exact_Cshock.f90 exact_planetdisc.f90 exact_bondi.f90 \
+	libexact.f90
+OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
+OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
+
+.PHONY: libexact
+libexact: libexactcmd
+libexactcmd: checksystem $(OBJLIBEXACTALL)
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+#
+# splash image manipulation utilities
+#
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
+              interpolate3D.f90 imageutils.f90 write_fits.f90 denoise.f90
+
+OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o)
+
+.PHONY: denoise
+splash-image: denoise
+
+splash-denoise: denoise
+
+denoise: checksystem checkfits $(OBJECTSIMLIB)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
+	@echo; echo ' Denoise utility successfully compiled! ';
+	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
@@ -790,9 +855,16 @@ checkhdf5:
 
 checksilo: checkhdf5
    ifeq (X${SILO_DIR}, X)
-	@echo; echo "ERROR: SILO_DIR should be set before compiling splash with SILO reader"; echo; ${MAKE} err;
+	   @echo; echo "ERROR: SILO_DIR should be set before compiling splash with SILO reader"; echo; ${MAKE} err;
    else
-	@if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
+	   @if [ -d $$SILO_DIR ]; then echo; echo "SILO_DIR=$$SILO_DIR"; echo; else echo; echo "ERROR: Directory given by SILO_DIR=$$SILO_DIR does not exist"; echo; ${MAKE} err; fi;
+   endif
+
+checkfits:
+   ifeq (X${FITS_DIR}, X)
+	   @echo; echo "*** WARNING: May need FITS_DIR=/usr/local to find cfitsio library **"; echo;
+   else
+	   @if [ -d $$FITS_DIR ]; then echo; echo "FITS_DIR=$$FITS_DIR"; echo; else echo; echo "ERROR: Directory given by FITS_DIR=$$FITS_DIR does not exist"; echo; ${MAKE} err; fi;
    endif
 
 checkpbob:
@@ -810,15 +882,16 @@ checkpbob:
 # to do the two separately
 #
 install: destdircheck installcheck
-	@cd $(BINDIR); for x in *splash*; do echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; done;
+	@cd $(BINDIR); for x in *splash*; do if [ -e $$x ]; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi; done;
+	@cd $(BINDIR); x=denoise; if test -e $$x; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi;
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if test -e $(BINDIR)/asplash && test -e $(BINDIR)/gsplash; then echo; \
+	@if [ -e $(BINDIR)/splash ] || [ -e $(BINDIR)/denoise ]; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\
-        echo 'run "make" first, followed by "sudo make install"'; echo;\
+        echo 'run "make" first, followed by "make install"'; echo;\
         $(MAKE) err; fi
 
 destdircheck: installcheck
@@ -862,28 +935,16 @@ withgiza: ../giza/lib/libgiza.a
 docs: doc
 
 doc:
-	cd ../docs; pdflatex splash; pdflatex splash
+	cd ../docs; make html latexpdf
 
 htmldocs: htmldoc
 
 htmldoc: doc cleanhtmldocs
 	cd ../docs;  \
-        hevea png.hva splash.tex -o html/splash.html; \
-        hevea png.hva splash.tex -o html/splash.html; \
-        bibhva html/splash; \
-        sed 's/et~al./et al./g' html/splash.hbbl > html/tmp.hbbl; \
-        mv html/tmp.hbbl html/splash.hbbl; \
-        hevea png.hva splash.tex -o html/splash.html; \
-        hevea png.hva splash.tex -o html/splash.html; \
-        imagen -png -pdf -mag 2000 html/splash; \
-	cd html; hacha -tocbis splash.html; \
-        rm *.gif splash.h{tml,aux,toc,bbl} splash.blg splash.image.tex ../splash.image.out;
+   make html
 
 cleanhtmldocs:
-	rm -f ../docs/html/*.h{tml,toc,bbl,aux} \
-           ../docs/html/*.image* ../docs/html/*.gif \
-           ../docs/html/splash*.{png,css,blg};
-	rm -f ../docs/splash.image.out ../docs/splash.out
+	cd ../docs; make clean
 
 tar:
 	tar cf splash.tar Makefile $(SOURCES) read_data*.f90
@@ -916,7 +977,7 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 include .depends
 
 clean:
-	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash libsplash.so
+	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall

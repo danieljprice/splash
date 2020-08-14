@@ -51,15 +51,15 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 ! check for errors in input parameters
 !
  ierr = 0
- if (Mdisk.le.0.) then
+ if (Mdisk <= 0.) then
     print*,'error: mass <= 0 in exact_ringspread'
     ierr = 2
     return
- elseif (Rdisk.le.0.) then
+ elseif (Rdisk <= 0.) then
     print*,'error: rdisk < 0 in exact_ringspread'
     ierr = 3
     return
- elseif (viscnu.le.tiny(viscnu)) then
+ elseif (viscnu <= tiny(viscnu)) then
     print*,'error: viscosity <= 0 in ringspreading solution'
     ierr = 4
     return
@@ -79,10 +79,10 @@ subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
 
     select case(iplot)
     case(1)
-    !--density
+       !--density
        yplot(i) = sigma
     case default
-    !--pressure
+       !--pressure
        yplot(i) = 0.
     end select
  enddo
@@ -98,7 +98,7 @@ double precision function ringspreadfunc(x,tau)
  double precision, intent(in) :: x, tau
  double precision :: xfunc,besfunc,dummy,term
 
- if (tau.le.epsilon(tau) .or. x.le.tiny(x)) then
+ if (tau <= epsilon(tau) .or. x <= tiny(x)) then
     ringspreadfunc = 0.
  else
     xfunc = 2.*x/tau
@@ -106,7 +106,7 @@ double precision function ringspreadfunc(x,tau)
 
     !--prevent blowups at t=0: no point evaluating
     !  the Bessel function if the exp term is zero.
-    if (term.gt.tiny(term)) then
+    if (term > tiny(term)) then
        call bessik(xfunc,0.25d0,besfunc,dummy,dummy,dummy)
     else
        besfunc = 0.
@@ -134,7 +134,7 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
 
 ! Returns the modified Bessel functions ri = I\nu, rk = K\nu and their
 ! derivatives rip = I'\nu and rkp = K'\nu, for positive x and for
-! xn = \nu .ge. 0. The relative accuracy is within one or two significant
+! xn = \nu  >=  0. The relative accuracy is within one or two significant
 ! digits of eps.
 !
 ! All internal arithmetic in double precision
@@ -158,7 +158,7 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
  xi = 1.d0/x
  xi2 = 2.d0*xi
  h = xnu*xi
- if (h.lt.fpmin) h = fpmin
+ if (h < fpmin) h = fpmin
  b = xi2*xnu
  d = 0.d0
  c = h
@@ -168,7 +168,7 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
     c = b + 1.d0/c
     del = c*d
     h = del*h
-    if (abs(del-1.d0).lt.eps) goto 1
+    if (abs(del-1.d0) < eps) goto 1
  enddo
  print*,'x too large in bessik; try asymptotic expansion'
 1 continue
@@ -187,14 +187,14 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
  if (x < xmin) then
     x2 = 0.5d0*x
     pimu = pi*xmu
-    if (abs(pimu).lt.eps) then
+    if (abs(pimu) < eps) then
        fact = 1.d0
     else
        fact = pimu/sin(pimu)
     endif
     d = -log(x2)
     e = xmu*d
-    if (abs(e).lt.eps) then
+    if (abs(e) < eps) then
        fact2 = 1.d0
     else
        fact2 = sinh(e)/e
@@ -218,7 +218,7 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
        sum = sum + del
        del1 = c*(p - i*ff)
        sum1 = sum1 + del1
-       if (abs(del).lt.abs(sum)*eps) goto 2
+       if (abs(del) < abs(sum)*eps) goto 2
     enddo
     print*,' bessk series failed to converge'
 2   continue
@@ -249,7 +249,7 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
        h = h + delh
        dels = q*delh
        s = s + dels
-       if (abs(dels/s).lt.eps) goto 3
+       if (abs(dels/s) < eps) goto 3
     enddo
     print*,'bessik: failure to converge in cf2'
 3   continue
@@ -322,7 +322,7 @@ double precision function chebev(a,b,c,m,x)
  integer :: j
  double precision :: d, dd, sv, y, y2
 
- if ((x-a)*(x-b).gt.0.) then
+ if ((x-a)*(x-b) > 0.) then
     print*,'error: x not in range in chebev'
     chebev = 0.
     return

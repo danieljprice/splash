@@ -85,48 +85,48 @@ contains
 !---------------------------------------------
 subroutine defaults_set_xsecrotate
 
-  xsec_nomulti = .false.    ! take cross section of data / particles
-  xsecpos_nomulti = 0.      ! position of cross section
-  flythru = .false.         ! take series of cross sections through data
-  xseclineX1 = 0.0
-  xseclineX2 = 0.0
-  xseclineY1 = 0.0
-  xseclineY2 = 0.0
-  xsecwidth = 0.0   ! width of xsec slices - zero means suggest better value to user
-  irotate = .false.
-  irotateaxes = 0
-  anglex = 0.
-  angley = 0.
-  anglez = 0.
-  xminrotaxes = 0.
-  xmaxrotaxes = 0.
-  use3Dperspective = .false.
-  use3Dopacityrendering = .false.
-  zobserver = 0.
-  dzscreenfromobserver = 0.
-  taupartdepth = 2.
+ xsec_nomulti = .false.    ! take cross section of data / particles
+ xsecpos_nomulti = 0.      ! position of cross section
+ flythru = .false.         ! take series of cross sections through data
+ xseclineX1 = 0.0
+ xseclineX2 = 0.0
+ xseclineY1 = 0.0
+ xseclineY2 = 0.0
+ xsecwidth = 0.0   ! width of xsec slices - zero means suggest better value to user
+ irotate = .false.
+ irotateaxes = 0
+ anglex = 0.
+ angley = 0.
+ anglez = 0.
+ xminrotaxes = 0.
+ xmaxrotaxes = 0.
+ use3Dperspective = .false.
+ use3Dopacityrendering = .false.
+ zobserver = 0.
+ dzscreenfromobserver = 0.
+ taupartdepth = 2.
 
-  !--defaults for animation sequences
-  nseq = 0
-  nframes = 0
-  iseqstart(:) = 0
-  iseqend(:)   = 0
-  iseqtype(:)  = 0
-  xminseqend = 0.
-  xmaxseqend = 0.
-  yminseqend = 0.
-  ymaxseqend = 0.
-  anglezend = 360.
-  angleyend = 0.
-  anglexend = 0.
-  icolchange = 0
-  xmincolend = 0.
-  xmaxcolend = 0.
-  zobserverend = 0.
-  taupartdepthend = 2000.0
-  xsecpos_nomulti_end = 0.
-  ihavesetsequence = .false.
-  rendersinks = .false.
+ !--defaults for animation sequences
+ nseq = 0
+ nframes = 0
+ iseqstart(:) = 0
+ iseqend(:)   = 0
+ iseqtype(:)  = 0
+ xminseqend = 0.
+ xmaxseqend = 0.
+ yminseqend = 0.
+ ymaxseqend = 0.
+ anglezend = 360.
+ angleyend = 0.
+ anglexend = 0.
+ icolchange = 0
+ xmincolend = 0.
+ xmaxcolend = 0.
+ zobserverend = 0.
+ taupartdepthend = 2000.0
+ xsecpos_nomulti_end = 0.
+ ihavesetsequence = .false.
+ rendersinks = .false.
 
 end subroutine defaults_set_xsecrotate
 
@@ -149,7 +149,7 @@ subroutine submenu_xsecrotate(ichoose)
  real, dimension(3) :: xorigintemp
 
  print "(a)",'---------- cross section / 3D plotting options --------'
- if (ndim.eq.1) print*,' WARNING: none of these options have any effect in 1D'
+ if (ndim==1) print*,' WARNING: none of these options have any effect in 1D'
  ians = ichoose
  if (xsec_nomulti) then
     text = 'xsec'
@@ -157,7 +157,7 @@ subroutine submenu_xsecrotate(ichoose)
     text = 'proj'
  endif
 
- if (ians.le.0 .or. ians.gt.6) then
+ if (ians <= 0 .or. ians > 6) then
     print 10,text,print_logical(irotate),anglex,angley,anglez, &
              print_logical(use3Dperspective),print_logical(use3Dopacityrendering), &
              irotateaxes,nseq
@@ -188,7 +188,7 @@ subroutine submenu_xsecrotate(ichoose)
        print*,'this means the y and x rotations are done about the *new* y and x axes'
        print*,'if in doubt, set the angles interactively in this order'
        call prompt('enter rotation angle about z axis (deg)',anglez,0.,360.)
-       if (ndim.eq.3) then
+       if (ndim==3) then
           call prompt('enter rotation angle about y axis (deg)',angley,0.,360.)
           call prompt('enter rotation angle about x axis (deg)',anglex,0.,360.)
        endif
@@ -201,12 +201,12 @@ subroutine submenu_xsecrotate(ichoose)
     labelx=(/'x','y','z'/)
     do i=1,ndim
        call prompt('enter location of origin '//labelx(i),xorigin(i))
-       if (abs(xorigin(i)-xorigintemp(i)).gt.tiny(0.)) then
+       if (abs(xorigin(i)-xorigintemp(i)) > tiny(0.)) then
           ichangedorigin = .true.
        endif
     enddo
     !--recalculate radius if origin settings have changed
-    if (ichangedorigin .and. iCalcQuantities .and. irad.gt.0) then
+    if (ichangedorigin .and. iCalcQuantities .and. irad > 0) then
        if (DataIsBuffered) then
           call calc_quantities(1,nsteps)
        else
@@ -218,12 +218,12 @@ subroutine submenu_xsecrotate(ichoose)
     call prompt(' Use 3D perspective? ',use3Dperspective)
     if (use3Dperspective) then
        if (.not.irotate) irotate = .true.
-       if (abs(anglez).lt.tiny(anglez) .and. &
-           abs(angley).lt.tiny(angley) .and. &
-           abs(anglex).lt.tiny(anglex)) then
-           anglez = 30.
-           anglex = 60.
-           print "(a)",' setting default rotation angles to 30,0,60'
+       if (abs(anglez) < tiny(anglez) .and. &
+           abs(angley) < tiny(angley) .and. &
+           abs(anglex) < tiny(anglex)) then
+          anglez = 30.
+          anglex = 60.
+          print "(a)",' setting default rotation angles to 30,0,60'
        endif
     endif
 !------------------------------------------------------------------------
@@ -243,9 +243,9 @@ subroutine submenu_xsecrotate(ichoose)
     print*,'2 : plot rotated box'
     print*,'3 : plot gridded x-y plane'
     call prompt('enter type of axes to plot',irotateaxes,0,3)
-    if (irotateaxes.gt.0) then
+    if (irotateaxes > 0) then
        !--if not previously set, use current plot limits
-       if (all(abs(xminrotaxes).le.tiny(xminrotaxes))) then
+       if (all(abs(xminrotaxes) <= tiny(xminrotaxes))) then
           xminrotaxes(:) = lim(ix(:),1)
           xmaxrotaxes(:) = lim(ix(:),2)
        endif
@@ -285,7 +285,7 @@ subroutine check_sequences(n)
  integer :: iseq
 
  print "(/,a)", ' Current list of animation sequences:'
- if (n.gt.0) then
+ if (n > 0) then
     do iseq=1,n
        print "(i2,') ',a)",iseq,labelseqtype(iseqtype(iseq))
     enddo
@@ -300,8 +300,8 @@ subroutine delete_sequence(iseq,n)
  integer, intent(inout) :: n
  integer :: i
 
- if (iseq.gt.0 .and. n.gt.0 .and. iseq.le.maxseq) then
-    if (iseqtype(iseq).gt.0 .and. iseqtype(iseq).le.maxseq) then
+ if (iseq > 0 .and. n > 0 .and. iseq <= maxseq) then
+    if (iseqtype(iseq) > 0 .and. iseqtype(iseq) <= maxseq) then
        print "(a,i1,': ',a)",' deleting sequence ',iseq,trim(labelseqtype(iseqtype(iseq)))
     endif
     iseqtype(iseq) = 0
@@ -324,13 +324,13 @@ subroutine add_sequence(istart,iend,n)
  integer :: i,j,ierr
 
  i = istart + 1
- over_sequences: do while (i.le.iend .and. i.le.maxseq)
+ over_sequences: do while (i <= iend .and. i <= maxseq)
 
-    if (i.gt.n) n = i
-    if (n.gt.0) then
+    if (i > n) n = i
+    if (n > 0) then
        !--set sensible default value for number of frames
-       if (nframes.eq.0) then
-          if (nsteps.gt.1) then
+       if (nframes==0) then
+          if (nsteps > 1) then
              nframes = 1
           else
              nframes = 10
@@ -341,9 +341,9 @@ subroutine add_sequence(istart,iend,n)
     endif
 
     print "(a,i2,a)",'----------------- sequence ',i,' ----------------------'
-    if (iseqstart(i).eq.0) iseqstart(i) = max(istartatstep,1)
-    if (iseqend(i).eq.0) iseqend(i) = max(1,iendatstep,istartatstep)
-    if (nsteps.gt.1) then
+    if (iseqstart(i)==0) iseqstart(i) = max(istartatstep,1)
+    if (iseqend(i)==0) iseqend(i) = max(1,iendatstep,istartatstep)
+    if (nsteps > 1) then
        call prompt('Enter starting dump for sequence ',iseqstart(i),1,nsteps)
        call prompt('Enter finishing dump for sequence ',iseqend(i),1,nsteps)
     endif
@@ -356,30 +356,30 @@ subroutine add_sequence(istart,iend,n)
        call prompt('Enter type of sequence ',iseqtype(i),0,maxseq)
        !--allow only one sequence of each type
        ierr = 0
-       if (i.gt.0) then
+       if (i > 0) then
           do j=1,n
-             if (i.ne.j .and. (iseqtype(j).eq.iseqtype(i)) .and. (iseqtype(i).gt.0)) ierr = 2
+             if (i /= j .and. (iseqtype(j)==iseqtype(i)) .and. (iseqtype(i) > 0)) ierr = 2
           enddo
-          if (ierr.eq.2) print "(/,a)",' Error: can only have one sequence of each type '
+          if (ierr==2) print "(/,a)",' Error: can only have one sequence of each type '
        endif
-    end do
+    enddo
     select case(iseqtype(i))
     case(1)
        print "(a)",'Note: zoom sequence starts using current fixed x,y plot limits'
-       if (abs(xminseqend).lt.tiny(xminseqend) .and. abs(xmaxseqend).lt.tiny(xmaxseqend)) then
+       if (abs(xminseqend) < tiny(xminseqend) .and. abs(xmaxseqend) < tiny(xmaxseqend)) then
           xminseqend = lim(1,1)
           xmaxseqend = lim(1,2)
        endif
        call prompt(' Enter finishing xmin ',xminseqend)
        call prompt(' Enter finishing xmax ',xmaxseqend)
-       if (abs(yminseqend).lt.tiny(yminseqend) .and. abs(ymaxseqend).lt.tiny(ymaxseqend)) then
+       if (abs(yminseqend) < tiny(yminseqend) .and. abs(ymaxseqend) < tiny(ymaxseqend)) then
           yminseqend = lim(2,1)
           ymaxseqend = lim(2,2)
        endif
        call prompt(' Enter finishing ymin ',yminseqend)
        call prompt(' Enter finishing ymax ',ymaxseqend)
     case(2)
-       if (ndim.lt.2) then
+       if (ndim < 2) then
           print "(a)",' ERROR: cannot use this sequence in 1D'
           iseqtype(i) = 0
        endif
@@ -392,8 +392,8 @@ subroutine add_sequence(istart,iend,n)
        call prompt(' Enter finishing rotation angle (y axis) ',angleyend)
        call prompt(' Enter finishing rotation angle (x axis) ',anglexend)
     case(3)
-       if (icolchange.le.0 .or. icolchange.gt.numplot) then
-          if (irho.gt.0 .and. irho.le.numplot) then
+       if (icolchange <= 0 .or. icolchange > numplot) then
+          if (irho > 0 .and. irho <= numplot) then
              icolchange = irho
           else
              icolchange = 1
@@ -401,14 +401,14 @@ subroutine add_sequence(istart,iend,n)
        endif
        call prompt(' Enter column to change limits ',icolchange,1,numplot)
        print "(a)",'Note: limits start from current fixed plot limits for this column'
-       if (abs(xmincolend).lt.tiny(xmincolend) .and. abs(xmaxcolend).lt.tiny(xmaxcolend)) then
+       if (abs(xmincolend) < tiny(xmincolend) .and. abs(xmaxcolend) < tiny(xmaxcolend)) then
           xmincolend = lim(icolchange,1)
           xmaxcolend = lim(icolchange,2)
        endif
        call prompt(' Enter finishing minimum value ',xmincolend)
        call prompt(' Enter finishing maximum value ',xmaxcolend)
     case(4)
-       if (ndim.ne.3) then
+       if (ndim /= 3) then
           print "(a)",' ERROR: cannot use this sequence in < 3D'
           iseqtype(i) = 0
        endif
@@ -419,16 +419,16 @@ subroutine add_sequence(istart,iend,n)
        print "(a)",'Note: observer starts at current observer settings '
        print "(a)",'      (screen height does not change)'
        !--try to give sensible default values
-       if (abs(zobserverend).lt.tiny(zobserverend)) then
-          if (abs(zobserver).gt.tiny(zobserver)) then
+       if (abs(zobserverend) < tiny(zobserverend)) then
+          if (abs(zobserver) > tiny(zobserver)) then
              zobserverend = 5.*zobserver
-          elseif (ix(3).gt.0 .and. ix(3).le.numplot) then
+          elseif (ix(3) > 0 .and. ix(3) <= numplot) then
              zobserverend = 10.*lim(ix(3),2)
           endif
        endif
        call prompt(' Enter finishing 3D observer height ',zobserverend)
     case(5)
-       if (ndim.ne.3) then
+       if (ndim /= 3) then
           print "(a)",' ERROR: cannot use this sequence in < 3D'
           iseqtype(i) = 0
        endif
@@ -443,7 +443,7 @@ subroutine add_sequence(istart,iend,n)
        print "(a)",'Note: slice position starts from value set at initial prompt'
        call prompt(' Enter finishing slice position ',xsecpos_nomulti_end)
     case(6)
-       if (ndim.ne.3) then
+       if (ndim /= 3) then
           print "(a)",' ERROR: cannot use this sequence in < 3D'
           iseqtype(i) = 0
        endif
@@ -463,7 +463,7 @@ subroutine add_sequence(istart,iend,n)
     i = i + 1
  enddo over_sequences
 
- if (all(iseqtype(1:n).eq.0)) then
+ if (all(iseqtype(1:n)==0)) then
     n = 0
  else
     ihavesetsequence = .true.
@@ -505,7 +505,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  ymaxfixed = lim(iploty,2)
  call transform_limits(yminfixed,ymaxfixed,itrans(iploty))
 
- if (irender.gt.0 .and. irender.le.numplot) then
+ if (irender > 0 .and. irender <= numplot) then
     renderminfixed = lim(irender,1)
     rendermaxfixed = lim(irender,2)
     call transform_limits(renderminfixed,rendermaxfixed,itrans(irender))
@@ -531,7 +531,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
     call transform_limits_inverse(yminseqend,ymaxseqend,itrans(iploty))
  endif
  !--change of rotation angles
- if (ndim.ge.2 .and. rotation .and. &
+ if (ndim >= 2 .and. rotation .and. &
     (notequal(anglexi,anglex).or.notequal(angleyi,angley).or.notequal(anglezi,anglez))) then
     nseq = nseq + 1
     iseqtype(nseq) = 2
@@ -543,7 +543,7 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
     print*,'angle z start = ',anglez,' end = ',anglezend
  endif
  !--change of render limits
- if (ndim.gt.1 .and. irender.gt.0 .and. irender.le.numplot) then
+ if (ndim > 1 .and. irender > 0 .and. irender <= numplot) then
     if (notequal(rendermin,renderminfixed) .or. notequal(rendermax,rendermaxfixed)) then
        nseq = nseq + 1
        iseqtype(nseq) = 3
@@ -557,13 +557,13 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
     endif
  endif
  !--change of observer position
- if (ndim.eq.3 .and. notequal(zobserveri,zobserver)) then
+ if (ndim==3 .and. notequal(zobserveri,zobserver)) then
     nseq = nseq + 1
     iseqtype(nseq) = 4
     zobserverend = zobserveri
  endif
  !--change of cross section position
- if (ndim.eq.3 .and. x_sec .and. notequal(xsecpos_nomulti,xsecposi)) then
+ if (ndim==3 .and. x_sec .and. notequal(xsecpos_nomulti,xsecposi)) then
     nseq = nseq + 1
     iseqtype(nseq) = 5
     xsecpos_nomulti_end = xsecposi
@@ -579,14 +579,14 @@ subroutine setsequenceend(ipos,iplotx,iploty,irender,rotation, &
  iseqstart(1:nseq) = 1
  iseqend(1:nseq) = ipos
 
- if (nseq.gt.0) then
+ if (nseq > 0) then
     print "(1x,a,i1,a)",'total of ',nseq,' sequences set:'
     do i=1,nseq
        print "(1x,i1,': ',a)",i,trim(labelseqtype(iseqtype(i)))
     enddo
     print "(a,i5)",' sequences start at dump 1 and end at dump ',ipos
-    if (nframes.le.0) then
-       if (ipos.eq.1) then
+    if (nframes <= 0) then
+       if (ipos==1) then
           nframes = 10
        else
           nframes = 1
@@ -606,7 +606,7 @@ end subroutine setsequenceend
 logical function notequal(r1,r2)
  real, intent(in) :: r1,r2
 
- if (abs(r1-r2).gt.epsilon(r1)) then
+ if (abs(r1-r2) > epsilon(r1)) then
     notequal = .true.
  else
     notequal = .false.
@@ -625,7 +625,7 @@ logical function insidesequence(ipos)
 
  insidesequence = .false.
  do i=1,nseq
-    if (iseqtype(i).gt.0 .and. iseqstart(i).le.ipos .and. iseqend(i).ge.ipos) then
+    if (iseqtype(i) > 0 .and. iseqstart(i) <= ipos .and. iseqend(i) >= ipos) then
        insidesequence = .true.
     endif
  enddo
@@ -656,13 +656,13 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
 
  do i=1,nseq
     !--set starting values based on first position
-    if (ipos.ge.iseqstart(i)) then
+    if (ipos >= iseqstart(i)) then
        iposinseq = (ipos-iseqstart(i))*nframes + iframe
        iposend = (iseqend(i)-iseqstart(i))*nframes + nframes
        xfrac = (iposinseq-1)/real(iposend-1)
        xfrac = min(xfrac,1.0)
 
-       if (iposinseq.gt.iposend) then
+       if (iposinseq > iposend) then
           print "(1x,a)",'-->  '//trim(labelseqtype(iseqtype(i)))//' finished : frac = 1.0'
        else
           print "(1x,a,i3,a,i3,a,f5.2)",'-->  frame ', &
@@ -695,7 +695,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        case(3)
           !--steps are linear in the transformed space
           !  and limits returned are *already transformed*
-          if (iplotx.eq.icolchange) then
+          if (iplotx==icolchange) then
              xminstart = lim(iplotx,1)
              xmaxstart = lim(iplotx,2)
              call transform_limits(xminstart,xmaxstart,itrans(iplotx))
@@ -704,7 +704,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
              call transform_limits(xminend,xmaxend,itrans(iplotx))
              xmin = xminstart + xfrac*(xminend - xminstart)
              xmax = xmaxstart + xfrac*(xmaxend - xmaxstart)
-          elseif (iploty.eq.icolchange) then
+          elseif (iploty==icolchange) then
              yminstart = lim(iploty,1)
              ymaxstart = lim(iploty,2)
              call transform_limits(yminstart,ymaxstart,itrans(iploty))
@@ -713,7 +713,7 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
              call transform_limits(yminend,ymaxend,itrans(iploty))
              ymin = yminstart + xfrac*(yminend - yminstart)
              ymax = ymaxstart + xfrac*(ymaxend - ymaxstart)
-          elseif (irender.eq.icolchange) then
+          elseif (irender==icolchange) then
              xminstart = lim(irender,1)
              xmaxstart = lim(irender,2)
              call transform_limits(xminstart,xmaxstart,itrans(irender))
@@ -730,8 +730,8 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
        case(5)
           xsecposi = xsecpos_nomulti + xfrac*(xsecpos_nomulti_end - xsecpos_nomulti)
        case(6)
-          logtaudepth = (taupartdepthend .gt. 1.001e3*taupartdepth) &
-                    .or.(taupartdepthend .lt. 1.001e-3*taupartdepth)
+          logtaudepth = (taupartdepthend  >  1.001e3*taupartdepth) &
+                    .or.(taupartdepthend  <  1.001e-3*taupartdepth)
           if (logtaudepth) then
              print "(a)",'     (incrementing optical depth logarithmically)'
              taupartdepthi = taupartdepth*(taupartdepthend/taupartdepth)**xfrac

@@ -34,28 +34,28 @@ module system_commands
 
 contains
 
- subroutine get_number_arguments(nargs)
-    integer, intent(out) :: nargs
-    integer :: iargc
+subroutine get_number_arguments(nargs)
+ integer, intent(out) :: nargs
+ integer :: iargc
 
-    nargs = iargc()
+ nargs = iargc()
 
- end subroutine get_number_arguments
+end subroutine get_number_arguments
 
- subroutine get_argument(iarg,argstring)
-    integer, intent(in) :: iarg
-    character(len=*), intent(out) :: argstring
+subroutine get_argument(iarg,argstring)
+ integer, intent(in) :: iarg
+ character(len=*), intent(out) :: argstring
 
-    call getarg(iarg,argstring)
+ call getarg(iarg,argstring)
 
- end subroutine get_argument
+end subroutine get_argument
 
- subroutine get_environment(variable,value)
-    character(len=*), intent(in) :: variable
-    character(len=*), intent(out) :: value
+subroutine get_environment(variable,value)
+ character(len=*), intent(in) :: variable
+ character(len=*), intent(out) :: value
 
-    call getenv(variable,value)
+ call getenv(variable,value)
 
- end subroutine get_environment
+end subroutine get_environment
 
 end module system_commands

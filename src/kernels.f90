@@ -44,6 +44,8 @@ module kernels
  real, public  :: cnormk1D = 2./3.
  real, public  :: cnormk2D = 10./(7.*pi)
  real, public  :: cnormk3D = 1./pi
+ integer, parameter :: doub_prec = kind(0.d0)
+
  procedure(k_func), pointer, public :: wfunc
 
  abstract interface
@@ -54,7 +56,7 @@ module kernels
  end interface
 
  public :: select_kernel, select_kernel_by_name
- public :: pint
+ public :: pint,wallint
 
  private
 
@@ -69,7 +71,7 @@ contains
 subroutine select_kernel(j)
  integer, intent(in) :: j
 
- if (j.ge.1 .and. j.le.nkernels) then
+ if (j >= 1 .and. j <= nkernels) then
     !--print only if NOT using the default kernel
     print "(a,/)",' Using '//trim(kernelname(j))//' kernel'
  endif
@@ -111,7 +113,7 @@ subroutine select_kernel(j)
     cnormk3D = 1./(20.*pi)
     wfunc => w_quartic
  case default  !-- cubic spline kernel
-    if (j.eq.1) then
+    if (j==1) then
        ikernel = 1 ! deliberately chose cubic spline
     else
        ikernel = 0 ! just whatever is the default
@@ -148,7 +150,7 @@ subroutine select_kernel_by_name(string)
  !
  !--if no match to a kernel name, look for other possible strings
  !
- if (ikernel.eq.0) then
+ if (ikernel==0) then
     select case(trim(adjustl(lcase(string))))
     case('wendlandc6','wendland c6','6th order wendland','wendland 3d c6','w6','wendland6')
        jkern = 6
@@ -179,10 +181,10 @@ pure real function w_cubic(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.1.0) then
+ if (q2 < 1.0) then
     q = sqrt(q2)
     w_cubic = 1.-1.5*q2 + 0.75*q2*q
- elseif (q2.lt.4.0) then
+ elseif (q2 < 4.0) then
     q = sqrt(q2)
     w_cubic = 0.25*(2.-q)**3
  else
@@ -197,11 +199,11 @@ pure real function w_quartic(q2)
  real :: q
 
  q = sqrt(q2)
- if (q.lt.0.5) then
+ if (q < 0.5) then
     w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4 + 10.*(0.5-q)**4
- elseif (q.lt.1.5) then
+ elseif (q < 1.5) then
     w_quartic = (2.5-q)**4 - 5.*(1.5-q)**4
- elseif (q.lt.2.5) then
+ elseif (q < 2.5) then
     w_quartic = (2.5-q)**4
  else
     w_quartic = 0.
@@ -214,14 +216,14 @@ pure real function w_quintic(q2)
  real, intent(in) :: q2
  real :: q,q4
 
- if (q2.lt.1.0) then
+ if (q2 < 1.0) then
     q = sqrt(q2)
     q4 = q2*q2
     w_quintic = 66.-60.*q2 + 30.*q4 - 10.*q4*q
- elseif ((q2.ge.1.0).and.(q2.lt.4.0)) then
+ elseif ((q2 >= 1.0).and.(q2 < 4.0)) then
     q = sqrt(q2)
     w_quintic = (3.-q)**5 - 6.*(2.-q)**5
- elseif ((q2.ge.4.0).and.(q2.lt.9.0)) then
+ elseif ((q2 >= 4.0).and.(q2 < 9.0)) then
     q = sqrt(q2)
     w_quintic = (3.-q)**5
  else
@@ -236,11 +238,11 @@ pure real function w_quartic2h(q2)
  real :: q
 
  q = sqrt(q2)
- if (q.lt.0.4) then
+ if (q < 0.4) then
     w_quartic2h = (2.-q)**4 - 5.*(1.2-q)**4 + 10.*(0.4-q)**4
- elseif (q.lt.1.2) then
+ elseif (q < 1.2) then
     w_quartic2h = (2.-q)**4 - 5.*(1.2-q)**4
- elseif (q.lt.2.) then
+ elseif (q < 2.) then
     w_quartic2h = (2.-q)**4
  else
     w_quartic2h = 0.
@@ -253,7 +255,7 @@ pure real function w_wendlandc2(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc2 = (1. - 0.5*q)**4*(2.*q + 1.)
  else
@@ -267,7 +269,7 @@ pure real function w_wendlandc4(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc4 = (1. - 0.5*q)**6*(35./12.*q2 + 3.*q + 1.)
  else
@@ -281,7 +283,7 @@ pure real function w_wendlandc6(q2)
  real, intent(in) :: q2
  real :: q
 
- if (q2.lt.4.) then
+ if (q2 < 4.) then
     q = sqrt(q2)
     w_wendlandc6 = (1. - 0.5*q)**8*(4.*q2*q + 25./4.*q2 + 4.*q + 1.)
  else
@@ -348,7 +350,7 @@ pure real function full_2d_mod(phi,tphi,q0)
     elseif (q <= 2.0) then
        cphi1 = q0
        phi1 = acos(q0)
-       tphi1 = tan(phi1)
+       tphi1 = tan(phi1)  !  tan (acos x) = sqrt(1-x**2)/x
        full_2d_mod = F2_2d(phi,tphi,cphi,q0) - F2_2d(phi1,tphi1,cphi1,q0) &
                    + F1_2d(phi1,tphi1,cphi1,q0)
     else
@@ -435,5 +437,201 @@ pure real function F3_2d(phi)
  F3_2d = 0.5/pi  *I0
 
 end function F3_2d
+
+!------------------------------------------------------------
+! 3D functions to evaluate exact overlap of kernel with wall boundaries
+! see Petkova, Laibe & Bonnell (2018), J. Comp. Phys
+!------------------------------------------------------------
+real function wallint(r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi)
+ real, intent(in) :: r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi
+ real(doub_prec) :: R_0, d1, d2, dx, dy, h
+
+ wallint = 0.0
+ dx = xc - xp
+ dy = yc - yp
+ h = hi
+
+ !
+ ! Contributions from each of the 4 sides of a cell wall
+ !
+ R_0 = 0.5*pixwidthy + dy
+ d1 = 0.5*pixwidthx - dx
+ d2 = 0.5*pixwidthx + dx
+ wallint = wallint + pint3D(r0, R_0, d1, d2, h)
+
+ R_0 = 0.5*pixwidthy - dy
+ d1 = 0.5*pixwidthx + dx
+ d2 = 0.5*pixwidthx - dx
+ wallint = wallint + pint3D(r0, R_0, d1, d2, h)
+
+ R_0 = 0.5*pixwidthx + dx
+ d1 = 0.5*pixwidthy + dy
+ d2 = 0.5*pixwidthy - dy
+ wallint = wallint + pint3D(r0, R_0, d1, d2, h)
+
+ R_0 = 0.5*pixwidthx - dx
+ d1 = 0.5*pixwidthy - dy
+ d2 = 0.5*pixwidthy + dy
+ wallint = wallint + pint3D(r0, R_0, d1, d2, h)
+
+end function wallint
+
+
+real function pint3D(r0, R_0, d1, d2, hi)
+
+ real(doub_prec), intent(in) :: R_0, d1, d2, hi
+ real, intent(in) :: r0
+ real(doub_prec) :: ar0, aR_0
+ real(doub_prec) :: int1, int2
+ integer :: fflag = 0
+
+ if (abs(r0) < tiny(0.)) then
+    pint3D = 0.d0
+    return
+ endif
+
+ if (r0  >  0.d0) then
+    pint3D = 1.d0
+    ar0 = r0
+ else
+    pint3D = -1.d0
+    ar0 = -r0
+ endif
+
+ if (R_0  >  0.d0) then
+    aR_0 = R_0
+ else
+    pint3D = -pint3D
+    aR_0 = -R_0
+ endif
+
+ int1 = full_integral_3D(d1, ar0, aR_0, hi)
+ int2 = full_integral_3D(d2, ar0, aR_0, hi)
+
+ if (int1 < 0.d0) int1 = 0.d0
+ if (int2 < 0.d0) int2 = 0.d0
+
+ if (d1*d2  >=  0) then
+    pint3D = pint3D*(int1 + int2)
+    if (int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
+ elseif (abs(d1)  <  abs(d2)) then
+    pint3D = pint3D*(int2 - int1)
+    if (int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
+ else
+    pint3D = pint3D*(int1 - int2)
+    if (int1 - int2 < 0.d0) print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
+ endif
+
+end function pint3D
+
+real(doub_prec) function full_integral_3D(d, r0, R_0, h)
+
+ real(doub_prec), intent(in) :: d, r0, R_0, h
+ real(doub_prec) :: B1, B2, B3, a, logs, u, u2, h2
+ real(doub_prec), parameter :: pi = 4.*atan(1.)
+ real(doub_prec) :: tanphi, phi, a2, cosp, cosp2, mu2, mu2_1, r0h, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
+ real(doub_prec) :: r2, R_, linedist2, phi1, phi2, cosphi, sinphi
+ real(doub_prec) :: I0, I1, I_1, I_2, I_3, I_4, I_5
+ real(doub_prec) :: J_1, J_2, J_3, J_4, J_5
+ real(doub_prec) :: D1, D2, D3
+
+ r0h = r0/h
+ tanphi = abs(d)/R_0
+ phi = atan(tanphi)
+
+ if (abs(r0h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
+    full_integral_3D = 0.0
+    return
+ endif
+
+ h2 = h*h
+ r03 = r0*r0*r0
+ r0h2 = r0h*r0h
+ r0h3 = r0h2*r0h
+ r0h_2 = 1./r0h2
+ r0h_3 = 1./r0h3
+
+ if (r0 >= 2.0*h) then
+    B3 = 0.25*h2*h
+ elseif (r0 > h) then
+    B3 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3+ 8./5.*r0h_2)
+    B2 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3)
+ else
+    B3 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 + 7./5.*r0h_2)
+    B2 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 - 1./5.*r0h_2)
+    B1 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3)
+ endif
+
+ a = R_0/r0
+ a2 = a*a
+
+ linedist2 = (r0*r0 + R_0*R_0)
+ cosphi = cos(phi)
+ R_ = R_0/cosphi
+ r2 = (r0*r0 + R_*R_)
+
+ D2 = 0.0
+ D3 = 0.0
+
+ if (linedist2 < h2) then
+    !////// phi1 business /////
+    cosp = R_0/sqrt(h2-r0*r0)
+    call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
+
+    D2 = -1./6.*I_2 + 0.25*(r0h) *I_3 - 0.15*r0h2 *I_4 + 1./30.*r0h3 *I_5 - 1./60. *r0h_3 *I1 + (B1-B2)/r03 *I0
+ endif
+ if (linedist2 < 4.*h2) then
+    !////// phi2 business /////
+    cosp = R_0/sqrt(4.0*h2-r0*r0)
+    call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
+
+    D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
+ endif
+
+ !//////////////////////////////
+ call get_I_terms(cosphi,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi=phi,tanphi=tanphi)
+
+ if (r2 < h2) then
+    full_integral_3D = r0h3/pi  * (1./6. *I_2 - 3./40.*r0h2 *I_4 + 1./40.*r0h3 *I_5 + B1/r03 *I0)
+ elseif (r2 < 4.*h2) then
+    full_integral_3D=  r0h3/pi  * (0.25 * (4./3. *I_2 - (r0/h) *I_3 + 0.3*r0h2 *I_4 - &
+    &   1./30.*r0h3 *I_5 + 1./15. *r0h_3 *I1) + B2/r03 *I0 + D2)
+ else
+    full_integral_3D = r0h3/pi  * (-0.25*r0h_3 *I1 + B3/r03 *I0 + D3)
+ endif
+
+end function full_integral_3D
+
+subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi,tanphi)
+ real(doub_prec), intent(in) :: cosp,a2,a
+ real(doub_prec), intent(out) :: I0,I1,I_2,I_3,I_4,I_5
+ real(doub_prec), intent(in), optional :: phi,tanphi
+ real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,fac
+
+ cosp2 = cosp*cosp
+ if (present(phi)) then
+    p = phi
+    tanp = tanphi
+ else
+    p = acos(cosp)
+    tanp = sqrt(1.-cosp2)/cosp ! tan(p)
+ endif
+
+ mu2_1 = 1. / (1. + cosp2/a2)
+ I0  = p
+ I_2 = p +    a2 * tanp
+ I_4 = p + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
+
+ u2 = (1.-cosp2)*mu2_1
+ u = sqrt(u2)
+ logs = log((1.+u)/(1.-u))
+ I1 = atan2(u,a)
+
+ fac = 1./(1.-u2)
+ I_1 = 0.5*a*logs + I1
+ I_3 = I_1 + a*0.25*(1.+a2)*(2.*u*fac + logs)
+ I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)*fac*fac + 3.*logs)
+
+end subroutine get_I_terms
 
 end module kernels

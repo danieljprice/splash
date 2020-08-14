@@ -31,7 +31,7 @@ module dataread_utils
 
  public :: check_range,count_types
  integer, private :: iverbose_level = 1 ! can be changed
- 
+
  private
 
  ! generic interface check_range
@@ -57,7 +57,7 @@ end subroutine set_check_range_verboseness
 subroutine handle_range_error(tag,string,ierror)
  character(len=*), intent(in)    :: tag,string
  integer,          intent(inout) :: ierror
- 
+
  if (iverbose_level > 0) then
     print "(1x,5a)",'ERROR: ',trim(tag),' value of ',trim(string),' out of range'
  endif
@@ -75,7 +75,7 @@ subroutine check_range_int(ivar,tag,min,max,err)
  integer,          intent(out), optional :: err
  integer :: ierror
  character(len=12) :: string
- 
+
  write(string,"(i12)") ivar
  string = trim(adjustl(string))
 
@@ -131,11 +131,11 @@ subroutine check_range_double(dvar,tag,min,max,err)
  integer,          intent(out), optional :: err
  integer :: ierror
  character(len=12) :: string
- 
+
  write(string,"(1pg12.3)") dvar
  string = trim(adjustl(string))
- 
- ierror = 0 
+
+ ierror = 0
  if (present(min)) then
     if (dvar < min) call handle_range_error(tag,string,ierror)
  endif
@@ -158,10 +158,10 @@ subroutine count_types(np,iamtype,noftype,nunknown)
  integer :: i,itype
 
  noftype(:) = 0
- if (size(iamtype).ge.np) then
+ if (size(iamtype) >= np) then
     do i=1,np
        itype = iamtype(i)
-       if (itype.gt.0 .and. itype.le.size(noftype)) then
+       if (itype > 0 .and. itype <= size(noftype)) then
           noftype(itype) = noftype(itype) + 1
        else
           nunknown = nunknown + 1

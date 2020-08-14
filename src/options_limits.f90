@@ -36,18 +36,18 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_limits
-  use multiplot, only:itrans
-  implicit none
+ use multiplot, only:itrans
+ implicit none
 
-  iadapt           = .true.  ! adaptive plot limits
-  iadaptcoords     = .false.
-  adjustlimitstodevice = .false.
-  scalemax         = 1.0     ! for rescaling adaptive limits
-  itrans(:)        = 0       ! no transformations (log10 etc)
-  xminoffset_track = 0.5     ! offset of limits from tracked particle
-  xmaxoffset_track = 0.5     !
+ iadapt           = .true.  ! adaptive plot limits
+ iadaptcoords     = .false.
+ adjustlimitstodevice = .false.
+ scalemax         = 1.0     ! for rescaling adaptive limits
+ itrans(:)        = 0       ! no transformations (log10 etc)
+ xminoffset_track = 0.5     ! offset of limits from tracked particle
+ xmaxoffset_track = 0.5     !
 
-  return
+ return
 end subroutine defaults_set_limits
 
 !----------------------------------------------------------------------
@@ -88,7 +88,7 @@ subroutine submenu_limits(ichoose)
  endif
  write(pstring,"(i12)") itrackoffset
  pstring = adjustl(pstring)
- if (itracktype.gt.0) then
+ if (itracktype > 0) then
     write(pstring2,"(i12)") itracktype
     pstring=trim(adjustl(pstring2))//':'//trim(pstring)
  else
@@ -105,7 +105,7 @@ subroutine submenu_limits(ichoose)
         ' 5) apply log/other transformations to columns ',/, &
         ' 6) reset limits for all columns  ',/, &
         ' 7) use subset of data restricted by parameter range     ( ',a,')')
- if (iaction.le.0 .or. iaction.gt.7) then
+ if (iaction <= 0 .or. iaction > 7) then
     print 10,trim(string),trim(string2),trim(pstring),&
              print_logical(adjustlimitstodevice),print_logical(anyrangeset())
     call prompt('enter option ',iaction,0,7)
@@ -128,7 +128,7 @@ subroutine submenu_limits(ichoose)
     call prompt('Adjust limits to aspect ratio of device?',adjustlimitstodevice)
     print "(a)",'adaptive plot limits = '//print_logical(iadapt)// &
                 ' on coords = '//print_logical(iadaptcoords)
-    !if (nstepsperpage.gt.1 .and. (iadapt .or. iadaptcoords)) then
+    !if (nstepsperpage > 1 .and. (iadapt .or. iadaptcoords)) then
     !   print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
     !endif
 !------------------------------------------------------------------------
@@ -137,17 +137,17 @@ subroutine submenu_limits(ichoose)
 !+ Manually sets the plot limits for each column of data
 
     ipick = 1
-    do while (ipick.gt.0)
+    do while (ipick > 0)
        ipick = 0
        !write(*,*)
        call prompt('Enter column number to set limits (0=quit)',ipick,0,numplot)
-       if (ipick.gt.0) then
+       if (ipick > 0) then
           call prompt(trim(label(ipick))//' min ',lim(ipick,1))
           call prompt(trim(label(ipick))//' max ',lim(ipick,2))
           print*,'>> '//trim(label(ipick))//' limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
           if (is_coord(ipick,ndim)) then
              iadaptcoords = .false.
-          elseif (ipick.le.numplot) then
+          elseif (ipick <= numplot) then
              iadapt = .false.
           endif
        endif
@@ -164,22 +164,22 @@ subroutine submenu_limits(ichoose)
     itracktypeprev   = itracktype
     print "(a,/,a,/)",'To track particle 4923, enter 4923', &
                       'To track the 43rd particle of type 3, enter 3:43'
-    
+
     call prompt('Enter particle to track: ',pstring,noblank=.true.)
     call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
-    do while (ierr.ne.0 .or. itracktype.lt.0 .or. itracktype.gt.ntypes .or. itrackoffset.lt.0)
-       if (itracktype.lt.0 .or. itracktype.gt.ntypes) print "(a)",'invalid particle type'
-       if (itrackoffset.lt.0)                         print "(a)",'invalid particle index'
-       if (ierr.ne.0)                                 print "(a)",'syntax error in string'
+    do while (ierr /= 0 .or. itracktype < 0 .or. itracktype > ntypes .or. itrackoffset < 0)
+       if (itracktype < 0 .or. itracktype > ntypes) print "(a)",'invalid particle type'
+       if (itrackoffset < 0)                         print "(a)",'invalid particle index'
+       if (ierr /= 0)                                 print "(a)",'syntax error in string'
        pstring = '0'
        call prompt('Enter particle to track: ',pstring,noblank=.true.)
        call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
     enddo
-    if (itracktype.gt.0) then
+    if (itracktype > 0) then
        write(string,"(i12)") itrackoffset
        string = adjustl(string)
        print "(a)",'=> tracking '//trim(labeltype(itracktype))//' particle #'//trim(string)
-    elseif (itrackoffset.gt.0) then
+    elseif (itrackoffset > 0) then
        write(string,"(i12)") itrackoffset
        string = adjustl(string)
        print "(a)",'=> tracking particle '//trim(string)
@@ -187,16 +187,16 @@ subroutine submenu_limits(ichoose)
        print "(a)",'=> particle tracking limits OFF'
     endif
 
-    if (itrackoffset.gt.0) then
+    if (itrackoffset > 0) then
        do i=1,ndim
           call prompt('Enter offset for '//trim(label(ix(i)))//'min:', &
                       xminoffset_track(i))
           call prompt('Enter offset for '//trim(label(ix(i)))//'max :', &
                       xmaxoffset_track(i))
        enddo
-       if ((itrackoffset.ne.itrackoffsetprev .or. itracktype.ne.itracktypeprev) &
-           .and. iCalcQuantities .and. irad.gt.0 .and. irad.le.numplot) then
-       !--radius calculation is relative to tracked particle
+       if ((itrackoffset /= itrackoffsetprev .or. itracktype /= itracktypeprev) &
+           .and. iCalcQuantities .and. irad > 0 .and. irad <= numplot) then
+          !--radius calculation is relative to tracked particle
           print "(a)",' recalculating radius relative to tracked particle '
           if (DataIsBuffered) then
              call calc_quantities(1,nsteps)
@@ -226,74 +226,74 @@ subroutine submenu_limits(ichoose)
 !       call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
 !    endif
 !------------------------------------------------------------------------
-  case(5)
+ case(5)
 
 !+ Applies log, inverse and other transformations to data columns
 
-     index = 1
-     do i=1,ntrans
-        write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
-        index = len_trim(transprompt) + 1
-     enddo
+    index = 1
+    do i=1,ntrans
+       write(transprompt(index:),"(1x,i1,'=',a,',')") i,trim(transform_label('x',i))
+       index = len_trim(transprompt) + 1
+    enddo
 
-     ipick = 1
-     do while (ipick.gt.0 .and. ipick.le.numplot)
-        ipick = 0
-        call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
-        if (ipick.le.numplot .and. ipick.ne.0) then
-           print "(a)", trim(transprompt)
-           if (ipick.lt.0) then
-              ipick = 0
-              call prompt('Which transform (or multiple e.g. 321)?',ipick,0)
-              itrans(:) = ipick
-              ipick = -99
-           else
-              call prompt('Which transform (or multiple e.g. 321)?',itrans(ipick),0)
-           endif
-        endif
-     enddo
-     return
+    ipick = 1
+    do while (ipick > 0 .and. ipick <= numplot)
+       ipick = 0
+       call prompt('Enter column to apply transform (0=quit,-1=all) ',ipick)
+       if (ipick <= numplot .and. ipick /= 0) then
+          print "(a)", trim(transprompt)
+          if (ipick < 0) then
+             ipick = 0
+             call prompt('Which transform (or multiple e.g. 321)?',ipick,0)
+             itrans(:) = ipick
+             ipick = -99
+          else
+             call prompt('Which transform (or multiple e.g. 321)?',itrans(ipick),0)
+          endif
+       endif
+    enddo
+    return
 !------------------------------------------------------------------------
-  case(6)
+ case(6)
 
 !+ Resets plot limits using all data currently in memory
 !+ Note that these limits will only apply when fixed limits are used
 
-     if (ivegotdata) then
-        if (DataIsBuffered) then
-           call set_limits(1,nsteps,1,ndataplots)
-        else
-           call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
-        endif
-     else
-        print*,'no data with which to set limits!!'
-     endif
+    if (ivegotdata) then
+       if (DataIsBuffered) then
+          call set_limits(1,nsteps,1,ndataplots)
+       else
+          call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
+       endif
+    else
+       print*,'no data with which to set limits!!'
+    endif
 !------------------------------------------------------------------------
  case(7)
 
 !+ Plot subset of data by restricting parameter range
 
     ipick = 1
-    do while (ipick.gt.0)
+    do while (ipick > 0)
        ipick = 0
        call print_rangeinfo()
 
        call prompt('Enter column to use to restrict data set (-1=none/unset all,0=quit)',ipick,-1,ndataplots)
-       if (ipick.gt.0) then
+       if (ipick > 0) then
           print*,'current plot limits for '//trim(label(ipick))//': (min,max) = ',lim(ipick,1),lim(ipick,2)
           call prompt(trim(label(ipick))//' min value ',range(ipick,1))
           call prompt(trim(label(ipick))//' max value ',range(ipick,2),range(ipick,1))
           if (.not.rangeset(ipick)) then
              print*,'>> min=max: no restriction set'
           endif
-       elseif (ipick.eq.-1) then
+       elseif (ipick==-1) then
           print "(a)",'>> removing all range restrictions on data set'
           range(:,:) = 0.
        endif
        write(*,*)
     enddo
     return
-  end select
+ end select
 
  return
 end subroutine submenu_limits
@@ -305,13 +305,13 @@ subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
  integer :: ic
 
  ic = index(string,':')
- if (ic.gt.0) then
+ if (ic > 0) then
     read(string(1:ic-1),*,iostat=ierr) itracktype
     read(string(ic+1:),*,iostat=ierr) itrackpart
-    if (itrackpart.eq.0) itracktype = 0
+    if (itrackpart==0) itracktype = 0
  else
     itracktype = 0
-    read(string,*,iostat=ierr) itrackpart 
+    read(string,*,iostat=ierr) itrackpart
  endif
 
 end subroutine get_itrackpart

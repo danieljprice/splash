@@ -39,25 +39,25 @@
 !-------------------------------------------------------------------------
 
 subroutine read_data(rootname,istepstart,ipos,nstepsread)
-  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
-  use params
-  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
-  use settings_page, only:legendtext
-  use mem_allocation, only:alloc
-  use labels, only:ih,irho
-  use system_utils, only:renvironment,lenvironment
-  implicit none
-  integer, intent(in) :: istepstart,ipos
-  integer, intent(out) :: nstepsread
-  character(len=*), intent(in) :: rootname
-  character(len=len(rootname)+10) :: datfile
+ use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+ use params
+ use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
+ use settings_page, only:legendtext
+ use mem_allocation, only:alloc
+ use labels, only:ih,irho
+ use system_utils, only:renvironment,lenvironment
+ implicit none
+ integer, intent(in) :: istepstart,ipos
+ integer, intent(out) :: nstepsread
+ character(len=*), intent(in) :: rootname
+ character(len=len(rootname)+10) :: datfile
 !  integer, dimension(maxparttypes) :: npartoftypei,Nall
 !  integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,ierr
+ integer :: i,j,ierr
 !  integer :: index1,index2,indexstart,indexend,Nmassesdumped
-  integer :: ncolstep,npart_max,nstep_max
+ integer :: ncolstep,npart_max,nstep_max
 !  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
-  logical :: iexist,reallocate
+ logical :: iexist,reallocate
 !   real(doub_prec) :: timetemp,ztemp, dummy
 !   real(doub_prec), dimension(6) :: massoftypei
 !   real, dimension(:), allocatable :: dattemp1
@@ -70,142 +70,142 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 
 !!!!!!!!!!!!!!!!
 
-  integer         :: proc, nread
+ integer         :: proc, nread
 
-  integer         :: myproc, nproc, npx, npy, npz;
-  integer         :: global_n, local_n, ndim_data
-  real(sing_prec) :: t_global, dt_global
-  integer         :: iteration
-  real(sing_prec) :: cfl_no, gamma_gas
-  integer         :: periodic_flag
-  real(sing_prec) :: xmin, ymin, zmin, xmax, ymax, zmax
+ integer         :: myproc, nproc, npx, npy, npz;
+ integer         :: global_n, local_n, ndim_data
+ real(sing_prec) :: t_global, dt_global
+ integer         :: iteration
+ real(sing_prec) :: cfl_no, gamma_gas
+ integer         :: periodic_flag
+ real(sing_prec) :: xmin, ymin, zmin, xmax, ymax, zmax
 
-  integer         :: idx
-  real(sing_prec) :: posx, posy, posz, pvelx, pvely, pvelz
-  real(sing_prec) :: dens, ethm, pres, pmag, vabs
-  real(sing_prec) :: velx, vely, velz, Bx, By, Bz
-  real(sing_prec) :: hsml, wght, Bpsi, divB, v1, v2, v3, v4
+ integer         :: idx
+ real(sing_prec) :: posx, posy, posz, pvelx, pvely, pvelz
+ real(sing_prec) :: dens, ethm, pres, pmag, vabs
+ real(sing_prec) :: velx, vely, velz, Bx, By, Bz
+ real(sing_prec) :: hsml, wght, Bpsi, divB, v1, v2, v3, v4
 
 
 
 !!!!!!!!!!!!!!!!!!
 
-  nstepsread = 0
-  npart_max = maxpart
+ nstepsread = 0
+ npart_max = maxpart
 
-  if (len_trim(rootname).gt.0) then
-     datfile = trim(rootname)
-  else
-     print*,' **** no data read **** '
-     return
-  endif
+ if (len_trim(rootname) > 0) then
+    datfile = trim(rootname)
+ else
+    print*,' **** no data read **** '
+    return
+ endif
 
 !
 !--check if first data file exists
 !
-  inquire(file=datfile,exist=iexist)
-  if (.not.iexist) then
-     print "(a)",' *** error: '//trim(datfile)//': file not found ***'
-     STOP
-  endif
+ inquire(file=datfile,exist=iexist)
+ if (.not.iexist) then
+    print "(a)",' *** error: '//trim(datfile)//': file not found ***'
+    stop
+ endif
 
 !
 !--set parameters which do not vary between timesteps
 !
-  ndim = 3
-  ndimV = 3
+ ndim = 3
+ ndimV = 3
 
 !
 !--read data from snapshots
 !
-  i = istepstart
+ i = istepstart
 
-  write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
+ write(*,"(23('-'),1x,a,1x,23('-'))") trim(datfile)
 
-  !
-  !--open data file and read data
-  !
-  open(11,iostat=ierr,file=datfile,status='old', form='unformatted')
-  if (ierr /= 0) then
-     print "(a)", '*** ERROR OPENING FILE ***'
-     STOP
-  endif
+ !
+ !--open data file and read data
+ !
+ open(11,iostat=ierr,file=datfile,status='old', form='unformatted')
+ if (ierr /= 0) then
+    print "(a)", '*** ERROR OPENING FILE ***'
+    stop
+ endif
 
-  !
-  !--read header for this timestep
-  !
-  read(11, iostat=ierr)  myproc, nproc, npx, npy, npz, &
+ !
+ !--read header for this timestep
+ !
+ read(11, iostat=ierr)  myproc, nproc, npx, npy, npz, &
        global_n, local_n, ndim_data, t_global, dt_global, iteration, &
        cfl_no, gamma_gas, periodic_flag, &
        xmin, ymin, zmin, xmax, ymax, zmax
-  print *, global_n
-  print *, local_n
-  print *, nproc
-  if (ierr /= 0) then
-     print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
-     STOP
-  endif
+ print *, global_n
+ print *, local_n
+ print *, nproc
+ if (ierr /= 0) then
+    print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
+    stop
+ endif
 
 !  t_global = t_global  - 0.13
 
-  iformat = 0
-  ncolstep = 30
-  ncolumns = ncolstep
+ iformat = 0
+ ncolstep = 30
+ ncolumns = ncolstep
 
-  print*,'nproc            : ',nproc
-  print*,'npx, npy, npz    : ',npx, npy, npz
-  print*,'time             : ',t_global
-  print*,'gamma_gas        : ',gamma_gas
-  print*,'N_total          : ',global_n
-  print*,'N data columns   : ',ncolstep
+ print*,'nproc            : ',nproc
+ print*,'npx, npy, npz    : ',npx, npy, npz
+ print*,'time             : ',t_global
+ print*,'gamma_gas        : ',gamma_gas
+ print*,'N_total          : ',global_n
+ print*,'N data columns   : ',ncolstep
 
-  !
-  !--if successfully read header, increment the nstepsread counter
-  !
-  nstepsread = nstepsread + 1
+ !
+ !--if successfully read header, increment the nstepsread counter
+ !
+ nstepsread = nstepsread + 1
 
-  !
-  !--now read data
-  !
-  reallocate = .false.
-  npart_max = maxpart
-  nstep_max = max(maxstep,1)
+ !
+ !--now read data
+ !
+ reallocate = .false.
+ npart_max = maxpart
+ nstep_max = max(maxstep,1)
 
-  if (global_n .gt. maxpart) then
-     reallocate = .true.
-     if (maxpart.gt.0) then
-        ! if we are reallocating, try not to do it again
-        npart_max = int(1.1*global_n)
-     else
-        ! if first time, save on memory
-        npart_max = int(global_n)
-     endif
-  endif
-  if (i.ge.maxstep .and. i.ne.1) then
-     nstep_max = i + max(10,INT(0.1*nstep_max))
-     reallocate = .true.
-  endif
+ if (global_n  >  maxpart) then
+    reallocate = .true.
+    if (maxpart > 0) then
+       ! if we are reallocating, try not to do it again
+       npart_max = int(1.1*global_n)
+    else
+       ! if first time, save on memory
+       npart_max = int(global_n)
+    endif
+ endif
+ if (i >= maxstep .and. i /= 1) then
+    nstep_max = i + max(10,INT(0.1*nstep_max))
+    reallocate = .true.
+ endif
 
-  !
-  !--reallocate memory for main data array
-  !
-  if (reallocate .or. .not.(allocated(dat))) then
-     call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
-  endif
+ !
+ !--reallocate memory for main data array
+ !
+ if (reallocate .or. .not.(allocated(dat))) then
+    call alloc(npart_max,nstep_max,max(ncolstep+ncalc,maxcol))
+ endif
 
-  npartoftype(:,i) = 0
-  npartoftype(1,i) = global_n
+ npartoftype(:,i) = 0
+ npartoftype(1,i) = global_n
 
-  !--use this line for code time
-  time(i) = real(t_global)
+ !--use this line for code time
+ time(i) = real(t_global)
 
-  !
-  !--read particle data
-  !
-  nread = 0
-  do proc = 1, nproc
-     do j = 1, local_n
-        read(11, iostat=ierr) &
+ !
+ !--read particle data
+ !
+ nread = 0
+ do proc = 1, nproc
+    do j = 1, local_n
+       read(11, iostat=ierr) &
              idx, &
              posx, posy, posz, pvelx, pvely, pvelz, &
              dens, ethm, pres, pmag,  vabs, &
@@ -214,94 +214,94 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
              v1, v2, v3, v4
 !        if (pres > 10) then
 !           print *, posx, posy, posz
-!        end if
-        if (ierr /= 0) then
-           print *, '*** ERROR READING PARTICLE', i, 'PROC:', myproc
-           STOP
-        endif
-        dat(j + nread, 1, i) = posx
-        dat(j + nread, 2, i) = posy
-        dat(j + nread, 3, i) = posz
-        dat(j + nread, 4, i) = velx
-        dat(j + nread, 5, i) = vely
-        dat(j + nread, 6, i) = velz
+!        endif
+       if (ierr /= 0) then
+          print *, '*** ERROR READING PARTICLE', i, 'PROC:', myproc
+          stop
+       endif
+       dat(j + nread, 1, i) = posx
+       dat(j + nread, 2, i) = posy
+       dat(j + nread, 3, i) = posz
+       dat(j + nread, 4, i) = velx
+       dat(j + nread, 5, i) = vely
+       dat(j + nread, 6, i) = velz
 
-        dat(j + nread, 7,  i) = dens
-        dat(j + nread, 8,  i) = pres
-        dat(j + nread, 9,  i) = pmag
-        dat(j + nread, 10, i) = vabs
+       dat(j + nread, 7,  i) = dens
+       dat(j + nread, 8,  i) = pres
+       dat(j + nread, 9,  i) = pmag
+       dat(j + nread, 10, i) = vabs
 
-        dat(j + nread, 11, i) = Bx
-        dat(j + nread, 12, i) = By
-        dat(j + nread, 13, i) = Bz
-        if (pmag > 0) then
-           dat(j + nread, 14, i) = abs(divB/sqrt(pmag*2.0))
-        else
-           dat(j + nread, 14, i) = 0.0;
-        end  if
+       dat(j + nread, 11, i) = Bx
+       dat(j + nread, 12, i) = By
+       dat(j + nread, 13, i) = Bz
+       if (pmag > 0) then
+          dat(j + nread, 14, i) = abs(divB/sqrt(pmag*2.0))
+       else
+          dat(j + nread, 14, i) = 0.0;
+       end  if
 
-        dat(j + nread, 15, i) = Bpsi
-        dat(j + nread, 16, i) = hsml*2
-        dat(j + nread, 17, i) = wght
+       dat(j + nread, 15, i) = Bpsi
+       dat(j + nread, 16, i) = hsml*2
+       dat(j + nread, 17, i) = wght
 
-        dat(j + nread, 18, i) = pvelx
-        dat(j + nread, 19, i) = pvely
-        dat(j + nread, 20, i) = pvelz
-        dat(j + nread, 21, i) = abs(divB)
+       dat(j + nread, 18, i) = pvelx
+       dat(j + nread, 19, i) = pvely
+       dat(j + nread, 20, i) = pvelz
+       dat(j + nread, 21, i) = abs(divB)
 
-        dat(j + nread, 22, i) = dens*wght
-        dat(j + nread, 23, i) = pres/dens/(gamma_gas - 1.0)   ! uthermal
-        dat(j + nread, 24, i) = sqrt(pmag*2.0)
-        dat(j + nread, 25, i) = pres + pmag
-        dat(j + nread, 26, i) = v1;
-        dat(j + nread, 27, i) = v2;
-        dat(j + nread, 28, i) = v3;
-        dat(j + nread, 29, i) = v4;
-        dat(j + nread, 30, i) = idx;
+       dat(j + nread, 22, i) = dens*wght
+       dat(j + nread, 23, i) = pres/dens/(gamma_gas - 1.0)   ! uthermal
+       dat(j + nread, 24, i) = sqrt(pmag*2.0)
+       dat(j + nread, 25, i) = pres + pmag
+       dat(j + nread, 26, i) = v1;
+       dat(j + nread, 27, i) = v2;
+       dat(j + nread, 28, i) = v3;
+       dat(j + nread, 29, i) = v4;
+       dat(j + nread, 30, i) = idx;
 
-     end do
-     nread = nread + local_n;
+    enddo
+    nread = nread + local_n;
 
-     if (proc < nproc) then
-        read(11, iostat=ierr) myproc, nproc, npx, npy, npz, &
+    if (proc < nproc) then
+       read(11, iostat=ierr) myproc, nproc, npx, npy, npz, &
              global_n, local_n, ndim_data, t_global, dt_global, iteration, &
              cfl_no, gamma_gas, periodic_flag, &
              xmin, ymin, zmin, xmax, ymax, zmax
-        if (ierr /= 0) then
-           print *, '*** ERROR READING TIMESTEP HEADER ***, proc=', proc
-           STOP
-        endif
-     end if
-  end do
+       if (ierr /= 0) then
+          print *, '*** ERROR READING TIMESTEP HEADER ***, proc=', proc
+          stop
+       endif
+    endif
+ enddo
 
-  if (nread .ne. global_n) then
-     print *, 'nread=     ', nread
-     print *, 'global_n=  ', global_n
-     print "(a)", ' *** SOMETHING WENT WRONG ***'
-     STOP
-  end if
+ if (nread  /=  global_n) then
+    print *, 'nread=     ', nread
+    print *, 'global_n=  ', global_n
+    print "(a)", ' *** SOMETHING WENT WRONG ***'
+    stop
+ endif
 
 !!!!!!!!!!!!!!!!!!!!!
-  gamma = gamma_gas
+ gamma = gamma_gas
 
 
-  irho = 7
-  ih   = 16
+ irho = 7
+ ih   = 16
 
 !
 !--set flag to indicate that only part of this file has been read
 !
-  if (.not.all(required(1:ncolstep))) ipartialread = .true.
+ if (.not.all(required(1:ncolstep))) ipartialread = .true.
 
 !
 !--close data file and return
 !
-  close(unit=11)
+ close(unit=11)
 
-  if (nstepsread.gt.0) then
-     print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
-  endif
-  return
+ if (nstepsread > 0) then
+    print*,'>> last step ntot =',sum(npartoftype(:,istepstart+nstepsread-1))
+ endif
+ return
 
 end subroutine read_data
 
@@ -310,85 +310,85 @@ end subroutine read_data
 !!------------------------------------------------------------
 
 subroutine set_labels
-  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm, idivb, iBfirst
-  use params
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
-  use geometry, only:labelcoord
-  use system_utils, only:renvironment
-  implicit none
-  integer :: i
+ use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm, idivb, iBfirst
+ use params
+ use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
+ use geometry, only:labelcoord
+ use system_utils, only:renvironment
+ implicit none
+ integer :: i
 
-  if (ndim.le.0 .or. ndim.gt.3) then
-     print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
-     return
-  endif
-  if (ndimV.le.0 .or. ndimV.gt.3) then
-     print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
-     return
-  endif
+ if (ndim <= 0 .or. ndim > 3) then
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    return
+ endif
+ if (ndimV <= 0 .or. ndimV > 3) then
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    return
+ endif
 
-  do i=1,ndim
-     ix(i) = i
-  enddo
+ do i=1,ndim
+    ix(i) = i
+ enddo
 
-  ivx = 4
-  irho = 7
-  iutherm = 23
-  ipr =  8
-  ih  = 16
-  iBfirst = 11
-  ipmass = 22
-  idivb  = 14
+ ivx = 4
+ irho = 7
+ iutherm = 23
+ ipr =  8
+ ih  = 16
+ iBfirst = 11
+ ipmass = 22
+ idivb  = 14
 
-  label(ix(1:ndim)) = labelcoord(1:ndim,1)
-  label(irho) = 'density'
-  label(iutherm) = 'cs'
-  label(ih) = 'h'
-  label(ipmass) = 'particle mass'
-  label(ipr) = 'pressure'
-  label(9)  = 'Pmag'
-  label(10) = 'vabs'
-  label(15) = "\gpsi"
-  label(18) = 'pvelx'
-  label(19) = 'pvely'
-  label(20) = 'pvelz'
-  label(11) = 'Bx'
-  label(12) = 'By'
-  label(13) = 'Bz'
-  label(14) = 'divB'
-  label(24) = '|B|'
-  label(25) = 'Ptot'
-  label(26) = 'scal0'
-  label(27) = 'scal1'
-  label(28) = 'scal2'
-  label(29) = 'scal3'
-  label(30) = 'idx'
-
-
-  !
-  !--set labels for vector quantities
-  !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
-  !--mag field
-  if (iBfirst.gt.0) then
-     iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-     labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-     do i=1,ndimV
-        label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-     enddo
-  endif
-  !
-  !--set labels for each particle type
-  !
-  ntypes = 1
-  labeltype(1) = 'gas'
-  UseTypeInRenderings(1) = .true.
+ label(ix(1:ndim)) = labelcoord(1:ndim,1)
+ label(irho) = 'density'
+ label(iutherm) = 'cs'
+ label(ih) = 'h'
+ label(ipmass) = 'particle mass'
+ label(ipr) = 'pressure'
+ label(9)  = 'Pmag'
+ label(10) = 'vabs'
+ label(15) = "\gpsi"
+ label(18) = 'pvelx'
+ label(19) = 'pvely'
+ label(20) = 'pvelz'
+ label(11) = 'Bx'
+ label(12) = 'By'
+ label(13) = 'Bz'
+ label(14) = 'divB'
+ label(24) = '|B|'
+ label(25) = 'Ptot'
+ label(26) = 'scal0'
+ label(27) = 'scal1'
+ label(28) = 'scal2'
+ label(29) = 'scal3'
+ label(30) = 'idx'
 
 
+ !
+ !--set labels for vector quantities
+ !
+ iamvec(ivx:ivx+ndimV-1) = ivx
+ labelvec(ivx:ivx+ndimV-1) = 'v'
+ do i=1,ndimV
+    label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
+ enddo
+ !--mag field
+ if (iBfirst > 0) then
+    iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
+    labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
+    do i=1,ndimV
+       label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
+    enddo
+ endif
+ !
+ !--set labels for each particle type
+ !
+ ntypes = 1
+ labeltype(1) = 'gas'
+ UseTypeInRenderings(1) = .true.
 
-  return
+
+
+ return
 end subroutine set_labels

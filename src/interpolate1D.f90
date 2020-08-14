@@ -67,96 +67,96 @@ contains
 subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      xmin,datsmooth,npixx,pixwidth,normalise)
 
-  use kernels, only:cnormk1D,radkernel,wfunc
-  implicit none
-  integer, intent(in) :: npart,npixx
-  real, intent(in), dimension(npart) :: x,hh,weight,dat
-  integer, intent(in), dimension(npart) :: itype
-  real, intent(in) :: xmin,pixwidth
-  real, intent(out), dimension(npixx) :: datsmooth
-  logical, intent(in) :: normalise
-  real, dimension(npixx) :: datnorm
+ use kernels, only:cnormk1D,radkernel,wfunc
+ implicit none
+ integer, intent(in) :: npart,npixx
+ real, intent(in), dimension(npart) :: x,hh,weight,dat
+ integer, intent(in), dimension(npart) :: itype
+ real, intent(in) :: xmin,pixwidth
+ real, intent(out), dimension(npixx) :: datsmooth
+ logical, intent(in) :: normalise
+ real, dimension(npixx) :: datnorm
 
-  integer :: i,ipix,ipixmin,ipixmax
-  real :: hi,hi1,radkern,q2,wab,const
-  real :: term,termnorm,dx,xpix
+ integer :: i,ipix,ipixmin,ipixmax
+ real :: hi,hi1,radkern,q2,wab,const
+ real :: term,termnorm,dx,xpix
 
-  datsmooth = 0.
-  term = 0.
-  if (normalise) then
-     print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
-  else
-     print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
-  endif
-  if (pixwidth.le.0.) then
-     print*,'interpolate1D: error: pixel width <= 0'
-     return
-  endif
-  if (any(hh(1:npart).le.tiny(hh))) then
-     print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
-  endif
-  const = cnormk1D  ! normalisation constant
-  !
-  !--loop over particles
-  !
-  over_parts: do i=1,npart
-     !
-     !--skip particles with itype < 0
-     !
-     if (itype(i).lt.0) cycle over_parts
-     !
-     !--skip particles with zero weights
-     !
-     termnorm = const*weight(i)
-     if (termnorm.le.0.) cycle over_parts
-     !
-     !--skip particles with wrong h's
-     !
-     hi = hh(i)
-     if (hi.le.tiny(hi)) cycle over_parts
-     !
-     !--set kernel related quantities
-     !
-     hi1 = 1./hi
-     radkern = radkernel*hi   ! radius of the smoothing kernel
-     term = termnorm*dat(i)
-     !
-     !--for each particle work out which pixels it contributes to
-     !
-     ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-     ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+ datsmooth = 0.
+ term = 0.
+ if (normalise) then
+    print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+ else
+    print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+ endif
+ if (pixwidth <= 0.) then
+    print*,'interpolate1D: error: pixel width <= 0'
+    return
+ endif
+ if (any(hh(1:npart) <= tiny(hh))) then
+    print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
+ endif
+ const = cnormk1D  ! normalisation constant
+ !
+ !--loop over particles
+ !
+ over_parts: do i=1,npart
+    !
+    !--skip particles with itype < 0
+    !
+    if (itype(i) < 0) cycle over_parts
+    !
+    !--skip particles with zero weights
+    !
+    termnorm = const*weight(i)
+    if (termnorm <= 0.) cycle over_parts
+    !
+    !--skip particles with wrong h's
+    !
+    hi = hh(i)
+    if (hi <= tiny(hi)) cycle over_parts
+    !
+    !--set kernel related quantities
+    !
+    hi1 = 1./hi
+    radkern = radkernel*hi   ! radius of the smoothing kernel
+    term = termnorm*dat(i)
+    !
+    !--for each particle work out which pixels it contributes to
+    !
+    ipixmin = int((x(i) - radkern - xmin)/pixwidth)
+    ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
 
-     if (ipixmin.lt.1) ipixmin = 1 ! make sure they only contribute
-     if (ipixmax.gt.npixx) ipixmax = npixx ! to pixels in the image
-     !
-     !--loop over pixels, adding the contribution from this particle
-     !
-     do ipix = ipixmin,ipixmax
-        xpix = xmin + (ipix-0.5)*pixwidth
-        dx = xpix - x(i)
-        q2 = dx*dx*hi1*hi1
-        !
-        !--SPH kernel - standard cubic spline
-        !
-        wab = wfunc(q2)
-        !
-        !--calculate data value at this pixel using the summation interpolant
-        !
-        datsmooth(ipix) = datsmooth(ipix) + term*wab
-        if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab
-     enddo
+    if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
+    if (ipixmax > npixx) ipixmax = npixx ! to pixels in the image
+    !
+    !--loop over pixels, adding the contribution from this particle
+    !
+    do ipix = ipixmin,ipixmax
+       xpix = xmin + (ipix-0.5)*pixwidth
+       dx = xpix - x(i)
+       q2 = dx*dx*hi1*hi1
+       !
+       !--SPH kernel - standard cubic spline
+       !
+       wab = wfunc(q2)
+       !
+       !--calculate data value at this pixel using the summation interpolant
+       !
+       datsmooth(ipix) = datsmooth(ipix) + term*wab
+       if (normalise) datnorm(ipix) = datnorm(ipix) + termnorm*wab
+    enddo
 
-  enddo over_parts
-  !
-  !--normalise dat array
-  !
-  if (normalise) then
-     where (datnorm > 0.)
-        datsmooth = datsmooth/datnorm
-     end where
-  endif
+ enddo over_parts
+ !
+ !--normalise dat array
+ !
+ if (normalise) then
+    where (datnorm > 0.)
+       datsmooth = datsmooth/datnorm
+    end where
+ endif
 
-  return
+ return
 
 end subroutine interpolate1D
 

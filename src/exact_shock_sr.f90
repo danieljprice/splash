@@ -44,63 +44,63 @@ module shock_sr
 contains
 
 subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
-  implicit none
-  integer, intent(in) :: iplot
-  integer, intent(out) :: ierr
-  real, intent(in) :: time,gamma
-  real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
-  real, dimension(:), intent(inout) :: xplot
-  real, dimension(size(xplot)), intent(out) :: yplot
-  double precision, dimension(size(xplot)) :: rad,dens,pr,vel,uu
-  double precision :: rhol,rhor,pl,prr,vl,vr,gam,t
+ implicit none
+ integer, intent(in) :: iplot
+ integer, intent(out) :: ierr
+ real, intent(in) :: time,gamma
+ real, intent(in) :: rho_L,rho_R,p_L,p_R,v_L,v_R
+ real, dimension(:), intent(inout) :: xplot
+ real, dimension(size(xplot)), intent(out) :: yplot
+ double precision, dimension(size(xplot)) :: rad,dens,pr,vel,uu
+ double precision :: rhol,rhor,pl,prr,vl,vr,gam,t
 
-  print*,'Plotting Special Relativistic Riemann solution at t = ',time,' gamma = ',gamma
+ print*,'Plotting Special Relativistic Riemann solution at t = ',time,' gamma = ',gamma
 !
 ! check for errors in input
 !
-  ierr = 0
-  if (rho_L.le.0. .or. rho_R.le.0.) then
-     print*,'error: rho <= 0 on input : ',rho_L,rho_R
-     ierr = 1
-     return
-  elseif (p_L .le.0. .or. p_R .le.0.) then
-     print*,'error: pr <= 0 on input ',p_L, p_R
-     ierr = 2
-     return
-  endif
+ ierr = 0
+ if (rho_L <= 0. .or. rho_R <= 0.) then
+    print*,'error: rho <= 0 on input : ',rho_L,rho_R
+    ierr = 1
+    return
+ elseif (p_L  <= 0. .or. p_R  <= 0.) then
+    print*,'error: pr <= 0 on input ',p_L, p_R
+    ierr = 2
+    return
+ endif
 
-  rhol = rho_L
-  rhor = rho_R
-  pl = p_L
-  prr = p_R
-  vl = v_L
-  vr = v_R
-  gam = gamma
-  t = time
-  rad(:) = xplot(:)
-  call riemann(size(xplot),rad,dens,pr,vel,uu,rhol,rhor,pl,prr,vl,vr,gam,t,0.0d0)
+ rhol = rho_L
+ rhor = rho_R
+ pl = p_L
+ prr = p_R
+ vl = v_L
+ vr = v_R
+ gam = gamma
+ t = time
+ rad(:) = xplot(:)
+ call riemann(size(xplot),rad,dens,pr,vel,uu,rhol,rhor,pl,prr,vl,vr,gam,t,0.0d0)
 
 !------------------------------------
 !  determine which solution to plot
 !------------------------------------
-  select case(iplot)
-  case(1)
-     yplot = real(dens)
-  case(2)
-     yplot = real(pr)
-  case(3)
-     yplot = real(vel)
-  case(4)
-     if (gamma.gt.1.0001) then
-        yplot = real(pr/((gamma-1.)*dens))
-     else
-        yplot = real(pr/dens)
-     endif
-  case(5) ! rho*
-     yplot = real(dens/dsqrt(1.d0-vel**2))
-  end select
+ select case(iplot)
+ case(1)
+    yplot = real(dens)
+ case(2)
+    yplot = real(pr)
+ case(3)
+    yplot = real(vel)
+ case(4)
+    if (gamma > 1.0001) then
+       yplot = real(pr/((gamma-1.)*dens))
+    else
+       yplot = real(pr/dens)
+    endif
+ case(5) ! rho*
+    yplot = real(dens/dsqrt(1.d0-vel**2))
+ end select
 
-  return
+ return
 end subroutine exact_shock_sr
 
 ! ------------
@@ -134,48 +134,48 @@ end subroutine exact_shock_sr
 !c    09/2008: reformatted in free-form and included in exact_shock_sr module
 !c
 
-  subroutine riemann(mn,rad,rhoa,pa,vela,ua,rholin,rhorin,plin,prin, &
+subroutine riemann(mn,rad,rhoa,pa,vela,ua,rholin,rhorin,plin,prin, &
                      vlin,vrin,gamin,tin,x0)
-  implicit none
+ implicit none
 
 ! -------
 ! common blocks
 ! -------
 
-  double precision rhol, pl, ul, hl, csl, vell, wl, &
+ double precision rhol, pl, ul, hl, csl, vell, wl, &
                    rhor, pr, ur, hr, csr, velr, wr
-  common /states/  rhol, pl, ul, hl, csl, vell, wl, &
+ common /states/  rhol, pl, ul, hl, csl, vell, wl, &
                    rhor, pr, ur, hr, csr, velr, wr
 
-  double precision rhols, uls, hls, csls, vells, vshockl
-  common /ls/      rhols, uls, hls, csls, vells, vshockl
+ double precision rhols, uls, hls, csls, vells, vshockl
+ common /ls/      rhols, uls, hls, csls, vells, vshockl
 
-  double precision rhors, urs, hrs, csrs, velrs, vshockr
-  common /rs/      rhors, urs, hrs, csrs, velrs, vshockr
+ double precision rhors, urs, hrs, csrs, velrs, vshockr
+ common /rs/      rhors, urs, hrs, csrs, velrs, vshockr
 
-  double precision gamma
-  common /adind/   gamma
+ double precision gamma
+ common /adind/   gamma
 
 ! ---------
 ! internal variables
 ! ---------
 
-  integer, intent(in) :: mn
-  integer         n, i, iloop
+ integer, intent(in) :: mn
+ integer         n, i, iloop
 !  parameter      (mn = 400)
 
-  double precision tol, pmin, pmax, dvel1, dvel2, check !, xmin
-  double precision, intent(in) :: rholin,rhorin,plin,prin,vlin,vrin,gamin,tin
+ double precision tol, pmin, pmax, dvel1, dvel2, check !, xmin
+ double precision, intent(in) :: rholin,rhorin,plin,prin,vlin,vrin,gamin,tin
 
-  double precision ps, vels
+ double precision ps, vels
 
-  double precision, intent(out) :: rhoa(mn), pa(mn), vela(mn), ua(mn)
+ double precision, intent(out) :: rhoa(mn), pa(mn), vela(mn), ua(mn)
 
-  double precision, intent(in) :: x0
-  double precision xi
+ double precision, intent(in) :: x0
+ double precision xi
 
-  double precision, intent(in) :: rad(mn)
-  double precision x1, x2, x3, x4, x5, t
+ double precision, intent(in) :: rad(mn)
+ double precision x1, x2, x3, x4, x5, t
 
 ! -------
 ! initial states
@@ -183,11 +183,11 @@ end subroutine exact_shock_sr
 
 !  write(*,*) ' adiabatic index of the gas: '
 ! read (*,*)   gamma
-  gamma = gamin
+ gamma = gamin
 
 !  write(*,*) ' time for the solution: '
 !  read (*,*)   t
-  t = tin
+ t = tin
 !  xmin = x0 - 0.5d0
 
 ! -----
@@ -201,13 +201,13 @@ end subroutine exact_shock_sr
 !  read (*,*) rhol
 !  write(*,*) '      flow velocity: '
 !  read (*,*) vell
-  pl = plin
-  rhol = rholin
-  vell = vlin
+ pl = plin
+ rhol = rholin
+ vell = vlin
 
-  pr = prin
-  rhor = rhorin
-  velr = vrin
+ pr = prin
+ rhor = rhorin
+ velr = vrin
 
 ! ------
 ! right state
@@ -226,56 +226,56 @@ end subroutine exact_shock_sr
 ! flow lorentz factors in the initial states
 ! ------------------------------
 
-  ul  = pl/(gamma-1.d0)/rhol
-  ur  = pr/(gamma-1.d0)/rhor
+ ul  = pl/(gamma-1.d0)/rhol
+ ur  = pr/(gamma-1.d0)/rhor
 
-  hl  = 1.d0+ul+pl/rhol
-  hr  = 1.d0+ur+pr/rhor
+ hl  = 1.d0+ul+pl/rhol
+ hr  = 1.d0+ur+pr/rhor
 
-  csl = dsqrt(gamma*pl/rhol/hl)
-  csr = dsqrt(gamma*pr/rhor/hr)
+ csl = dsqrt(gamma*pl/rhol/hl)
+ csr = dsqrt(gamma*pr/rhor/hr)
 
-  wl  = 1.d0/dsqrt(1.d0-vell**2)
-  wr  = 1.d0/dsqrt(1.d0-velr**2)
+ wl  = 1.d0/dsqrt(1.d0-vell**2)
+ wr  = 1.d0/dsqrt(1.d0-velr**2)
 
 ! --------
 ! number of points
 ! --------
 
-  n   = mn
+ n   = mn
 
 ! -------------
 ! tolerance for the solution
 ! -------------
 
-  tol = 0.d0
+ tol = 0.d0
 
 !
 
-  iloop = 0
+ iloop = 0
 
-  pmin  = (pl + pr)/2.d0
-  pmax  = pmin
+ pmin  = (pl + pr)/2.d0
+ pmax  = pmin
 
 5 iloop = iloop + 1
 
-  pmin  = 0.5d0*max(pmin,0.d0)
-  pmax  = 2.d0*pmax
+ pmin  = 0.5d0*max(pmin,0.d0)
+ pmax  = 2.d0*pmax
 
-  call getdvel(pmin, dvel1)
+ call getdvel(pmin, dvel1)
 
-  call getdvel(pmax, dvel2)
+ call getdvel(pmax, dvel2)
 
-  check = dvel1*dvel2
-  if (check.gt.0.d0) goto 5
+ check = dvel1*dvel2
+ if (check > 0.d0) goto 5
 
 ! ---------------------------
 ! pressure and flow velocity in the intermediate states
 ! ---------------------------
 
-  call getp(pmin, pmax, tol, ps)
+ call getp(pmin, pmax, tol, ps)
 
-  vels = 0.5d0*(vells + velrs)
+ vels = 0.5d0*(vells + velrs)
 
 ! ---------------
 ! solution on the numerical mesh
@@ -285,89 +285,89 @@ end subroutine exact_shock_sr
 ! positions of the waves
 ! -----------
 
-  if (pl.ge.ps) then
+ if (pl >= ps) then
 
     x1 = x0 + (vell - csl )/(1.d0 - vell*csl )*t
     x2 = x0 + (vels - csls)/(1.d0 - vels*csls)*t
 
-  else
+ else
 
     x1 = x0 + vshockl*t
     x2 = x1
 
-  end if
+ endif
 
-  x3 = x0 + vels*t
+ x3 = x0 + vels*t
 
-  if (pr.ge.ps) then
+ if (pr >= ps) then
 
     x4 = x0 + (vels + csrs)/(1.d0 + vels*csrs)*t
     x5 = x0 + (velr + csr )/(1.d0 + velr*csr )*t
 
-  else
+ else
 
     x4 = x0 + vshockr*t
     x5 = x4
 
-  end if
+ endif
 
 ! ----------
 ! solution on the mesh
 ! ----------
 
-  !do i=1,n
+ !do i=1,n
 
-  !  rad(i) = xmin + dfloat(i-1)/dfloat(n-1)
+ !  rad(i) = xmin + dfloat(i-1)/dfloat(n-1)
 
-  !enddo
+ !enddo
 
-  do i=1,n
+ do i=1,n
 
-    if (rad(i).le.x1) then
+    if (rad(i) <= x1) then
 
-      pa(i)   = pl
-      rhoa(i) = rhol
-      vela(i) = vell
-      ua(i)   = ul
+       pa(i)   = pl
+       rhoa(i) = rhol
+       vela(i) = vell
+       ua(i)   = ul
 
-    else if (rad(i).le.x2) then
+    elseif (rad(i) <= x2) then
 
-      xi = (rad(i) - x0)/t
+       xi = (rad(i) - x0)/t
 
-      call raref(xi, rhol,  csl,  vell,  'l', &
+       call raref(xi, rhol,  csl,  vell,  'l', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
-    else if (rad(i).le.x3) then
+    elseif (rad(i) <= x3) then
 
-      pa(i)   = ps
-      rhoa(i) = rhols
-      vela(i) = vels
-      ua(i)   = uls
+       pa(i)   = ps
+       rhoa(i) = rhols
+       vela(i) = vels
+       ua(i)   = uls
 
-    else if (rad(i).le.x4) then
+    elseif (rad(i) <= x4) then
 
-      pa(i)   = ps
-      rhoa(i) = rhors
-      vela(i) = vels
-      ua(i)   = urs
+       pa(i)   = ps
+       rhoa(i) = rhors
+       vela(i) = vels
+       ua(i)   = urs
 
-    else if (rad(i).le.x5) then
+    elseif (rad(i) <= x5) then
 
-      xi = (rad(i) - x0)/t
+       xi = (rad(i) - x0)/t
 
-      call raref(xi, rhor, csr,  velr,  'r', &
+       call raref(xi, rhor, csr,  velr,  'r', &
                      rhoa(i), pa(i), ua(i),       vela(i))
 
     else
 
-      pa(i)   = pr
-      rhoa(i) = rhor
-      vela(i) = velr
-      ua(i)   = ur
+       pa(i)   = pr
+       rhoa(i) = rhor
+       vela(i) = velr
+       ua(i)   = ur
 
-    end if
+    endif
 
-   enddo
+ enddo
 
 !  open (3,file='solution.dat',form='formatted',status='new')
 
@@ -382,8 +382,8 @@ end subroutine exact_shock_sr
 
 !  close(3)
 
-  return
-  end subroutine riemann
+ return
+end subroutine riemann
 
 ! ----------
 !n    name: g e t d v e l
@@ -397,53 +397,53 @@ end subroutine exact_shock_sr
 !c    comments
 !c    none
 
-  subroutine getdvel( p, dvel )
+subroutine getdvel( p, dvel )
 
-  implicit none
+ implicit none
 
 ! -----
 ! arguments
 ! -----
 
-  doubleprecision, intent(in)  :: p
-  doubleprecision, intent(out) :: dvel
+ doubleprecision, intent(in)  :: p
+ doubleprecision, intent(out) :: dvel
 
 ! -------
 ! common blocks
 ! -------
 
-  double precision rhols,uls,hls,csls,vells,vshockl
-  common /ls/      rhols,uls,hls,csls,vells,vshockl
+ double precision rhols,uls,hls,csls,vells,vshockl
+ common /ls/      rhols,uls,hls,csls,vells,vshockl
 
-  double precision rhors,urs,hrs,csrs,velrs,vshockr
-  common /rs/      rhors,urs,hrs,csrs,velrs,vshockr
+ double precision rhors,urs,hrs,csrs,velrs,vshockr
+ common /rs/      rhors,urs,hrs,csrs,velrs,vshockr
 
-  double precision rhol, pl, ul, hl, csl, vell, wl, &
+ double precision rhol, pl, ul, hl, csl, vell, wl, &
                    rhor, pr, ur, hr, csr, velr, wr
-  common /states/  rhol, pl, ul, hl, csl, vell, wl, &
+ common /states/  rhol, pl, ul, hl, csl, vell, wl, &
                    rhor, pr, ur, hr, csr, velr, wr
 
-  double precision gamma
-  common /adind/   gamma
+ double precision gamma
+ common /adind/   gamma
 
 ! -----
 ! left wave
 ! -----
 
-  call getvel(p, rhol, pl, hl,  csl,  vell,  wl, 'l', &
+ call getvel(p, rhol, pl, hl,  csl,  vell,  wl, 'l', &
                  rhols,    uls, hls, csls, vells, vshockl )
 
 ! -----
 ! right wave
 ! -----
 
-  call getvel(p, rhor, pr, hr,  csr,  velr,  wr, 'r', &
+ call getvel(p, rhor, pr, hr,  csr,  velr,  wr, 'r', &
                  rhors,    urs, hrs, csrs, velrs, vshockr )
 
-  dvel = vells - velrs
+ dvel = vells - velrs
 
-  return
-  end subroutine getdvel
+ return
+end subroutine getdvel
 
 ! -------
 !n    name: g e t p
@@ -463,145 +463,145 @@ end subroutine exact_shock_sr
 !c    by g. e. forsythe, m. a. malcolm, and c. b. moler,
 !c    prentice-hall, englewood cliffs n.j.
 !
-  subroutine getp( pmin, pmax, tol, ps )
+subroutine getp( pmin, pmax, tol, ps )
 
-  implicit none
+ implicit none
 
 ! -----
 ! arguments
 ! -----
 
-  doubleprecision, intent(in) :: pmin, pmax, tol
-  doubleprecision, intent(out) :: ps
+ doubleprecision, intent(in) :: pmin, pmax, tol
+ doubleprecision, intent(out) :: ps
 
 ! -------
 ! common blocks
 ! -------
 
-  doubleprecision gamma
-  common /adind/  gamma
+ doubleprecision gamma
+ common /adind/  gamma
 
-  doubleprecision rhol, pl, ul, hl, csl, vell, wl, &
+ doubleprecision rhol, pl, ul, hl, csl, vell, wl, &
                   rhor, pr, ur, hr, csr, velr, wr
-  common /states/ rhol, pl, ul, hl, csl, vell, wl, &
+ common /states/ rhol, pl, ul, hl, csl, vell, wl, &
                   rhor, pr, ur, hr, csr, velr, wr
 
 ! ---------
 ! internal variables
 ! ---------
 
-  doubleprecision a, b, c, d, e, eps, fa, fb, fc, tol1, xm, p, q, r, s
+ doubleprecision a, b, c, d, e, eps, fa, fb, fc, tol1, xm, p, q, r, s
 
 ! -------------
 ! compute machine precision
 ! -------------
 
-  eps  = 1.d0
-10    eps  = eps/2.d0
-  tol1 = 1.d0 + eps
-  if( tol1 .gt. 1.d0 ) go to 10
+ eps  = 1.d0
+10 eps  = eps/2.d0
+ tol1 = 1.d0 + eps
+ if ( tol1  >  1.d0 ) go to 10
 
 ! -------
 ! initialization
 ! -------
 
-  a  = pmin
-  b  = pmax
-  call getdvel(a,fa)
-  call getdvel(b,fb)
+ a  = pmin
+ b  = pmax
+ call getdvel(a,fa)
+ call getdvel(b,fb)
 
 ! -----
 ! begin step
 ! -----
 
-20    c  = a
-  fc = fa
-  d  = b - a
-  e  = d
-30    if( dabs(fc) .ge. dabs(fb) )go to 40
-  a  = b
-  b  = c
-  c  = a
-  fa = fb
-  fb = fc
-  fc = fa
+20 c  = a
+ fc = fa
+ d  = b - a
+ e  = d
+30 if ( dabs(fc)  >=  dabs(fb) )go to 40
+ a  = b
+ b  = c
+ c  = a
+ fa = fb
+ fb = fc
+ fc = fa
 
 ! --------
 ! convergence test
 ! --------
 
-40    tol1 = 2.d0*eps*dabs(b) + 0.5d0*tol
-  xm   = 0.5d0*(c - b)
-  if( dabs(xm) .le. tol1 ) go to 90
-  if( fb .eq. 0.d0 ) go to 90
+40 tol1 = 2.d0*eps*dabs(b) + 0.5d0*tol
+ xm   = 0.5d0*(c - b)
+ if ( dabs(xm)  <=  tol1 ) go to 90
+ if ( fb == 0.d0 ) go to 90
 
 ! ------------
 ! is bisection necessary?
 ! ------------
 
-  if( dabs(e) .lt. tol1 ) go to 70
-  if( dabs(fa) .le. dabs(fb) ) go to 70
+ if ( dabs(e)  <  tol1 ) go to 70
+ if ( dabs(fa)  <=  dabs(fb) ) go to 70
 
 ! ------------------
 ! is quadratic interpolation possible?
 ! ------------------
 
-  if( a .ne. c ) go to 50
+ if ( a  /=  c ) go to 50
 
 ! ----------
 ! linear interpolation
 ! ----------
 
-  s = fb/fa
-  p = 2.d0*xm*s
-  q = 1.d0 - s
-  go to 60
+ s = fb/fa
+ p = 2.d0*xm*s
+ q = 1.d0 - s
+ go to 60
 
 ! ----------------
 ! inverse quadratic interpolation
 ! ----------------
 
 50 q = fa/fc
-  r = fb/fc
-  s = fb/fa
-  p = s*(2.d0*xm*q*(q - r) - (b - a)*(r - 1.d0))
-  q = (q - 1.d0)*(r - 1.d0)*(s - 1.d0)
+ r = fb/fc
+ s = fb/fa
+ p = s*(2.d0*xm*q*(q - r) - (b - a)*(r - 1.d0))
+ q = (q - 1.d0)*(r - 1.d0)*(s - 1.d0)
 
 ! ------
 ! adjust signs
 ! ------
 
-60 if( p .gt. 0.d0 ) q = -q
-  p = dabs(p)
+60 if ( p  >  0.d0 ) q = -q
+ p = dabs(p)
 
 ! --------------
 ! is interpolation acceptable?
 ! --------------
 
-  if( (2.d0*p) .ge. (3.d0*xm*q-dabs(tol1*q)) ) go to 70
-  if( p .ge. dabs(0.5d0*e*q) ) go to 70
-  e = d
-  d = p/q
-  go to 80
+ if ( (2.d0*p)  >=  (3.d0*xm*q-dabs(tol1*q)) ) go to 70
+ if ( p  >=  dabs(0.5d0*e*q) ) go to 70
+ e = d
+ d = p/q
+ go to 80
 
 ! -----
 ! bisection
 ! -----
 
 70 d = xm
-  e = d
+ e = d
 
 ! -------
 ! complete step
 ! -------
 
 80 a  = b
-  fa = fb
-  if( dabs(d) .gt. tol1 ) b = b+d
-  if( dabs(d) .le. tol1 ) b = b+dsign(tol1,xm)
-  call getdvel(b,fb)
-  if( (fb*(fc/dabs(fc))) .gt. 0.d0) go to 20
-  go to 30
+ fa = fb
+ if ( dabs(d)  >  tol1 ) b = b+d
+ if ( dabs(d)  <=  tol1 ) b = b+dsign(tol1,xm)
+ call getdvel(b,fb)
+ if ( (fb*(fc/dabs(fc)))  >  0.d0) go to 20
+ go to 30
 
 ! --
 ! done
@@ -609,8 +609,8 @@ end subroutine exact_shock_sr
 
 90 ps = b
 
-  return
-  end subroutine getp
+ return
+end subroutine getp
 
 ! ---------
 !n    name: g e t v e l
@@ -626,46 +626,46 @@ end subroutine exact_shock_sr
 !c    this routine closely follows the expressions in Marti and Mueller,
 !c    J. fluid mech., (1994)
 
-  subroutine getvel( p, rhoa, pa, ha, csa, vela, wa, s,  &
+subroutine getvel( p, rhoa, pa, ha, csa, vela, wa, s,  &
                      rho, u,  h,  cs,  vel,  vshock )
 
-  implicit none
+ implicit none
 
 ! -----
 ! arguments
 ! -----
 
-  double precision, intent(in) :: p, rhoa, pa, ha, csa, vela, wa
-  character(len=1), intent(in) :: s
-  double precision, intent(out) :: rho, u, h, cs, vel, vshock
+ double precision, intent(in) :: p, rhoa, pa, ha, csa, vela, wa
+ character(len=1), intent(in) :: s
+ double precision, intent(out) :: rho, u, h, cs, vel, vshock
 
 ! -------
 ! common blocks
 ! -------
 
-  double precision gamma
-  common /adind/   gamma
+ double precision gamma
+ common /adind/   gamma
 
 ! ---------
 ! internal variables
 ! ---------
 
-  double precision a, b, c, sign
-  double precision j, wshock
-  double precision k, sqgl1
+ double precision a, b, c, sign
+ double precision j, wshock
+ double precision k, sqgl1
 
 ! ---------------
 ! left or right propagating wave
 ! ---------------
 
-  sign = 0.d0
-  if (s.eq.'l') sign = -1.d0
+ sign = 0.d0
+ if (s=='l') sign = -1.d0
 
-  if (s.eq.'r') sign =  1.d0
+ if (s=='r') sign =  1.d0
 
 !
 
-  if (p.gt.pa) then
+ if (p > pa) then
 
 !   ---
 !   shock
@@ -679,7 +679,7 @@ end subroutine exact_shock_sr
 !   check for unphysical enthalpies
 !   ----------------
 
-    if (c.gt.(b**2/4.d0/a)) then
+    if (c > (b**2/4.d0/a)) then
        print*,'getvel: unphysical specific enthalpy in intermediate state'
        return
     endif
@@ -740,7 +740,7 @@ end subroutine exact_shock_sr
 
     cs = dsqrt(gamma*p/rho/h)
 
-  else
+ else
 
 !   ------
 !   rarefaction
@@ -782,9 +782,9 @@ end subroutine exact_shock_sr
 
     vel = (a-1.d0)/(a+1.d0)
 
-  end if
+ endif
 
-  end subroutine getvel
+end subroutine getvel
 
 ! --------
 !n    name: r a r e f
@@ -798,77 +798,77 @@ end subroutine exact_shock_sr
 !c    this routine closely follows the expressions in marti and mueller,
 !c    j. fluid mech., (1994)
 
-  subroutine raref( xi, rhoa, csa, vela, s, rho, p, u, vel )
+subroutine raref( xi, rhoa, csa, vela, s, rho, p, u, vel )
 
-  implicit none
+ implicit none
 
 ! -----
 ! arguments
 ! -----
 
-  double precision, intent(in) :: xi
+ double precision, intent(in) :: xi
 
-  double precision, intent(in) :: rhoa, csa, vela
+ double precision, intent(in) :: rhoa, csa, vela
 
-  character, intent(in) ::  s
+ character, intent(in) ::  s
 
-  double precision, intent(out) :: rho, p, u, vel
+ double precision, intent(out) :: rho, p, u, vel
 
 ! -------
 ! common blocks
 ! -------
 
-  double precision gamma
-  common /adind/   gamma
+ double precision gamma
+ common /adind/   gamma
 
 ! ---------
 ! internal variables
 ! ---------
 
-  double precision b, c, d, k, l, v, ocs2, fcs2, dfdcs2, cs2, sign
+ double precision b, c, d, k, l, v, ocs2, fcs2, dfdcs2, cs2, sign
 
 ! ---------------
 ! left or right propagating wave
 ! ---------------
 
-  sign = 0.d0
-  if (s.eq.'l') sign =  1.d0
+ sign = 0.d0
+ if (s=='l') sign =  1.d0
 
-  if (s.eq.'r') sign = -1.d0
+ if (s=='r') sign = -1.d0
 
-  b    = dsqrt(gamma - 1.d0)
-  c    = (b + csa)/(b - csa)
-  d    = -sign*b/2.d0
-  k    = (1.d0 + xi)/(1.d0 - xi)
-  l    = c*k**d
-  v    = ((1.d0 - vela)/(1.d0 + vela))**d
+ b    = dsqrt(gamma - 1.d0)
+ c    = (b + csa)/(b - csa)
+ d    = -sign*b/2.d0
+ k    = (1.d0 + xi)/(1.d0 - xi)
+ l    = c*k**d
+ v    = ((1.d0 - vela)/(1.d0 + vela))**d
 
-  ocs2 = csa
+ ocs2 = csa
 
 25 fcs2   = l*v*(1.d0 + sign*ocs2)**d*(ocs2 - b) + (1.d0 - sign*ocs2)**d*(ocs2 + b)
 
-  dfdcs2 = l*v*(1.d0 + sign*ocs2)**d* &
+ dfdcs2 = l*v*(1.d0 + sign*ocs2)**d* &
    (1.d0 + sign*d*(ocs2 - b)/(1.d0 + sign*ocs2)) + &
    (1.d0 - sign*ocs2)**d* &
    (1.d0 - sign*d*(ocs2 + b)/(1.d0 - sign*ocs2))
 
-  cs2 = ocs2 - fcs2/dfdcs2
+ cs2 = ocs2 - fcs2/dfdcs2
 
-  if (abs(cs2 - ocs2)/ocs2.gt.5.e-7)then
+ if (abs(cs2 - ocs2)/ocs2 > 5.e-7) then
     ocs2 = cs2
     goto 25
-  end if
+ endif
 
-  vel = (xi + sign*cs2)/(1.d0 + sign*xi*cs2)
+ vel = (xi + sign*cs2)/(1.d0 + sign*xi*cs2)
 
-  rho = rhoa*((cs2**2*(gamma - 1.d0 - csa**2))/ &
+ rho = rhoa*((cs2**2*(gamma - 1.d0 - csa**2))/ &
    (csa**2*(gamma - 1.d0 - cs2**2)))**(1.d0/(gamma - 1.d0))
 
-  p   = cs2**2*(gamma - 1.d0)*rho/(gamma - 1.d0 - cs2**2)/gamma
+ p   = cs2**2*(gamma - 1.d0)*rho/(gamma - 1.d0 - cs2**2)/gamma
 
-  u   = p/(gamma - 1.d0)/rho
+ u   = p/(gamma - 1.d0)/rho
 
-  return
-  end subroutine raref
+ return
+end subroutine raref
 
 end module shock_sr

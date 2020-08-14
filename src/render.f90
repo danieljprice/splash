@@ -78,20 +78,20 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 
  !print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
 
- if (abs(icolouropt).eq.1) then        ! greyscale
+ if (abs(icolouropt)==1) then        ! greyscale
 
-    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
+    if (iColourBarStyle > 0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
 
-    if (icolouropt.eq.1) then
+    if (icolouropt==1) then
        call plot_gray(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
     else !--allow inverse greyscale
        call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
     endif
- elseif (abs(icolouropt).gt.0) then        ! colour
+ elseif (abs(icolouropt) > 0) then        ! colour
     !
     !--plot colour bar
     !
-    if (iColourBarStyle.gt.0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
+    if (iColourBarStyle > 0) call plotcolourbar(iColourBarstyle,icolouropt,datmin,datmax,trim(label),log,0.)
     !
     !--plot pixel map
     !
@@ -103,7 +103,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
        else
           call plot_imag(datpix,npixx,npixy,1,npixx,1,npixy,datmin,datmax,trans)
        endif
-   endif
+    endif
  endif
 !
 !--contours
@@ -126,7 +126,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !  then we construct the default levels as usual.
 !
     call read_contours(nc,ierr)
-    if (ierr.eq.0 .and. nc.gt.0) then
+    if (ierr==0 .and. nc > 0) then
        ifixed_contours = .true.
     else
        nc = ncontours
@@ -139,10 +139,10 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
           levels(i) = contours_list(i)
        enddo
        dcont = 0.
-    elseif (nc.le.0) then
+    elseif (nc <= 0) then
        print*,'ERROR: cannot plot contours with ',nc,' levels'
        return
-    elseif (nc.eq.1) then
+    elseif (nc==1) then
        levels(1) = cmin
        dcont = 0.
     else
@@ -242,11 +242,11 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  call plot_sch(0.3*charheight)          ! size of arrow head
 
  if (iallarrowssamelength) then
-    !!if (vecmax.le.0.0) vecmax = 1.0 ! adaptive limits
+    !!if (vecmax <= 0.0) vecmax = 1.0 ! adaptive limits
     scale=0.9*dx !!/vecmax
     print*,trim(label),' showing direction only: max = ',vecmax
 
-    where (abs(vecpixx).gt.tiny(vecpixx) .and. abs(vecpixy).gt.tiny(vecpixy))
+    where (abs(vecpixx) > tiny(vecpixx) .and. abs(vecpixy) > tiny(vecpixy))
        dvmag(:,:) = 1./sqrt(vecpixx**2 + vecpixy**2)
     elsewhere
        dvmag(:,:) = 0.
@@ -255,10 +255,10 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
     call plot_vect(vecpixx(:,:)*dvmag(:,:),vecpixy(:,:)*dvmag(:,:),npixx,npixy, &
          1,npixx,1,npixy,scale,0,trans,0.0)
  else
-    if (vecmax.le.0.0) then  ! adaptive limits
+    if (vecmax <= 0.0) then  ! adaptive limits
        scale = 0.0
        vecmax = max(maxval(vecpixx(:,:)),maxval(vecpixy(:,:)))
-       if (vecmax.gt.0.) scale = dx/vecmax
+       if (vecmax > 0.) scale = dx/vecmax
     else
        scale=dx/vecmax
     endif

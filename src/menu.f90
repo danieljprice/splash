@@ -32,49 +32,49 @@ module mainmenu
 contains
 
 subroutine menu
-  use filenames,        only:defaultsfile,limitsfile,unitsfile,fileprefix,set_filenames
-  use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
-  use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
-  use options_data,     only:submenu_data
-  use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
+ use filenames,        only:defaultsfile,limitsfile,unitsfile,fileprefix,set_filenames
+ use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
+ use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
+ use options_data,     only:submenu_data
+ use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
                              buffer_data,ncolumns,icoords,icoordsnew,iRescale
-  use settings_limits,  only:submenu_limits,iadapt
-  use settings_part,    only:submenu_particleplots
-  use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
-  use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
-  use settings_vecplot, only:submenu_vecplot,iplotpartvec
-  use settings_xsecrot, only:submenu_xsecrotate,xsec_nomulti
-  use settings_units,   only:write_unitsfile
-  use multiplot
-  use prompting,        only:prompt,print_logical
-  use transforms,       only:transform_label
-  use defaults,         only:defaults_write
-  use getdata,          only:get_data
-  use geomutils,        only:set_coordlabels
-  use timestepping
-  integer            :: i,icol,ihalf,iadjust,indexi,ierr
-  integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
-  integer            :: iamvecprev, ivecplottemp,ichoose
-  integer            :: maxdigits
-  character(len=5)   :: ioption
-  character(len=100) :: vecprompt,string
-  character(len=20)  :: rprompt
-  character(len=2)   :: fmtstrlen
-  character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
-  character(len=*), parameter :: sep="(55('-'))"
-  logical            :: iAllowRendering
+ use settings_limits,  only:submenu_limits,iadapt
+ use settings_part,    only:submenu_particleplots,mstari
+ use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
+ use settings_render,  only:submenu_render,iplotcont_nomulti,icolours,double_rendering
+ use settings_vecplot, only:submenu_vecplot,iplotpartvec
+ use settings_xsecrot, only:submenu_xsecrotate,xsec_nomulti
+ use settings_units,   only:write_unitsfile
+ use multiplot
+ use prompting,        only:prompt,print_logical
+ use transforms,       only:transform_label
+ use defaults,         only:defaults_write
+ use getdata,          only:get_data
+ use geomutils,        only:set_coordlabels
+ use timestepping
+ integer            :: i,icol,ihalf,iadjust,indexi,ierr
+ integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
+ integer            :: iamvecprev, ivecplottemp,ichoose
+ integer            :: maxdigits
+ character(len=5)   :: ioption
+ character(len=100) :: vecprompt,string
+ character(len=20)  :: rprompt
+ character(len=2)   :: fmtstrlen
+ character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
+ character(len=*), parameter :: sep="(55('-'))"
+ logical            :: iAllowRendering
 
-  irender = 0
-  icontourplot = 0
-  ivecplot = 0
-  if (ndim > 1 .and. ix(1) > 0) then
-     ipickx = ix(1)
-  else
-     ipickx = 1
-  endif
-  ipicky = 1
+ irender = 0
+ icontourplot = 0
+ ivecplot = 0
+ if (ndim > 1 .and. ix(1) > 0) then
+    ipickx = ix(1)
+ else
+    ipickx = 1
+ endif
+ ipicky = 1
 
-  menuloop: do
+ menuloop: do
 !---------------------------------------------------------------------------
 !  preliminaries
 !---------------------------------------------------------------------------
@@ -82,308 +82,309 @@ subroutine menu
 !--make sure the number of columns is set appropriately
 !  (nextra can change depending on what options are set)
 !
-  !
-  !--numplot is the total number of data columns (read + calculated)
-  !   not including the particle co-ordinates
-  !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
-  !
-  !  note that numplot and ndataplots should *only* be set here
-  !  this means that even if ncolumns changes during data reads while plotting
-  !  we don't start plotting new quantities
-  !
-  call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
+    !
+    !--numplot is the total number of data columns (read + calculated)
+    !   not including the particle co-ordinates
+    !  nextra are extra graphs to plot (e.g. convergence plots, power spectrum)
+    !
+    !  note that numplot and ndataplots should *only* be set here
+    !  this means that even if ncolumns changes during data reads while plotting
+    !  we don't start plotting new quantities
+    !
+    call set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 !
 !--set the coordinate and vector labels
 !  if working in a different coordinate system
 !
-  call set_coordlabels(numplot)
+    call set_coordlabels(numplot)
 
 !--set contents of the vector plotting prompt
-  vecprompt(1:6) = '0=none'
-  indexi = 7
-  iamvecprev = 0
-  do icol=1,numplot
-     if (iamvec(icol).ne.0 .and. iamvec(icol).ne.iamvecprev) then
-        iamvecprev = iamvec(icol)
-        if (iamvec(icol).ge.10) then
-           write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
+    vecprompt(1:6) = '0=none'
+    indexi = 7
+    iamvecprev = 0
+    do icol=1,numplot
+       if (iamvec(icol) /= 0 .and. iamvec(icol) /= iamvecprev) then
+          iamvecprev = iamvec(icol)
+          if (iamvec(icol) >= 10) then
+             write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
-        else
-           write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &
+          else
+             write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &
                  iamvec(icol),trim(labelvec(icol))
-        endif
-        indexi = len_trim(vecprompt) + 1
-     endif
-  enddo
+          endif
+          indexi = len_trim(vecprompt) + 1
+       endif
+    enddo
 
-  ichoose = 0
+    ichoose = 0
 
 !---------------------------------------------------------------------------
 !  print menu
 !---------------------------------------------------------------------------
 
-  if (numplot.gt.0) then
+    if (numplot > 0) then
 !
 !--data columns
 !
-     call print_header()
-     print sep
-     ihalf = numplot/2                ! print in two columns
-     iadjust = mod(numplot,2)
-     maxdigits = floor(log10(real(maxplot)))+1
-     write(fmtstrlen,"(A1,I1)") "i",maxdigits
-     fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+       call print_header()
+       print sep
+       ihalf = numplot/2                ! print in two columns
+       iadjust = mod(numplot,2)
+       maxdigits = floor(log10(real(maxplot)))+1
+       write(fmtstrlen,"(A1,I1)") "i",maxdigits
+       fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
                      //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-     print fmtstr1, &
+       print fmtstr1, &
           (i,transform_label(label(i),itrans(i)), &
           ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
           itrans(ihalf+i+iadjust)),i=1,ihalf)
-     if (iadjust.ne.0) then
-        fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
-        print fmtstr2, &
+       if (iadjust /= 0) then
+          fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+          print fmtstr2, &
               ihalf + iadjust,transform_label(label(ihalf + iadjust), &
               itrans(ihalf+iadjust))
-     endif
+       endif
 !
 !--multiplot
 !
-     print sep
-     fmtstr3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a,'[ '," &
+       print sep
+       fmtstr3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a,'[ '," &
                      //trim(adjustl(fmtstrlen))//",' ]',5x,a2,') ',a)"
-     print fmtstr3, &
+       print fmtstr3, &
            numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
-  else
+    else
 !
 !--if no data
 !
-     maxdigits = 1
-     print "(/a)",' No data: You may choose from the options below '
-  endif
+       maxdigits = 1
+       print "(/a)",' No data: You may choose from the options below '
+    endif
 !
 !--options
 !
-  print sep
-  if (ndim.le.1) then
-     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
-  else
-     print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
-     print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
-  endif
-  print sep
+    print sep
+    if (ndim <= 1) then
+       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
+    else
+       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
+       print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
+    endif
+    print sep
 
 !
 !--prompt user for selection
 !
-  write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
-  read(*,"(a)",iostat=ierr) string
-  if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
-  if (ierr > 0) stop !'error reading input'
-  ioption = string(1:maxdigits)
+    write(*,"(a)",ADVANCE='NO') 'Please enter your selection now (y axis or option):'
+    read(*,"(a)",iostat=ierr) string
+    if (ierr < 0) stop 'reached end of input' ! end of input (e.g. in script)
+    if (ierr > 0) stop !'error reading input'
+    ioption = string(1:maxdigits)
 
 !------------------------------------------------------------
 !  if input is an integer and within range, plot data
 !------------------------------------------------------------
-  read(ioption,*,iostat=ierr) ipicky
-  if (ierr /= 0) ipicky = -1
+    read(ioption,*,iostat=ierr) ipicky
+    if (ierr /= 0) ipicky = -1
 
-  !--try to read more integers from the string
-  !  if present, use these to set up an "instant multiplot"
-  if (ipicky > 0 .and. ipicky < numplot+1 .and. len_trim(string) > 2) then
-     call set_instant_multiplot(string,ipicky,ipickx,numplot,nyplotmulti,&
+    !--try to read more integers from the string
+    !  if present, use these to set up an "instant multiplot"
+    if (ipicky > 0 .and. ipicky < numplot+1 .and. len_trim(string) > 2) then
+       call set_instant_multiplot(string,ipicky,ipickx,numplot,nyplotmulti,&
                                 multiplotx,multiploty,nacross,ndown)
-  endif
+    endif
 
-  if (ipicky > 0 .and. ipicky <= numplot+1) then
+    if (ipicky > 0 .and. ipicky <= numplot+1) then
 
-     if (.not.ivegotdata) then
-        !
-        !--do not allow plotting if no data - instead try to read data
-        !
-        print*,' no data '
-        if (buffer_data) then
-           call get_data(-1,.false.)
-        else
-           call get_data(1,.false.,firsttime=.true.)
-        endif
-     else
-        !
-        !--if needed prompt for x axis selection
-        !
-        if (ipicky <= (numplot-nextra)) then
-           if (ipickx==0) then
-              if (ndim > 1 .and. ix(1) > 0) then
-                 ipickx = ix(1)
-              else
-                 ipickx = 1 ! do not allow zero as default
-              endif
-           endif
-           if (ipickx==ipicky) then ! do not allow x same as y by default
-              if (ipickx > 1) then
-                 ipickx = ipicky-1
-              else
-                 ipickx = ipicky+1
-              endif
-           endif
-           call prompt(' (x axis) ',ipickx)
-           !--go back to y prompt if out of range
-           if (ipickx.gt.numplot .or. ipickx.le.0) cycle menuloop
-           !
-           !--work out whether rendering is allowed
-           !
-           iAllowRendering = allowrendering(ipickx,ipicky,xsec_nomulti)
-           !
-           !--prompt for render and vector plots
-           ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
-           ! (a future feature might be to interpolate in icoord then translate the pixels
-           !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
-           ! -> also do not allow if transformations are applied
-           !
-           if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim)) then
-              if (iAllowRendering) then
-                 call prompt('(render) (0=none)',irender,0,(numplot-nextra))
-                 if (irender > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
-                    if (double_rendering) then
-                       rprompt = '2nd render'
-                    else
-                       rprompt = 'contours'
-                    endif
-                    call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
-                    if (icontourplot==irender) then
-                       if (iadapt) then
-                          print "(a)",' limits for '//trim(rprompt)//' are adaptive'
-                       else
-                          if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
-                          call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
-                          call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
-                          if (all(abs(lim2(icontourplot,:)-lim(icontourplot,:)) < tiny(lim))) then
-                             call reset_lim2(icontourplot)
-                          endif
-                       endif
-                    endif
-                 endif
-              else
-                 irender = 0
-              endif
-              if (any(iamvec(1:numplot).ne.0) .and. (icoordsnew.eq.icoords)) then
-                 ivecplottemp = -1
-                 ierr = 1
-                 do while(ierr /= 0 .and. ivecplottemp /= 0)
-                    ivecplottemp = ivecplot
-                    ierr = 0
-                    call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-                    if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                       print "(a)",'Error, value not in list'
-                       ierr = 1
-                    endif
-                 enddo
-                 ivecplot = ivecplottemp
-              else
-                 ivecplot = 0
-              endif
-              if (ivecplot.gt.0 .and. irender.eq.0) then
-                 call prompt('plot particles?',iplotpartvec)
-              endif
-           else
-              if (iAllowRendering) then
-                 call prompt('(render) (0=none)',irender,0,(numplot-nextra))
-              else
-                 irender = 0
-              endif
-              ivecplot = 0
-           endif
-        elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
-            if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
-            if (ipicky==itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
-            ipickx = 1
-            irender = 0
-            ivecplot = 0
-        elseif (ipicky > 0 .and. ipicky==ipdf) then
-            call prompt(' enter x axis for PDF calculation ',ipickx,1,ndataplots)
-            irender = 0
-            ivecplot = 0
-        elseif (ipicky > 0 .and. ipicky==icolpixmap) then
-            call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
-            ipickx = 0
-            ivecplot = 0
-        elseif (ipicky==numplot+1) then
-        !
-        !--for multiplots, check that options are valid. If not, re-prompt for multiplot
-        !  settings
-        !
-            ipickx   = 0
-            irender  = 0
-            ivecplot = 0
-            if (any(multiploty(1:nyplotmulti) <= 0) .or. &
+       if (.not.ivegotdata) then
+          !
+          !--do not allow plotting if no data - instead try to read data
+          !
+          print*,' no data '
+          if (buffer_data) then
+             call get_data(-1,.false.)
+          else
+             call get_data(1,.false.,firsttime=.true.)
+          endif
+       else
+          !
+          !--if needed prompt for x axis selection
+          !
+          if (ipicky <= (numplot-nextra)) then
+             if (ipickx==0) then
+                if (ndim > 1 .and. ix(1) > 0) then
+                   ipickx = ix(1)
+                else
+                   ipickx = 1 ! do not allow zero as default
+                endif
+             endif
+             if (ipickx==ipicky) then ! do not allow x same as y by default
+                if (ipickx > 1) then
+                   ipickx = ipicky-1
+                else
+                   ipickx = ipicky+1
+                endif
+             endif
+             call prompt(' (x axis) ',ipickx)
+             !--go back to y prompt if out of range
+             if (ipickx > numplot .or. ipickx <= 0) cycle menuloop
+             !
+             !--work out whether rendering is allowed
+             !
+             iAllowRendering = allowrendering(ipickx,ipicky,xsec_nomulti)
+             !
+             !--prompt for render and vector plots
+             ! -> only allow if in "natural" coord system, otherwise h's would be wrong)
+             ! (a future feature might be to interpolate in icoord then translate the pixels
+             !  to icoordsnew, or alternatively plot non-cartesian pixel shapes)
+             ! -> also do not allow if transformations are applied
+             !
+             if (is_coord(ipicky,ndim) .and. is_coord(ipickx,ndim)) then
+                if (iAllowRendering) then
+                   call prompt('(render) (0=none)',irender,0,(numplot-nextra))
+                   if (irender > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
+                      if (double_rendering) then
+                         rprompt = '2nd render'
+                      else
+                         rprompt = 'contours'
+                      endif
+                      call prompt('('//trim(rprompt)//') (0=none)',icontourplot,0,(numplot-nextra))
+                      if (icontourplot==irender) then
+                         if (iadapt) then
+                            print "(a)",' limits for '//trim(rprompt)//' are adaptive'
+                         else
+                            if (.not.lim2set(icontourplot)) lim2(icontourplot,:) = lim(icontourplot,:)
+                            call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourplot,1))
+                            call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourplot,2))
+                            if (all(abs(lim2(icontourplot,:)-lim(icontourplot,:)) < tiny(lim))) then
+                               call reset_lim2(icontourplot)
+                            endif
+                         endif
+                      endif
+                   endif
+                else
+                   irender = 0
+                endif
+                if (any(iamvec(1:numplot) /= 0) .and. (icoordsnew==icoords)) then
+                   ivecplottemp = -1
+                   ierr = 1
+                   do while(ierr /= 0 .and. ivecplottemp /= 0)
+                      ivecplottemp = ivecplot
+                      ierr = 0
+                      call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+                      if (.not.any(iamvec(1:numplot)==ivecplottemp)) then
+                         print "(a)",'Error, value not in list'
+                         ierr = 1
+                      endif
+                   enddo
+                   ivecplot = ivecplottemp
+                else
+                   ivecplot = 0
+                endif
+                if (ivecplot > 0 .and. irender==0) then
+                   call prompt('plot particles?',iplotpartvec)
+                endif
+             else
+                if (iAllowRendering) then
+                   call prompt('(render) (0=none)',irender,0,(numplot-nextra))
+                else
+                   irender = 0
+                endif
+                ivecplot = 0
+             endif
+          elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
+             if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
+             if (ipicky==itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
+             call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
+             ipickx = 1
+             irender = 0
+             ivecplot = 0
+          elseif (ipicky > 0 .and. ipicky==ipdf) then
+             call prompt(' enter x axis for PDF calculation ',ipickx,1,ndataplots)
+             irender = 0
+             ivecplot = 0
+          elseif (ipicky > 0 .and. ipicky==icolpixmap) then
+             call prompt(' enter corresponding SPH column for particle data ',irender,0,ndataplots)
+             ipickx = 0
+             ivecplot = 0
+          elseif (ipicky==numplot+1) then
+             !
+             !--for multiplots, check that options are valid. If not, re-prompt for multiplot
+             !  settings
+             !
+             ipickx   = 0
+             irender  = 0
+             ivecplot = 0
+             if (any(multiploty(1:nyplotmulti) <= 0) .or. &
                 any(multiploty(1:nyplotmulti) > numplot) .or. &
                 any(multiplotx(1:nyplotmulti) <= 0) .or. &
                 any(multiplotx(1:nyplotmulti) > numplot)) then
-               print "(/,a,/)",'ERROR: multiplot settings out of range, please re-enter these'
-               call options_multiplot
-            endif
-        endif
-        !
-        !--call main plotting routine
-        !
-        call timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
-     endif
+                print "(/,a,/)",'ERROR: multiplot settings out of range, please re-enter these'
+                call options_multiplot
+             endif
+          endif
+          !
+          !--call main plotting routine
+          !
+          call timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
+       endif
 !------------------------------------------------------------------------
 !  if input is an integer > numplot+1, quit
 !------------------------------------------------------------------------
-  elseif (ipicky > numplot+1) then
-     return
-  else
+    elseif (ipicky > numplot+1) then
+       return
+    else
 !------------------------------------------------------------------------
 !  if input is a string, use menu options
 !------------------------------------------------------------------------
 !--  Menu shortcuts; so you can type e.g. o2 and get the o)ptions menu, item 2
-     read(ioption(2:2),*,iostat=ierr) ichoose
-     if (ierr /= 0) ichoose = 0
+       read(ioption(2:2),*,iostat=ierr) ichoose
+       if (ierr /= 0) ichoose = 0
 
-     select case(ioption(1:1))
+       select case(ioption(1:1))
 !------------------------------------------------------------------------
 !+ Sets up plotting of (m)ultiple quantities per timestep
-     case('m','M')
-        call options_multiplot
+       case('m','M')
+          call options_multiplot
 !------------------------------------------------------------------------
 !+ This submenu sets options relating to the (d)ata read
-     case('d','D')
-        call submenu_data(ichoose)
+       case('d','D')
+          call submenu_data(ichoose)
 !------------------------------------------------------------------------
 !+ This option turns (i)nteractive mode on/off
-     case('i','I')
-        interactive = .not.interactive
-        print "(a)",' Interactive mode is '//print_logical(interactive)
+       case('i','I')
+          interactive = .not.interactive
+          print "(a)",' Interactive mode is '//print_logical(interactive)
 !------------------------------------------------------------------------
 !+ This submenu sets (p)age setup options
-     case('p','P')
-        call submenu_page(ichoose)
+       case('p','P')
+          call submenu_page(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets particle plot (o)ptions
-     case('o','O')
-        call submenu_particleplots(ichoose)
+       case('o','O')
+          call submenu_particleplots(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets le(g)end and title options
-     case('g','G')
-        call submenu_legend(ichoose)
+       case('g','G')
+          call submenu_legend(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets (r)endering options
-     case('r','R')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
-        call submenu_render(ichoose)
+       case('r','R')
+          if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
+          call submenu_render(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets (v)ector plotting options
-     case('v','V')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
-        call submenu_vecplot(ichoose)
+       case('v','V')
+          if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
+          call submenu_vecplot(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets cross section and rotation options
-     case('x','X')
-        if (ndim.le.1) print "(a)",'WARNING: these options have no effect in < 2D'
-        call submenu_xsecrotate(ichoose)
+       case('x','X')
+          if (ndim <= 1) print "(a)",'WARNING: these options have no effect in < 2D'
+          call submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
 !+ This submenu sets options relating to the plot limits
-     case('l','L')
-        call submenu_limits(ichoose)
+       case('l','L')
+          call submenu_limits(ichoose)
 !------------------------------------------------------------------------
 !+ The (s)ave option saves the default options to a
 !+ file called `splash.defaults'' in the current directory which
@@ -395,257 +396,257 @@ subroutine menu
 !+ also saves the current plot limits to a file called
 !+ 'splash.limits' which is also read automatically
 !+ at startup.
-     case('s')
-        if (ioption(2:2).eq.'a') then
-           call prompt('enter prefix for defaults file: ',fileprefix,noblank=.true.)
-           if (index(fileprefix,'.defaults').eq.0) then
-              defaultsfile = trim(fileprefix)//'.defaults'
-           else
-              defaultsfile = trim(fileprefix)
-           endif
-        endif
-        call defaults_write(defaultsfile)
-     case('S')
-        if (ioption(2:2).eq.'a' .or. ioption(2:2).eq.'A') then
-           call prompt('enter prefix for filenames: ',fileprefix,noblank=.true.)
-           call set_filenames(trim(fileprefix))
-        endif
-        call defaults_write(defaultsfile)
-        call write_limits(limitsfile)
-        if (iRescale) call write_unitsfile(unitsfile,ncolumns)
+       case('s')
+          if (ioption(2:2)=='a') then
+             call prompt('enter prefix for defaults file: ',fileprefix,noblank=.true.)
+             if (index(fileprefix,'.defaults')==0) then
+                defaultsfile = trim(fileprefix)//'.defaults'
+             else
+                defaultsfile = trim(fileprefix)
+             endif
+          endif
+          call defaults_write(defaultsfile)
+       case('S')
+          if (ioption(2:2)=='a' .or. ioption(2:2)=='A') then
+             call prompt('enter prefix for filenames: ',fileprefix,noblank=.true.)
+             call set_filenames(trim(fileprefix))
+          endif
+          call defaults_write(defaultsfile)
+          call write_limits(limitsfile)
+          if (iRescale) call write_unitsfile(unitsfile,ncolumns)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
-     case('h','H')
-        print "(10(/a))",' Hint: menu items can be shortcut by typing, e.g. o2 for ',&
+       case('h','H')
+          print "(10(/a))",' Hint: menu items can be shortcut by typing, e.g. o2 for ',&
                  ' the o)ptions menu, item 2.',' ', &
                  ' for detailed help, consult the user guide',' ',&
                  '  (splash/docs/splash.pdf ',&
                  '   or http://users.monash.edu.au/~dprice/splash/userguide/)', &
                  ' ',' and/or the online FAQ. If you''re really stuck, email me! '
-        read*
+          read*
 !------------------------------------------------------------------------
 !+ (q)uit, unsurprisingly, quits. Typing a number greater
 !+ than the number of data columns also exits the program
 !+ (e.g. I often simply type 99 to exit).
-     case('q','Q')
-        return
+       case('q','Q')
+          return
 !------------------------------------------------------------------------
-     case DEFAULT
-        print "(a)",'unknown option '//trim(ioption)
-     end select
+       case DEFAULT
+          print "(a)",'unknown option '//trim(ioption)
+       end select
 
-  endif
+    endif
 
-  enddo menuloop
+ enddo menuloop
 
-  return
+ return
 
- contains
+contains
 
 !----------------------------------------------------
 ! multiplot setup
 !----------------------------------------------------
-  subroutine options_multiplot
-   use settings_page,   only:nacross, ndown
-   use settings_render, only:iplotcont_nomulti
-   use limits,          only:lim,lim2,lim2set,reset_lim2
-   use labels,          only:is_coord,labeltype
-   use params,          only:maxparttypes
-   use settings_data,   only:ntypes
-   integer :: ifac,ierr,itype,nvalues
-   logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
-   integer, dimension(maxparttypes)   :: itypelist
+subroutine options_multiplot
+ use settings_page,   only:nacross, ndown
+ use settings_render, only:iplotcont_nomulti
+ use limits,          only:lim,lim2,lim2set,reset_lim2
+ use labels,          only:is_coord,labeltype
+ use params,          only:maxparttypes
+ use settings_data,   only:ntypes
+ integer :: ifac,ierr,itype,nvalues
+ logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
+ integer, dimension(maxparttypes)   :: itypelist
 
-   call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
+ call prompt('Enter number of plots per timestep:',nyplotmulti,1,numplot)
 
-   isamey = all(multiploty(1:nyplotmulti).eq.multiploty(1))
-   if (ndim.ge.2) call prompt('Same y axis for all?',isamey)
-   if (isamey) then
-      call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
-      multiploty(2:nyplotmulti) = multiploty(1)
-   endif
+ isamey = all(multiploty(1:nyplotmulti)==multiploty(1))
+ if (ndim >= 2) call prompt('Same y axis for all?',isamey)
+ if (isamey) then
+    call prompt('Enter y axis for all plots',multiploty(1),1,numplot)
+    multiploty(2:nyplotmulti) = multiploty(1)
+ endif
 
-   isamex = all(multiplotx(1:nyplotmulti).eq.multiplotx(1))
-   call prompt('Same x axis for all?',isamex)
-   if (isamex) then
-      call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
-      multiplotx(2:nyplotmulti) = multiplotx(1)
-   endif
+ isamex = all(multiplotx(1:nyplotmulti)==multiplotx(1))
+ call prompt('Same x axis for all?',isamex)
+ if (isamex) then
+    call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
+    multiplotx(2:nyplotmulti) = multiplotx(1)
+ endif
 
-   anycoordplot = .false.
-   do i=1,nyplotmulti
-      print*,'-------------- Plot number ',i,' --------------'
-      if (.not.isamey) then
-         call prompt(' y axis ',multiploty(i),1,numplot)
-      endif
-      if (multiploty(i).le.ndataplots .and. .not.isamex) then
-         call prompt(' x axis ',multiplotx(i),1,ndataplots)
-      else
-         if (multiploty(i).eq.isurfdens) then
-            print "(a)",' setting x axis to r for surface density plot'
-            multiplotx(i) = 1
-         elseif (multiploty(i).eq.itoomre) then
-            print "(a)",' setting x axis to r for Toomre Q plot'
-            multiplotx(i) = 1
-         elseif (multiploty(i).eq.ipdf) then
-            call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)
-         elseif (multiploty(i).eq.icolpixmap) then
-            call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
-            multiplotx(i) = 1
-         elseif(.not.isamex) then
-            multiplotx(i) = multiploty(i)
-         endif
-      endif
-      !
-      !--work out whether rendering is allowed
-      !
-      iAllowRendering = allowrendering(multiplotx(i),multiploty(i))
+ anycoordplot = .false.
+ do i=1,nyplotmulti
+    print*,'-------------- Plot number ',i,' --------------'
+    if (.not.isamey) then
+       call prompt(' y axis ',multiploty(i),1,numplot)
+    endif
+    if (multiploty(i) <= ndataplots .and. .not.isamex) then
+       call prompt(' x axis ',multiplotx(i),1,ndataplots)
+    else
+       if (multiploty(i)==isurfdens) then
+          print "(a)",' setting x axis to r for surface density plot'
+          multiplotx(i) = 1
+       elseif (multiploty(i)==itoomre) then
+          print "(a)",' setting x axis to r for Toomre Q plot'
+          multiplotx(i) = 1
+       elseif (multiploty(i)==ipdf) then
+          call prompt(' enter x axis for PDF calculation ',multiplotx(i),1,ndataplots)
+       elseif (multiploty(i)==icolpixmap) then
+          call prompt(' enter corresponding SPH column for particle data ',irendermulti(i),0,ndataplots)
+          multiplotx(i) = 1
+       elseif (.not.isamex) then
+          multiplotx(i) = multiploty(i)
+       endif
+    endif
+    !
+    !--work out whether rendering is allowed
+    !
+    iAllowRendering = allowrendering(multiplotx(i),multiploty(i))
 
-      icoordplot = (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim))
-      if (icoordplot) anycoordplot = icoordplot
+    icoordplot = (is_coord(multiplotx(i),ndim) .and. is_coord(multiploty(i),ndim))
+    if (icoordplot) anycoordplot = icoordplot
 
-      if (icoordplot) then
-         if (iAllowRendering) then
-            call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
-            if (irendermulti(i).gt.0 .and. iplotcont_nomulti .and. icolours.ne.0) then
-               if (double_rendering) then
-                  rprompt = '2nd render'
-               else
-                  rprompt = 'contours'
-               endif
-               call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
-               if (icontourmulti(i).eq.irendermulti(i)) then
-                  if (iadapt) then
-                     print "(a)",' limits for '//trim(rprompt)//' are adaptive '
-                  else
-                     if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
-                     call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
-                     call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
-                     if (all(abs(lim2(icontourmulti(i),:)-lim(icontourmulti(i),:)) < tiny(lim))) then
-                        call reset_lim2(icontourmulti(i))
-                     endif
-                  endif
-               endif
-            else
-               icontourmulti(i) = 0
-            endif
-            !iplotcontmulti(i) = iplotcont_nomulti
-         endif
-         if (any(iamvec(1:numplot).gt.0)) then
-            ivecplottemp = -1
-            ierr = 1
-            do while(ierr.ne.0 .and. ivecplottemp.ne.0)
-               ivecplottemp = ivecplotmulti(i)
-               ierr = 0
-               call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
-               if (.not.any(iamvec(1:numplot).eq.ivecplottemp)) then
-                  print "(a)",'Error, value not in list'
-                  ierr = 1
-               endif
-            enddo
-            ivecplotmulti(i) = ivecplottemp
-         else
-            ivecplotmulti(i) = 0
-         endif
-         if (ivecplotmulti(i).gt.0 .and. irendermulti(i).eq.0) then
-            call prompt('plot particles?',iplotpartvec)
-         endif
-      else
-         !
-         !--set irender, icontour and ivecplot to zero if no rendering allowed
-         !
-         if (multiploty(i).ne.icolpixmap) irendermulti(i) = 0
-         icontourmulti(i) = 0
-         ivecplotmulti(i) = 0
-      endif
+    if (icoordplot) then
+       if (iAllowRendering) then
+          call prompt('(render) (0=none)',irendermulti(i),0,numplot-nextra)
+          if (irendermulti(i) > 0 .and. iplotcont_nomulti .and. icolours /= 0) then
+             if (double_rendering) then
+                rprompt = '2nd render'
+             else
+                rprompt = 'contours'
+             endif
+             call prompt('('//trim(rprompt)//') (0=none)',icontourmulti(i),0,numplot-nextra)
+             if (icontourmulti(i)==irendermulti(i)) then
+                if (iadapt) then
+                   print "(a)",' limits for '//trim(rprompt)//' are adaptive '
+                else
+                   if (.not.lim2set(icontourmulti(i))) lim2(icontourmulti(i),:) = lim(icontourmulti(i),:)
+                   call prompt(' enter min for '//trim(rprompt)//':',lim2(icontourmulti(i),1))
+                   call prompt(' enter max for '//trim(rprompt)//':',lim2(icontourmulti(i),2))
+                   if (all(abs(lim2(icontourmulti(i),:)-lim(icontourmulti(i),:)) < tiny(lim))) then
+                      call reset_lim2(icontourmulti(i))
+                   endif
+                endif
+             endif
+          else
+             icontourmulti(i) = 0
+          endif
+          !iplotcontmulti(i) = iplotcont_nomulti
+       endif
+       if (any(iamvec(1:numplot) > 0)) then
+          ivecplottemp = -1
+          ierr = 1
+          do while(ierr /= 0 .and. ivecplottemp /= 0)
+             ivecplottemp = ivecplotmulti(i)
+             ierr = 0
+             call prompt('(vector plot) ('//trim(vecprompt)//')',ivecplottemp,0,maxval(iamvec))
+             if (.not.any(iamvec(1:numplot)==ivecplottemp)) then
+                print "(a)",'Error, value not in list'
+                ierr = 1
+             endif
+          enddo
+          ivecplotmulti(i) = ivecplottemp
+       else
+          ivecplotmulti(i) = 0
+       endif
+       if (ivecplotmulti(i) > 0 .and. irendermulti(i)==0) then
+          call prompt('plot particles?',iplotpartvec)
+       endif
+    else
+       !
+       !--set irender, icontour and ivecplot to zero if no rendering allowed
+       !
+       if (multiploty(i) /= icolpixmap) irendermulti(i) = 0
+       icontourmulti(i) = 0
+       ivecplotmulti(i) = 0
+    endif
 
-      if (icoordplot .and. ndim.ge.2) then
-         call prompt(' is this a cross section (no=projection)? ',x_secmulti(i))
-         if (x_secmulti(i)) then
-            call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
-         endif
-      endif
-      !
-      !--prompt for selection of different particle types
-      !  if more than one SPH particle type is present
-      !
-      itypelist = 0
-      if (ntypes.ge.2) then
-         call prompt('use all active particle types?',iusealltypesmulti(i))
+    if (icoordplot .and. ndim >= 2) then
+       call prompt(' is this a cross section (no=projection)? ',x_secmulti(i))
+       if (x_secmulti(i)) then
+          call prompt('enter co-ordinate location of cross section slice',xsecposmulti(i))
+       endif
+    endif
+    !
+    !--prompt for selection of different particle types
+    !  if more than one SPH particle type is present
+    !
+    itypelist = 0
+    if (ntypes >= 2) then
+       call prompt('use all active particle types?',iusealltypesmulti(i))
 
-         if (iusealltypesmulti(i)) then
-            nvalues = 0
-            itypelist(:) = 0
-         else
-         !
-         !--prepare list of types based on current iplotpartoftypemulti
-         !
-            nvalues = 0
-            do itype=1,ntypes
-               if (iplotpartoftypemulti(itype,i)) then
-                  nvalues = nvalues + 1
-                  itypelist(nvalues) = itype
-               endif
-            enddo
-            if (nvalues.eq.0) then
-               print*,'warning: internal error in type list'
-               itypelist(:) = 0
-               nvalues = 1
-            endif
-         !
-         !--prompt for list of types to use
-         !
-            do itype=1,ntypes
-               print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
-            enddo
+       if (iusealltypesmulti(i)) then
+          nvalues = 0
+          itypelist(:) = 0
+       else
+          !
+          !--prepare list of types based on current iplotpartoftypemulti
+          !
+          nvalues = 0
+          do itype=1,ntypes
+             if (iplotpartoftypemulti(itype,i)) then
+                nvalues = nvalues + 1
+                itypelist(nvalues) = itype
+             endif
+          enddo
+          if (nvalues==0) then
+             print*,'warning: internal error in type list'
+             itypelist(:) = 0
+             nvalues = 1
+          endif
+          !
+          !--prompt for list of types to use
+          !
+          do itype=1,ntypes
+             print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
+          enddo
 
-            call prompt('Enter type or list of types to use',itypelist,nvalues,1,ntypes)
-         !
-         !--set which particle types to plot
-         !
-            iplotpartoftypemulti(:,i) = .false.
-            iplotpartoftypemulti(itypelist(1:nvalues),i) = .true.
+          call prompt('Enter type or list of types to use',itypelist,nvalues,1,ntypes)
+          !
+          !--set which particle types to plot
+          !
+          iplotpartoftypemulti(:,i) = .false.
+          iplotpartoftypemulti(itypelist(1:nvalues),i) = .true.
 
-         endif
-      else
-         !
-         !--if ntypes < 2 always use the (only) particle type
-         !
-         iusealltypesmulti(i) = .true.
-      endif
-   enddo
+       endif
+    else
+       !
+       !--if ntypes < 2 always use the (only) particle type
+       !
+       iusealltypesmulti(i) = .true.
+    endif
+ enddo
 
-   if (isamex .and. .not.anycoordplot) then
-      imultisamepanel = .false.
-      !call prompt('plot all plots in same panel? (default is different panels)',imultisamepanel)
-   else
-      imultisamepanel = .false.
-   endif
+ if (isamex .and. .not.anycoordplot) then
+    imultisamepanel = .false.
+    !call prompt('plot all plots in same panel? (default is different panels)',imultisamepanel)
+ else
+    imultisamepanel = .false.
+ endif
 
-   if (nyplotmulti.eq.1 .or. imultisamepanel) then
-      nacross = 1
-      ndown = 1
-      print*,'setting nacross,ndown = ',nacross,ndown
-   elseif (mod(nacross*ndown,nyplotmulti).ne.0) then
-      !--guess nacross,ndown based on largest factor
-      ifac = nyplotmulti/2
-      do while (mod(nyplotmulti,ifac).ne.0 .and. ifac.gt.1)
-         ifac = ifac - 1
-      end do
-      if (ifac.le.1) then
-         nacross = nyplotmulti/2
-      else
-         nacross = ifac
-      endif
-      if (nacross.le.0) nacross = 1
-      ndown = nyplotmulti/nacross
-      print*,'setting nacross,ndown = ',nacross,ndown
-   else
-      print*,'nacross = ',nacross,' ndown = ',ndown
-   endif
+ if (nyplotmulti==1 .or. imultisamepanel) then
+    nacross = 1
+    ndown = 1
+    print*,'setting nacross,ndown = ',nacross,ndown
+ elseif (mod(nacross*ndown,nyplotmulti) /= 0) then
+    !--guess nacross,ndown based on largest factor
+    ifac = nyplotmulti/2
+    do while (mod(nyplotmulti,ifac) /= 0 .and. ifac > 1)
+       ifac = ifac - 1
+    enddo
+    if (ifac <= 1) then
+       nacross = nyplotmulti/2
+    else
+       nacross = ifac
+    endif
+    if (nacross <= 0) nacross = 1
+    ndown = nyplotmulti/nacross
+    print*,'setting nacross,ndown = ',nacross,ndown
+ else
+    print*,'nacross = ',nacross,' ndown = ',ndown
+ endif
 
-   return
-   end subroutine options_multiplot
+ return
+end subroutine options_multiplot
 end subroutine menu
 
 !----------------------------------------------
@@ -670,8 +671,8 @@ logical function allowrendering(iplotx,iploty,xsec)
  endif
  itransx = 0
  itransy = 0
- if (iplotx.gt.0) itransx = itrans(iplotx)
- if (iploty.gt.0) itransy = itrans(iploty)
+ if (iplotx > 0) itransx = itrans(iplotx)
+ if (iploty > 0) itransy = itrans(iploty)
 
  iz = get_z_coord(ndim,iplotx,iploty)
  islengthz = coord_is_length(iz,icoordsnew)
@@ -679,10 +680,10 @@ logical function allowrendering(iplotx,iploty,xsec)
 !--work out whether rendering is allowed based on presence of rho, h & m in data read
 !  also must be in base coordinate system and no transformations applied
 !
- if ((ih.gt.0 .and. ih.le.ndataplots) &
-    .and.(irho.gt.0 .and. irho.le.ndataplots) &
-    .and.(icoords.eq.icoordsnew .or. (.not.is_xsec .or. (is_xsec .and. islengthz))) &
-    .and.(itransx.eq.0 .and. itransy.eq.0)) then
+ if ((ih > 0 .and. ih <= ndataplots) &
+    .and.(irho > 0 .and. irho <= ndataplots) &
+    .and.(icoords==icoordsnew .or. (.not.is_xsec .or. (is_xsec .and. islengthz))) &
+    .and.(itransx==0 .and. itransy==0)) then
 
     allowrendering = .true.
  else
@@ -711,36 +712,36 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  !
  !-add extra columns (but not if nothing read from file)
  !
- if (ncolumns.gt.0) then
+ if (ncolumns > 0) then
     nextra = 0
     ipowerspec = 0
     iacplane = 0
     isurfdens = 0
     itoomre = 0
-    if (ndim.eq.3 .and. icoordsnew.eq.2 .or. icoordsnew.eq.3) then
+    if (ndim==3 .and. icoordsnew==2 .or. icoordsnew==3) then
        nextra = nextra + 1
        isurfdens = ncolumns + ncalc + nextra
        label(isurfdens) = 'Surface density'
-       if (iutherm.gt.0 .and. iutherm.le.ncolumns) then
+       if (iutherm > 0 .and. iutherm <= ncolumns) then
           nextra = nextra + 1
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'
        endif
     endif
-    if (ndim.eq.3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
+    if (ndim==3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
        label(ipdf) = 'PDF'
     endif
 
-    if (ndim.le.1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim.eq.3) then ! if 1D or no coord data (then prompts for which x)
+    if (ndim <= 1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
        nextra = nextra + 1      ! one extra plot = power spectrum
        ipowerspec = ncolumns + ncalc + nextra
        label(ipowerspec) = '1D power spectrum'
     else
        ipowerspec = 0
     endif
-    if (iexact.eq.6) then       ! toy star plot a-c plane
+    if (iexact==6) then       ! toy star plot a-c plane
        nextra = nextra + 1
        iacplane = ncolumns + ncalc + nextra
        label(iacplane) = 'a-c plane'
@@ -749,7 +750,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
     endif
     !nextra = nextra + 1
     !label(ncolumns+ncalc+nextra) = 'gwaves'
-    if (ndim.ge.2) then
+    if (ndim >= 2) then
        if (ireadpixmap) then
           nextra = nextra + 1
           icolpixmap = ncolumns + ncalc + nextra
@@ -762,7 +763,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
 !
  if (ivegotdata) then
     numplot = ncolumns + ncalc + nextra
-    if (numplot.gt.maxplot) then
+    if (numplot > maxplot) then
        print "(a,i3,a)",' ERROR: total number of columns = ',numplot,' is greater '
        print "(a,i3,a)",'        than the current allowed maximum (',maxplot,').'
        print "(a)",'        This is set by the parameter "maxplot" in the params module'
@@ -837,10 +838,10 @@ subroutine print_header
  integer, parameter :: a(49) = (/32,83,101,103,109,101,110,116,97,116,105,111,110,32,&
                       102,97,117,108,116,46,32,80,108,101,97,115,101,32,114,101,98,111,&
                       111,116,32,121,111,117,114,32,99,111,109,112,117,116,101,114,46/)
-integer, parameter :: s(48)=(/64,138,228,228,222,228,116,64,230,224,216,194,230,208,64,&
+ integer, parameter :: s(48)=(/64,138,228,228,222,228,116,64,230,224,216,194,230,208,64,&
                       200,210,202,200,92,64,160,216,202,194,230,202,64,228,202,196,222,&
                       222,232,64,242,222,234,228,64,198,222,218,224,234,232,202,228/)
-integer, parameter :: p(53)=(/12,7,10,13,10,14,18,11,15,14,12,14,17,18,16,18,12,11,12,&
+ integer, parameter :: p(53)=(/12,7,10,13,10,14,18,11,15,14,12,14,17,18,16,18,12,11,12,&
                       17,13,15,11,15,13,12,12,17,12,11,16,18,14,9,11,17,17,13,10,18,16,10,15,&
                       18,12,18,18,12,16,14,10,9,14/)
 
