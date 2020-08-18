@@ -90,7 +90,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer, dimension(12) :: icoltogrid
  integer :: ncolstogrid,igeom
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
- real    :: mtot,mtotgrid,err,t2,t1,xi(3)
+ real    :: mtot,mtotgrid,err,t2,t1,xi(3),ax,ay,az
+ real, parameter :: pi=4.0*atan(1.0)
  logical :: inormalise,lowmem,do_output
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
@@ -350,10 +351,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        z = dat(1:ninterp,ix(3))
        if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
           print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
-          print*, 'Warning: this does not rotate vector components'
+          print*, 'WARNING: This does not rotate vector components'
+          ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
+          ay = angley*pi/180.0
+          az = anglez*pi/180.0
           do i=1,ninterp
              xi = (/x(i),y(i),z(i)/)
-             call rotate3D(xi,anglex,angley,anglez,0.,0.)
+             call rotate3D(xi,ax,ay,az,0.,0.)
              x(i) = xi(1)
              y(i) = xi(2)
              z(i) = xi(3)
