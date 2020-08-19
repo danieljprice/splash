@@ -51,8 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.0.0   : (xx/06/20) Unified splash binary with -f flag to specify format;
-!             automated format recognition for hdf5 format variants and fits
+!     3.0.0   : (xx/08/20) Unified splash binary with -f flag to specify format;
+!             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
+!             cleaner d) menu; splash is compiled in double precision by default;
+!             rotation settings used in splash to grid to rotate particles;
+!             bug fix in mbatesph data read
 !     2.10.1  : (24/06/20) exact solution can appear in legend; can also plot under data;
 !             fits reader and denoise utility can read/write spectral cubes; text shapes can
 !             print header variables using %(var); can shift cross section by precise amounts
@@ -432,7 +435,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.0 [25th June 2020]'
+ character(len=*), parameter :: version = 'v3.0.0beta [19th Aug 2020]'
 
  !
  ! initialise some basic code variables
