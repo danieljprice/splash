@@ -55,7 +55,8 @@ program splash
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;
 !             rotation settings used in splash to grid to rotate particles;
-!             bug fix in mbatesph data read
+!             bug fix in mbatesph data read; pysplash utility for reading SPH
+!             data formats into python; libsplash.so, libexact.so and libread.so libraries
 !     2.10.1  : (24/06/20) exact solution can appear in legend; can also plot under data;
 !             fits reader and denoise utility can read/write spectral cubes; text shapes can
 !             print header variables using %(var); can shift cross section by precise amounts
