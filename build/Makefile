@@ -90,6 +90,12 @@ ifndef OPENMP
 OPENMP=yes
 endif
 #
+# compile in double precision by default (v3.0 onwards this is now default)
+#
+ifndef DOUBLEPRECISION
+DOUBLEPRECISION=yes
+endif
+#
 # the openMP flags should be set in the lines defining your system type
 # (ie. leave line below blank)
 OMPFLAGS=
