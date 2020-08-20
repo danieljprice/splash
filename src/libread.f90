@@ -35,7 +35,7 @@ module libreaddata
  use asciiutils,       only:fstring,cstring
  use filenames,        only:rootname, tagline, nfiles
  use particle_data,    only:dat,maxpart,maxcol,maxstep,npartoftype,iamtype,headervals
- use settings_data,    only:ncolumns,ivegotdata,required
+ use settings_data,    only:ncolumns,ivegotdata,required,iverbose
  use libutils,         only:ctypes_to_fstring,check_argcv
 
  implicit none
@@ -47,7 +47,7 @@ contains
    call check_argcv()
  end subroutine check_argcv_c
 
-subroutine get_labels_c(labels_out, ncol) bind(c, name='getlabels')
+subroutine get_labels_c(labels_out, ncol) bind(c)
   integer(c_int),          intent(in)  :: ncol
   character(kind=c_char),  intent(out) :: labels_out(lenlabel, ncol)
   character(len=lenlabel)    :: temp_string
@@ -65,8 +65,6 @@ do i = 1, ncol
     endif
   enddo
 end do
-
-  print*, labels_out
 
 end subroutine get_labels_c
 
@@ -87,7 +85,6 @@ subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bin
   real(c_double),                  intent(out) :: headervals_out(vallength)
   integer :: i,j
 
-print*, taglength
   do i = 1, taglength
     do j = 1, ltag
       if (j .le. len(headertags(i))) then
@@ -103,23 +100,25 @@ print*, taglength
 end subroutine get_headers
 
 subroutine read_data_c(filename,fileformat,f_length, ff_length,&
-                       sph_dat,npart,ncol,read_header,verbose,ierr) bind(c, name='read_data')
+                       sph_dat,npart,ncol,read_header,iverbose,ierr) bind(c, name='read_data')
  integer(c_int),         intent(in)     :: f_length, ff_length
  character(kind=c_char), intent(in)     :: filename(f_length), fileformat(ff_length)
  integer(c_int),         intent(inout)  :: ncol, npart
  real(c_double),         intent(out)    :: sph_dat(npart,ncol)
- integer(c_int),         intent(in)     :: read_header, verbose
+ integer(c_int),         intent(in)     :: read_header, iverbose
  integer(c_int),         intent(out)    :: ierr
 
  character(len=ff_length)   :: format_f
 
  integer   :: ncolr,npartr
 
- if (verbose==1) print*, tagline
-
  ierr = 0
 
  call defaults_set_initial
+
+ ! iverbose = verbose
+
+ if (iverbose==1) print*, tagline
 
  if (read_header==1) required = .false.
 
@@ -127,7 +126,7 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
  rootname(1) = ctypes_to_fstring(filename)
  format_f = ctypes_to_fstring(fileformat)
 
- if (verbose==1) then
+ if (iverbose==1) then
    print*, "Received file format f ", format_f
    print*, "Size of sph_dat is ", size(sph_dat)
  endif
@@ -135,7 +134,6 @@ subroutine read_data_c(filename,fileformat,f_length, ff_length,&
 call select_data_format(format_f,ierr)
 
  if (ierr == 0) then
-   if (verbose==1) print*, "Calling get_data"
    call get_data(1,.true.,.true.,1)
    if (ivegotdata .and. maxpart>0) then
       npartr = sum(npartoftype(:,1))
@@ -153,7 +151,7 @@ call select_data_format(format_f,ierr)
        sph_dat(1:npart,1:ncol-1) = dat(1:npart,1:ncol-1,1)
        sph_dat(1:npart,ncol) = iamtype(1:npart,1)
     else
-        if (verbose==1) print*, "Updating values for npart and ncol."
+        if (iverbose==1) print*, "Updating values for npart and ncol."
         npart = sum(npartoftype(:,1))
         ncol = ncolumns + 1
      endif
