@@ -245,7 +245,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
              if (verbose) print "(a,i8,1x,a)",' plotting ',index2-index1+1,trim(labeltype(itype))//' particles'
              select case(imarktype(itype))
              case(32:35)
-                do j=1,noftype(itype)
+                do j=index1,index2
                    call plot_particle(imarktype(itype),x(j),y(j),h(j))
                 enddo
                 call plot_sfs(1)
