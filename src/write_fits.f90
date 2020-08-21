@@ -26,6 +26,7 @@
 !
 !----------------------------------------------------------------------
 module readwrite_fits
+ use iso_fortran_env, only:real32,real64
  implicit none
  public :: read_fits_image,write_fits_image,fits_error
  public :: read_fits_cube,write_fits_cube
@@ -46,8 +47,10 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group,nfound
+ integer :: firstpix,nullval,group,nfound,bitpix
  logical :: anynull
+ real(kind=4), allocatable :: img32(:,:)
+ real(kind=8), allocatable :: img64(:,:)
  !
  !--open file and read header information
  !
@@ -70,6 +73,7 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  !
  call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = naxes(1)*naxes(2)
+ bitpix = abs(get_from_header('BITPIX',hdr,ierr))
  !
  !--sanity check the header read
  !
@@ -90,6 +94,29 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
     return
  endif
  ierr = 0
+ !
+ ! handle both 32 and 64 bit images, perform type conversions if they don't match
+ !
+ if (kind(image)==bitpix/8) then
+    call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
+ elseif (bitpix==64) then
+    ! convert float64 image -> 32 bit internal array
+    allocate(img64(naxes(1),naxes(2)),stat=ierr)
+    call ftgpve(iunit,group,firstpix,npixels,nullval,img64,anynull,ierr)
+    image = real(img64)
+    deallocate(img64)
+ elseif (bitpix==32) then ! perform type conversion
+    ! convert float32 image -> 64 bit internal array
+    allocate(img32(naxes(1),naxes(2)),stat=ierr)
+    call ftgpve(iunit,group,firstpix,npixels,nullval,img32,anynull,ierr)
+    image = real(img32)
+    deallocate(img32)
+ else ! should never happen, but just have a go anyway, maybe bitpix is corrupt?
+    call ftclos(iunit,ierr)
+    call ftfiou(iunit,ierr)
+    ierr = 3
+    return
+ endif
  call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
@@ -117,7 +144,7 @@ subroutine read_fits_header(filename,hdr,ierr)
  call read_fits_head(iunit,hdr,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
-   
+
 end subroutine read_fits_header
 
 !---------------------------------------------------
@@ -182,9 +209,11 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group
+ integer :: firstpix,nullval,group,bitpix
  logical :: anynull
  integer :: ndim
+ real(kind=real32), allocatable :: img32(:,:,:)
+ real(kind=real64), allocatable :: img64(:,:,:)
  !
  !--open file and read header information
  !
@@ -204,6 +233,9 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  call ftgisz(iunit,3,naxes(1:ndim),ierr)
  if (ndim==2) naxes(3) = 1
  if (ndim>=3) ndim = 3
+
+ bitpix = abs(get_from_header('BITPIX',hdr,ierr))
+
  ! call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = product(naxes(1:ndim))
  !
@@ -225,10 +257,32 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
     return
  endif
  ierr = 0
- call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
+ !
+ ! handle both 32 and 64 bit cubes, perform type conversions if they don't match
+ !
+ if (kind(image)==bitpix/8) then
+    call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
+ elseif (bitpix==64) then
+    ! convert float64 image -> 32 bit internal array
+    allocate(img64(naxes(1),naxes(2),naxes(3)),stat=ierr)
+    call ftgpve(iunit,group,firstpix,npixels,nullval,img64,anynull,ierr)
+    image = real(img64)
+    deallocate(img64)
+ elseif (bitpix==32) then ! perform type conversion
+    ! convert float32 image -> 64 bit internal array
+    allocate(img32(naxes(1),naxes(2),naxes(3)),stat=ierr)
+    call ftgpve(iunit,group,firstpix,npixels,nullval,img32,anynull,ierr)
+    image = real(img32)
+    deallocate(img32)
+ else ! should never happen, but just have a go anyway, maybe bitpix is corrupt?
+    call ftclos(iunit,ierr)
+    call ftfiou(iunit,ierr)
+    ierr = 3
+    return
+ endif
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
-  
+
 end subroutine read_fits_cube
 
 !---------------------------------------------------
@@ -238,6 +292,8 @@ end subroutine read_fits_cube
   integer, intent(in) :: ierr
 
   select case(ierr)
+  case(3)
+     fits_error = 'could not match floating point type for fits image'
   case(2)
      fits_error = 'could not allocate memory'
   case(1)
@@ -256,7 +312,7 @@ end subroutine read_fits_cube
  subroutine write_fits_image(filename,image,naxes,ierr,hdr)
   character(len=*), intent(in) :: filename
   integer, intent(in)  :: naxes(2)
-  real(kind=4),     intent(in) :: image(naxes(1),naxes(2))
+  real(kind=4), intent(in) :: image(naxes(1),naxes(2))
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
   integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
@@ -301,21 +357,21 @@ end subroutine read_fits_cube
  subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
    character(len=*), intent(in) :: filename
    integer, intent(in)  :: naxes(3)
-   real(kind=4),     intent(in) :: image(naxes(1),naxes(2),naxes(3))
+   real(kind=4), intent(in) :: image(naxes(1),naxes(2),naxes(3))
    integer, intent(out) :: ierr
    character(len=80), intent(in), optional :: hdr(:)
    integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
    logical :: simple,extend
- 
+
    !  Get an unused Logical Unit Number to use to open the FITS file.
    ierr = 0
    call ftgiou(iunit,ierr)
- 
+
    !  Create the new empty FITS file.
    blocksize=1
    print "(a)",' writing '//trim(filename)
    call ftinit(iunit,filename,blocksize,ierr)
- 
+
    !  Initialize parameters about the FITS image
    simple=.true.
    ! data size
@@ -332,13 +388,13 @@ end subroutine read_fits_cube
    npixels = product(naxes)
    ! write as real*4
    call ftppre(iunit,group,firstpixel,npixels,image,ierr)
- 
+
    !  Close the file and free the unit number
    call ftclos(iunit, ierr)
    call ftfiou(iunit, ierr)
- 
+
  end subroutine write_fits_cube
- 
+
 !--------------------------------------------------
 ! read all floating point variables from fits header
 !--------------------------------------------------
@@ -347,7 +403,7 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
  character(len=*),  intent(out) :: tags(:)
  real,              intent(out) :: vals(:)
  integer :: i, n, ierr
-  
+
  n = 0
  do i=1,size(hdr)
     n = n + 1
@@ -356,7 +412,7 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
     endif
     if (ierr /= 0) n = n - 1
  enddo
-  
+
 end subroutine get_floats_from_fits_header
 
 !------------------------------------------------
