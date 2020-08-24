@@ -33,6 +33,14 @@ module readwrite_fits
  public :: read_fits_header
  public :: get_floats_from_fits_header,get_from_header
 
+ interface write_fits_image
+  module procedure write_fits_image,write_fits_image64
+ end interface write_fits_image
+
+ interface write_fits_cube
+  module procedure write_fits_cube,write_fits_cube64
+ end interface write_fits_cube
+
  private
 
 contains
@@ -49,8 +57,8 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,nfound,bitpix
  logical :: anynull
- real(kind=4), allocatable :: img32(:,:)
- real(kind=8), allocatable :: img64(:,:)
+ real(kind=real32), allocatable :: img32(:,:)
+ real(kind=real64), allocatable :: img64(:,:)
  !
  !--open file and read header information
  !
@@ -312,7 +320,7 @@ end subroutine read_fits_cube
  subroutine write_fits_image(filename,image,naxes,ierr,hdr)
   character(len=*), intent(in) :: filename
   integer, intent(in)  :: naxes(2)
-  real(kind=4), intent(in) :: image(naxes(1),naxes(2))
+  real(kind=real32), intent(in) :: image(naxes(1),naxes(2))
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
   integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
@@ -350,6 +358,26 @@ end subroutine read_fits_cube
 
  end subroutine write_fits_image
 
+!-------------------------------------------------------------
+! Writing new fits file (convert from double precision input)
+!-------------------------------------------------------------
+ subroutine write_fits_image64(filename,image,naxes,ierr,hdr)
+  character(len=*), intent(in) :: filename
+  integer,          intent(in) :: naxes(2)
+  real(kind=real64),intent(in) :: image(naxes(1),naxes(2))
+  real(kind=real32), allocatable :: img32(:,:)
+  integer, intent(out) :: ierr
+  character(len=80), intent(in), optional :: hdr(:)
+
+  img32 = image  ! copy and allocate
+  if (present(hdr)) then
+     call write_fits_image(filename,img32,naxes,ierr,hdr)
+  else
+     call write_fits_image(filename,img32,naxes,ierr)
+  endif
+  deallocate(img32,stat=ierr)
+
+ end subroutine write_fits_image64
 
 !------------------------------------------------
 ! Writing new fits file
@@ -357,7 +385,7 @@ end subroutine read_fits_cube
  subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
    character(len=*), intent(in) :: filename
    integer, intent(in)  :: naxes(3)
-   real(kind=4), intent(in) :: image(naxes(1),naxes(2),naxes(3))
+   real(kind=real32), intent(in) :: image(naxes(1),naxes(2),naxes(3))
    integer, intent(out) :: ierr
    character(len=80), intent(in), optional :: hdr(:)
    integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
@@ -395,6 +423,26 @@ end subroutine read_fits_cube
 
  end subroutine write_fits_cube
 
+!-------------------------------------------------------------
+! Writing new fits file (convert from double precision input)
+!-------------------------------------------------------------
+subroutine write_fits_cube64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in) :: filename
+ integer,          intent(in) :: naxes(3)
+ real(kind=real64),intent(in) :: image(naxes(1),naxes(2),naxes(3))
+ character(len=80), intent(in), optional :: hdr(:)
+ integer,           intent(out) :: ierr
+ real(kind=real32), allocatable :: img32(:,:,:)
+
+ img32 = image  ! copy and allocate
+ if (present(hdr)) then
+    call write_fits_cube(filename,img32,naxes,ierr,hdr)
+ else
+    call write_fits_cube(filename,img32,naxes,ierr)
+ endif
+ deallocate(img32,stat=ierr)
+
+end subroutine write_fits_cube64
 !--------------------------------------------------
 ! read all floating point variables from fits header
 !--------------------------------------------------
