@@ -64,8 +64,8 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS    = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5
-HDF5INCLUDE = -I/usr/include/hdf5/serial/
+HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
+HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
 ifdef FITS_DIR
