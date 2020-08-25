@@ -46,13 +46,13 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module flash_hdf5read
- use, intrinsic :: iso_c_binding, only:c_int,c_float,c_char
+ use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
  !interface to the c versions
  interface
   subroutine read_flash_hdf5_header(filename,time,npart,ncol,ierr) bind(c)
    import
    character(kind=c_char,len=1), intent(in) :: filename
-   real(kind=c_float), intent(out) :: time
+   real(kind=c_double), intent(out) :: time
    integer(kind=c_int), intent(out) :: npart,ncol,ierr
   end subroutine read_flash_hdf5_header
 
@@ -102,10 +102,10 @@ end module flash_hdf5read
 
 module readdata_flash_hdf5
  implicit none
- 
+
  public :: read_data_flash_hdf5, set_labels_flash_hdf5
- 
- private 
+
+ private
 contains
 
 subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
