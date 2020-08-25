@@ -419,6 +419,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              call save_perspective(zobserver,dscreen)
           endif
        endif
+       call save_windowsize()
        print*,'> interactively set limits saved <'
        !
        !--actions on left click
@@ -1803,6 +1804,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
              if (ivecy > 0) call save_limits(ivecy,-xmax(ivecy),xmax(ivecy))
           endif
        enddo
+       call save_windowsize()
        print*,'> interactively set limits saved <'
     case(plot_left_click) ! left click
        !
@@ -3006,6 +3008,27 @@ subroutine save_opacity(taupartdepthi)
 
  return
 end subroutine save_opacity
+!
+!--save the current paper size
+!
+subroutine save_windowsize()
+ use settings_page, only:ipapersize,ipapersizeunits,papersizex,aspectratio
+ use plotlib,       only:plot_qvsz
+ real :: x1,x2,y1,y2,papersizey
+
+ call plot_qvsz(0,x1,x2,y1,y2)
+
+ if (abs(x2-x1 - 800.) > 0. .and. abs(y2-y1 - 600.) > 0.) then
+    !print*,' saving paper size = ',x2-x1,' x ',y2-y1
+    ipapersize = 24  ! custom
+    ipapersizeunits = 0
+    papersizex = x2-x1
+    papersizey = y2-y1
+    aspectratio = papersizey/papersizex
+ endif
+
+end subroutine save_windowsize
+
 !
 !--saves circles of interaction
 !

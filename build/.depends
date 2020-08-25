@@ -48,9 +48,9 @@ pdfs.o pdfs.mod: asciiutils.mod filenames.mod plotutils.mod transforms.mod promp
 rotate.o rotation.mod: rotate.f90
 interpolate1D.o interpolations1d.mod: interpolate1D.f90
 interpolate2D.o interpolations2d.mod: interpolate2D.f90
-interpolate3D.o interpolations3d.mod: interpolate3D.F90
+interpolate3D.o interpolations3d.mod: interpolate3D.f90
 interpolate3D_xsec.o xsections3d.mod: interpolate3D_xsec.f90
-interpolate3D_projection.o projections3d.mod: interpolate3D_projection.F90
+interpolate3D_projection.o projections3d.mod: interpolate3D_projection.f90
 interpolate3D_opacity.o interpolate3d_opacity.mod: colours.mod projections3d.mod interpolate3D_opacity.f90
 interpolate_vec.o interpolate_vec.mod: interpolate_vec.f90
 interactive.o interactive_routines.mod: colours.mod settings_part.mod labels.mod calcquantities.mod filenames.mod transforms.mod settings_limits.mod settings_data.mod limits.mod settings_vecplot.mod settings_page.mod multiplot.mod shapes.mod settings_xsecrot.mod colourbar.mod interactive.f90

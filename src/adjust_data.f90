@@ -61,12 +61,11 @@ end subroutine get_adjust_data_dependencies
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist
  use labels,          only:ih,ix,ivx,label,get_sink_type,ipmass,idustfrac,irho,labeltype
- use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,UseFakeDustParticles
+ use settings_data,   only:ncolumns,ndimV,icoords,ndim,debugmode,ntypes,iverbose,UseFakeDustParticles,UseFastRender
  use particle_data,   only:dat,npartoftype,iamtype
  use geometry,        only:labelcoord
  use filenames,       only:ifileopen,nstepsinfile
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
- use settings_render, only:ifastrender
  real :: hmin,dphi,domega
  real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
@@ -88,8 +87,8 @@ subroutine adjust_data_codeunits
        where (dat(:,ih,:) < hmin .and. dat(:,ih,:) > 0.)
           dat(:,ih,:) = hmin
        end where
-       print "(a)",' >> Switching accelerated rendering ON'
-       ifastrender = .true.
+       print "(a)",' >> Recommended to switch accelerated rendering ON'
+       UseFastRender = .true.
     endif
  endif
 

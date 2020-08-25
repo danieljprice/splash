@@ -47,7 +47,7 @@ contains
 !  utilities
 !
 !-------------------------------------------------------------------------
-subroutine set_blocklabel(icol,name,lenname) bind(c)
+subroutine set_blocklabel_cactus(icol,name,lenname) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  ! use cactushdf5read, only:blocklabel
  use asciiutils,     only:fstring
@@ -67,7 +67,7 @@ subroutine set_blocklabel(icol,name,lenname) bind(c)
  endif
  !print*,icol,' name = ',trim(blocklabel(icol))
 
-end subroutine set_blocklabel
+end subroutine set_blocklabel_cactus
 
 subroutine sort_cactus_data(n,iter,iorder) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int

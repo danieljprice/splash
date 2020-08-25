@@ -52,13 +52,20 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_tipsy
+ implicit none
+
+ public :: read_data_tipsy, set_labels_tipsy
+
+ private
+contains
+
+subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart
  use params
  use settings_data, only:ndim,ndimV,ncolumns
  use mem_allocation, only:alloc
  use labels, only:label,ih,ipmass,irho
- use exact, only:hfact
  implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
@@ -70,7 +77,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  logical :: iexist
  character(len=len(rootname)) :: dumpfile
  character(len=11) :: fmt
- real :: timei
+ real :: timei, hfact
 
  nstepsread = 0
  nstep_max = 0
@@ -184,7 +191,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  time(j) = timei
 
  nread = 0
- call set_labels
+ call set_labels_tipsy
 
  if (iambinaryfile==1) then
     call read_tipsybody_binary(iunit,ierr,nread)
@@ -203,6 +210,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  ! (and warn people about the evils of using fixed softening lengths for sph particles)
  !
  if (ngas >= 0 .and. nread >= irho .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)) <= tiny(dat))) then
+    hfact=1.2
     print "(a)",'WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
     print "(a,f5.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
     dat(1:ngas,ih,j) = hfact*(dat(1:ngas,ipmass,j)/(dat(1:ngas,irho,j) + tiny(dat)))**(1./ndim)
@@ -401,13 +409,13 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
 
 end subroutine read_tipsybody_binary
 
-end subroutine read_data
+end subroutine read_data_tipsy
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_tipsy
  use labels, only:label,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,ipmass !,iutherm
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
@@ -417,11 +425,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_tipsy ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_tipsy ***'
     return
  endif
 
@@ -462,4 +470,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_tipsy
+end module readdata_tipsy

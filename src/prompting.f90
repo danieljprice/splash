@@ -134,7 +134,7 @@ module prompting
   module procedure &
       integer_prompt, real_prompt, string_prompt, double_prompt, logical_prompt, intarr_prompt
  end interface
- public :: prompt,print_logical
+ public :: prompt,print_logical,print_logicals
 
 contains
 
@@ -720,9 +720,35 @@ function print_logical(lvalue,mask)
        print_logical = 'OFF'
     endif
  else
-    print_logical = '-'
+    print_logical = ''
  endif
 
 end function print_logical
+
+function print_logicals(lvalues,mask)
+ implicit none
+ logical, intent(in) :: lvalues(:)
+ logical, intent(in), optional :: mask(:)
+ character(len=3*size(lvalues)) :: print_logicals
+ logical :: maskval
+ integer :: i
+
+ print_logicals = ''
+ do i=1,size(lvalues)
+    maskval = .true.
+    if (present(mask)) maskval = mask(i)
+    if (maskval) then
+       if (lvalues(i)) then
+          print_logicals = trim(print_logicals)//'ON,'
+       else
+          print_logicals = trim(print_logicals)//'OFF,'
+       endif
+    endif
+ enddo
+ ! delete last comma
+ i = index(print_logicals,',',back=.true.)
+ if (i > 1) print_logicals = print_logicals(1:i-1)
+
+end function print_logicals
 
 end module prompting

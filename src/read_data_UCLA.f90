@@ -46,7 +46,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_ucla
+ implicit none
+ 
+ public :: read_data_ucla, set_labels_ucla
+ 
+ private 
+contains
+
+subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
@@ -156,7 +164,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
 
  return
-end subroutine read_data
+end subroutine read_data_UCLA
 
 !!-------------------------------------------------------------------
 !! set labels for each column of data
@@ -167,7 +175,7 @@ end subroutine read_data
 !!
 !!-------------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_UCLA
  use labels, only:label,labeltype,ix,irho,ipmass,ih,ipr,ivx,iamvec,labelvec
  use params
  use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
@@ -207,4 +215,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_UCLA
+end module readdata_ucla

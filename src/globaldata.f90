@@ -138,15 +138,16 @@ module settings_data
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  logical :: iRescale_has_been_set
- logical, parameter :: buffer_steps_in_file = .false.
+ logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)
  logical :: lowmemorymode
  logical :: debugmode
- logical :: UseFakeDustParticles
+ logical :: UseFakeDustParticles, UseFastRender
  logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
+ character(len=60)       :: device
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
                      itracktype,itrackoffset,idustfrac_plot,ideltav_plot,UseFakeDustParticles

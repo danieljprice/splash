@@ -80,12 +80,20 @@ module gadgetread
 
 end module gadgetread
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_gadget
+ implicit none
+
+ public :: read_data_gadget, set_labels_gadget, file_format_is_gadget
+
+ private
+contains
+
+subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,sing_prec,maxparttypes
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
- use settings_page,  only:legendtext
  use mem_allocation, only:alloc
  use labels,         only:ih,irho,ipmass,labeltype
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
@@ -97,7 +105,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  character(len=len(rootname)+10)    :: datfile,densfile,hfile
  character(len=4)                   :: blocklabel
  character(len=20)                  :: string
- integer, dimension(maxparttypes)   :: npartoftypei,Nall
+ integer, dimension(6) :: npartoftypei,Nall
  integer, dimension(:), allocatable :: iamtemp
  integer               :: i,j,k,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
  integer               :: index1,index2,indexstart,indexend,nmassesdumped,ntypesused
@@ -106,7 +114,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  integer               :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
  integer, dimension(6) :: i0,i1all,i2all
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,checkids,usez,goterrors
+ logical               :: iexist,reallocate,checkids,goterrors
  logical, dimension(6) :: ireadtype
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
@@ -152,7 +160,6 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  idumpformat = 0
  idumpformat = ienvironment('GSPLASH_FORMAT')
  checkids    = lenvironment('GSPLASH_CHECKIDS')
- usez        = lenvironment('GSPLASH_USE_Z')
 !
 !--read data from snapshots
 !
@@ -334,16 +341,12 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        !--call set labels to get ih, ipmass, irho for use in the read routine
        !
        hsoft = 0. ! to avoid unset variable
-       call set_labels
+       call set_labels_gadget
     endif
 
     if (ifile==1) then
        print*,'time            : ',timetemp
-       if (usez) then
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
-       else
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
-       endif
+       print "(1x,a,f8.2)",'z (redshift)    : ',ztemp
     endif
     print*,'Npart (by type) : ',npartoftypei(1:6)
     if (ifile==1) print*,'Mass  (by type) : ',massoftypei(1:6)
@@ -382,13 +385,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
              ncolumns = ncolumns + 1
              blocklabelgas(ncolumns) = 'HSML'
              ih = ncolumns
-             call set_labels
+             call set_labels_gadget
           endif
           if (irho==0 .and. (hsoft > tiny(hsoft) .or. ierrrho==0 .or. ierrh==0)) then
              ncolumns = ncolumns + 1
              blocklabelgas(ncolumns) = 'RHO '
              irho = ncolumns
-             call set_labels
+             call set_labels_gadget
           endif
        endif
 
@@ -451,20 +454,9 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
     !--set time to be used in the legend
     !
     if (ifile==1) then
-       if (usez) then
-          !--use this line for redshift
-          legendtext = 'z='
-          time(i) = real(ztemp)
-       else
-          !--use this line for code time
-          time(i) = real(timetemp)
-       endif
+       time(i) = real(timetemp)
     else
-       if (usez) then
-          if (abs(real(ztemp)-time(i)) > tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
-       else
-          if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
-       endif
+       if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
        if (sum(Nall) /= ntotall) then
           print*,' ERROR: Nall differs between files'
           goterrors = .true.
@@ -913,7 +905,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
        else
           print "(a,i10,a)",' SMOOTHING LENGTHS READ OK for ',index2-index1+1,' dark matter / star particles '
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget routine
     endif
 
     if (ierrrho==0) then
@@ -944,7 +936,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
           print "(a,i10,a,f5.2,a)", &
             ' SMOOTHING LENGTHS SET for ',index2-index1+1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
        endif
-       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels routine
+       hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget routine
     endif
  else
     !
@@ -1109,13 +1101,13 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
  return
 end subroutine read_blockheader
 
-end subroutine read_data
+end subroutine read_data_gadget
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_gadget
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
@@ -1129,11 +1121,11 @@ subroutine set_labels
  character(len=30), dimension(10) :: labelextra
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_gadget ***'
     return
  endif
 
@@ -1343,4 +1335,48 @@ subroutine set_labels
  endif
  UseTypeInRenderings(3:6) = .false.
 
-end subroutine set_labels
+end subroutine set_labels_gadget
+
+!-----------------------------------------------------------
+!
+! check if a file is in phantom/sphNG format
+!
+!-----------------------------------------------------------
+logical function file_format_is_gadget(filename) result(is_gadget)
+ use params, only:doub_prec
+ character(len=*), intent(in) :: filename
+ integer :: iunit,ierr
+ real(doub_prec) :: time,z
+ real(doub_prec) :: massoftypei(6)
+ integer :: noftype(6),Nall(6),iFlagSfr,iFlagFeedback,iFlagcool,nfiles
+
+ is_gadget = .false.
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted')
+ if (ierr /= 0) return
+ !
+ ! attempt to read the first line of the header
+ !
+ noftype(:) = -1
+ massoftypei(:) = -1.
+ time = -1.
+ z = -1.
+ iFlagSfr = -1
+
+ read(iunit,iostat=ierr) noftype(1:6),massoftypei(1:6),time,z,iFlagSfr,&
+      iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+! print*,' got ',ierr,noftype(1:6),massoftypei(1:6),time,z,iFlagSfr, &
+!         iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+
+ if (ierr==0 .and. all(noftype(1:6) >= 0) .and. all(massoftypei >= 0.) &
+     .and. time >= 0. .and. z >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
+     .and. iFlagFeedback >= 0 .and. all(nall(1:6) >= 0) .and. nfiles >= 0 &
+     .and. nfiles <= 1e6) is_gadget = .true.
+
+ close(iunit)    ! close the file
+
+end function file_format_is_gadget
+
+end module readdata_gadget

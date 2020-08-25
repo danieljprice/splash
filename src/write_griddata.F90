@@ -90,24 +90,30 @@ end subroutine write_gridlimits
 !-----------------------------------------------------------------
 ! print usage if format selection not valid
 !-----------------------------------------------------------------
-subroutine print_gridformats
+subroutine print_gridformats(string)
+ character(len=*), intent(in) :: string
 
- print "(/,a)",' Grid conversion mode ("splash to X dumpfiles"): '
- print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
- print "(a)",'                             to 2D or 3D grid, write grid data to file (using default output=ascii)'
- print "(a)",'           to gridascii    : as above, grid data written in ascii format'
- print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
- print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
- print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax [ 4x4,7x8 bytes ]'
- print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
- print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
- print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
- print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
- print "(a)",'           to gridstream   : grid data in byte-stream binary format (e.g. for python):'
- print "(a)",'                              nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax,rho [ 4,4,4,4,8*7,8*nx*ny*nz ]'
- print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
- print "(a)",'        allto gridascii    : as above, with ascii output'
- print "(a)",'        allto gridbinary   : as above, with binary output'
+ if (trim(string)=='short') then
+    print "(/,a)",'Grid conversion mode: '
+    print "(a)",'   splash to grid      : interpolate to grid; type "splash to" for details'
+ else
+    print "(/,a)",' Grid conversion mode ("splash to X dumpfiles"): '
+    print "(a)",'    splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)'
+    print "(a)",'                             to 2D or 3D grid, write grid data to file (using default output=ascii)'
+    print "(a)",'           to gridascii    : as above, grid data written in ascii format'
+    print "(a)",'           to gridascii2   : grid data written in ascii format, all in one file'
+    print "(a)",'           to gridbinary   : as above, grid data in simple unformatted binary format:'
+    print "(a)",'                                write(unit) nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax [ 4x4,7x8 bytes ]'
+    print "(a)",'                                write(unit) (((rho(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+    print "(a)",'                                write(unit) (((vx(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+    print "(a)",'                                write(unit) (((vy(i,j,k), i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+    print "(a)",'                                write(unit) (((...(i,j,k),i=1,nx),j=1,ny),k=1,nz)  [ 8 bytes each ]'
+    print "(a)",'           to gridstream   : grid data in byte-stream binary format (e.g. for python):'
+    print "(a)",'                              nx,ny,nz,ncolumns,time,xmin,xmax,ymin,ymax,zmin,zmax,rho [ 4,4,4,4,8*7,8*nx*ny*nz ]'
+    print "(a)",'        allto grid         : as above, interpolating *all* columns to the grid (and output file)'
+    print "(a)",'        allto gridascii    : as above, with ascii output'
+    print "(a)",'        allto gridbinary   : as above, with binary output'
+ endif
 
  return
 end subroutine print_gridformats

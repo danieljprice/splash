@@ -423,7 +423,7 @@ subroutine set_grain_sizes(ntags,tags,vals,udist)
  real, intent(inout) :: vals(ntags)
  real(doub_prec), intent(in) :: udist
  integer :: i,nd
-  
+
  ! convert grain sizes to cm
  nd = 0
  do i=1,ntags
@@ -1219,9 +1219,21 @@ end subroutine get_rho_from_h
 end module sphNGread
 
 !----------------------------------------------------------------------
-!  Main read_data routine for splash
+!  Module for read_data_sphNG and set_labels_sphNG routines
 !----------------------------------------------------------------------
-subroutine read_data(rootname,indexstart,iposn,nstepsread)
+
+module readdata_sphNG
+ implicit none
+
+ public :: read_data_sphNG, set_labels_sphNG, file_format_is_sphNG
+
+ private
+contains
+
+!----------------------------------------------------------------------
+!  Main read_data_sphNG routine for splash
+!----------------------------------------------------------------------
+subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use particle_data,  only:dat,gamma,time,headervals,&
                       iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
  !use params,         only:int1,int8
@@ -2138,7 +2150,7 @@ subroutine read_data(rootname,indexstart,iposn,nstepsread)
  if (allocated(iphase)) deallocate(iphase)
  if (allocated(listpm)) deallocate(listpm)
 
- call set_labels
+ call set_labels_sphNG
  if (.not.phantomdump) then
     if (ngas /= npart - nptmassi - ndust - nstar - nunknown) &
            print*,'WARNING!!! ngas =',ngas,'but should be',npart-nptmassi-ndust-nstar-nunknown
@@ -2246,13 +2258,13 @@ subroutine reset_corotating_positions(np,xy,omeg,t)
  return
 end subroutine reset_corotating_positions
 
-end subroutine read_data
+end subroutine read_data_sphNG
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_sphNG
  use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
@@ -2272,11 +2284,11 @@ subroutine set_labels
  character(len=20) :: deltav_string
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_sphNG ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_sphNG ***'
     return
  endif
 !--all formats read the following columns
@@ -2589,7 +2601,31 @@ subroutine set_labels
     UseTypeInRenderings(6) = .true.  ! only applies if turned on
  endif
 
-!-----------------------------------------------------------
-
  return
-end subroutine set_labels
+end subroutine set_labels_sphNG
+
+!-----------------------------------------------------------
+!
+! check if a file is in phantom/sphNG format
+!
+!-----------------------------------------------------------
+logical function file_format_is_sphNG(filename) result(is_sphNG)
+ character(len=*), intent(in) :: filename
+ integer :: iunit,intg1,ierr
+
+ is_sphNG = .false.
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted')
+ if (ierr /= 0) return
+ !
+ ! check the magic integer to determine phantom/sphNG format
+ !
+ read(iunit,iostat=ierr) intg1
+ if (intg1==690706 .or. intg1==060769) is_sphNG = .true.
+ close(iunit)    ! close the file
+
+end function file_format_is_sphNG
+
+end module readdata_sphNG
