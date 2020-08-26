@@ -70,7 +70,6 @@ jobs:
           tarfile: ${{ steps.get_version.outputs.tarfile }}
       id: shasum
       run: |
-          mv /tmp/$tarfile .
           tar tfz $tarfile
           echo ::set-output name=sha::"$(shasum -a 256 $tarfile | awk '{printf $1}')"
 
