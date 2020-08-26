@@ -41,6 +41,14 @@ module readwrite_fits
   module procedure write_fits_cube,write_fits_cube64
  end interface write_fits_cube
 
+ interface read_fits_image
+  module procedure read_fits_image,read_fits_image64
+ end interface read_fits_image
+
+ interface read_fits_cube
+  module procedure read_fits_cube,read_fits_cube64
+ end interface read_fits_cube
+
  private
 
 contains
@@ -51,14 +59,12 @@ contains
 !---------------------------------------------------
 subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
- real, intent(out), allocatable :: image(:,:)
+ real(kind=real32), intent(out), allocatable :: image(:,:)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,nfound,bitpix
  logical :: anynull
- real(kind=real32), allocatable :: img32(:,:)
- real(kind=real64), allocatable :: img64(:,:)
  !
  !--open file and read header information
  !
@@ -102,29 +108,6 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
     return
  endif
  ierr = 0
- !
- ! handle both 32 and 64 bit images, perform type conversions if they don't match
- !
- if (kind(image)==bitpix/8) then
-    call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
- elseif (bitpix==64) then
-    ! convert float64 image -> 32 bit internal array
-    allocate(img64(naxes(1),naxes(2)),stat=ierr)
-    call ftgpve(iunit,group,firstpix,npixels,nullval,img64,anynull,ierr)
-    image = real(img64)
-    deallocate(img64)
- elseif (bitpix==32) then ! perform type conversion
-    ! convert float32 image -> 64 bit internal array
-    allocate(img32(naxes(1),naxes(2)),stat=ierr)
-    call ftgpve(iunit,group,firstpix,npixels,nullval,img32,anynull,ierr)
-    image = real(img32)
-    deallocate(img32)
- else ! should never happen, but just have a go anyway, maybe bitpix is corrupt?
-    call ftclos(iunit,ierr)
-    call ftfiou(iunit,ierr)
-    ierr = 3
-    return
- endif
  call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
@@ -213,15 +196,13 @@ end subroutine write_fits_head
 !---------------------------------------------------
 subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
- real, intent(out), allocatable :: image(:,:,:)
+ real(kind=real32), intent(out), allocatable :: image(:,:,:)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,bitpix
  logical :: anynull
  integer :: ndim
- real(kind=real32), allocatable :: img32(:,:,:)
- real(kind=real64), allocatable :: img64(:,:,:)
  !
  !--open file and read header information
  !
@@ -265,29 +246,7 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
     return
  endif
  ierr = 0
- !
- ! handle both 32 and 64 bit cubes, perform type conversions if they don't match
- !
- if (kind(image)==bitpix/8) then
-    call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
- elseif (bitpix==64) then
-    ! convert float64 image -> 32 bit internal array
-    allocate(img64(naxes(1),naxes(2),naxes(3)),stat=ierr)
-    call ftgpve(iunit,group,firstpix,npixels,nullval,img64,anynull,ierr)
-    image = real(img64)
-    deallocate(img64)
- elseif (bitpix==32) then ! perform type conversion
-    ! convert float32 image -> 64 bit internal array
-    allocate(img32(naxes(1),naxes(2),naxes(3)),stat=ierr)
-    call ftgpve(iunit,group,firstpix,npixels,nullval,img32,anynull,ierr)
-    image = real(img32)
-    deallocate(img32)
- else ! should never happen, but just have a go anyway, maybe bitpix is corrupt?
-    call ftclos(iunit,ierr)
-    call ftfiou(iunit,ierr)
-    ierr = 3
-    return
- endif
+ call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
 
@@ -443,6 +402,47 @@ subroutine write_fits_cube64(filename,image,naxes,ierr,hdr)
  deallocate(img32,stat=ierr)
 
 end subroutine write_fits_cube64
+
+!-------------------------------------------------------------
+! read fits file and convert to double precision
+!-------------------------------------------------------------
+subroutine read_fits_image64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in)   :: filename
+ real(kind=real64), intent(out), allocatable :: image(:,:)
+ character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ integer, intent(out) :: naxes(2),ierr
+ real(kind=real32), allocatable :: img32(:,:)
+
+ if (present(hdr)) then
+    call read_fits_image(filename,img32,naxes,ierr,hdr)
+ else
+    call read_fits_image(filename,img32,naxes,ierr)
+ endif
+ image = img32  ! allocate and copy, converting real type
+ deallocate(img32,stat=ierr)
+
+end subroutine read_fits_image64
+
+!-------------------------------------------------------------
+! read fits cube and convert to double precision
+!-------------------------------------------------------------
+subroutine read_fits_cube64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in)   :: filename
+ real(kind=real64), intent(out), allocatable :: image(:,:,:)
+ character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ integer, intent(out) :: naxes(4),ierr
+ real(kind=real32), allocatable :: img32(:,:,:)
+
+ if (present(hdr)) then
+    call read_fits_cube(filename,img32,naxes,ierr,hdr)
+ else
+    call read_fits_cube(filename,img32,naxes,ierr)
+ endif
+ image = img32  ! allocate and copy, converting real type
+ deallocate(img32,stat=ierr)
+
+end subroutine read_fits_cube64
+
 !--------------------------------------------------
 ! read all floating point variables from fits header
 !--------------------------------------------------
