@@ -34,14 +34,6 @@ jobs:
           echo ::set-output name=repo::`basename ${repo}`
           echo ::set-output name=tarfile::`basename ${repo}`-${vernum/refs\/tags\//}.tar.gz
 
-    - name: build tarball (no submodules)
-      env:
-          tarfile: ${{ steps.get_version.outputs.tarfile }}
-          repo: ${{ steps.get_version.outputs.repo }}
-      run: |
-          git archive --prefix="${repo}/" HEAD > $tarfile
-          gzip $tarfile
-
 #    - name: build tarball mac
 #      if: matrix.os == 'macos-latest'
 #      env:
@@ -50,26 +42,23 @@ jobs:
 #      run: |
 #          tar cfz /tmp/$tarfile --exclude ".git*" -s "/./${repo}/" .
 
-#    - name: build tarball
-#      if: matrix.os == 'ubuntu-latest'
-#      env:
-#          tarfile: ${{ steps.get_version.outputs.tarfile }}
-#          repo: ${{ steps.get_version.outputs.repo }}
-#      run: |
-#          env
-#          echo "tarfile is $tarfile, repo is $repo"
-#          tar cfz /tmp/$tarfile --exclude ".git*" \
-#              --exclude "*.c" --exclude "*.h" \
-#              --exclude "*.F90" --exclude "utils/*"  \
-#              --exclude "docs/*" --exclude "scripts/*" \
-#              --exclude "*H5Part*" --exclude "read_data*" \
-#              --transform "s,.,${repo}," .
+    - name: build tarball
+      if: matrix.os == 'ubuntu-latest'
+      env:
+          tarfile: ${{ steps.get_version.outputs.tarfile }}
+          repo: ${{ steps.get_version.outputs.repo }}
+      run: |
+          env
+          echo "tarfile is $tarfile, repo is $repo"
+          tar cfz /tmp/$tarfile --exclude ".git*" \
+              --transform "s,.,${repo}," .
 
     - name: check tarball and get SHA
       env:
           tarfile: ${{ steps.get_version.outputs.tarfile }}
       id: shasum
       run: |
+          mv /tmp/$tarfile .
           tar tfz $tarfile
           echo ::set-output name=sha::"$(shasum -a 256 $tarfile | awk '{printf $1}')"
 
