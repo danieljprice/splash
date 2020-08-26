@@ -93,6 +93,7 @@ jobs:
       run: |
         git config --global user.email "daniel.price@monash.edu"
         git config --global user.name "Daniel Price"
+        brew install pipgrip
         brew tap $brewtap
         brew bump-formula-pr -f --version=${version/v/} --no-browse --no-audit \
         --sha256=${{ steps.shasum.outputs.sha }} \
