@@ -23,7 +23,7 @@ program denoise
  use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image,get_from_header
  use imageutils,      only:image_denoise,image_denoise3D
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
- use system_utils,    only:get_command_option,count_matching_args
+ use system_utils,    only:get_command_option,count_matching_args,get_command_flag
  implicit none
  character(len=120) :: file1,file2,fileout,tagline,filek
  integer :: ierr,jext,nfiles,its,naxes(4),npixels,k,i,iarglist(3),kstart,kend,k1,k2
@@ -32,7 +32,7 @@ program denoise
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
  character(len=:), allocatable :: fitsheader(:)
  real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1
- logical :: iexist,use_3D
+ logical :: iexist,use_3D,skip
 
  nfiles = count_matching_args('.fits',iarglist)
 
@@ -46,6 +46,7 @@ program denoise
     print "(a)",  '          --use3D=1         [denoise in 3D for spectral cubes]'
     print "(a)",  '          --start=1         [denoise from channel 1 onwards]'
     print "(a,/)",'          --end=10          [denoise only up to channel 10]'
+    print "(a)",  '          --nosubsample     [do not subsample if beam size >> pixel scale]'
     stop
  endif
 
@@ -72,6 +73,7 @@ program denoise
  kstart = nint(get_command_option('start',default=0.))
  kend   = nint(get_command_option('end',default=0.))
  its    = nint(get_command_option('its',default=4.))
+ skip   = .not.get_command_flag('nosubsample')
 
  !print*,' GOT imax=',imax,' fac =  ',fac,trim(file1),trim(file2),trim(fileout)
 
@@ -125,11 +127,11 @@ program denoise
     bmin = get_from_header('BMIN',fitsheader,ierr)
     cdelt1 = get_from_header('CDELT1',fitsheader,ierr)
 !    beam = sqrt(bmaj*bmin)/abs(cdelt1)
-    if (abs(cdelt1) > 0. .and. ierr /= 0) then
+    if (abs(cdelt1) > 0. .and. ierr == 0) then
        beam = bmaj/abs(cdelt1) !sqrt(bmin*bmaj)/abs(cdelt1)
        print*,' bmin = ',bmin/abs(cdelt1),' bmaj = ',bmaj/abs(cdelt1), ' mean = ',sqrt(bmin*bmaj)/abs(cdelt1)
     endif
-    if (beam < 1. .or. beam > 20.) beam = 1. 
+    if (beam < 1. .or. beam > 20.) beam = 1.
  endif
  print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', min pix per beam = ',beam
  !imagemax = beam**2*imagemax
@@ -149,7 +151,7 @@ program denoise
     if (kend > 0 .and. kend <= naxes(3)) k2 = kend
     do k=k1,k2
        if (naxes(3) > 1) print "(a,i5,a,i5)",'>> channel ',k, ' of ',naxes(3)
-       call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam)
+       call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
        !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
 
        ! for polarised images, denoise individual polarisations
@@ -157,9 +159,9 @@ program denoise
        ! and stitch the denoised images back together
        if (nfiles >= 3) then
           write(stdout,'(/,a)') '>> de-noising p...'
-          call image_denoise(naxes,image1,hh,iterations=0)
+          call image_denoise(naxes,image1,hh,iterations=0,skip=skip)
           write(stdout,'(/,a)') '>> de-noising q...'
-          call image_denoise(naxes,image2,hh,iterations=0)
+          call image_denoise(naxes,image2,hh,iterations=0,skip=skip)
           write(stdout,'(/,a)') '>> recombining to get total intensity...'
           image = sqrt(image1**2 + image2**2)
        endif

@@ -44,6 +44,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin,iverbose
  use settings_part,        only:iplotpartoftype
  use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation,exact_rendering
+ use settings_xsecrot,     only:anglex,angley,anglez
+ use rotation,             only:rotate3D
  use params,               only:int1
  use interpolation,        only:set_interpolation_weights
  use interpolations3D,     only:interpolate3D,interpolate3D_vec
@@ -77,7 +79,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real, dimension(:,:),   allocatable   :: datgrid2D
  real(doub_prec), dimension(:,:,:,:), allocatable :: datgridvec
  real, dimension(:,:,:),   allocatable :: datgridvec2D
- real, dimension(:), allocatable       :: weight
+ real, dimension(:), allocatable       :: weight,x,y,z
  real, dimension(3)    :: xmin,xmax
  real, dimension(3)    :: partmin,partmax,partmean
  real, dimension(3)    :: datmin,datmax,datmean
@@ -88,7 +90,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer, dimension(12) :: icoltogrid
  integer :: ncolstogrid,igeom
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
- real    :: mtot,mtotgrid,err,t2,t1
+ real    :: mtot,mtotgrid,err,t2,t1,xi(3),ax,ay,az
+ real, parameter :: pi=4.0*atan(1.0)
  logical :: inormalise,lowmem,do_output
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
@@ -167,6 +170,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
      .or. size(itype) > 1) ninterp = ntoti
 
  allocate(weight(ninterp),stat=ierr)
+ allocate(x(ninterp),y(ninterp),z(ninterp),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     return
@@ -290,6 +294,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (ierr /= 0) then
     write(*,*) 'FAILED: NOT ENOUGH MEMORY'
     if (allocated(weight)) deallocate(weight)
+    if (allocated(x)) deallocate(x)
+    if (allocated(y)) deallocate(y)
+    if (allocated(z)) deallocate(z)
     return
  else
     write(*,*) 'OK'
@@ -308,6 +315,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        if (allocated(datgrid)) deallocate(datgrid)
        if (allocated(datgrid)) deallocate(datgrid2D)
        if (allocated(weight)) deallocate(weight)
+       if (allocated(x)) deallocate(x)
+       if (allocated(y)) deallocate(y)
+       if (allocated(z)) deallocate(z)
        return
     endif
  endif
@@ -336,7 +346,25 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
             xmin,datgrid,npixels,pixwidthx,xorigin,inormalise,isperiodic)
     else
-       call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+       x = dat(1:ninterp,ix(1))
+       y = dat(1:ninterp,ix(2))
+       z = dat(1:ninterp,ix(3))
+       if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
+          print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
+          print*, 'WARNING: This does not rotate vector components'
+          ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
+          ay = angley*pi/180.0
+          az = anglez*pi/180.0
+          do i=1,ninterp
+             xi = (/x(i),y(i),z(i)/)
+             call rotate3D(xi,ax,ay,az,0.,0.)
+             x(i) = xi(1)
+             y(i) = xi(2)
+             z(i) = xi(3)
+          enddo
+       endif
+
+       call interpolate3D(x,y,z,&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
             xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
             pixwidthx(1),pixwidthx(2),pixwidthx(3),inormalise,&
@@ -460,7 +488,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                         xmin,datgrid,npixels,pixwidthx,xorigin,.true.,isperiodic)
                 else
-                   call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                   call interpolate3D(x,y,z,&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                         xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
                         pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
@@ -548,7 +576,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                            xmin,datgrid,npixels,pixwidthx,xorigin,.true.,isperiodic)
                       else
-                         call interpolate3D(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                         call interpolate3D(x,y,z,&
                               dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,i),icolourme,ninterp,&
                               xmin(1),xmin(2),xmin(3),datgrid,npixels(1),npixels(2),npixels(3),&
                               pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
@@ -595,7 +623,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                            dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
                            xmin,datgridvec,npixels,pixwidthx,xorigin,.true.,isperiodic)
                    else
-                      call interpolate3D_vec(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
+                      call interpolate3D_vec(x,y,z,&
                         dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,iloc:iloc+ndimV-1),icolourme,ninterp,&
                         xmin(1),xmin(2),xmin(3),datgridvec,npixels(1),npixels(2),npixels(3),&
                         pixwidthx(1),pixwidthx(2),pixwidthx(3),.true.,isperiodic(1),isperiodic(2),isperiodic(3))
@@ -645,6 +673,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (allocated(datgridvec))   deallocate(datgridvec)
  if (allocated(datgridvec2D)) deallocate(datgridvec2D)
  if (allocated(weight)) deallocate(weight)
+ if (allocated(x)) deallocate(x)
+ if (allocated(y)) deallocate(y)
+ if (allocated(z)) deallocate(z)
 
  return
 end subroutine convert_to_grid

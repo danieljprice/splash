@@ -325,13 +325,16 @@ subroutine submenu_exact(iexact)
     enddo overfunc
     if (ierr /= 0) nfunc = ierr
  case(2)
-    call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
     !
     ! try to read filenames from .exactfiles if it exists
     !
     filename_tmp = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename_tmp),nfiles,filename_exact,ierr)
-    if (ierr==-1 .and. nfiles > 1) then
+    !
+    ! then prompt user
+    !
+    call prompt('enter number of files to read per plot ',nfiles,1,maxexact)
+    if (ierr /= 0 .and. nfiles > 1) then
        print "(2(/,a))",' Hint: create a file called '//trim(fileprefix)//'.exactfiles', &
                                      ' with one filename per line to automatically read the filenames'
     else
@@ -706,7 +709,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  character(len=*), intent(in)  :: rootname
  integer,          intent(out) :: ierr
 
- integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6),narmsread
+ integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6),narmsread,nfiles_got
  character(len=len_trim(rootname)+8) :: filename
  character(len=120) :: line
  character(len=30)  :: var
@@ -755,10 +758,12 @@ subroutine read_exactparams(iexact,rootname,ierr)
     endif
  case(2)
     filename = trim(fileprefix)//'.exactfiles'
-    call read_asciifile(trim(filename),nfiles,filename_exact,ierr)
+    call read_asciifile(trim(filename),nfiles_got,filename_exact,ierr)
     if (ierr==-1) then
        if (iverbose > 0) print "(a)",' no file '//trim(filename)
        return
+    elseif (nfiles_got > 0) then
+       nfiles = nfiles_got
     endif
  case(3,13)
     !

@@ -64,8 +64,8 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS    = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5
-HDF5INCLUDE = -I/usr/include/hdf5/serial/
+HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
+HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
 ifdef FITS_DIR
@@ -88,6 +88,12 @@ STATICLIBS=
 #PARALLEL=no
 ifndef OPENMP
 OPENMP=yes
+endif
+#
+# compile in double precision by default (v3.0 onwards this is now default)
+#
+ifndef DOUBLEPRECISION
+DOUBLEPRECISION=yes
 endif
 #
 # the openMP flags should be set in the lines defining your system type
@@ -404,10 +410,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90\
          plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
-	 		   rotate.f90 interpolate3D_projection.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
-         interpolate3D_proj_geom.F90 \
-         interpolate3D_opacity.f90 interpolate_vec.f90 \
-         interpolate3D.F90 \
+         rotate.f90 interpolate3D_projection.f90 interpolate3D_geom.f90 interpolate3D_xsec.f90 \
+         interpolate3D_proj_geom.f90 \
+         interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
@@ -503,12 +508,11 @@ liball: lib libexact libread
 # libsplash: library version of splash interpolation routines
 #
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
-      interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
-      interpolate3D_geom.F90 interpolate3D_projection.F90 \
-      interpolate3D_proj_geom.F90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
+      interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
+      interpolate3D_geom.f90 interpolate3D_projection.f90 \
+      interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
       libsplash.f90 libread.f90
 OBJLIB1=${SRCLIB:.f90=.o}
-# OBJLIB=${OBJLIB1:.F90=.o}
 OBJLIB=${OBJECTS:splash.o=} libread.o
 
 .PHONY: libsplash

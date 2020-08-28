@@ -9,7 +9,7 @@ Data is read *directly* from the code dump format giving rapid access to results
 
 SPLASH uses the SPH smoothing kernel to render plots of density and other physical quantities, giving a smooth representation of the data. The goal is to produce beautiful plots and visualisations from SPH codes, instead of simple particle plots.
 
-SPLASH can also be used as a standalone plotting tool, though this is not its main purpose.
+SPLASH can also be used as a standalone plotting tool for any kind of tabulated or image data from ascii, csv or .fits files.
 
 Status
 ------

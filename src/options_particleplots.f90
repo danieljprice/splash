@@ -117,13 +117,13 @@ end subroutine initialise_coord_transforms
 !----------------------------------------------------------------------
 subroutine submenu_particleplots(ichoose)
  use exact,           only:options_exact,submenu_exact
- use labels,          only:labeltype,ih,label
+ use labels,          only:labeltype,ih,label,get_sink_type
  use limits,          only:lim
  use settings_data,   only:icoords,ntypes,ndim,UseTypeInRenderings, &
                             ndataplots,idustfrac_plot,ideltav_plot
  use settings_render, only:iplotcont_nomulti
  use particle_data,   only:npartoftype,iamtype
- use prompting,       only:prompt,print_logical
+ use prompting,       only:prompt,print_logical,print_logicals
  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits,&
                             igeom_flaredcyl,igeom_logflared,set_flaring_index
  use multiplot,       only:itrans
@@ -136,40 +136,45 @@ subroutine submenu_particleplots(ichoose)
  use asciiutils,      only:enumerate
  implicit none
  integer, intent(in) :: ichoose
- integer             :: i,iaction,n,itype,icoordsprev,ierr,icol
+ integer             :: i,iaction,n,itype,icoordsprev,ierr,icol,isinktype,nt
  character(len=2)    :: charntypes
- character(len=20)   :: substring1,substring2,substring3
+ character(len=20)   :: substring2,substring3
  character(len=1000) :: fmtstring
  character(len=120)  :: contline
  logical :: ians
+ integer :: itypes(maxparttypes)
 
  iaction = ichoose
 
  !--we require some tricks with the format string to print only the actual number of
  !  particle types rather than the whole array
  !
- if (ntypes > 100) print*,'WARNING: Internal error: ntypes too large for formatting in particle plot menu'
- if (ntypes <= 0) then
-    substring1 = "no types specified"
+ isinktype = get_sink_type(ntypes)
+ nt = 0
+ do i=1,ntypes
+    if (any(npartoftype(i,:) > 0) .or. i==isinktype) then
+       nt = nt + 1
+       itypes(nt) = i
+    endif
+ enddo
+ if (nt <= 0) then
     substring2 = "not applicable"
- elseif (ntypes==1) then
-    substring1 = "a"
+ elseif (nt==1) then
     substring2 = "i2"
  else
-    write(charntypes,"(i2)") ntypes-1
-    substring1 = charntypes//"(a,',',1x),a"
+    write(charntypes,"(i2)") nt-1
     substring2 = charntypes//"(i2,',',1x),i2"
  endif
  substring3 = enumerate(ismooth_particle_plots+1,(/'OFF  ','FIXED','ADAPT'/),default=1)
  if (iplotcont_nomulti) then
-    contline = "'            use in contour plots:       ( ',"//trim(substring1)//",' )',/,"
+    contline = "'            use in contour plots:       ( ',a,' )',/,"
  else
     contline = ' '
  endif
 
  fmtstring="("// &
          "' 0) exit ',/,"// &
-         "' 1) turn on/off particles by type       ( ',"//trim(substring1)//",' )',/,"//trim(contline)// &
+         "' 1) turn on/off particles by type       ( ',a,' )',/,"//trim(contline)// &
          "' 2) change graph markers for each type  ( ',"//trim(substring2)//",' )',/,"//  &
          "' 3) set colour for each particle type   ( ',"//trim(substring2)//",' )',/,"//  &
          "' 4) smooth particle plots               ( ',a,' )',/,"//  &
@@ -182,13 +187,13 @@ subroutine submenu_particleplots(ichoose)
  print "(a)",'------------- particle plot options -------------------'
  if (iaction <= 0 .or. iaction > 9) then
     if (iplotcont_nomulti) then
-       print fmtstring,(trim(print_logical(iplotpartoftype(i),mask=any(npartoftype(i,:) > 0))),i=1,ntypes), &
-                 (trim(print_logical(UseTypeInContours(i),mask=UseTypeInRenderings(i))),i=1,ntypes), &
-                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
+       print fmtstring,trim(print_logicals(iplotpartoftype(itypes(1:nt)))), &
+                 trim(print_logicals(UseTypeInContours(itypes(1:nt)),mask=UseTypeInRenderings(itypes(1:nt)))), &
+                 imarktype(itypes(1:nt)),idefaultcolourtype(itypes(1:nt)),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
     else
-       print fmtstring,(trim(print_logical(iplotpartoftype(i),mask=any(npartoftype(i,:) > 0))),i=1,ntypes), &
-                 imarktype(1:ntypes),idefaultcolourtype(1:ntypes),trim(substring3), &
+       print fmtstring,trim(print_logicals(iplotpartoftype(itypes(1:nt)))), &
+                 imarktype(itypes(1:nt)),idefaultcolourtype(itypes(1:nt)),trim(substring3), &
                  print_logical(iplotline),print_logical(ncircpart > 0 .or.iploterrbars),icoordsnew,iexact
     endif
     call prompt('enter option',iaction,0,9)

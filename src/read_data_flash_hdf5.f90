@@ -102,10 +102,10 @@ end module flash_hdf5read
 
 module readdata_flash_hdf5
  implicit none
- 
+
  public :: read_data_flash_hdf5, set_labels_flash_hdf5
- 
- private 
+
+ private
 contains
 
 subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
@@ -126,7 +126,8 @@ subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
  integer :: nprint,npart_max,nstep_max,ierr
  integer, dimension(0:maxplot) :: isrequired
  logical :: iexist
- real :: tread,hfact,totmass
+ real(c_float) :: tread
+ real :: hfact,totmass
 
  nstepsread = 0
  nstep_max = 0
@@ -303,8 +304,5 @@ subroutine set_labels_flash_hdf5
  labeltype(1) = 'tracer'
  UseTypeInRenderings(1) = .true.
 
-!-----------------------------------------------------------
-
- return
 end subroutine set_labels_flash_hdf5
 end module readdata_flash_hdf5
