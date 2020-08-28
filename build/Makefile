@@ -404,7 +404,7 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90\
+SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
          plotutils.f90 colourbar.f90 \
@@ -417,8 +417,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90\
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 plotlib_mock.f90 \
-				 exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
+         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
+         exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
@@ -437,6 +437,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90\
          plotstep.f90 timestepping.f90 \
          defaults.f90 initialise.f90 menu.f90 \
          splash.f90
+
 
 OBJECTS1= $(SOURCES:.f90=.o) $(STATICLIBS)
 OBJECTS2= $(OBJECTS1:.F90=.o)
