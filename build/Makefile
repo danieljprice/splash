@@ -438,6 +438,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          defaults.f90 initialise.f90 menu.f90 \
          splash.f90
 
+
 OBJECTS1= $(SOURCES:.f90=.o) $(STATICLIBS)
 OBJECTS2= $(OBJECTS1:.F90=.o)
 OBJECTS3= $(OBJECTS2:.c=.o)
@@ -499,6 +500,11 @@ grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
 #
+#
+#
+liball: lib libexact libread
+
+#
 # libsplash: library version of splash interpolation routines
 #
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
@@ -518,7 +524,7 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
+SRCLIBEXACT= plotlib_mock.f90 libutils.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
 	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
@@ -528,19 +534,18 @@ OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 
 .PHONY: libexact
-libexact: libexactcmd
-libexactcmd: checksystem $(OBJLIBEXACTALL)
+libexact: checksystem $(OBJLIBEXACTALL)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
 
 
 #
-# libexact: read solution library
+# libexact: read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
-       system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
-			  geomutils.f90 partutils.f90 calc_quantities.f90\
-			  $(READFILES) \
-       read_data.F90 adjust_data.f90 limits.f90 get_data.f90 initialise.f90 libread.f90
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+            system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
+            geomutils.f90 partutils.f90 calc_quantities.f90 \
+            $(READFILES) read_data.F90 \
+            adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
 OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
