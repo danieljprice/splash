@@ -71,7 +71,7 @@ def shock(
     c_x = (c_float*len(x))()
     c_y = (c_float*len(x))()
     c_x[:] = x[:]
-    exactdll.shock_(
+    exactdll.shock(
         byref(c_int(iplot)),
         byref(c_int(len(x))),
         byref(c_float(time)),
@@ -88,7 +88,7 @@ def shock(
         byref(c_y),
         byref(c_int(ierr))
     )
-    return c_x[:], c_y[:],ierr
+    return c_x[:], c_y[:], ierr
 
 def shock_sr(
     x,

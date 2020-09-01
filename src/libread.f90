@@ -27,63 +27,139 @@
 module libreaddata
 
  use readdata,         only:select_data_format
- use getdata,          only:get_data, get_labels
+ use getdata,          only:get_data,get_labels
+ use labels,           only:label,unitslabel,headertags,shortstring,lenlabel,lenunitslabel
+ use params,           only:ltag
  use initialise,       only:defaults_set_initial
- use iso_c_binding,    only:c_float, c_int, c_bool, c_char
- use asciiutils,       only:fstring
+ use iso_c_binding,    only:c_float,c_int,c_bool,c_char,c_double
+ use asciiutils,       only:fstring,cstring
  use filenames,        only:rootname, tagline, nfiles
- use particle_data,    only:dat, maxpart, maxcol, maxstep, npartoftype
- use settings_data,    only:ncolumns, ivegotdata
+ use particle_data,    only:dat,maxpart,maxcol,maxstep,npartoftype,iamtype,headervals
+ use settings_data,    only:ncolumns,ivegotdata,required,iverbose
+ use libutils,         only:ctypes_to_fstring,check_argcv
 
  implicit none
 
  public
 
 contains
-subroutine check_argcv_f() bind(c)
- include 'libinclude.f90'
-end subroutine check_argcv_f
+  subroutine check_argcv_c() bind(c, name='check_argcv')
+   call check_argcv()
+ end subroutine check_argcv_c
 
-subroutine read_data_c(filename,fileformat,ierr) bind(c, name='read_data')
- character(kind=c_char), intent(in)   :: filename(:), fileformat(:)
- !real(c_double),         intent(out)  :: sph_dat(:,:)
- integer(c_int),         intent(out)  :: ierr
+subroutine get_labels_c(labels_out, ncol) bind(c)
+  integer(c_int),          intent(in)  :: ncol
+  character(kind=c_char),  intent(out) :: labels_out(lenlabel, ncol)
+  character(len=lenlabel)    :: temp_string
+  integer :: i,j
 
- character(len=120) :: filename_f
- character(len=20)   :: format_f
- integer :: np, nc
+  call get_labels
 
- print*, tagline
+do i = 1, ncol
+  temp_string = shortstring(label(i), unitslabel(i))
+  do j = 1, lenlabel
+    if (j .le. len(temp_string)) then
+      labels_out(j, i) = temp_string(j:j)
+    else
+      labels_out(j, i) = ' '
+    endif
+  enddo
+end do
+
+end subroutine get_labels_c
+
+subroutine get_header_vals_size(taglength, vallength) bind(c)
+  ! Need to get the correct size of the header array to allocate memory in Python
+  integer(c_int), intent(out)  :: taglength, vallength
+  ! taglength is the size of the tag array
+  ! vallength is the length of the headerval array
+
+  taglength = size(headertags)
+  vallength = size(headervals)
+
+end subroutine get_header_vals_size
+
+subroutine get_headers(headertags_out, headervals_out, taglength, vallength) bind(c)
+  integer(c_int),                  intent(in)  :: taglength, vallength
+  character(kind=c_char),          intent(out) :: headertags_out(ltag, taglength)
+  real(c_double),                  intent(out) :: headervals_out(vallength)
+  integer :: i,j
+
+  do i = 1, taglength
+    do j = 1, ltag
+      if (j .le. len(headertags(i))) then
+        headertags_out(j, i) = headertags(i)(j:j)
+      else
+        headertags_out(j, i) = ' '
+      endif
+    enddo
+  enddo
+
+  headervals_out(1:vallength) = headervals(1:vallength, 1)
+
+end subroutine get_headers
+
+subroutine read_data_c(filename,fileformat,f_length, ff_length,&
+                       sph_dat,npart,ncol,read_header,iverbose,ierr) bind(c, name='read_data')
+ integer(c_int),         intent(in)     :: f_length, ff_length
+ character(kind=c_char), intent(in)     :: filename(f_length), fileformat(ff_length)
+ integer(c_int),         intent(inout)  :: ncol, npart
+ real(c_double),         intent(out)    :: sph_dat(npart,ncol)
+ integer(c_int),         intent(in)     :: read_header, iverbose
+ integer(c_int),         intent(out)    :: ierr
+
+ character(len=ff_length)   :: format_f
+
+ integer   :: ncolr,npartr
 
  ierr = 0
 
  call defaults_set_initial
 
+ ! iverbose = verbose
+
+ if (iverbose==1) print*, tagline
+
+ if (read_header==1) required = .false.
+
  nfiles = 1
- rootname(1) = fstring(filename)
- format_f = fstring(fileformat)
+ rootname(1) = ctypes_to_fstring(filename)
+ format_f = ctypes_to_fstring(fileformat)
+
+ if (iverbose==1) then
+   print*, "Received file format f ", format_f
+   print*, "Size of sph_dat is ", size(sph_dat)
+ endif
 
 call select_data_format(format_f,ierr)
 
-if (ierr /= 0) then
-  call get_data(1,.true.,.true.,1)
-  if (ivegotdata .and. maxpart>0) then
-    ! np = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
-    ! nc = min(ncolumns, size(sph_dat(1,:)))
-    if (nc > 0) then
-       !sph_dat(1:np,1:nc) = dat(1:np,1:nc,1)
+ if (ierr == 0) then
+   call get_data(1,.true.,.true.,1)
+   if (ivegotdata .and. maxpart>0) then
+      npartr = sum(npartoftype(:,1))
+      ncolr = ncolumns
+      if (ncol/=0 .or. npart/=0) then
+        if (ncol/=ncolr+1 .or. npart/=npartr) then
+          print*, "WARNING: Array size given in libread is not equal to read array."
+        endif
+      else if (ncol==0 .or. npart==0) then
+        ncol = ncolr
+        npart = npartr
     endif
-  endif
-endif
+
+   if (ncol > 0 .and. read_header/=1) then
+       sph_dat(1:npart,1:ncol-1) = dat(1:npart,1:ncol-1,1)
+       sph_dat(1:npart,ncol) = iamtype(1:npart,1)
+    else
+        if (iverbose==1) print*, "Updating values for npart and ncol."
+        npart = sum(npartoftype(:,1))
+        ncol = ncolumns + 1
+     endif
+   endif
+ else
+   print*, "Error in selecting the data format"
+ endif
 
 end subroutine read_data_c
-
-! subroutine select_data_format_c(string, ierr) bind(c, name='select_data_format')
-!
-!  integer(c_int), intent(out)   :: ierr
-!
-!  call select_data_format(string, ierr)
-!
-! end subroutine select_data_format_c
 
 end module libreaddata
