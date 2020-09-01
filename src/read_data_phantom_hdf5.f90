@@ -232,9 +232,21 @@ end subroutine get_ncolumns
 
 end module readphantomhdf5
 
-! ---------------------------------------------------------------------------- !
+!-------------------------------------------------------------------------
+!
+!  The routine that reads the data into splash's internal arrays
+!
+!-------------------------------------------------------------------------
 
-subroutine read_data(dumpfile,ifile,ipos,nstepsread)
+module readdata_phantom_hdf5
+ implicit none
+
+ public :: read_data_phantom_hdf5, set_labels_phantom_hdf5
+
+ private
+contains
+
+subroutine read_data_phantom_hdf5(dumpfile,ifile,ipos,nstepsread)
   use particle_data,   only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,iamtype,maxstep
   use settings_data,   only:ndim,ndimV,ncolumns,ncalc,ntypes,ndusttypes,maxparttypes
   use labels,          only:label,labeltype,ipmass,irho,ih,ix,ivx,idivB,&
@@ -670,8 +682,9 @@ subroutine read_data(dumpfile,ifile,ipos,nstepsread)
 
   call close_hdf5file(file_id,error)
 
-end subroutine read_data
+end subroutine read_data_phantom_hdf5
 
-subroutine set_labels
+subroutine set_labels_phantom_hdf5
 
-end subroutine set_labels
+end subroutine set_labels_phantom_hdf5
+end module readdata_phantom_hdf5

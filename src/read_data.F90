@@ -61,6 +61,7 @@ module readdata
 ! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
  use readdata_flash_hdf5,   only:read_data_flash_hdf5,   set_labels_flash_hdf5
  use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5
+ use readdata_phantom_hdf5,  only:read_data_phantom_hdf5,  set_labels_phantom_hdf5
 #endif
 
  ! Same for FITS files
@@ -280,8 +281,8 @@ subroutine select_data_format(string,ierr)
  ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
 #ifdef HDF5
  case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
-   print "(a)",  'Phantom HDF5 files are currently not supported :( '
-   stop
+   read_data=>read_data_phantom_hdf5
+   set_labels=>set_labels_phantom_hdf5
 
  case('gadget_hdf5')
    read_data=>read_data_gadget_hdf5

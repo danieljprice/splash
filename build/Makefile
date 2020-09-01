@@ -64,7 +64,7 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
+HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5 -lhdf5_fortran
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
@@ -364,7 +364,8 @@ READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspm
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
                 read_data_cactus_hdf5_utils.c   read_data_cactus_hdf5_futils.f90   read_data_cactus_hdf5.f90 \
-                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90
+                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90 \
+                hdf5_utils.f90                  read_data_phantom_hdf5.f90
                 #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
 
 READFILES_FITS= write_fits.f90 read_data_fits.f90
@@ -482,6 +483,10 @@ falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
+
+#---phantom HDF5 read ---
+hdf5_utils.o: hdf5_utils.f90
+	$(FC) $(FFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
 
 #---SILO read ---
