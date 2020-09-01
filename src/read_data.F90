@@ -353,6 +353,7 @@ subroutine print_available_formats(string)
  print "(a)"  ,' -ndspmhd          : ndspmhd code'
  print "(a)"  ,' -seren            : Seren code'
 #ifdef HDF5
+ print "(a)"  ,' -phantom_hdf5     : Phantom code (with HDF5)'
  print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
  print "(a)"  ,' -flash  -flash_hdf5  : FLASH code'
@@ -393,6 +394,7 @@ subroutine print_available_formats(string)
     print "(a)",' -vanaverbeke      : Sigfried Vanaverbeke code'
     print "(a)",' -gadget_jsb       : GADGET Jamie Bolton variant'
 #ifndef HDF5
+    print "(a)",' -phantom_hdf5        : Phantom HDF5 [not compiled]'
     print "(a)",' -gadget_hdf5         : Gadget HDF5 [not compiled]'
     print "(a)",' -falcon -falcon_hdf5 : FalcON code [not compiled]'
     print "(a)",' -flash  -flash_hdf5  : FLASH code [not compiled]'
