@@ -204,7 +204,7 @@ subroutine submenu_particleplots(ichoose)
  case(1)
     !          plot particles by type?
     over_types: do itype=1,ntypes
-       if (all(npartoftype(itype,:) == 0)) cycle over_types
+       if (all(npartoftype(itype,:) == 0) .and. itype/=isinktype) cycle over_types
        if (UseTypeinRenderings(itype) .and. ndim > 1) then
           call prompt('Plot '//trim(labeltype(itype))//' particles / use in renderings?',iplotpartoftype(itype))
           if (iplotcont_nomulti) then
@@ -235,7 +235,7 @@ subroutine submenu_particleplots(ichoose)
 
     !print*,'(0 Square) (1 .) (2 +) (3 *) (4 o) (5 x) (17 bold circle) (-8 bigger bold circle)'
     over_types2: do itype=1,ntypes
-       if (all(npartoftype(itype,:) == 0)) cycle over_types2
+       if (all(npartoftype(itype,:) == 0) .and. itype/=isinktype) cycle over_types2
 
        call prompt(' Enter marker to use for '//trim(labeltype(itype)) &
              //' particles:',imarktype(itype),-8,35)
