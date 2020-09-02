@@ -407,9 +407,9 @@ subroutine print_available_formats(string)
  end if
 
 #ifdef HDF5
- print "(/,a)" ,'This build supports HDF5 formats. HDF5 files will be automatically'
- print "(a)",' recognised if they end with .h5, however you must specify a supported data format.'
- print "(a)",'  add a suffix "_hdf5" to above format if your data files do not end with .h5.'
+ print "(/,a)",'This build supports HDF5 formats.'
+ print "(a)"  ,'If data files end with .h5 they are assumed to be -phantom_hdf5 format,'
+ print "(a)"  ,'unless a different format is specified.'
 #else
  print "(/,a)",'This build does not support HDF5. Compile with HDF5=yes to change this.'
 #endif
