@@ -49,9 +49,10 @@ logical function isanalysis(string,noprint)
  implicit none
  character(len=*), intent(in) :: string
  logical, intent(in), optional :: noprint
- logical :: doprint
+ logical :: doprint,verbose
 
  isanalysis = .false.
+ verbose = .true.
  select case(trim(string))
  case('energies','energy')
     isanalysis = .true.
@@ -85,6 +86,8 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('lightcurve')
     isanalysis = .true.
+ case('none')
+    verbose = .false.
  end select
 
  if (present(noprint)) then
@@ -93,7 +96,7 @@ logical function isanalysis(string,noprint)
     doprint = .true.
  endif
 
- if (.not.isanalysis .and. doprint) then
+ if (.not.isanalysis .and. doprint .and. verbose) then
     print "(a)",' Analysis mode ("splash calc X dumpfiles") on a sequence of dump files: '
     print "(a)",'  splash calc energies     : calculate KE,PE,total energy vs time'
     print "(a)",'                             output to file called ''energy.out'''
@@ -127,6 +130,9 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''time_average.out'''
     print "(/,a)",'         calc ratio        : ratio of *all* entries in each file compared to first'
     print "(a)",'                             output to file called ''ratio.out'''
+ else
+    print "(a)",'Analysis mode:'
+    print "(a)",'   splash calc <mode>  : type "splash calc" for details'
  endif
 
  return

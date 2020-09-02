@@ -41,7 +41,7 @@ contains
 !  is inversely proportional to the image intensity
 !
 !----------------------------------------------------------------------
-subroutine image_denoise(naxes,image,hh,iterations,imax,beam,err)
+subroutine image_denoise(naxes,image,hh,iterations,imax,beam,skip,err)
  use interpolations2D, only:interpolate2D
  integer, intent(in)    :: naxes(2)
  real,    intent(inout) :: image(naxes(1),naxes(2))
@@ -49,10 +49,12 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,beam,err)
  integer, intent(in), optional :: iterations
  real,    intent(in), optional :: beam,imax
  integer, intent(out), optional :: err
+ logical, intent(in), optional :: skip
  real, allocatable      :: x(:),y(:),weight(:),dat(:)
  integer, allocatable   :: mask(:)
  integer :: npixels,its,niter,i,j,n,ierr,iskip
  real :: imagemax,dx,dy,hfac,xmin,ymin
+ logical :: do_skip
 
  ! choose default kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)
@@ -74,6 +76,8 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,beam,err)
  else
     imagemax = maxval(image)
  endif
+ do_skip = .true.
+ if (present(skip)) do_skip = skip
  !fluxold  = sum(image)
  !print*,' total intensity =',fluxold
 
@@ -88,8 +92,13 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,beam,err)
  iskip = 1  ! as many particles as pixels
  if (present(beam)) then
     hfac = beam
-    iskip = max(nint(0.5*hfac),1)
-    if (iskip > 1) print "(a,i2,a)",' beam is large compared to pixel scale, subsampling by factor of ',iskip,' for efficiency'
+    if (do_skip) then
+       iskip = max(nint(0.5*hfac),1)
+       if (iskip > 1) then
+          print "(a,i2,a)",' beam is large compared to pixel scale, subsampling by factor of ',iskip,' for efficiency'
+          print "(a)",'  use --nosubsample to switch off'
+       endif
+    endif
  endif
 
  ! find the convolution length by iteration
@@ -104,7 +113,7 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,beam,err)
           if (niter > 0) then
              if (abs(image(i,j)) > 0.) then
                 hh(n) = min(max(0.4*hfac*sqrt(imagemax/abs(image(i,j))),1.),5.*(its+1)*sqrt(hfac))
-             else 
+             else
                 hh(n) = 5.*(its+1)*sqrt(hfac)
              endif
           endif
@@ -240,7 +249,7 @@ subroutine image_rotate(naxes,image,angle,err)
  integer, allocatable   :: mask(:)
  integer :: npixels,i,j,n,ierr
  real :: dx,dy,xmin,ymin,anglerad,xpos(2)
-   
+
  ! choose default kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)
 

@@ -26,11 +26,28 @@
 !
 !----------------------------------------------------------------------
 module readwrite_fits
+ use iso_fortran_env, only:real32,real64
  implicit none
  public :: read_fits_image,write_fits_image,fits_error
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
  public :: get_floats_from_fits_header,get_from_header
+
+ interface write_fits_image
+  module procedure write_fits_image,write_fits_image64
+ end interface write_fits_image
+
+ interface write_fits_cube
+  module procedure write_fits_cube,write_fits_cube64
+ end interface write_fits_cube
+
+ interface read_fits_image
+  module procedure read_fits_image,read_fits_image64
+ end interface read_fits_image
+
+ interface read_fits_cube
+  module procedure read_fits_cube,read_fits_cube64
+ end interface read_fits_cube
 
  private
 
@@ -42,11 +59,11 @@ contains
 !---------------------------------------------------
 subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
- real, intent(out), allocatable :: image(:,:)
+ real(kind=real32), intent(out), allocatable :: image(:,:)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group,nfound
+ integer :: firstpix,nullval,group,nfound,bitpix
  logical :: anynull
  !
  !--open file and read header information
@@ -70,6 +87,7 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  !
  call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = naxes(1)*naxes(2)
+ bitpix = abs(get_from_header('BITPIX',hdr,ierr))
  !
  !--sanity check the header read
  !
@@ -117,7 +135,7 @@ subroutine read_fits_header(filename,hdr,ierr)
  call read_fits_head(iunit,hdr,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
-   
+
 end subroutine read_fits_header
 
 !---------------------------------------------------
@@ -178,11 +196,11 @@ end subroutine write_fits_head
 !---------------------------------------------------
 subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
- real, intent(out), allocatable :: image(:,:,:)
+ real(kind=real32), intent(out), allocatable :: image(:,:,:)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group
+ integer :: firstpix,nullval,group,bitpix
  logical :: anynull
  integer :: ndim
  !
@@ -204,6 +222,9 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  call ftgisz(iunit,3,naxes(1:ndim),ierr)
  if (ndim==2) naxes(3) = 1
  if (ndim>=3) ndim = 3
+
+ bitpix = abs(get_from_header('BITPIX',hdr,ierr))
+
  ! call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = product(naxes(1:ndim))
  !
@@ -228,7 +249,7 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  call ftgpve(iunit,group,firstpix,npixels,nullval,image,anynull,ierr)
  call ftclos(iunit,ierr)
  call ftfiou(iunit,ierr)
-  
+
 end subroutine read_fits_cube
 
 !---------------------------------------------------
@@ -238,6 +259,8 @@ end subroutine read_fits_cube
   integer, intent(in) :: ierr
 
   select case(ierr)
+  case(3)
+     fits_error = 'could not match floating point type for fits image'
   case(2)
      fits_error = 'could not allocate memory'
   case(1)
@@ -256,7 +279,7 @@ end subroutine read_fits_cube
  subroutine write_fits_image(filename,image,naxes,ierr,hdr)
   character(len=*), intent(in) :: filename
   integer, intent(in)  :: naxes(2)
-  real(kind=4),     intent(in) :: image(naxes(1),naxes(2))
+  real(kind=real32), intent(in) :: image(naxes(1),naxes(2))
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
   integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
@@ -294,6 +317,26 @@ end subroutine read_fits_cube
 
  end subroutine write_fits_image
 
+!-------------------------------------------------------------
+! Writing new fits file (convert from double precision input)
+!-------------------------------------------------------------
+ subroutine write_fits_image64(filename,image,naxes,ierr,hdr)
+  character(len=*), intent(in) :: filename
+  integer,          intent(in) :: naxes(2)
+  real(kind=real64),intent(in) :: image(naxes(1),naxes(2))
+  real(kind=real32), allocatable :: img32(:,:)
+  integer, intent(out) :: ierr
+  character(len=80), intent(in), optional :: hdr(:)
+
+  img32 = image  ! copy and allocate
+  if (present(hdr)) then
+     call write_fits_image(filename,img32,naxes,ierr,hdr)
+  else
+     call write_fits_image(filename,img32,naxes,ierr)
+  endif
+  deallocate(img32,stat=ierr)
+
+ end subroutine write_fits_image64
 
 !------------------------------------------------
 ! Writing new fits file
@@ -301,21 +344,21 @@ end subroutine read_fits_cube
  subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
    character(len=*), intent(in) :: filename
    integer, intent(in)  :: naxes(3)
-   real(kind=4),     intent(in) :: image(naxes(1),naxes(2),naxes(3))
+   real(kind=real32), intent(in) :: image(naxes(1),naxes(2),naxes(3))
    integer, intent(out) :: ierr
    character(len=80), intent(in), optional :: hdr(:)
    integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
    logical :: simple,extend
- 
+
    !  Get an unused Logical Unit Number to use to open the FITS file.
    ierr = 0
    call ftgiou(iunit,ierr)
- 
+
    !  Create the new empty FITS file.
    blocksize=1
    print "(a)",' writing '//trim(filename)
    call ftinit(iunit,filename,blocksize,ierr)
- 
+
    !  Initialize parameters about the FITS image
    simple=.true.
    ! data size
@@ -332,13 +375,74 @@ end subroutine read_fits_cube
    npixels = product(naxes)
    ! write as real*4
    call ftppre(iunit,group,firstpixel,npixels,image,ierr)
- 
+
    !  Close the file and free the unit number
    call ftclos(iunit, ierr)
    call ftfiou(iunit, ierr)
- 
+
  end subroutine write_fits_cube
- 
+
+!-------------------------------------------------------------
+! Writing new fits file (convert from double precision input)
+!-------------------------------------------------------------
+subroutine write_fits_cube64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in) :: filename
+ integer,          intent(in) :: naxes(3)
+ real(kind=real64),intent(in) :: image(naxes(1),naxes(2),naxes(3))
+ character(len=80), intent(in), optional :: hdr(:)
+ integer,           intent(out) :: ierr
+ real(kind=real32), allocatable :: img32(:,:,:)
+
+ img32 = image  ! copy and allocate
+ if (present(hdr)) then
+    call write_fits_cube(filename,img32,naxes,ierr,hdr)
+ else
+    call write_fits_cube(filename,img32,naxes,ierr)
+ endif
+ deallocate(img32,stat=ierr)
+
+end subroutine write_fits_cube64
+
+!-------------------------------------------------------------
+! read fits file and convert to double precision
+!-------------------------------------------------------------
+subroutine read_fits_image64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in)   :: filename
+ real(kind=real64), intent(out), allocatable :: image(:,:)
+ character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ integer, intent(out) :: naxes(2),ierr
+ real(kind=real32), allocatable :: img32(:,:)
+
+ if (present(hdr)) then
+    call read_fits_image(filename,img32,naxes,ierr,hdr)
+ else
+    call read_fits_image(filename,img32,naxes,ierr)
+ endif
+ image = img32  ! allocate and copy, converting real type
+ deallocate(img32,stat=ierr)
+
+end subroutine read_fits_image64
+
+!-------------------------------------------------------------
+! read fits cube and convert to double precision
+!-------------------------------------------------------------
+subroutine read_fits_cube64(filename,image,naxes,ierr,hdr)
+ character(len=*), intent(in)   :: filename
+ real(kind=real64), intent(out), allocatable :: image(:,:,:)
+ character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ integer, intent(out) :: naxes(4),ierr
+ real(kind=real32), allocatable :: img32(:,:,:)
+
+ if (present(hdr)) then
+    call read_fits_cube(filename,img32,naxes,ierr,hdr)
+ else
+    call read_fits_cube(filename,img32,naxes,ierr)
+ endif
+ image = img32  ! allocate and copy, converting real type
+ deallocate(img32,stat=ierr)
+
+end subroutine read_fits_cube64
+
 !--------------------------------------------------
 ! read all floating point variables from fits header
 !--------------------------------------------------
@@ -347,7 +451,7 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
  character(len=*),  intent(out) :: tags(:)
  real,              intent(out) :: vals(:)
  integer :: i, n, ierr
-  
+
  n = 0
  do i=1,size(hdr)
     n = n + 1
@@ -356,7 +460,7 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
     endif
     if (ierr /= 0) n = n - 1
  enddo
-  
+
 end subroutine get_floats_from_fits_header
 
 !------------------------------------------------

@@ -34,7 +34,7 @@ int read_cactus_dataset(hid_t file_id,char *name,int *ncol,int *ncells,int *ndim
 int read_cactus_iteration(hid_t file_id,int iter,int *next,int *nsteps,int *ncells,int *ndim,int *ncol,double *time,double *deltax,int inheader,int ignoretl);
 int read_cactus_grid(hid_t dataset_id,hid_t dataspace_id,int ndim,int mycol,int *n,int nx,int ny,int nz,int nghost[3],double orig[3],double delta[3]);
 void get_ndim_ncells(hid_t dataspace_id, int *ndim, int *nx,int *ny,int *nz);
-void set_blocklabel(int *icol, char *name, int *lenname);
+void set_blocklabel_cactus(int *icol, char *name, int *lenname);
 void sort_cactus_data(int *n, int iarr[*n], int iorder[*n]);
 void read_cactus_hdf5_data_fromc(int *icol,int *ntot,int *np,double temparr[*np]);
 void read_cactus_itype_fromc(int *ntot,int *np,int itype[*np]);
@@ -158,7 +158,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
                *ncol = *ncol + 1;
                if (inheader) printf("-> %s tl=%i\n",thorn,tl);
                 /* send dataset name back to phantom */
-               if (inheader) set_blocklabel(ncol,thorn,&mylen);
+               if (inheader) set_blocklabel_cactus(ncol,thorn,&mylen);
                nsub = 0;
                n = 0;
                if (debug) printf(" GOT ncells = %i\n",*ncells);

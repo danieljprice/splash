@@ -71,7 +71,16 @@ module asciiread
 
 end module asciiread
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+
+module readdata_ascii
+ implicit none
+ 
+ public :: read_data_ascii, set_labels_ascii
+ 
+ private 
+contains
+
+subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
@@ -147,6 +156,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     endif
     if (ncolstep <= 1) then
        print "(a)",'*** ERROR: could not determine number of columns in file ***'
+       print "(a)",'Are you trying to read a non-ascii file?'
+       print "(a)",'Type --formats to see a list of supported data formats and their command line options.'
        return
     endif
 
@@ -170,7 +181,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     iverbose_was = iverbose
     iverbose = 0
     ncolumns = ncolstep
-    call set_labels()  ! to see if types are defined
+    call set_labels_ascii()  ! to see if types are defined
     iverbose = iverbose_was
 
     !
@@ -326,7 +337,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
  close(iunit)
 
-end subroutine read_data
+end subroutine read_data_ascii
 
 !-------------------------------------------------------------------
 ! set labels for each column of data
@@ -336,7 +347,7 @@ end subroutine read_data
 ! from the column labels
 !
 !-------------------------------------------------------------------
-subroutine set_labels
+subroutine set_labels_ascii
  use asciiutils,      only:lcase,match_taglist,find_repeated_tags
  use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel, &
@@ -528,4 +539,5 @@ subroutine set_labels
  labeltype(1) = 'gas'
  UseTypeInRenderings(1) = .true.
 
-end subroutine set_labels
+end subroutine set_labels_ascii
+end module readdata_ascii

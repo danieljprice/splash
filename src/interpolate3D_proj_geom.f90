@@ -39,11 +39,7 @@ module projections3Dgeom
  public :: interpolate3D_proj_geom, interpolate3D_xsec_geom
 ! public :: interpolate3D_proj_geom_vec
 
-#ifdef _OPENMP
  character(len=5), parameter :: str = 'cpu s'
-#else
- character(len=1), parameter :: str = 's'
-#endif
 
 contains
 
@@ -96,11 +92,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
  integer :: ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,ip,jp
  integer :: ixcoord,iycoord,izcoord,ierr,ncpus
  integer :: iprintinterval, iprintnext
-#ifdef _OPENMP
- integer :: omp_get_num_threads,i
-#else
+ !$ integer :: omp_get_num_threads
  integer(kind=selected_int_kind(10)) :: iprogress,i  ! up to 10 digits
-#endif
  real, dimension(3) :: xcoord, xpix
  real, dimension(3), save :: xci, xi
 !$omp threadprivate(xci,xi)
@@ -162,6 +155,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
  !  (a "long time" is, however, somewhat system dependent)
  !
  iprintprogress = (npart  >=  100000) .or. (npixx*npixy  > 100000)
+ !$ iprintprogress = .false.
  !
  !--loop over particles
  !
@@ -190,8 +184,10 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,ixcoord,iycoord,izcoord,islengthx,islengthy,islengthz,igeom) &
 !$omp shared(datnorm,normalise,radkernel,radkernel2,xorigin) &
+!$omp shared(iprintprogress,iprintinterval) &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
+!$omp private(iprogress,iprintnext) &
 !$omp private(q2,dx,dx2,dy,dy2,dz,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix,ip,jp,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
 !$omp do schedule (guided, 2)
@@ -199,7 +195,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
        iprogress = 100*i/npart
        if (iprogress >= iprintnext) then
@@ -207,7 +202,6 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !

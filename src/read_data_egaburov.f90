@@ -38,11 +38,18 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+module readdata_egaburov
+ implicit none
+
+ public :: read_data_egaburov, set_labels_egaburov
+
+ private
+contains
+
+subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
- use settings_page, only:legendtext
  use mem_allocation, only:alloc
  use labels, only:ih,irho
  use system_utils, only:renvironment,lenvironment
@@ -51,24 +58,10 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  character(len=len(rootname)+10) :: datfile
-!  integer, dimension(maxparttypes) :: npartoftypei,Nall
-!  integer, dimension(:), allocatable :: iamtemp
  integer :: i,j,ierr
-!  integer :: index1,index2,indexstart,indexend,Nmassesdumped
  integer :: ncolstep,npart_max,nstep_max
-!  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
  logical :: iexist,reallocate
-!   real(doub_prec) :: timetemp,ztemp, dummy
-!   real(doub_prec), dimension(6) :: massoftypei
-!   real, dimension(:), allocatable :: dattemp1
-!   real :: hsoft
-!   integer :: ntot, nnopt, nout, nit, nav, ngr, nrelax
-!   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
-!   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz
-!   real(doub_prec) :: duth, dmmu
-!   real(doub_prec) :: rscale, mscale
 
-!!!!!!!!!!!!!!!!
 
  integer         :: proc, nread
 
@@ -303,13 +296,13 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  endif
  return
 
-end subroutine read_data
+end subroutine read_data_egaburov
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_egaburov
  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm, idivb, iBfirst
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
@@ -319,11 +312,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_egaburov ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_egaburov ***'
     return
  endif
 
@@ -388,7 +381,6 @@ subroutine set_labels
  labeltype(1) = 'gas'
  UseTypeInRenderings(1) = .true.
 
-
-
  return
-end subroutine set_labels
+end subroutine set_labels_egaburov
+end module readdata_egaburov

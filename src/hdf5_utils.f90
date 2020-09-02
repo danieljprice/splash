@@ -11,1587 +11,1392 @@
 ! DEPENDENCIES: HDF5, ISO_C_BINDING
 !
 ! ---------------------------------------------------------------------------- !
-MODULE hdf5_utils
+module hdf5_utils
 
-  USE HDF5
-  USE ISO_C_BINDING, ONLY:C_LOC
+ use hdf5
+ use iso_c_binding, only:c_loc
 
-  IMPLICIT NONE
+ implicit none
 
-  PRIVATE
+ public :: write_to_hdf5,    &
+           read_from_hdf5,   &
+           open_hdf5file,    &
+           create_hdf5file,  &
+           close_hdf5file,   &
+           open_hdf5group,   &
+           create_hdf5group, &
+           close_hdf5group,  &
+           exist_in_hdf5,    &
+           HID_T
 
-  INTEGER, PARAMETER :: compression_level = 9
+ private
 
-  PUBLIC :: write_to_hdf5,    &
-            read_from_hdf5,   &
-            open_hdf5file,    &
-            create_hdf5file,  &
-            close_hdf5file,   &
-            open_hdf5group,   &
-            create_hdf5group, &
-            close_hdf5group,  &
-            exist_in_hdf5,    &
-            HID_T
+ integer, parameter :: compression_level = 9
 
-  INTERFACE write_to_hdf5
-    MODULE PROCEDURE write_real_kind4,              & ! REAL(4)
-                     write_real_kind8,              & ! REAL(8)
-                     write_real_1d_array_kind4,     & ! 1d REAL(4) arrays
-                     write_real_1d_array_kind8,     & ! 1d REAL(8) arrays
-                     write_real_2d_array_kind4,     & ! 2d REAL(4) arrays
-                     write_real_2d_array_kind8,     & ! 2d REAL(8) arrays
-                     write_real_3d_array_kind4,     & ! 3d REAL(4) arrays
-                     write_real_3d_array_kind8,     & ! 3d REAL(8) arrays
-                     write_integer_kind4,           & ! INTEGER(4)
-                     write_integer_1d_array_kind1,  & ! 1d INTEGER(1) arrays
-                     write_integer_1d_array_kind4,  & ! 1d INTEGER(4) arrays
-                     write_string                     ! strings
-  END INTERFACE write_to_hdf5
+ interface write_to_hdf5
+  module procedure write_real_kind4,              & ! real(4)
+                   write_real_kind8,              & ! real(8)
+                   write_real_1d_array_kind4,     & ! 1d real(4) arrays
+                   write_real_1d_array_kind8,     & ! 1d real(8) arrays
+                   write_real_2d_array_kind4,     & ! 2d real(4) arrays
+                   write_real_2d_array_kind8,     & ! 2d real(8) arrays
+                   write_real_3d_array_kind4,     & ! 3d real(4) arrays
+                   write_real_3d_array_kind8,     & ! 3d real(8) arrays
+                   write_integer_kind4,           & ! integer(4)
+                   write_integer_1d_array_kind1,  & ! 1d integer(1) arrays
+                   write_integer_1d_array_kind4,  & ! 1d integer(4) arrays
+                   write_string                     ! strings
+ end interface write_to_hdf5
 
-  INTERFACE read_from_hdf5
-    MODULE PROCEDURE read_real_kind4,              & ! REAL(4)
-                     read_real_kind8,              & ! REAL(8)
-                     read_real_1d_array_kind4,     & ! 1d REAL(4) arrays
-                     read_real_1d_array_kind8,     & ! 1d REAL(8) arrays
-                     read_real_2d_array_kind4,     & ! 2d REAL(4) arrays
-                     read_real_2d_array_kind8,     & ! 2d REAL(8) arrays
-                     read_real_3d_array_kind4,     & ! 3d REAL(4) arrays
-                     read_real_3d_array_kind8,     & ! 3d REAL(8) arrays
-                     read_integer_kind4,           & ! INTEGER(4)
-                     read_integer_1d_array_kind1,  & ! 1d INTEGER(1) arrays
-                     read_integer_1d_array_kind4,  & ! 1d INTEGER(4) arrays
-                     read_string                     ! strings
-  END INTERFACE read_from_hdf5
+ interface read_from_hdf5
+  module procedure read_real_kind4,              & ! real(4)
+                   read_real_kind8,              & ! real(8)
+                   read_real_1d_array_kind4,     & ! 1d real(4) arrays
+                   read_real_1d_array_kind8,     & ! 1d real(8) arrays
+                   read_real_2d_array_kind4,     & ! 2d real(4) arrays
+                   read_real_2d_array_kind8,     & ! 2d real(8) arrays
+                   read_real_3d_array_kind4,     & ! 3d real(4) arrays
+                   read_real_3d_array_kind8,     & ! 3d real(8) arrays
+                   read_integer_kind4,           & ! integer(4)
+                   read_integer_1d_array_kind1,  & ! 1d integer(1) arrays
+                   read_integer_1d_array_kind4,  & ! 1d integer(4) arrays
+                   read_string                     ! strings
+ end interface read_from_hdf5
 
-CONTAINS
+ interface create_hdf5group
+  module procedure h5gcreate_f
+ end interface create_hdf5group
 
-SUBROUTINE create_hdf5group(file_id, groupname, group_id, error)
-  CHARACTER(LEN=*), INTENT(IN)  :: groupname
-  INTEGER(HID_T),   INTENT(IN)  :: file_id
-  INTEGER(HID_T),   INTENT(OUT) :: group_id
-  INTEGER,          INTENT(OUT) :: error
+ interface open_hdf5group
+  module procedure h5gopen_f
+ end interface open_hdf5group
 
-  CALL H5GCREATE_F(file_id, groupname, group_id, error)
+ interface close_hdf5group
+  module procedure h5gclose_f
+ end interface close_hdf5group
 
-END SUBROUTINE create_hdf5group
+contains
 
-SUBROUTINE open_hdf5group(file_id, groupname, group_id, error)
-  CHARACTER(LEN=*), INTENT(IN)  :: groupname
-  INTEGER(HID_T),   INTENT(IN)  :: file_id
-  INTEGER(HID_T),   INTENT(OUT) :: group_id
-  INTEGER,          INTENT(OUT) :: error
+subroutine exist_in_hdf5(id, name, got, error)
+  integer(HID_T),   intent(in)  :: id
+  character(len=*), intent(in)  :: name
+  logical,          intent(out) :: got
+  integer,          intent(out) :: error
 
-  CALL H5GOPEN_F(file_id, groupname, group_id, error)
+  call h5lexists_f(id, name, got, error)
 
-END SUBROUTINE open_hdf5group
+end subroutine exist_in_hdf5
 
-SUBROUTINE close_hdf5group(group_id, error)
-  INTEGER(HID_T),   INTENT(IN)  :: group_id
-  INTEGER,          INTENT(OUT) :: error
 
-  CALL H5GCLOSE_F(group_id, error)
+subroutine create_hdf5file(filename,file_id,error)
+ character(len=*), intent(in)  :: filename
+ integer(HID_T),   intent(out) :: file_id
+ integer,          intent(out) :: error
+ integer :: filter_info
+ integer :: filter_info_both
+ logical :: avail
 
-END SUBROUTINE close_hdf5group
+ ! Initialise HDF5
+ call h5open_f(error)
+ if (error /= 0) then
+    write(*,'("cannot initialise HDF5",/)')
+    return
+ endif
 
-SUBROUTINE exist_in_hdf5(id, name, got, error)
-  INTEGER(HID_T),   INTENT(IN)  :: id
-  CHARACTER(LEN=*), INTENT(IN)  :: name
-  LOGICAL,          INTENT(OUT) :: got
-  INTEGER,          INTENT(OUT) :: error
+ ! Check if gzip compression is available.
+ call h5zfilter_avail_f(h5z_filter_deflate_f,avail,error)
+ if (.not.avail) then
+    write(*,'("gzip filter not available.",/)')
+    return
+ endif
+ call h5zget_filter_info_f(h5z_filter_deflate_f,filter_info,error)
+ filter_info_both=ior(h5z_filter_encode_enabled_f,h5z_filter_decode_enabled_f)
+ if (filter_info /= filter_info_both) then
+    write(*,'("gzip filter not available for encoding and decoding.",/)')
+    return
+ endif
 
-  CALL H5LEXISTS_F(id, name, got, error)
+ ! Create file
+ call h5fcreate_f(filename,h5f_acc_trunc_f,file_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 file",/)')
+    return
+ endif
 
-END SUBROUTINE exist_in_hdf5
+end subroutine create_hdf5file
 
-SUBROUTINE create_hdf5file(filename, file_id, error)
-  CHARACTER(LEN=*), INTENT(IN)  :: filename
-  INTEGER(HID_T),   INTENT(OUT) :: file_id
-  INTEGER,          INTENT(OUT) :: error
-  INTEGER :: filter_info
-  INTEGER :: filter_info_both
-  LOGICAL :: avail
-
-  ! Initialise HDF5
-  CALL H5OPEN_F(error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot initialise HDF5",/)')
-    RETURN
-  ENDIF
-
-  ! Check if gzip compression is available.
-  CALL H5ZFILTER_AVAIL_F(H5Z_FILTER_DEFLATE_F, avail, error)
-  IF (.NOT.avail) THEN
-    WRITE(*,'("gzip filter not available.",/)')
-    RETURN
-  ENDIF
-  CALL H5ZGET_FILTER_INFO_F(H5Z_FILTER_DEFLATE_F, filter_info, error)
-  filter_info_both=IOR(H5Z_FILTER_ENCODE_ENABLED_F, H5Z_FILTER_DECODE_ENABLED_F)
-  IF (filter_info /= filter_info_both) THEN
-    WRITE(*,'("gzip filter not available for encoding and decoding.",/)')
-    RETURN
-  ENDIF
-
-  ! Create file
-  CALL H5FCREATE_F(filename, H5F_ACC_TRUNC_F, file_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 file",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE create_hdf5file
-
-SUBROUTINE open_hdf5file(filename, file_id, error, read_only)
-  CHARACTER(LEN=*),  INTENT(IN)  :: filename
-  INTEGER(HID_T),    INTENT(OUT) :: file_id
-  INTEGER,           INTENT(OUT) :: error
-  LOGICAL, OPTIONAL, INTENT(IN)  :: read_only
-  LOGICAL :: readonly
+subroutine open_hdf5file(filename, file_id, error, read_only)
+  character(len=*),  intent(in)  :: filename
+  integer(HID_T),    intent(out) :: file_id
+  integer,           intent(out) :: error
+  logical, optional, intent(in)  :: read_only
+  logical :: readonly
 
   ! Initialise HDF5
-  CALL H5OPEN_F(error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot initialise HDF5",/)')
-    RETURN
-  ENDIF
+  call h5open_f(error)
+  if (error /= 0) then
+    write(*,'("cannot initialise HDF5",/)')
+    return
+  endif
 
-  IF (PRESENT(read_only)) THEN
+  if (present(read_only)) then
     readonly = read_only
-  ELSE
-    readonly = .FALSE.
-  ENDIF
+  else
+    readonly = .false.
+  endif
 
   ! Open file
-  IF (readonly) THEN
-    CALL H5FOPEN_F(filename, H5F_ACC_RDONLY_F, file_id, error)
-  ELSE
-    CALL H5FOPEN_F(filename, H5F_ACC_RDWR_F, file_id, error)
-  ENDIF
-
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 file",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE open_hdf5file
-
-SUBROUTINE close_hdf5file(file_id, error)
-  INTEGER(HID_T), INTENT(IN)  :: file_id
-  INTEGER,        INTENT(OUT) :: error
-
-  ! Close file
-  CALL H5FCLOSE_F(file_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close HDF5
-  CALL H5CLOSE_F(error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE close_hdf5file
-
-SUBROUTINE write_real_kind4(x, name, id, error)
-  REAL(KIND=4),   INTENT(IN)  :: x
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dspace_id
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Create dataspace
-  CALL H5SCREATE_F(H5S_SCALAR_F, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_kind4
-
-SUBROUTINE write_real_kind8(x, name, id, error)
-  REAL(KIND=8),   INTENT(IN)  :: x
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dspace_id
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Create dataspace
-  CALL H5SCREATE_F(H5S_SCALAR_F, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_kind8
-
-SUBROUTINE write_real_1d_array_kind4(x, name, id, error)
-  REAL(KIND=4),   INTENT(IN)  :: x(:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_1d_array_kind4
-
-SUBROUTINE write_real_1d_array_kind8(x, name, id, error)
-  REAL(KIND=8),   INTENT(IN)  :: x(:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_1d_array_kind8
-
-SUBROUTINE write_real_2d_array_kind4(x, name, id, error)
-  REAL(KIND=4),   INTENT(IN)  :: x(:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 2
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_2d_array_kind4
-
-SUBROUTINE write_real_2d_array_kind8(x, name, id, error)
-  REAL(KIND=8),   INTENT(IN)  :: x(:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 2
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_2d_array_kind8
-
-SUBROUTINE write_real_3d_array_kind4(x, name, id, error)
-  REAL(KIND=4),   INTENT(IN)  :: x(:,:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 3
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_3d_array_kind4
-
-SUBROUTINE write_real_3d_array_kind8(x, name, id, error)
-  REAL(KIND=8),   INTENT(IN)  :: x(:,:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 3
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_real_3d_array_kind8
-
-SUBROUTINE write_integer_kind4(x, name, id, error)
-  INTEGER(KIND=4), INTENT(IN)  :: x
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dspace_id
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_INTEGER
-
-  ! Create dataspace
-  CALL H5SCREATE_F(H5S_SCALAR_F, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_integer_kind4
-
-SUBROUTINE write_integer_1d_array_kind4(x, name, id, error)
-  INTEGER(KIND=4), INTENT(IN)  :: x(:)
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_NATIVE_INTEGER
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_integer_1d_array_kind4
-
-SUBROUTINE write_integer_1d_array_kind1(x, name, id, error)
-  INTEGER(KIND=1), INTENT(IN)  :: x(:)
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HSIZE_T)   :: chunk(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: prop_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  chunk = shape(x)
-  dtype_id = H5T_STD_I8LE
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, xshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset creation property list, add the gzip
-  ! compression filter and set the chunk size.
-  CALL H5PCREATE_F(H5P_DATASET_CREATE_F, prop_id, error)
-  CALL H5PSET_DEFLATE_F(prop_id, compression_level, error)
-  CALL H5PSET_CHUNK_F(prop_id, ndims, chunk, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataset in file
-  CALL H5DCREATE_F(id, name, dtype_id, dspace_id, dset_id, error, prop_id)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close property list
-  CALL H5PCLOSE_F(prop_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 property list",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_integer_1d_array_kind1
-
-SUBROUTINE write_string(str, name, id, error)
-  CHARACTER(*),    INTENT(IN), TARGET :: str
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 0
-  INTEGER(HSIZE_T)   :: sshape(ndims)
-  INTEGER(HID_T)     :: dspace_id
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(SIZE_T)    :: slength
-  INTEGER(HID_T)     :: filetype
-  TYPE(C_PTR)        :: cpointer
-
-  slength = LEN(str)
-  sshape  = shape(str)
-
-  ! Create file datatypes. Save the string as FORTRAN string
-  CALL H5TCOPY_F(H5T_FORTRAN_S1,filetype, error)
-  CALL H5TSET_SIZE_F(filetype, slength, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 datatype",/)')
-    RETURN
-  ENDIF
-
-  ! Create dataspace
-  CALL H5SCREATE_SIMPLE_F(ndims, sshape, dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Create the dataset in file
-  CALL H5DCREATE_F(id, name, filetype, dspace_id, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot create HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Find C pointer
-  cpointer = C_LOC(str(1:1))
-
-  ! Write to file
-  CALL H5DWRITE_F(dset_id, filetype, cpointer, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot write to HDF5 file",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataspace
-  CALL H5SCLOSE_F(dspace_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ! Close datatype
-  CALL H5TCLOSE_F(filetype, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 datatype",/)')
-    RETURN
-  ENDIF
-
-END SUBROUTINE write_string
-
-SUBROUTINE read_real_kind4(x, name, id, got, error)
-  REAL(KIND=4),   INTENT(OUT) :: x
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_kind4
-
-SUBROUTINE read_real_kind8(x, name, id, got, error)
-  REAL(KIND=8),   INTENT(OUT) :: x
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_kind8
-
-SUBROUTINE read_real_1d_array_kind4(x, name, id, got, error)
-  REAL(KIND=4),   INTENT(OUT) :: x(:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_1d_array_kind4
-
-SUBROUTINE read_real_1d_array_kind8(x, name, id, got, error)
-  REAL(KIND=8),   INTENT(OUT) :: x(:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_1d_array_kind8
-
-SUBROUTINE read_real_2d_array_kind4(x, name, id, got, error)
-  REAL(KIND=4),   INTENT(OUT) :: x(:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 2
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_2d_array_kind4
-
-SUBROUTINE read_real_2d_array_kind8(x, name, id, got, error)
-  REAL(KIND=8),   INTENT(OUT) :: x(:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 2
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_2d_array_kind8
-
-SUBROUTINE read_real_3d_array_kind4(x, name, id, got, error)
-  REAL(KIND=4),   INTENT(OUT) :: x(:,:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 3
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_REAL
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_3d_array_kind4
-
-SUBROUTINE read_real_3d_array_kind8(x, name, id, got, error)
-  REAL(KIND=8),   INTENT(OUT) :: x(:,:,:)
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 3
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_DOUBLE
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_real_3d_array_kind8
-
-SUBROUTINE read_integer_kind4(x, name, id, got, error)
-  INTEGER(KIND=4), INTENT(OUT) :: x
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  LOGICAL,         INTENT(OUT) :: got
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER(HSIZE_T), PARAMETER  :: xshape(0) = 0
-  INTEGER(HID_T) :: dset_id
-  INTEGER(HID_T) :: dtype_id
-
-  dtype_id = H5T_NATIVE_INTEGER
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_integer_kind4
-
-SUBROUTINE read_integer_1d_array_kind1(x, name, id, got, error)
-  INTEGER(KIND=1), INTENT(OUT) :: x(:)
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  LOGICAL,         INTENT(OUT) :: got
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_STD_I8LE
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_integer_1d_array_kind1
-
-SUBROUTINE read_integer_1d_array_kind4(x, name, id, got, error)
-  INTEGER(KIND=4), INTENT(OUT) :: x(:)
-  CHARACTER(*),    INTENT(IN)  :: name
-  INTEGER(HID_T),  INTENT(IN)  :: id
-  LOGICAL,         INTENT(OUT) :: got
-  INTEGER,         INTENT(OUT) :: error
-
-  INTEGER, PARAMETER :: ndims = 1
-  INTEGER(HSIZE_T)   :: xshape(ndims)
-  INTEGER(HID_T)     :: dset_id
-  INTEGER(HID_T)     :: dtype_id
-
-  xshape = shape(x)
-  dtype_id = H5T_NATIVE_INTEGER
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  ! Open dataset
-  CALL H5DOPEN_F(id, name, dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Read dataset
-  CALL H5DREAD_F(dset_id, dtype_id, x, xshape, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close dataset
-  CALL H5DCLOSE_F(dset_id, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_integer_1d_array_kind4
-
-SUBROUTINE read_string(str, name, id, got, error)
-  CHARACTER(*),   INTENT(OUT) :: str
-  CHARACTER(*),   INTENT(IN)  :: name
-  INTEGER(HID_T), INTENT(IN)  :: id
-  LOGICAL,        INTENT(OUT) :: got
-  INTEGER,        INTENT(OUT) :: error
-
-  INTEGER,         PARAMETER :: dim0 = 1
-  INTEGER(SIZE_T), PARAMETER :: sdim = 100
-
-  INTEGER(HSIZE_T) :: dims(1) = (/dim0/)
-  INTEGER(HSIZE_T) :: maxdims(1)
-
-  INTEGER(HID_T) :: filetype, memtype, space, dset
-
-  CHARACTER(LEN=sdim), ALLOCATABLE, TARGET :: rdata(:)
-  INTEGER(SIZE_T) :: size
-  TYPE(C_PTR) :: f_ptr
-
-  ! Check if dataset exists
-  CALL H5LEXISTS_F(id, name, got, error)
-  IF (.NOT.got) RETURN
-
-  CALL H5DOPEN_F(id, name, dset, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot open HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Get the datatype and its size.
-  CALL H5DGET_TYPE_F(dset, filetype, error)
-  CALL H5TGET_SIZE_F(filetype, size, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot get HDF5 datatype or size",/)')
-    RETURN
-  ENDIF
-
-  ! Make sure the declared length is large enough,
-  ! the C string contains the null character.
-  IF (size > sdim+1) THEN
-    PRINT*,'ERROR: Character LEN is too small'
-    STOP
-  ENDIF
-
-  ! Get dataspace.
-  CALL H5DGET_SPACE_F(dset, space, error)
-  CALL H5SGET_SIMPLE_EXTENT_DIMS_F(space, dims, maxdims, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot get HDF5 dataspace",/)')
-    RETURN
-  ENDIF
-
-  ALLOCATE(rdata(1:dims(1)))
-
-  ! Create the memory datatype.
-  CALL H5TCOPY_F(H5T_FORTRAN_S1,memtype, error)
-  CALL H5TSET_SIZE_F(memtype, sdim, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot get HDF5 memory datatype",/)')
-    RETURN
-  ENDIF
-
-  ! Read the data.
-  f_ptr = C_LOC(rdata(1)(1:1))
-  CALL H5DREAD_F(dset, memtype, f_ptr, error,space)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot read HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  ! Close and release resources.
-  CALL H5DCLOSE_F(dset, error)
-  CALL H5SCLOSE_F(space, error)
-  CALL H5TCLOSE_F(filetype, error)
-  CALL H5TCLOSE_F(memtype, error)
-  IF (error /= 0) THEN
-    WRITE(*,'("cannot close HDF5 dataset",/)')
-    RETURN
-  ENDIF
-
-  str = rdata(1)
-
-  DEALLOCATE(rdata)
-
-  IF (error /= 0) THEN
-    got = .FALSE.
-    write(*,'(/,"HDF5 ERROR -- reading variable: ",a,/)') name
-  ENDIF
-
-END SUBROUTINE read_string
-
-END MODULE hdf5_utils
+  if (readonly) then
+    call h5fopen_f(filename, H5F_ACC_RDONLY_F, file_id, error)
+  else
+    call h5fopen_f(filename, H5F_ACC_RDWR_F, file_id, error)
+  endif
+
+  if (error /= 0) then
+    write(*,'("cannot open HDF5 file",/)')
+    return
+  endif
+
+end subroutine open_hdf5file
+
+subroutine close_hdf5file(file_id,error)
+ integer(HID_T), intent(in)  :: file_id
+ integer,        intent(out) :: error
+
+ ! Close file
+ call h5fclose_f(file_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 file",/)')
+    return
+ endif
+
+ ! Close HDF5
+ call h5close_f(error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5",/)')
+    return
+ endif
+
+end subroutine close_hdf5file
+
+subroutine write_real_kind4(x,name,id,error)
+ real(kind=4),   intent(in)  :: x
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dspace_id
+ integer(HID_T) :: dset_id
+ integer(HID_T) :: dtype_id
+
+ dtype_id = H5T_NATIVE_REAL
+
+ ! Create dataspace
+ call h5screate_f(H5S_SCALAR_F,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_kind4
+
+subroutine write_real_kind8(x,name,id,error)
+ real(kind=8),   intent(in)  :: x
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dspace_id
+ integer(HID_T) :: dset_id
+ integer(HID_T) :: dtype_id
+
+ dtype_id = H5T_NATIVE_DOUBLE
+
+ ! Create dataspace
+ call h5screate_f(H5S_SCALAR_F,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_kind8
+
+subroutine write_real_1d_array_kind4(x,name,id,error)
+ real(kind=4),   intent(in)  :: x(:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_REAL
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_1d_array_kind4
+
+subroutine write_real_1d_array_kind8(x,name,id,error)
+ real(kind=8),   intent(in)  :: x(:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_DOUBLE
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_1d_array_kind8
+
+subroutine write_real_2d_array_kind4(x,name,id,error)
+ real(kind=4),   intent(in)  :: x(:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 2
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_REAL
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_2d_array_kind4
+
+subroutine write_real_2d_array_kind8(x,name,id,error)
+ real(kind=8),   intent(in)  :: x(:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 2
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_DOUBLE
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_2d_array_kind8
+
+subroutine write_real_3d_array_kind4(x,name,id,error)
+ real(kind=4),   intent(in)  :: x(:,:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 3
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_REAL
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_3d_array_kind4
+
+subroutine write_real_3d_array_kind8(x,name,id,error)
+ real(kind=8),   intent(in)  :: x(:,:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 3
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_DOUBLE
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_real_3d_array_kind8
+
+subroutine write_integer_kind4(x,name,id,error)
+ integer(kind=4), intent(in)  :: x
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ integer,         intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dspace_id
+ integer(HID_T) :: dset_id
+ integer(HID_T) :: dtype_id
+
+ dtype_id = H5T_NATIVE_INTEGER
+
+ ! Create dataspace
+ call h5screate_f(H5S_SCALAR_F,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_integer_kind4
+
+subroutine write_integer_1d_array_kind4(x,name,id,error)
+ integer(kind=4), intent(in)  :: x(:)
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ integer,         intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_NATIVE_INTEGER
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_integer_1d_array_kind4
+
+subroutine write_integer_1d_array_kind1(x,name,id,error)
+ integer(kind=1), intent(in)  :: x(:)
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ integer,         intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HSIZE_T)   :: chunk(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(HID_T)     :: prop_id
+ integer(HID_T)     :: dtype_id
+
+ xshape = shape(x)
+ chunk = shape(x)
+ dtype_id = H5T_STD_I8LE
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,xshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset creation property list, add the gzip
+ ! compression filter and set the chunk size.
+ call h5pcreate_f(H5P_DATASET_CREATE_F,prop_id,error)
+ call h5pset_deflate_f(prop_id,compression_level,error)
+ call h5pset_chunk_f(prop_id,ndims,chunk,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 property list",/)')
+    return
+ endif
+
+ ! Create dataset in file
+ call h5dcreate_f(id,name,dtype_id,dspace_id,dset_id,error,prop_id)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Write to file
+ call h5dwrite_f(dset_id,dtype_id,x,xshape,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close property list
+ call h5pclose_f(prop_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 property list",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+end subroutine write_integer_1d_array_kind1
+
+subroutine write_string(str,name,id,error)
+ character(*),    intent(in), target :: str
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ integer,         intent(out) :: error
+
+ integer, parameter :: ndims = 0
+ integer(HSIZE_T)   :: sshape(ndims)
+ integer(HID_T)     :: dspace_id
+ integer(HID_T)     :: dset_id
+ integer(SIZE_T)    :: slength
+ integer(HID_T)     :: filetype
+ type(C_PTR)        :: cpointer
+
+ slength = len(str)
+ sshape  = shape(str)
+
+ ! Create file datatypes. Save the string as FORTRAN string
+ call h5tcopy_f(H5T_FORTRAN_S1,filetype,error)
+ call h5tset_size_f(filetype,slength,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 datatype",/)')
+    return
+ endif
+
+ ! Create dataspace
+ call h5screate_simple_f(ndims,sshape,dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Create the dataset in file
+ call h5dcreate_f(id,name,filetype,dspace_id,dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot create HDF5 dataset",/)')
+    return
+ endif
+
+ ! Find C pointer
+ cpointer = c_loc(str(1:1))
+
+ ! Write to file
+ call h5dwrite_f(dset_id,filetype,cpointer,error)
+ if (error /= 0) then
+    write(*,'("cannot write to HDF5 file",/)')
+    return
+ endif
+
+ ! Close dataset
+ call h5dclose_f(dset_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataset",/)')
+    return
+ endif
+
+ ! Close dataspace
+ call h5sclose_f(dspace_id,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 dataspace",/)')
+    return
+ endif
+
+ ! Close datatype
+ call h5tclose_f(filetype,error)
+ if (error /= 0) then
+    write(*,'("cannot close HDF5 datatype",/)')
+    return
+ endif
+
+end subroutine write_string
+
+subroutine read_real_kind4(x,name,id,got,error)
+ real(kind=4),   intent(out) :: x
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dset_id
+ integer :: errors(3)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_REAL,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_kind4
+
+subroutine read_real_kind8(x,name,id,got,error)
+ real(kind=8),   intent(out) :: x
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dset_id
+ integer :: errors(3)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_DOUBLE,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_kind8
+
+subroutine read_real_1d_array_kind4(x,name,id,got,error)
+ real(kind=4),   intent(out) :: x(:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_REAL,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_1d_array_kind4
+
+subroutine read_real_1d_array_kind8(x,name,id,got,error)
+ real(kind=8),   intent(out) :: x(:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_DOUBLE,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_1d_array_kind8
+
+subroutine read_real_2d_array_kind4(x,name,id,got,error)
+ real(kind=4),   intent(out) :: x(:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 2
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_REAL,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_2d_array_kind4
+
+subroutine read_real_2d_array_kind8(x,name,id,got,error)
+ real(kind=8),   intent(out) :: x(:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 2
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_DOUBLE,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_2d_array_kind8
+
+subroutine read_real_3d_array_kind4(x,name,id,got,error)
+ real(kind=4),   intent(out) :: x(:,:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 3
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_REAL,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_3d_array_kind4
+
+subroutine read_real_3d_array_kind8(x,name,id,got,error)
+ real(kind=8),   intent(out) :: x(:,:,:)
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer, parameter :: ndims = 3
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_DOUBLE,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_real_3d_array_kind8
+
+subroutine read_integer_kind4(x,name,id,got,error)
+ integer(kind=4), intent(out) :: x
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ logical,         intent(out) :: got
+ integer,         intent(out) :: error
+
+ integer(HSIZE_T), parameter  :: xshape(0) = 0
+ integer(HID_T) :: dset_id
+ integer :: errors(3)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_INTEGER,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_integer_kind4
+
+subroutine read_integer_1d_array_kind1(x,name,id,got,error)
+ integer(kind=1), intent(out) :: x(:)
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ logical,         intent(out) :: got
+ integer,         intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_STD_I8LE,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_integer_1d_array_kind1
+
+subroutine read_integer_1d_array_kind4(x,name,id,got,error)
+ integer(kind=4), intent(out) :: x(:)
+ character(*),    intent(in)  :: name
+ integer(HID_T),  intent(in)  :: id
+ logical,         intent(out) :: got
+ integer,         intent(out) :: error
+
+ integer, parameter :: ndims = 1
+ integer(HSIZE_T)   :: xshape(ndims)
+ integer(HID_T)     :: dset_id
+ integer :: errors(3)
+
+ xshape = shape(x)
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ ! Open dataset
+ call h5dopen_f(id,name,dset_id,errors(1))
+
+ ! Read dataset
+ call h5dread_f(dset_id,H5T_NATIVE_INTEGER,x,xshape,errors(2))
+
+ ! Close dataset
+ call h5dclose_f(dset_id,errors(3))
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_integer_1d_array_kind4
+
+subroutine read_string(str,name,id,got,error)
+ character(*),   intent(out) :: str
+ character(*),   intent(in)  :: name
+ integer(HID_T), intent(in)  :: id
+ logical,        intent(out) :: got
+ integer,        intent(out) :: error
+
+ integer :: errors(12)
+
+ integer,         parameter :: dim0 = 1
+ integer(SIZE_T), parameter :: sdim = 100
+
+ integer(HSIZE_T) :: dims(1) = (/dim0/)
+ integer(HSIZE_T) :: maxdims(1)
+
+ integer(HID_T) :: filetype,memtype,space,dset
+
+ character(LEN=sdim), allocatable, target :: rdata(:)
+ integer(SIZE_T) :: size
+ type(c_ptr) :: f_ptr
+
+ ! Check if dataset exists
+ call h5lexists_f(id,name,got,error)
+ if (.not.got) return
+
+ call h5dopen_f(id,name,dset,errors(1))
+
+ ! Get the datatype and its size.
+ call h5dget_type_f(dset,filetype,errors(2))
+ call h5tget_size_f(filetype,size,errors(3))
+
+ ! Make sure the declared length is large enough,
+ ! the C string contains the null character.
+ if (size > sdim+1) then
+    print*,'ERROR: Character LEN is too small'
+    stop
+ endif
+
+ ! Get dataspace.
+ call h5dget_space_f(dset,space,errors(4))
+ call h5sget_simple_extent_dims_f(space,dims,maxdims,errors(5))
+
+ allocate(rdata(1:dims(1)))
+
+ ! Create the memory datatype.
+ call H5Tcopy_f(H5T_FORTRAN_S1,memtype,errors(6))
+ call H5Tset_size_f(memtype,sdim,errors(7))
+
+ ! Read the data.
+ f_ptr = C_LOC(rdata(1)(1:1))
+ call H5Dread_f(dset,memtype,f_ptr,errors(8),space)
+
+ ! Close and release resources.
+ call H5Dclose_f(dset,errors(9))
+ call H5Sclose_f(space,errors(10))
+ call H5Tclose_f(filetype,errors(11))
+ call H5Tclose_f(memtype,errors(12))
+
+ str = rdata(1)
+
+ deallocate(rdata)
+
+ error = maxval(abs(errors))
+
+ if (error /= 0) got = .false.
+
+end subroutine read_string
+
+end module hdf5_utils

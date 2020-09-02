@@ -84,11 +84,8 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  real :: term,termnorm,xpix(3),dx(3)
  !real :: t_start,t_end
  logical :: iprintprogress
-#ifdef _OPENMP
- integer :: omp_get_num_threads
-#else
+ !$ integer :: omp_get_num_threads
  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
-#endif
 
  datsmooth = 0.
  datnorm = 0.
@@ -110,6 +107,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  !  (a "long time" is, however, somewhat system dependent)
  !
  iprintprogress = (npart  >=  100000) .or. (npix(1)*npix(2)  > 100000)
+ !$ iprintprogress = .false.
  !
  !--loop over particles
  !
@@ -143,9 +141,11 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(xminpix,pixwidth,xorigin) &
 !$omp shared(npix,const,igeom) &
 !$omp shared(datnorm,normalise,periodic) &
+!$omp shared(iprintprogress,iprintinterval) &
 !$omp shared(hmin) & !,dhmin3) &
 !$omp private(hi,xi,xci,xcoord,xpix,radkern,hi1,hi21) &
 !$omp private(term,termnorm) &
+!$omp private(iprogress,iprintnext) &
 !$omp private(ipixmin,ipixmax,ierr) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx,q2,wab)
@@ -158,7 +158,6 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
        iprogress = 100*i/npart
        if (iprogress >= iprintnext) then
@@ -166,7 +165,6 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !
@@ -281,11 +279,8 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  real :: term(3),termnorm,xpix(3),dx(3),ddatnorm
  !real :: t_start,t_end
  logical :: iprintprogress
-#ifdef _OPENMP
- integer :: omp_get_num_threads
-#else
+ !$ integer :: omp_get_num_threads
  integer(kind=selected_int_kind(10)) :: iprogress  ! up to 10 digits
-#endif
 
  datsmooth = 0.
  datnorm = 0.
@@ -307,6 +302,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  !  (a "long time" is, however, somewhat system dependent)
  !
  iprintprogress = (npart  >=  100000) .or. (npix(1)*npix(2)  > 100000)
+ !$ iprintprogress = .false.
  !
  !--loop over particles
  !
@@ -339,9 +335,11 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 !$omp shared(npix,const,igeom) &
 !$omp shared(datnorm,normalise,periodic) &
 !$omp shared(hmin) & !,dhmin3) &
+!$omp shared(iprintprogress,iprintinterval) &
 !$omp private(hi,xi,xci,xcoord,xpix,radkern,hi1,hi21) &
 !$omp private(term,termnorm) &
 !$omp private(ipixmin,ipixmax,ierr) &
+!$omp private(iprogress,iprintnext) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx,q2,wab)
 !$omp master
@@ -353,7 +351,6 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     !
     !--report on progress
     !
-#ifndef _OPENMP
     if (iprintprogress) then
        iprogress = 100*i/npart
        if (iprogress >= iprintnext) then
@@ -361,7 +358,6 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
           iprintnext = iprintnext + iprintinterval
        endif
     endif
-#endif
     !
     !--skip particles with itype < 0
     !

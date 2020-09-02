@@ -75,7 +75,15 @@ module unit_constants
 
 end module unit_constants
 
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+module readdata_dragon
+ implicit none
+ 
+ public :: read_data_dragon, set_labels_dragon
+ 
+ private 
+contains
+
+subroutine read_data_dragon(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,ntypes
@@ -132,7 +140,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
     nextracols = 0
  endif
  ncolumns = ncolstep
- call set_labels
+ call set_labels_dragon
 !
 !--read data from snapshots
 !
@@ -675,13 +683,13 @@ subroutine set_types(itypei,ntotal,noftype)
  return
 end subroutine set_types
 
-end subroutine read_data
+end subroutine read_data_dragon
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_dragon
  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho
  use params
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
@@ -690,11 +698,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_dragon ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_dragon ***'
     return
  endif
 
@@ -741,7 +749,7 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_dragon
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
  use labels, only:ipmass,ih,irho
@@ -920,3 +928,4 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
 
  return
 end subroutine find_weights
+end module readdata_dragon

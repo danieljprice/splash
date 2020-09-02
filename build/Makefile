@@ -64,7 +64,7 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
-HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
+HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5 -lhdf5_fortran
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
 H5PART_INCLUDE = -I$(H5PART_DIR)/include
@@ -88,6 +88,12 @@ STATICLIBS=
 #PARALLEL=no
 ifndef OPENMP
 OPENMP=yes
+endif
+#
+# compile in double precision by default (v3.0 onwards this is now default)
+#
+ifndef DOUBLEPRECISION
+DOUBLEPRECISION=yes
 endif
 #
 # the openMP flags should be set in the lines defining your system type
@@ -131,11 +137,8 @@ endif
 #  set the environment variable 'SYSTEM' to one of those
 #  listed to use the appropriate settings
 #
-#  e.g. in tcsh use
-#  setenv SYSTEM 'g95'
-#
 #  in bash the equivalent is
-#  export SYSTEM='g95'
+#  export SYSTEM='gfortran'
 #
 #--------------------------------------------------------------
 
@@ -151,21 +154,6 @@ ifeq ($(SYSTEM), gfortran)
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM), gfortran-catalina)
-#  gfortran compiler (part of gcc 4.x.x)
-   FC= gfortran
-   FFLAGS= -O3 -frecord-marker=4 -fPIC
-   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
-   SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
-              -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
-   OMPFLAGS= -fopenmp
-   ENDIANFLAGBIG= -fconvert=big-endian
-   ENDIANFLAGLITTLE= -fconvert=little-endian
-   KNOWN_SYSTEM=yes
-   X11_DIR= /opt/X11/
 endif
 
 ifeq ($(SYSTEM),nagf95)
@@ -194,7 +182,6 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
-#   FFLAGS= -O3 -nbs -i_dynamic
    FFLAGS= -O3 -nbs
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
@@ -206,20 +193,6 @@ ifeq ($(SYSTEM),ifort)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
-endif
-
-ifeq ($(SYSTEM),ifort8)
-#  this is for the intel fortran compiler (version 8)
-   FC= ifort
-   FFLAGS= -O3 -Vaxlib -nbs
-   OMPFLAGS= -openmp
-   DBLFLAGS= -r8
-   DEBUGFLAG= -C -g
-   SYSTEMFILE= system_unix.f90
-   ENDIANFLAGBIG= -convert big_endian
-   ENDIANFLAGLITTLE= -convert little_endian
-# or use setenv F_UFMTENDIAN=big or little at runtime
-   KNOWN_SYSTEM=yes
 endif
 
 ifeq ($(SYSTEM),pgf90)
@@ -251,40 +224,9 @@ endif
 
 #--------------------------------------------------------------
 #
-# the following presets are machine-specific
-# (ie. relate to both the compiler and a specific
-#      installation of pgplot)
+# the following presets are user or machine-specific
 #
 #--------------------------------------------------------------
-ifeq ($(SYSTEM),zen)
-#  this is for the intel fortran compiler
-   FC= ifort
-   FFLAGS= -O3 -mcmodel=medium -axT -warn all #-ipo #-assume nounderscore
-   OMPFLAGS= -openmp
-   DEBUGFLAG= -check all -traceback -g
-   SYSTEMFILE= system_f2003.f90
-   ENDIANFLAGBIG= -convert big_endian
-   ENDIANFLAGLITTLE= -convert little_endian
-   X11_LIBS=-L/home/djp212/lib -lX11
-   PGPLOTLIBS= -lpng #-L${PGPLOT_DIR} -lpgplot -lpng
-   STATICLIBS= /home/djp212/pgplot/libpgplot.a
-# or use setenv F_UFMTENDIAN=big or little at runtime
-   KNOWN_SYSTEM=yes
-endif
-
-ifeq ($(SYSTEM),intelmac)
-#  these are the settings for an Intel Macbook running Tiger
-#  using gfortran with pgplot installed via fink
-   FC= gfortran
-   FFLAGS= -O3 -ffast-math
-   DEBUGFLAG= -Wall -Wextra -Wno=165 -g -frange-check
-   PGPLOTLIBS= -L/sw/lib/pgplot -lpgplot -L/sw/lib -lpng \
-          -laquaterm -Wl,-framework -Wl,Foundation -lSystemStubs
-   SYSTEMFILE= system_f2003.f90
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),cody)
     FC= gfortran
     FFLAGS= -O3 -Wall
@@ -329,17 +271,12 @@ endif
 # compile in double precision
 ifeq ($(DOUBLEPRECISION), yes)
     FFLAGS += ${DBLFLAGS}
+    FPPFLAGS+=-DDP
 endif
 
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     FFLAGS += $(DEBUGFLAG)
-endif
-
-# link with hdf5 libraries
-ifeq ($(HDF5),yes)
-    CFLAGS  += $(HDF5INCLUDE)
-    LDFLAGS += $(HDF5LIBS)
 endif
 
 #
@@ -414,97 +351,126 @@ endif
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
+READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspmhd.f90 \
+           read_data_gadget.f90          read_data_VINE.f90      read_data_sro.f90 \
+           read_data_dragon.f90          read_data_seren.f90     read_data_tipsy.f90 \
+           read_data_mhutch.f90          read_data_UCLA.f90      read_data_aly.f90 \
+           read_data_bauswein.f90        read_data_egaburov.f90  read_data_starsmasher.f90 \
+           read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
+           read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
+           read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
+           read_data_vanaverbeke.f90
+
+READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
+                read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
+                read_data_cactus_hdf5_utils.c   read_data_cactus_hdf5_futils.f90   read_data_cactus_hdf5.f90 \
+                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90 \
+                hdf5_utils.f90                  read_data_phantom_hdf5.f90
+                #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
+
+READFILES_FITS= write_fits.f90 read_data_fits.f90
+
+READFILES_PBOB= read_data_pbob_utils.c read_data_pbob.f90 read_pbob.c read_particle.c
+
+READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
+
+RUN_CHECKS=
+
+# link with hdf5 libraries
+ifeq ($(HDF5),yes)
+  READFILES+=$(READFILES_HDF5)
+  CFLAGS+=$(HDF5INCLUDE)
+  LDFLAGS+=$(HDF5LIBS)
+  FPPFLAGS+=-DHDF5
+  RUN_CHECKS+=checkhdf5
+endif
+
+
+ifeq ($(FITS),yes)
+  READFILES+= $(READFILES_FITS)
+  LDFLAGS+=$(FITSLIBS)
+  FPPFLAGS+=-DFITS
+  RUN_CHECKS+=checkfits
+endif
+
+ifdef PBOB_DIR
+  READFILES+=$(READFILES_PBOB)
+  VPATH+=$(PBOB_DIR)
+  RUN_CHECKS+=checkpbob
+endif
+
+ifdef H5PART_DIR
+  READFILES+=$(READFILES_H5PART)
+  VPATH+=$(H5PART_LIBS) $(HDF5LIBS)
+  RUN_CHECKS+=checkh5part
+endif
+
+
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
-         interpolation.f90 plotutils.f90 colourbar.f90 \
+         plotutils.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
+         interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
+         rotate.f90 interpolate3D_projection.f90 interpolate3D_geom.f90 interpolate3D_xsec.f90 \
+         interpolate3D_proj_geom.f90 \
+         interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 \
-         fparser.f90 parsetext.f90 \
-         exact_function.f90 exact_dustywaves.f90 exact_planetdisc.f90 \
+         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
-         exact_toystar1D.f90 exact_toystar2D.f90 \
-         exact_densityprofiles.f90 exact_torus.f90 exact_bondi.f90 \
+         exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
+         exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
-         interpolate3D_projection.F90 legends.f90 \
-         options_render.f90 options_particleplots.f90 \
+         legends.f90 options_render.f90 options_particleplots.f90 \
+         options_limits.f90 options_page.f90 imageutils.f90 $(READFILES) read_data.F90 \
          adjust_data.f90 get_data.f90 \
-         options_data.f90 options_limits.f90 options_page.f90 \
-	    options_powerspec.f90 \
-	    options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
-         rotate.f90 interpolate1D.f90 interpolate2D.f90 \
-         interpolate3D.F90 interpolate3D_geom.F90 interpolate3D_xsec.f90 \
-         interpolate3D_proj_geom.F90 \
-         interpolate3D_opacity.f90 interpolate_vec.f90 \
+         options_data.f90 options_powerspec.f90 \
+         options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          particleplot.f90 interactive.f90  \
          convert_grid.f90 lightcurve.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \
-         defaults.f90 menu.f90 \
+         defaults.f90 initialise.f90 menu.f90 \
          splash.f90
 
-OBJECTS1 = $(SOURCES:.f90=.o) $(STATICLIBS)
-OBJECTS= $(OBJECTS1:.F90=.o)
+
+OBJECTS1= $(SOURCES:.f90=.o) $(STATICLIBS)
+OBJECTS2= $(OBJECTS1:.F90=.o)
+OBJECTS3= $(OBJECTS2:.c=.o)
+OBJECTS= $(OBJECTS3:.cc=.o)
+
 
 #
 # Now compile with the appropriate data read file
 # (move yours to the top so that you can simply type "make")
 #
-all: mhutch ascii gadget vine sphNG ndspmhd srosph dragon seren tipsy
-	@echo; echo ' SPLASH successfully compiled! ';
-	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
-allhdf5: phantom_hdf5 amuse_hdf5 cactus_hdf5 falcON_hdf5 gadget_hdf5 # flash_hdf5 <-- is broken?
-	@echo; echo ' SPLASH successfully compiled (with HDF5)! ';
-	@echo; echo ' Use "sudo make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
+	@echo; echo ' SPLASH v3 successfully compiled! ';
+	@echo; echo '   "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin';
+	@echo; echo ' If you do not have admin privileges, add the following to your .bashrc or equialent:';
+	@echo; echo '   export SPLASH_DIR=$$HOME/splash';
+	@echo '   export PATH=$$PATH:$$SPLASH_DIR/bin';
+	@echo; echo ' For backwards compatibility with v2.x, add the following to your .bashrc or equivalent:';
+	@echo; echo "   alias asplash='splash ' # alias for ascii splash";
+	@echo "   alias ssplash='splash -f phantom'";
+	@echo "   alias gsplash='splash -f gadget' ";
+	@echo "   alias vsplash='splash -f vine' ";
+	@echo "   alias nsplash='splash -f ndspmhd' ";
+	@echo "   alias rsplash='splash -f srosph' ";
+	@echo "   alias dsplash='splash -f dragon' ";
+	@echo "   alias srsplash='splash -f seren' ";
+	@echo "   alias tsplash='splash -f tipsy' ";
+	@echo "   alias msplash='splash -f mhutch' "; echo;
 
-ascii: checksystem $(OBJECTS) read_data_ascii.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/asplash $(OBJECTS) read_data_ascii.o $(LDFLAGS)
-	cp $(BINDIR)/asplash $(BINDIR)/splash
-
-mbatesph: checksystem $(OBJECTS) read_data_mbate.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_mbate.o $(LDFLAGS)
-
-
-#---h5part reader---
-H5PARTSRCC=H5PartF.c H5PartAttribF.c
-H5PARTSRCF90=H5Part.f90 H5PartAttrib.f90
-H5PARTOBJ=$(H5PARTSRCC:.c=.o) $(H5PARTSRCF90:.f90=.o)
-
-h5part: checksystem checkh5part $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/h5splash $(OBJECTS) $(H5PARTOBJ) read_data_h5part.o $(LDFLAGS) $(H5PART_LIBS) $(HDF5LIBS)
-
-read_data_h5part.o: read_data_h5part.f90
-	$(FC) $(FFLAGS) $(H5PART_INCLUDE) -o $@ -c $<
-
-H5PartF.o: H5PartF.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
-
-H5PartAttribF.o: H5PartAttribF.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
-
-#------------------
-
-gadget: checksystem $(OBJECTS) read_data_gadget.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o $(LDFLAGS)
-
-gadgetdualendian: checksystem $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash $(OBJECTS) read_data_gadget.o read_data_gadget_otherendian.o $(LDFLAGS)
-
-read_data_gadget_otherendian.o: read_data_gadget.o
-	cat read_data_gadget.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' > read_data_gadget_otherendian.f90
-	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c read_data_gadget_otherendian.f90 -o read_data_gadget_otherendian.o
-
-gadget_jsb: checksystem $(OBJECTS) read_data_gadget_jsb.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-jsb $(OBJECTS) read_data_gadget_jsb.o $(LDFLAGS)
 
 #---falcON HDF5 read ---
 falcon: falcON
@@ -517,55 +483,11 @@ falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
 
-#---HDF5 gadget read ---
-gadgethdf5: gadget_hdf5
 
-gadget_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/gsplash-hdf5 $(OBJECTS) read_data_gadget_hdf5_utils.o read_data_gadget_hdf5.o $(LDFLAGS) $(HDF5LIBS)
+#---phantom HDF5 read ---
+hdf5_utils.o: hdf5_utils.f90
+	$(FC) $(FFLAGS) $(HDF5INCLUDE) -c $< -o $@
 
-read_data_gadget_hdf5_utils.o: read_data_gadget_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-#---AMUSE HDF5 read ---
-amuse: amuse_hdf5
-
-amuse_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/amsplash-hdf5 $(OBJECTS) read_data_amuse_hdf5_utils.o read_data_amuse_hdf5.o $(LDFLAGS) $(HDF5LIBS)
-
-read_data_amuse_hdf5_utils.o: read_data_amuse_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-#---CACTUS HDF5 read ---
-cactus: cactus_hdf5
-
-cactus_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/csplash-hdf5 $(OBJECTS) read_data_cactus_hdf5_futils.o read_data_cactus_hdf5_utils.o read_data_cactus_hdf5.o $(LDFLAGS) $(HDF5LIBS)
-
-read_data_cactus_hdf5_utils.o: read_data_cactus_hdf5_utils.c
-	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-#---FITS read ---
-fits: checksystem checkfits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-fits $(OBJECTS) imageutils.o write_fits.o read_data_fits.o $(LDFLAGS) $(FITSLIBS)
-
-#---PBOB read ---
-
-OBJPBOB=read_data_pbob_utils.o read_data_pbob.o read_pbob.o read_particle.o
-pbob: checksystem checkpbob $(OBJECTS) $(OBJPBOB)
-	$(FC) $(FFLAGS) -I$(PBOB_DIR)/include -o $(BINDIR)/psplash $(OBJECTS) $(OBJPBOB) $(LDFLAGS)
-
-read_data_pbob_utils.o: read_data_pbob_utils.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_pbob.o: read_pbob.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-read_particle.o: read_particle.c
-	$(CC) $(CFLAGS) -D_FILE_OFFSET_BITS=64 -I$(PBOB_DIR)/include -c $< -o $@
-
-ifdef PBOB_DIR
-   VPATH+=$(PBOB_DIR)
-endif
 
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
@@ -573,120 +495,6 @@ silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
 
 read_data_silo_utils.o: read_data_silo_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-#------------------
-
-bauswein: checksystem $(OBJECTS) read_data_bauswein.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/bsplash $(OBJECTS) read_data_bauswein.o $(LDFLAGS)
-
-dragon: checksystem $(OBJECTS) read_data_dragon.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dragon.o $(LDFLAGS)
-
-seren: checksystem $(OBJECTS) read_data_seren.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/srsplash $(OBJECTS) read_data_seren.o $(LDFLAGS)
-
-vine: checksystem $(OBJECTS) read_data_VINE.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_VINE.o $(LDFLAGS)
-
-kitp: checksystem $(OBJECTS) read_data_kitp.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/ksplash $(OBJECTS) read_data_kitp.o
-
-ndspmhd: checksystem $(OBJECTS) read_data_ndspmhd.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/nsplash $(OBJECTS) read_data_ndspmhd.o $(LDFLAGS)
-
-dansph: checksystem $(OBJECTS) read_data_dansph_old.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_dansph_old.o $(LDFLAGS)
-
-foulkes: checksystem $(OBJECTS) read_data_foulkes.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_foulkes.o $(LDFLAGS)
-
-flash_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_flash_hdf5_utils.o read_data_flash_hdf5.o $(LDFLAGS)
-
-flashhdf5:
-	$(MAKE) flash_hdf5 HDF5=yes
-
-read_data_flash_hdf5_utils.o: read_data_flash_hdf5_utils.c
-	$(CC) -c $(CFLAGS) $(HDF5INCLUDE) $(H5PART_INCLUDE) $< -o $@
-
-flash: flashhdf5
-
-jjm: checksystem $(OBJECTS) read_data_jjm.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm.o $(LDFLAGS)
-
-jules: checksystem $(OBJECTS) read_data_jules.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jules.o $(LDFLAGS)
-
-oilonwater: checksystem $(OBJECTS) read_data_oilonwater.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/osplash $(OBJECTS) read_data_oilonwater.o $(LDFLAGS)
-
-mhutch: checksystem $(OBJECTS) read_data_mhutch.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/msplash $(OBJECTS) read_data_mhutch.o $(LDFLAGS)
-
-RSPH: rsph
-
-rsph: checksystem $(OBJECTS) read_data_rsph.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_rsph.o $(LDFLAGS)
-
-scwsph: checksystem $(OBJECTS) read_data_scw.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/wsplash $(OBJECTS) read_data_scw.o $(LDFLAGS)
-
-snsplash: snsph
-snsph: $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/snsplash $(OBJECTS) read_data_snsph.o read_data_snsph_utils.o $(LDFLAGS) $(SNFLAGS)
-
-srosph: checksystem $(OBJECTS) read_data_sro.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/rsplash $(OBJECTS) read_data_sro.o $(LDFLAGS)
-
-spyros: checksystem $(OBJECTS) read_data_spyros.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_spyros.o $(LDFLAGS)
-
-sphNG: checksystem $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/ssplash $(OBJECTS) read_data_sphNG.o read_data_sphNG_otherendian.o $(LDFLAGS)
-
-sphysics: checksystem $(OBJECTS) read_data_sphysics.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/dsplash $(OBJECTS) read_data_sphysics.o $(LDFLAGS)
-
-read_data_sphNG_otherendian.o: read_data_sphNG.o
-	@echo "!--This file is automatically generated during the make: do not edit" > $(SRCDIR)/${@:.o=.f90}
-	cat $(SRCDIR)/read_data_sphNG.f90 | awk "/subroutine read_data/,/end subroutine read_data/ { print }" | sed 's/subroutine read_data/subroutine read_data_otherendian/' >> $(SRCDIR)/${@:.o=.f90}
-	$(FC) $(FFLAGS) $(ENDIANFLAGBIG) -c $(SRCDIR)/${@:.o=.f90} -o $@
-
-jjmmulti: checksystem $(OBJECTS) read_data_multiphase.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/jsplash $(OBJECTS) read_data_jjm_multiphase.o $(LDFLAGS)
-
-tipsy: checksystem $(OBJECTS) read_data_tipsy.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/tsplash $(OBJECTS) read_data_tipsy.o $(LDFLAGS)
-
-vanaverbeke: checksystem $(OBJECTS) read_data_vanaverbeke.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/vsplash $(OBJECTS) read_data_vanaverbeke.o $(LDFLAGS)
-
-ucla: checksystem $(OBJECTS) read_data_UCLA.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_UCLA.o $(LDFLAGS)
-
-urban: checksystem $(OBJECTS) read_data_urban.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/usplash $(OBJECTS) read_data_urban.o $(LDFLAGS)
-
-aly: checksystem $(OBJECTS) read_data_aly.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash-aly $(OBJECTS) read_data_aly.o $(LDFLAGS)
-
-sky: ucla
-
-steve: foulkes
-
-sigfried: vanaverbeke
-
-gasoline: tipsy
-
-hdf5_utils.o: hdf5_utils.f90
-	$(FC) $(FFLAGS) $(HDF5INCLUDE) -c $< -o $@
-
-phantomhdf5: phantom_hdf5
-
-phantom_hdf5: checksystem checkhdf5 $(OBJECTS) hdf5_utils.o read_data_phantom_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/hsplash $(OBJECTS) hdf5_utils.o read_data_phantom_hdf5.o $(LDFLAGS) -lhdf5_fortran
-
-myall: mhutch ndspmhd dansph sphNG srosph gadget mbatesph tipsy ascii
 
 #
 # sources for the grid2pdf command-line utility
@@ -698,15 +506,20 @@ grid2pdf: checksystem $(OBJGRID2PDF)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
 
 #
+#
+#
+liball: lib libexact libread
+
+#
 # libsplash: library version of splash interpolation routines
 #
 SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
-      interpolate1D.f90 interpolate2D.f90 interpolate3D.F90 \
-      interpolate3D_geom.F90 interpolate3D_projection.F90 \
-      interpolate3D_proj_geom.F90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
-      libsplash.f90
+      interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
+      interpolate3D_geom.f90 interpolate3D_projection.f90 \
+      interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
+      libsplash.f90 libread.f90
 OBJLIB1=${SRCLIB:.f90=.o}
-OBJLIB=${OBJLIB1:.F90=.o}
+OBJLIB=${OBJECTS:splash.o=} libread.o
 
 .PHONY: libsplash
 libsplash: lib
@@ -717,7 +530,7 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
+SRCLIBEXACT= plotlib_mock.f90 libutils.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
 	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
@@ -727,9 +540,26 @@ OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 
 .PHONY: libexact
-libexact: libexactcmd
-libexactcmd: checksystem $(OBJLIBEXACTALL)
+libexact: checksystem $(OBJLIBEXACTALL)
 	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+
+
+#
+# libexact: read library
+#
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+            system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
+            geomutils.f90 partutils.f90 calc_quantities.f90 \
+            $(READFILES) read_data.F90 \
+            adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
+
+OBJLIBREAD=${SRCLIBREAD:.f90=.o}
+OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
+
+.PHONY: libread
+libread: checksystem $(OBJLIBREADALL)
+		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+
 #
 # splash image manipulation utilities
 #
@@ -975,6 +805,9 @@ test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parset
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
 #
 include .depends
+
+cleanread:
+	rm -f read_data*.o splash.o $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so
 
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise

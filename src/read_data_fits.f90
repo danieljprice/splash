@@ -53,11 +53,21 @@
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_fits
+ implicit none
+
+ public :: read_data_fits, set_labels_fits
+
+ private
+contains
+
+subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
- use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,get_floats_from_fits_header
+ use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,&
+                            get_floats_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
  implicit none
@@ -68,7 +78,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  integer               :: i,j,k,l,n,ierr,nextra,naxes(4)
  integer               :: ncolstep,npixels,nsteps_to_read
  logical               :: iexist,reallocate
- real, dimension(:,:,:), allocatable :: image
+ real(kind=4), dimension(:,:,:), allocatable :: image
  character(len=:), allocatable :: fitsheader(:)
  real :: dx,dy,dz,j0,k0
  logical :: centre_image
@@ -197,23 +207,23 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
 !
  deallocate(image) !,old_image)
 
-end subroutine read_data
+end subroutine read_data_fits
 
 !------------------------------------------------------------
 ! set labels for each column of data
 !------------------------------------------------------------
-subroutine set_labels
+subroutine set_labels_fits
  use labels,         only:label,labeltype,ix,ipmass,ih,irho
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,       only:labelcoord
  implicit none
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_fits ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_fits ***'
     return
  endif
 
@@ -235,4 +245,5 @@ subroutine set_labels
  labeltype(1) = 'pixel'
  UseTypeInRenderings(:) = .true.
 
-end subroutine set_labels
+end subroutine set_labels_fits
+end module readdata_fits
