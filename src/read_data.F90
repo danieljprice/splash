@@ -443,7 +443,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
  if (any((index(extensions, '.h5') > 0))) then
     if (present(informat)) then
        call select_data_format(informat//"_hdf5",ierr)
-    elseif (any((index(extensions, '.pb') > 0))) then
+    else
        call select_data_format("phantom_hdf5", ierr)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
