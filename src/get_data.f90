@@ -42,7 +42,6 @@ contains
 
 subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use asciiutils,     only:ucase
- use exact,          only:read_exactparams
  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,iposopen
  use limits,         only:set_limits
  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
@@ -55,9 +54,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use calcquantities, only:calc_quantities
  use settings_units, only:units
  use timing,         only:wall_time,print_time
- use settings_part,  only:iplotpartoftype
  use geomutils,      only:set_coordlabels
  use adjustdata,     only:adjust_data_codeunits
+ use readdata,       only:read_data
  implicit none
  integer, intent(in) :: ireadfile
  logical, intent(in) :: gotfilenames
@@ -327,36 +326,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        iendatstep = nsteps
     endif
  endif
- !
- !--check for errors in data read / print warnings
- !
- if (ndim /= 0 .and. ncolumns > 0 .and. nsteps > 0 .and. iverbose==1) then
-    if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0 .and. .not.any(iplotpartoftype(2:))) then
-       print "(/,a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
-       itype = 0
-       nplot = 0
-       do while (nplot==0 .and. itype < ntypes)
-          itype = itype + 1
-          if (npartoftype(itype,1) > 0) then
-             iplotpartoftype(itype) = .true.
-             if (UseTypeInRenderings(itype)) nplot = nplot + npartoftype(itype,1)
-             print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
-          endif
-       enddo
-       print*
-    endif
- endif
 
- !
- !--read exact solution parameters from files if present
- !
- if (iexact /= 0) then
-    if (ireadfile < 0) then
-       call read_exactparams(iexact,rootname(1),ierr)
-    else
-       call read_exactparams(iexact,rootname(ireadfile),ierr)
-    endif
- endif
 
  return
 end subroutine get_data
@@ -376,6 +346,7 @@ subroutine get_labels
  use settings_units, only:read_unitsfile
  use particle_data,  only:maxcol
  use params,         only:maxplot
+ use readdata,      only:set_labels
  implicit none
  logical :: iexist
  integer :: nlabelsread,ierr,i
@@ -420,7 +391,6 @@ subroutine check_labels
  use settings_data,   only:ndim,ndimV,ncolumns,iverbose
  use labels,          only:ix,irho,ih,ipmass
  use particle_data,   only:masstype
- use settings_render, only:icolour_particles
  implicit none
  integer :: i,ndimset
 
@@ -474,7 +444,6 @@ subroutine check_labels
                    '  until positions of density, smoothing length and particle', &
                    '  masses are known (specified using the integer variables ', &
                    '  irho,ih and ipmass in the read_data routine)'
-          icolour_particles = .true.
        elseif (irho > 0 .and. ih > 0 .and. ipmass==0 .and. all(masstype(:,:) < tiny(0.))) then
           print "(2(/,a))",' WARNING: Particle masses not read as array but mass not set:', &
                            '          RENDERING WILL NOT WORK! '

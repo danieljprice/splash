@@ -94,7 +94,21 @@ end function icolshuffle
 
 end module flash_hdf5read
 
-subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
+!-------------------------------------------------------------------------
+!
+!  The routine that reads the data into splash's internal arrays
+!
+!-------------------------------------------------------------------------
+
+module readdata_flash_hdf5
+ implicit none
+
+ public :: read_data_flash_hdf5, set_labels_flash_hdf5
+
+ private
+contains
+
+subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
  use particle_data, only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,lowmemorymode
@@ -112,7 +126,8 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
  integer :: nprint,npart_max,nstep_max,ierr
  integer, dimension(0:maxplot) :: isrequired
  logical :: iexist
- real :: tread,hfact,totmass
+ real(c_float) :: tread
+ real :: hfact,totmass
 
  nstepsread = 0
  nstep_max = 0
@@ -141,7 +156,7 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
  ncolstep = ncolstep - 1   ! subtract particle ID column
  print "(a,i10,a,es10.3,a,i2)",' npart = ',nprint,' time = ',tread
 
- call set_labels
+ call set_labels_flash_hdf5
  if (ih > 0 .and. required(ih)) required(irho) = .true.
 !
 !--(re)allocate memory
@@ -210,7 +225,7 @@ subroutine read_data(dumpfile,indexstart,ipos,nstepsread)
  endif
 
  return
-end subroutine read_data
+end subroutine read_data_flash_hdf5
 
 subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -250,7 +265,7 @@ end subroutine receive_data_fromc
 !!
 !!-------------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_flash_hdf5
  use labels, only:label,labeltype,ix,irho,ipmass,ih,ivx,iamvec,labelvec
  use params
  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings,ncolumns
@@ -289,7 +304,5 @@ subroutine set_labels
  labeltype(1) = 'tracer'
  UseTypeInRenderings(1) = .true.
 
-!-----------------------------------------------------------
-
- return
-end subroutine set_labels
+end subroutine set_labels_flash_hdf5
+end module readdata_flash_hdf5

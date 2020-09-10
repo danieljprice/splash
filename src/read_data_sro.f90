@@ -58,7 +58,15 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_sro
+ implicit none
+ 
+ public :: read_data_sro, set_labels_sro
+ 
+ private 
+contains
+
+subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:dat,time,npartoftype,gamma,maxpart,maxcol,maxstep
  use params
  use settings_data, only:ndim,ndimV,ncolumns,iformat
@@ -602,13 +610,13 @@ subroutine set_corotating_vels(pmass,vxy,n1,npart)
 
 end subroutine set_corotating_vels
 
-end subroutine read_data
+end subroutine read_data_sro
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_sro
  use filenames, only:rootname
  use labels, only:label,unitslabel,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB,make_vector_label
@@ -624,11 +632,11 @@ subroutine set_labels
  if (index(rootname(1),'minidump') /= 0) minidump = .true.
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_sro ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_sro ***'
     return
  endif
 
@@ -784,4 +792,5 @@ subroutine set_labels
  UseTypeInRenderings(1) = .true.
  UseTypeInRenderings(2) = .false.
 
-end subroutine set_labels
+end subroutine set_labels_sro
+end module readdata_sro

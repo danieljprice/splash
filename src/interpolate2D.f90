@@ -341,7 +341,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
              q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
              !q2 = (dx*dx + dy*dy)*hi1*hi1
 
-                 
+
              !
              !--SPH kernel
              !
@@ -826,7 +826,7 @@ end subroutine interpolate_part1
 
 subroutine interpolate2D_pixels(x,y,itype,npart, &
      xmin,ymin,xmax,ymax,datsmooth,npixx,npixy,&
-     normalise,adaptive,dat,datpix2)
+     normalise,adaptive,dat,datpix2,fac)
 
  use timing, only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
@@ -837,6 +837,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  logical, intent(in) :: normalise,adaptive
  real, intent(in), dimension(npart), optional :: dat
  real, dimension(npixx,npixy), intent(out), optional :: datpix2
+ real, intent(in), optional :: fac
 
  real, dimension(npixx,npixy) :: datnorm,datold
  real, dimension(npixx) :: dx2i,qq2,wabi
@@ -845,7 +846,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  real :: hi,hi1,radkernx,radkerny,q2,wab,const
  real :: term,termnorm,dy,xpix,ypix,ddx,ddy
  real :: xi,yi,pixwidthx,pixwidthy,dy2
- real :: t1,t2
+ real :: t1,t2,hfac
 
  if (adaptive) then
     print "(1x,a)",'interpolating from particles to 2D pixels (adaptive)...'
@@ -857,6 +858,11 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     itsmax = 3
  else
     itsmax = 1
+ endif
+ ! default smoothing length in units of pixel scale
+ hfac = 1.5
+ if (present(fac)) then
+    if (fac > 0.) hfac = fac
  endif
  call wall_time(t1)
  if (.not.associated(wfunc)) call select_kernel(0)
@@ -882,7 +888,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     !$omp parallel do default(none) &
     !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its) &
     !$omp shared(datold,datsmooth,datnorm,npixx,npixy,const,radkernel,radkernel2,dat) &
-    !$omp shared(pixwidthx,pixwidthy,normalise) &
+    !$omp shared(pixwidthx,pixwidthy,normalise,hfac) &
     !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
     !$omp private(radkernx,radkerny,ipixmin,ipixmax,jpixmin,jpixmax) &
     !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,termnorm,qq2,wabi)
@@ -902,7 +908,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        ipix = int(xi)
        jpix = int(yi)
        if (its > 1 .and. ipix >= 1 .and. ipix <= npixx.and. jpix >= 1 .and. jpix <= npixy) then
-          hi = min(1.5/sqrt(datold(ipix,jpix)),20.) !) !,1.)
+          hi = min(hfac/sqrt(datold(ipix,jpix)),20.)
        endif
        hi1 = 1./hi
        termnorm = const*hi1*hi1

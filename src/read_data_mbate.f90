@@ -49,19 +49,27 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_mbate
+ implicit none
+
+ public :: read_data_mbate, set_labels_mbate
+
+ private
+
+contains
+
+subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc
- use settings_units, only:units
- use labels,         only:unitslabel
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,buffer_steps_in_file
+ use settings_units, only:units,get_nearest_length_unit,get_nearest_time_unit
+ use labels,         only:unitslabel,headertags
  use mem_allocation
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  integer, parameter :: maxptmass = 1000
- real, parameter :: pi=3.141592653589
+ real, parameter :: pi=4.*atan(1.)
  integer :: i,j,ifile,ierr,ipart
  integer :: npart_max,nstep_max,ncolstep,npart,nptmassi,nunknown
  logical :: iexist,doubleprec
@@ -77,7 +85,8 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  real(doub_prec) :: timei, gammai
  real(doub_prec) :: rhozero, RK2
  real(doub_prec) :: escap,tkin,tgrav,tterm
- real(doub_prec) :: dtmax
+ real(doub_prec) :: dtmax,unitx
+ character(len=20) :: unitlabelx
 
  !--use these lines for single precision
  real, dimension(:,:), allocatable :: dattemps
@@ -90,6 +99,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  nstep_max = 0
  npart_max = maxpart
  ifile = 1
+ buffer_steps_in_file = .true.
 
  dumpfile = trim(rootname)
  !
@@ -115,7 +125,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  j = indexstart
  nstepsread = 0
 
- print "(1x,a)",'reading Matthew Bate''s/Willy Benz''s old SPH code format'
+ print "(1x,a)",'reading Matthew Bate''s/Willy Benz''s old SPH code format (on unit 15)'
  write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
  !
  !--open the (unformatted) binary file and read the number of particles
@@ -129,7 +139,6 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     !  allocate memory and rewind
     !
     read(15,end=55,iostat=ierr) udisti,umassi,utimei,nprint,n1,n2,timei,gammai,rhozero,RK2
-    print*,'nprint = ',nprint
     doubleprec = .true.
     !--try single precision if non-sensible values for time, gamma etc.
     if (ierr /= 0 .or. timei < 0. .or. timei > 1e30  &
@@ -175,11 +184,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
        if (allocated(isteps)) deallocate(isteps)
        allocate(isteps(npart_max),stat=ierr)
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data_mbate'
 
        if (allocated(iphase)) deallocate(iphase)
        allocate(iphase(npart_max),stat=ierr)
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data_mbate'
 !
 !--now read the timestep data in the dumpfile
 !
@@ -192,7 +201,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemp)) deallocate(dattemp)
           allocate(dattemp(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data'
+          if (ierr /= 0) print*,'not enough memory in read_data_mbate'
 
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
              nprint, n1, n2, timei, gammai, rhozero, RK2, &
@@ -210,7 +219,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemps)) deallocate(dattemps)
           allocate(dattemps(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data'
+          if (ierr /= 0) print*,'not enough memory in read_data_mbate'
 
           print "(a)",'single precision dump'
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
@@ -227,12 +236,15 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
 !--set transformation factors between code units/real units
 !
-       units(1:3) = udisti
-       unitslabel(1:3) = ' [cm]'
+       call get_nearest_time_unit(utimei,unitx,unitslabel(0))
+       units(0) = unitx ! convert to real*4
+       call get_nearest_length_unit(udisti,unitx,unitlabelx)
+       units(1:3) = unitx
+       unitslabel(1:3) = unitlabelx
        units(4:6) = udisti/utimei
        unitslabel(4:6) = ' [cm/s]'
-       units(7) = udisti
-       unitslabel(7) = ' [cm]'
+       units(7) = unitx
+       unitslabel(7) = unitlabelx
        units(8) = (udisti/utimei)**2
        unitslabel(8) = ' [erg/g]'
        units(9) = umassi
@@ -297,12 +309,24 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
        npartoftype(2,j) = nptmassi
        npartoftype(3,j) = nunknown
 
+       headertags(1:14) = (/'udist','umass','utime','npart',&
+                           'n1   ','n2   ','time ','gamma',&
+                           'rho0 ','RK2  ','escap','tkin ',&
+                           'tgrav','tterm'/)
        if (doubleprec) then
           gamma(j) = real(gammai)
           time(j) = real(timei)
+          headervals(1:14,j) = (/real(udisti),real(umassi),real(utimei),real(nprint),&
+                                real(n1),real(n2),real(timei),real(gammai),&
+                                real(rhozero),real(RK2),real(escap),real(tkin), &
+                                real(tgrav),real(tterm)/)
        else
           gamma(j) = gammasi
           time(j) = timesi
+          headervals(1:14,j) = (/real(udisti),real(umassi),real(utimei),real(nprint),&
+                                real(n1),real(n2),real(timesi),real(gammasi),&
+                                real(rhozeros),real(RK2s),real(escaps),real(tkins), &
+                                real(tgravs),real(tterms)/)
        endif
        print*,' time = ',time(j),' gamma = ',gamma(j)
 
@@ -329,28 +353,24 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
          sum(npartoftype(:,j-1)),'nghost=',npartoftype(2,j-1)
  endif
 
- return
+end subroutine read_data_mbate
 
-end subroutine read_data
-
-!!------------------------------------------------------------
-!! set labels for each column of data
-!!------------------------------------------------------------
-
-subroutine set_labels
+!------------------------------------------------------------
+! set labels for each column of data
+!------------------------------------------------------------
+subroutine set_labels_mbate
  use labels
  use params
  use settings_data
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_mbate ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_mbate ***'
     return
  endif
 
@@ -394,7 +414,6 @@ subroutine set_labels
  UseTypeInRenderings(2) = .false.
  UseTypeInRenderings(3) = .true.
 
-!-----------------------------------------------------------
+end subroutine set_labels_mbate
 
- return
-end subroutine set_labels
+end module readdata_mbate

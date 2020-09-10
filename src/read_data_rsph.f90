@@ -46,8 +46,16 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
- use exact, only:hfact
+module readdata_rsph
+ implicit none
+
+ public :: read_data_rsph, set_labels_rsph
+
+ private
+contains
+
+
+subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
  use params
 !  use labels
@@ -206,9 +214,9 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     print*,'kernel range = ',rheader(3)
     gamma(i) = rheader(4)
  endif
- hfact = 0.
+
  print "(/a14,':',f8.4,a8,':',i8,a8,':',i8)",' time',time(i),'npart',npartoftype(1,i),'ntotal',ntoti
- print "(a14,':',i8,a8,':',f8.4,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i),'hfact',hfact
+ print "(a14,':',i8,a8,':',f8.4)",' ncolumns',ncolumns,'gamma',gamma(i)
  print "(a14,':',i8,a8,':',i8)",'ndim',ndim,'ndimV',ndimV
 !
 !--read data arrays
@@ -275,13 +283,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
  print*,' *** data file empty : no timesteps ***'
  return
 
-end subroutine read_data
+end subroutine read_data_rsph
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_rsph
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              iamvec,labelvec,label,labeltype
  use params
@@ -294,11 +302,11 @@ subroutine set_labels
  common /chead/ cheader
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_rsph ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_rsph ***'
     return
  endif
 
@@ -362,4 +370,5 @@ subroutine set_labels
 !-----------------------------------------------------------
 
  return
-end subroutine set_labels
+end subroutine set_labels_rsph
+end module readdata_rsph

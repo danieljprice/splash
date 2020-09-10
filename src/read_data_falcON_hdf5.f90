@@ -150,7 +150,16 @@ end module falcONhdf5read
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-subroutine read_data(rootname,istepstart,ipos,nstepsread)
+
+module readdata_falcON_hdf5
+ implicit none
+ 
+ public :: read_data_falcON_hdf5, set_labels_falcON_hdf5
+ 
+ private 
+contains
+
+subroutine read_data_falcON_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol
  use params,         only:doub_prec,maxparttypes !,maxplot
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread, &
@@ -352,7 +361,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  !
  ! call set labels to identify location of smoothing length
  !
- call set_labels
+ call set_labels_falcON_hdf5
 
  !if (nstepsread > 0) then
  !   print "(a,i10,a)",' >> read ',sum(npartoftype(:,i)),' particles'
@@ -360,7 +369,7 @@ subroutine read_data(rootname,istepstart,ipos,nstepsread)
  call close_falcON_file()
  return
 
-end subroutine read_data
+end subroutine read_data_falcON_hdf5
 
 subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c,name="read_falcON_data_into_splash")
  use, intrinsic :: iso_c_binding, only:c_int,c_double
@@ -415,7 +424,7 @@ end subroutine read_falcON_data_into_splash
 !------------------------------------------------------------
 ! set labels for each column of data
 !------------------------------------------------------------
-subroutine set_labels
+subroutine set_labels_falcON_hdf5
  use labels,        only:label,iamvec,labelvec,ix,ivx,ipmass, &
                           ih,irho,iax,iutherm !ipr,iutherm
  use settings_data,  only:ndim,ndimV,UseTypeInRenderings
@@ -426,11 +435,11 @@ subroutine set_labels
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_falcON_hdf5 ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_falcON_hdf5 ***'
     return
  endif
 
@@ -487,7 +496,7 @@ subroutine set_labels
 
 !-----------------------------------------------------------
  return
-end subroutine set_labels
+end subroutine set_labels_falcON_hdf5
 
 subroutine set_splash_block_label(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
@@ -515,3 +524,4 @@ subroutine set_splash_particle_label(itypec,name) bind(c)
  labeltype(itypemap_falcON(itypec+1)) = trim(fstring(name))
 
 end subroutine set_splash_particle_label
+end module readdata_falcON_hdf5

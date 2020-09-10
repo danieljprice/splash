@@ -397,22 +397,22 @@ function get_label_grain_size(sizecm) result(string)
  character(len=16) :: string
  character(len=6) :: ulab
 
- if (sizecm > 1000.) then
+ if (sizecm >= 1000.) then
     write(string,"(1pg10.3)") sizecm*0.001
     ulab = 'km'
- elseif (sizecm > 100.) then
+ elseif (sizecm >= 100.) then
     write(string,"(1pg10.3)") sizecm*0.01
     ulab = 'm'
- elseif (sizecm > 1.) then
+ elseif (sizecm >= 1.) then
     write(string,"(1pg10.3)") sizecm
     ulab = 'cm'
- elseif (sizecm > 0.1) then
+ elseif (sizecm >= 0.09) then
     write(string,"(1pg10.3)") sizecm*10.
     ulab = 'mm'
- elseif (sizecm > 1.e-4) then
+ elseif (sizecm >= 1.e-4) then
     write(string,"(1pg10.3)") sizecm*1.e4
     ulab = '\gmm'
- elseif (sizecm > 1.e-7) then
+ elseif (sizecm >= 1.e-7) then
     write(string,"(1pg10.3)") sizecm*1.e7
     ulab = 'nm'
  endif

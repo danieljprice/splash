@@ -29,6 +29,7 @@ module system_utils
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
+ public :: get_command_flag
 
  private
 
@@ -252,6 +253,24 @@ real function get_command_option(variable,default) result(val)
  enddo
 
 end function get_command_option
+
+!
+!--find real-valued option from command line arguments
+!  as in --arg=blah
+!
+logical function get_command_flag(variable) result(val)
+ character(len=*), intent(in) :: variable
+ character(len=80) :: string
+ integer :: ierr,nargs,ieq,iarg
+
+ val = .false.
+ nargs = command_argument_count()
+ do iarg=1,nargs
+    call get_command_argument(iarg,string)
+    if (string(1:1)=='-' .and. index(string,variable) > 0) val = .true.
+ enddo
+
+end function get_command_flag
 
 !
 !--count the number of arguments matching a certain substring

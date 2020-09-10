@@ -119,7 +119,7 @@ subroutine submenu_render(ichoose)
  ians = ichoose
  print "(a)",'----------------- rendering options -------------------'
 
- if (ians <= 0 .or. ians > 8) then
+ if (ians <= 0 .or. ians > 10) then
     if (npix > 0) then
        write(string,"(i5)") npix
     else
@@ -127,7 +127,7 @@ subroutine submenu_render(ichoose)
     endif
     kname = ''
     if (ikernel >= 0 .and. ikernel <= nkernels) kname = trim(kernelname(ikernel))
-    print 10,trim(string),icolours,print_logical(iplotcont_nomulti),ncontours, &
+    print 10,trim(string),icolours,print_logical(iplotcont_nomulti), &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
            print_logical(idensityweightedinterpolation),trim(projlabelformat),&
@@ -136,16 +136,15 @@ subroutine submenu_render(ichoose)
           ' 0) exit ',/,                      &
           ' 1) set number of pixels               ( ',a,' )',/, &
           ' 2) change colour scheme               (',i2,' )',/,    &
-          ' 3) 2nd render/contour prompt          ( ',a,' )',/, &
-          ' 4) change number of contours          (',i3,' )',/, &
-          ' 5) change colour bar style            ( ',i2,' )',/,&
-          ' 6) use particle colours not pixels    ( ',a,' )',/,&
-          ' 7) normalise interpolations           ( ',a,' )',/,&
-          ' 8) use accelerated rendering          ( ',a,' )',/,&
-          ' 9) use density weighted interpolation ( ',a,' )',/, &
-          ' 10) customize label on projection plots ( ',a,' )',/,&
-          ' 11) change kernel         ( ',a,' )')
-    call prompt('enter option',ians,0,11)
+          ' 3) contour plot settings              ( ',a,' )',/, &
+          ' 4) change colour bar style            ( ',i2,' )',/,&
+          ' 5) use particle colours not pixels    ( ',a,' )',/,&
+          ' 6) normalise interpolations           ( ',a,' )',/,&
+          ' 7) use accelerated rendering          ( ',a,' )',/,&
+          ' 8) use density weighted interpolation ( ',a,' )',/, &
+          ' 9) customize label on projection plots ( ',a,' )',/,&
+          ' 10) set kernel             ( ',a,' )')
+    call prompt('enter option',ians,0,10)
  endif
 !
 !--options
@@ -208,21 +207,17 @@ subroutine submenu_render(ichoose)
        print "(a)",' Contour plotting prompt is '//trim(print_logical(iplotcont_nomulti))
     endif
     if ((iplotcont_nomulti .or. icolours==0) .and. .not.double_rendering) then
-       call prompt('enter number of contours between min,max',ncontours,0,500)
-       call prompt('plot contour labels?',ilabelcont)
-    endif
-!------------------------------------------------------------------------
- case(4)
-    print "(5(/,a),/)",&
+       print "(5(/,a),/)",&
              ' To set contour levels and level labels manually, create a file called', &
              '  '''//trim(fileprefix)//'.contours'' in the working directory, with the following format:',&
              '  1.0   label1 ', &
              '  2.0   label2 ', &
              '  ...'
-    call prompt('otherwise, enter number of contours between min,max',ncontours,0,500)
-    call prompt('plot contour labels?',ilabelcont)
+       call prompt('enter number of contours between min,max',ncontours,0,500)
+       !call prompt('plot contour labels?',ilabelcont)
+    endif
 !------------------------------------------------------------------------
- case(5)
+ case(4)
     do i=0,maxcolourbarstyles
        print "(i2,')',1x,a)",i,trim(labelcolourbarstyles(i))
     enddo
@@ -262,12 +257,12 @@ subroutine submenu_render(ichoose)
        endif
     endif
 !------------------------------------------------------------------------
- case(6)
+ case(5)
     icolour_particles = .not.icolour_particles
     print "(a)",' Use particle colours instead of pixels is ' &
                    //trim(print_logical(icolour_particles))
 !------------------------------------------------------------------------
- case(7)
+ case(6)
     call prompt('Use normalised interpolations?',inormalise_interpolations)
     print "(a)",' Normalisation of interpolations is ' &
                    //trim(print_logical(inormalise_interpolations))
@@ -277,7 +272,7 @@ subroutine submenu_render(ichoose)
                    //trim(print_logical(exact_rendering))
     endif
 !------------------------------------------------------------------------
- case(8)
+ case(7)
     ifastrender = .not.ifastrender
     print "(a)",' Accelerated rendering is '//trim(print_logical(ifastrender))
     if (ifastrender) then
@@ -285,12 +280,12 @@ subroutine submenu_render(ichoose)
        print*,'          assumed to be at centre of pixel)'
     endif
 !------------------------------------------------------------------------
- case(9)
+ case(8)
     idensityweightedinterpolation = .not.idensityweightedinterpolation
     print "(a)",' Density weighted interpolation is '// &
                    print_logical(idensityweightedinterpolation)
 !------------------------------------------------------------------------
- case(10)
+ case(9)
     print "(5(/,a),/,4(/,a),/)", &
                         ' Example format strings: ', &
                         '  \(2268) %l d%z %uz       : this is the default format "\int rho [g/cm^3] dz [cm]"', &
@@ -305,7 +300,7 @@ subroutine submenu_render(ichoose)
     call prompt(' enter label format for projection plots: ',projlabelformat)
     call prompt(' enter which column to apply format to (0=all) ',iapplyprojformat,0,maxplot)
 !------------------------------------------------------------------------
- case(11)
+ case(10)
     do i=0,nkernels
        print "(1x,i1,')',1x,a)",i,trim(kernelname(i))
     enddo

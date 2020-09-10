@@ -58,7 +58,16 @@ module oilonwaterread
 end module oilonwaterread
 
 
-subroutine read_data(rootname,indexstart,ipos,nstepsread)
+module readdata_oilonwater
+ implicit none
+ 
+ public :: read_data_oilonwater, set_labels_oilonwater
+ 
+ private 
+contains
+
+
+subroutine read_data_oilonwater(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
@@ -152,7 +161,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
     rewind(15)
  endif
 
- call set_labels
+ call set_labels_oilonwater
 
  if (ierr /= 0) then
     print "(a)",'*** ERROR READING TIMESTEP HEADER ***'
@@ -178,11 +187,11 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 !
        if (allocated(isteps)) deallocate(isteps)
        allocate(isteps(npart_max),stat=ierr)
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data_oilonwater'
 
        if (allocated(iphase)) deallocate(iphase)
        allocate(iphase(npart_max),stat=ierr)
-       if (ierr /= 0) print*,'not enough memory in read_data'
+       if (ierr /= 0) print*,'not enough memory in read_data_oilonwater'
 !
 !--now read the timestep data in the dumpfile
 !
@@ -195,7 +204,7 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemp)) deallocate(dattemp)
           allocate(dattemp(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data'
+          if (ierr /= 0) print*,'not enough memory in read_data_oilonwater'
 
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
              nprint, n1, n2, timei, gammai, rhozero, RK2, &
@@ -310,13 +319,13 @@ subroutine read_data(rootname,indexstart,ipos,nstepsread)
 
  return
 
-end subroutine read_data
+end subroutine read_data_oilonwater
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
-subroutine set_labels
+subroutine set_labels_oilonwater
  use labels
  use params
  use physcon, only:solarrcgs,solarmcgs
@@ -328,11 +337,11 @@ subroutine set_labels
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
-    print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'
+    print*,'*** ERROR: ndim = ',ndim,' in set_labels_oilonwater ***'
     return
  endif
  if (ndimV <= 0 .or. ndimV > 3) then
-    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels ***'
+    print*,'*** ERROR: ndimV = ',ndimV,' in set_labels_oilonwater ***'
     return
  endif
 
@@ -410,4 +419,5 @@ subroutine set_labels
  UseTypeInRenderings(3) = .false.
  UseTypeInRenderings(4) = .true.
 
-end subroutine set_labels
+end subroutine set_labels_oilonwater
+end module readdata_oilonwater

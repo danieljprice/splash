@@ -37,7 +37,6 @@ contains
 !---------------------------------------------
 subroutine defaults_set_limits
  use multiplot, only:itrans
- implicit none
 
  iadapt           = .true.  ! adaptive plot limits
  iadaptcoords     = .false.
@@ -47,7 +46,6 @@ subroutine defaults_set_limits
  xminoffset_track = 0.5     ! offset of limits from tracked particle
  xmaxoffset_track = 0.5     !
 
- return
 end subroutine defaults_set_limits
 
 !----------------------------------------------------------------------
@@ -58,17 +56,14 @@ subroutine submenu_limits(ichoose)
  use settings_data,  only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
                           DataIsBuffered,itracktype,itrackoffset,ntypes
  use calcquantities, only:calc_quantities
- !use settings_page, only:nstepsperpage
  use multiplot,      only:itrans
  use prompting,      only:prompt,print_logical
  use limits,         only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
  use labels,         only:label,ix,irad,is_coord,labeltype
  use transforms,     only:ntrans,transform_label
- implicit none
  integer, intent(in) :: ichoose
  integer             :: iaction,ipick,i,index,ierr
  integer             :: itracktypeprev,itrackoffsetprev
-! real                :: diff, mid, zoom
  character(len=120)  :: transprompt
  character(len=12)   :: string,string2
  character(len=20)   :: pstring,pstring2
@@ -98,17 +93,14 @@ subroutine submenu_limits(ichoose)
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
         ' 0) exit ',/,                 &
-        ' 1) use adaptive/fixed limits                  ( ',a,', ',a,' )   ',/,  &
+        ' 1) use adaptive/fixed limits        ( ',a,', ',a,' )   ',/,  &
         ' 2) set limits manually ',/,     &
-        ' 3) xy limits/radius relative to particle           ( ',a,' )',/,   &
-        ' 4) auto-adjust limits to match device aspect ratio ( ',a,' )',/, &
-        ' 5) apply log/other transformations to columns ',/, &
-        ' 6) reset limits for all columns  ',/, &
-        ' 7) use subset of data restricted by parameter range     ( ',a,')')
- if (iaction <= 0 .or. iaction > 7) then
-    print 10,trim(string),trim(string2),trim(pstring),&
-             print_logical(adjustlimitstodevice),print_logical(anyrangeset())
-    call prompt('enter option ',iaction,0,7)
+        ' 3) set particle tracking                      ( ',a,' )',/,   &
+        ' 4) subset data by parameter range             ( ',a,')',/, &
+        ' 5) apply log/other transformations to columns ')
+ if (iaction <= 0 .or. iaction > 5) then
+    print 10,trim(string),trim(string2),trim(pstring),print_logical(anyrangeset())
+    call prompt('enter option ',iaction,0,5)
  endif
 !
 !--limits
@@ -128,9 +120,7 @@ subroutine submenu_limits(ichoose)
     call prompt('Adjust limits to aspect ratio of device?',adjustlimitstodevice)
     print "(a)",'adaptive plot limits = '//print_logical(iadapt)// &
                 ' on coords = '//print_logical(iadaptcoords)
-    !if (nstepsperpage > 1 .and. (iadapt .or. iadaptcoords)) then
-    !   print*,'WARNING: adaptive limits and multiple steps per page don''t mix'
-    !endif
+
 !------------------------------------------------------------------------
  case(2)
 
@@ -208,23 +198,28 @@ subroutine submenu_limits(ichoose)
 !------------------------------------------------------------------------
  case(4)
 
-!+ Adjust plot limits to match device aspect ratio
+!+ Plot subset of data by restricting parameter range
 
-    call prompt('Adjust limits to aspect ratio of device?',adjustlimitstodevice)
+    ipick = 1
+    do while (ipick > 0)
+       ipick = 0
+       call print_rangeinfo()
 
-!!+ Zooms in/out (alternatively do this in interactive mode)
-!
-!    if (.not.iadapt) then
-!       call prompt('Enter zoom factor for fixed limits',zoom,0.0)
-!       do i=1,numplot
-!          diff = lim(i,2)- lim(i,1)
-!          mid = 0.5*(lim(i,1) + lim(i,2))
-!          lim(i,1) = mid - 0.5*zoom*diff
-!          lim(i,2) = mid + 0.5*zoom*diff
-!       enddo
-!    else
-!       call prompt('Enter scale factor (adaptive limits)',scalemax,0.0)
-!    endif
+       call prompt('Enter column to use to restrict data set (-1=none/unset all,0=quit)',ipick,-1,ndataplots)
+       if (ipick > 0) then
+          print*,'current plot limits for '//trim(label(ipick))//': (min,max) = ',lim(ipick,1),lim(ipick,2)
+          call prompt(trim(label(ipick))//' min value ',range(ipick,1))
+          call prompt(trim(label(ipick))//' max value ',range(ipick,2),range(ipick,1))
+          if (.not.rangeset(ipick)) then
+             print*,'>> min=max: no restriction set'
+          endif
+       elseif (ipick==-1) then
+          print "(a)",'>> removing all range restrictions on data set'
+          range(:,:) = 0.
+       endif
+       write(*,*)
+    enddo
+    return
 !------------------------------------------------------------------------
  case(5)
 
@@ -253,53 +248,12 @@ subroutine submenu_limits(ichoose)
        endif
     enddo
     return
-!------------------------------------------------------------------------
- case(6)
 
-!+ Resets plot limits using all data currently in memory
-!+ Note that these limits will only apply when fixed limits are used
-
-    if (ivegotdata) then
-       if (DataIsBuffered) then
-          call set_limits(1,nsteps,1,ndataplots)
-       else
-          call set_limits(1,nstepsinfile(ifileopen),1,ndataplots)
-       endif
-    else
-       print*,'no data with which to set limits!!'
-    endif
-!------------------------------------------------------------------------
- case(7)
-
-!+ Plot subset of data by restricting parameter range
-
-    ipick = 1
-    do while (ipick > 0)
-       ipick = 0
-       call print_rangeinfo()
-
-       call prompt('Enter column to use to restrict data set (-1=none/unset all,0=quit)',ipick,-1,ndataplots)
-       if (ipick > 0) then
-          print*,'current plot limits for '//trim(label(ipick))//': (min,max) = ',lim(ipick,1),lim(ipick,2)
-          call prompt(trim(label(ipick))//' min value ',range(ipick,1))
-          call prompt(trim(label(ipick))//' max value ',range(ipick,2),range(ipick,1))
-          if (.not.rangeset(ipick)) then
-             print*,'>> min=max: no restriction set'
-          endif
-       elseif (ipick==-1) then
-          print "(a)",'>> removing all range restrictions on data set'
-          range(:,:) = 0.
-       endif
-       write(*,*)
-    enddo
-    return
  end select
 
- return
 end subroutine submenu_limits
 
 subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
- implicit none
  character(len=*), intent(in)  :: string
  integer,          intent(out) :: itracktype,itrackpart,ierr
  integer :: ic

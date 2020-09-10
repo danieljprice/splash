@@ -6,7 +6,7 @@ Data reads and environment variables
 
 Requesting a customised data reader
 ------------------------------------
-The basic "splash" binary will read any ascii or csv data file where
+The ``splash`` binary will read many formats, however the default format is ascii or csv any ascii or csv data file where
 columns correspond to different quantities and rows correspond to each particle (actually
 I use splash to plot graphs for nearly all data in this form, whether SPH or not)
 -- it will also sensibly skip header lines which do not have the same number of columns.
@@ -186,7 +186,7 @@ Environment variables that affect all data reads are:
 | SPLASH_MARGIN_YMAX         | top (vertical) page margin                      |
 +----------------------------+-------------------------------------------------+
 
-.. _sec:asplash:
+.. _sec:splash:
 
 Ascii data read
 ~~~~~~~~~~~~~~~~
@@ -233,12 +233,12 @@ at runtime which are specific to the data read. For the ascii data read
 |                                   | where gamma appears in the header |
 +-----------------------------------+-----------------------------------+
 
-.. _sec:gsplash:
+.. _sec:splash -gadget:
 
 GADGET data read
 ~~~~~~~~~~~~~~~~~
 
-For the GADGET read (``gsplash``) the environment variable options are:
+For the GADGET read (``splash -gadget``) the environment variable options are:
 
 +-----------------------------------+-----------------------------------+
 | GSPLASH_FORMAT                    | if set = 2, reads the block       |
@@ -301,7 +301,7 @@ matter particles (these should just be one-column ascii files).
 VINE data read
 ~~~~~~~~~~~~~~~
 
-For the VINE read (``vsplash``) the environment variable options are:
+For the VINE read (``splash -vine``) the environment variable options are:
 
 +-----------------------------------+-----------------------------------+
 | VSPLASH_HFAC                      | if ``yes`` or ``true`` multiplies |
@@ -322,7 +322,7 @@ For the VINE read (``vsplash``) the environment variable options are:
 sphNG data read
 ~~~~~~~~~~~~~~~~
 
-For the sphNG and PHANTOM read (``ssplash``) the environment variable
+For the sphNG and PHANTOM read (``splash -phantom``) the environment variable
 options are:
 
 +-----------------------------------+-----------------------------------+
@@ -349,7 +349,7 @@ options are:
 dragon data read
 ~~~~~~~~~~~~~~~~~
 
-For the dragon read (``dsplash``) the environment variable options are:
+For the dragon read (``splash -dragon``) the environment variable options are:
 
 +-----------------------------------+-----------------------------------+
 | DSPLASH_EXTRACOLS                 | specifies number of extra columns |
@@ -360,7 +360,7 @@ For the dragon read (``dsplash``) the environment variable options are:
 Stephan Rosswog data read
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the srosph read (``rsplash``) the environment variable options are:
+For the srosph read (``splash``) the environment variable options are:
 
 +-----------------------------------+-----------------------------------+
 | RSPLASH_FORMAT                    | can be ``MHD`` or ``HYDRO`` which |
@@ -388,7 +388,7 @@ For the srosph read (``rsplash``) the environment variable options are:
 ndspmhd data read
 ~~~~~~~~~~~~~~~~~~
 
-For the ndspmhd read (``nsplash``) the environment variable options are:
+For the ndspmhd read (``splash -ndspmhd``) the environment variable options are:
 
 +-----------------------------------+-----------------------------------+
 | NSPLASH_BARYCENTRIC               | plots barycentric quantities for  |
