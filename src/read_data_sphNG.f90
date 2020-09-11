@@ -1159,13 +1159,14 @@ integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttype
 
 end function extract_ndusttypes
 
-subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,hfact,dat,iphase)
+subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,hfact,dat,iphase,nkilled)
  integer,            intent(in)    :: i1,i2,ih,ipmass,irho
  logical,            intent(in)    :: required(0:)
  integer,            intent(inout) :: npartoftype(:)
  real,               intent(in)    :: massoftype(:),hfact
  real,               intent(inout) :: dat(:,:)
  integer(kind=int1), intent(inout) :: iphase(:)
+ integer,            intent(inout) :: nkilled
  integer :: itype,k
  real :: pmassi,hi,rhoi
  !
@@ -1187,7 +1188,10 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
          npartoftype(itype) = npartoftype(itype) - 1
          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
          if (required(irho)) dat(k,irho) = pmassi*(hfact/abs(hi))**3
-      else
+      else ! dead particles
+         npartoftype(itype) = npartoftype(itype) - 1
+         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+         nkilled = nkilled + 1
          if (required(irho)) dat(k,irho) = 0.
       endif
    enddo
@@ -1257,7 +1261,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: nskip,ntotal,npart,n1,ngas,nreals
  integer :: iblock,nblocks,ntotblock,ncolcopy
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
- integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr
+ integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
@@ -1418,6 +1422,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  igotmass = .true.
  imadepmasscolumn = .false.
  massoftypei(:) = 0.
+ nkilled = 0
 
  over_MPIblocks: do iblock=1,nblocks
 !
@@ -1932,7 +1937,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              !--construct density for phantom dumps based on h, hfact and particle mass
              if (phantomdump .and. icolumn==ih) then
                 icolumn = irho ! density
-                call get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype(:,j),masstype(:,j),hfact,dat(:,:,j),iphase)
+                call get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype(:,j),masstype(:,j),hfact,dat(:,:,j),iphase,nkilled)
              endif
           enddo
 !        real 8's need converting
@@ -1961,6 +1966,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  print*,'Press any key to continue (but there is likely something wrong with the file...)'
  read*
 34 continue
+ !
+ !--emit warning if we find particles with h = 0
+ !
+ if (nkilled > 0) print*,'WARNING: got ',nkilled,' dead (not accreted) particles, should not happen'
  !
  !--read .divv file for phantom dumps
  !
@@ -2031,14 +2040,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           do i=1,npart
              itype = itypemap_phantom(iphase(i))
              iamtype(i,j) = itype
-             select case(itype)
-             case(1,2,4:) ! remove accreted particles
-                if (ih > 0 .and. required(ih)) then
-                   if (dat(i,ih,j) <= 0.) then
-                      iamtype(i,j) = itypemap_unknown_phantom
-                   endif
-                endif
-             end select
+             if (ih > 0 .and. required(ih)) then
+                if (dat(i,ih,j) <= 0. .and. itype /= itypemap_sink_phantom) iamtype(i,j) = itypemap_unknown_phantom
+             endif
           enddo
        else
           !
