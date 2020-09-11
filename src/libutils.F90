@@ -25,9 +25,17 @@
 ! specifies c interfaces to corresponding Fortran subroutines
 !-------------------------------------------------------------------------
 module libutils
+use iso_c_binding, only:c_float, c_double
+
   implicit none
 
   public
+
+#ifdef DP
+  integer, parameter :: c_real = c_double
+#else
+  integer, parameter :: c_real = c_float
+#endif
 
  contains
 

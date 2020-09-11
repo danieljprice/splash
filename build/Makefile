@@ -271,6 +271,7 @@ endif
 # compile in double precision
 ifeq ($(DOUBLEPRECISION), yes)
     FFLAGS += ${DBLFLAGS}
+    FPPFLAGS+=-DDP
 endif
 
 # add debugging flags at compile time
