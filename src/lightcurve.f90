@@ -2,64 +2,64 @@ module lightcurve
  use params, only:int1,doub_prec
  implicit none
 
- public :: get_lightcurve
+ ! public :: get_lightcurve
  public :: get_temp_from_u
 
  private
 
 contains
 
-subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,lum,rphoto,temp)
- use convert_grid, only:convert_to_grid
- use labels,       only:iutherm,ix
- use limits,       only:lim
- integer, intent(in)  :: ncolumns,ntypes,ndim
- integer, intent(in)  :: npartoftype(:)
- integer(kind=int1), intent(in) :: itype(:)
- real,    intent(in)  :: time
- real,    intent(in)  :: masstype(:)
- real,    intent(in)  :: dat(:,:)
- real,    intent(out) :: lum,rphoto,temp
- real, allocatable :: rhogrid(:,:,:),ugrid(:,:,:),tgrid(:,:,:)
- integer :: nlos,idim,nx,ny,nz
- real :: xmin(ndim),xmax(ndim)
-
- if (ndim /= 3) then
-    print "(a)",' ERROR: lightcurve only works with 3 dimensional data'
-    return
- endif
- !
- ! interpolate SPH data to 3D grid to get density and thermal energy
- !
- call convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,'none',&
-                      'none',.false.,icols=(/iutherm/),rhogrid=rhogrid,dat3D=ugrid)
- !
- ! convert thermal energy to temperature
- !
- print*,' max density = ',maxval(rhogrid)
- print*,' max utherm  = ',maxval(ugrid)
- tgrid = get_temp_from_u(rhogrid,ugrid)
- print*,' max temp    = ',maxval(tgrid)
- if (allocated(ugrid)) deallocate(ugrid)
- !
- ! find the photosphere and get the temperature and luminosity
- !
- nx = size(rhogrid,1)
- ny = size(rhogrid,2)
- nz = size(rhogrid,3)
- xmin(1:ndim) = lim(ix(1:ndim),1)
- xmax(1:ndim) = lim(ix(1:ndim),2)
- do idim=3,3
-    call get_photosphere(idim,1,nx,ny,nz,rhogrid,tgrid,xmin,xmax,lum,rphoto,temp)
-    !call get_photosphere(idim,-1,rhogrid,ugrid,lum,rphoto,temp)
- enddo
- !
- ! clean up memory
- !
- if (allocated(rhogrid)) deallocate(rhogrid)
- if (allocated(tgrid)) deallocate(tgrid)
-
-end subroutine get_lightcurve
+! subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,lum,rphoto,temp)
+!  use convert_grid, only:convert_to_grid
+!  use labels,       only:iutherm,ix
+!  use limits,       only:lim
+!  integer, intent(in)  :: ncolumns,ntypes,ndim
+!  integer, intent(in)  :: npartoftype(:)
+!  integer(kind=int1), intent(in) :: itype(:)
+!  real,    intent(in)  :: time
+!  real,    intent(in)  :: masstype(:)
+!  real,    intent(in)  :: dat(:,:)
+!  real,    intent(out) :: lum,rphoto,temp
+!  real, allocatable :: rhogrid(:,:,:),ugrid(:,:,:),tgrid(:,:,:)
+!  integer :: nlos,idim,nx,ny,nz
+!  real :: xmin(ndim),xmax(ndim)
+!
+!  if (ndim /= 3) then
+!     print "(a)",' ERROR: lightcurve only works with 3 dimensional data'
+!     return
+!  endif
+!  !
+!  ! interpolate SPH data to 3D grid to get density and thermal energy
+!  !
+!  call convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,'none',&
+!                       'none',.false.,icols=(/iutherm/),rhogrid=rhogrid,dat3D=ugrid)
+!  !
+!  ! convert thermal energy to temperature
+!  !
+!  print*,' max density = ',maxval(rhogrid)
+!  print*,' max utherm  = ',maxval(ugrid)
+!  tgrid = get_temp_from_u(rhogrid,ugrid)
+!  print*,' max temp    = ',maxval(tgrid)
+!  if (allocated(ugrid)) deallocate(ugrid)
+!  !
+!  ! find the photosphere and get the temperature and luminosity
+!  !
+!  nx = size(rhogrid,1)
+!  ny = size(rhogrid,2)
+!  nz = size(rhogrid,3)
+!  xmin(1:ndim) = lim(ix(1:ndim),1)
+!  xmax(1:ndim) = lim(ix(1:ndim),2)
+!  do idim=3,3
+!     call get_photosphere(idim,1,nx,ny,nz,rhogrid,tgrid,xmin,xmax,lum,rphoto,temp)
+!     !call get_photosphere(idim,-1,rhogrid,ugrid,lum,rphoto,temp)
+!  enddo
+!  !
+!  ! clean up memory
+!  !
+!  if (allocated(rhogrid)) deallocate(rhogrid)
+!  if (allocated(tgrid)) deallocate(tgrid)
+!
+! end subroutine get_lightcurve
 
 subroutine get_photosphere(idim,idir,nx,ny,nz,rho,temp,xmin,xmax,lum,rphoto,tphoto)
  integer, intent(in)  :: idim,idir,nx,ny,nz
