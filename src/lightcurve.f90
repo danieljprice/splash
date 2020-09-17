@@ -3,6 +3,7 @@ module lightcurve
  implicit none
 
  public :: get_lightcurve
+ public :: get_temp_from_u
 
  private
 
