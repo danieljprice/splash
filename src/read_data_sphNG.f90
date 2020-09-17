@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1245,10 +1245,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
- use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags
+ use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,iutherm
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
+ use lightcurve,     only:get_temp_from_u
+ use settings_units, only:units
  implicit none
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
@@ -1276,7 +1278,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer, dimension(:), allocatable :: listpm
  real(doub_prec), dimension(:), allocatable :: dattemp
  real*4, dimension(:), allocatable :: dattempsingle
- real(doub_prec) :: r8
+ real(doub_prec) :: r8,unit_dens,unit_ergg
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
@@ -1296,6 +1298,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
+ itempcol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1563,6 +1566,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              icurlvycol = ncolstep + 3
              icurlvzcol = ncolstep + 4
              ncolstep   = ncolstep + 4
+          endif
+          if (lenvironment("SPLASH_GET_TEMP")) then
+            !add a column for the temperature
+             ncolstep = ncolstep+1
+             itempcol = ncolstep
           endif
        endif
     endif
@@ -1966,6 +1974,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  print*,'Press any key to continue (but there is likely something wrong with the file...)'
  read*
 34 continue
+
+ call set_labels_sphNG
  !
  !--emit warning if we find particles with h = 0
  !
@@ -1989,6 +1999,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading curlv from file'
        close(66)
     endif
+ endif
+
+
+ if (itempcol > 0 .and. required(itempcol)) then
+    !--calculate the temperature from density and internal energy (using physical units)
+    unit_dens = umass/(udist**3)
+    unit_ergg = (udist/utime)**2
+    dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
  endif
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
@@ -2430,6 +2448,7 @@ subroutine set_labels_sphNG
  if (ipmass > 0) label(ipmass) = 'particle mass'
  if (idivB > 0) label(idivB) = 'div B'
  if (idivvcol > 0) label(idivvcol) = 'div v'
+ if (itempcol > 0) label(itempcol) = 'temperature'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif
