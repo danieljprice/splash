@@ -272,14 +272,51 @@ Outputting the raw pixel map to a file
 The actual pixel map rendered to the graphics device (i.e., when a
 quantity is rendered to pixels, not for particle plots) can be output
 directly to a file, or series of files by using the ``-o`` command line
-option when you invoke splash . Invoking splash with ``-o`` produces a
-list of currently implemented formats (at the moment these are an ascii
-dump file and ppm format). This is useful if you need to compare the
+option when you invoke splash. This is useful if you need to compare the
 image to the output from another code (e.g. using a different
 visualisation tool) or if you wish to have a “raw” rendering, that is
-without annotation on the plots, but which (in the ppm case) uses more
-colours. The files are given default names such as ``splash_00001.dat`` or
-``splash_00001.ppm`` where the number corresponds to the frame number as
-would be rendered to the graphics device.
+without annotation on the plots. 
+
+Invoking splash with ``-o`` lists the currently implemented formats::
+
+  possible formats for -o option: 
+  -o ppm   : dump pixel map to portable pixel map file
+  -o pfm   : dump pixel map to portable float map file
+  -o ascii : dump pixel map to ascii file
+  
+For example, to output the pixel map in ascii format, use::
+
+   splash discG_00300 -o ascii -r 6 -dev /png
+   
+giving::
+
+   > writing pixel map to file discG_00300_columndensitygcm2_proj.pix ...OK
+
+This produces a file as follows::
+
+  $ more discG_00300_columndensitygcm2_proj.pix
+  # discG_00300_columndensitygcm2_proj.pix created by SPLASH
+  # Contains 2D pixel array 512 x 512 written as 
+  #   do j=1,512
+  #      write(*,*) dat(1:512,j)
+  #   enddo
+  # column density [g/cm^2]: min =   9.697428E-12 max =   7.487661E+03
+  # x axis: min =  -4.000000E+03 max =   4.000000E+03
+  # y axis: min =  -4.000000E+03 max =   4.000000E+03
+  # 512 512
+    0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+0
+  ...
+
+The number of pixels in the image can be controlled using the `set number of pixels' option in the :ref:`sec:menu-r` (making sure you save the settings to the splash.defaults file using the :ref:`sec:menu-s`).
+
+.. _sec:readpixmap:
+
+Reading raw pixel maps from splash into Python
+----------------------------------------------
+
+See above for how to output the raw pixel map to a file. The resulting .pix file can be read into Python using the command::
+
+  array = np.loadtxt('discG_00300_columndensitygcm2_proj.pix',skiprows=9)
+  print (array.shape)
 
 For other command line options, see :ref:`sec:commandline`.

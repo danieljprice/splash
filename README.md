@@ -26,7 +26,7 @@ Links
 
 Install
 -------
-For installation instructions see the [download page](http://users.monash.edu.au/~dprice/splash/download) or the [userguide](http://users.monash.edu.au/~dprice/splash/userguide).
+For installation instructions see the [userguide](https://splash-viz.readthedocs.io/en/latest/getting-started.html).
 
 Usage
 ------------
@@ -39,7 +39,7 @@ Command line mode:
     splash -y 2 -x 1 -dev myplot.pdf mydata.txt
 ```
 
-See the [userguide](http://users.monash.edu.au/~dprice/splash/userguide) for more.
+See the [userguide](https://splash-viz.readthedocs.io) for more.
 
 Contributing
 ------------
