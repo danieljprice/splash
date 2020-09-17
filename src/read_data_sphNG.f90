@@ -1563,9 +1563,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              ncolstep   = ncolstep + 4
           endif
           if (lenvironment("SPLASH_GET_TEMP")) then
+            !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
-             print*,"Got the temperature woohoo"
           endif
        endif
     endif
@@ -1997,7 +1997,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     !--calculate the temperature from density and internal energy (using physical units)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
-    print*,"u_dens, u_ergg, irho, iutherm ",unit_dens,unit_ergg,irho,iutherm
     dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
  endif
  !
