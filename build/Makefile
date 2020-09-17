@@ -427,12 +427,13 @@ SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          legends.f90 options_render.f90 options_particleplots.f90 \
-         options_limits.f90 options_page.f90 imageutils.f90 $(READFILES) read_data.F90 \
+         options_limits.f90 options_page.f90 imageutils.f90 lightcurve.f90 $(READFILES) \
+				 read_data.F90 \
          adjust_data.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 options_xsecrotate.f90 pdfs.f90 \
          particleplot.f90 interactive.f90  \
-         convert_grid.f90 lightcurve.f90 \
+         convert_grid.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
          plotstep.f90 timestepping.f90 \

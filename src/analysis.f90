@@ -84,8 +84,8 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('tracks')
     isanalysis = .true.
- case('lightcurve')
-    isanalysis = .true.
+ ! case('lightcurve')
+ !    isanalysis = .true.
  case('none')
     verbose = .false.
  end select
@@ -354,20 +354,20 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     fileout = 'tracks.out'
     standardheader = .true.
 
- case('lightcurve')
-    !
-    !--for lightcurve need to h, mass and utherm
-    !
-    required(ix(1:ndim)) = .true.
-    required(ih) = .true.
-    required(iutherm) = .true.
-    required(ipmass) = .true.
-    !
-    !--set filename and header line
-    !
-    fileout = 'lightcurve.out'
-    write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
-          1,'time',2,'Luminosity',3,'Rphoto',4,'Tphoto'
+ ! case('lightcurve')
+ !    !
+ !    !--for lightcurve need to h, mass and utherm
+ !    !
+ !    required(ix(1:ndim)) = .true.
+ !    required(ih) = .true.
+ !    required(iutherm) = .true.
+ !    required(ipmass) = .true.
+ !    !
+ !    !--set filename and header line
+ !    !
+ !    fileout = 'lightcurve.out'
+ !    write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
+ !          1,'time',2,'Luminosity',3,'Rphoto',4,'Tphoto'
 
  end select
 
@@ -432,7 +432,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use settings_data, only:xorigin,icoords,icoordsnew,itracktype,itrackoffset
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
- use lightcurve,    only:get_lightcurve
+ !use lightcurve,    only:get_lightcurve
  implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
@@ -1114,13 +1114,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        endif
     endif
     return
- case('lightcurve')
-    call get_lightcurve(time,ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto)
-    print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
-    !
-    !--write line to output file
-    !
-    write(iunit,"(4(es18.10,1x))") timei,lum,rphoto,tphoto
+ ! case('lightcurve')
+ !    call get_lightcurve(time,ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto)
+ !    print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
+ !    !
+ !    !--write line to output file
+ !    !
+ !    write(iunit,"(4(es18.10,1x))") timei,lum,rphoto,tphoto
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
