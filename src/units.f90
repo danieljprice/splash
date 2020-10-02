@@ -25,7 +25,7 @@
 !--------------------------------------------------------------------
 module settings_units
  use params
- use labels, only:unitslabel,labelzintegration
+ use labels, only:unitslabel,labelzintegration,lenlabel
  implicit none
  real, dimension(0:maxplot), public :: units
  real, public :: unitzintegration
@@ -33,9 +33,10 @@ module settings_units
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
 
- integer, parameter :: nx = 8
+ integer, parameter :: nx = 9
  real(doub_prec), parameter :: unit_length(nx) = &
     (/1.d0,    &
+      1.d2,    &
       2.01168d4, &
       1.d5,    &
       6.96d10, &
@@ -46,6 +47,7 @@ module settings_units
 
  character(len=*), parameter :: unit_labels_length(nx) = &
     (/' [cm]     ',&
+      ' [m]      ',&
       ' [furlong]',&
       ' [km]     ',&
       ' [R_{Sun}]',&
@@ -73,6 +75,17 @@ module settings_units
       ' Myr ',&
       ' Gyr '/)
 
+ integer, parameter :: nv = 3
+ real(doub_prec), parameter :: unit_vel(nv) = &
+    (/1.d0,  &
+      1.d2,  &
+      1.d5/)
+
+ character(len=*), parameter :: unit_labels_vel(nv) = &
+    (/' [cm/s] ',&
+      ' [m/s]  ',&
+      ' [km/s] '/)
+
  private
 
 contains
@@ -89,7 +102,6 @@ subroutine defaults_set_units
  unitslabel(:) = ' '
  labelzintegration = ' '
 
- return
 end subroutine defaults_set_units
 
 !-------------------------------------------
@@ -154,20 +166,29 @@ end subroutine get_nearest_unit
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use prompting,     only:prompt
- use labels,        only:label,ix,ih,idivB,iamvec,labelvec,headertags
+ use labels,        only:label,ix,ih,ivx,idivB,iamvec,labelvec,headertags,strip_units
  use settings_data, only:ndim,ndimV,ivegotdata
  use particle_data, only:headervals,maxstep
  use asciiutils,    only:match_tag
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
- integer :: icol,i,ihdr,ibs,ibc
+ integer :: icol,i,ihdr,ibs,ibc,itime,idist
  real :: unitsprev,dunits
  real(doub_prec) :: udist,utime
- logical :: applytoall
+ logical :: applytoall,got_label
+ character(len=lenlabel) :: mylabel
 
  icol = 1
+ ! try to extract code units from the file headers, these only exist in some data reads
  utime = 0.d0
  udist = 0.d0
+ itime = match_tag(headertags,'utime')
+ idist = match_tag(headertags,'udist')
+ if (maxstep > 0 .and. ivegotdata) then
+    if (itime > 0) utime = headervals(itime,1)
+    if (idist > 0) udist = headervals(idist,1)
+ endif
+
  do while(icol >= 0)
     icol = -1
     call prompt('enter column to change units (-2=reset all,-1=quit,0=time)',icol,-2,numplot)
@@ -177,45 +198,36 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
           print "(a)",' WARNING: calculated quantities are automatically calculated in physical units '
           print "(a)",' this means that units set here will be re-scalings of these physical values'
        endif
-       if (icol==0) then
+       got_label = .true.
+       mylabel = strip_units(label(icol),unitslabel(icol))
+       if (icol==0 .and. utime > 0.) then
           ! give hints for possible time units, if utime is read from data file
-          ihdr = match_tag(headertags,'utime')
-          if (ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
-             utime = headervals(ihdr,1) ! retrieve from first file in memory
-             do i=1,nt
-                print "(a,' = ',1pg11.4)",unit_labels_time(i),utime/unit_time(i)
-             enddo
-          endif
-          call prompt('enter time units (new=old*units)',units(icol))
-          if (utime > 0.d0) call suggest_label(unitsprev,units(icol),utime,&
-                                unit_time,unit_labels_time,unitslabel(icol))
+          call choose_unit_from_list(units(icol),unitslabel(icol),&
+                                     nt,unit_labels_time,unit_time,utime,'time')
+       elseif (any(ix==icol) .or. icol==ih .and. udist > 0.) then
+          ! give hints for possible length units, if udist is read from data file
+          call choose_unit_from_list(units(icol),unitslabel(icol),&
+                                     nx,unit_labels_length,unit_length,udist,mylabel)
+       elseif (ivx==icol .and. udist > 0. .and. utime > 0.) then
+          ! give hints for velocity units, if both udist and utime read from data file
+          call choose_unit_from_list(units(icol),unitslabel(icol),&
+                                     nv,unit_labels_vel,unit_vel,udist/utime,mylabel)
        else
-          ! give hints for possible length units, if utime is read from data file
-          ihdr = match_tag(headertags,'udist')
-          if (any(ix==icol) .and. ihdr > 0 .and. maxstep > 0 .and. ivegotdata) then
-             udist = headervals(ihdr,1) ! retrieve from first file in memory
-             do i=1,nx
-                print "(a,' = ',1pg11.4)",unit_labels_length(i),udist/unit_length(i)
-             enddo
-          endif
-          call prompt('enter '//trim(label(icol))//' units (new=old*units)',units(icol))
-          if (udist > 0.d0) call suggest_label(unitsprev,units(icol),udist,&
-                                unit_length,unit_labels_length,unitslabel(icol))
+          call prompt('enter '//trim(mylabel)//' units (new=old*units)',units(icol))
+          got_label = .false.
        endif
-       if (abs(units(icol)) > tiny(units)) then
+
+       if (abs(units(icol)) > tiny(units)) then ! sanity check the units
           if (abs(units(icol) - unitsprev) > tiny(units)) UnitsHaveChanged = .true.
-          if (len_trim(unitslabel(icol))==0) then
+
+          !--prompt for the units label
+          if (.not.got_label) then ! skip if label set in choose_unit_from_list
              !--suggest a label amendment if none already set
-             dunits = 1./units(icol)
-             if (dunits > 100 .or. dunits < 1.e-1) then
-                write(unitslabel(icol),"(1pe8.1)") dunits
-             else
-                write(unitslabel(icol),"(f5.1)") dunits
-             endif
-             unitslabel(icol) = ' [ x '//trim(adjustl(unitslabel(icol)))//' ]'
+             if (len_trim(unitslabel(icol))==0) &
+                call suggest_units_label(units(icol), unitslabel(icol))
+
+             call prompt('enter label amendment ',unitslabel(icol))
           endif
-          !--label amendment can be overwritten
-          call prompt('enter label amendment ',unitslabel(icol))
        else
           UnitsHaveChanged = .true.
           units(icol) = 1.0
@@ -297,7 +309,44 @@ end subroutine set_units
 
 !-------------------------------------------------------
 !
-!  save units for all columns to a file
+!  select unit from a sensible list of presets
+!
+!-------------------------------------------------------
+subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_code,tag)
+ use prompting, only:prompt
+ integer, intent(in) :: n
+ real(doub_prec), intent(inout)  :: unit
+ character(len=*), intent(inout) :: unitlabel
+ real(doub_prec), intent(in)     :: unit_code,unit_vals(n)
+ character(len=*), intent(in)    :: unit_labels(n),tag
+ integer :: i,iselect
+ real(doub_prec) :: unitsprev
+
+ iselect = n+1
+ do i=1,n
+    print "(i1,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
+ enddo
+ print "(i1,') custom')",n+1
+ call prompt('Enter choice of '//trim(tag)//' unit ',iselect,1,n+1)
+ if (iselect==n+1) then
+    unitsprev = unit
+    call prompt('Enter custom unit (new=old*unit)',unit)
+    if (unit_code > 0.d0) call suggest_label(unitsprev,unit,unit_code, &
+                               unit_vals,unit_labels,unitlabel)
+    call prompt('enter label amendment ',unitlabel)
+ else
+    unit = unit_code/unit_vals(iselect)
+    unitlabel = unit_labels(iselect)
+    print "(a,1pg11.4)", ' => '//trim(tag)//' unit is now '//trim(unitlabel)//&
+                         ', i.e. '//trim(tag)//' = '//trim(tag)//'_code * ',unit
+ endif
+
+end subroutine choose_unit_from_list
+
+!-------------------------------------------------------
+!
+!  suggest the units label based on matching list
+!  of known scalings
 !
 !-------------------------------------------------------
 subroutine suggest_label(unitsprev,unit,ucode,unit_suggest,unit_label_suggest,unitlabel)
@@ -317,6 +366,26 @@ subroutine suggest_label(unitsprev,unit,ucode,unit_suggest,unit_label_suggest,un
  !print*,' suggested unit label = ',unitlabel
 
 end subroutine suggest_label
+
+!-------------------------------------------------------
+!
+!  suggest sensible units label for an arbitrary scaling
+!
+!-------------------------------------------------------
+subroutine suggest_units_label(unit,label)
+ real(doub_prec),  intent(in)  :: unit
+ character(len=*), intent(out) :: label
+ real(doub_prec) :: dunits
+
+ dunits = 1./unit
+ if (dunits > 100 .or. dunits < 1.e-1) then
+    write(label,"(1pe8.1)") dunits
+ else
+    write(label,"(f5.1)") dunits
+ endif
+ label = ' [ x '//trim(adjustl(label))//' ]'
+
+end subroutine suggest_units_label
 
 !-------------------------------------------------------
 !
