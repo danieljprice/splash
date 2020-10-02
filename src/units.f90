@@ -173,7 +173,7 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
  integer :: icol,i,ihdr,ibs,ibc,itime,idist
- real :: unitsprev,dunits
+ real(doub_prec) :: unitsprev,dunits
  real(doub_prec) :: udist,utime
  logical :: applytoall,got_label
  character(len=lenlabel) :: mylabel
@@ -315,12 +315,12 @@ end subroutine set_units
 subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_code,tag)
  use prompting, only:prompt
  integer, intent(in) :: n
- real(doub_prec), intent(inout)  :: unit
+ real,             intent(inout) :: unit
  character(len=*), intent(inout) :: unitlabel
  real(doub_prec), intent(in)     :: unit_code,unit_vals(n)
  character(len=*), intent(in)    :: unit_labels(n),tag
  integer :: i,iselect
- real(doub_prec) :: unitsprev
+ real :: unitsprev
 
  iselect = n+1
  do i=1,n
@@ -373,7 +373,7 @@ end subroutine suggest_label
 !
 !-------------------------------------------------------
 subroutine suggest_units_label(unit,label)
- real(doub_prec),  intent(in)  :: unit
+ real, intent(in) :: unit
  character(len=*), intent(out) :: label
  real(doub_prec) :: dunits
 
