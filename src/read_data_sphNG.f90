@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol,ikappacol
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1295,6 +1295,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvycol = 0
  icurlvzcol = 0
  itempcol = 0
+ ikappacol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1566,6 +1567,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
             !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
+             ncolstep = ncolstep+1
+             ikappacol = ncolstep
           endif
        endif
     endif
@@ -1998,6 +2001,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
+    dat(1:ntotal,ikappacol,j)=0.0
+    where(dat(1:ntotal,itempcol,j)>7000) dat(1:ntotal,ikappacol,j)=0.3
  endif
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
@@ -2445,6 +2450,7 @@ subroutine set_labels_sphNG
  if (idivB > 0) label(idivB) = 'div B'
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itempcol > 0) label(itempcol) = 'temperature'
+ if (ikappacol > 0) label(ikappacol) = 'kappa'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif

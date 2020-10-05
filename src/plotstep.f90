@@ -708,6 +708,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use asciiutils,            only:string_delete
  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
                                   plot_sls,plot_line,plot_pt1,plotlib_is_pgplot
+ use sphNGread,             only:ikappacol
  integer, intent(inout) :: ipos, istepsonpage
  integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
  integer(kind=int1), dimension(:), intent(in) :: iamtype
@@ -1463,7 +1464,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                                  dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
+                                  dzscreentemp,dat(1:ninterp,ikappacol),zslicepos,iverbose,exact_rendering)
                                   gotcontours = .true.
 
                                   if (.not.isameweights) & ! reset weights
@@ -1475,7 +1476,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                               dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
+                               dzscreentemp,dat(1:ninterp,ikappacol),zslicepos,iverbose,exact_rendering)
                             else
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
                                   if (.not.isameweights) & ! set contouring weights as necessary
@@ -1486,7 +1487,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                                  dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
+                                  dzscreentemp,dat(1:ninterp,ikappacol),zslicepos,iverbose,exact_rendering)
                                   gotcontours = .true.
 
                                   if (.not.isameweights) & ! reset weights
@@ -1497,7 +1498,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                               dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
+                               dzscreentemp,dat(1:ninterp,ikappacol),zslicepos,iverbose,exact_rendering)
                             endif
                          elseif (use3Dperspective) then
                             print*,'ERROR: X_SEC WITH 3D PERSPECTIVE NOT IMPLEMENTED'
@@ -1560,7 +1561,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   dat(1:ninterp,icontourplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                                  dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
+                                  dzscreentemp,dat(1:ninterp,ikappacol),huge(zslicepos),iverbose,exact_rendering)
                                   gotcontours = .true.
 
                                   if (.not.isameweights) & ! reset weights
@@ -1572,7 +1573,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                               dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
+                               dzscreentemp,dat(1:ninterp,ikappacol),huge(zslicepos),iverbose,exact_rendering)
                             else
                                !--do contour plot first so brightness corresponds to render plot
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
@@ -1584,7 +1585,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                                  dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
+                                  dzscreentemp,dat(1:ninterp,ikappacol),huge(zslicepos),iverbose,exact_rendering)
                                   gotcontours = .true.
 
                                   if (.not.isameweights) & ! reset weights
@@ -1595,7 +1596,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
-                               dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
+                               dzscreentemp,dat(1:ninterp,ikappacol),huge(zslicepos),iverbose,exact_rendering)
                             endif
                          else
                             !!--do fast projection of z integrated data (e.g. column density)

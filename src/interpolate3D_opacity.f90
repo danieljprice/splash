@@ -82,12 +82,12 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  implicit none
  real, parameter :: pi=3.1415926536
  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
- real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig
+ real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig,rkappa
  real, intent(in), dimension(npmass) :: pmass
  integer, intent(in), dimension(npart) :: itype
  logical, intent(in) :: exact_rendering
  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
-                      zcut,rkappa
+                      zcut
  real, dimension(npixx,npixy), intent(out) :: datsmooth, brightness
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
@@ -154,7 +154,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--average particle mass
  pmassav = sum(pmass(1:npmass))/real(npmass)
  rkappatemp = pi*hav*hav/(pmassav*coltable(0))
- if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/rkappa,' smoothing lengths'
+ if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/0.3,' smoothing lengths'
  !print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
  !
  !--print a progress report if it is going to take a long time
@@ -395,7 +395,7 @@ ymax = ymin + npixy*pixwidthy
 
 
 
-                    tau = rkappa*wab*term
+                    tau = rkappa(i)*wab*term
                     fopacity = 1. - exp(-tau)
                     !
                     !--render, obscuring previously drawn pixels by relevant amount
