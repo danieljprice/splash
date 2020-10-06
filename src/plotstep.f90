@@ -1165,11 +1165,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 dzscreenfromobserver = zobserver
                 zslicemax = zobservertemp
              endif
-             if (use3Dopacityrendering) rkappa = rkappafac!/taupartdepthtemp
-             if (ikappacol > 0) then
-               rkappa = dat(1:ninterp,ikappacol)
+             if (use3Dopacityrendering) then
+               if (ikappacol > 0) then
+                 rkappa = dat(1:ninterp,ikappacol)
+               else
+                 rkappa = rkappafac!/taupartdepthtemp
+               endif
              endif
-             else
           endif
 
        endif initdataplots
