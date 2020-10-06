@@ -29,6 +29,7 @@
 !-----------------------------------------------------------------
 module write_pixmap
  use filenames, only:fileprefix,tagline
+ use particle_data, only:time
  implicit none
  logical, public :: iwritepixmap = .false.
  logical, public :: ireadpixmap = .false.
@@ -162,6 +163,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# time = ',time
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
 
  write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
