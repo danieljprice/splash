@@ -2343,7 +2343,7 @@ integer function getpanel(vptx,vpty)
     do i=1,size(vptxmin)
        icol = icol + 1
        if (icol > nacross) icol = 1
-       if (icol > 1) then
+       if (icol > 1 .and. i > 1) then
           ! if column>1 assign panel by being to the right of previous panel
           vptxmini = vptxmax(i-1)+barwmulti(i-1)
        else

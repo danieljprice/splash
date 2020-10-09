@@ -337,6 +337,8 @@ integer function get_sink_type(ntypes)
  get_sink_type = 0
  do i=1,ntypes
     if (get_sink_type==0 .and. index(labeltype(i),'sink') /= 0) get_sink_type = i
+    if (get_sink_type==0 .and. index(labeltype(i),'compact object') /= 0) get_sink_type = i
+    if (get_sink_type==0 .and. index(labeltype(i),'point mass') /= 0) get_sink_type = i
  enddo
 
 end function get_sink_type
