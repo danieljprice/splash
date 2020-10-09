@@ -1,5 +1,4 @@
 module read_test
-
  use readdata,         only:select_data_format
  use getdata,          only:get_data, get_labels
  use initialise,       only:defaults_set_initial
@@ -37,20 +36,13 @@ contains
    print*, "format is ", fileformat
 
   call select_data_format(fileformat,ierr)
-  print*, "ierr is:", ierr
 
    if (ierr == 0) then
-     print*, "calling get_data"
      call get_data(1,.true.,.true.,1)
-     print*, "called get_data"
      if (ivegotdata .and. maxpart>0) then
-       print*, "setting ncol and npart"
-       print*, "sum(nartpartoftype(:,1))", sum(npartoftype(:,1))
-       print*, "size(sph_dat(:,1))", size(sph_dat(:,1))
-       print*, "ncolumns", ncolumns
-      npart = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
-      ncol = min(ncolumns, size(sph_dat(1,:)))
-      print*, "npart and ncol in fortran are", npart, ncol
+        npart = min(sum(npartoftype(:,1)), size(sph_dat(:,1)) )
+        ncol = min(ncolumns, size(sph_dat(1,:)))
+        print*, "npart and ncol in fortran are", npart, ncol
        if (ncol > 0) then
          do i=1,ncol
            do j=1,npart
