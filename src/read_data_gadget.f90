@@ -441,13 +441,13 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              i0(itype) = sum(Nall(1:itype-1))
           endif
        enddo
-       npartoftype(:,i) = npartoftypei
+       npartoftype(1:6,i) = npartoftypei(1:6)
     else
        i0(1) = npartoftype(1,i)
        do itype=2,ntypes
           i0(itype) = sum(Nall(1:itype-1)) + npartoftype(itype,i)
        enddo
-       npartoftype(:,i) = npartoftype(:,i) + npartoftypei
+       npartoftype(1:6,i) = npartoftype(1:6,i) + npartoftypei(1:6)
     endif
     if (debugmode) print*,'DEBUG: starting position for each type in data array: ',i0(:)
     !
