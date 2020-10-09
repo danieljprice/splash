@@ -12,6 +12,8 @@ module readdata_starsmasher
  public :: read_data_starsmasher, set_labels_starsmasher
 
  private
+ integer :: frame = -1  ! default value of -1
+
 contains
 
 
@@ -23,6 +25,7 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   use mem_allocation, only:alloc
   use labels,       only:ih,irho,headertags
   use system_utils, only:renvironment,lenvironment
+  use prompting,    only:prompt
   integer, intent(in) :: istepstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
@@ -42,9 +45,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz, dudot
   real(doub_prec) :: duth, dmmu
-  integer frame
-  data frame/-1/
-  save frame
   real(doub_prec) :: theta
   real(doub_prec) :: gram, sec, cm, kelvin, erg, boltz
   parameter(gram=1.d0,sec=1.d0,cm=1.d0,kelvin=1.d0)
@@ -98,14 +98,14 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
        ntot, nnopt, hmin, hmax, sep0, tf, dtout, nout, nit, timetemp, &
        nav, alpha, beta, eta2, ngr, nrelax, trelax, dt, omega2
 
-  if(omega2.ne.0.d0 .and. frame.eq.-1) then
+  if (omega2 > 0.d0 .and. frame == -1) then
      ! frame can equal -1 only the first time through, so this question
      ! will get asked (at most) only once
      print *, 'Period of rotating frame=',8*atan(1.d0)/omega2**0.5d0
-     print *, 'Do you want movie in the inertial frame? (1=yes)'
-     read(5,*) frame
+     frame = 0
+     call prompt('Do you want movie in the inertial frame? (1=yes)',frame,0,1)
   endif
-  if(frame.eq.-1) frame=0
+  if (frame.eq.-1) frame=0
 
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
@@ -269,7 +269,8 @@ end subroutine read_data_starsmasher
 !!------------------------------------------------------------
 
 subroutine set_labels_starsmasher
-  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm
+  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,&
+                          irho,ipr,iutherm,make_vector_label
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
   use geometry,      only:labelcoord
@@ -307,11 +308,7 @@ subroutine set_labels_starsmasher
   !
   !--set labels for vector quantities
   !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !
