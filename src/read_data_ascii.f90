@@ -74,10 +74,10 @@ end module asciiread
 
 module readdata_ascii
  implicit none
- 
+
  public :: read_data_ascii, set_labels_ascii
- 
- private 
+
+ private
 contains
 
 subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
@@ -155,9 +155,10 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        ncolstep = ncolenv
     endif
     if (ncolstep <= 1) then
-       print "(a)",'*** ERROR: could not determine number of columns in file ***'
-       print "(a)",'Are you trying to read a non-ascii file?'
-       print "(a)",'Type --formats to see a list of supported data formats and their command line options.'
+       !print "(a)",'*** ERROR: could not determine number of columns in file ***'
+       print "(/,a)",' Are you trying to read a non-ascii file? If so, use:'
+       print "(' ',/,a,/,' ')",'  splash -f <format> '//trim(dumpfile)
+       print "(a)",' Use splash --formats for list of supported data formats '
        return
     endif
 
