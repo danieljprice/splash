@@ -16,6 +16,10 @@ Status
 ![build](https://github.com/danieljprice/splash/workflows/build/badge.svg)
 [![docs](https://readthedocs.org/projects/splash-viz/badge/?version=latest)](https://splash-viz.readthedocs.io/en/latest/?badge=latest)
 
+Example
+-------
+<img src="https://splash-viz.readthedocs.io/en/latest/_images/default-mode.png" alt="Accretion disc visualisation with SPLASH" height="300"/>
+
 Links
 -----
 
