@@ -100,9 +100,9 @@ subroutine get_photosphere(idim,idir,nx,ny,nz,rho,temp,xmin,xmax,lum,rphoto,tpho
 end subroutine get_photosphere
 
 real elemental function get_temp_from_u(rho,u) result(temp)
- real, intent(in) :: rho,u
- real :: ft,dft,dt
- real, parameter :: tol = 1.e-8
+ real(doub_prec), intent(in) :: rho,u
+ real(doub_prec) :: ft,dft,dt
+ real(doub_prec), parameter :: tol = 1.e-8
  real(doub_prec), parameter :: radconst = 7.5646d-15
  real(doub_prec), parameter :: kb_on_mh = real(1.38066d-16/1.67262158d-24)
  real(doub_prec), parameter :: mu = 0.6

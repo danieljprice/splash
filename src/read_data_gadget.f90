@@ -441,13 +441,13 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              i0(itype) = sum(Nall(1:itype-1))
           endif
        enddo
-       npartoftype(:,i) = npartoftypei
+       npartoftype(1:6,i) = npartoftypei(1:6)
     else
        i0(1) = npartoftype(1,i)
        do itype=2,ntypes
           i0(itype) = sum(Nall(1:itype-1)) + npartoftype(itype,i)
        enddo
-       npartoftype(:,i) = npartoftype(:,i) + npartoftypei
+       npartoftype(1:6,i) = npartoftype(1:6,i) + npartoftypei(1:6)
     endif
     if (debugmode) print*,'DEBUG: starting position for each type in data array: ',i0(:)
     !
@@ -1367,11 +1367,11 @@ logical function file_format_is_gadget(filename) result(is_gadget)
 
  read(iunit,iostat=ierr) noftype(1:6),massoftypei(1:6),time,z,iFlagSfr,&
       iFlagFeedback,Nall(1:6),iFlagCool,nfiles
-! print*,' got ',ierr,noftype(1:6),massoftypei(1:6),time,z,iFlagSfr, &
-!         iFlagFeedback,Nall(1:6),iFlagCool,nfiles
+ !print*,' got ',ierr,noftype(1:6),massoftypei(1:6),time,z,iFlagSfr, &
+ !         iFlagFeedback,Nall(1:6),iFlagCool,nfiles
 
  if (ierr==0 .and. all(noftype(1:6) >= 0) .and. all(massoftypei >= 0.) &
-     .and. time >= 0. .and. z >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
+     .and. time >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
      .and. iFlagFeedback >= 0 .and. all(nall(1:6) >= 0) .and. nfiles >= 0 &
      .and. nfiles <= 1e6) is_gadget = .true.
 

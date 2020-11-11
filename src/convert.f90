@@ -67,7 +67,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
     print "(/,5('-'),a,/)",'> CONVERTING SNAPSHOTS TO '//trim(ucase(outformat))//' FORMAT '
     listofcolumns = ienvlist('SPLASH_CONVERT',ncolumns)
     if (all(listofcolumns==0)) then
-       print "(a,/)",' > to output select columns, set SPLASH_CONVERT=1,4 (for columns 1 & 4)'
+       print "(a,/)",' > to output select columns, export SPLASH_CONVERT=1,4 (for columns 1 & 4)'
     else
        print "(a,32(1x,i2),/)",' > WRITING ONLY COLUMNS ',listofcolumns(1:count(listofcolumns > 0))
     endif

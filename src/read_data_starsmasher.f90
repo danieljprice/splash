@@ -12,17 +12,20 @@ module readdata_starsmasher
  public :: read_data_starsmasher, set_labels_starsmasher
 
  private
+ integer :: frame = -1  ! default value of -1
+
 contains
 
 
 subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
-  use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
+  use particle_data, only:dat,iamtype,npartoftype,time,gamma,headervals,&
+                          maxpart,maxcol,maxstep
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread
   use mem_allocation, only:alloc
-  use labels, only:ih,irho
+  use labels,       only:ih,irho,headertags
   use system_utils, only:renvironment,lenvironment
-
+  use prompting,    only:prompt
   integer, intent(in) :: istepstart,ipos
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
@@ -42,9 +45,6 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz, dudot
   real(doub_prec) :: duth, dmmu
-  integer frame
-  data frame/-1/
-  save frame
   real(doub_prec) :: theta
   real(doub_prec) :: gram, sec, cm, kelvin, erg, boltz
   parameter(gram=1.d0,sec=1.d0,cm=1.d0,kelvin=1.d0)
@@ -98,14 +98,14 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
        ntot, nnopt, hmin, hmax, sep0, tf, dtout, nout, nit, timetemp, &
        nav, alpha, beta, eta2, ngr, nrelax, trelax, dt, omega2
 
-  if(omega2.ne.0.d0 .and. frame.eq.-1) then
+  if (omega2 > 0.d0 .and. frame == -1) then
      ! frame can equal -1 only the first time through, so this question
      ! will get asked (at most) only once
      print *, 'Period of rotating frame=',8*atan(1.d0)/omega2**0.5d0
-     print *, 'Do you want movie in the inertial frame? (1=yes)'
-     read(5,*) frame
+     frame = 0
+     call prompt('Do you want movie in the inertial frame? (1=yes)',frame,0,1)
   endif
-  if(frame.eq.-1) frame=0
+  if (frame.eq.-1) frame=0
 
   if (ierr /= 0) then
      print "(a)", '*** ERROR READING TIMESTEP HEADER ***'
@@ -160,12 +160,23 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   !--copy header into header arrays
   !
   npartoftype(:,i) = 0
-!  npartoftype(1,i) = ntoti
   !
   !--set time to be used in the legend
   !
   time(i) = real(timetemp)
-
+  !
+  !--store other quantities from the file header
+  !
+  headertags(1:18) = (/'ntot  ','nnopt ','hmin  ','hmax  ',&
+                       'sep0  ','tf    ','dtout ','nout  ',&
+                       'nit   ','nav   ','alpha ','beta  ',&
+                       'eta2  ','ngr   ','nrelax','trelax',&
+                       'dt    ','omega2'/)
+  headervals(1:18,i) = (/real(ntot),real(nnopt),real(hmin),real(hmax),&
+                         real(sep0),real(tf),real(dtout),real(nout),&
+                         real(nit),real(nav),real(alpha),real(beta), &
+                         real(eta2),real(ngr),real(nrelax),real(trelax),&
+                         real(dt),real(omega2)/)
   !
   !--read particle data
   !
@@ -213,12 +224,12 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
         dat(j,12,i) = dudot
         dat(j,13,i) = duth*gravconst*munit/runit/(1.5d0*boltz/dmmu)
 
-        if(duth.ne.0.d0) then
-           iamtype(j,i)=1
-           npartoftype(1,i)=npartoftype(1,i)+1
+        if (abs(duth) > tiny(duth)) then
+           iamtype(j,i) = 1
+           npartoftype(1,i) = npartoftype(1,i)+1
         else
-           iamtype(j,i)=2
-           npartoftype(2,i)=npartoftype(2,i)+1
+           iamtype(j,i) = 2
+           npartoftype(2,i) = npartoftype(2,i)+1
         endif
 
      end do
@@ -258,12 +269,12 @@ end subroutine read_data_starsmasher
 !!------------------------------------------------------------
 
 subroutine set_labels_starsmasher
-  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm
+  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,&
+                          irho,ipr,iutherm,make_vector_label
   use params
   use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
-  use geometry, only:labelcoord
-  use system_utils, only:renvironment
-  implicit none
+  use geometry,      only:labelcoord
+  use system_utils,  only:renvironment
   integer :: i
   real :: hsoft
 
@@ -297,11 +308,7 @@ subroutine set_labels_starsmasher
   !
   !--set labels for vector quantities
   !
-  iamvec(ivx:ivx+ndimV-1) = ivx
-  labelvec(ivx:ivx+ndimV-1) = 'v'
-  do i=1,ndimV
-     label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-  enddo
+  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
   !
   !--set labels for each particle type
   !
@@ -311,53 +318,6 @@ subroutine set_labels_starsmasher
   UseTypeInRenderings(1) = .true.
   UseTypeInRenderings(2) = .false.
 
-
-
-!   !
-!   !--set labels of the quantities read in
-!   !
-!   label(ix(1:ndim)) = labelcoord(1:ndim,1)
-!   label(irho) = 'density'
-!   label(iutherm) = 'u'
-!   label(ipmass) = 'particle mass'
-
-!   if (ncolumns.gt.10) then
-!      label(10) = 'Ne'
-!      label(11) = 'Nh'
-!      ih = 12        !  smoothing length
-!   else
-!      ih = 10
-!   endif
-!   label(ih) = 'h'
-!   !
-!   !--set labels for vector quantities
-!   !
-!   iamvec(ivx:ivx+ndimV-1) = ivx
-!   labelvec(ivx:ivx+ndimV-1) = 'v'
-!   do i=1,ndimV
-!      label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-!   enddo
-
-!   !--set labels for each particle type
-!   !
-!   ntypes = 5
-!   labeltype(1) = 'gas'
-!   labeltype(2) = 'dark matter'
-!   labeltype(5) = 'star'
-!   UseTypeInRenderings(1) = .true.
-!   !
-!   !--dark matter particles are of non-SPH type (ie. cannot be used in renderings)
-!   !  unless they have had a smoothing length defined
-!   !
-!   hsoft = renvironment('GSPLASH_DARKMATTER_HSOFT')
-!   if (hsoft.gt.tiny(hsoft)) then
-!      UseTypeInRenderings(2) = .true.
-!   else
-!      UseTypeInRenderings(2) = .false.
-!   endif
-!   UseTypeInRenderings(3:5) = .false.
-
-!-----------------------------------------------------------
-  return
 end subroutine set_labels_starsmasher
+
 end module readdata_starsmasher

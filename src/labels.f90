@@ -158,6 +158,29 @@ end function get_z_coord
 
 !-----------------------------------------------------------------
 !
+!  utility to strip the units label from a label string
+!
+!-----------------------------------------------------------------
+elemental function strip_units(string,unitslab)
+ character(len=lenlabel), intent(in) :: string
+ character(len=*),        intent(in) :: unitslab
+ character(len=lenlabel)             :: strip_units
+ integer :: ipos
+
+ strip_units = string
+ if (len_trim(unitslab) > 0) then
+    !--remove units label (only do this once)
+    ipos = index(trim(strip_units),trim(unitslab))
+    if (ipos /= 0) then
+       strip_units = strip_units(1:ipos-1)//&
+                     strip_units(ipos+len_trim(unitslab)+1:len_trim(strip_units))
+    endif
+ endif
+
+end function strip_units
+
+!-----------------------------------------------------------------
+!
 !  utility to strip spaces, escape sequences and
 !  units labels from strings (this can be called for both
 !  function strings and variable labels)
@@ -169,20 +192,10 @@ elemental function shortstring(string,unitslab)
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortstring
- integer :: ipos
 
  shortstring = string
  !--strip off the units label
- if (present(unitslab)) then
-    if (len_trim(unitslab) > 0) then
-       !--remove units label (only do this once)
-       ipos = index(trim(shortstring),trim(unitslab))
-       if (ipos /= 0) then
-          shortstring = shortstring(1:ipos-1)//&
-                        shortstring(ipos+len_trim(unitslab)+1:len_trim(shortstring))
-       endif
-    endif
- endif
+ if (present(unitslab)) shortstring = strip_units(shortstring,unitslab)
 
  !--remove spaces
  call string_delete(shortstring,' ')
@@ -324,6 +337,8 @@ integer function get_sink_type(ntypes)
  get_sink_type = 0
  do i=1,ntypes
     if (get_sink_type==0 .and. index(labeltype(i),'sink') /= 0) get_sink_type = i
+    if (get_sink_type==0 .and. index(labeltype(i),'compact object') /= 0) get_sink_type = i
+    if (get_sink_type==0 .and. index(labeltype(i),'point mass') /= 0) get_sink_type = i
  enddo
 
 end function get_sink_type

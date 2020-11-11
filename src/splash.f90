@@ -415,7 +415,8 @@ program splash
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
- use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,ncalc,nextra,numplot,ndataplots,device
+ use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata
  use system_commands,    only:get_number_arguments,get_argument,get_environment
  use system_utils,       only:lenvironment
  use asciiutils,         only:read_asciifile,basename
@@ -431,6 +432,7 @@ program splash
  use settings_xsecrot,   only:xsec_nomulti
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
+ use set_options_from_dataread, only:set_options_dataread
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
@@ -726,6 +728,11 @@ program splash
     else
        call get_data(1,ihavereadfilenames,firsttime=.true.)
     endif
+    !
+    ! override some options based on specifics of the data
+    ! (e.g. switch on sink particles if there is no gas)
+    !
+    call set_options_dataread()
 
     ! read tabulated colour table, if necessary
     if (abs(icolours)==icustom) then
@@ -744,7 +751,7 @@ program splash
     !
     ! read plot limits from file (overrides get_data limits settings)
     !
-    call read_limits(trim(limitsfile),ierr)
+    if (ivegotdata) call read_limits(trim(limitsfile),ierr)
 
     if (nomenu) then
        !

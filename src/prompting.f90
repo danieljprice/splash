@@ -729,7 +729,7 @@ function print_logicals(lvalues,mask)
  implicit none
  logical, intent(in) :: lvalues(:)
  logical, intent(in), optional :: mask(:)
- character(len=3*size(lvalues)) :: print_logicals
+ character(len=4*size(lvalues)) :: print_logicals
  logical :: maskval
  integer :: i
 

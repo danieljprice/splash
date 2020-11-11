@@ -88,11 +88,11 @@ subroutine submenu_data(ichoose)
                           UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits
- use labels,         only:label,unitslabel,labelzintegration,lenlabel,shortstring,idustfrac
+ use labels,         only:label,unitslabel,labelzintegration,lenlabel,strip_units,idustfrac
  use settings_units, only:units,set_units,write_unitsfile,unitzintegration
  use fparser,        only:rn,mu0
  integer, intent(in) :: ichoose
- integer             :: ians,i,ncalcwas,maxopt
+ integer             :: ians,i,ncalcwas,maxopt,len_max
  character(len=30)   :: fmtstring
  character(len=1)    :: charp
  character(len=lenlabel) :: labeli
@@ -107,7 +107,7 @@ subroutine submenu_data(ichoose)
 10  format( &
            ' 0) exit ',/,               &
            ' 1) calculate extra quantities             (  ',a,' )',/, &
-           ' 2) use physical units                     (  ',a,' )')
+           ' 2) physical units on/off/edit             (  ',a,' )')
     if (idustfrac > 0) then
         print &
          "(' 3) use fake dust particles                (  ',a,' )')",print_logical(UseFakeDustParticles)
@@ -180,13 +180,16 @@ subroutine submenu_data(ichoose)
 !------------------------------------------------------------------------
  case(2)
     iRescale_has_been_set = .true.
-    print "(/,a)",' Current settings for physical units:'
     call get_labels ! reset labels for printing
-    print "(2x,a,a3,a,a3,es9.2)",'dz '//trim(labelzintegration),' = ','dz',' x ',unitzintegration
-    print "('  0) ',a,a3,a,a3,es9.2)",'time'//trim(unitslabel(0)),' = ','time',' x ',units(0)
+    print "(/,a,/)",' Current settings for physical units:'
+    len_max = min(maxval(len_trim(label(:))),20)
+    labeli = 'dz '//trim(labelzintegration)
+    print "(2x,a,es10.3,a)",labeli(1:len_max+3)//' = ',unitzintegration,' x dz'
+    labeli = 'time'//trim(unitslabel(0))
+    print "('  0) ',a,es10.3,a)",labeli(1:len_max)//' = ',units(0),' x time'
     do i=1,ncolumns
-       labeli = shortstring(label(i),unitslabel(i))
-       print "(i3,') ',a,a3,a,a3,es10.3)",i,trim(labeli)//trim(unitslabel(i)),' = ',trim(labeli),' x ',units(i)
+       labeli = strip_units(label(i),unitslabel(i))
+       print "(i3,') ',a,es10.3,a)",i,label(i)(1:len_max)//' = ',units(i),' x '//trim(labeli)
     enddo
     print "(a)"
 
