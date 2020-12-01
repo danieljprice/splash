@@ -974,7 +974,7 @@ subroutine match_taglist(taglist,tags,istartmatch,nmatch)
     if (nmatch <= 1 .and. trim(tags(i))==trim(taglist(1))) then
        nmatch = 1
        istartmatch = i
-       do j=2,size(taglist)
+       do j=2,min(size(taglist),size(tags)-i+1)
           if (trim(tags(i+j-1))==trim(taglist(j))) then
              nmatch = nmatch + 1
           endif
