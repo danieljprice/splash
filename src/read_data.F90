@@ -121,7 +121,7 @@ subroutine select_data_format(string,ierr)
  ! Check if SPLASH has been compiled with hdf5, if hdf5 format is requested
  if ((index(string, 'hdf5') > 0) .or. (index(string, '.h5') > 0)) then
 #ifndef HDF5
-   print "(a)", ' *** ERROR: hdf5 file format requested, but SPLASH  has not been compiled with HDF5 ***'
+   print "(/,a)", ' *** ERROR: hdf5 file format requested, but SPLASH  has not been compiled with HDF5 ***'
    print "(a)", '           Try make HDF5=yes   '
    stop
 #else
@@ -132,7 +132,7 @@ subroutine select_data_format(string,ierr)
  ! Check if H5PART is being requested
  if (string == 'h5part') then
 #ifndef H5PART_DIR
-   print "(a)", ' *** ERROR: H5PART file given, but SPLASH has not been compiled with the H5PART library. ***'
+   print "(/,a)", ' *** ERROR: H5PART file given, but SPLASH has not been compiled with the H5PART library. ***'
    print "(a)", '            Try make H5PART_DIR=/path/to/h5part/ Note: You must also compile with HDF5=yes'
    stop
 #else
@@ -143,18 +143,15 @@ subroutine select_data_format(string,ierr)
  ! Check if SPLASH has been compiled with the fits library, if fits format is requested
  if (string == 'fits') then
 #ifndef FITS
-! print "(a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
-   ! print "(a)", '            Try make FITS=yes '
-   ! stop
-#else
-   continue
+   print "(/,a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
+   print "(a)", '            Try make FITS=yes '
 #endif
  end if
 
  ! Check if PBOB is being requested
  if (string == 'pbob') then
 #ifndef PBOB_DIR
-   print "(a)", ' *** ERROR: .pbob file given, but SPLASH has not been compiled with the PBOB library. ***'
+   print "(/,a)", ' *** ERROR: .pbob file given, but SPLASH has not been compiled with the PBOB library. ***'
    print "(a)", '            Try make PBOB_DIR=/path/to/pbob/ '
 #else
    continue
@@ -347,10 +344,10 @@ subroutine print_available_formats(string)
  else
     print "(/,a,/)",'Supported data formats:'
  endif
- print "(a)"  ,' -ascii            : ascii file format (default)'
- print "(a)"  ,' -phantom -sphng   : Phantom and sphNG codes'
- print "(a)"  ,' -ndspmhd          : ndspmhd code'
- print "(a)"  ,' -seren            : Seren code'
+ print "(a)"  ,' -ascii,-csv          : ascii text/csv format (default)'
+ print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes'
+ print "(a)"  ,' -ndspmhd             : ndspmhd code'
+ print "(a)"  ,' -seren               : Seren code'
 #ifdef HDF5
  print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
@@ -358,48 +355,48 @@ subroutine print_available_formats(string)
  print "(a)"  ,' -cactus -cactus_hdf5 : Cactus code'
  print "(a,/)",' -amuse  -amuse_hdf5  : AMUSE Framework'
 #else
- print "(a)"  ,' -gadget           : Gadget code'
+ print "(a)"  ,' -gadget              : Gadget code'
 #endif
 #ifdef FITS
- print "(a)"  ,' -fits             : FITS format'
+ print "(a)"  ,' -fits                : FITS format'
 #endif
 #ifdef PBOB_DIR
- print "(a)"  ,' -pbob             : PBOB format'
+ print "(a)"  ,' -pbob                : PBOB format'
 #endif
 #ifdef H5PART_DIR
- print "(a)"  ,' -h5part           : H5PART format'
+ print "(a)"  ,' -h5part              : H5PART format'
 #endif
 
  if (string /= 'short') then
-    print "(a)",' -tipsy -gasoline  : Gasoline code'
-    print "(a)",' -vine             : VINE SPH code'
-    print "(a)",' -rsph             : Regularised SPH'
-    print "(a)",' -starsmasher      : Star Smasher code'
-    print "(a)",' -dragon           : DRAGON code'
-    print "(a)",' -sro -magma       : Stephan Rosswog SPH code'
-    print "(a)",' -gradsph          : GRADSPH code'
-    print "(a)"," -mhutch           : Mark Hutchison's code"
-    print "(a)"," -mbate            : Matthew Bate's code"
-    print "(a)",' -oilonwater       : Oil-on-Water binary accretion SPH'
-    print "(a)",' -ucla             : UCLA ascii format'
-    print "(a)",' -urban            : Andrea Urban ascii format'
-    print "(a)",' -spyros           : Spyros Kitsionas format'
-    print "(a)",' -jjm  -jjmmulti   : Joe Monaghan format'
-    print "(a)",' -bauswein         : Andreas Bauswein format'
-    print "(a)",' -egaburov         : Evghenii Gaburov format'
-    print "(a)",' -aly              : Aly Reheam format'
-    print "(a)",' -foulkes          : Foulkes ascii format'
-    print "(a)",' -vanaverbeke      : Sigfried Vanaverbeke code'
-    print "(a)",' -gadget_jsb       : GADGET Jamie Bolton variant'
+    print "(a)",' -tipsy -gasoline     : Gasoline code'
+    print "(a)",' -vine                : VINE SPH code'
+    print "(a)",' -rsph                : Regularised SPH'
+    print "(a)",' -starsmasher         : Star Smasher code'
+    print "(a)",' -dragon              : DRAGON code'
+    print "(a)",' -sro -magma          : Stephan Rosswog SPH code'
+    print "(a)",' -gradsph             : GRADSPH code'
+    print "(a)"," -mhutch              : Mark Hutchison's code"
+    print "(a)"," -mbate               : Matthew Bate's code"
+    print "(a)",' -oilonwater          : Oil-on-Water binary accretion SPH'
+    print "(a)",' -ucla                : UCLA ascii format'
+    print "(a)",' -urban               : Andrea Urban ascii format'
+    print "(a)",' -spyros              : Spyros Kitsionas format'
+    print "(a)",' -jjm  -jjmmulti      : Joe Monaghan format'
+    print "(a)",' -bauswein            : Andreas Bauswein format'
+    print "(a)",' -egaburov            : Evghenii Gaburov format'
+    print "(a)",' -aly                 : Aly Reheam format'
+    print "(a)",' -foulkes             : Foulkes ascii format'
+    print "(a)",' -vanaverbeke         : Sigfried Vanaverbeke code'
+    print "(a)",' -gadget_jsb          : GADGET Jamie Bolton variant'
 #ifndef HDF5
-    print "(a)",' -gadget_hdf5         : Gadget HDF5 [not compiled]'
-    print "(a)",' -falcon -falcon_hdf5 : FalcON code [not compiled]'
-    print "(a)",' -flash  -flash_hdf5  : FLASH code [not compiled]'
-    print "(a)",' -cactus -cactus_hdf5 : Cactus code [not compiled]'
+    print "(a)",' -gadget_hdf5         : Gadget HDF5     [not compiled]'
+    print "(a)",' -falcon -falcon_hdf5 : FalcON code     [not compiled]'
+    print "(a)",' -flash  -flash_hdf5  : FLASH code      [not compiled]'
+    print "(a)",' -cactus -cactus_hdf5 : Cactus code     [not compiled]'
     print "(a)",' -amuse  -amuse_hdf5  : AMUSE Framework [not compiled]'
 #endif
 #ifndef FITS
-    print "(a)",' -fits              : FITS format [not compiled]'
+    print "(a)",' -fits                : FITS format     [not compiled]'
 #endif
  end if
 
@@ -411,7 +408,7 @@ subroutine print_available_formats(string)
  print "(/,a)",'This build does not support HDF5. Compile with HDF5=yes to change this.'
 #endif
 #ifndef FITS
- print "(/,a)",'This build does not support FITS. Compile with FITS=yes to change this.'
+ print "(a)",'This build does not support FITS. Compile with FITS=yes to change this.'
 #endif
 
 end subroutine print_available_formats
@@ -424,15 +421,12 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
  character(len=*), intent(in)            :: filenames(:)
  character(len=*), intent(in), optional  :: informat ! This is given if --format <string> is supplied
  integer, intent(out)                    :: ierr
-
- logical    :: selected_format
  integer    :: i
  character(len=12), dimension(5) :: extensions(5)
  character(len=12) :: extension
 
  call get_extensions(filenames(1), extensions)
 
- selected_format = .false.
  ierr = 0
  !
  ! try to guess the file format from the extension
@@ -449,6 +443,8 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     call select_data_format('phantom', ierr)
  elseif (any((index(extensions, '.pbob') > 0))) then
     call select_data_format('pbob', ierr)
+ elseif (any((index(extensions, '.csv') > 0))) then
+    call select_data_format('ascii', ierr)
  else
     !
     ! if cannot guess from extension, then
@@ -459,7 +455,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     ! it is ok to not get a format, just assume ascii
     ! in this case we just return ierr /= 0
     !
- end if
+ endif
 
 end subroutine guess_format
 
@@ -484,8 +480,7 @@ end subroutine guess_format_from_file_header
 ! utility to return up to five file extensions
 !------------------------------------------------------------
 subroutine get_extensions(string,extensions)
- use asciiutils,    only:lcase
-
+ use asciiutils, only:lcase
  character(len=*), intent(in) :: string
  character(len=12), dimension(5), intent(out) :: extensions(5)
  character(:), allocatable :: tmp_string
@@ -498,16 +493,16 @@ subroutine get_extensions(string,extensions)
  ppos_old = len(string)
  tmp_string = lcase(string)
 
- do i=1, 5
-   if (ppos_new > 0) then
-     extensions(i) = trim(tmp_string(ppos_new:ppos_old))
-     tmp_string=tmp_string(1:ppos_new-1)
-     ppos_old=ppos_new-1
-     ppos_new=scan(trim(tmp_string),".",BACK=.true.)
-   else
-     extensions(i)=""
-   end if
- end do
+ do i=1,5
+    if (ppos_new > 0) then
+       extensions(i) = trim(tmp_string(ppos_new:ppos_old))
+       tmp_string=tmp_string(1:ppos_new-1)
+       ppos_old=ppos_new-1
+       ppos_new=scan(trim(tmp_string),".",BACK=.true.)
+    else
+       extensions(i)=""
+    endif
+ enddo
 
 end subroutine get_extensions
 
