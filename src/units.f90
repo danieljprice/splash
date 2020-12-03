@@ -172,8 +172,8 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use asciiutils,    only:match_tag
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
- integer :: icol,i,ihdr,ibs,ibc,itime,idist
- real(doub_prec) :: unitsprev,dunits
+ integer :: icol,ibs,ibc,itime,idist
+ real(doub_prec) :: unitsprev
  real(doub_prec) :: udist,utime
  logical :: applytoall,got_label
  character(len=lenlabel) :: mylabel
@@ -199,7 +199,6 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
           print "(a)",' this means that units set here will be re-scalings of these physical values'
        endif
        got_label = .true.
-       mylabel = strip_units(label(icol),unitslabel(icol))
        if (icol==0 .and. utime > 0.) then
           ! give hints for possible time units, if utime is read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
@@ -212,8 +211,12 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
           ! give hints for velocity units, if both udist and utime read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
                                      nv,unit_labels_vel,unit_vel,udist/utime,mylabel)
-       else
+       elseif (icol > 0) then
+          mylabel = strip_units(label(icol),unitslabel(icol))
           call prompt('enter '//trim(mylabel)//' units (new=old*units)',units(icol))
+          got_label = .false.
+       else ! icol = 0
+          call prompt('enter time units (new=old*units)',units(icol))
           got_label = .false.
        endif
 
