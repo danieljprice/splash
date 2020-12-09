@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.0.2   : (11/11/20) seg fault in gadget data read fixed; bug fix in x-menu options;
+!             opacity rendering uses physical value of kappa and can use opacity defined on particles
 !     3.0.0   : (26/08/20) Unified splash binary with -f flag to specify format;
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;

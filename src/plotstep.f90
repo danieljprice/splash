@@ -836,7 +836,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  !--work out the identity of a particle being tracked
  if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
  itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
- if (itrackpart==0) then
+ if (itrackpart == 0) then
     write(string,"(i12)") itrackoffset
     string = adjustl(string)
     if (itracktype > 0 .and. itracktype <= ntypes) then
@@ -846,7 +846,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     endif
  else
     write(string,"(i12)") itrackpart
-    print "(/,a,/)",' Tracking particle #'//trim(adjustl(string))
+    if (itrackpart > ntoti) then
+       print "(/,a,/)",' WARNING: tracked particle #'//trim(adjustl(string))//' not found in data'
+    else
+       print "(/,a,/)",' Tracking particle #'//trim(adjustl(string))
+    endif
  endif
 
  !--non-SPH particle types cannot be used in contours
@@ -3345,7 +3349,7 @@ subroutine settrackinglimits(itrackpart,iplot,xploti,xmini,xmaxi)
  real, intent(inout) :: xmini,xmaxi
 
  !--particle tracking limits only apply to co-ordinate axes
- if (is_coord(iplot,ndim)) then
+ if (is_coord(iplot,ndim) .and. itrackpart < size(xploti)) then
     xmini = xploti(itrackpart) - xminoffset_track(iplot)
     xmaxi = xploti(itrackpart) + xmaxoffset_track(iplot)
     call transform_limits(xmini,xmaxi,itrans(iplot))

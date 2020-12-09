@@ -371,17 +371,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        print*,'----------------------------------------------------------------------'
     case('s','S')
        itrackpart = itrackparttemp
-       if (itrackpart==0) then
+       if (itrackpart<=0 .or. itrackpart > size(xcoords)) then
           call save_limits(iplotx,xmin,xmax)
           call save_limits(iploty,ymin,ymax)
           call save_itrackpart_recalcradius(itrackpart) ! set saved value to zero
        else
           print*,'tracking particle ',itrackpart,'x,y = ',xcoords(itrackpart),ycoords(itrackpart)
           if (is_coord(iplotx,ndim)) then
-             print*,' here, SAVING tracked',xmin,xmax
              call save_limits_track(iplotx,xmin,xmax,xcoords(itrackpart))
           else
-             print*,' here, SAVING non-track',xmin,xmax
              call save_limits(iplotx,xmin,xmax)
           endif
           if (is_coord(iploty,ndim)) then
