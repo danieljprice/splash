@@ -162,21 +162,22 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        return
     endif
 
-    do i=1,nheaderlines
+    if (ncolstep > 1) then
        !--search through header for column labels
-       read(iunit,"(a)",iostat=ierr) line
-       !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-       if ((.not.got_labels .or. nlabels /= ncolstep) .and. ncolstep > 1 ) then
+       do i=1,nheaderlines
+          read(iunit,"(a)",iostat=ierr) line
+          !--try to match column labels from this header line, if not already matched (or dubious match)
           call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
-          ! use labels if > ncolumns, but replace if we match exact number on subsequent line
+          !--if we get nlabels > ncolumns, use them, but keep trying for a better match
           if ((got_labels .and. nlabels == ncolstep) .or. &
-               (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
-                .and. (.not.(imethod>=4).or.nlabels==ncolstep))) then
+              (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
+               .and. (.not.(imethod>=4).or.nlabels==ncolstep))) then
              label_orig(1:ncolstep) = tmplabel(1:ncolstep)
              got_labels = .true.
+             !print*,'DEBUG: line ',i,' nlabels = ',nlabels,' LABELS= '//tmplabel(1:ncolstep)
           endif
-       endif
-    enddo
+       enddo
+    endif
     rewind(iunit)
 
     iverbose_was = iverbose
