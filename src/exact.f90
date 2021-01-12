@@ -255,7 +255,7 @@ subroutine submenu_exact(iexact)
  use planetdisc,    only:maxspirals,labelspiral
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars,read_asciifile
  integer, intent(inout) :: iexact
- integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
+ integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows,nfilestmp
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
@@ -329,7 +329,8 @@ subroutine submenu_exact(iexact)
     ! try to read filenames from .exactfiles if it exists
     !
     filename_tmp = trim(fileprefix)//'.exactfiles'
-    call read_asciifile(trim(filename_tmp),nfiles,filename_exact,ierr)
+    call read_asciifile(trim(filename_tmp),nfilestmp,filename_exact,ierr)
+    if (nfilestmp > 0) nfiles = nfilestmp
     !
     ! then prompt user
     !
@@ -345,7 +346,7 @@ subroutine submenu_exact(iexact)
     over_files: do i=1,nfiles
        iexist = .false.
        do while(.not.iexist)
-          print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
+          if (i==1) print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
           write(str,"(i4)") i
           call prompt('enter filename #'//trim(adjustl(str)),filename_exact(i))
           !--substitute %f for filename
@@ -413,7 +414,7 @@ subroutine submenu_exact(iexact)
        endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
-       call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
+       !call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
     enddo over_files
     if (nadjust >= 0) then
        nfiles = nadjust
@@ -657,7 +658,7 @@ subroutine options_exact(iexact)
  string = ''
  do i=1,nexact
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
-    call prompt('enter line colour '//trim(string),iExactLineColour(i),1,plotlib_maxlinecolour)
+    call prompt('enter line colour '//trim(string),iExactLineColour(i),0,plotlib_maxlinecolour)
  enddo
  do i=1,nexact
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
