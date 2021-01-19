@@ -63,7 +63,7 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group,nfound,bitpix
+ integer :: firstpix,nullval,group,nfound!,bitpix
  logical :: anynull
  !
  !--open file and read header information
@@ -87,7 +87,7 @@ subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  !
  call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = naxes(1)*naxes(2)
- bitpix = abs(get_from_header('BITPIX',hdr,ierr))
+ !if (present(hdr)) bitpix = abs(get_from_header('BITPIX',hdr,ierr))
  !
  !--sanity check the header read
  !
@@ -200,7 +200,7 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group,bitpix
+ integer :: firstpix,nullval,group
  logical :: anynull
  integer :: ndim
  !
@@ -223,7 +223,7 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  if (ndim==2) naxes(3) = 1
  if (ndim>=3) ndim = 3
 
- bitpix = abs(get_from_header('BITPIX',hdr,ierr))
+ !if (present(hdr)) bitpix = abs(get_from_header('BITPIX',hdr,ierr))
 
  ! call ftgknj(iunit,'NAXIS',1,2,naxes,nfound,ierr)
  npixels = product(naxes(1:ndim))
