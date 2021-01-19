@@ -52,7 +52,8 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     3.0.2   : (11/11/20) seg fault in gadget data read fixed; bug fix in x-menu options;
-!             opacity rendering uses physical value of kappa and can use opacity defined on particles
+!             opacity rendering uses physical value of kappa and can use opacity defined on particles;
+!             seg fault in fits reader fixed; support for SWIFT code in gadget_hdf5
 !     3.0.0   : (26/08/20) Unified splash binary with -f flag to specify format;
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;
@@ -440,7 +441,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.1 [27th Aug 2020]'
+ character(len=*), parameter :: version = 'v3.0.2 [20th Jan 2021]'
 
  !
  ! initialise some basic code variables
@@ -843,7 +844,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2020 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &

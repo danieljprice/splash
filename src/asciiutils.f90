@@ -41,6 +41,7 @@ module asciiutils
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique
  public :: count_non_blank,find_repeated_tags
+ public :: get_extensions
 
  private
 
@@ -1150,5 +1151,34 @@ subroutine find_repeated_tags(tag,ntags,tags,istartlist,nlist)
  enddo
 
 end subroutine find_repeated_tags
+
+!------------------------------------------------------------
+! utility to return up to five file extensions
+!------------------------------------------------------------
+subroutine get_extensions(string,extensions)
+ character(len=*), intent(in) :: string
+ character(len=12), dimension(5), intent(out) :: extensions(5)
+ character(:), allocatable :: tmp_string
+
+ integer :: ppos_new
+ integer :: ppos_old
+ integer :: i
+
+ ppos_new = scan(trim(string),".", BACK= .true.)
+ ppos_old = len(string)
+ tmp_string = lcase(string)
+
+ do i=1,5
+    if (ppos_new > 0) then
+       extensions(i) = trim(tmp_string(ppos_new:ppos_old))
+       tmp_string=tmp_string(1:ppos_new-1)
+       ppos_old=ppos_new-1
+       ppos_new=scan(trim(tmp_string),".",BACK=.true.)
+    else
+       extensions(i)=""
+    endif
+ enddo
+
+end subroutine get_extensions
 
 end module asciiutils

@@ -163,10 +163,10 @@ end module gadgethdf5read
 
 module readdata_gadget_hdf5
  implicit none
- 
+
  public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
- 
- private 
+
+ private
 contains
 
 subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
@@ -181,7 +181,6 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use asciiutils,     only:cstring
  use gadgethdf5read, only:hsoft,blocklabelgas,havewarned,read_gadget_hdf5_header, &
                            read_gadget_hdf5_data,maxtypes,arepo
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -506,7 +505,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     !  twice the usual SPH smoothing length
     !  (do this after we have read data from all of the files)
     !
-    print "(a)",' converting GADGET smoothing length on gas particles to usual SPH definition (x 0.5)'
+    print "(a)",' converting GADGET h on gas particles to usual SPH definition (x 0.5)'
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
 
@@ -654,6 +653,11 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
        enddo
        hfact = hfactmean/real(nhfac)
        havewarned = .true.
+       ! CHECK that h is not implausibly small due to the multiply-by-0.5 -- if so, reverse this
+       if (hfact < 0.75) then
+          dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)*2.0
+          hfact = hfact*2.0
+       endif
        if (hfact < 1.125 .or. hfact > 1.45) then
           print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
           print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
@@ -698,7 +702,6 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  if (nstepsread > 0) then
     print "(a,i10,a)",' >> read ',sum(npartoftype(:,istepstart+nstepsread-1)),' particles'
  endif
- return
 
 end subroutine read_data_gadget_hdf5
 
@@ -708,7 +711,6 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
  use settings_data,  only:debugmode
  use labels,         only:label,ih
  use system_utils,   only:lenvironment
- implicit none
  integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
  real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
  integer(kind=c_int), dimension(npartoftypei), intent(in) :: id
@@ -776,7 +778,6 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
     endif
  endif
 
- return
 end subroutine read_gadgethdf5_data_fromc
 
 !!------------------------------------------------------------
@@ -785,14 +786,13 @@ end subroutine read_gadgethdf5_data_fromc
 
 subroutine set_labels_gadget_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax
+                          ih,irho,ipr,iutherm,iBfirst,idivB,iax,make_vector_label
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+ use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat,debugmode
  use geometry,       only:labelcoord
  use system_utils,   only:envlist,ienvironment
  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel,arepo
  use asciiutils,     only:lcase
- implicit none
  integer :: i,j,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -809,6 +809,7 @@ subroutine set_labels_gadget_hdf5
  do i=1,size(blocklabelgas)
     irank = blocksize(i)
     if (irank > 0 .and. (len_trim(blocklabelgas(i)) > 0)) then
+       if (debugmode) print*,i,trim(blocklabelgas(i))
        select case(blocklabelgas(i))
        case('Coordinates')
           ix(1) = icol
@@ -816,29 +817,26 @@ subroutine set_labels_gadget_hdf5
           if (irank >= 3) ix(3) = icol + 2
        case('Velocities','Velocity')
           ivx = icol
-       case('SmoothingLength')
+       case('SmoothingLength','SmoothingLengths')
           ih = icol
        case('Volume')
           ih = icol
           arepo = .true.
        case('Masses','Mass')
           ipmass = icol
-       case('InternalEnergy')
+       case('InternalEnergy','InternalEnergies')
           iutherm = icol
-       case('Density')
+       case('Density','Densities')
           irho = icol
        case('MagneticField')
           iBfirst = icol
-       case default
-          label(icol:icol+irank-1) = reformatlabel(blocklabelgas(i))
+       case('Pressures','Pressure')
+          ipr = icol
        end select
+       label(icol:icol+irank-1) = reformatlabel(blocklabelgas(i))
 
        if (irank==ndimV) then
-          iamvec(icol:icol+ndimV-1)   = icol
-          labelvec(icol:icol+ndimV-1) = label(icol)
-          do j=1,ndimV
-             label(icol+j-1) = trim(labelvec(icol))//'\d'//labelcoord(j,1)
-          enddo
+          call make_vector_label(label(icol),icol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
        endif
        icol = icol + irank
     endif
@@ -847,36 +845,16 @@ subroutine set_labels_gadget_hdf5
  !--set labels of the quantities read in
  !
  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
- if (irho > 0)    label(irho)       = 'density'
- if (iutherm > 0) label(iutherm)    = 'u'
- if (ipmass > 0)  label(ipmass)     = 'particle mass'
- if (ih > 0)      label(ih)         = 'h'
+ if (irho > 0)    label(irho)       = 'density' ! needed to convert to "column density"
+ if (iutherm > 0) label(iutherm)    = 'u'       ! otherwise \int u dz looks ugly
+ !if (ipmass > 0)  label(ipmass)     = 'particle mass'
+ !if (ih > 0)      label(ih)         = 'h'
  !
  !--set labels for vector quantities
  !
- if (ivx > 0) then
-    iamvec(ivx:ivx+ndimV-1) = ivx
-    labelvec(ivx:ivx+ndimV-1) = 'v'
-    do i=1,ndimV
-       label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
-    enddo
- endif
-
- if (iax > 0) then
-    iamvec(iax:iax+ndimV-1) = iax
-    labelvec(iax:iax+ndimV-1) = 'a'
-    do i=1,ndimV
-       label(iax+i-1) = trim(labelvec(iax))//'\d'//labelcoord(i,1)
-    enddo
- endif
-
- if (iBfirst > 0) then
-    iamvec(iBfirst:iBfirst+ndimV-1) = iBfirst
-    labelvec(iBfirst:iBfirst+ndimV-1) = 'B'
-    do i=1,ndimV
-       label(iBfirst+i-1) = trim(labelvec(iBfirst))//'\d'//labelcoord(i,1)
-    enddo
- endif
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  !--set labels for each particle type
  !
@@ -899,14 +877,11 @@ subroutine set_labels_gadget_hdf5
  endif
  UseTypeInRenderings(3:6) = .false.
 
-!-----------------------------------------------------------
- return
 end subroutine set_labels_gadget_hdf5
 
 subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use gadgethdf5read, only:blocklabelgas,blocksize,fstring
- implicit none
  integer(kind=c_int), intent(in) :: icol,irank
  character(kind=c_char), dimension(256), intent(in) :: name
 

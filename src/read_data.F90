@@ -121,7 +121,7 @@ subroutine select_data_format(string,ierr)
  ! Check if SPLASH has been compiled with hdf5, if hdf5 format is requested
  if ((index(string, 'hdf5') > 0) .or. (index(string, '.h5') > 0)) then
 #ifndef HDF5
-   print "(/,a)", ' *** ERROR: hdf5 file format requested, but SPLASH  has not been compiled with HDF5 ***'
+   print "(/,a)", ' *** ERROR: hdf5 file format requested, but SPLASH not compiled with HDF5 ***'
    print "(a)", '           Try make HDF5=yes   '
    stop
 #else
@@ -132,7 +132,7 @@ subroutine select_data_format(string,ierr)
  ! Check if H5PART is being requested
  if (string == 'h5part') then
 #ifndef H5PART_DIR
-   print "(/,a)", ' *** ERROR: H5PART file given, but SPLASH has not been compiled with the H5PART library. ***'
+   print "(/,a)", ' *** ERROR: H5PART file given, but SPLASH not compiled with the H5PART library. ***'
    print "(a)", '            Try make H5PART_DIR=/path/to/h5part/ Note: You must also compile with HDF5=yes'
    stop
 #else
@@ -143,7 +143,7 @@ subroutine select_data_format(string,ierr)
  ! Check if SPLASH has been compiled with the fits library, if fits format is requested
  if (string == 'fits') then
 #ifndef FITS
-   print "(/,a)", ' *** ERROR: .fits file given, but SPLASH has not been compiled with the fits library. ***'
+   print "(/,a)", ' *** ERROR: .fits file given, but SPLASH not compiled with the fits library. ***'
    print "(a)", '            Try make FITS=yes '
 #endif
  end if
@@ -280,7 +280,7 @@ subroutine select_data_format(string,ierr)
    print "(a)",  'Phantom HDF5 files are currently not supported :( '
    stop
 
- case('gadget_hdf5')
+ case('gadget_hdf5','swift')
    read_data=>read_data_gadget_hdf5
    set_labels=>set_labels_gadget_hdf5
 
@@ -417,6 +417,7 @@ end subroutine print_available_formats
 ! subroutine for guessing the file format if not specified, or full info not given
 !-----------------------------------------------------------------------------------
 subroutine guess_format(nfiles,filenames,ierr,informat)
+ use asciiutils, only:get_extensions
  integer, intent(in)                     :: nfiles
  character(len=*), intent(in)            :: filenames(:)
  character(len=*), intent(in), optional  :: informat ! This is given if --format <string> is supplied
@@ -431,11 +432,13 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
  !
  ! try to guess the file format from the extension
  !
- if (any((index(extensions, '.h5') > 0))) then
+ if (any(index(extensions, '.h5') > 0) .or. any(index(extensions, '.hdf5') > 0)) then
     if (present(informat)) then
        call select_data_format(informat//"_hdf5",ierr)
     elseif (any((index(extensions, '.pb') > 0))) then
        call select_data_format("phantom_hdf5", ierr)
+    else
+       call select_data_format('gadget_hdf5',ierr)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
     call select_data_format('fits',ierr)
@@ -472,38 +475,10 @@ subroutine guess_format_from_file_header(filename,ierr)
     call select_data_format('sphNG',ierr)
  elseif (file_format_is_gadget(filename)) then
     call select_data_format('gadget',ierr)
+ elseif (index(filename,'.hdf5') > 0) then
+    call select_data_format('gadget_hdf5',ierr)
  endif
 
 end subroutine guess_format_from_file_header
-
-!------------------------------------------------------------
-! utility to return up to five file extensions
-!------------------------------------------------------------
-subroutine get_extensions(string,extensions)
- use asciiutils, only:lcase
- character(len=*), intent(in) :: string
- character(len=12), dimension(5), intent(out) :: extensions(5)
- character(:), allocatable :: tmp_string
-
- integer :: ppos_new
- integer :: ppos_old
- integer :: i
-
- ppos_new = scan(trim(string),".", BACK= .true.)
- ppos_old = len(string)
- tmp_string = lcase(string)
-
- do i=1,5
-    if (ppos_new > 0) then
-       extensions(i) = trim(tmp_string(ppos_new:ppos_old))
-       tmp_string=tmp_string(1:ppos_new-1)
-       ppos_old=ppos_new-1
-       ppos_new=scan(trim(tmp_string),".",BACK=.true.)
-    else
-       extensions(i)=""
-    endif
- enddo
-
-end subroutine get_extensions
 
 end module readdata
