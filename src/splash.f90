@@ -51,9 +51,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.0.2   : (11/11/20) seg fault in gadget data read fixed; bug fix in x-menu options;
-!             opacity rendering uses physical value of kappa and can use opacity defined on particles;
-!             seg fault in fits reader fixed; support for SWIFT code in gadget_hdf5
+!     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
+!             use opacity defined on particles; can track multiple particles with
+!             'splash calc tracks' by specifying ids in splash.tracks file;
+!             support for SWIFT code in gadget_hdf5; auto-recognise format for .csv files;
+!             improved starsmasher data read; improved physical unit selection;
+!             exact solution lines can be plotted in background colour;
+!             bug fix for dead particles in phantom dumps; seg fault in fits reader fixed;
+!             seg fault in gadget data read fixed; bug fix in x-menu options
 !     3.0.0   : (26/08/20) Unified splash binary with -f flag to specify format;
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;
