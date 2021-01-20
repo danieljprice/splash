@@ -3131,7 +3131,7 @@ end subroutine page_setup
 !  will overwrite plot area)
 !------------------------------------------------------
 subroutine legends_and_title
- use colourbar,     only:plotcolourbar
+ use colourbar,     only:plotcolourbar,isfloating
  use legends,       only:legend,legend_markers,legend_scale,ipanelselect
  use titles,        only:pagetitles,steplegend,lensteplegend
  use filenames,     only:nstepsinfile,nfiles,rootname
@@ -3171,6 +3171,7 @@ subroutine legends_and_title
     if (iPlotColourBar) then
        xlabeloffsettemp = xlabeloffset + 1.0
        if (iaxistemp < 0) xlabeloffsettemp = 0.
+       if (iUseBackGroundColourForAxes .and. isfloating(iColourBarStyle)) call plot_sci(0)
 
        !--for tiled plots only on last plot in first row,
        !  and use full viewport size in the y direction
