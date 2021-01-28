@@ -212,15 +212,15 @@ end subroutine get_nearest_unit
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use prompting,     only:prompt
- use labels,        only:label,ix,ih,ivx,idivB,iamvec,labelvec,headertags,strip_units
+ use labels,        only:label,ix,ih,ivx,ipmass,idivB,iamvec,labelvec,headertags,strip_units
  use settings_data, only:ndim,ndimV,ivegotdata
  use particle_data, only:headervals,maxstep
  use asciiutils,    only:match_tag
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
- integer :: icol,ibs,ibc,itime,idist
+ integer :: icol,ibs,ibc,itime,idist,imass
  real(doub_prec) :: unitsprev
- real(doub_prec) :: udist,utime
+ real(doub_prec) :: udist,utime,umass
  logical :: applytoall,got_label
  character(len=lenlabel) :: mylabel
 
@@ -228,11 +228,14 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  ! try to extract code units from the file headers, these only exist in some data reads
  utime = 0.d0
  udist = 0.d0
+ umass = 0.d0
  itime = match_tag(headertags,'utime')
  idist = match_tag(headertags,'udist')
+ imass = match_tag(headertags,'umass')
  if (maxstep > 0 .and. ivegotdata) then
     if (itime > 0) utime = headervals(itime,1)
     if (idist > 0) udist = headervals(idist,1)
+    if (imass > 0) umass = headervals(imass,1)
  endif
 
  do while(icol >= 0)
@@ -257,6 +260,10 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
           ! give hints for velocity units, if both udist and utime read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
                                      nv,unit_labels_vel,unit_vel,udist/utime,'velocity')
+       elseif (ipmass==icol .and. umass > 0.) then
+          ! give hints for velocity units, if both udist and utime read from data file
+          call choose_unit_from_list(units(icol),unitslabel(icol),&
+                                     nm,unit_labels_mass,unit_mass,umass,'mass')
        elseif (icol > 0) then
           mylabel = strip_units(label(icol),unitslabel(icol))
           call prompt('enter '//trim(mylabel)//' units (new=old*units)',units(icol))
@@ -372,6 +379,10 @@ subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_cod
  real :: unitsprev
 
  iselect = n+1
+ ! get default value of iselect if one of the units is already chosen
+ do i=1,n
+    if (abs(unit-unit_code/unit_vals(i)) < tiny(0.)) iselect = i
+ enddo
  do i=1,n
     print "(i2,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
  enddo
