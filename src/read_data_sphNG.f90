@@ -65,7 +65,7 @@ module sphNGread
  use params
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
- real :: tfreefall
+ real :: tfreefall,dtmax
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
  integer :: itempcol = 0 ! default value
  integer :: nhydroreal4,istart_extra_real4
@@ -761,7 +761,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
  integer, intent(inout) :: npart,ntotal
  logical, intent(in)  :: debug
  logical, intent(out) :: gotbinary
- real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax
+ real :: rhozero,tff,radL1,PhiL1,Er,RK2 !,dtmax
  real :: massoftypei(ntypes)
  integer :: i,ierrs(10)
  integer :: itype
@@ -842,6 +842,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
  hfact = 1.2
  if (phantomdump) then
     call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
+    call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
     if (iverbose > 0) then
        print "(a,es12.4,a,f6.3,a,f5.2)", &
            ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
@@ -1280,7 +1281,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
  real :: hfact,omega
- logical :: skip_corrupted_block_3,get_temperature
+ logical :: skip_corrupted_block_3
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -2563,7 +2564,12 @@ subroutine set_labels_sphNG
     units(0) = 1./tfreefall
     unitslabel(0) = ' '
  case default
-    call get_nearest_time_unit(utime,unitx,unitslabel(0))
+    if (dtmax > 0. .and. (abs(utime-1d0) > 0.d0)) then ! use interval between full dumps
+       call get_nearest_time_unit(utime*dtmax*10.,unitx,unitslabel(0))
+       unitx = unitx/(dtmax*10.)
+    else
+       call get_nearest_time_unit(utime,unitx,unitslabel(0))
+    endif
     units(0) = unitx ! convert to real*4
  end select
 
