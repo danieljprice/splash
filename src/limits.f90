@@ -187,7 +187,7 @@ subroutine read_limits(limitsfile,ierr)
 999 continue
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
- if (i <= ncolumns+ncalc) then
+ if (i < ncolumns+ncalc) then
     print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
     ierr = -1
  endif
