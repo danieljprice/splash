@@ -206,11 +206,11 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
        elseif (any(ix==icol) .or. icol==ih .and. udist > 0.) then
           ! give hints for possible length units, if udist is read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
-                                     nx,unit_labels_length,unit_length,udist,mylabel)
+                                     nx,unit_labels_length,unit_length,udist,'length')
        elseif (ivx==icol .and. udist > 0. .and. utime > 0.) then
           ! give hints for velocity units, if both udist and utime read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
-                                     nv,unit_labels_vel,unit_vel,udist/utime,mylabel)
+                                     nv,unit_labels_vel,unit_vel,udist/utime,'velocity')
        elseif (icol > 0) then
           mylabel = strip_units(label(icol),unitslabel(icol))
           call prompt('enter '//trim(mylabel)//' units (new=old*units)',units(icol))
@@ -327,9 +327,9 @@ subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_cod
 
  iselect = n+1
  do i=1,n
-    print "(i1,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
+    print "(i2,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
  enddo
- print "(i1,') custom')",n+1
+ print "(i2,') custom')",n+1
  call prompt('Enter choice of '//trim(tag)//' unit ',iselect,1,n+1)
  if (iselect==n+1) then
     unitsprev = unit
