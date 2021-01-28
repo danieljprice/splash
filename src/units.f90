@@ -215,7 +215,7 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use labels,        only:label,ix,ih,ivx,ipmass,idivB,iamvec,labelvec,headertags,strip_units
  use settings_data, only:ndim,ndimV,ivegotdata
  use particle_data, only:headervals,maxstep
- use asciiutils,    only:match_tag
+ use asciiutils,    only:get_value
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
  integer :: icol,ibs,ibc,itime,idist,imass
@@ -229,13 +229,10 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  utime = 0.d0
  udist = 0.d0
  umass = 0.d0
- itime = match_tag(headertags,'utime')
- idist = match_tag(headertags,'udist')
- imass = match_tag(headertags,'umass')
  if (maxstep > 0 .and. ivegotdata) then
-    if (itime > 0) utime = headervals(itime,1)
-    if (idist > 0) udist = headervals(idist,1)
-    if (imass > 0) umass = headervals(imass,1)
+    utime = get_value('utime',headertags,headervals(:,1))
+    udist = get_value('udist',headertags,headervals(:,1))
+    umass = get_value('umass',headertags,headervals(:,1))
  endif
 
  do while(icol >= 0)
