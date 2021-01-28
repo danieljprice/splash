@@ -3102,10 +3102,10 @@ subroutine unset_movie_mode()
  iPageColours = 1
  if (.not.plotlib_is_pgplot) then
     ipapersize   = 0
-    papersizex   = 0.
-    aspectratio  = 0.
+    papersizex   = 800.
+    aspectratio  = 600./800.
     iColourBarStyle   = 1
-    call plot_pap(papersizex,aspectratio,9)
+    call plot_pap(papersizex,aspectratio,0)
     call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
