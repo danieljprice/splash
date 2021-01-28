@@ -66,7 +66,8 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
+ integer :: itempcol = 0 ! default value
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1250,8 +1251,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use asciiutils,     only:make_tags_unique
  use sphNGread
  use lightcurve,     only:get_temp_from_u
- use settings_units, only:units
- implicit none
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1283,7 +1282,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
  real :: hfact,omega
- logical :: skip_corrupted_block_3
+ logical :: skip_corrupted_block_3,get_temperature
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1298,7 +1297,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
- itempcol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1332,6 +1330,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  j = indexstart
  nstepsread = 0
  doubleprec = .true.
+ if (itempcol > 0 .and. required(itempcol)) then
+    required(irho) = .true.
+    required(iutherm) = .true.
+ endif
  ilastrequired = 0
  do i=1,size(required)-1
     if (required(i)) ilastrequired = i
@@ -2006,7 +2008,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     !--calculate the temperature from density and internal energy (using physical units)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
-    dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
+    dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
  endif
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
