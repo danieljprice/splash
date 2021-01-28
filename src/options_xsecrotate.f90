@@ -135,8 +135,7 @@ end subroutine defaults_set_xsecrotate
 !----------------------------------------------------------------------
 subroutine submenu_xsecrotate(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use labels,         only:label,ix,irad,get_sink_type
- use limits,         only:lim
+ use labels,         only:irad,get_sink_type
  use prompting,      only:prompt,print_logical
  use promptlist,     only:prompt_list
  use settings_data,  only:ndim,xorigin,iCalcQuantities,DataIsBuffered,ntypes
