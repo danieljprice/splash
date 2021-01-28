@@ -82,8 +82,7 @@ subroutine submenu_data(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen,unitsfile
  use prompting,      only:prompt,print_logical
  use getdata,        only:get_data,get_labels
- use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
-                          isteplist,buffer_data,iCalcQuantities,iRescale, &
+ use settings_data,  only:buffer_data,iCalcQuantities,iRescale, &
                           DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set,&
                           UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
@@ -93,7 +92,6 @@ subroutine submenu_data(ichoose)
  use fparser,        only:rn,mu0
  integer, intent(in) :: ichoose
  integer             :: ians,i,ncalcwas,maxopt,len_max
- character(len=30)   :: fmtstring
  character(len=1)    :: charp
  character(len=lenlabel) :: labeli
  logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile,oldval
