@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.0.3   : (xx/xx/21) closest physical velocity and mass units used in phantom/sphNG read;
+!             error message if Inf or NaN read from .units file; bug fix with units prompt
 !     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
 !             use opacity defined on particles; can track multiple particles with
 !             'splash calc tracks' by specifying ids in splash.tracks file;
@@ -446,7 +448,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.2 [20th Jan 2021]'
+ character(len=*), parameter :: version = 'v3.0.3 [29th Jan 2021]'
 
  !
  ! initialise some basic code variables

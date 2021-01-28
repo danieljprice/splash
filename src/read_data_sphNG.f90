@@ -502,8 +502,6 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
  integer               :: i,ierr1,ierr2,ierrs(4)
  integer               :: nints,ninttypes,nreal4s,nreal8s
  integer               :: n2,nreassign,naccrete,nkill
- real(doub_prec), allocatable :: dattemp(:)
- real(sing_prec), allocatable :: dattempsingle(:)
 
  ! initialise empty tag array
  tags(:) = ''
@@ -2296,15 +2294,16 @@ subroutine set_labels_sphNG
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
- use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
+ use settings_units,  only:units,unitzintegration,get_nearest_length_unit,&
+                           get_nearest_time_unit,get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread
  use asciiutils,      only:lcase,make_tags_unique,match_tag
  use system_commands, only:get_environment
  use system_utils,    only:lenvironment
  implicit none
  integer :: i,j,idustlast
- real(doub_prec)   :: unitx
- character(len=20) :: string,unitlabelx
+ real(doub_prec)   :: unitx,unitvel
+ character(len=20) :: string,unitlabelx,unitlabelv
  character(len=20) :: deltav_string
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -2486,27 +2485,29 @@ subroutine set_labels_sphNG
  !--set units for plot data
  !
  call get_nearest_length_unit(udist,unitx,unitlabelx)
+ call get_nearest_velocity_unit(udist/utime,unitvel,unitlabelv)
  if (ndim >= 3) then
     units(1:3) = unitx
     unitslabel(1:3) = unitlabelx
  endif
  if (ipmass > 0) then
-    units(ipmass) = umass
-    unitslabel(ipmass) = ' [g]'
+    call get_nearest_mass_unit(umass,units(ipmass),unitslabel(ipmass))
+    !units(ipmass) = umass
+    !unitslabel(ipmass) = ' [g]'
  endif
  units(ih) = unitx
  unitslabel(ih) = unitlabelx
  if (ivx > 0) then
-    units(ivx:ivx+ndimV-1) = udist/utime
-    unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'
+    units(ivx:ivx+ndimV-1) = unitvel
+    unitslabel(ivx:ivx+ndimV-1) = unitlabelv
  endif
  if (ideltavsum > 0) then
-    units(ideltavsum:ideltav+ndimV-1) = udist/utime
-    unitslabel(ideltavsum:ideltav+ndimV-1) = ' [cm/s]'
+    units(ideltavsum:ideltav+ndimV-1) = unitvel
+    unitslabel(ideltavsum:ideltav+ndimV-1) = unitlabelv
  endif
  if (ideltav > 0) then
-    units(ideltav:ideltav+ndimV-1) = udist/utime
-    unitslabel(ideltav:ideltav+ndimV-1) = ' [cm/s]'
+    units(ideltav:ideltav+ndimV-1) = unitvel
+    unitslabel(ideltav:ideltav+ndimV-1) = unitlabelv
  endif
  if (iutherm > 0) then
     units(iutherm) = (udist/utime)**2

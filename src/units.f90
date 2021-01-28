@@ -32,6 +32,7 @@ module settings_units
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
+ public :: get_nearest_mass_unit,get_nearest_velocity_unit
 
  integer, parameter :: nx = 9
  real(doub_prec), parameter :: unit_length(nx) = &
@@ -86,6 +87,23 @@ module settings_units
       ' [m/s]  ',&
       ' [km/s] '/)
 
+ integer, parameter :: nm = 6
+ real(doub_prec), parameter :: unit_mass(nm) = &
+    (/1.d0,  &
+      1.d3,  &
+      8.958d23,  &  ! Ceres mass
+      5.979d27,  &  ! Earth mass
+      1.898d30,  &  ! Jupiter mass
+      1.989d33/)    ! Solar mass
+
+ character(len=*), parameter :: unit_labels_mass(nm) = &
+    (/' [g]         ',&
+      ' [kg]        ',&
+      ' [M_{Ceres}] ',&
+      ' [M_{Earth}] ',&
+      ' [M_{Jup}]   ',&
+      ' [M_{Sun}]   '/)
+
  private
 
 contains
@@ -131,6 +149,34 @@ subroutine get_nearest_time_unit(utime,unit,unitlabel)
  call get_nearest_unit(nt,unit_time,unit_labels_time,utime,unit,unitlabel)
 
 end subroutine get_nearest_time_unit
+
+!-------------------------------------------
+!
+!  find the nearest 'sensible' velocity unit
+!
+!-------------------------------------------
+subroutine get_nearest_velocity_unit(uvel,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: uvel
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+
+ call get_nearest_unit(nv,unit_vel,unit_labels_vel,uvel,unit,unitlabel)
+
+end subroutine get_nearest_velocity_unit
+
+!-------------------------------------------
+!
+!  find the nearest 'sensible' mass unit
+!
+!-------------------------------------------
+subroutine get_nearest_mass_unit(umass,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: umass
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+
+ call get_nearest_unit(nm,unit_mass,unit_labels_mass,umass,unit,unitlabel)
+
+end subroutine get_nearest_mass_unit
 
 !-------------------------------------------------------
 !
@@ -463,7 +509,9 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
 !    now get units from the first part of the line
 !
     read(line,*,iostat=itemp) units(i)
-    if (itemp /= 0) print*,'error reading units for column ',i
+    if (itemp /= 0) print*,'ERROR reading units for column ',i
+    if (units(i) > huge(units)) print "(/,a,i2)",' ERROR: UNITS ARE INFINITE FOR COLUMN ',i
+    if (isnan(units(i))) print "(/,a,i2)",' ERROR: UNITS ARE NaN FOR COLUMN ',i
 !
 !    units label is what comes after the semicolon
 !
