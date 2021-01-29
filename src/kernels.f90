@@ -47,6 +47,7 @@ module kernels
  integer, parameter :: doub_prec = kind(0.d0)
 
  procedure(k_func), pointer, public :: wfunc
+ procedure(k_func), pointer, public :: dwfunc
 
  abstract interface
   pure function k_func(q)
@@ -123,6 +124,7 @@ subroutine select_kernel(j)
     cnormk2D = 10./(7.*pi)
     cnormk3D = 1./pi
     wfunc => w_cubic
+    dwfunc => dw_cubic
  end select
  radkernel2 = radkernel*radkernel
 
@@ -191,6 +193,22 @@ pure real function w_cubic(q2)
  endif
 
 end function w_cubic
+
+pure real function dw_cubic(q2)
+ real, intent(in) :: q2
+ real :: q
+
+ if (q2 < 1.0) then
+    q = sqrt(q2)
+    dw_cubic = q*(2.25*q - 3.)
+ elseif (q2 < 4.0) then
+    q = sqrt(q2)
+    dw_cubic = -0.75*(2.-q)**2
+ else
+    dw_cubic = 0.
+ endif
+
+end function dw_cubic
 
 pure real function w_quartic(q2)
  real, intent(in) :: q2
