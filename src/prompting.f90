@@ -522,7 +522,7 @@ recursive subroutine string_prompt(text, string, length, case, noblank, list)
  integer, optional, intent(out)  :: length
  integer, optional, intent(in)   :: case
  logical, optional, intent(in)   :: noblank
- integer                         :: is, ia
+ integer                         :: is, ia, i
  integer, parameter              :: aoffset = 32
  logical                         :: allowblank,inlist
  character(len=*), dimension(:), intent(in), optional :: list
