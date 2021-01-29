@@ -67,7 +67,6 @@ module sphNGread
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
- integer :: itempcol = 0 ! default value
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1245,7 +1244,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
- use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,iutherm,ikappacol
+ use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,iutherm,itemp,ikappa
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
@@ -1281,7 +1280,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
  real :: hfact,omega
- logical :: skip_corrupted_block_3
+ logical :: skip_corrupted_block_3,get_temperature
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1296,7 +1295,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
- ikappacol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1330,7 +1328,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  j = indexstart
  nstepsread = 0
  doubleprec = .true.
- if (itempcol > 0 .and. required(itempcol)) then
+ get_temperature = lenvironment("SPLASH_GET_TEMP")
+ if (get_temperature .and. itemp > 0 .and. required(itemp)) then
     required(irho) = .true.
     required(iutherm) = .true.
  endif
@@ -1569,12 +1568,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              icurlvzcol = ncolstep + 4
              ncolstep   = ncolstep + 4
           endif
-          if (lenvironment("SPLASH_GET_TEMP")) then
+          if (get_temperature) then
             !add a column for the temperature
              ncolstep = ncolstep+1
-             itempcol = ncolstep
+             itemp = ncolstep
              ncolstep = ncolstep+1
-             ikappacol = ncolstep
+             ikappa = ncolstep
           endif
        endif
     endif
@@ -2005,14 +2004,16 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     endif
  endif
 
-
- if (itempcol > 0 .and. required(itempcol)) then
+ if (get_temperature .and. itemp > 0 .and. required(itemp)) then
     !--calculate the temperature from density and internal energy (using physical units)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
-    dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
-    dat(1:ntotal,ikappacol,j)=0.0
-    where(dat(1:ntotal,itempcol,j)>7000) dat(1:ntotal,ikappacol,j)=0.3
+    dat(1:ntotal,itemp,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
+    where(dat(1:ntotal,itemp,j) > 7000.)
+       dat(1:ntotal,ikappa,j) = 0.3   ! electron scattering opacity
+    elsewhere
+       dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
+    end where
  endif
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
@@ -2294,7 +2295,7 @@ subroutine set_labels_sphNG
               labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
-              ivrel,make_vector_label,get_label_grain_size,ikappacol
+              ivrel,make_vector_label,get_label_grain_size,itemp,ikappa
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
@@ -2453,8 +2454,8 @@ subroutine set_labels_sphNG
  if (ipmass > 0) label(ipmass) = 'particle mass'
  if (idivB > 0) label(idivB) = 'div B'
  if (idivvcol > 0) label(idivvcol) = 'div v'
- if (itempcol > 0) label(itempcol) = 'temperature'
- if (ikappacol > 0) label(ikappacol) = 'kappa'
+ if (itemp > 0) label(itemp) = 'temperature'
+ if (ikappa > 0) label(ikappa) = 'kappa'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif

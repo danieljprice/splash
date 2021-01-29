@@ -40,7 +40,7 @@ module labels
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
- integer :: ipmass,ike,ispsound, ikappacol
+ integer :: ipmass,ike,ispsound,itemp,ikappa
  integer :: idivb,iJfirst,irhostar
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
@@ -83,6 +83,8 @@ subroutine reset_columnids
  igrainsize = 0 ! grainsize
  igraindens = 0 ! graindens
  ivrel = 0      ! relative velocity
+ itemp = 0      ! temperature
+ ikappa = 0     ! opacity
  iacplane = 0
  ike = 0
  idivB = 0
@@ -97,7 +99,6 @@ subroutine reset_columnids
  ideltavsum = 0
  headertags = ''
 
- return
 end subroutine reset_columnids
 
 !--------------------------------------------------------------

@@ -48,7 +48,7 @@ module timestep_plotting
  real(doub_prec), dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
  real, private :: xmin,xmax,ymin,ymax,zmin
  real, private :: rendermin,rendermax,vecmax,contmin,contmax
- real, private :: dz,zslicepos,zobservertemp,dzscreentemp,taupartdepthtemp,rkappafac
+ real, private :: dz,zslicepos,zobservertemp,dzscreentemp,rkappatemp
  real, private :: dxgrid,xmingrid,xmaxgrid
  real, private :: angletempx, angletempy, angletempz
  !--buffer for interactive mode on multiplots
@@ -59,7 +59,7 @@ module timestep_plotting
  real, private :: contminadapt,contmaxadapt
  real, private :: xminwas = 0.,xmaxwas = 0.,yminwas = 0.,ymaxwas = 0.
  real, private :: renderminwas = 0.,rendermaxwas = 0.,contminwas = 0.,contmaxwas = 0.
- real, parameter, private :: pi = 3.1415926536
+ real, parameter, private :: pi = 4.*atan(1.)
 
  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
  logical, private :: inewpage,tile_plots,lastplot,lastinpanel
@@ -80,7 +80,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use params
  use colours,            only:colour_set
  use colourbar,          only:barisvertical
- use labels,             only:label,ipowerspec,ih,ipmass,irho,iamvec,isurfdens, &
+ use labels,             only:label,ipowerspec,ih,ipmass,irho,ikappa,iamvec,isurfdens, &
                                is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir
  use limits,             only:lim,rangeset,limits_are_equal
  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
@@ -99,9 +99,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec,irotate, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
-                               use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
+                               use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,rkappafac=>taupartdepth
  use settings_powerspec, only:options_powerspec,options_pdf
  use particle_data,      only:npartoftype,masstype
+ use projections3D,      only:coltable
  use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
  use system_utils,       only:renvironment
@@ -441,11 +442,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        endif
 !       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
 !
-!--initialise opacity for 3D opacity rendering
+!--initialise opacity for 3D opacity rendering if it is not found as a data column (ikappa > 0)
 !
        if (use3Dopacityrendering .and. (iamrendering .or. idoingvecplot)) then
-          hav = lim(ih,1) !! 0.5*(lim(ih,2) + lim(ih,1))
-          if (hav <= epsilon(hav)) hav = 0.5*lim(ih,2) ! take 0.5*max if min is zero
+          hav = lim(ih,2) !! 0.5*(lim(ih,2) + lim(ih,1))
           if (ipmass > 0) then
              pmassav = lim(ipmass,1)
              if (pmassav <= epsilon(hav)) pmassav = 0.5*lim(ipmass,2) ! take 0.5*max if min is zero
@@ -456,13 +456,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                      .and. any(masstype(i,:) > 0.)) pmassav = min(pmassav,maxval(masstype(i,:)))
              enddo
           endif
-          ! print*,'using current h and pmass limits to calculate kappa (cross section/unit mass)'
-          ! print*,'min h = ',hav,' min particle mass = ',pmassav
-          ! print*,'[ kappa = pi*h_min**2/(particle_mass*n_smoothing_lengths) ]'
-          !call prompt('enter approximate surface depth (number of smoothing lengths):',taupartdepth,0.)
-          !rkappafac = pi*hav*hav/(pmassav*coltable(0))
-          !print*,'kappa (particle cross section per unit mass) = ',rkappafac/taupartdepth
-          call prompt('enter kappa (in current units)',rkappafac)
+          if (ikappa > 0) then
+             call prompt('Enter opacity scaling factor ',rkappafac)
+          else
+             print*,' suggested value for kappa = ',pi*hav*hav/(pmassav*coltable(0))
+             if (rkappafac <= 0.) rkappafac = pi*hav*hav/(pmassav*coltable(0))
+             call prompt('enter kappa (in current units)',rkappafac)
+          endif
        endif
     endif
 
@@ -644,7 +644,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm, &
                                ipdf,icolpixmap,is_coord,labeltype, &
                                labelzintegration,unitslabel,integrate_label, &
-                               get_sink_type,get_unitlabel_coldens,ikappacol
+                               get_sink_type,get_unitlabel_coldens,ikappa
  use limits,             only:lim,get_particle_subset,lim2,lim2set
  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti, &
                                itrans,icontourmulti,x_secmulti,xsecposmulti,&
@@ -668,7 +668,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
                                flythru,use3Dperspective,use3Dopacityrendering,&
                                anglex,angley,anglez,zobserver,&
-                               dzscreenfromobserver,taupartdepth,xsecpos_nomulti, &
+                               dzscreenfromobserver,rkappafac=>taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
  use settings_powerspec, only:nfreqspec,freqmin,freqmax,ipowerspecx,ipowerspecy,&
@@ -1103,13 +1103,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              angletempz = anglez
              dzscreentemp = 0.
              zobservertemp = 0.
-             taupartdepthtemp = 0.
+             rkappatemp = 0.
              if (ndim==3) then
                 if (use3Dperspective) then
                    dzscreentemp = dzscreenfromobserver
                    zobservertemp = zobserver
                 endif
-                if (use3Dopacityrendering) taupartdepthtemp = taupartdepth
+                if (use3Dopacityrendering) rkappatemp = rkappafac
              endif
           else
              if (ndim==3 .and. use3Dperspective) dzscreentemp = zobservertemp
@@ -1159,7 +1159,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !--override settings based on positions in sequence
           if (nseq > 0) then
              call getsequencepos(iseqpos,iframe,iplotx,iploty,irender, &
-                angletempx,angletempy,angletempz,zobservertemp,dzscreentemp,taupartdepthtemp,&
+                angletempx,angletempy,angletempz,zobservertemp,dzscreentemp,rkappatemp,&
                 zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
           endif
           !--for 3D perspective, do not plot particles behind the observer
@@ -1169,11 +1169,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 zslicemax = zobservertemp
              endif
              if (use3Dopacityrendering) then
-               if (ikappacol > 0) then
-                 rkappa = dat(1:ninterp,ikappacol)
-               else
-                 rkappa = rkappafac!/taupartdepthtemp
-               endif
+                if (ikappa > 0) then
+                   rkappa = dat(1:ninterp,ikappa)*rkappafac
+                else
+                   rkappa = rkappafac!/taupartdepthtemp
+                endif
              endif
           endif
 
@@ -2109,7 +2109,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       xmin,xmax,ymin,ymax,rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,&
                       contminadapt,contmaxadapt,vecmax, &
                       angletempx,angletempy,angletempz,ndim,xorigin(1:ndim),x_sec,zslicepos,dz, &
-                      zobservertemp,dzscreentemp,use3Dopacityrendering,taupartdepthtemp,&
+                      zobservertemp,dzscreentemp,use3Dopacityrendering,rkappatemp,&
                       (double_rendering .and. gotcontours),irerender,itrackpart,icolours,&
                       iColourBarStyle,labelrender,iadvance,ipos,iendatstep,iframe,nframesloop,interactivereplot)
                    !--turn rotation on if necessary
