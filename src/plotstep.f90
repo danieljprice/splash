@@ -686,6 +686,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   get_binary,locate_nth_particle_of_type
  use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
  use powerspectrums,        only:powerspectrum
+ use interpolation,         only:get_n_interp
  use interpolations1D,      only:interpolate1D
  use interpolations2D,      only:interpolate2D,interpolate2D_xsec,&
                                   interpolate2D_pixels
@@ -829,9 +830,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  !  (by default, only the gas particles)
  !
  ntoti = sum(npartoftype)
- ninterp = npartoftype(1)
- if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-      .or. size(iamtype) > 1 .or. (use3Dopacityrendering .and. rendersinks)) ninterp = ntoti
+ ninterp = get_n_interp(npartoftype,UseTypeInRenderings,iplotpartoftype,size(iamtype),&
+                        (use3Dopacityrendering .and. rendersinks))
 
  !--work out the identity of a particle being tracked
  if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
@@ -3379,7 +3379,6 @@ subroutine set_weights(weighti,dati,iamtypei,usetype)
          iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required,&
          (use3Dopacityrendering .and. rendersinks),isinktype)
 
- return
 end subroutine set_weights
 
 !-------------------------------------------------------------------
