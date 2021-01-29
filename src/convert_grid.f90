@@ -43,11 +43,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use settings_units,       only:units,unit_interp
  use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin,iverbose
  use settings_part,        only:iplotpartoftype
- use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation,exact_rendering
+ use settings_render,      only:npix,inormalise=>inormalise_interpolations,&
+                                idensityweightedinterpolation,exact_rendering
  use settings_xsecrot,     only:anglex,angley,anglez
  use rotation,             only:rotate3D
  use params,               only:int1
- use interpolation,        only:set_interpolation_weights
+ use interpolation,        only:set_interpolation_weights,get_n_interp
  use interpolations3D,     only:interpolate3D,interpolate3D_vec
  use interpolations3Dgeom, only:interpolate3Dgeom,interpolate3Dgeom_vec
  use interpolations2D,     only:interpolate2D,interpolate2D_vec
@@ -92,7 +93,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
  real    :: mtot,mtotgrid,err,t2,t1,xi(3),ax,ay,az
  real, parameter :: pi=4.0*atan(1.0)
- logical :: inormalise,lowmem,do_output
+ logical :: lowmem,do_output
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
  character(len=120) :: origin
@@ -162,13 +163,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  !
  !--set number of particles to use in the interpolation routines
- !  (by default, only the gas particles)
+ !  and allocate memory for weights
  !
- ntoti = sum(npartoftype)
- ninterp = npartoftype(1)
- if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-     .or. size(itype) > 1) ninterp = ntoti
-
+ ninterp = get_n_interp(npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
  allocate(weight(ninterp),stat=ierr)
  allocate(x(ninterp),y(ninterp),z(ninterp),stat=ierr)
  if (ierr /= 0) then
@@ -178,18 +175,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
- inormalise = inormalise_interpolations
  isinktype = get_sink_type(ntypes)
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
       idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.,isinktype)
  !
- !--set colours (just in case)
+ !--set default mask and apply range restrictions to data
  !
  icolourme(:) = 1
- !
- !--apply range restrictions to data
- !
  call get_particle_subset(icolourme,dat,ncolumns)
 
  !
@@ -293,10 +286,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  endif
  if (ierr /= 0) then
     write(*,*) 'FAILED: NOT ENOUGH MEMORY'
-    if (allocated(weight)) deallocate(weight)
-    if (allocated(x)) deallocate(x)
-    if (allocated(y)) deallocate(y)
-    if (allocated(z)) deallocate(z)
+    call deallocate_memory()
     return
  else
     write(*,*) 'OK'
@@ -312,12 +302,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                          xmind(1:ndim),xmaxd(1:ndim),dtime,ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR: could not open grid file for output, skipping...'
-       if (allocated(datgrid)) deallocate(datgrid)
-       if (allocated(datgrid)) deallocate(datgrid2D)
-       if (allocated(weight)) deallocate(weight)
-       if (allocated(x)) deallocate(x)
-       if (allocated(y)) deallocate(y)
-       if (allocated(z)) deallocate(z)
+       call deallocate_memory()
        return
     endif
  endif
@@ -668,16 +653,26 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  close(iunit)
 
- if (allocated(datgrid))      deallocate(datgrid)
- if (allocated(datgrid2D))    deallocate(datgrid2D)
- if (allocated(datgridvec))   deallocate(datgridvec)
- if (allocated(datgridvec2D)) deallocate(datgridvec2D)
- if (allocated(weight)) deallocate(weight)
- if (allocated(x)) deallocate(x)
- if (allocated(y)) deallocate(y)
- if (allocated(z)) deallocate(z)
-
+ call deallocate_memory()
  return
+
+contains
+!------------------------------------------------------------
+! manual mop-up of allocatable memory
+!------------------------------------------------------------
+ subroutine deallocate_memory()
+
+  if (allocated(datgrid))      deallocate(datgrid)
+  if (allocated(datgrid2D))    deallocate(datgrid2D)
+  if (allocated(datgridvec))   deallocate(datgridvec)
+  if (allocated(datgridvec2D)) deallocate(datgridvec2D)
+  if (allocated(weight)) deallocate(weight)
+  if (allocated(x)) deallocate(x)
+  if (allocated(y)) deallocate(y)
+  if (allocated(z)) deallocate(z)
+
+ end subroutine deallocate_memory
+
 end subroutine convert_to_grid
 
 !------------------------------------------------------------
