@@ -102,7 +102,6 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                use3Dperspective,use3Dopacityrendering,zobserver,dzscreenfromobserver,taupartdepth
  use settings_powerspec, only:options_powerspec,options_pdf
  use particle_data,      only:npartoftype,masstype
- use projections3D,      only:coltable
  use plotlib,            only:plot_init,plot_qcur,plot_slw,plot_env,plot_curs,plot_band, &
                                plot_close,plot_qinf
  use system_utils,       only:renvironment
@@ -830,7 +829,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  !  (by default, only the gas particles)
  !
  ntoti = sum(npartoftype)
- ninterp = get_n_interp(npartoftype,UseTypeInRenderings,iplotpartoftype,size(iamtype),&
+ ninterp = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(iamtype),&
                         (use3Dopacityrendering .and. rendersinks))
 
  !--work out the identity of a particle being tracked

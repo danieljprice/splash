@@ -72,7 +72,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real,    intent(out), allocatable, optional  :: rhogrid(:,:,:),dat3D(:,:,:)
  integer, parameter :: iunit = 89
  integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
- integer            :: npixx,ntoti,ninterp,isinktype
+ integer            :: npixx,ninterp,isinktype
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
@@ -165,7 +165,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
  !
- ninterp = get_n_interp(npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
+ ninterp = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
  allocate(weight(ninterp),stat=ierr)
  allocate(x(ninterp),y(ninterp),z(ninterp),stat=ierr)
  if (ierr /= 0) then

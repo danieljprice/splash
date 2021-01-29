@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol!,ikappacol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
  integer :: itempcol = 0 ! default value
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
