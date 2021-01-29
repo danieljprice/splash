@@ -62,7 +62,6 @@ subroutine read_data_urban(rootname,indexstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  !use system_utils,   only:lenvironment,ienvironment
  use asciiutils,     only:get_ncolumns
- implicit none
  integer, intent(in)          :: indexstart,ipos
  integer, intent(out)         :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -269,7 +268,6 @@ subroutine set_labels_urban
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,      only:labelcoord
  !use settings_units, only:units,unitslabel
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

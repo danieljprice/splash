@@ -92,14 +92,13 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=*), parameter :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2020 Daniel Price and contributors'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2021 Daniel Price and contributors'
 
  public
 
 contains
 
 subroutine set_filenames(prefix)
- implicit none
  character(len=*), intent(in) :: prefix
 
  fileprefix   = trim(adjustl(prefix))

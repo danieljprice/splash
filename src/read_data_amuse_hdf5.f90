@@ -111,7 +111,6 @@ subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
  use asciiutils,     only:cstring
  use amusehdf5read, only:hsoft,blocklabel,havewarned,read_amuse_hdf5_header, &
                            read_amuse_hdf5_data,maxtypes
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -291,7 +290,6 @@ subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
  use particle_data,  only:dat,iamtype
  use settings_data,  only:debugmode
  use labels,         only:label
- implicit none
  integer(kind=c_int), intent(in) :: icol,npartoftypei,itype
  real(kind=c_double), intent(in) :: temparr(npartoftypei)
  integer(kind=c_int) :: i,icolput
@@ -336,7 +334,6 @@ subroutine set_labels_amuse_hdf5
  use system_utils,   only:envlist,ienvironment
  use amusehdf5read,  only:hsoft,blocklabel
  use asciiutils,     only:lcase
- implicit none
  integer :: i,j,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -409,7 +406,6 @@ subroutine set_blocklabel(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use amusehdf5read, only:blocklabel
  use asciiutils,    only:fstring
- implicit none
  integer(kind=c_int),    intent(in) :: icol
  character(kind=c_char), intent(in) :: name(256)
 

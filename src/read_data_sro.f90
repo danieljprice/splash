@@ -60,10 +60,10 @@
 
 module readdata_sro
  implicit none
- 
+
  public :: read_data_sro, set_labels_sro
- 
- private 
+
+ private
 contains
 
 subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
@@ -73,7 +73,6 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use system_utils, only:lenvironment
  use system_commands, only:get_environment
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -547,7 +546,6 @@ contains
 !--reset centre of mass to zero
 !
 subroutine reset_centre_of_mass(xyz,pmass,npart)
- implicit none
  integer, intent(in) :: npart
  real, dimension(npart,3), intent(inout) :: xyz
  real, dimension(npart) :: pmass
@@ -574,7 +572,6 @@ end subroutine reset_centre_of_mass
 !--adjust velocities to corotating frame
 !
 subroutine set_corotating_vels(pmass,vxy,n1,npart)
- implicit none
  integer, intent(in) :: n1,npart
  real, dimension(npart,2), intent(inout) :: vxy !, xy
  real, dimension(npart) :: pmass
@@ -618,12 +615,11 @@ end subroutine read_data_sro
 
 subroutine set_labels_sro
  use filenames, only:rootname
- use labels, only:label,unitslabel,labelvec,labeltype,iamvec,&
+ use labels, only:label,unitslabel=>unitslabel_default,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB,make_vector_label
- use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
- use geometry, only:labelcoord
- use settings_units, only:units
- implicit none
+ use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+ use geometry,       only:labelcoord
+ use settings_units, only:units=>units_default
  integer :: i
  logical :: minidump
  real :: udistcm,udistkm,utime,umass,uvelkms

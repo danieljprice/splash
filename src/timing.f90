@@ -43,7 +43,6 @@ contains
 !+
 !--------------------------------------------------------------------
 subroutine initialise_timing
- implicit none
  integer :: iday,imonth,iyear,ihour,imin,isec,imsec,ivalues(8)
  character(len=8)  :: date
  character(len=5)  :: zone
@@ -75,7 +74,6 @@ end subroutine initialise_timing
 !+
 !--------------------------------------------------------------------
 subroutine wall_time(t)
- implicit none
  real, intent(out) :: t
  integer :: i,iday,imonth,ihour,imin,isec,imsec,ivalues(8)
  character(len=8)  :: date
@@ -116,7 +114,6 @@ end subroutine wall_time
 !
 !--------------------------------------------------------------------
 subroutine print_time(time,string,iunit)
- implicit none
  real, intent(in) :: time
  character(len=*), intent(in), optional :: string
  integer, intent(in), optional :: iunit

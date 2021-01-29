@@ -65,7 +65,6 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  use geometry,       only:labelcoordsys
  use system_utils,   only:lenvironment
  use labels,         only:labeltype,print_types,headertags
- implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname
@@ -362,7 +361,6 @@ subroutine set_labels_ndspmhd
  use settings_data, only:ndim,ndimV,iformat,ntypes, &
                     UseTypeInRenderings,ncolumns
  use geometry, only:labelcoord
- implicit none
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then

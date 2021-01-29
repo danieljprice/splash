@@ -51,6 +51,19 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.0.3   : (29/01/21) changing units rescales plot limits correctly;
+!             can change units temporarily without writing .units file;
+!             auto-select closest velocity and mass unit and better default time unit
+!             in phantom/sphNG read; error message if Inf or NaN read from .units file;
+!             bug fix with units prompt; floating colour bars are white not black
+!     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
+!             use opacity defined on particles; can track multiple particles with
+!             'splash calc tracks' by specifying ids in splash.tracks file;
+!             support for SWIFT code in gadget_hdf5; auto-recognise format for .csv files;
+!             improved starsmasher data read; improved physical unit selection;
+!             exact solution lines can be plotted in background colour;
+!             bug fix for dead particles in phantom dumps; seg fault in fits reader fixed;
+!             seg fault in gadget data read fixed; bug fix in x-menu options
 !     3.0.0   : (26/08/20) Unified splash binary with -f flag to specify format;
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;
@@ -438,7 +451,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.1 [27th Aug 2020]'
+ character(len=*), parameter :: version = 'v3.0.3 [29th Jan 2021]'
 
  !
  ! initialise some basic code variables
@@ -827,7 +840,6 @@ contains
 ! this subroutine prints the splash screen on startup
 !------------------------------------------------------
 subroutine print_header
- implicit none
 
  print 10
 10 format( &
@@ -841,7 +853,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2020 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
@@ -856,7 +868,6 @@ end subroutine print_header
 
 subroutine print_usage(quit)
  use filenames, only:tagline
- implicit none
  logical, intent(in), optional :: quit
  logical :: ltemp
 

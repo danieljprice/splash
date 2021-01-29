@@ -64,7 +64,6 @@ contains
 !
 !---------------------------------------------------------------------------
 subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
- implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in), dimension(npixx,npixy) :: vecpixx,vecpixy
  real, intent(in) :: pixwidth
@@ -206,7 +205,6 @@ end subroutine streamlines
 ! we want to trace the curve through a 2D vector field
 !
 subroutine fieldlines2D(npart,x,y,vecx,vecy,h,pmass,rho,xmin,xmax,ymin,ymax)
- implicit none
  integer, intent(in) :: npart
  real, intent(in), dimension(npart) :: x,y,vecx,vecy,h,pmass,rho
  real, intent(in) :: xmin,xmax,ymin,ymax
@@ -234,7 +232,6 @@ end subroutine fieldlines2D
 subroutine trace2D(xstart,ystart,xmin,xmax,ymin,ymax,ymaxline, &
                    x,y,vecx,vecy,h,pmass,rho,npart)
  use plotlib, only:plot_line
- implicit none
  integer, intent(in) :: npart
  real, intent(in) :: xstart,ystart,xmin,xmax,ymin,ymax
  real, intent(inout) :: ymaxline
@@ -299,7 +296,6 @@ end subroutine trace2D
 !
 subroutine interpolate_pt(xpt,ypt,vxpt,vypt,x,y,vecx,vecy,h,pmass,rho,npart)
  use kernels, only:radkernel2,wfunc,cnormk2D
- implicit none
  integer, intent(in) :: npart
  real, dimension(npart), intent(in) :: x,y,vecx,vecy,h,pmass,rho
  real, intent(in) :: xpt, ypt
@@ -353,7 +349,6 @@ subroutine vecplot3D_proj(x,y,z,vx,vy,vz,vecmax,weight,itype,n,dx,zobs,dscreen)
  use plotlib, only:plot_line,plot_bbuf,plot_ebuf,plot_slw,plot_sci,plot_set_opacity
  use plotlib, only:plot_qcr,plot_scr,plot_qlw,plot_arro,plot_sah
  use sort,    only:indexx
- implicit none
  integer, intent(in) :: n
  real, dimension(n), intent(in) :: x,y,z,vx,vy,vz,weight
  integer, dimension(n), intent(in) :: itype

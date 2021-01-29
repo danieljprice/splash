@@ -31,13 +31,15 @@ module analysis
  private
  integer, private, parameter :: iunit = 89
  integer, private, parameter :: maxlevels = 20
+ integer, private, parameter :: maxtrack = 32
 !
 ! default settings for the density thresholds for massaboverho output
 !
- integer, private :: nlevels,nfilesread
+ integer, private :: nlevels,nfilesread,nfileout
  real, dimension(maxlevels), private :: rholevels
- character(len=64), private :: fileout
+ character(len=64), private :: fileout(maxtrack)
  real, dimension(:,:), allocatable :: datmean,datvar
+ integer, private :: itracks(maxtrack)
 
 contains
 
@@ -46,7 +48,6 @@ contains
 ! and if not, to print the available options
 !-----------------------------------------------------------------
 logical function isanalysis(string,noprint)
- implicit none
  character(len=*), intent(in) :: string
  logical, intent(in), optional :: noprint
  logical :: doprint,verbose
@@ -119,18 +120,18 @@ logical function isanalysis(string,noprint)
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
     print "(a)",'                             output to file called ''rmsvals.out'''
     print "(a)",'         calc tracks       : track particle data vs time for selected* particle,'
-    print "(a)",'                             output to file called ''tracks.out'''
+    print "(a)",'                             output to file called ''tracks-123.out'''
 !    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
 !    print "(a)",'                             output to file called ''rmsvals-vw.out'''
-    print "(a)",'          ( * select "xy limits relative to particle" in l)imits menu", or'
-    print "(a)",'            press "t" in interactive mode, and save settings to splash.defaults )'
+    print "(a)",'          ( * select "xy limits relative to particle" in l)imits menu",'
+    print "(a)",'            or "t" in interactive mode and save, or list ids in ''splash.tracks'' )'
     print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
     print "(a)",'  the following option produces a file equivalent in size to one input file (in ascii format):'
     print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
     print "(a)",'                             output to file called ''time_average.out'''
     print "(/,a)",'         calc ratio        : ratio of *all* entries in each file compared to first'
     print "(a)",'                             output to file called ''ratio.out'''
- else
+ elseif (.not.isanalysis .and. doprint) then
     print "(a)",'Analysis mode:'
     print "(a)",'   splash calc <mode>  : type "splash calc" for details'
  endif
@@ -143,11 +144,10 @@ end function isanalysis
 !  over all dump files
 !----------------------------------------------------------------
 subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
- use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,ih,label
+ use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,label
  use asciiutils, only:read_asciifile
- use filenames,  only:rootname,nfiles,tagline
+ use filenames,  only:rootname,nfiles,tagline,fileprefix
  use params,     only:maxplot
- implicit none
  integer, intent(in) :: ncolumns,ndim,ndimV
  character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
@@ -155,7 +155,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  character(len=64) :: levelsfile
  character(len=maxplot*12) :: fmtstring
  logical :: iexist,standardheader
- integer :: ierr,i
+ integer :: ierr,i,lunit
 !
 !--the 'required' array is used by the data reads (where implemented)
 !  to determine whether or not we actually need to read a given column
@@ -167,6 +167,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  required(:)=.false.
  headerline = ' '
  standardheader = .false.
+ nfileout = 1
 
  select case(trim(analysistype))
  case('energy','energies')
@@ -185,7 +186,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'energy.out'
+    fileout(1) = 'energy.out'
     write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
           1,'time',2,'ekin',3,'etherm',4,'emag',5,'epot',6,'etot',7,'totmom',8,'totang'
 
@@ -228,7 +229,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'massaboverho.out'
+    fileout(1) = 'massaboverho.out'
     write(headerline,"('#',1x,'[',i2.2,1x,a12,']',1x,20('[',i2.2,1x,a4,es8.1,a1,']',1x))") &
           1,'time',(i+1,'M(r>',rholevels(i),')',i=1,nlevels)
 
@@ -240,49 +241,49 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'maxvals.out'
+    fileout(1) = 'maxvals.out'
     standardheader = .true.
 
  case('min','minvals')
 
     required(:) = .true.
-    fileout = 'minvals.out'
+    fileout(1) = 'minvals.out'
     standardheader = .true.
 
  case('diff','diffvals')
 
     required(:) = .true.
-    fileout = 'diffvals.out'
+    fileout(1) = 'diffvals.out'
     standardheader = .true.
 
  case('amp','ampvals')
 
     required(:) = .true.
-    fileout = 'ampvals.out'
+    fileout(1) = 'ampvals.out'
     standardheader = .true.
 
  case('delta','deltavals','deltas')
 
     required(:) = .true.
-    fileout = 'deltavals.out'
+    fileout(1) = 'deltavals.out'
     standardheader = .true.
 
  case('mean','meanvals')
 
     required(:) = .true.
-    fileout = 'meanvals.out'
+    fileout(1) = 'meanvals.out'
     standardheader = .true.
 
  case('rms','rmsvals')
 
     required(:) = .true.
-    fileout = 'rmsvals.out'
+    fileout(1) = 'rmsvals.out'
     standardheader = .true.
 
  case('vrms','vrmsvals','vwrms','rmsvw')
 
     required(:) = .true.
-    fileout = 'rmsvals-vw.out'
+    fileout(1) = 'rmsvals-vw.out'
     standardheader = .true.
 
  case('rhovar','rhomach')
@@ -295,7 +296,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'rhomach.out'
+    fileout(1) = 'rhomach.out'
     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 17
     write(headerline,fmtstring) 1,'time',2,'rhomean(vw)',3,'rhomean(mw)',4,'varrho(vw)',5,'varrho(mw)',&
           6,'stddevrho(vw)',7,'stddevrho(mw)',8,'rms v (vw)',9,'rms v (mw)',10,'b (vw)',11,'b (mw)',&
@@ -310,7 +311,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'kh.out'
+    fileout(1) = 'kh.out'
     standardheader = .true.
     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) 2
     write(headerline,fmtstring) 1,'time',2,'max(ekiny)'
@@ -323,7 +324,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'time_average.out'
+    fileout(1) = 'time_average.out'
     if (ncolumns > 0) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
@@ -337,7 +338,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'ratio.out'
+    fileout(1) = 'ratio.out'
     if (ncolumns > 0 .and. ncolumns /= maxplot) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
@@ -351,7 +352,16 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout = 'tracks.out'
+    fileout(1) = 'tracks.out' ! in case ntracks = 0
+    !
+    !--look for a file "splash.tracks" for particle ids to track
+    !
+    call read_asciifile(trim(fileprefix)//'.tracks',nfileout,itracks,ierr)
+    if (ierr == 0) then
+       do i=1,nfileout
+          write(fileout(i),"(a,i0,a)") 'tracks-',itracks(i),'.out'
+       enddo
+    endif
     standardheader = .true.
 
  ! case('lightcurve')
@@ -383,34 +393,40 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
 !
 !--do not replace the file if it already exists
 !
- inquire(file=trim(fileout),exist=iexist)
- if (iexist) then
-    print "(2(a,/))",' ERROR: analysis file '//trim(fileout)//' already exists', &
-                    '        delete, move or rename this file and try again'
-    stop
- endif
-!
-!--open the file for output
-!
- open(unit=iunit,file=trim(fileout),status='new',form='formatted',iostat=ierr)
- if (ierr /= 0) then
-    print "(a)",' ERROR opening file '//trim(fileout)//' for output'
-    stop
- endif
- print "(a)",' WRITING '//trim(analysistype)//' vs time to file '//trim(fileout)
-!
-!--write header if the headerline is set
-!  (no header is written if headerline is blank)
-!
- if (len_trim(headerline) > 0) then
-    write(iunit,"(a)") '# '//trim(tagline)
-    write(iunit,"(a)") '# '//trim(fileout)//' produced using "splash calc '//trim(analysistype)// &
-                       '" on dump files '//trim(rootname(1))//'->'//trim(rootname(nfiles))
-    write(iunit,"(a)") '# use asplash -e '//trim(fileout)//' to plot the contents of this file '
-    write(iunit,"(a)") '#'
-    write(iunit,"(a)") trim(headerline)
- endif
-
+ do i=1,nfileout
+    inquire(file=trim(fileout(i)),exist=iexist)
+    if (iexist) then
+       print "(2(a,/))",' ERROR: analysis file '//trim(fileout(i))//' already exists', &
+                        '        delete, move or rename this file and try again'
+       if (nfileout==1) cycle
+    endif
+    !
+    !--open the file for output
+    !
+    lunit = iunit+i-1
+    if (nfileout > 1) then
+       open(unit=lunit,file=trim(fileout(i)),status='replace',form='formatted',iostat=ierr)
+    else
+       open(unit=lunit,file=trim(fileout(i)),status='new',form='formatted',iostat=ierr)
+    endif
+    if (ierr /= 0) then
+       print "(a)",' ERROR opening file '//trim(fileout(i))//' for output'
+       stop
+    endif
+    print "(a)",' WRITING '//trim(analysistype)//' vs time to file '//trim(fileout(i))
+    !
+    !--write header if the headerline is set
+    !  (no header is written if headerline is blank)
+    !
+    if (len_trim(headerline) > 0) then
+       write(lunit,"(a)") '# '//trim(tagline)
+       write(lunit,"(a)") '# '//trim(fileout(i))//' produced using "splash calc '//trim(analysistype)// &
+                          '" on dump files '//trim(rootname(1))//'->'//trim(rootname(nfiles))
+       write(lunit,"(a)") '# use splash -ev '//trim(fileout(i))//' to plot the contents of this file '
+       write(lunit,"(a)") '#'
+       write(lunit,"(a)") trim(headerline)
+    endif
+ enddo
  nfilesread = 0
 
  return
@@ -433,7 +449,6 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  !use lightcurve,    only:get_lightcurve
- implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
@@ -442,7 +457,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
@@ -450,7 +465,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real(kind=doub_prec) :: lmin(maxplot),lmax(maxplot),lmean(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
- real                 :: lum,rphoto,tphoto
+ !real                 :: lum,rphoto,tphoto
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
@@ -655,19 +670,38 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     lmean(:) = 0.
     lmin(:) = huge(0.d0)
     lmax(:) = -huge(0.d0)
-    nused = 0
-    do j=1,ntot
-       itype = igettype(j)
-       if (iplotpartoftype(itype) .or. j==itrack) then
-          vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
-          if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
-          nused = nused + 1
-          do i=1,ncolumns
-             lmin(i) = min(lmin(i), vals(i))
-             lmax(i) = max(lmax(i), vals(i))
-             lmean(i) = lmean(i) + vals(i)
-          enddo
-          if (j==itrack) coltemp = vals
+    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
+
+    do ifile=1,nfileout
+       if (nfileout > 1) itrack = itracks(ifile)
+       nused = 0
+       coltemp = 0.
+       do j=1,ntot
+          itype = igettype(j)
+          if (iplotpartoftype(itype) .or. j==itrack) then
+             vals(1:ncolumns) = real(dat(j,1:ncolumns),kind=doub_prec)
+             if (change_coordsys) call change_coords(vals,ncolumns,ndim,icoords,icoordsnew,x0,v0)
+             nused = nused + 1
+             do i=1,ncolumns
+                lmin(i) = min(lmin(i), vals(i))
+                lmax(i) = max(lmax(i), vals(i))
+                lmean(i) = lmean(i) + vals(i)
+             enddo
+             if (j==itrack) coltemp = vals
+          endif
+       enddo
+
+       if (trim(analysistype)=='tracks') then
+          if (ifile==1) then
+             do i=1,ncolumns
+                print "(1x,' particle ',i8,': ',a20,' = ',es18.10)",itrack,label(i),coltemp(i)
+             enddo
+          endif
+          !
+          !--write line to output file
+          !
+          write(iunit+ifile-1,fmtstring) timei,coltemp(1:ncolumns)
+          print "(1x,'>>> ',a,' <<<')",'written to '//trim(fileout(ifile))
        endif
     enddo
     if (nused > 0) lmean(:) = lmean(:)/real(nused)
@@ -688,11 +722,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           endif
           print "(1x,a20,'0.5*(max - min)/mean = ',es18.10)",label(i),coltemp(i)
        enddo
-    case('tracks')
-       do i=1,ncolumns
-          print "(1x,' particle ',i8,': ',a20,' = ',es18.10)",itrack,label(i),coltemp(i)
-       enddo
-    case default ! diff, diffvals
+    case('diff','diffvals') ! diff, diffvals
        do i=1,ncolumns
           coltemp(i) = lmax(i) - lmin(i)
           print "(1x,a20,'(max - min) = ',es18.10)",label(i),coltemp(i)
@@ -701,8 +731,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     !
     !--write line to output file
     !
-    write(fmtstring,"('(',i3,'(es18.10,1x))')",iostat=ierr) ncolumns+1
-    write(iunit,fmtstring) timei,coltemp(1:ncolumns)
+    if (trim(analysistype) /= 'tracks') then
+       write(iunit,fmtstring) timei,coltemp(1:ncolumns)
+    endif
 
     if (nused /= ntot) then
        select case(trim(analysistype))
@@ -1127,7 +1158,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     return
  end select
 
- print "(/,1x,'>>> ',a,' <<<')",'written to '//trim(fileout)
+ if (nfileout==1) print "(/,1x,'>>> ',a,' <<<')",'written to '//trim(fileout(1))
 
  return
 
@@ -1137,7 +1168,6 @@ contains
 !  (which depends whether or not mixed types are stored)
 !
 integer function igettype(i)
- implicit none
  integer :: np
  integer, intent(in) :: i
 
@@ -1159,7 +1189,6 @@ end function igettype
 !   or only for each type)
 !
 real function particlemass(i,iparttype)
- implicit none
  integer, intent(in) :: i,iparttype
 
  if (ipmass > 0 .and. ipmass <= ncolumns) then
@@ -1174,7 +1203,6 @@ end subroutine write_analysis
 
 subroutine cross_product3D(veca,vecb,vecc)
  use params, only:doub_prec
- implicit none
  real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
  real(kind=doub_prec), dimension(3), intent(out) :: vecc
 
@@ -1188,7 +1216,6 @@ end subroutine cross_product3D
 ! close output file
 !---------------------
 subroutine close_analysis(analysistype)
- implicit none
  character(len=*), intent(in) :: analysistype
  integer :: i
 
@@ -1207,7 +1234,9 @@ subroutine close_analysis(analysistype)
  if (allocated(datmean)) deallocate(datmean)
  if (allocated(datvar)) deallocate(datvar)
 
- close(unit=iunit)
+ do i=1,nfileout
+    close(iunit+i-1)
+ enddo
 
  return
 end subroutine close_analysis

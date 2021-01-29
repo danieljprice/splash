@@ -39,12 +39,11 @@ module planetdisc
 
 contains
 
-subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot,yplot,ierr)
+subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,rplot,yplot,ierr)
  use plotlib, only:plot_line
- implicit none
  integer, intent(in)  :: iplot,ispiral,narms
  integer, intent(out) :: ierr
- real,    intent(in)  :: time, HonR, rplanet, q, params(:,:)
+ real,    intent(in)  :: time, HonR, rplanet, q, phi0, params(:,:)
  real, dimension(:),           intent(inout) :: rplot
  real, dimension(size(rplot)), intent(out)   :: yplot
  integer :: npts,iend,istart
@@ -59,7 +58,8 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,params,rplot
  ierr = 0
  npts = size(rplot)
  norbits = int(time/(2.*pi))
- phase   = 0. !time - (2.*pi*norbits)
+ phase = phi0*pi/180. ! convert to radians
+ if (time > 0.) phase = phase + (time - (2.*pi*norbits))
  use_ogilvie = .false.
  select case(ispiral)
  case(2)

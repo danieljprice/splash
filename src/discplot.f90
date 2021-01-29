@@ -43,7 +43,6 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes,doub_prec
  use part_utils, only:igettype
- implicit none
  integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
@@ -243,7 +242,6 @@ end subroutine disccalc
 !---------------------------------------------------
 subroutine discplot
  use plotlib, only:plot_line
- implicit none
 
  call plot_line(nbins,radius,sigma)
 

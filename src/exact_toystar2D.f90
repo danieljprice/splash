@@ -48,7 +48,6 @@ contains
 subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
                            ampl,denscentre,C0,jorder,morder, &
                            V11,V22,V12,V21,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot,jorder,morder
  integer, intent(out) :: ierr
  real, intent(in) :: time,gamma,polyk,totmass
@@ -301,7 +300,6 @@ end subroutine exact_toystar2D
 !  etar = rad**m sum_k a_k rad**k
 !
 real function etar(j,m,rad,gamma)
- implicit none
  integer, intent(in) :: j,m ! j is the radial mode, m is the theta mode
  integer :: k,kprev
  real, intent(in) :: rad,gamma
@@ -347,7 +345,6 @@ end function etar
 !  (from the power series solution to the 2nd order ODE)
 !
 real function detadr(j,m,rad,gamma)
- implicit none
  integer, intent(in) :: j, m  ! j is the radial mode, m is the theta mode
  integer :: k,kprev
  real, intent(in) :: rad,gamma
@@ -397,7 +394,6 @@ real function detadr(j,m,rad,gamma)
 end function detadr
 
 subroutine param_derivs(func,dfunc,fac,gamm1,omegasq)
- implicit none
  real, intent(in), dimension(8) :: func
  real, intent(out), dimension(8) :: dfunc
  real, intent(in) :: fac, gamm1,omegasq
@@ -424,7 +420,6 @@ end subroutine param_derivs
 !----------------------------------------------------------------------
 subroutine exact_toystar_ACplane2D(astart,bstart,sigmain,gamma)
  use plotlib, only:plot_swin,plot_box,plot_label,plot_line
- implicit none
  real, intent(in) :: astart,bstart,sigmain,gamma
  integer, parameter :: npts = 2000
  integer :: i

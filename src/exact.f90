@@ -92,7 +92,7 @@ module exact
  !--C-shock
  real :: machs,macha
  !--planet-disc interaction
- real :: HonR,rplanet,q_index
+ real :: HonR,rplanet,q_index,phase
  real :: spiral_params(7,maxexact)
  integer :: ispiral,narms
  !--bondi flow
@@ -118,7 +118,7 @@ module exact
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params
+       const1,const2,ispiral,narms,spiral_params,phase
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -206,6 +206,7 @@ subroutine defaults_set_exact
  q_index = 0.25
  ispiral = 1
  narms = 1
+ phase = 0.
  spiral_params = 0.
  spiral_params(2,:) = 360.
 !   Bondi
@@ -255,7 +256,7 @@ subroutine submenu_exact(iexact)
  use planetdisc,    only:maxspirals,labelspiral
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars,read_asciifile
  integer, intent(inout) :: iexact
- integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows
+ integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows,nfilestmp
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
@@ -329,7 +330,8 @@ subroutine submenu_exact(iexact)
     ! try to read filenames from .exactfiles if it exists
     !
     filename_tmp = trim(fileprefix)//'.exactfiles'
-    call read_asciifile(trim(filename_tmp),nfiles,filename_exact,ierr)
+    call read_asciifile(trim(filename_tmp),nfilestmp,filename_exact,ierr)
+    if (nfilestmp > 0) nfiles = nfilestmp
     !
     ! then prompt user
     !
@@ -345,7 +347,7 @@ subroutine submenu_exact(iexact)
     over_files: do i=1,nfiles
        iexist = .false.
        do while(.not.iexist)
-          print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
+          if (i==1) print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
           write(str,"(i4)") i
           call prompt('enter filename #'//trim(adjustl(str)),filename_exact(i))
           !--substitute %f for filename
@@ -413,7 +415,7 @@ subroutine submenu_exact(iexact)
        endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
-       call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
+       !call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
     enddo over_files
     if (nadjust >= 0) then
        nfiles = nadjust
@@ -587,6 +589,7 @@ subroutine submenu_exact(iexact)
        call prompt('enter disc aspect ratio at planet location (H/R)',HonR,0.,1.)
        call prompt('enter planet orbital radius ',rplanet,0.)
        call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
+       call prompt('enter orbital phase at t=0 in degrees ',phase)
     end select
  case(18)
     prompt_for_gamma = .true.
@@ -647,7 +650,6 @@ end function get_nexact
 subroutine options_exact(iexact)
  use prompting, only:prompt
  use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
- implicit none
  integer, intent(in) :: iexact
  character(len=12) :: string
  integer :: nexact,i
@@ -657,7 +659,7 @@ subroutine options_exact(iexact)
  string = ''
  do i=1,nexact
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
-    call prompt('enter line colour '//trim(string),iExactLineColour(i),1,plotlib_maxlinecolour)
+    call prompt('enter line colour '//trim(string),iExactLineColour(i),0,plotlib_maxlinecolour)
  enddo
  do i=1,nexact
     if (nexact > 1) write(string,"(a,i2)") 'for line ',i
@@ -1440,7 +1442,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     endif
  case(17) ! planet-disc interaction
     if (ndim >= 2 .and. iplotx==ix(1) .and. iploty==ix(2)) then
-       call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,q_index,narms,&
+       call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,q_index,phase,narms,&
                                 spiral_params,xexact,yexact,ierr)
     endif
  case(18)

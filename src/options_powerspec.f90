@@ -41,7 +41,6 @@ contains
 !---------------------------------------------
 subroutine defaults_set_powerspec
  use settings_data, only:ndim
- implicit none
 
  idisordered = .true.
  ipowerspecy = max(ndim+1,2)
@@ -63,7 +62,6 @@ subroutine options_powerspec
  use limits,        only:lim
  use labels,        only:ipowerspec
  use prompting,     only:prompt
- implicit none
  real :: boxsize
 
  if (ipowerspecy < ndim+1) ipowerspecy = ndim+1
@@ -108,7 +106,6 @@ end subroutine options_powerspec
 !-----------------------------------------------------------------
 subroutine options_pdf
  use prompting, only:prompt
- implicit none
 
  call prompt(' Enter number of bins between min and max of plot (0=auto)',npdfbins,0)
 

@@ -50,7 +50,6 @@ contains
 !---------------------------------------------
 subroutine defaults_set_part
  use settings_data, only:icoords
- implicit none
  integer :: i
 
  ncircpart = 0
@@ -93,7 +92,6 @@ end subroutine defaults_set_part
 ! changed default values for these options
 !---------------------------------------------
 subroutine defaults_set_part_ev
- implicit none
 
  iplotline = .true.     ! plot line joining the particles
  iplotpartoftype(1:maxparttypes) = .false. ! whether or not to plot particles of certain types
@@ -134,7 +132,6 @@ subroutine submenu_particleplots(ichoose)
  use geomutils,       only:set_coordlabels
  use calcquantities,  only:setup_calculated_quantities
  use asciiutils,      only:enumerate
- implicit none
  integer, intent(in) :: ichoose
  integer             :: i,iaction,n,itype,icoordsprev,ierr,icol,isinktype,nt
  character(len=2)    :: charntypes

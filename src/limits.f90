@@ -93,6 +93,21 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
 end subroutine set_limits
 
 !----------------------------------------------------------
+! rescale plot limits for all columns by factor
+! e.g. if units have changed
+!----------------------------------------------------------
+subroutine rescale_limits(fac)
+ real, intent(in) :: fac(:)
+ integer :: j
+
+ do j=1,min(size(fac),size(lim),size(lim2))
+    lim(j,:) = lim(j,:)*fac(j)
+    lim2(j,:) = lim2(j,:)*fac(j)
+ enddo
+
+end subroutine rescale_limits
+
+!----------------------------------------------------------
 ! save plot limits for all columns to a file
 !----------------------------------------------------------
 subroutine write_limits(limitsfile)
@@ -187,7 +202,7 @@ subroutine read_limits(limitsfile,ierr)
 999 continue
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
- if (i <= ncolumns+ncalc) then
+ if (i < ncolumns+ncalc) then
     print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
     ierr = -1
  endif

@@ -261,7 +261,7 @@ end function get_command_option
 logical function get_command_flag(variable) result(val)
  character(len=*), intent(in) :: variable
  character(len=80) :: string
- integer :: ierr,nargs,ieq,iarg
+ integer :: nargs,iarg
 
  val = .false.
  nargs = command_argument_count()
@@ -280,7 +280,7 @@ integer function count_matching_args(string,id) result(n)
  character(len=*), intent(in) :: string
  integer, intent(out), optional :: id(:)
  character(len=80) :: myarg
- integer :: ierr,nargs,ieq,iarg
+ integer :: iarg,nargs
 
  n = 0
  nargs = command_argument_count()

@@ -685,7 +685,6 @@ end subroutine add_textshape
 !-----------------------------------------------------------------
 subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itransx,itransy)
  use transforms, only:transform
- implicit none
  type(shapedef), intent(in) :: shape
  real, intent(out)   :: xpos,ypos,xlen,ylen
  real, intent(in)    :: xmin,ymin,dxplot,dyplot

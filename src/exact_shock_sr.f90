@@ -44,7 +44,6 @@ module shock_sr
 contains
 
 subroutine exact_shock_sr(iplot,time,gamma,rho_L,rho_R,p_L,p_R,v_L,v_R,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot
  integer, intent(out) :: ierr
  real, intent(in) :: time,gamma
@@ -136,7 +135,6 @@ end subroutine exact_shock_sr
 
 subroutine riemann(mn,rad,rhoa,pa,vela,ua,rholin,rhorin,plin,prin, &
                      vlin,vrin,gamin,tin,x0)
- implicit none
 
 ! -------
 ! common blocks
@@ -399,7 +397,6 @@ end subroutine riemann
 
 subroutine getdvel( p, dvel )
 
- implicit none
 
 ! -----
 ! arguments
@@ -465,7 +462,6 @@ end subroutine getdvel
 !
 subroutine getp( pmin, pmax, tol, ps )
 
- implicit none
 
 ! -----
 ! arguments
@@ -629,7 +625,6 @@ end subroutine getp
 subroutine getvel( p, rhoa, pa, ha, csa, vela, wa, s,  &
                      rho, u,  h,  cs,  vel,  vshock )
 
- implicit none
 
 ! -----
 ! arguments
@@ -800,7 +795,6 @@ end subroutine getvel
 
 subroutine raref( xi, rhoa, csa, vela, s, rho, p, u, vel )
 
- implicit none
 
 ! -----
 ! arguments

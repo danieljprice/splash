@@ -117,7 +117,7 @@
 ! Real and double prompts print values using scientific notation 1.e8 instead of 0.1e9
 !
 module prompting
-
+ implicit none
  private
 
  !
@@ -522,7 +522,7 @@ recursive subroutine string_prompt(text, string, length, case, noblank, list)
  integer, optional, intent(out)  :: length
  integer, optional, intent(in)   :: case
  logical, optional, intent(in)   :: noblank
- integer                         :: is, ia
+ integer                         :: is, ia, i
  integer, parameter              :: aoffset = 32
  logical                         :: allowblank,inlist
  character(len=*), dimension(:), intent(in), optional :: list
@@ -704,7 +704,6 @@ end subroutine intarr_prompt
  !
 
 function print_logical(lvalue,mask)
- implicit none
  logical, intent(in) :: lvalue
  logical, intent(in), optional :: mask
  character(len=3) :: print_logical
@@ -726,7 +725,6 @@ function print_logical(lvalue,mask)
 end function print_logical
 
 function print_logicals(lvalues,mask)
- implicit none
  logical, intent(in) :: lvalues(:)
  logical, intent(in), optional :: mask(:)
  character(len=4*size(lvalues)) :: print_logicals

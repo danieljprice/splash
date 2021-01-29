@@ -36,7 +36,6 @@ module densityprofiles
 contains
 
 subroutine exact_densityprofiles(iplot,iprofile,Msphere,rsoft,xplot,yplot,ierr)
- implicit none
  real, parameter :: pi = 3.1415926536
  integer, intent(in) :: iplot,iprofile
  real, intent(in), dimension(2) :: Msphere,rsoft

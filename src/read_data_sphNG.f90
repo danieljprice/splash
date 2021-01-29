@@ -65,8 +65,9 @@ module sphNGread
  use params
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
- real :: tfreefall
+ real :: tfreefall,dtmax
  integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol!,ikappacol
+ integer :: itempcol = 0 ! default value
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -501,8 +502,6 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
  integer               :: i,ierr1,ierr2,ierrs(4)
  integer               :: nints,ninttypes,nreal4s,nreal8s
  integer               :: n2,nreassign,naccrete,nkill
- real(doub_prec), allocatable :: dattemp(:)
- real(sing_prec), allocatable :: dattempsingle(:)
 
  ! initialise empty tag array
  tags(:) = ''
@@ -762,7 +761,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
  integer, intent(inout) :: npart,ntotal
  logical, intent(in)  :: debug
  logical, intent(out) :: gotbinary
- real :: rhozero,tfreefall,tff,radL1,PhiL1,Er,RK2,dtmax
+ real :: rhozero,tff,radL1,PhiL1,Er,RK2 !,dtmax
  real :: massoftypei(ntypes)
  integer :: i,ierrs(10)
  integer :: itype
@@ -843,6 +842,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
  hfact = 1.2
  if (phantomdump) then
     call extract('hfact',hfact,realarr,tags,nreals,ierrs(1))
+    call extract('dtmax',dtmax,realarr,tags,nreals,ierrs(2))
     if (iverbose > 0) then
        print "(a,es12.4,a,f6.3,a,f5.2)", &
            ' time = ',time,' gamma = ',gamma,' hfact = ',hfact
@@ -1250,8 +1250,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use asciiutils,     only:make_tags_unique
  use sphNGread
  use lightcurve,     only:get_temp_from_u
- use settings_units, only:units
- implicit none
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1298,7 +1296,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
- itempcol = 0
  ikappacol = 0
  nhydroreal4 = 0
  umass = 1.d0
@@ -1333,6 +1330,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  j = indexstart
  nstepsread = 0
  doubleprec = .true.
+ if (itempcol > 0 .and. required(itempcol)) then
+    required(irho) = .true.
+    required(iutherm) = .true.
+ endif
  ilastrequired = 0
  do i=1,size(required)-1
     if (required(i)) ilastrequired = i
@@ -2208,7 +2209,6 @@ contains
 !--reset centre of mass to zero
 !
 subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,3), intent(inout) :: xyz
  real, dimension(np), intent(in) :: pmass
@@ -2240,7 +2240,6 @@ subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
 end subroutine reset_centre_of_mass
 
 subroutine reset_corotating_velocities(np,xy,velxy,omeg)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,2), intent(in) :: xy
  real, dimension(np,2), intent(inout) :: velxy
@@ -2259,7 +2258,6 @@ subroutine reset_corotating_velocities(np,xy,velxy,omeg)
 end subroutine reset_corotating_velocities
 
 subroutine reset_corotating_positions(np,xy,omeg,t)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,2), intent(inout) :: xy
  real, intent(in) :: omeg,t
@@ -2292,22 +2290,24 @@ end subroutine read_data_sphNG
 !!------------------------------------------------------------
 
 subroutine set_labels_sphNG
- use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
+ use labels, only:label,unitslabel=>unitslabel_default,&
+              labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label,get_label_grain_size,ikappacol
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
- use settings_units,  only:units,unitzintegration,get_nearest_length_unit,get_nearest_time_unit
+ use settings_units,  only:units=>units_default,unitzintegration,&
+                           get_nearest_length_unit,get_nearest_time_unit,&
+                           get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread
  use asciiutils,      only:lcase,make_tags_unique,match_tag
  use system_commands, only:get_environment
  use system_utils,    only:lenvironment
- implicit none
  integer :: i,j,idustlast
- real(doub_prec)   :: unitx
- character(len=20) :: string,unitlabelx
+ real(doub_prec)   :: unitx,unitvel
+ character(len=20) :: string,unitlabelx,unitlabelv
  character(len=20) :: deltav_string
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -2490,27 +2490,29 @@ subroutine set_labels_sphNG
  !--set units for plot data
  !
  call get_nearest_length_unit(udist,unitx,unitlabelx)
+ call get_nearest_velocity_unit(udist/utime,unitvel,unitlabelv)
  if (ndim >= 3) then
     units(1:3) = unitx
     unitslabel(1:3) = unitlabelx
  endif
  if (ipmass > 0) then
-    units(ipmass) = umass
-    unitslabel(ipmass) = ' [g]'
+    call get_nearest_mass_unit(umass,units(ipmass),unitslabel(ipmass))
+    !units(ipmass) = umass
+    !unitslabel(ipmass) = ' [g]'
  endif
  units(ih) = unitx
  unitslabel(ih) = unitlabelx
  if (ivx > 0) then
-    units(ivx:ivx+ndimV-1) = udist/utime
-    unitslabel(ivx:ivx+ndimV-1) = ' [cm/s]'
+    units(ivx:ivx+ndimV-1) = unitvel
+    unitslabel(ivx:ivx+ndimV-1) = unitlabelv
  endif
  if (ideltavsum > 0) then
-    units(ideltavsum:ideltav+ndimV-1) = udist/utime
-    unitslabel(ideltavsum:ideltav+ndimV-1) = ' [cm/s]'
+    units(ideltavsum:ideltav+ndimV-1) = unitvel
+    unitslabel(ideltavsum:ideltav+ndimV-1) = unitlabelv
  endif
  if (ideltav > 0) then
-    units(ideltav:ideltav+ndimV-1) = udist/utime
-    unitslabel(ideltav:ideltav+ndimV-1) = ' [cm/s]'
+    units(ideltav:ideltav+ndimV-1) = unitvel
+    unitslabel(ideltav:ideltav+ndimV-1) = unitlabelv
  endif
  if (iutherm > 0) then
     units(iutherm) = (udist/utime)**2
@@ -2566,7 +2568,12 @@ subroutine set_labels_sphNG
     units(0) = 1./tfreefall
     unitslabel(0) = ' '
  case default
-    call get_nearest_time_unit(utime,unitx,unitslabel(0))
+    if (dtmax > 0. .and. (abs(utime-1d0) > 0.d0)) then ! use interval between full dumps
+       call get_nearest_time_unit(utime*dtmax*10.,unitx,unitslabel(0))
+       unitx = unitx/(dtmax*10.)
+    else
+       call get_nearest_time_unit(utime,unitx,unitslabel(0))
+    endif
     units(0) = unitx ! convert to real*4
  end select
 

@@ -104,7 +104,6 @@ subroutine read_data_pbob(rootname,istepstart,ipos,nstepsread)
  use labels,         only:labeltype,print_types
  use asciiutils,     only:cstring
  use pbobread,       only:read_pbob_header,read_pbob_data
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -305,7 +304,6 @@ subroutine set_labels_pbob
  use system_utils,   only:envlist,ienvironment
  use pbobread,       only:blocklabel
  use asciiutils,     only:lcase
- implicit none
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then

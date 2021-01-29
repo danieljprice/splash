@@ -39,8 +39,9 @@ module asciiutils
  public :: get_line_containing
  public :: enumerate,isdigit,split
  public :: get_column_labels
- public :: match_tag,match_taglist,append_number,make_tags_unique
+ public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: count_non_blank,find_repeated_tags
+ public :: get_extensions
 
  private
 
@@ -51,7 +52,8 @@ module asciiutils
 !--------------------------------------------------
  interface read_asciifile
   module procedure read_asciifile_char, read_asciifile_real,&
-                    read_asciifile_real_string, read_asciifile_realarr
+                   read_asciifile_real_string, read_asciifile_realarr, &
+                   read_asciifile_int
  end interface read_asciifile
 
  interface string_delete
@@ -186,6 +188,71 @@ subroutine read_asciifile_real(filename,nlinesread,realarr,ierror)
  return
 
 end subroutine read_asciifile_real
+
+!---------------------------------------------------------------------------
+! Generic subroutine to read all lines of an ascii file
+! returns array of real numbers (either one per line or all on same line)
+! up to a maximum corresponding to the size of the array
+!---------------------------------------------------------------------------
+subroutine read_asciifile_int(filename,nlinesread,intarr,ierror)
+ character(len=*), intent(in) :: filename
+ integer, intent(out) :: nlinesread
+ integer, dimension(:), intent(out) :: intarr
+ integer, intent(out), optional :: ierror
+ integer, parameter :: iunit = 66 ! logical unit number for read operation
+ integer :: ierr,i,maxlines
+ logical :: iexist
+
+ i = 0
+ nlinesread = 0
+ if (present(ierror)) ierror = 0
+
+ !--if file does not exist, do nothing and return
+ inquire(file=filename,exist=iexist)
+ if (.not.iexist) then
+    if (present(ierror)) ierror = -1
+    return
+ endif
+
+ open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+ !--error opening file (but file does exist)
+ if (ierr /= 0) then
+    print "(a)",' ERROR opening '//trim(filename)
+    if (present(ierror)) then
+       ierror = ierr
+    endif
+    return
+ endif
+
+ intarr(:) = -666
+ maxlines = size(intarr)
+ read(iunit,*,err=66,end=99) (intarr(i),i=1,maxlines)
+
+ !--end of array limits
+ print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ nlinesread = maxlines
+ close(unit=iunit)
+ return
+
+ !--error encountered
+66 continue
+ print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
+ if (present(ierror)) ierror = 1
+ do i=1,maxlines
+    if (abs(intarr(i)+666) > 0) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
+
+ !--reached end of file (the expected behaviour)
+99 continue
+ do i=1,maxlines
+    if (abs(intarr(i)+666) > 0) nlinesread = nlinesread + 1
+ enddo
+ close(unit=iunit)
+ return
+
+end subroutine read_asciifile_int
 
 !---------------------------------------------------------------------------
 ! Generic subroutine to read all lines of an ascii file
@@ -940,7 +1007,8 @@ logical function is_sensible_label(string)
 end function is_sensible_label
 
 !------------------------------------------
-! match tag against a list of string_sub
+! match tag against a list of tags
+! returns index of matching tag in the list
 !------------------------------------------
 integer function match_tag(tags,tag)
  character(len=*), intent(in) :: tags(:)
@@ -956,6 +1024,25 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!----------------------------------------------
+! match tag against a list of tags
+! and extract the value from an array of reals
+!----------------------------------------------
+real function get_value(tag,tags,vals)
+ character(len=*), intent(in) :: tag
+ character(len=*), intent(in) :: tags(:)
+ real, intent(in) :: vals(:)
+ integer :: itag
+
+ itag = match_tag(tags,tag)
+ if (itag > 0 .and. itag <= size(vals)) then
+    get_value = vals(itag)
+ else
+    get_value = 0.
+ endif
+
+end function get_value
 
 !-----------------------------------------------
 ! match multiple tags against a list of strings
@@ -974,7 +1061,7 @@ subroutine match_taglist(taglist,tags,istartmatch,nmatch)
     if (nmatch <= 1 .and. trim(tags(i))==trim(taglist(1))) then
        nmatch = 1
        istartmatch = i
-       do j=2,size(taglist)
+       do j=2,min(size(taglist),size(tags)-i+1)
           if (trim(tags(i+j-1))==trim(taglist(j))) then
              nmatch = nmatch + 1
           endif
@@ -1084,5 +1171,34 @@ subroutine find_repeated_tags(tag,ntags,tags,istartlist,nlist)
  enddo
 
 end subroutine find_repeated_tags
+
+!------------------------------------------------------------
+! utility to return up to five file extensions
+!------------------------------------------------------------
+subroutine get_extensions(string,extensions)
+ character(len=*), intent(in) :: string
+ character(len=12), dimension(5), intent(out) :: extensions(5)
+ character(:), allocatable :: tmp_string
+
+ integer :: ppos_new
+ integer :: ppos_old
+ integer :: i
+
+ ppos_new = scan(trim(string),".", BACK= .true.)
+ ppos_old = len(string)
+ tmp_string = lcase(string)
+
+ do i=1,5
+    if (ppos_new > 0) then
+       extensions(i) = trim(tmp_string(ppos_new:ppos_old))
+       tmp_string=tmp_string(1:ppos_new-1)
+       ppos_old=ppos_new-1
+       ppos_new=scan(trim(tmp_string),".",BACK=.true.)
+    else
+       extensions(i)=""
+    endif
+ enddo
+
+end subroutine get_extensions
 
 end module asciiutils

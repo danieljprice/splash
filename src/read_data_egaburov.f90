@@ -53,7 +53,6 @@ subroutine read_data_egaburov(rootname,istepstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use labels, only:ih,irho
  use system_utils, only:renvironment,lenvironment
- implicit none
  integer, intent(in) :: istepstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -308,7 +307,6 @@ subroutine set_labels_egaburov
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
  use system_utils, only:renvironment
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

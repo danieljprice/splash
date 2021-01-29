@@ -32,7 +32,6 @@ module torus
 contains
 
 subroutine exact_torus(iplot,itorus,Mstar,Rtorus,AA,distortion,gamma,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot,itorus
  real, intent(in) :: Mstar,Rtorus,AA,gamma,distortion
  real, intent(in), dimension(:) :: xplot

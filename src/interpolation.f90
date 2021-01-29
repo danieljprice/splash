@@ -25,7 +25,7 @@
 !-----------------------------------------------------------------
 module interpolation
  implicit none
- public :: iroll, set_interpolation_weights
+ public :: iroll, set_interpolation_weights, get_n_interp
  real, parameter,    public :: weight_sink = -1.
  integer, parameter, public :: doub_prec = kind(0.d0)
  private
@@ -51,6 +51,26 @@ pure integer function iroll(i,n)
 
 end function iroll
 
+!--------------------------------------------------------------------------
+!
+!  get maximum number of particles for which interpolation weights
+!  need to be computed
+!
+!--------------------------------------------------------------------------
+integer function get_n_interp(ntypes,npartoftype,UseType,iplotpartoftype,&
+                              iamtype_size,rendersinks) result(ninterp)
+ integer, intent(in) :: ntypes,iamtype_size
+ integer, intent(in) :: npartoftype(ntypes)
+ logical, intent(in) :: iplotpartoftype(ntypes),UseType(ntypes),rendersinks
+ integer :: ntoti
+
+ ntoti = sum(npartoftype)
+ ninterp = npartoftype(1) ! by default, only the gas particles
+ if (any(UseType(2:ntypes) .and. iplotpartoftype(2:ntypes)) &
+     .or. iamtype_size > 1 .or. rendersinks) ninterp = ntoti
+
+end function get_n_interp
+
 !-------------------------------------------------------------------
 ! Set interpolation weights for the particles. The weights are
 ! calculated using:
@@ -75,13 +95,13 @@ subroutine set_interpolation_weights(weighti,dati,iamtypei,usetype, &
            iRescale,idensityweighted,inormalise,units,unit_interp,required, &
            rendersinks,isinktype)
  integer, parameter :: doub_prec = selected_real_kind(P=10,R=30)
+ integer, intent(in)                          :: ninterp,ntypes,ndataplots,isinktype
  real, dimension(:), intent(out)              :: weighti
  real, dimension(:,:), intent(in)             :: dati
  integer(kind=1), dimension(:), intent(in)    :: iamtypei
  logical, dimension(:), intent(in)            :: usetype
  logical, dimension(0:ndataplots), intent(in) :: required
  integer, intent(in)                          :: ih,irho,ipmass,ndim
- integer, intent(in)                          :: ninterp,ntypes,ndataplots,isinktype
  integer, dimension(:), intent(in)            :: npartoftype
  real,    dimension(:), intent(in)            :: masstype
  logical, intent(in)                          :: iRescale,idensityweighted,rendersinks

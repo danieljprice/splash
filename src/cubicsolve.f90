@@ -41,7 +41,6 @@ contains
 ! dprice@astro.ex.ac.uk
 !-------------------------------------------------------------
 subroutine cubicsolve(a,b,c,d,x,nreal,check)
- implicit none
  real, intent(in) :: a,b,c,d
  real, intent(out), dimension(3) :: x
  integer, intent(out) :: nreal
@@ -162,7 +161,6 @@ end subroutine cubicsolve
 !
 !-------------------------------------------------------------
 subroutine cubicsolve_complex(b,c,d,x,nreal,check)
- implicit none
  real,    intent(in) :: b,c,d
  complex, intent(out), dimension(3) :: x
  integer, intent(out), optional :: nreal

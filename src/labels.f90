@@ -35,7 +35,7 @@ module labels
  character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
- character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
+ character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel,unitslabel_default
  character(len=lenunitslabel), public :: labelzintegration
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
@@ -60,7 +60,6 @@ contains
 !
 !--------------------------------------------------------------
 subroutine reset_columnids
- implicit none
  !
  !--array positions of specific quantities
  !  Identification is used in exact solution
@@ -107,7 +106,6 @@ end subroutine reset_columnids
 !
 !--------------------------------------------------------------
 logical function is_coord(icol,ndim)
- implicit none
  integer, intent(in) :: icol,ndim
  integer :: i
 
@@ -126,7 +124,6 @@ end function is_coord
 !
 !--------------------------------------------------------------
 integer function get_z_dir(ndim,iplotx,iploty) result(iplotz)
- implicit none
  integer, intent(in) :: ndim,iplotx,iploty
  integer :: i
 
@@ -145,7 +142,6 @@ end function get_z_dir
 !
 !--------------------------------------------------------------
 integer function get_z_coord(ndim,iplotx,iploty) result(iplotz)
- implicit none
  integer, intent(in) :: ndim,iplotx,iploty
  integer :: i
 
@@ -188,7 +184,6 @@ end function strip_units
 !-----------------------------------------------------------------
 elemental function shortstring(string,unitslab)
  use asciiutils, only:string_delete
- implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortstring
@@ -216,7 +211,6 @@ end function shortstring
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab)
  use asciiutils, only:string_delete
- implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortlabel
@@ -252,7 +246,6 @@ end function shortlabel
 function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
                          projlabelformat,iapplyprojformat)
  use asciiutils,      only:string_replace,string_delete
- implicit none
  character(len=*), intent(in) :: labelin,labelzint,projlabelformat
  integer, intent(in) :: iplot,izcol,iapplyprojformat
  logical, intent(in) :: normalise,iRescale
@@ -330,7 +323,6 @@ end function get_unitlabel_coldens
 !
 !-----------------------------------------------------------------
 integer function get_sink_type(ntypes)
- implicit none
  integer, intent(in) :: ntypes
  integer :: i
 

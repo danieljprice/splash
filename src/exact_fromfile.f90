@@ -35,7 +35,6 @@ contains
 
 subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,ierr)
  use asciiutils, only:get_ncolumns
- implicit none
  character(len=*), intent(in) :: filename
  real, intent(out), dimension(:) :: xexact, yexact
  integer, intent(in)  :: ixcolfile,iycolfile

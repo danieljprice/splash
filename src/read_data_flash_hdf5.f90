@@ -76,7 +76,6 @@ contains
 ! the particles)
 !
 integer function icolshuffle(icol)
- implicit none
  integer, intent(in) :: icol
 
  select case(icol)
@@ -117,7 +116,6 @@ subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
  use asciiutils, only:cstring
  use labels, only:ih,irho
  use system_utils, only:renvironment
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: dumpfile
@@ -232,7 +230,6 @@ subroutine receive_data_fromc(icol,npart,temparr,id) bind(c)
  use particle_data,  only:dat
  use flash_hdf5read, only:icolshuffle
  use labels,         only:label
- implicit none
  integer(kind=c_int), intent(in) :: icol,npart
  real(kind=c_double), dimension(npart), intent(in) :: temparr
  integer(kind=c_int), dimension(npart), intent(in) :: id
@@ -270,7 +267,6 @@ subroutine set_labels_flash_hdf5
  use params
  use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings,ncolumns
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  do i=1,ndim

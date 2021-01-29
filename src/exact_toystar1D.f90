@@ -39,7 +39,6 @@ contains
 subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
                            sigma,norder,xplot,yplot,npts,ierr)
  use plotlib, only:plot_pt1
- implicit none
  integer, intent(in) :: iplot,norder,npts
  integer, intent(out) :: ierr
  real, intent(in) :: time,gamma,sigma
@@ -243,7 +242,6 @@ end subroutine exact_toystar1D
 !--function to evaluate the Gegenbauer polynomial of index n given x
 !
 real function Gn(x,n)
- implicit none
  integer, intent(in) :: n
  real, intent(in) :: x
  integer :: i
@@ -282,7 +280,6 @@ end function Gn
 !--function to calculate a Legendre Polynomial of order m
 !
 real function Pm(x,m)
- implicit none
  integer, intent(in) :: m
  real, intent(in) :: x
  integer :: i
@@ -317,7 +314,6 @@ end function Pm
 !----------------------------------------------------------------------
 subroutine exact_toystar_ACplane(astart,cstart,sigma,gamma)
  use plotlib, only:plot_swin,plot_funx,plot_label,plot_box
- implicit none
  real, intent(in) :: astart,cstart,sigma,gamma
  real :: constk,gam1,gamm1,gamp1,fact
  real :: xstart,xend,xcentre,c,cnew,k

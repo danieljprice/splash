@@ -47,6 +47,7 @@ module kernels
  integer, parameter :: doub_prec = kind(0.d0)
 
  procedure(k_func), pointer, public :: wfunc
+ procedure(k_func), pointer, public :: dwfunc
 
  abstract interface
   pure function k_func(q)
@@ -123,6 +124,7 @@ subroutine select_kernel(j)
     cnormk2D = 10./(7.*pi)
     cnormk3D = 1./pi
     wfunc => w_cubic
+    dwfunc => dw_cubic
  end select
  radkernel2 = radkernel*radkernel
 
@@ -177,7 +179,6 @@ end subroutine select_kernel_by_name
 !
 !--------------------------------------
 pure real function w_cubic(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 
@@ -193,8 +194,23 @@ pure real function w_cubic(q2)
 
 end function w_cubic
 
+pure real function dw_cubic(q2)
+ real, intent(in) :: q2
+ real :: q
+
+ if (q2 < 1.0) then
+    q = sqrt(q2)
+    dw_cubic = q*(2.25*q - 3.)
+ elseif (q2 < 4.0) then
+    q = sqrt(q2)
+    dw_cubic = -0.75*(2.-q)**2
+ else
+    dw_cubic = 0.
+ endif
+
+end function dw_cubic
+
 pure real function w_quartic(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 
@@ -212,7 +228,6 @@ pure real function w_quartic(q2)
 end function w_quartic
 
 pure real function w_quintic(q2)
- implicit none
  real, intent(in) :: q2
  real :: q,q4
 
@@ -233,7 +248,6 @@ pure real function w_quintic(q2)
 end function w_quintic
 
 pure real function w_quartic2h(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 
@@ -251,7 +265,6 @@ pure real function w_quartic2h(q2)
 end function w_quartic2h
 
 pure real function w_wendlandc2(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 
@@ -265,7 +278,6 @@ pure real function w_wendlandc2(q2)
 end function w_wendlandc2
 
 pure real function w_wendlandc4(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 
@@ -279,7 +291,6 @@ pure real function w_wendlandc4(q2)
 end function w_wendlandc4
 
 pure real function w_wendlandc6(q2)
- implicit none
  real, intent(in) :: q2
  real :: q
 

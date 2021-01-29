@@ -34,7 +34,6 @@ module powerspectrums
 contains
 
 subroutine powerspectrum(npts,x,dat,nfreqpts,freq,power,idisordered)
- implicit none
  integer, intent(in) :: npts, nfreqpts
  real, intent(in), dimension(npts) :: x
  real, intent(in), dimension(npts) :: dat
@@ -78,7 +77,6 @@ end subroutine powerspectrum
 !--------------------------------------------------------
 
 subroutine power_fourier(npts,x,dat,omega,power)
- implicit none
  integer, intent(in) :: npts
  real, intent(in), dimension(npts) :: x, dat
  real, intent(in) :: omega
@@ -108,7 +106,6 @@ end subroutine power_fourier
 ! together with the power at each frequency (power)
 !----------------------------------------------------------
 subroutine power_lomb(npts,x,dat,datmean,datvar,omega,power)
- implicit none
  integer, intent(in) :: npts
  real, intent(in), dimension(npts) :: x, dat
  real, intent(in) :: datmean,datvar,omega
@@ -164,7 +161,6 @@ end subroutine power_lomb
 ! this is similar to their subroutine avevar
 !-------------------------------------------------
 subroutine mean_variance(x,npts,xmean,xvariance)
- implicit none
  integer, intent(in) :: npts
  real, intent(in), dimension(npts) :: x
  real, intent(out) :: xmean, xvariance

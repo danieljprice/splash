@@ -71,7 +71,6 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use labels,         only:ipr,ivx,ih,irho,labeltype
  use alydataread,    only:compName
- implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname
@@ -266,7 +265,6 @@ subroutine set_labels_aly
  use params
  use settings_data, only:ndim,ndimV,UseTypeInRenderings
  use geometry,      only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

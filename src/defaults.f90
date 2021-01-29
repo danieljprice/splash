@@ -47,7 +47,6 @@ contains
    use settings_powerspec, only:defaults_set_powerspec
    use settings_units,     only:defaults_set_units
    use titles,             only:pagetitles,steplegend
-   implicit none
    logical, intent(in) :: use_evdefaults
    integer :: i
   !
@@ -131,7 +130,6 @@ subroutine defaults_write(filename)
  use multiplot,          only:multi
  use shapes,             only:shapeopts
  use calcquantities,     only:calcopts
- implicit none
  character(len=*), intent(in) :: filename
  integer :: i,ierr
  integer, parameter :: iunit = 1
@@ -182,7 +180,6 @@ subroutine defaults_read(filename)
  use exact,              only:exactopts,exactparams
  use shapes,             only:shapeopts
  use calcquantities,     only:calcopts
- implicit none
  character(len=*), intent(in) :: filename
  logical :: iexist
  integer :: ierr,i,nerr
