@@ -1972,7 +1972,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       xmin,xmax,ymin,ymax,ifastparticleplot,interactive,datpix,npixx,npixy,rendermax)
 
                       call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,labelrender,&
-                                     unitslabel(irenderplot),((istep-1)*nframesloop + iframe),x_sec,rootname(ifileopen))
+                                       unitslabel(irenderplot),((istep-1)*nframesloop+iframe),x_sec,rootname(ifileopen),timei)
                    else
                       !!--plot non-gas particle types (e.g. sink particles) on top
                       call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
