@@ -60,10 +60,10 @@
 
 module readdata_sro
  implicit none
- 
+
  public :: read_data_sro, set_labels_sro
- 
- private 
+
+ private
 contains
 
 subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
@@ -618,12 +618,11 @@ end subroutine read_data_sro
 
 subroutine set_labels_sro
  use filenames, only:rootname
- use labels, only:label,unitslabel,labelvec,labeltype,iamvec,&
+ use labels, only:label,unitslabel=>unitslabel_default,labelvec,labeltype,iamvec,&
               ix,ivx,ih,irho,iutherm,ipmass,iBfirst,idivB,make_vector_label
- use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
- use geometry, only:labelcoord
- use settings_units, only:units
- implicit none
+ use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+ use geometry,       only:labelcoord
+ use settings_units, only:units=>units_default
  integer :: i
  logical :: minidump
  real :: udistcm,udistkm,utime,umass,uvelkms

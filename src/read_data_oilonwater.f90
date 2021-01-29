@@ -60,26 +60,22 @@ end module oilonwaterread
 
 module readdata_oilonwater
  implicit none
- 
- public :: read_data_oilonwater, set_labels_oilonwater
- 
- private 
-contains
 
+ public :: read_data_oilonwater, set_labels_oilonwater
+
+ private
+contains
 
 subroutine read_data_oilonwater(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
- use settings_data, only:ndim,ndimV,ncolumns,ncalc
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc
  use mem_allocation
- use labels, only:ix,ivx,ih,irho,ipmass
+ use labels,         only:ih,ipmass
  use oilonwaterread, only:udisti,umassi,utimei
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
- integer, parameter :: maxptmass = 1000
- real, parameter :: pi=3.141592653589
  integer :: i,j,k,ifile,ierr,ipart
  integer :: npart_max,nstep_max,ncolstep,npart,nunknown
  logical :: iexist,doubleprec
@@ -326,13 +322,16 @@ end subroutine read_data_oilonwater
 !!------------------------------------------------------------
 
 subroutine set_labels_oilonwater
- use labels
+ use labels,  only:label,unitslabel=>unitslabel_default,&
+                   ix,ih,ipmass,irho,iutherm,ivx,labeltype,&
+                   labelvec,labelzintegration,iamvec,&
+                   make_vector_label
  use params
  use physcon, only:solarrcgs,solarmcgs
  use settings_data
- use geometry, only:labelcoord
+ use geometry,       only:labelcoord
  use oilonwaterread, only:udisti,umassi,utimei
- use settings_units, only:units,unitzintegration
+ use settings_units, only:units=>units_default,unitzintegration
  implicit none
  integer :: i
 
@@ -376,11 +375,7 @@ subroutine set_labels_oilonwater
  !
  !--set labels for vector quantities
  !
- iamvec(ivx:ivx+ndimV-1) = ivx
- labelvec(ivx:ivx+ndimV-1) = 'v'
- do i=1,ndimV
-    label(ivx+i-1) = trim(labelvec(ivx))//'\d'//labelcoord(i,1)
- enddo
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  !
  !--set transformation factors between code units/real units

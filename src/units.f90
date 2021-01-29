@@ -25,9 +25,9 @@
 !--------------------------------------------------------------------
 module settings_units
  use params
- use labels, only:unitslabel,labelzintegration,lenlabel
+ use labels, only:unitslabel,unitslabel_default,labelzintegration,lenlabel
  implicit none
- real, dimension(0:maxplot), public :: units
+ real, dimension(0:maxplot), public :: units,units_default,units_old
  real, public :: unitzintegration
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
@@ -115,9 +115,11 @@ contains
 subroutine defaults_set_units
 
  units(:) = 1.0
+ units_default(:) = 1.0
  unitzintegration = 1.0
  unit_interp      = 1.0d0
  unitslabel(:) = ' '
+ unitslabel_default(:) = ' '
  labelzintegration = ' '
 
 end subroutine defaults_set_units
@@ -218,7 +220,7 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use asciiutils,    only:get_value
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
- integer :: icol,ibs,ibc,itime,idist,imass
+ integer :: icol,ibs,ibc
  real(doub_prec) :: unitsprev
  real(doub_prec) :: udist,utime,umass
  logical :: applytoall,got_label

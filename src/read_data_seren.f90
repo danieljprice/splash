@@ -101,10 +101,10 @@ end module seren_data_store
 
 module readdata_seren
  implicit none
- 
+
  public :: read_data_seren, set_labels_seren
- 
- private 
+
+ private
 contains
 
 subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
@@ -1101,12 +1101,12 @@ end subroutine read_data_seren
 !!------------------------------------------------------------
 
 subroutine set_labels_seren
- use labels, only:label,iamvec,labelvec,labeltype,unitslabel,&
+ use labels, only:label,iamvec,labelvec,labeltype,unitslabel=>unitslabel_default,&
  &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
- use settings_units, only:units
+ use settings_units, only:units=>units_default
  use seren_data_store
  implicit none
  integer :: i, j, width, unit_no

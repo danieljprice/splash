@@ -35,7 +35,7 @@ module labels
  character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
- character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
+ character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel,unitslabel_default
  character(len=lenunitslabel), public :: labelzintegration
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec

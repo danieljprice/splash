@@ -45,14 +45,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use filenames,      only:rootname,nstepsinfile,nfiles,nsteps,maxfile,ifileopen,iposopen
  use limits,         only:set_limits
  use settings_data,  only:ncolumns,iendatstep,ncalc,ivegotdata,    &
-                      DataisBuffered,iCalcQuantities,ndim,iverbose,ntypes, &
+                      DataisBuffered,iCalcQuantities,iverbose, &
                       iRescale,required,ipartialread,lowmemorymode,debugmode
- use settings_data,  only:iexact,buffer_steps_in_file,iRescale_has_been_set,UseTypeInRenderings
- use particle_data,  only:dat,time,npartoftype,maxcol
+ use settings_data,  only:buffer_steps_in_file
+ use particle_data,  only:dat,maxcol
  use prompting,      only:prompt
- use labels,         only:labeltype
  use calcquantities, only:calc_quantities
- use settings_units, only:units
  use timing,         only:wall_time,print_time
  use geomutils,      only:set_coordlabels
  use adjustdata,     only:adjust_data_codeunits
@@ -64,7 +62,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  integer, intent(in), optional :: iposinfile
  logical :: setlimits,isfirsttime
  logical, parameter  :: dotiming = .true.
- integer :: i,istart,ierr,itype,nplot,ipos,nsteps_read
+ integer :: i,istart,ierr,ipos,nsteps_read
  real    :: t1,t2
 
  if (.not.gotfilenames) then
@@ -81,6 +79,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  ncalc = 0
  nsteps = 0
  istart = 1
+ ierr = 0
  ivegotdata = .false.
  ifileopen = ireadfile
  DataIsBuffered = .false.
@@ -159,17 +158,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        !--do some basic sanity checks
        !
        call check_data_read()
+       call rescale_data(isfirsttime,nsteps)
     endif
 
-    if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
-       !write(*,"(/a)") ' rescaling data...'
-       do i=1,ncolumns
-          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
-             dat(:,i,1:nsteps) = dat(:,i,1:nsteps)*units(i)
-          endif
-       enddo
-       time(1:nsteps) = time(1:nsteps)*units(0)
-    endif
     !
     !--reset coordinate and vector labels (depending on coordinate system)
     !  Need to do this BEFORE calculating quantities
@@ -256,10 +247,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        endif
     endif
 
-    if (isfirsttime .and. any(abs(units(0:ncolumns)-1.0) > tiny(units)) .and. .not.iRescale_has_been_set) then
-       iRescale = .true. ! turn physical units on if they have not been switched off
-    endif
-
     !
     !--assume there are the same number of steps in the other files
     !  which have not been read
@@ -279,19 +266,9 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        call get_labels
        call adjust_data_codeunits
        call check_data_read()
+       call rescale_data(isfirsttime,nsteps_read)
     endif
 
-    if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
-       if (debugmode) write(*,"(a)") ' rescaling data...'
-       do i=1,min(ncolumns,maxcol)
-          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
-             dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
-          endif
-       enddo
-       do i=1,nsteps_read
-          if (time(i) > -0.5*huge(0.)) time(i) = time(i)*units(0)
-       enddo
-    endif
     !
     !--reset coordinate and vector labels (depending on coordinate system)
     !  Need to do this BEFORE calculating quantities
@@ -340,16 +317,15 @@ end subroutine get_data
 !----------------------------------------------------------------------
 subroutine get_labels
  use asciiutils,     only:read_asciifile
- use filenames,      only:fileprefix,unitsfile
- use labels,         only:label,unitslabel
- use settings_data,  only:ncolumns,iRescale,iverbose
- use settings_units, only:read_unitsfile
+ use filenames,      only:fileprefix
+ use labels,         only:label
+ use settings_data,  only:ncolumns
  use particle_data,  only:maxcol
  use params,         only:maxplot
- use readdata,      only:set_labels
+ use readdata,       only:set_labels
  implicit none
  logical :: iexist
- integer :: nlabelsread,ierr,i
+ integer :: nlabelsread
 
  call set_labels
  !
@@ -367,10 +343,56 @@ subroutine get_labels
     if (nlabelsread < ncolumns) &
        print "(a,i3)",' end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
  endif
+
+end subroutine get_labels
+
+!----------------------------------------------------------------------
+!
+! Apply physical units to data
+!
+!----------------------------------------------------------------------
+subroutine rescale_data(firsttime,nsteps_read)
+ use filenames,      only:unitsfile
+ use labels,         only:label,unitslabel,unitslabel_default
+ use settings_data,  only:ncolumns,iRescale,iRescale_has_been_set,iverbose,debugmode
+ use settings_units, only:units,units_default,read_unitsfile
+ use particle_data,  only:maxcol,dat,time
+ use params,         only:maxplot
+ logical, intent(in) :: firsttime
+ integer, intent(in) :: nsteps_read
+ integer :: i,ierr
+
  !
- !--read units file and change units if necessary
+ ! turn physical units on by default if:
+ ! 1) the data read has set the physical units
+ ! 2) they have not been switched off
  !
- call read_unitsfile(trim(unitsfile),ncolumns,ierr,iverbose)
+ if (firsttime .and. any(abs(units_default(0:ncolumns)-1.0) > tiny(units)) &
+     .and. .not.iRescale_has_been_set) then
+    units = units_default
+    unitslabel = unitslabel_default
+    iRescale = .true.
+ endif
+
+ !
+ !--override default units by reading .units file
+ !
+ if (firsttime) call read_unitsfile(trim(unitsfile),ncolumns,ierr,iverbose)
+
+ !
+ !--apply physical units to data
+ !
+ if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
+    if (debugmode) write(*,"(a)") ' rescaling data...'
+    do i=1,min(ncolumns,maxcol)
+       if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
+          dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
+       endif
+    enddo
+    do i=1,nsteps_read
+       if (time(i) > -0.5*huge(0.)) time(i) = time(i)*units(0)
+    enddo
+ endif
  !
  !--add units labels to labels
  !
@@ -380,7 +402,7 @@ subroutine get_labels
     enddo
  endif
 
-end subroutine get_labels
+end subroutine rescale_data
 
 !----------------------------------------------------------------
 !

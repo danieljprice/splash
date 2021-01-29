@@ -2288,15 +2288,17 @@ end subroutine read_data_sphNG
 !!------------------------------------------------------------
 
 subroutine set_labels_sphNG
- use labels, only:label,unitslabel,labelzintegration,labeltype,labelvec,iamvec, &
+ use labels, only:label,unitslabel=>unitslabel_default,&
+              labelzintegration,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label,get_label_grain_size
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
- use settings_units,  only:units,unitzintegration,get_nearest_length_unit,&
-                           get_nearest_time_unit,get_nearest_mass_unit,get_nearest_velocity_unit
+ use settings_units,  only:units=>units_default,unitzintegration,&
+                           get_nearest_length_unit,get_nearest_time_unit,&
+                           get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread
  use asciiutils,      only:lcase,make_tags_unique,match_tag
  use system_commands, only:get_environment
