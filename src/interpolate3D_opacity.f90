@@ -79,7 +79,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
      rkappa,zcut,iverbose,exact_rendering)
 
- real, parameter :: pi=3.1415926536
+ real, parameter :: pi=4.*atan(1.)
  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig
  real, intent(in), dimension(npmass) :: pmass
@@ -174,13 +174,13 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--first sort the particles in z so that we do the opacity in the correct order
 !
  call indexx(npart,z,iorder)
-!
-!--store x value for each pixel (for optimisation)
-!
-xminpix = xmin - 0.5*pixwidthx
-yminpix = ymin - 0.5*pixwidthy
-xmax = xmin + npixx*pixwidthx
-ymax = ymin + npixy*pixwidthy
+ !
+ !--store x value for each pixel (for optimisation)
+ !
+ xminpix = xmin - 0.5*pixwidthx
+ yminpix = ymin - 0.5*pixwidthy
+ xmax = xmin + npixx*pixwidthx
+ ymax = ymin + npixy*pixwidthy
  do ipix=1,npixx
     xpix(ipix) = xminpix + ipix*pixwidthx
  enddo
@@ -237,8 +237,6 @@ ymax = ymin + npixy*pixwidthy
     !--skip particles with weight < 0
     !  but not if weight == weight_sink (=-1)
     !
-
-    ! THIS BIT IS DIFFERENT
     rendersink = .false.
     if (abs(weight(i) - weight_sink) < tiny(0.)) then
        rendersink = .true.
@@ -392,8 +390,6 @@ ymax = ymin + npixy*pixwidthy
                  if (q2 < radkernel2) then
                     wab = wfromtable(q2)
 
-
-
                     tau = rkappa*wab*term
                     fopacity = 1. - exp(-tau)
                     !
@@ -443,8 +439,6 @@ ymax = ymin + npixy*pixwidthy
     if (iverbose >= 0) print "(1x,a,f5.2,1x,a)",'completed in ',t_used,'s'
  endif
  if (zcut < huge(zcut) .and. iverbose >= 0) print*,'slice contains ',nused,' of ',npart,' particles'
-
- return
 
 end subroutine interp3D_proj_opacity
 
