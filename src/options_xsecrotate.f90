@@ -227,10 +227,6 @@ subroutine submenu_xsecrotate(ichoose)
 !------------------------------------------------------------------------
  case(4)
     call prompt(' Use 3D opacity rendering? ',use3Dopacityrendering)
-    if (use3Dopacityrendering .and..not.use3Dperspective) then
-       print "(a)",' also turning on 3D perspective (recommended)'
-       use3Dperspective = .true.
-    endif
     if (use3Dopacityrendering .and. get_sink_type(ntypes) > 0) then
        call prompt('Include sinks in opacity rendering (no=plot on top)?',rendersinks)
     endif
