@@ -39,7 +39,6 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
  use settings_page,     only:interactive,nstepsperpage,iColourEachStep,iChangeStyles,nomenu
  use timestep_plotting, only:initialise_plotting,plotstep
  use plotlib,           only:plot_close
- implicit none
  integer, intent(in) :: ipicky,ipickx,irender,icontourplot,ivecplot
  integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev
  logical :: ipagechange
@@ -205,7 +204,6 @@ recursive subroutine get_nextstep(istep,ilocindat)
  use filenames,     only:nstepsinfile,nfiles,ifileopen,iposopen,nsteps
  use getdata,       only:get_data
  use settings_data, only:buffer_steps_in_file
- implicit none
  integer, intent(in)  :: istep
  integer, intent(out) :: ilocindat
  integer :: ifile,nstepstotal,nstepsprev,iposinfile
@@ -292,7 +290,6 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
  use settings_part, only:linecolourthisstep,linestylethisstep,imarktype
  use settings_page, only:maxlinestyle,modlinestyle,maxcolour,modcolour,linepalette
  use plotlib,       only:plotlib_maxlinestyle,plotlib_maxlinecolour
- implicit none
  integer, intent(in) :: istep
  logical, intent(in) :: iChangeColours, iChangeStyles
  integer :: icolour,imarkernumber
@@ -350,7 +347,6 @@ subroutine colourparts_default(npartoftype,iamtype)
  use settings_data, only:ntypes
  use particle_data, only:icolourme
  use settings_part, only:idefaultcolourtype
- implicit none
  integer, dimension(:), intent(in) :: npartoftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer :: i,index1,index2,itype

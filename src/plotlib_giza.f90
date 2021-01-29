@@ -137,7 +137,6 @@ contains
 !---------------------------------------------
 subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  use giza, only:giza_units_inches,giza_units_pixels,giza_units_mm
- implicit none
 
  character(len=*),intent(in)   :: devicein
  integer,intent(out)           :: ierr
@@ -242,7 +241,6 @@ subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
 end subroutine plot_imag_transparent
 
 subroutine plot_ctab(l,r,g,b,nc,contra,bright)
- implicit none
  integer,intent(in) :: nc
  real,intent(in)    :: l(nc),r(nc),g(nc),b(nc),contra,bright
 
@@ -252,7 +250,6 @@ end subroutine plot_ctab
 
 subroutine plot_qvsz(paperunits,x1,x2,y1,y2)
  use giza, only:giza_get_paper_size,giza_units_device,giza_units_inches,giza_units_pixels,giza_units_mm
- implicit none
  real, intent(out)   :: x1,x2,y1,y2
  integer, intent(in) :: paperunits
  integer :: units
@@ -283,7 +280,6 @@ subroutine plot_bins(nbin,x,data,centre)
 end subroutine plot_bins
 
 subroutine plot_qvp(units, x1, x2, y1, y2)
- implicit none
  integer,intent(in) :: units
  real,intent(out)   :: x1, x2, y1, y2
 
@@ -292,7 +288,6 @@ subroutine plot_qvp(units, x1, x2, y1, y2)
 end subroutine plot_qvp
 
 subroutine plot_qcs(units,xch,ych)
- implicit none
  integer,intent(in) :: units
  real,intent(out)   :: xch,ych
 
@@ -309,7 +304,6 @@ subroutine plot_qcol(icolmin,icolmax)
 end subroutine plot_qcol
 
 subroutine plot_scrn(ci,name,ier)
- implicit none
  integer,intent(in)          :: ci
  character(len=*),intent(in) :: name
  integer,intent(out)         :: ier
@@ -320,7 +314,6 @@ subroutine plot_scrn(ci,name,ier)
 end subroutine plot_scrn
 
 subroutine plot_qinf(item,value,length)
- implicit none
  character(len=*),intent(in)  :: item
  character(len=*),intent(out) :: value
  integer,intent(out)          :: length
@@ -363,7 +356,6 @@ subroutine plot_qinf(item,value,length)
 end subroutine plot_qinf
 
 subroutine plot_numb(m,pp,form,string,nc)
- implicit none
  integer,intent(in)           :: m,pp,form
  character(len=*),intent(out) :: string
  integer,intent(out)          :: nc
@@ -374,7 +366,6 @@ subroutine plot_numb(m,pp,form,string,nc)
 end subroutine plot_numb
 
 subroutine plot_set_opacity(alpha)
- implicit none
  real, intent(in)           :: alpha
  integer :: ci
  real    :: red,green,blue
@@ -387,7 +378,6 @@ end subroutine plot_set_opacity
 
 
 subroutine plot_err1(dir,x,y,e,t)
- implicit none
  integer,intent(in) :: dir
  real,intent(in)    :: x,y,e
  real,intent(in)    :: t
@@ -401,7 +391,6 @@ subroutine plot_err1(dir,x,y,e,t)
 end subroutine plot_err1
 
 subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
- implicit none
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
  real,intent(in)    :: a(idim,jdim),c(*),tr(6),blank
  real               :: affine(6)
@@ -413,7 +402,6 @@ subroutine plot_conb(a,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
 end subroutine plot_conb
 
 subroutine plot_cons(a,idim,jdim,i1,i2,j1,j2,c,nc,tr)
- implicit none
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
  real,intent(in)    :: a(idim,jdim),c(*),tr(6)
  real               :: affine(6)
@@ -424,7 +412,6 @@ subroutine plot_cons(a,idim,jdim,i1,i2,j1,j2,c,nc,tr)
 end subroutine plot_cons
 
 subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr,label,intval,mininit)
- implicit none
  integer,intent(in)          :: idim,jdim,i1,i2,j1,j2,intval,mininit
  real,intent(in)             :: a(idim,jdim),c,tr(6)
  character(len=*),intent(in) :: label
@@ -441,7 +428,6 @@ subroutine plot_conl(a,idim,jdim,i1,i2,j1,j2,c,tr,label,intval,mininit)
 end subroutine plot_conl
 
 subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
- implicit none
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2,nc
  real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,c
  real               :: affine(6)
@@ -453,7 +439,6 @@ end subroutine plot_vect
 
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
  use giza, only:giza_draw_pixels
- implicit none
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2
  integer,intent(in) :: ia(idim,jdim)
  real,intent(in)    :: x1,x2,y1,y2
@@ -465,7 +450,6 @@ end subroutine plot_pixl
 subroutine plot_pap(widthin,aspect,paperunits)
  use giza, only:giza_set_paper_size
  use giza, only:giza_units_inches,giza_units_pixels,giza_units_mm
- implicit none
  real,intent(in) :: widthin,aspect
  integer, intent(in), optional :: paperunits
  integer :: units
@@ -498,7 +482,6 @@ end subroutine plot_pap
 !  unnecessary for giza
 !
 subroutine plot_set_exactpixelboundaries()
- implicit none
 
 end subroutine plot_set_exactpixelboundaries
 
@@ -508,7 +491,6 @@ end subroutine plot_set_exactpixelboundaries
 integer function units_giza(pgplotunits)
  use giza, only:giza_units_normalized,giza_units_inches, &
                  giza_units_mm,giza_units_pixels,giza_units_world
- implicit none
  integer, intent(in) :: pgplotunits
 
  select case(pgplotunits)
@@ -529,7 +511,6 @@ integer function units_giza(pgplotunits)
 end function units_giza
 
 subroutine convert_tr_to_affine(tr,affine)
- implicit none
  real, dimension(6), intent(in)  :: tr
  real, dimension(6), intent(out) :: affine
 

@@ -59,7 +59,6 @@ subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
  use mem_allocation, only:alloc
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -180,7 +179,6 @@ subroutine set_labels_UCLA
  use params
  use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
  use geometry, only:labelcoord
- implicit none
  integer :: i,ierr,ndimVtemp
 
  do i=1,ndim

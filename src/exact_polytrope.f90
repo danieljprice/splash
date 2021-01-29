@@ -35,7 +35,6 @@ module polytrope
 contains
 
 subroutine exact_polytrope(gamma,polyk,totmass,rplot,denplot,npts,ierr)
- implicit none
  integer, intent(out) :: npts,ierr
  real, intent(in)     :: gamma
  real, intent(in)     :: polyk,totmass

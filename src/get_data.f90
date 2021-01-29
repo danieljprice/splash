@@ -55,7 +55,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  use geomutils,      only:set_coordlabels
  use adjustdata,     only:adjust_data_codeunits
  use readdata,       only:read_data
- implicit none
  integer, intent(in) :: ireadfile
  logical, intent(in) :: gotfilenames
  logical, intent(in), optional :: firsttime
@@ -323,7 +322,6 @@ subroutine get_labels
  use particle_data,  only:maxcol
  use params,         only:maxplot
  use readdata,       only:set_labels
- implicit none
  logical :: iexist
  integer :: nlabelsread
 
@@ -413,7 +411,6 @@ subroutine check_labels
  use settings_data,   only:ndim,ndimV,ncolumns,iverbose
  use labels,          only:ix,irho,ih,ipmass
  use particle_data,   only:masstype
- implicit none
  integer :: i,ndimset
 
  if (ndim /= 0 .and. ncolumns > 0) then
@@ -485,7 +482,6 @@ subroutine check_data_read
  use settings_data, only:ncolumns,ndim,ndimV,ntypes,ivegotdata
  use particle_data, only:npartoftype,iamtype,dat
  use labels,        only:labeltype
- implicit none
  integer :: i,j,ntoti,nunknown,itype
  integer, dimension(maxparttypes) :: noftype
 
@@ -564,7 +560,6 @@ end subroutine check_data_read
 !-------------------------------------
 
 subroutine endian_info
- implicit none
  logical :: bigendian
 
  bigendian = IACHAR(TRANSFER(1,"a")) == 0

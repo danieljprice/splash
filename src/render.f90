@@ -48,7 +48,6 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
                            plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent,&
                            plot_imag_alpha
  use contours_module, only:read_contours,contours_list,contourtitles
- implicit none
  integer, intent(in) :: npixx,npixy,ncontours,icolouropt
  real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
  real, dimension(npixx,npixy), intent(in) :: datpix
@@ -210,7 +209,6 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  use settings_vecplot, only:hposlegendvec,vposlegendvec,&
                             iplotarrowheads,iallarrowssamelength
  use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
- implicit none
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx,dy
  real, intent(inout) :: vecmax

@@ -44,7 +44,6 @@ subroutine convert_all(outformat,igotfilenames,useall)
  use asciiutils,    only:ucase
  use limits,        only:read_limits
  use system_utils,  only:ienvlist
- implicit none
  character(len=*), intent(in) :: outformat
  logical, intent(inout)       :: igotfilenames
  logical, intent(in)          :: useall

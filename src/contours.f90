@@ -39,7 +39,6 @@ contains
 subroutine read_contours(ncontours,ierr)
  use asciiutils, only:read_asciifile
  use filenames,  only:fileprefix
- implicit none
  integer, intent(out) :: ncontours, ierr
  character(len=50)    :: contourfile
  logical :: iexist

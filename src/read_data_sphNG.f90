@@ -2204,7 +2204,6 @@ contains
 !--reset centre of mass to zero
 !
 subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,3), intent(inout) :: xyz
  real, dimension(np), intent(in) :: pmass
@@ -2236,7 +2235,6 @@ subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
 end subroutine reset_centre_of_mass
 
 subroutine reset_corotating_velocities(np,xy,velxy,omeg)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,2), intent(in) :: xy
  real, dimension(np,2), intent(inout) :: velxy
@@ -2255,7 +2253,6 @@ subroutine reset_corotating_velocities(np,xy,velxy,omeg)
 end subroutine reset_corotating_velocities
 
 subroutine reset_corotating_positions(np,xy,omeg,t)
- implicit none
  integer, intent(in) :: np
  real, dimension(np,2), intent(inout) :: xy
  real, intent(in) :: omeg,t
@@ -2303,7 +2300,6 @@ subroutine set_labels_sphNG
  use asciiutils,      only:lcase,make_tags_unique,match_tag
  use system_commands, only:get_environment
  use system_utils,    only:lenvironment
- implicit none
  integer :: i,j,idustlast
  real(doub_prec)   :: unitx,unitvel
  character(len=20) :: string,unitlabelx,unitlabelv

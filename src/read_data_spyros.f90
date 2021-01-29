@@ -62,7 +62,6 @@ subroutine read_data_spyros(rootname,indexstart,ipos,nstepsread)
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
  use mem_allocation
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -214,7 +213,6 @@ subroutine set_labels_spyros
  use params
  use settings_data
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

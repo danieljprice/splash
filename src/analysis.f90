@@ -48,7 +48,6 @@ contains
 ! and if not, to print the available options
 !-----------------------------------------------------------------
 logical function isanalysis(string,noprint)
- implicit none
  character(len=*), intent(in) :: string
  logical, intent(in), optional :: noprint
  logical :: doprint,verbose
@@ -149,7 +148,6 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  use asciiutils, only:read_asciifile
  use filenames,  only:rootname,nfiles,tagline,fileprefix
  use params,     only:maxplot
- implicit none
  integer, intent(in) :: ncolumns,ndim,ndimV
  character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
@@ -451,7 +449,6 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  !use lightcurve,    only:get_lightcurve
- implicit none
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
@@ -1171,7 +1168,6 @@ contains
 !  (which depends whether or not mixed types are stored)
 !
 integer function igettype(i)
- implicit none
  integer :: np
  integer, intent(in) :: i
 
@@ -1193,7 +1189,6 @@ end function igettype
 !   or only for each type)
 !
 real function particlemass(i,iparttype)
- implicit none
  integer, intent(in) :: i,iparttype
 
  if (ipmass > 0 .and. ipmass <= ncolumns) then
@@ -1208,7 +1203,6 @@ end subroutine write_analysis
 
 subroutine cross_product3D(veca,vecb,vecc)
  use params, only:doub_prec
- implicit none
  real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
  real(kind=doub_prec), dimension(3), intent(out) :: vecc
 
@@ -1222,7 +1216,6 @@ end subroutine cross_product3D
 ! close output file
 !---------------------
 subroutine close_analysis(analysistype)
- implicit none
  character(len=*), intent(in) :: analysistype
  integer :: i
 

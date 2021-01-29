@@ -57,7 +57,6 @@ contains
 subroutine setup_calculated_quantities(ncalc)
  use settings_data, only:ncolumns
  use prompting,     only:prompt
- implicit none
  integer, intent(out) :: ncalc
  integer              :: ncalctot,istart,iend, ipick, ninactive, i
  logical              :: done,first
@@ -266,7 +265,6 @@ end subroutine add_calculated_quantities
 !
 !---------------------------------------------------------------------
 subroutine splitstring(string,calclabel,calcstring)
- implicit none
  character(len=*), intent(in)    :: string
  character(len=*), intent(inout) :: calclabel
  character(len=*), intent(out)   :: calcstring

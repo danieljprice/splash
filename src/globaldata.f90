@@ -99,7 +99,6 @@ module filenames
 contains
 
 subroutine set_filenames(prefix)
- implicit none
  character(len=*), intent(in) :: prefix
 
  fileprefix   = trim(adjustl(prefix))

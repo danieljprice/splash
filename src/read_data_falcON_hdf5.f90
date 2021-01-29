@@ -170,7 +170,6 @@ subroutine read_data_falcON_hdf5(rootname,istepstart,ipos,nstepsread)
  use asciiutils,     only:cstring
  use dataread_utils, only:check_range
  use falcONhdf5read
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -377,7 +376,6 @@ subroutine read_falcON_data_into_splash(icol,npartoftypei,temparr,itypec) bind(c
  use settings_data,  only:debugmode
  use labels,         only:label
  use falcONhdf5read, only:itypemap_falcON,ioffset,i_current_step
- implicit none
  integer(kind=c_int), intent(in) :: icol,npartoftypei,itypec
  real(kind=c_double), intent(in) :: temparr(*)
  integer(kind=c_int) :: icolput
@@ -431,7 +429,6 @@ subroutine set_labels_falcON_hdf5
  use geometry,       only:labelcoord
  use falcONhdf5read, only:blocklabel
  use asciiutils,     only:lcase
- implicit none
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -502,7 +499,6 @@ subroutine set_splash_block_label(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use falcONhdf5read, only:blocklabel
  use asciiutils,     only:fstring
- implicit none
  integer(kind=c_int),    intent(in) :: icol
  character(kind=c_char), intent(in) :: name(256)
 
@@ -516,7 +512,6 @@ subroutine set_splash_particle_label(itypec,name) bind(c)
  use asciiutils,     only:fstring
  use labels,         only:labeltype
  use falcONhdf5read, only:itypemap_falcON
- implicit none
  integer(kind=c_int),    intent(in) :: itypec
  character(kind=c_char), intent(in) :: name(256)
 

@@ -332,7 +332,6 @@ subroutine set_labels_oilonwater
  use geometry,       only:labelcoord
  use oilonwaterread, only:udisti,umassi,utimei
  use settings_units, only:units=>units_default,unitzintegration
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

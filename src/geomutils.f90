@@ -44,7 +44,6 @@ subroutine change_coords(vals,ncols,ndim,icoords,icoordsnew,x0,v0)
  use params,        only:doub_prec
  use geometry,      only:coord_transform,vector_transform
  use labels,        only:ix,iamvec,ivx
- implicit none
  integer,                intent(in)    :: ncols,ndim,icoords,icoordsnew
  real(kind=doub_prec), dimension(ncols), intent(inout) :: vals
  real, dimension(ndim),  intent(in)    :: x0,v0
@@ -80,7 +79,6 @@ subroutine changecoords(iplotx,iploty,iplotz,xplot,yplot,zplot,ntot,ndim,itrackp
  use geometry,      only:coord_transform,labelcoordsys
  use settings_data, only:xorigin,icoords,icoordsnew,debugmode
  use labels,        only:is_coord,ix
- implicit none
  integer, intent(in) :: iplotx,iploty,iplotz,ntot,ndim,itrackpart
  real, dimension(:), intent(inout) :: xplot,yplot,zplot
  real, dimension(:,:), intent(in)  :: dat
@@ -138,7 +136,6 @@ subroutine changeveccoords(iplot,xploti,ntot,ndim,itrackpart,dat)
  use geometry,      only:vector_transform,labelcoordsys
  use settings_data, only:xorigin,icoords,icoordsnew,debugmode
  use labels,        only:ivx,iamvec,ix
- implicit none
  integer, intent(in) :: iplot,ntot,ndim,itrackpart
  real, dimension(:), intent(inout) :: xploti
  real, dimension(ndim) :: xcoords,vecnew,vecin
@@ -187,7 +184,6 @@ subroutine set_coordlabels(numplot)
  use geometry,       only:labelcoord,coord_is_length
  use labels,         only:label,unitslabel,iamvec,labelvec,ix,labeldefault
  use settings_data,  only:icoords,icoordsnew,ndim,iRescale,debugmode
- implicit none
  integer, intent(in) :: numplot
  integer             :: i
  integer, save :: icoordsprev = -1

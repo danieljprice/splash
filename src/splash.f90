@@ -840,7 +840,6 @@ contains
 ! this subroutine prints the splash screen on startup
 !------------------------------------------------------
 subroutine print_header
- implicit none
 
  print 10
 10 format( &
@@ -869,7 +868,6 @@ end subroutine print_header
 
 subroutine print_usage(quit)
  use filenames, only:tagline
- implicit none
  logical, intent(in), optional :: quit
  logical :: ltemp
 

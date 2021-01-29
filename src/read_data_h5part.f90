@@ -86,7 +86,6 @@ subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  use h5partattrib,    only:h5pt_readstepattrib,h5pt_getnstepattribs,h5pt_getstepattribinfo, &
                             h5pt_readstepattrib_r8, h5pt_readstepattrib_string
  use h5partdataread
- implicit none
  integer, intent(in)               :: indexstart,ipos
  integer, intent(out)              :: nstepsread
  character(len=*), intent(in)      :: rootname
@@ -504,7 +503,6 @@ subroutine set_labels_h5part()
  use geometry,        only:labelcoord
  use system_utils,    only:ienvironment
  use h5partdataread
- implicit none
  integer                 :: i,ndimset,ndim_max
  character(len=lenlabel) :: labeli
 

@@ -98,7 +98,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use labels,         only:ih,irho,ipmass,labeltype
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  use gadgetread,     only:hsoft,blocklabelgas,havewarned
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -1066,7 +1065,6 @@ contains
 !! small utility to transparently handle block labelled data read
 !!-----------------------------------------------------------------
 subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
- implicit none
  integer, intent(in) :: idumpfmt,lun,nexpected
  integer, intent(out) :: ndumped
  character(len=4), intent(out) :: blklabel
@@ -1116,7 +1114,6 @@ subroutine set_labels_gadget
  use system_utils,  only:envlist,ienvironment
  use gadgetread,    only:hsoft,blocklabelgas
  use asciiutils,    only:lcase
- implicit none
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
 

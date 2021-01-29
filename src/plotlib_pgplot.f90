@@ -273,7 +273,6 @@ module plotlib
 
  interface plot_lcur
   subroutine pglcur (maxpt, npt, x, y)
-   implicit none
    integer, intent(in) :: maxpt
    integer, intent(inout) :: npt
    real,    intent(inout) :: x(*), y(*)
@@ -284,7 +283,6 @@ module plotlib
 
  interface plot_olin
   subroutine pgolin (maxpt, npt, x, y, symbol)
-   implicit none
    integer, intent(in)    :: maxpt
    integer, intent(inout) :: npt
    real,    intent(inout) :: x(*), y(*)
@@ -294,7 +292,6 @@ module plotlib
 
  interface plot_ncur
   subroutine pgncur(maxpt, npt, x, y, symbol)
-   implicit none
    integer, intent(in)    :: maxpt
    integer, intent(inout) :: npt
    real,    intent(inout) :: x(*), y(*)
@@ -481,7 +478,6 @@ contains
 ! initialise the plotting library
 !---------------------------------------------
 subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
- implicit none
 
  character*(*), intent(in)    :: devicein
  integer, intent(out)         :: ierr
@@ -524,7 +520,6 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
 end subroutine plot_init
 
 subroutine plot_slc(lc)
- implicit none
  integer,intent(in) :: lc
 
  !--line cap has no effect in PGPLOT
@@ -543,14 +538,12 @@ subroutine plot_pap(width,aspect,paperunits)
 end subroutine plot_pap
 
 subroutine plot_qlc(lc)
- implicit none
  integer,intent(out) :: lc
 
  lc = 0
 end subroutine plot_qlc
 
 subroutine plot_set_opacity(alpha)
- implicit none
  real, intent(in)           :: alpha
 
  !--opacity has no effect in PGPLOT
@@ -578,7 +571,6 @@ subroutine plot_slw_float (LW)
 end subroutine plot_slw_float
 
 subroutine plot_rgb_from_table(frac,r,g,b)
- implicit none
  real, intent(in) :: frac
  real, intent(out) :: r,g,b
 
@@ -587,7 +579,6 @@ subroutine plot_rgb_from_table(frac,r,g,b)
 end subroutine plot_rgb_from_table
 
 subroutine plot_set_palette(lp)
- implicit none
  integer, intent(in) :: lp
 
  !--set line palette not implemented in PGPLOT
@@ -595,7 +586,6 @@ subroutine plot_set_palette(lp)
 end subroutine plot_set_palette
 
 logical function plot_qcur()
- implicit none
  character(len=10) :: string
  integer           :: nc
  call pgqinf('CURSOR',string,nc)
@@ -630,7 +620,6 @@ end function pgcurs_sub
 !--transparent rendering does not work in PGPLOT, but
 !  we give it an interface anyway
 subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
- implicit none
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
  integer, intent(in), optional :: iextend
@@ -651,7 +640,6 @@ end subroutine plot_imag_alpha
 
 !--giza version of plot_gray takes additional arguments
 subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
- implicit none
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
  integer, intent(in), optional :: iextend
@@ -662,7 +650,6 @@ end subroutine plot_gray
 
 !--version of lcur that returns last character pressed
 subroutine plot_clcur(maxpt, npt, x, y, ch)
- implicit none
  integer, intent(in) :: maxpt
  integer, intent(inout) :: npt
  real,    intent(inout) :: x(*), y(*)
@@ -676,7 +663,6 @@ end subroutine plot_clcur
 !--rounded rectangle plotting
 !  (not implemented -- just calls pgrect)
 subroutine plot_rect_rounded(x1,x2,y1,y2,r)
- implicit none
  real,intent(in) :: x1,x2,y1,y2,r
 
  call pgrect(x1,x2,y1,y2)
@@ -712,7 +698,6 @@ end function pgband_sub
 !
 
 subroutine plot_set_exactpixelboundaries()
- implicit none
  real :: xminpix,xmaxpix,yminpix,ymaxpix
  real :: vptxmin,vptxmax,vptymin,vptymax
  real :: dv
@@ -751,7 +736,5 @@ subroutine plot_set_exactpixelboundaries()
 
  return
 end subroutine plot_set_exactpixelboundaries
-
-
 
 end module plotlib

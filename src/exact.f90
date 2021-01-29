@@ -650,7 +650,6 @@ end function get_nexact
 subroutine options_exact(iexact)
  use prompting, only:prompt
  use plotlib,   only:plotlib_maxlinestyle,plotlib_maxlinecolour
- implicit none
  integer, intent(in) :: iexact
  character(len=12) :: string
  integer :: nexact,i

@@ -2853,7 +2853,6 @@ subroutine page_setup(dummy)
  use settings_limits, only:adjustlimitstodevice
  use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity,plot_qcur
  use limits,        only:fix_equal_limits
- implicit none
  integer :: iplotsave,ipanelsave,ipanelpos,npanels_remaining
  real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
  real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
@@ -3145,7 +3144,6 @@ subroutine legends_and_title
  use labels,        only:is_coord,headertags,count_non_blank
  use asciiutils,    only:add_escape_chars
  use exact,         only:iExactLineColour,iExactLineStyle,ExactLegendText,get_nexact
- implicit none
  integer :: icoloursave
  character(len=lensteplegend) :: steplegendtext
  real :: xlabeloffsettemp
@@ -3322,7 +3320,6 @@ end subroutine legends_and_title
 ! and allocates memory for datpix1D
 !--------------------------------------------
 subroutine set_grid1D(xmin1D,xmax1D,dxgrid1D,ngridpts)
- implicit none
  integer, intent(in) :: ngridpts
  real, intent(in) :: xmin1D,xmax1D,dxgrid1D
  integer :: igrid
@@ -3344,7 +3341,6 @@ end subroutine set_grid1D
 subroutine settrackinglimits(itrackpart,iplot,xploti,xmini,xmaxi)
  use labels,          only:is_coord
  use settings_limits, only:xminoffset_track,xmaxoffset_track
- implicit none
  integer, intent(in) :: itrackpart,iplot
  real, dimension(:), intent(in) :: xploti
  real, intent(inout) :: xmini,xmaxi
@@ -3369,7 +3365,6 @@ subroutine set_weights(weighti,dati,iamtypei,usetype)
  use settings_units,   only:unit_interp
  use settings_xsecrot, only:rendersinks,use3Dopacityrendering
  use labels,           only:get_sink_type
- implicit none
  real, dimension(:), intent(out) :: weighti
  real, dimension(:,:), intent(in) :: dati
  integer(kind=int1), dimension(:), intent(in) :: iamtypei
@@ -3405,7 +3400,6 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
  use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw,plot_set_opacity
  use system_utils,     only:lenvironment
  use legends,          only:ipanelselect
- implicit none
  integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
  real,             intent(in) :: pixwidthvec,pixwidthvecy
  real,          intent(inout) :: vmax
@@ -3714,7 +3708,6 @@ subroutine adapt_limits(iplot,xploti,xmini,xmaxi,xminadaptive,xmaxadaptive,label
  use settings_limits, only:scalemax,iadapt,iadaptcoords
  use settings_data,   only:debugmode,ndim,iverbose
  use settings_part,   only:iplotline
- implicit none
  integer,            intent(in)    :: iplot
  real, dimension(:), intent(in)    :: xploti
  real,               intent(inout) :: xmini,xmaxi,xminadaptive,xmaxadaptive
@@ -3792,7 +3785,6 @@ end function same_limits
 subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,intreplot)
  use transforms,    only:transform,transform_label,transform_limits
  use settings_data, only:numplot
- implicit none
  integer, intent(in)               :: itransxi,iplotxi,iaxis
  real, dimension(:), intent(inout) :: xploti
  real, intent(inout)               :: xmini,xmaxi
@@ -3834,7 +3826,6 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
  use settings_xsecrot, only:use3Dperspective
  use rotation,         only:rotate2D,rotate3D
  use plotlib,          only:plot_qcur
- implicit none
  real,                 intent(in)  :: anglexi,angleyi,anglezi,dzscreen,zobs
  real, dimension(:), intent(inout) :: xploti,yploti,zploti
  real, dimension(:,:), intent(in)  :: dat
@@ -3952,7 +3943,6 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
  use rotation, only:rotate_axes3D,rotate_axes2D
  use settings_data, only:ndim,xorigin
  use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,use3Dperspective
- implicit none
  integer, intent(in) :: irotateaxes,iplotx,iploty
  real, intent(in) :: anglexi,angleyi,anglezi
  real, intent(inout) :: dzscreen,zobs

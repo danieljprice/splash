@@ -30,7 +30,6 @@ module wave
 contains
 
 subroutine exact_wave(time,ampl,period,lambda,x0,ymean,xplot,yplot,ierr)
- implicit none
  integer :: i
  real, parameter :: pi = 3.1415926536
  real, intent(in) :: time, ampl, period, lambda, x0, ymean

@@ -79,7 +79,6 @@ module gadgethdf5read
                                       timeh,zh,iFlagSfr,iFlagFeedback,Nall,iFlagCool, &
                                       igotids,ndim,ndimV,nfiles,ncol,ierr) bind(c)
    import
-   implicit none
    character(kind=c_char), dimension(*), intent(in) :: filename
    integer(kind=c_int), intent(in), value :: maxtypes
    integer(kind=c_int), intent(out) :: iFlagSfr,iFlagFeedback,iFlagCool,igotids
@@ -92,7 +91,6 @@ module gadgethdf5read
   subroutine read_gadget_hdf5_data(filename,maxtypes,npartoftypei,massoftypei,&
                                     ncol,isrequired,i0,ierr) bind(c)
    import
-   implicit none
    character(kind=c_char), dimension(*), intent(in)  :: filename
    integer(kind=c_int), intent(in), value :: maxtypes
    integer(kind=c_int), dimension(6), intent(in) :: npartoftypei
@@ -112,7 +110,6 @@ contains
  !
  !---------------------------------------------------------------------------
 function fstring(array)
- implicit none
  character(kind=c_char), dimension(:), intent(in) :: array
  character(len=size(array)-1) :: fstring
  integer :: i
@@ -132,7 +129,6 @@ end function fstring
  !
  !---------------------------------------------------------------------------
 function reformatlabel(label)
- implicit none
  character(len=*), intent(in) :: label
  character(len=2*len(label)) :: reformatlabel
  integer :: is,ia,ib,ip

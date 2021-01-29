@@ -49,7 +49,6 @@ contains
 
 subroutine prompt_list(nobj,maxobj,objname,print_objlist,add_obj,delete_obj)
  use prompting, only:prompt
- implicit none
  integer, intent(inout) :: nobj
  integer, intent(in)    :: maxobj
  character(len=*), intent(in) :: objname

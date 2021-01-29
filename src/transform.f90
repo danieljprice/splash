@@ -51,6 +51,7 @@
 !
 !------------------------------------------------------------------------
 module transforms
+ implicit none
  integer, parameter, public :: ntrans = 6  ! this is the number of different transformations
  real, parameter, private :: zerolog = 1.e-12 ! this is minimum set if xmin = 0 and log
  public :: transform,transform_inverse,trans
@@ -84,7 +85,6 @@ contains
 !
 !------------------------------------------------------------------------
 subroutine transform(array,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, dimension(:), intent(inout) :: array
  real, intent(in), optional :: errval
@@ -163,7 +163,6 @@ end subroutine transform
 !
 !------------------------------------------------------------------------
 subroutine transforma(aa,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, intent(inout) :: aa
  real, intent(in), optional :: errval
@@ -186,7 +185,6 @@ end subroutine transforma
 !
 !------------------------------------------------------------------------
 function transformarray(array,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, intent(in), dimension(:) :: array
  real, dimension(size(array)) :: transformarray
@@ -208,7 +206,6 @@ end function transformarray
 !
 !------------------------------------------------------------------------
 subroutine transform_inverse(array,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, dimension(:), intent(inout) :: array
  real, intent(in), optional :: errval
@@ -280,7 +277,6 @@ end subroutine transform_inverse
 !
 !------------------------------------------------------------------------
 subroutine transforma_inverse(aa,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, intent(inout) :: aa
  real, intent(in), optional :: errval
@@ -304,7 +300,6 @@ end subroutine transforma_inverse
 !
 !------------------------------------------------------------------------
 subroutine transform2(array,itrans,errval)
- implicit none
  integer, intent(in) :: itrans
  real, dimension(:,:), intent(inout) :: array
  real, intent(in), optional :: errval
@@ -385,7 +380,6 @@ end subroutine transform2
 !
 !------------------------------------------------------------------------
 subroutine transform_limits(xmin,xmax,itrans)
- implicit none
  integer, intent(in) :: itrans
  real, intent(inout) :: xmin,xmax
  real :: xmintemp,xmaxtemp
@@ -492,7 +486,6 @@ end subroutine transform_limits
 !
 !------------------------------------------------------------------------
 subroutine transform_limits_inverse(xmin,xmax,itrans)
- implicit none
  integer, intent(in) :: itrans
  real, intent(inout) :: xmin,xmax
  real :: xmintemp,xmaxtemp,xtemp
@@ -576,7 +569,6 @@ end subroutine transform_limits_inverse
 !
 !------------------------------------------------------------------------
 function transform_label(label,itrans)
- implicit none
  integer, intent(in) :: itrans
  character(len=*), intent(in) :: label
  integer :: itransmulti,i,ndigits
@@ -633,7 +625,6 @@ end function transform_label
 !------------------------------------------------------------------------
 
 subroutine get_digits(i,digits,ndigits)
- implicit none
  integer, intent(in) :: i
  integer, intent(out) :: ndigits
  integer, intent(out), dimension(:) :: digits
@@ -659,7 +650,6 @@ end subroutine get_digits
 !     to convert the log in the transform to a natural log
 !------------------------------------------------------------------------
 real function convert_to_ln_fac(itrans)
- implicit none
  integer, intent(in) :: itrans
  character(len=20) :: string
  integer :: i
@@ -709,7 +699,6 @@ end function convert_to_ln_fac
 ! transformation involves a log or not
 !---------------------------------------
 logical function islogged(itrans)
- implicit none
  integer, intent(in) :: itrans
  character(len=20) :: string
 

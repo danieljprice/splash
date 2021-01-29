@@ -61,7 +61,6 @@ subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,debugmode
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment
- implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname

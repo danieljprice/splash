@@ -84,7 +84,6 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
- implicit none
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -1411,7 +1410,6 @@ end subroutine interactive_part
 !
 subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interactivereplot)
  use plotlib, only:plot_qcur,plot_curs,plot_band,plot_rect,plot_left_click
- implicit none
  integer, intent(inout) :: iadvance
  integer, intent(in) :: istep,ilaststep
  real, intent(inout) :: xmin,xmax,ymin,ymax
@@ -1610,7 +1608,6 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  use multiplot, only:itrans
  use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
- implicit none
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
@@ -2319,7 +2316,6 @@ contains
  ! and the viewport limits for each panel.
  !--------
 integer function getpanel(vptx,vpty)
- implicit none
  real, intent(in) :: vptx,vpty
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
  integer :: i,icol
@@ -2397,7 +2393,6 @@ end function getpanel
  !--------
 
 subroutine getxy(vptx,vpty,x,y,ipanel)
- implicit none
  real, intent(in) :: vptx,vpty
  real, intent(out) :: x,y
  integer, intent(in) :: ipanel
@@ -2443,7 +2438,6 @@ end subroutine getxy
 
 subroutine set_panel(ipanel)
  use plotlib, only:plot_svp,plot_swin
- implicit none
  integer, intent(in) :: ipanel
 
  if (ipanel > 0) then
@@ -2458,7 +2452,6 @@ end subroutine set_panel
 
 subroutine reset_panel
  use plotlib, only:plot_swin
- implicit none
 
  call plot_swin(xmini,xmaxi,ymini,ymaxi)
 
@@ -2470,7 +2463,6 @@ end subroutine interactive_multi
 ! utilities to determine whether a point is in or out of a selection
 !--------------------------------------------------------------------
 logical function inslice(x,xmin,xmax)
- implicit none
  real, intent(in) :: x,xmin,xmax
 
  inslice = (x >= xmin .and. x <= xmax)
@@ -2478,7 +2470,6 @@ logical function inslice(x,xmin,xmax)
 end function inslice
 
 logical function inrectangle(x,y,xmin,xmax,ymin,ymax)
- implicit none
  real, intent(in) :: x,y,xmin,xmax,ymin,ymax
 
  inrectangle = (x >= xmin .and. x <= xmax .and. y >= ymin .and. y <= ymax)
@@ -2486,7 +2477,6 @@ logical function inrectangle(x,y,xmin,xmax,ymin,ymax)
 end function inrectangle
 
 logical function incircle(x,y,r2)
- implicit none
  real, intent(in) :: x,y,r2
 
  incircle = ((x*x + y*y) <= r2)
@@ -2498,7 +2488,6 @@ end function incircle
 ! See: http://en.wikipedia.org/wiki/Even-odd_rule
 !
 logical function inpoly(x,y,xpts,ypts,npts)
- implicit none
  real, intent(in) :: x,y
  real, dimension(:), intent(in) :: xpts,ypts
  integer, intent(in) :: npts
@@ -2523,7 +2512,6 @@ end function inpoly
 subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype,iusetype)
  use params, only:int1
  use limits, only:assert_sensible_limits
- implicit none
  character(len=*), intent(in)    :: labeli
  integer, intent(in)             :: np
  real, dimension(np), intent(in) :: xarr
@@ -2564,7 +2552,6 @@ end subroutine adapt_limits_interactive
 !------------------------------------------------------------
 subroutine get_vptxy(x,y,vptx,vpty)
  use plotlib, only:plot_qvp,plot_qwin
- implicit none
  real, intent(in) :: x,y
  real, intent(out) :: vptx,vpty
  real :: xmini,xmaxi,ymini,ymaxi
@@ -2583,7 +2570,6 @@ end subroutine get_vptxy
 !------------------------------------------------------------
 subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
  use plotlib, only:plot_qvp
- implicit none
  real, intent(in) :: vptx,vpty
  real, intent(out) :: x,y
  real, intent(in) :: xmini,xmaxi,ymini,ymaxi
@@ -2605,7 +2591,6 @@ end subroutine get_posxy
 !
 subroutine plot_number(i,xi,yi)
  use plotlib, only:plot_numb,plot_qch,plot_sch,plot_text
- implicit none
  integer, intent(in) :: i
  real, intent(in) :: xi,yi
  integer :: nc
@@ -2630,7 +2615,6 @@ subroutine deleteaxes()
  use settings_page, only:iaxis,iPlotLegend,& !iPlotStepLegend, &
                     iPlotTitles,iPlotScale
  use settings_vecplot, only:iVecplotLegend
- implicit none
 
  if (iaxis==-2) then
     !
@@ -2664,7 +2648,6 @@ end subroutine deleteaxes
 subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  use settings_page, only:hposlegend,vposlegend,fjustlegend,iPlotLegend,iPlotLegendOnlyOnPanel
  use plotlib, only:plot_qcs
- implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  integer, intent(in), optional :: ipanel
  real :: xch,ych
@@ -2695,7 +2678,6 @@ end subroutine mvlegend
 subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  use settings_vecplot, only:hposlegendvec,vposlegendvec,iVecplotLegend
  use plotlib, only:plot_qcs
- implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
 
@@ -2714,7 +2696,6 @@ end subroutine mvlegendvec
 subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  use settings_page, only:hpostitle,vpostitle,fjusttitle,iPlotTitles
  use plotlib, only:plot_qcs
- implicit none
  real, intent(in) :: xi,yi,xmin,xmax,ymax
  real :: xch,ych
 
@@ -2747,7 +2728,6 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  use settings_data,   only:ndim
  use settings_limits, only:iadapt,iadaptcoords
  use transforms,      only:transform_limits_inverse
- implicit none
  integer, intent(in) :: iplot
  real,    intent(in) :: xmin,xmax
  logical, intent(in), optional :: setlim2
@@ -2796,7 +2776,6 @@ subroutine restrict_range(iplot,xmin,xmax)
  use limits, only:range
  use multiplot, only:itrans
  use transforms, only:transform_limits_inverse
- implicit none
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax
  real :: xmintemp,xmaxtemp
@@ -2820,7 +2799,6 @@ end subroutine restrict_range
 !
 subroutine reset_ranges()
  use limits, only:reset_all_ranges
- implicit none
 
  call reset_all_ranges()
 
@@ -2832,7 +2810,6 @@ end subroutine reset_ranges
 !
 subroutine reset_limits2(icol)
  use limits, only:reset_lim2
- implicit none
  integer, intent(in) :: icol
 
  call reset_lim2(icol)
@@ -2848,7 +2825,6 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
  use settings_data, only:ndim
  use settings_limits, only:xminoffset_track,xmaxoffset_track
  use transforms, only:transform_limits_inverse
- implicit none
  integer, intent(in) :: iplot
  real, intent(in) :: xmin,xmax,xi
  real :: xmintemp,xmaxtemp
@@ -2877,7 +2853,6 @@ subroutine save_itrackpart_recalcradius(itrackpart)
  use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities, &
                           itracktype,itrackoffset
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
- implicit none
  integer, intent(in) :: itrackpart
 
  itracktype   = 0  ! cannot interactively track by type
@@ -2904,7 +2879,6 @@ subroutine change_itrans(iplot,xmin,xmax)
  use multiplot, only:itrans
  use settings_data, only:numplot
  use transforms, only:transform_limits,transform_limits_inverse
- implicit none
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax
 
@@ -2927,7 +2901,6 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
  use multiplot, only:itrans
  use settings_data, only:numplot
  use transforms, only:transform_limits,transform_limits_inverse
- implicit none
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax, xmina, xmaxa
 
@@ -2953,7 +2926,6 @@ end subroutine change_itrans2
 !
 subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
  use settings_xsecrot, only:anglex,angley,anglez
- implicit none
  integer, intent(in) :: ndim
  real, intent(in) :: anglexi,angleyi,anglezi
 
@@ -2971,7 +2943,6 @@ end subroutine save_rotation
 !
 subroutine save_xsecpos(xsecpos,xsec)
  use settings_xsecrot, only:xsecpos_nomulti,xsec_nomulti
- implicit none
  real, intent(in) :: xsecpos
  logical, intent(in) :: xsec
 
@@ -2986,7 +2957,6 @@ end subroutine save_xsecpos
 !
 subroutine save_perspective(zpos,dz)
  use settings_xsecrot, only:zobserver,dzscreenfromobserver
- implicit none
  real, intent(in) :: zpos,dz
 
  zobserver = zpos
@@ -2999,7 +2969,6 @@ end subroutine save_perspective
 !
 subroutine save_opacity(taupartdepthi)
  use settings_xsecrot, only:taupartdepth
- implicit none
  real, intent(in) :: taupartdepthi
 
  taupartdepth = taupartdepthi
@@ -3032,7 +3001,6 @@ end subroutine save_windowsize
 !
 subroutine save_circles(ncircpartset,icircpartset)
  use settings_part, only:ncircpart,icircpart
- implicit none
  integer, intent(in) :: ncircpartset
  integer, intent(in), dimension(:) :: icircpartset
  integer :: imax
@@ -3048,7 +3016,6 @@ end subroutine save_circles
 !
 subroutine change_colourmap(imap,istep)
  use colours, only:colour_set,ncolourschemes,icustom
- implicit none
  integer, intent(inout) :: imap
  integer, intent(in) :: istep
 
@@ -3069,7 +3036,6 @@ subroutine set_movie_mode()
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
  use colourbar,       only:set_floating_bar_style
- implicit none
 
  iaxis = -1
  iPageColours = 2
@@ -3096,7 +3062,6 @@ subroutine unset_movie_mode()
  use settings_render, only:iColourBarStyle
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
- implicit none
 
  iaxis = 0
  iPageColours = 1

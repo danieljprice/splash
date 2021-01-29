@@ -79,7 +79,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
      xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
      rkappa,zcut,iverbose,exact_rendering)
 
- implicit none
  real, parameter :: pi=3.1415926536
  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat,zorig

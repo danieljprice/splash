@@ -79,7 +79,6 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  use plotlib,   only:plot_bbuf,plot_ebuf,plot_qwin,plot_qvp,plot_qcs,&
                      plot_svp,plot_swin,plot_imag,plot_box,plot_annotate,plot_gray,&
                      plotlib_extend_pad
- implicit none
  integer, intent(in) :: istyle,icolours
  real, intent(in) :: datmin,datmax,xlabeloffset
  character(len=*), intent(in) :: label
@@ -322,7 +321,6 @@ end subroutine plotcolourbar
 ! vertically or horizontally for a given style
 !-------------------------------------------------------
 logical function barisvertical(istyle)
- implicit none
  integer, intent(in) :: istyle
 
  barisvertical = .true.
@@ -343,7 +341,6 @@ end function barisvertical
 !-------------------------------------------------------
 logical function incolourbar(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
  use plotlib, only:plot_qcs
- implicit none
  integer, intent(in) :: istyle,iunits
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
  real :: xminbar,xmaxbar,yminbar,ymaxbar,xch,ych,barwidth
@@ -399,7 +396,6 @@ end function incolourbar
 !-------------------------------------------------------
 logical function incolourbarlabel(istyle,iunits,xpt,ypt,xmin,xmax,ymin,ymax)
  use plotlib, only:plot_qcs
- implicit none
  integer, intent(in) :: istyle,iunits
  real, intent(in) :: xpt,ypt,xmin,xmax,ymin,ymax
  real :: xch,ych,disp,xminbar,xmaxbar,yminbar,ymaxbar
@@ -442,7 +438,6 @@ end function incolourbarlabel
 ! utility function to avoid repeated code
 !------------------------------------------
 subroutine barlimits(barmin,barmax,posmin,posmax,pos,barlen)
- implicit none
  real, intent(out) :: barmin,barmax
  real, intent(in)  :: posmin,posmax,pos,barlen
  real :: dpos
@@ -460,7 +455,6 @@ end subroutine barlimits
 !-------------------------------------------------------
 subroutine get_colourbarmargins(istyle,xminmargin,xmaxmargin,yminmargin,ymaxmargin,barwidth)
  use plotlib, only:plot_qcs,plot_qvp
- implicit none
  integer, intent(in) :: istyle
  real, intent(inout) :: xminmargin,xmaxmargin,yminmargin,ymaxmargin
  real, intent(out) :: barwidth
@@ -538,7 +532,6 @@ end function iscustombar
 !---------------------------------------------------------------------
 subroutine adjustcolourbar(istyle,xpt1,ypt1,xpt2,ypt2,&
                            xmin,xmax,ymin,ymax,barmin,barmax)
- implicit none
  integer, intent(in)    :: istyle
  real,    intent(in)    :: xpt1,ypt1,xpt2,ypt2,xmin,xmax,ymin,ymax
  real,    intent(inout) :: barmin,barmax

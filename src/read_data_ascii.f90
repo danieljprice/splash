@@ -89,7 +89,6 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  use system_utils,   only:ienvironment,renvironment
  use asciiread,      only:icoltype,label_orig
  use labels,         only:lenlabel,labeltype,print_types,label
- implicit none
  integer, intent(in)          :: indexstart,ipos
  integer, intent(out)         :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -359,7 +358,6 @@ subroutine set_labels_ascii
  use system_commands, only:get_environment
  use filenames,       only:fileprefix
  use asciiread,       only:icoltype,label_orig
- implicit none
  integer                 :: i,ierr,ndimVtemp
  character(len=120)      :: columnfile
  character(len=lenlabel) :: labeli

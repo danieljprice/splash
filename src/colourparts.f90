@@ -27,7 +27,6 @@ contains
 
 subroutine colour_particles(dat,datmin,datmax,icolour,npart)
  use plotlib, only: plot_qcir
- implicit none
  integer, intent(in) :: npart
  real, dimension(npart), intent(in) :: dat
  real, intent(in) :: datmin, datmax

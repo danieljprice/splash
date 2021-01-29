@@ -121,7 +121,6 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  use system_utils,   only:lenvironment
  use vineread,       only:id_gamma,id_iheadlen,id_ndim,id_npart,id_npart_sph,&
                            id_npoim,id_t
- implicit none
  integer, intent(in)          :: indexstart,ipos
  integer, intent(out)         :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -481,7 +480,6 @@ subroutine set_labels_VINE
  use params
  use settings_data, only:ndim,ndimV,UseTypeInRenderings,ntypes
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

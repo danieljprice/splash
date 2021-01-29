@@ -74,7 +74,6 @@ subroutine read_data_cactus_hdf5(rootname,istepstart,ipos,nstepsread)
  use cactushdf5read, only:open_cactus_hdf5_file,read_cactus_hdf5_data,close_cactus_hdf5_file,&
                            datfileprev,file_is_open,ntoti_prev,ncol_prev,nstep_prev,compute_extra_columns
  use dataread_utils, only:count_types
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -247,7 +246,6 @@ subroutine read_cactus_hdf5_data_fromc(icol,ntot,np,temparr) bind(c)
  use particle_data,  only:dat
  use settings_data,  only:debugmode
  use labels,         only:label
- implicit none
  integer(kind=c_int), intent(in) :: icol,ntot,np
  real(kind=c_double), intent(in) :: temparr(np)
  integer(kind=c_int) :: icolput
@@ -283,7 +281,6 @@ subroutine read_cactus_itype_fromc(ntot,np,itype) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int
  use particle_data,  only:iamtype
  use params,         only:int1
- implicit none
  integer(kind=c_int), intent(in) :: ntot,np
  integer(kind=c_int), intent(in) :: itype(np)
  integer :: i1,i2,len_type
@@ -315,7 +312,6 @@ subroutine set_labels_cactus_hdf5
  use system_utils,   only:envlist,ienvironment
  use cactushdf5read, only:blocklabel
  use asciiutils,     only:lcase
- implicit none
  integer :: i,icol
 
  if (ndim <= 0 .or. ndim > 3) then

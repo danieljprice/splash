@@ -116,7 +116,6 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  use labels,         only:labeltype,labelzintegration
  use system_utils,   only:ienvironment
  use seren_data_store
- implicit none
  integer, intent(in) :: istepstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -370,7 +369,6 @@ contains
 ! binary header read
 !----------------------------------------------------
 subroutine read_serenheader_binary(iunitb)
- implicit none
  integer, intent(in) :: iunitb
 
  read (iunitb,end=55) idata
@@ -402,7 +400,6 @@ end subroutine read_serenheader_binary
 ! ascii header read
 !----------------------------------------------------
 subroutine read_serenheader_ascii(iunita)
- implicit none
  integer, intent(in) :: iunita
 
  do i=1,size(idata)
@@ -450,7 +447,6 @@ end subroutine read_serenheader_ascii
 subroutine read_serenbody(iunit,ierr_out)
  use seren_data_store
  use labels, only:ix,ivx,ipmass,ih,irho,iBfirst,iutherm
- implicit none
  integer, intent(in)  :: iunit
  integer, intent(out) :: ierr_out
  integer              :: ierr, ierr1
@@ -1053,7 +1049,6 @@ end subroutine
 ! translate types into order (for old dragon read)
 !----------------------------------------------------
 subroutine set_types(itypei,ntotal,noftype)
- implicit none
  integer(kind=int1), dimension(:), intent(inout) :: itypei
  integer, intent(in) :: ntotal
  integer, dimension(:), intent(out) :: noftype
@@ -1108,7 +1103,6 @@ subroutine set_labels_seren
  use geometry, only:labelcoord
  use settings_units, only:units=>units_default
  use seren_data_store
- implicit none
  integer :: i, j, width, unit_no
  integer :: nunknown                ! Number of unknown data types
  character(len=lenunitslabel) :: unit_base, unit_string
@@ -1267,7 +1261,6 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  use labels, only:lenunitslabel
  use params
  use seren_data_store
- implicit none
 
  real(doub_prec), intent(out)      :: out_unit_interp
  real, intent(out)                 :: out_unitzintegration
@@ -1417,7 +1410,6 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
 end subroutine find_weights
 
 subroutine translate_unit_names(unit_name)
- implicit none
  character(len=*), intent(inout) :: unit_name
 
  select case (trim(unit_name))

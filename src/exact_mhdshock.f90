@@ -47,7 +47,6 @@ module mhdshock
 contains
 
 subroutine exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xpts,ypts,npts,ierr)
- implicit none
  integer, intent(in) :: iplot,ishk
  integer, intent(out) :: npts,ierr
  real, intent(in) :: time,gamma,xmin,xmax,xshock

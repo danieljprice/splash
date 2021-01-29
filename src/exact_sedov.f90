@@ -33,7 +33,6 @@ module sedov
 contains
 
 subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot
  integer, intent(out) :: ierr
  real, intent(in) :: time, gam, rhozero, energy, rmax
@@ -160,7 +159,6 @@ end subroutine exact_sedov
 !--eta (dimensionless radius) as a function of u_bar (dimensionless velocity)
 !
 real function etau(u,gamma,ndim)
- implicit none
  integer, intent(in) :: ndim
  real, intent(in) :: u,gamma
  real :: gam1,term1,term2,power1,power2
@@ -177,7 +175,6 @@ end function etau
 !--rhobar (dimensionless density) as a function of u_bar (dimensionless velocity)
 !
 real function rhou(u,gamma)
- implicit none
  real, intent(in) :: u,gamma
  real :: gam1,power1,power2,power3,term1,term2,term3
 
@@ -196,7 +193,6 @@ end function rhou
 !--prbar (dimensionless pressure) as a function of u_bar (dimensionless velocity)
 !
 real function pru(u,gamma)
- implicit none
  real, intent(in) :: u,gamma
 
  pru = (gamma+1. - 2.*u)/(2.*gamma*u - gamma - 1.)*u**2*rhou(u,gamma)
@@ -206,7 +202,6 @@ end function pru
 !--du /dln eta - required for the integral to compute eta0
 !
 real function dudlneta(u,gamma)
- implicit none
  real, intent(in) :: u,gamma
  real :: term1,term2
 
@@ -221,7 +216,6 @@ end function dudlneta
 !--eta_0 as a function of gamma
 !
 real function eta0(gamma,ndim)
- implicit none
  integer, parameter :: ipts = 50000
  real, parameter :: pi = 3.1415926536
  integer, intent(in) :: ndim

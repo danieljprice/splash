@@ -41,7 +41,6 @@ contains
 
 subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,rplot,yplot,ierr)
  use plotlib, only:plot_line
- implicit none
  integer, intent(in)  :: iplot,ispiral,narms
  integer, intent(out) :: ierr
  real,    intent(in)  :: time, HonR, rplanet, q, phi0, params(:,:)

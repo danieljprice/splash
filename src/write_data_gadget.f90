@@ -39,7 +39,6 @@ subroutine write_sphdata_gadget(time,dat,iamtype,ntotal,ntypes,npartoftype, &
  use settings_data,  only:ndim
  use limits,         only:lim
  use params,         only:int1
- implicit none
  integer, intent(in)                          :: ntotal,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
  real, intent(in)                             :: time

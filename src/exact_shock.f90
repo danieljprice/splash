@@ -48,7 +48,6 @@ module shock
 contains
 
 subroutine exact_shock(iplot,time,gammain,xshock,rho_L,rho_R,p_L,p_R,v_L,v_R,rdust_to_gas,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot
  integer, intent(out) :: ierr
  real, intent(in) :: time,gammain,xshock
@@ -328,7 +327,6 @@ end subroutine exact_shock
 ! dprice@ast.cam.ac.uk
 !-------------------------------------------------------------------
 subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
- implicit none
  real, parameter :: tol = 1.5e-6
  real, intent(in) :: gamma,p_L,p_R,v_L,v_R,c_L,c_R
  real, intent(out) :: pr,vstar
@@ -384,7 +382,6 @@ end subroutine get_pstar
 !  H is pstar/p_L or pstar/p_R
 !
 subroutine f_and_df(prstar,pr,cs,gam,fp,dfdp)
- implicit none
  real, intent(in) :: prstar, pr, gam, cs
  real, intent(out) :: fp,dfdp
  real :: H,term, power, gamm1, denom
@@ -414,7 +411,6 @@ end subroutine f_and_df
 ! See also Cha & Whitworth (2003), MNRAS 340, 73-90
 !-------------------------------------------------------------
 subroutine get_pstar_isothermal(cs2,v_L,v_R,rho_L,rho_R,pstar,vstar)
- implicit none
  real, intent(in) :: cs2,v_L,v_R,rho_L,rho_R
  real, intent(out) :: pstar,vstar
  real :: sqrtrho_L, sqrtrho_R, X, vdiff, determinant, vstar2

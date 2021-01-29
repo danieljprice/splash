@@ -51,7 +51,6 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  use asciiutils, only:string_replace
  use parsetext,  only:parse_text,rn
  use params,     only:ltag
- implicit none
  real, intent(in) :: t,hpos,vpos,fjust
  integer, intent(in) :: nvar
  real, intent(in), dimension(nvar) :: allvars
@@ -104,7 +103,6 @@ end subroutine legend
 subroutine plot_box_around_text(string,hpos,vpos,fjust)
  use plotlib, only:plot_qwin,plot_qcs,plot_qtxt,plot_qci,plot_sci,plot_sfs, &
               plot_set_opacity, plot_rect
- implicit none
  character(len=*), intent(in) :: string
  real, intent(in) :: hpos,vpos,fjust
  real :: xmin,xmax,ymin,ymax,xpos,ypos
@@ -161,7 +159,6 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_numb,plot_qtxt, &
                    plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
                    plot_qvp,plot_svp,plot_swin,plot_arro,plot_set_opacity
- implicit none
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
  real :: xmin,xmax,ymin,ymax
@@ -284,7 +281,6 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
            iplotpts,iplotline,text,hposlegend,vposlegend,alphalegend)
  use plotlib, only:plot_qwin,plot_qcs,plot_qci,plot_qls,plot_sci,plot_sls, &
                     plot_line,plot_pt,plot_text,plot_stbg,plot_slc,plot_qlc,plot_set_opacity
- implicit none
  integer, intent(in) :: icall,icolour,imarkerstyle,ilinestyle
  logical, intent(in) :: iplotpts,iplotline
  character(len=*), intent(in) :: text
@@ -371,7 +367,6 @@ end subroutine legend_markers
 !-----------------------------------------------------------------
 subroutine legend_scale(dxscale,hpos,vpos,text)
  use plotlib, only:plot_qwin,plot_qcs,plot_err1,plot_annotate
- implicit none
  real, intent(in) :: dxscale,hpos,vpos
  character(len=*), intent(in) :: text
  real :: xmin,xmax,ymin,ymax,xch,ych,xpos,ypos
@@ -398,7 +393,6 @@ end subroutine legend_scale
 !-------------------------------------------------------------------
 subroutine prompt_panelselect(string,iselect)
  use prompting, only:prompt
- implicit none
  character(len=*), intent(in) :: string
  integer,       intent(inout) :: iselect
 
@@ -417,7 +411,6 @@ end subroutine prompt_panelselect
 !  as per the prompts in prompt_panelselect
 !-------------------------------------------------------------------
 logical function ipanelselect(iselect,ipanel,irow,icolumn)
- implicit none
  integer,       intent(in) :: iselect,ipanel,irow,icolumn
 
  ipanelselect = ((iselect > 0 .and. ipanel==iselect) &

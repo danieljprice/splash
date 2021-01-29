@@ -70,7 +70,6 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
                             get_floats_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -216,7 +215,6 @@ subroutine set_labels_fits
  use labels,         only:label,labeltype,ix,ipmass,ih,irho
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,       only:labelcoord
- implicit none
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_fits ***'
