@@ -63,7 +63,7 @@ module readdata_fits
 contains
 
 subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
- use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
+ use particle_data,    only:dat,npartoftype,masstype,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
  use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,&
