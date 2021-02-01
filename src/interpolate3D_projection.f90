@@ -39,6 +39,10 @@ module projections3D
  public :: interpolate3D_projection
  public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
+ public :: coltable
+ logical, public :: have_setup_kernel = .false.
+
+ private
 
 contains
 
@@ -54,6 +58,7 @@ subroutine setup_integratedkernel
 
  ! force cubic kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)
+ have_setup_kernel = .true.
 
  !print "(1x,a)",'setting up integrated kernel table...'
  dq2table = radkernel2/maxcoltable
@@ -218,9 +223,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  !
  !--check column density table has actually been setup
  !
- if (abs(coltable(1)) <= 1.e-5) then
-    call setup_integratedkernel
- endif
+ if (.not.have_setup_kernel) call setup_integratedkernel
  !
  !--print a progress report if it is going to take a long time
  !  (a "long time" is, however, somewhat system dependent)

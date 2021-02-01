@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 
 module interpolate3D_opacity
- use projections3D, only:wfromtable,coltable
+ use projections3D, only:wfromtable,coltable,setup_integratedkernel,have_setup_kernel
  use kernels,       only:radkernel,radkernel2,cnormk3D,wallint
  use sort,          only:indexx
  use interpolation, only:weight_sink
@@ -93,7 +93,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  integer :: iprintinterval, iprintnext,itmin
  integer, dimension(npart) :: iorder
  integer(kind=selected_int_kind(12)) :: ipart
- integer :: nsubgrid,nfull,nok,ncpus
+ integer :: nsubgrid,nok!,ncpus,nfull
  real :: hi,hi1,hi21,radkern,q2,wab,pmassav
 
  real, dimension(npixx,npixy) :: datnorm
@@ -139,6 +139,10 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     adjustzperspective = .false.
     zcutoff = huge(zobserver)
  endif
+ !
+ !--setup kernel table if not already set
+ !
+ if (.not.have_setup_kernel) call setup_integratedkernel
 
 !
 !--kappa is the opacity in units of length^2/mass

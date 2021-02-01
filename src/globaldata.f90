@@ -46,8 +46,10 @@ end module params
 module physcon
  use params, only:doub_prec
  implicit none
- real(doub_prec), parameter :: solarrcgs = 6.955d10
- real(doub_prec), parameter :: solarmcgs = 1.989d33
+ real, parameter :: pi = 4.*atan(1.)
+ real(doub_prec), parameter :: solarrcgs = 6.955d10  ! cm
+ real(doub_prec), parameter :: solarmcgs = 1.989d33  ! g
+ real(doub_prec), parameter :: steboltz = 5.67e-5    ! erg cm^-2 K^-4 s-1
 
  public
 end module physcon

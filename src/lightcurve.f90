@@ -20,6 +20,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
+ use physcon,               only:steboltz,pi
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -31,13 +32,17 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:,:), allocatable :: datpix,brightness
- real :: zobs,dzobs,steboltz,dx,dy
+ real :: zobs,dzobs,dx,dy
 
  lum = 0.
  rphoto = 0.
  temp = 0.
  if (ndim /= 3) then
     print "(a)",' ERROR: lightcurve only works with 3 dimensional data'
+    return
+ endif
+ if (.not. (ih > 0 .and. ipmass > 0 .and. irho > 0 .and. itemp > 0)) then
+    print "(a)",' ERROR: could not locate h,mass,rho or temperature in data'
     return
  endif
  xmin(1:ndim) = lim(ix(1:ndim),1)
@@ -56,6 +61,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  !--allocate memory for image
  !
  npixx = npix
+ if (npixx < 8) npixx = 512
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
  dy = (xmax(2)-xmin(2))/npixy
@@ -86,7 +92,6 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  !
  ! specify source function for each particle
  !
- steboltz = 5.67e-5 ! erg cm^-2 K^-4 s-1
  flux = steboltz*dat(1:n,itemp)**4
  !
  ! raytrace SPH data to 2D image to get flux
@@ -99,9 +104,16 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
       n,xmin(1),xmin(2),datpix,brightness,npixx,npixy,&
       dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,exact_rendering)
 
+ ! effective temperature: total flux equals that of a blackbody at T=Teff
+ temp = (sum(datpix)/steboltz)**0.25
+ print "(/,a,g10.1,a)",' Teff = ',temp,' K'
+
  ! luminosity is integrated flux
  lum = sum(datpix)*dx*dy
  print*,'time = ',time,' luminosity = ',lum,' erg/s'
+
+ rphoto = sqrt(lum/(4./3.*pi*steboltz*temp**4))
+ print*,' radius = ',rphoto/1.49e13,' au',dx/1.49e13
 
 end subroutine get_lightcurve
 
