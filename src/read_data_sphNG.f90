@@ -461,7 +461,7 @@ subroutine print_dustgrid_info(ntags,tags,vals,mgas)
  if (match_tag(tags,'grainsize1') > 0) then
     print "(/,a)",' Dust grid:'
     do i=1,ntags
-       if (index(tags(i),'grainsize') > 0) then
+       if (index(tags(i),'grainsize') > 0 .and. vals(i) > 0.) then
           nd = nd + 1
           print "(i3,a)",nd,': '//get_label_grain_size(vals(i))
        endif

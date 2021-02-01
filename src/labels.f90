@@ -423,6 +423,9 @@ function get_label_grain_size(sizecm) result(string)
  elseif (sizecm >= 1.e-7) then
     write(string,"(1pg10.3)") sizecm*1.e7
     ulab = 'nm'
+ else
+    write(string,"(1pg10.3)") sizecm
+    ulab = 'cm'
  endif
  string = adjustl(string)
  call string_delete(string,'.0 ')
