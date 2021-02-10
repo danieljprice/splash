@@ -34,8 +34,9 @@ module write_pixmap
  logical, public :: ireadpixmap = .false.
  character(len=5), public :: pixmapformat = ' '
  character(len=5), public :: readpixformat = ' '
- public :: isoutputformat,writepixmap,write_pixmap_ppm
- public :: isinputformat,readpixmap
+ public :: writepixmap,write_pixmap_ppm,write_pixmap_ascii
+ public :: isinputformat,isoutputformat
+ public :: readpixmap
 
  private
 
@@ -105,7 +106,8 @@ subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,
 
  select case(trim(pixmapformat))
  case('ascii')
-    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile,time)
+    call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pix',xsec)
+    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
  case('ppm')
     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
  case('pfm')
@@ -128,23 +130,18 @@ end subroutine writepixmap
 !-----------------------------------------------------------------
 !   output pixmap as an ascii file
 !-----------------------------------------------------------------
-subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile,time)
- use labels, only:shortlabel
- integer, intent(in) :: npixx,npixy,istep
+subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
+ integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
- logical, intent(in) :: xsec
- character(len=*), intent(in) :: label,labu,dumpfile
+ character(len=*), intent(in) :: label,filename
  character(len=10) :: stringx,stringy
  character(len=30) :: fmtstring
- character(len=len(dumpfile)+10) :: filename
  integer :: ierr,j
  integer, parameter :: iunit = 166
 !
 !--write ascii file
 !
- !write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
- call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pix',xsec)
  open(unit=iunit,file=filename,status='replace',form='formatted',iostat=ierr)
  if (ierr /=0) then
     print*,'error opening '//trim(filename)
