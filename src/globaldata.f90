@@ -50,6 +50,7 @@ module physcon
  real(doub_prec), parameter :: solarrcgs = 6.955d10  ! cm
  real(doub_prec), parameter :: solarmcgs = 1.989d33  ! g
  real(doub_prec), parameter :: steboltz = 5.67e-5    ! erg cm^-2 K^-4 s-1
+ real(doub_prec), parameter :: au = 1.496d13 ! cm
 
  public
 end module physcon

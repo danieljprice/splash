@@ -20,7 +20,8 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
- use physcon,               only:steboltz,pi
+ use physcon,               only:steboltz,pi,au
+ use write_pixmap,          only:write_pixmap_ascii
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -31,8 +32,8 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  integer :: n,isinktype,npixx,npixy,ierr
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
- real, dimension(:,:), allocatable :: datpix,brightness
- real :: zobs,dzobs,dx,dy
+ real, dimension(:,:), allocatable :: datpix,taupix
+ real :: zobs,dzobs,dx,dy,area
 
  lum = 0.
  rphoto = 0.
@@ -57,17 +58,21 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     return
  endif
+ x(1:n) = dat(1:n,ix(1))
+ y(1:n) = dat(1:n,ix(2))
+ z(1:n) = dat(1:n,ix(3))
  !
  !--allocate memory for image
  !
- npixx = npix
+ npixx = 512 !npix
  if (npixx < 8) npixx = 512
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
  dy = (xmax(2)-xmin(2))/npixy
- print*,' using nx,ny,dx,dy = ',npixx,npixy,dx,dy
+ print "(a,i0,a,i0,a)",' Using ',npixx,' x ',npixy,' pixels'
+ print "(2(1x,a,es10.3,'->',es10.3,a,/))",'x = [',xmin(1),xmax(1),']','y = [',xmin(2),xmax(2),']'
 
- allocate(datpix(npixx,npixy),brightness(npixx,npixy))
+ allocate(datpix(npixx,npixy),taupix(npixx,npixy))
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
@@ -87,6 +92,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  if (ikappa > 0) then
     opacity = dat(1:n,ikappa)
  else
+    print*,' WARNING: using fixed opacity kappa = 0.3 cm^2/g for lightcurve'
     opacity = 0.3
  endif
  !
@@ -101,19 +107,25 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  call interp3D_proj_opacity(x,y,z,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
-      n,xmin(1),xmin(2),datpix,brightness,npixx,npixy,&
+      n,xmin(1),xmin(2),datpix,taupix,npixx,npixy,&
       dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,exact_rendering)
 
+ area = count(taupix >= 1.)*dx*dy
+ print "(/,a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
+ print "(a,1pf10.3,a)",' maximum Temp  = ',(maxval(datpix)/steboltz)**0.25,' K'
+
  ! effective temperature: total flux equals that of a blackbody at T=Teff
- temp = (sum(datpix)/steboltz)**0.25
- print "(/,a,g10.1,a)",' Teff = ',temp,' K'
+ temp = (sum(datpix)/count(taupix >= 1.)/steboltz)**0.25
+ print "(/,a,1pf10.3,a)",' Teff = ',temp,' K'
 
  ! luminosity is integrated flux
- lum = sum(datpix)*dx*dy
- print*,'time = ',time,' luminosity = ',lum,' erg/s'
+ lum = area*steboltz*temp**4
+ print "(a,es10.3,a)",' luminosity = ',lum,' erg/s'
 
- rphoto = sqrt(lum/(4./3.*pi*steboltz*temp**4))
- print*,' radius = ',rphoto/1.49e13,' au',dx/1.49e13
+ rphoto = sqrt(lum/(4.*pi*steboltz*temp**4))
+ print "(a,es10.3,a)",' radius = ',rphoto/1.49e13,' au'
+
+ call write_pixmap_ascii(datpix,npixx,npixy,xmin(1),xmin(2),dx,minval(datpix),maxval(datpix),'temp','lum.pix',time)
 
 end subroutine get_lightcurve
 

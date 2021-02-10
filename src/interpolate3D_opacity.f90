@@ -119,8 +119,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
     return
  endif
- if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
-    print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
+ if (any(hh(1:npart) <= tiny(0.))) then
+    if (iverbose > 1) print*,'interpolate3D_opacity: warning: ignoring some or all particles with h < 0'
  endif
  !--check that npmass is sensible
  if (npmass < 1 .or. npmass > npart) then
@@ -157,7 +157,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--average particle mass
  pmassav = sum(pmass(1:npmass))/real(npmass)
  rkappatemp = pi*hav*hav/(pmassav*coltable(0))
- if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/0.3,' smoothing lengths'
+ if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/maxval(rkappa),' smoothing lengths'
  !print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
  !
  !--print a progress report if it is going to take a long time
@@ -402,7 +402,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                     !
                  !   !$omp atomic
                     datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dat(i)
-                    ! brightness(ipix,jpix) = brightness(ipix,jpix) + fopacity
+                    brightness(ipix,jpix) = brightness(ipix,jpix) + tau
+                    !brightness(ipix,jpix) = brightness(ipix,jpix) + fopacity
 
                     !
                     !--calculate data value at this pixel using the summation interpolant
@@ -424,7 +425,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  enddo over_particles
 !!$omp end do
 !!$omp end parallel
-
 !
 !--get ending CPU time
 !
