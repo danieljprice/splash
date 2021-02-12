@@ -213,7 +213,7 @@ end subroutine read_data_fits
 !------------------------------------------------------------
 subroutine set_labels_fits
  use labels,         only:label,labeltype,ix,ipmass,ih,irho
- use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
+ use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings,iautorender
  use geometry,       only:labelcoord
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -237,6 +237,8 @@ subroutine set_labels_fits
  if (irho > 0)    label(irho)       = 'intensity'
  if (ipmass > 0)  label(ipmass)     = 'flux'
  if (ih > 0)      label(ih)         = 'sigma'
+
+ if (ndim==2) iautorender = irho ! automatically select this column for first plot
 
  ! set labels for each particle type
  ntypes = 1

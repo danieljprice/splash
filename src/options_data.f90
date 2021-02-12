@@ -70,8 +70,8 @@ subroutine defaults_set_data
  ipartialread = .false.  ! strictly unnecessary as set in get_data
  iverbose = 1
  UseFakeDustParticles = .false.
+ iautorender = 0
 
- return
 end subroutine defaults_set_data
 
 !----------------------------------------------------------------------

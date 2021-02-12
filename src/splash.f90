@@ -51,11 +51,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.0.3   : (29/01/21) changing units rescales plot limits correctly;
+!     3.1.0   : (10/02/21) splash calc lightcurve implemented;
+!             changing units rescales plot limits correctly;
 !             can change units temporarily without writing .units file;
 !             auto-select closest velocity and mass unit and better default time unit
 !             in phantom/sphNG read; error message if Inf or NaN read from .units file;
-!             bug fix with units prompt; floating colour bars are white not black
+!             bug fix with units prompt; floating colour bars are white not black;
 !     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
 !             use opacity defined on particles; can track multiple particles with
 !             'splash calc tracks' by specifying ids in splash.tracks file;
@@ -429,7 +430,7 @@ program splash
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
  use system_commands,    only:get_number_arguments,get_argument,get_environment
  use system_utils,       only:lenvironment
  use asciiutils,         only:read_asciifile,basename
@@ -451,7 +452,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.3 [29th Jan 2021]'
+ character(len=*), parameter :: version = 'v3.1.0 [10th Feb 2021]'
 
  !
  ! initialise some basic code variables
@@ -575,6 +576,8 @@ program splash
           lowmemorymode = .true.
        case('nolowmem','nlm')
           lowmemorymode = .false.
+       case('-buffer','b','buffer')
+          buffer_data = .true.
        case('f','-format')
           i = i + 1
           call get_argument(i,string)
@@ -746,6 +749,14 @@ program splash
     ! (e.g. switch on sink particles if there is no gas)
     !
     call set_options_dataread()
+    !
+    ! for some data reads we can automatically plot a particular column
+    !
+    if (irender == 0 .and. iautorender > 0) then
+       irender = iautorender
+       nomenu = .true.
+       if (len_trim(device)==0) device = '/xw'
+    endif
 
     ! read tabulated colour table, if necessary
     if (abs(icolours)==icustom) then
@@ -884,6 +895,7 @@ subroutine print_usage(quit)
  !print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
  print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
  print "(a)",' -360              : set default options suited to 360 video'
+ print "(a)",' -b, --buffer      : buffer all data files into memory'
  !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(/,a,/)",'Command line plotting mode:'

@@ -133,6 +133,7 @@ module settings_data
  integer :: ndusttypes
  integer :: idustfrac_plot = 0
  integer :: ideltav_plot = 0
+ integer :: iautorender
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
