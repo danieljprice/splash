@@ -1831,7 +1831,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                          enddo
                       else
                          if (debug) print*,'DEBUG: skipping sink particle array ',k
-                         read(iunit,end=33,iostat=ierr)
                       endif
                    enddo
                 endif
