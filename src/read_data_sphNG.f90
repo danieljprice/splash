@@ -1220,6 +1220,24 @@ endif
 end subroutine get_rho_from_h
 
 !----------------------------------------------------------------------
+!  Set density on sink particles based on the mass and radius
+!  this is useful for opacity rendering, but also provides useful
+!  information rather than just having zero density on sinks
+!----------------------------------------------------------------------
+subroutine set_sink_density(i1,i2,ih,ipmass,irho,dat)
+ integer, intent(in) :: i1,i2,ih,ipmass,irho
+ real, intent(inout) :: dat(:,:)
+ integer :: i
+
+ if (ih > 0 .and. ipmass > 0 .and. irho > 0) then
+    do i=i1,i2
+       if (dat(i,ih) > 0.) dat(i,irho) = dat(i,ipmass)/dat(i,ih)**3
+    enddo
+ endif
+
+end subroutine set_sink_density
+
+!----------------------------------------------------------------------
 !  Map sink particle data to splash columns
 !----------------------------------------------------------------------
 integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
@@ -1794,12 +1812,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       return
                    endif
                    do k=1,nreal(iarr)
+                      if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+                      if (debug) print*,'DEBUG: reading sink array ',k,isize(iarr),' tag = ',trim(tagtmp)
+                      read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                      if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
+
                       iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
-                         if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
-                         if (tagged) read(iunit,end=33,iostat=ierr) !tagarr(iloc)
-                         read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
-                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                          do i=1,isize(iarr)
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
                          enddo
@@ -1812,11 +1831,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                          enddo
                       else
                          if (debug) print*,'DEBUG: skipping sink particle array ',k
-                         if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
                          read(iunit,end=33,iostat=ierr)
                       endif
                    enddo
                 endif
+                ! DEFINE density on sink particles (needed for opacity rendering)
+                if (required(irho)) call set_sink_density(npart+1,int(npart+isize(iarr)),ih,ipmass,irho,dat(:,:,j))
                 npart  = npart + isize(iarr)
              endif
           elseif (smalldump .and. iarr==2 .and. allocated(listpm)) then
@@ -2015,9 +2035,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        close(66)
     endif
  endif
-
+ !
+ !--calculate the temperature from density and internal energy (using physical units)
+ !
  if (get_temperature .and. itemp > 0 .and. required(itemp)) then
-    !--calculate the temperature from density and internal energy (using physical units)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itemp,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density

@@ -458,6 +458,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
              enddo
           endif
           if (ikappa > 0) then
+             if (rkappafac <= 0.) rkappafac = 1.0
              call prompt('Enter opacity scaling factor ',rkappafac)
           else
              string = '[code units]'
