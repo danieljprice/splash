@@ -155,7 +155,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
  str = ''
  if (exact_rendering) str = '(exact)'
- if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing '//trim(str)//&
+ if (iverbose >= 0) print "(1x,a,g9.2,a)",'ray tracing '//trim(str)//&
     ': surface depth ~ ',rkappatemp/maxval(rkappa),' smoothing lengths'
 !
 !--get starting CPU time
