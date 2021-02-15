@@ -315,7 +315,7 @@ subroutine get_user(string)
  inquire(file=tempfile,exist=iexist)
  if (iexist) then
     open(newunit=iu,file=tempfile,action='read',status='old',iostat=ierr)
-    read(iu,"(a)") string
+    read(iu,"(a)",iostat=ierr) string
     close(iu,status='delete',iostat=ierr)
  endif
 
