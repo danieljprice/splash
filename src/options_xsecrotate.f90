@@ -104,7 +104,7 @@ subroutine defaults_set_xsecrotate
  use3Dopacityrendering = .false.
  zobserver = 0.
  dzscreenfromobserver = 0.
- taupartdepth = 2.
+ taupartdepth = -1. ! determine kappa automatically
 
  !--defaults for animation sequences
  nseq = 0

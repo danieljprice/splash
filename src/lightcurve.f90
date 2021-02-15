@@ -1,3 +1,24 @@
+!-----------------------------------------------------------------
+!
+!  This file is (or was) part of SPLASH, a visualisation tool
+!  for Smoothed Particle Hydrodynamics written by Daniel Price:
+!
+!  http://users.monash.edu.au/~dprice/splash
+!
+!  SPLASH comes with ABSOLUTELY NO WARRANTY.
+!  This is free software; and you are welcome to redistribute
+!  it under the terms of the GNU General Public License
+!  (see LICENSE file for details) and the provision that
+!  this notice remains intact. If you modify this file, please
+!  note section 2a) of the GPLv2 states that:
+!
+!  a) You must cause the modified files to carry prominent notices
+!     stating that you changed the files and the date of any change.
+!
+!  Copyright (C) 2021- Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
+!
+!-----------------------------------------------------------------
 module lightcurve
  use params, only:int1,doub_prec
  implicit none
@@ -9,6 +30,22 @@ module lightcurve
 
 contains
 
+!---------------------------------------------------------
+! routine to to compute luminosity, effective temperature
+! effective blackbody radius, Reff, vs time from
+! SPH particle data
+!
+! We solve the equation of radiative transfer along a
+! ray for each pixel in the image, performing the ray
+! trace through particles assuming grey blackbody
+! emission (i.e. each particle emits sigma*T^4)
+!
+! We then compute the emitting area (area of optically
+! thick material) and the effective temperature, putting
+! these together to give a total luminosity
+!
+! Used to generate synthetic lightcurves
+!---------------------------------------------------------
 subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,lum,rphoto,temp)
  use labels,                only:ix,ih,irho,ipmass,itemp,ikappa
  use limits,                only:lim,get_particle_subset
@@ -29,7 +66,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp
- integer :: n,isinktype,npixx,npixy,ierr
+ integer :: n,isinktype,npixx,npixy,ierr,j
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:,:), allocatable :: datpix,taupix
@@ -64,14 +101,16 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  !
  !--allocate memory for image
  !
- npixx = 512 !npix
- if (npixx < 8) npixx = 512
+ !do j=6,12
+ npixx = npix !2**j
+ if (npixx < 8) npixx = 1024
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
  dy = (xmax(2)-xmin(2))/npixy
  print "(a,i0,a,i0,a)",' Using ',npixx,' x ',npixy,' pixels'
  print "(2(1x,a,es10.3,'->',es10.3,a,/))",'x = [',xmin(1),xmax(1),']','y = [',xmin(2),xmax(2),']'
 
+ if (allocated(datpix) .or. allocated(taupix)) deallocate(datpix,taupix)
  allocate(datpix(npixx,npixy),taupix(npixx,npixy))
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
@@ -108,7 +147,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),datpix,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,exact_rendering)
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.)
 
  area = count(taupix >= 1.)*dx*dy
  print "(/,a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
@@ -123,12 +162,30 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  print "(a,es10.3,a)",' luminosity = ',lum,' erg/s'
 
  rphoto = sqrt(lum/(4.*pi*steboltz*temp**4))
- print "(a,es10.3,a)",' radius = ',rphoto/1.49e13,' au'
+ print "(a,es10.3,a)",' radius = ',rphoto/au,' au'
+!write(2,*) npixx,area/au**2,(maxval(datpix)/steboltz)**0.25,temp,lum,rphoto/au
 
- call write_pixmap_ascii(datpix,npixx,npixy,xmin(1),xmin(2),dx,minval(datpix),maxval(datpix),'temp','lum.pix',time)
+ !if (j==12) call write_pixmap_ascii(datpix,npixx,npixy,xmin(1),xmin(2),dx,minval(datpix),maxval(datpix),'intensity','lum.pix',time)
+ !enddo
 
 end subroutine get_lightcurve
 
+!---------------------------------------------------------
+! routine to to compute temperature from
+! internal energy assuming a mix of gas and radiation
+! pressure, where Trad = Tgas. That is, we solve the
+! quartic equation
+!
+!  a*T^4 + 3/2*rho*kb*T/mu = rho*u
+!
+! to determine the temperature from the supplied density
+! and internal energy (rho, u).
+! INPUT:
+!    rho - density [g/cm^3]
+!    u - internal energy [erg/g]
+! OUTPUT:
+!    temp - temperature [K]
+!---------------------------------------------------------
 real elemental function get_temp_from_u(rho,u) result(temp)
  real(doub_prec), intent(in) :: rho,u
  real(doub_prec) :: ft,dft,dt
