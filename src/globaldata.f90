@@ -140,7 +140,7 @@ module settings_data
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
- logical :: iRescale_has_been_set
+ logical :: idefaults_file_read
  logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)

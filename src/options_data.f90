@@ -61,7 +61,7 @@ subroutine defaults_set_data
  iCalcQuantities = .false.
  DataIsBuffered = .false.
  iRescale = .false.
- iRescale_has_been_set = .false.
+ idefaults_file_read = .false.
  ivegotdata = .false.
  ntypes = 1
  xorigin = 0.
@@ -83,8 +83,7 @@ subroutine submenu_data(ichoose)
  use prompting,      only:prompt,print_logical
  use getdata,        only:get_data
  use settings_data,  only:buffer_data,iCalcQuantities,iRescale, &
-                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set,&
-                          UseFakeDustParticles
+                          DataIsBuffered,numplot,ncalc,ncolumns,UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
  use limits,         only:set_limits,rescale_limits
  use labels,         only:label,unitslabel,labelzintegration,lenlabel,strip_units,idustfrac
@@ -119,14 +118,6 @@ subroutine submenu_data(ichoose)
 !--options
 !
  select case(ians)
-!------------------------------------------------------------------------
-!  case(1)
-!     if (buffer_data) then
-!        call get_data(-1,.false.)
-!     else
-!        call get_data(1,.false.,firsttime=.true.)
-!     endif
-! !------------------------------------------------------------------------
 !  case(2)
 !     iUseStepList = .false.
 !     call prompt('Start at timestep ',istartatstep,1,nsteps)
@@ -146,17 +137,6 @@ subroutine submenu_data(ichoose)
 !        write(fmtstring,"(a,i2)") 'Enter step ',i
 !        call prompt(fmtstring,isteplist(i),1,nsteps)
 !     enddo
-! !------------------------------------------------------------------------
-!  case(4)
-!     buffer_data = .not.buffer_data
-!     print "(/a)",' Buffering of data = '//print_logical(buffer_data)
-!     if (buffer_data) then
-!        call prompt('Do you want to read all files into memory now?',ireadnow)
-!        if (ireadnow) then
-!           call get_data(-1,.true.)
-!        endif
-!     endif
-!------------------------------------------------------------------------
  case(1)
     ncalcwas = ncalc
     call setup_calculated_quantities(ncalc)
@@ -177,7 +157,6 @@ subroutine submenu_data(ichoose)
     endif
 !------------------------------------------------------------------------
  case(2)
-    iRescale_has_been_set = .true.
     print "(/,a,/)",' Current settings for physical units:'
     len_max = min(maxval(len_trim(label(:))),20)
     labeli = 'dz '//trim(labelzintegration)

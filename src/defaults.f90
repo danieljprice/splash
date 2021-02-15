@@ -29,7 +29,7 @@
 module defaults
  implicit none
 
-contains  
+contains
   !!
   !! set initial default options
   !! these are used if no defaults file is found
@@ -170,7 +170,7 @@ end subroutine defaults_write
 subroutine defaults_read(filename)
  use filenames,          only:rootname,maxfile
  use multiplot,          only:multi
- use settings_data,      only:dataopts,idustfrac_plot,iRescale_has_been_set
+ use settings_data,      only:dataopts,idustfrac_plot,idefaults_file_read
  use settings_part,      only:plotopts
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
@@ -192,7 +192,7 @@ subroutine defaults_read(filename)
 
     ierr = 0
     read(iunit,NML=dataopts,iostat=ierr)
-    iRescale_has_been_set = .true.
+    idefaults_file_read = .true.
     if (ierr /= 0) nerr = nerr + 1
 
     ierr = 0
