@@ -3037,7 +3037,7 @@ subroutine set_movie_mode()
  use system_utils,    only:get_copyright
  use shapes,          only:add_text
 
- iaxis = -1
+ iaxis = -2
  iPageColours = 2
  if (.not.plotlib_is_pgplot) then
     ipapersize      = 9
