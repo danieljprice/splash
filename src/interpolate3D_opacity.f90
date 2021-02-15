@@ -70,13 +70,13 @@ contains
 !     Settings: zobs, dz1 : settings for 3D projection
 !               rkappa    : particle cross section per unit mass
 !
-!     Output: smoothed data            : datsmooth (npixx,npixy)
-!             brightness array         : brightness (npixx,npixy)
+!     Output: smoothed data               : datsmooth (npixx,npixy)
+!             optical depth on each pixel : tausmooth (npixx,npixy)
 !
 !--------------------------------------------------------------------------
 
 subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
-     xmin,ymin,datsmooth,brightness,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
+     xmin,ymin,datsmooth,tausmooth,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
      rkappa,zcut,iverbose,exact_rendering)
 
  real, parameter :: pi=4.*atan(1.)
@@ -85,36 +85,31 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  real, intent(in), dimension(npmass) :: pmass
  integer, intent(in), dimension(npart) :: itype
  logical, intent(in) :: exact_rendering
- real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
-                      zcut
- real, dimension(npixx,npixy), intent(out) :: datsmooth, brightness
+ real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreenfromobserver,zcut
+ real, dimension(npixx,npixy), intent(out) :: datsmooth,tausmooth
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
- integer :: iprintinterval, iprintnext,itmin
+ integer :: itmin
  integer, dimension(npart) :: iorder
  integer(kind=selected_int_kind(12)) :: ipart
  integer :: nsubgrid,nok!,ncpus,nfull
  real :: hi,hi1,hi21,radkern,q2,wab,pmassav
 
  real, dimension(npixx,npixy) :: datnorm
- real :: termnorm,termtau,hsmooth,horigi
+ real :: termnorm,hsmooth,horigi
  real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
- real :: hmin,fac,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact,termnorm_exact
+ real :: hmin,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact
  real :: fopacity,tau,rkappatemp,termi,xi,yi
  real :: t_start,t_end,t_used,tsec
- logical :: iprintprogress,adjustzperspective,rendersink
+ logical :: adjustzperspective,rendersink
  real, dimension(npixx) :: xpix,dx2i
  real :: xminpix,yminpix
-!#ifdef _OPENMP
-!  integer :: OMP_GET_NUM_THREADS
-!#else
- integer(kind=selected_int_kind(12)) :: iprogress
-!#endif
+ character(len=10) :: str
 
  datsmooth = 0.
  term = 0.
- brightness = 0.
+ tausmooth = 0.
  if (pixwidthx <= 0. .or. pixwidthy <= 0) then
     if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
     return
@@ -157,19 +152,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--average particle mass
  pmassav = sum(pmass(1:npmass))/real(npmass)
  rkappatemp = pi*hav*hav/(pmassav*coltable(0))
- if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing: surface depth ~ ',rkappatemp/maxval(rkappa),' smoothing lengths'
- !print "(1x,a,f6.2,a)",'typical surface optical depth is ~',rkappatemp/rkappa,' smoothing lengths'
- !
- !--print a progress report if it is going to take a long time
- !  (a "long time" is, however, somewhat system dependent)
- !
- iprintprogress = ((npart  >=  1000000) .or. (npixx*npixy  > 500000)) .and. (iverbose >= 0)
- !
- !--loop over particles
- !
- iprintinterval = 25
- if (npart >= 1e7) iprintinterval = 10
- iprintnext = iprintinterval
+
+ str = ''
+ if (exact_rendering) str = '(exact)'
+ if (iverbose >= 0) print "(1x,a,g8.2,a)",'ray tracing '//trim(str)//&
+    ': surface depth ~ ',rkappatemp/maxval(rkappa),' smoothing lengths'
 !
 !--get starting CPU time
 !
@@ -201,7 +188,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !!$omp SHARED(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
 !!$omp SHARED(xmin,ymin,xminpix,yminpix,xpix,pixwidth) &
 !!$omp SHARED(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
-!!$omp SHARED(zcut,zcutoff,iorder,rkappa,brightness) &
+!!$omp SHARED(zcut,zcutoff,iorder,rkappa,tausmooth) &
 !!$omp PRIVATE(hi,zfrac,xi,yi,radkern) &
 !!$omp PRIVATE(hi1,hi21,term,termi) &
 !!$omp PRIVATE(ipixmin,ipixmax,jpixmin,jpixmax) &
@@ -216,18 +203,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
 !!$omp DO ORDERED SCHEDULE(dynamic)
  over_particles: do ipart=1,npart
-    !
-    !--report on progress
-    !
-! !#ifndef _OPENMP
-!     if (iprintprogress) then
-!        iprogress = 100*(ipart/real(npart))
-!        if (iprogress >= iprintnext) then
-!           write(*,"('(',i3,'% -',i12,' particles done)')") iprogress,ipart
-!           iprintnext = iprintnext + iprintinterval
-!        endif
-!     endif
-! !#endif
     !
     !--render in order from back to front
     !
@@ -271,7 +246,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        endif
 
        !--these are the quantities used in the kernel r^2/h^2
-       radkern = radkernel*hi ! changed from 2*hi??
+       radkern = radkernel*hi  ! changed from 2*hi??
        hi1 = 1./hi
        hi21 = hi1*hi1
        !--this is the term which multiplies tau
@@ -284,7 +259,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        !--determine colour contribution of current point
        !  (work out position in colour table)
        !
-!     dati = dat(i)
        xi = x(i)
        xpixmin = xi - radkern
        if (xpixmin > xmax) cycle over_particles
@@ -297,38 +271,30 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        ypixmax = yi + radkern
        if (ypixmax < ymin) cycle over_particles
 
-
        !--take resolution length as max of h and 1/2 pixel width
        if (.not.exact_rendering .and. hi < hmin) then
           hminall = min(hi,hminall)
           nsubgrid = nsubgrid + 1
           hsmooth = hmin
-          fac = 1. !(horigi*horigi*horigi)*dhmin3      ! factor by which to adjust the weight
        else
-          fac = 1.
           hsmooth = hi
           nok = nok + 1
        endif
 
-
-       !termi = dat(i)
-       termnorm = weight(i)*fac*horigi
-       termi = termnorm*dat(i) ! h gives the z length scale (NB: no perspective)
        !
        !--sink particles can have weight set to -1
        !  indicating that we should include them in the rendering
        !
        if (rendersink) then
-          termi = pmass(i)/(4./3.*pi*hh(i)**3)  ! define "density" of a sink
+          term = pmass(i)/(hh(i)**2)  ! define "density" of a sink
           nsink = nsink + 1
+          print*,' HERE ',term,nsink
        endif
 
 
        !--quantities for exact 3D wall integrals
        !
-       dfac = horigi**3/(pixwidthx*pixwidthy*cnormk3D)
-       termnorm_exact = cnormk3D*weight(i)
-       term_exact = termnorm_exact*dat(i)
+       dfac = hi**2/(pixwidthx*pixwidthy)
        pixwidthz = 2.*radkern
        zi = 0.; zpix = 0.
        !
@@ -377,15 +343,15 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                  pixint = pixint + wallint(xi-xpixi+0.5*pixwidthx,zi,yi,zpix,ypix,pixwidthz,pixwidthy,hi)
 
                  wab = pixint*dfac
+
+                 tau = rkappa(i)*wab*term
+                 fopacity = 1. - exp(-tau)
                  !
-                 !--calculate data value at this pixel using the summation interpolant
+                 !--render, obscuring previously drawn pixels by relevant amount
+                 !  also calculate total optical depth for each pixel
                  !
-                 !$omp atomic
-                 datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term_exact*wab
-                 ! if (normalise) then
-                 !    !$omp atomic
-                 !    datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm_exact*wab
-                 ! endif
+                 datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dat(i)
+                 tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
               else
                  !
                  !--SPH kernel - integral through cubic spline
@@ -398,26 +364,13 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                     fopacity = 1. - exp(-tau)
                     !
                     !--render, obscuring previously drawn pixels by relevant amount
-                    !  also calculate total brightness (`transparency') of each pixel
+                    !  also calculate total optical depth for each pixel
                     !
-                 !   !$omp atomic
                     datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dat(i)
-                    brightness(ipix,jpix) = brightness(ipix,jpix) + tau
-                    !brightness(ipix,jpix) = brightness(ipix,jpix) + fopacity
-
-                    !
-                    !--calculate data value at this pixel using the summation interpolant
-                    !
-                    !!$omp atomic
-                    ! datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + term*wab
-                    !
-                    ! if (normalise) then
-                    !    !$omp atomic
-                    !    datnorm(ipix,jpix) = datnorm(ipix,jpix) + termnorm*wab
-                    !  endif
-                   endif
-                endif
-             enddo
+                    tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                 endif
+              endif
+           enddo
        enddo
 
     endif particle_within_zcut

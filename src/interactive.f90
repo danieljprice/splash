@@ -68,7 +68,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   rendermin,rendermax,renderminadapt,rendermaxadapt,contmin,contmax,&
   contminadapt,contmaxadapt,vecmax, &
   anglex,angley,anglez,ndim,xorigin,x_sec,zslicepos,dzslice, &
-  zobserver,dscreen,use3Dopacity,taupartdepth,double_rendering,irerender,itrackpart,icolourscheme, &
+  zobserver,dscreen,use3Dopacity,rkappa,double_rendering,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
  use settings_xsecrot, only:setsequenceend
  use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_textshape
@@ -93,7 +93,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  logical, dimension(maxparttypes), intent(in) :: usetype
  integer, dimension(maxparttypes), intent(in) :: npartoftype
- real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,taupartdepth
+ real, intent(inout) :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,contmin,contmax,rkappa
  real, intent(inout) :: anglex,angley,anglez,zslicepos,dzslice,zobserver,dscreen
  real, intent(in) :: renderminadapt,rendermaxadapt,contminadapt,contmaxadapt
  real, intent(in), dimension(ndim) :: xorigin
@@ -405,7 +405,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           call save_limits(ivecy,-vecmax,vecmax)
        endif
        if (ndim==3 .and. iplotz > 0 .and. irender > 0 .and. use3Dopacity) then
-          call save_opacity(taupartdepth)
+          call save_opacity(rkappa)
        endif
        if (ncircpart > 0) call save_circles(ncircpart,icircpart)
        if (rotation) call save_rotation(ndim,anglex,angley,anglez)
@@ -824,8 +824,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('k')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
           print*,'decreasing opacity by factor of ',1.5*zoomfac*scalefac
-          !--opacity goes like 1/taupartdepth
-          taupartdepth = zoomfac*scalefac*taupartdepth
+          rkappa = rkappa/(zoomfac*scalefac)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -834,8 +833,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('K')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
           print*,'increasing opacity by factor of ',1.5*zoomfac*scalefac
-          !--opacity goes like 1/taupartdepth
-          taupartdepth = taupartdepth/(zoomfac*scalefac)
+          rkappa = rkappa*(zoomfac*scalefac)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -895,7 +893,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !
     case('e','E')
        call setsequenceend(istep,iplotx,iploty,irender,rotation, &
-                          anglex,angley,anglez,zobserver,use3Dopacity,taupartdepth, &
+                          anglex,angley,anglez,zobserver,use3Dopacity,rkappa, &
                           x_sec,zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax)
        !
        !--rotation
@@ -2967,11 +2965,11 @@ end subroutine save_perspective
 !
 !--saves 3D opacity
 !
-subroutine save_opacity(taupartdepthi)
+subroutine save_opacity(rkappai)
  use settings_xsecrot, only:taupartdepth
- real, intent(in) :: taupartdepthi
+ real, intent(in) :: rkappai
 
- taupartdepth = taupartdepthi
+ taupartdepth = rkappai
 
  return
 end subroutine save_opacity
