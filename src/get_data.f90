@@ -59,7 +59,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  logical, intent(in) :: gotfilenames
  logical, intent(in), optional :: firsttime
  integer, intent(in), optional :: iposinfile
- logical :: setlimits,isfirsttime
+ logical :: setlimits,isfirsttime,verbose
  logical, parameter  :: dotiming = .true.
  integer :: i,istart,ierr,ipos,nsteps_read
  real    :: t1,t2
@@ -230,17 +230,18 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
     endif
     !--override ncolumns from file and warn if different to first file
     if (ncolumnsfirst > 0 .and. nstepsinfile(ireadfile) > 0) then
+       verbose = any(required(min(ncolumnsfirst,ncolumns)+1:))
        if (ncolumns /= ncolumnsfirst) then
-          write(*,"(1x,a,i2,a,i2,a)",advance='NO') 'WARNING: file has ',ncolumns, &
+          if (verbose) write(*,"(1x,a,i2,a,i2,a)",advance='NO') 'WARNING: file has ',ncolumns, &
            ' columns (',ncolumnsfirst,' previously)'
           if (ncolumns < ncolumnsfirst) then
-             write(*,"(a,i2,/)") ', data=0 for columns > ',ncolumns
+             if (verbose) write(*,"(a,i2,/)") ', data=0 for columns > ',ncolumns
              dat(:,ncolumns+1:min(ncolumnsfirst,maxcol),1:nstepsinfile(ireadfile)) = 0.
           elseif (ncolumns > ncolumnsfirst) then
-             write(*,"(a,i2,a)") ', columns > ',ncolumnsfirst,' ignored'
-             print "(10x,a,/)",'(read this file first to use this data)'
+             if (verbose) write(*,"(a,i2,a)") ', columns > ',ncolumnsfirst,' ignored'
+             if (verbose) print "(10x,a,/)",'(read this file first to use this data)'
           else
-             write (*,*)
+             if (verbose) write (*,*)
           endif
           ncolumns = ncolumnsfirst
        endif
