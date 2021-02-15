@@ -3034,6 +3034,8 @@ subroutine set_movie_mode()
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
  use colourbar,       only:set_floating_bar_style
+ use system_utils,    only:get_copyright
+ use shapes,          only:add_text
 
  iaxis = -1
  iPageColours = 2
@@ -3048,6 +3050,7 @@ subroutine set_movie_mode()
     call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
+ call add_text(0.025,0.05,get_copyright())
 
 end subroutine set_movie_mode
 
@@ -3060,6 +3063,8 @@ subroutine unset_movie_mode()
  use settings_render, only:iColourBarStyle
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
+ use system_utils,    only:get_copyright
+ use shapes,          only:delete_text
 
  iaxis = 0
  iPageColours = 1
@@ -3072,6 +3077,7 @@ subroutine unset_movie_mode()
     call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
+ call delete_text(get_copyright())
 
 end subroutine unset_movie_mode
 

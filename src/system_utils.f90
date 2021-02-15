@@ -29,7 +29,7 @@ module system_utils
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
- public :: get_command_flag
+ public :: get_command_flag,get_user,get_copyright
 
  private
 
@@ -295,5 +295,44 @@ integer function count_matching_args(string,id) result(n)
  enddo
 
 end function count_matching_args
+
+!
+!--get the name of the logged in user
+!
+subroutine get_user(string)
+ character(len=*), intent(out) :: string
+ character(len=*), parameter :: tempfile = '/tmp/splash.username'
+ logical :: iexist
+ integer :: ierr,iu
+
+ string = ''
+ inquire(file='/proc/cpuinfo/',exist=iexist) ! exists only in Linux
+ if (.not.iexist) then
+    call system('id -F $USER > '//trim(tempfile)) ! Mac
+ else
+    call system('getent passwd "$USER" | cut -d: -f5 | cut -d, -f1 > '//trim(tempfile)) ! Linux
+ endif
+ inquire(file=tempfile,exist=iexist)
+ if (iexist) then
+    open(newunit=iu,file=tempfile,action='read',status='old',iostat=ierr)
+    read(iu,"(a)") string
+    close(iu,status='delete',iostat=ierr)
+ endif
+
+end subroutine get_user
+
+!
+!--get copyright string involving logged in user and current year
+!
+function get_copyright() result(string)
+ character(len=30) :: string
+ character(len=8) :: year
+
+ call get_user(string)
+ call date_and_time(date=year)
+
+ string = '(c) '//year(1:4)//' '//trim(string)
+
+end function get_copyright
 
 end module system_utils
