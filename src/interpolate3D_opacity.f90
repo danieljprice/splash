@@ -288,7 +288,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        if (rendersink) then
           term = pmass(i)/(hh(i)**2)  ! define "density" of a sink
           nsink = nsink + 1
-          print*,' HERE ',term,nsink
        endif
 
 

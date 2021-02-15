@@ -1219,6 +1219,31 @@ endif
 
 end subroutine get_rho_from_h
 
+!----------------------------------------------------------------------
+!  Map sink particle data to splash columns
+!----------------------------------------------------------------------
+integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
+ use labels, only:ix,ipmass,ih,ivx
+ integer, intent(in) :: k,ilocvx,ncolmax
+
+ select case(k)
+ case(1:3)
+     iloc = ix(k)
+ case(4)
+     iloc = ipmass
+ case(5)
+     iloc = ih
+ case default
+     if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
+        iloc = ivx + k-ilocvx ! put velocity into correct arrays
+     else
+        iloc = 0
+     endif
+ end select
+ if (iloc > ncolmax) iloc = 0  ! error occurred
+
+end function map_sink_property_to_column
+
 end module sphNGread
 
 !----------------------------------------------------------------------
@@ -1744,24 +1769,17 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                       if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
 
-                      select case(k)
-                      case(1:3)
-                         iloc = ix(k)
-                      case(4)
-                         iloc = ipmass
-                      case(5)
-                         iloc = ih
-                      case default
-                         if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
-                            iloc = ivx + k-ilocvx ! put velocity into correct arrays
-                         else
-                            iloc = 0
-                         endif
-                      end select
-                      if (iloc > size(dat(1,:,j))) then; print*,' error iloc = ',iloc,ivx; stop; endif
+                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
                          do i=1,isize(iarr)
                             dat(npart+i,iloc,j) = real(dattemp(i))
+                         enddo
+                      elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
+                         do i=1,isize(iarr)
+                            if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
+                               dat(npart+i,ih,j) = real(dattemp(i))
+                               if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
+                            endif
                          enddo
                       else
                          if (debug) print*,'DEBUG: skipping sink particle array ',k
@@ -1776,28 +1794,15 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       return
                    endif
                    do k=1,nreal(iarr)
-                      select case(k)
-                      case(1:3)
-                         iloc = ix(k)
-                      case(4)
-                         iloc = ipmass
-                      case(5)
-                         iloc = ih
-                      case default
-                         if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
-                            iloc = ivx + k-ilocvx ! put velocity into correct arrays
-                         else
-                            iloc = 0
-                         endif
-                      end select
+                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
                          if (debug) print*,'DEBUG: reading sinks into ',npart+1,'->',npart+isize(iarr),iloc
                          if (tagged) read(iunit,end=33,iostat=ierr) !tagarr(iloc)
                          read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
+                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                          do i=1,isize(iarr)
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
                          enddo
-                         if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
                       else
                          if (debug) print*,'DEBUG: skipping sink particle array ',k
                          if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
