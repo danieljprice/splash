@@ -81,7 +81,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use colours,            only:colour_set
  use colourbar,          only:barisvertical
  use labels,             only:label,ipowerspec,ih,ipmass,irho,ikappa,iamvec,isurfdens, &
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,unitslabel
  use limits,             only:lim,rangeset,limits_are_equal
  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -89,7 +89,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use titles,             only:read_titles,read_steplegend
  use settings_data,      only:ndim,ndimV,numplot,ncolumns,ncalc,ndataplots,required,   &
                                icoords,icoordsnew,debugmode,ntypes,usetypeinrenderings, &
-                               idustfrac_plot,ideltav_plot,device
+                               idustfrac_plot,ideltav_plot,device,iRescale
  use settings_page,      only:nacross,ndown,ipapersize,tile,papersizex,aspectratio,&
                                iPageColours,iadapt,iadaptcoords,linewidth,linepalette,nomenu,&
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
@@ -116,6 +116,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  integer, dimension(:), allocatable :: ifirstinrow,ifirstincolumn
  character(len=1)    :: char
  character(len=20)   :: devstring
+ character(len=30)   :: string
 
  !------------------------------------------------------------------------
  ! initialisations
@@ -459,7 +460,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
           if (ikappa > 0) then
              call prompt('Enter opacity scaling factor ',rkappafac)
           else
-             print*,' suggested value for kappa = ',pi*hav*hav/(pmassav*coltable(0))
+             string = '[code units]'
+             if (iRescale) string = trim(unitslabel(ih))//'^2 / '//trim(unitslabel(ipmass))
+             print "(a,es10.3,a)",' suggested value for kappa: ',pi*hav*hav/(pmassav*coltable(0)),trim(string)
              if (rkappafac <= 0.) rkappafac = pi*hav*hav/(pmassav*coltable(0))
              call prompt('enter kappa (in current units)',rkappafac)
           endif
@@ -1169,10 +1172,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 zslicemax = zobservertemp
              endif
              if (use3Dopacityrendering) then
+                if (allocated(rkappa)) deallocate(rkappa)
+                if (.not.allocated(rkappa)) allocate(rkappa(ninterp))
                 if (ikappa > 0) then
-                   rkappa = dat(1:ninterp,ikappa)*rkappafac
+                   rkappa = dat(1:ninterp,ikappa)*rkappatemp
                 else
-                   rkappa = rkappafac!/taupartdepthtemp
+                   rkappa = rkappatemp!/taupartdepthtemp
                 endif
              endif
           endif
@@ -2839,6 +2844,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  if (allocated(zplot)) deallocate(zplot)
  if (allocated(hh)) deallocate(hh)
  if (allocated(weight)) deallocate(weight)
+ if (allocated(rkappa)) deallocate(rkappa)
 
  return
 
