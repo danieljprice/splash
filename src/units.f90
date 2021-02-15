@@ -25,10 +25,11 @@
 !--------------------------------------------------------------------
 module settings_units
  use params
- use labels, only:unitslabel,unitslabel_default,labelzintegration,lenlabel
+ use labels, only:unitslabel,unitslabel_default,lenlabel,&
+                  labelzintegration,labelzintegration_default
  implicit none
  real, dimension(0:maxplot), public :: units,units_default,units_old
- real, public :: unitzintegration
+ real, public :: unitzintegration,unitzintegration_default
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
@@ -117,10 +118,12 @@ subroutine defaults_set_units
  units(:) = 1.0
  units_default(:) = 1.0
  unitzintegration = 1.0
+ unitzintegration_default = 1.0
  unit_interp      = 1.0d0
  unitslabel(:) = ' '
  unitslabel_default(:) = ' '
  labelzintegration = ' '
+ labelzintegration_default = ' '
 
 end subroutine defaults_set_units
 

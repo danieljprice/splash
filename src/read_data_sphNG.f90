@@ -1803,6 +1803,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                          do i=1,isize(iarr)
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
                          enddo
+                      elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
+                         do i=1,isize(iarr)
+                            if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
+                               dat(npart+i,ih,j) = real(dattempsingle(i))
+                               if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
+                            endif
+                         enddo
                       else
                          if (debug) print*,'DEBUG: skipping sink particle array ',k
                          if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
@@ -2297,14 +2304,14 @@ end subroutine read_data_sphNG
 
 subroutine set_labels_sphNG
  use labels, only:label,unitslabel=>unitslabel_default,&
-              labelzintegration,labeltype,labelvec,iamvec, &
+              labelzintegration=>labelzintegration_default,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
               ivrel,make_vector_label,get_label_grain_size,itemp,ikappa
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
- use settings_units,  only:units=>units_default,unitzintegration,&
+ use settings_units,  only:units=>units_default,unitzintegration=>unitzintegration_default,&
                            get_nearest_length_unit,get_nearest_time_unit,&
                            get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread

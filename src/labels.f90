@@ -36,7 +36,7 @@ module labels
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
  character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel,unitslabel_default
- character(len=lenunitslabel), public :: labelzintegration
+ character(len=lenunitslabel), public :: labelzintegration,labelzintegration_default
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
@@ -304,7 +304,7 @@ function get_unitlabel_coldens(iRescale,labelzint,unitlabel)
  character(len=*), intent(in) :: labelzint,unitlabel
  character(len=lenunitslabel) :: get_unitlabel_coldens
 
- if (iRescale) then
+ if (iRescale .and. len_trim(labelzint) > 0) then
     get_unitlabel_coldens = trim(unitlabel)//trim(labelzint)
     call string_delete(get_unitlabel_coldens,']')
     call string_delete(get_unitlabel_coldens,'[')
