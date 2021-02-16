@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2020 Daniel Price
+!     Copyright (C) 2005-2021 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,12 +51,15 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.1.0   : (10/02/21) splash calc lightcurve implemented;
+!     3.1.0   : (16/02/21) splash calc lightcurve implemented; sink particles ON by default;
 !             changing units rescales plot limits correctly;
+!             further improvements to ray tracing / opacity rendering with physical opacity;
 !             can change units temporarily without writing .units file;
 !             auto-select closest velocity and mass unit and better default time unit
 !             in phantom/sphNG read; error message if Inf or NaN read from .units file;
 !             bug fix with units prompt; floating colour bars are white not black;
+!             automatically write copyright in Hollywood mode; auto-render fits files;
+!             read softening length from phantom sinks if accretion radius is zero;
 !     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
 !             use opacity defined on particles; can track multiple particles with
 !             'splash calc tracks' by specifying ids in splash.tracks file;
@@ -452,7 +455,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.1.0 [10th Feb 2021]'
+ character(len=*), parameter :: version = 'v3.1.0 [16th Feb 2021]'
 
  !
  ! initialise some basic code variables
