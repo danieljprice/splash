@@ -306,7 +306,7 @@ subroutine get_user(string)
  integer :: ierr,iu
 
  string = ''
- inquire(file='/proc/cpuinfo/',exist=iexist) ! exists only in Linux
+ inquire(file='/proc/cpuinfo',exist=iexist) ! exists only in Linux
  if (.not.iexist) then
     call system('id -F $USER > '//trim(tempfile)) ! Mac
  else
