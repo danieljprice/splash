@@ -759,6 +759,11 @@ program splash
        irender = iautorender
        nomenu = .true.
        if (len_trim(device)==0) device = '/xw'
+    elseif (ncolumns==2) then
+       nomenu = .true.
+       if (len_trim(device)==0) device = '/xw'
+       if (ipicky==0) ipicky = 2
+       if (ipickx==0) ipickx = 1
     endif
 
     ! read tabulated colour table, if necessary
