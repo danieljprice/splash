@@ -18,7 +18,7 @@ KNOWN_SYSTEM=no
 SRCDIR=../src
 BINDIR=../bin
 TESTDIR=../tests
-VPATH=$(SRCDIR) $(SRCDIR)/H5Part
+VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../utils
 SHELL=/bin/bash
 
 #

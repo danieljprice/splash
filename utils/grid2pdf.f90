@@ -8,23 +8,22 @@ program grid2pdf
  integer, parameter     :: iunit = 13
  integer, dimension(3)  :: nxgrid
  integer                :: ierr,ncolumns,itransx,ifile,nargs
- integer                :: ntot,i
+ integer                :: ntot,i,ndim
  real                   :: time,rhologmin,rhologmax,pdfmin,pdfmax,smean,svar,rhomean,rhovar
  real, dimension(nbins) :: xbin,pdf
  character(len=120)     :: filename,tagline
  character(len=20)      :: informat
- logical                :: volweighted
  real, dimension(:), allocatable :: rhogrid
- 
- tagline = 'grid2pdf: a SPLASH utility (c) 2010 Daniel Price'
- 
+
+ tagline = 'grid2pdf: a SPLASH utility (c) 2010-2021 Daniel Price'
+
  call get_number_arguments(nargs)
  if (nargs.le.0) then
     print "(a)",trim(tagline)
     print "(/,a,/)",'Usage: grid2pdf gridfile(s)'
     stop
  endif
- 
+
  do ifile=1,nargs
     !
     !--get the filename off the command line
@@ -34,7 +33,8 @@ program grid2pdf
     !--open the grid data file and read the header information
     !
     informat = 'gridbinary'
-    call open_gridfile_r(iunit,filename,informat,nxgrid(:),ncolumns,time,ierr)
+    ndim = 3
+    call open_gridfile_r(iunit,filename,informat,ndim,ncolumns,nxgrid,time,ierr)
     !
     !--allocate memory for the grid data
     !
@@ -70,12 +70,12 @@ program grid2pdf
     !--calculate the PDF
     !
     call pdf_calc(ntot,rhogrid,rhologmin,rhologmax,nbins,xbin,&
-                  pdf,pdfmin,pdfmax,usefixedbins,volweighted,ierr)
+                  pdf,pdfmin,pdfmax,usefixedbins,ierr)
     !
     !--calculate the mean and variance in ln(rho)
     !
     call mean_variance(rhogrid,ntot,smean,svar)
-    
+
     print*,'    rho mean,var = ',rhomean,rhovar
     print*,'ln(rho) mean,var = ',smean,svar
     print*,'    svar,rhovar = ',-2.*smean,exp(svar) - 1.
@@ -88,12 +88,12 @@ program grid2pdf
     enddo
     svar = svar/real(ntot-1)
     print*,'svar = ',svar
-    
+
     !
     !--write the PDF to file
     !
     if (ierr.eq.0) then
-       call pdf_write(nbins,xbin,pdf,'lnrhogrid',volweighted,trim(filename),trim(tagline))
+       call pdf_write(nbins,xbin,pdf,'lnrhogrid',trim(filename),trim(tagline))
     endif
  enddo
  !
