@@ -186,6 +186,7 @@ subroutine pdf_write(nbins,xbin,pb,labelx,rootname,tagline)
  write(iunit,"(a)",iostat=ierr) '# probability density function, calculated using '//trim(tagline)
  if (ierr /= 0) print "(a)",' ERROR writing header line'
  write(iunit,"(a,i5,a)",iostat=ierr) '# ',nbins,' bins evenly spaced in '//trim(labelx)
+ write(iunit,"(a)") '# '//trim(labelx)//','//' P('//trim(labelx)//')'
 
  warned = .false.
  !--dump bins to file

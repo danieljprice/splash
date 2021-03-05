@@ -93,7 +93,7 @@ program grid2pdf
     !--write the PDF to file
     !
     if (ierr.eq.0) then
-       call pdf_write(nbins,xbin,pdf,'lnrhogrid',trim(filename),trim(tagline))
+       call pdf_write(nbins,xbin,pdf,'ln density',trim(filename),trim(tagline))
     endif
  enddo
  !
