@@ -185,7 +185,7 @@ be used for example to specify the graphics device via the ``-dev``
 command line option, which means that only the device selection prompt
 does not appear.
 
-:: _sec:pdfs:
+.. _sec:pdfs:
 
 Computing volume-weighted probability density functions from SPH data using SPLASH
 -----------------------------------------------------------------------------------
