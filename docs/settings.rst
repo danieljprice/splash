@@ -130,14 +130,9 @@ should be used for this plot.
 
 The following can all be achieved from the d)ata options menu:
 
-.. _sec:d1:
-
 Re-reading the initial data / changing the dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The data can be re-read from the dump file or a new dump file can be
-selected by choosing the :ref:`sec:menu-d`, option 1 (or just ``d1`` from the
-main menu). In practice it is usually faster to exit splash and restart
+Just exit splash and restart
 with the new dump file name on the command line (remember to save by
 pressing ’S’ from the main menu before exiting to save both the current
 settings and the plot limits – then you can continue plotting with the
@@ -154,22 +149,6 @@ automatically, plotting the same plot for each file/timestep.
 
 Using only a subset of data files / plotting every :math:`n-`\ th dump file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When splash is invoked with more than one filename on the command line
-(for example, where all files are selected with something like ``splash
-DUMP*``) it is often helpful to use only a subset of the files. This can
-be set in the :ref:`sec:menu-d`, selecting option 2 ``change number of timesteps
-used``. This prompts something like:
-
-::
-
-    Start at timestep ([1:10], default=1):
-    End at timestep ([1:10], default=10):
-    Frequency of steps to read ([1:10], default=1):
-
-so that the beginning, end and frequency (e.g. 2 would mean read every
-second step) of dump files to use can be set.
-
 To plot a subset of the data files in \*any\* order, see :ref:`sec:selectedstepsonly`.
 
 Of course, another way to achieve the same thing is to explicitly order
@@ -190,28 +169,6 @@ splash with no files on the command line:
 which will use the list of files specified in the ``splash.filenames``
 file.
 
-.. _sec:selectedstepsonly:
-
-Plotting a subset of data files in non-sequential order
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A subset of data files from the command line can be chosen in any order
-using the ``plot selected steps only`` option from the :ref:`sec:menu-d`
-which then prompts the user to enter something like the following:
-
-::
-
-    Enter number of steps to plot ([1:10], default=0):5
-    Enter step  1 ([1:10], default=1):5
-    Enter step  2 ([1:10], default=2):2
-    Enter step  3 ([1:10], default=3):1
-    Enter step  4 ([1:10], default=4):4
-    Enter step  5 ([1:10], default=5):3
-
-Only a limited number of steps can be selected in this way. An
-alternative way is to order the files on the command line before
-invoking splash (see :ref:`sec:subsetofsteps`).
-
 .. _sec:buffering:
 
 Plotting more than one file without re-reading the data from disk
@@ -221,8 +178,11 @@ For small data sets (or a small number of dump files) it is often useful
 to read all of the data into memory so that you can move rapidly
 forwards and backwards between dumps (e.g. in :ref:`sec:interactive`, or where
 both dumps are plotted on the same page) without unnecessary re-reading
-of data from disk. This is achieved by turning ``buffering of data`` on in
-the :ref:`sec:menu-d` (provided you have the memory of course!!). Non-buffered
+of data from disk. This is achieved with the command line flag::
+
+  splash --buffer file_0*
+
+(provided you have the memory of course!!). Non-buffered
 data means that only one file at a time is read.
 
 .. _sec:calc:
@@ -233,7 +193,7 @@ Calculating additional quantities not dumped
 Turn ``calculate extra quantities`` on in the :ref:`sec:menu-d`.
 New columns of data can be created as
 completely arbitrary functions of the data read from the SPH particles.
-Option ``d5`` in the data menu leads, for a typical data read, to a prompt
+Option ``d1`` in the data menu leads, for a typical data read, to a prompt
 similar to the following:
 
 ::
@@ -291,11 +251,15 @@ units`` option in the :ref:`sec:menu-d`. The settings for transforming the
 data into physical units may be changed via the ``change physical unit
 settings`` option in the :ref:`sec:menu-d`. (see :ref:`sec:changingunits`)
 
-For some data reads (sphNG, srosph) the scalings required to transform
+For some data reads (phantom, sphNG, magma) the scalings required to transform
 the data into physical units are read from the dump file. These are used
 as the default values but are overridden as soon as changes are made by
 the user (that is, by the presence of a ‘splash.units’ file) (see
 :ref:`sec:changingunits`).
+
+.. important::
+   Physical units are now ON by default in v3.x of SPLASH if they are set by the data read.
+   You can use this option to revert to code units
 
 Rescaling data columns
 ~~~~~~~~~~~~~~~~~~~~~~~
