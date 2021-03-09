@@ -1,6 +1,6 @@
 Frequently Asked Questions
 ==========================
-Here is a collection of the most common problems with using SPLASH. You may also wish to browse the archives of the `splash-users <http://groups.google.com/group/splash-users>`_ discussion list. See also the old `pgplot faq <http://users.monash.edu.au/~dprice/splash/pgplot.html`.
+Here is a collection of the most common problems with using SPLASH. You may also wish to browse the archives of the `splash-users <http://groups.google.com/group/splash-users>`_ discussion list. See also the old `pgplot faq <http://users.monash.edu.au/~dprice/splash/pgplot.html>`__.
 
 .. _sec:moviemaking:
 
@@ -32,13 +32,17 @@ This should produce a movie called ``movie.mp4`` from your splash_*.png files. T
    #
    # DJP, Feb 2014
    #
-   opts='-r 10 -vb 50M -bt 100M -vcodec mpeg4 -vf setpts=4.*PTS'
+   opts='-r 10 -vb 50M -bt 100M -vf setpts=4.*PTS'
    ffmpeg -i splash_%04d.png $opts movie.mp4
 
 
 The main options to play with are the bitrate (``-bt 100M``) that controls the quality and the ``-vf setpts=4.*PTS`` which controls how fast the movie plays (``setpts=1.*PTS`` gives 10 frames per second, this is usually too fast so we slow it down).
 
 The industry-standard compression codec is the ``H.264`` MPEG codec which gives a nice small movie that is still good quality. The best way to reduce the movie size further is to restrict the data rate.
+
+.. important::
+   The .mp4 files produced by ffmpeg as above currently not play directly in the Slack app. To ensure this you need to mandate that the pixel format is 
+   "yuv420p", by adding the flag ``-pix_fmt yuv420p``. You must also ensure that the page dimensions are given in even (not odd) numbers of pixels.
 
 Can I make animated gifs?
 ~~~~~~~~~~~~~~~~~~~~~~~~~

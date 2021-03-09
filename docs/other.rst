@@ -128,7 +128,7 @@ standard deviation for column 1 is output in column :math:`N + 1`).
 Examples of how this could be use might be to produce the time-averaged
 power spectrum from a series of ascii files containing power spectra for
 individual output times, or the time averaged probability density
-function (PDF) from PDFs produced by splash .
+function (PDF) from PDFs produced by splash (see :ref:`sec:pdfs:`).
 
 The resulting ascii file, called ``time_average.out`` can be plotted
 using the ascii splash binary (asplash).
@@ -184,6 +184,40 @@ line, then prompts will appear for only the remaining options. This can
 be used for example to specify the graphics device via the ``-dev``
 command line option, which means that only the device selection prompt
 does not appear.
+
+.. _sec:pdfs:
+
+Computing volume-weighted probability density functions from SPH data using SPLASH
+-----------------------------------------------------------------------------------
+The best way to compute a volume-weighted probability density function
+on SPH particles is to interpolate the density field to a grid and compute
+the histogram of the number of grid cells containing a given value of the desired quantity.
+
+The grid2pdf utility included with splash can be used to compute the density PDF
+from gridded data output by the ``splash to grid`` utility (see :ref:`sec:converttogrid`).
+
+To use this feature, you will need to output grids in "binary" format, e.g::
+
+   splash to gridbinary turb_00020
+
+or if you want to skip the velocity interpolation (assuming density in column 6)::
+
+   SPLASH_TO_GRID=6 splash to gridbinary turb_00020
+
+this produces a file called turb_00020.grid, then follow this with::
+
+   cd $SPLASH_DIR; make grid2pdf
+   cd -
+   $SPLASH_DIR/splash/bin/grid2pdf turb_00020.grid
+
+which produces::
+
+   turb_00020.grid_pdf_ln_density.dat
+
+this is just a two-column ascii file, so you can then plot this with your favourite plotting tool, e.g.::
+
+   splash -ev turb_00020.grid_pdf_ln_density.dat
+
 
 Making frames across multiple processors
 ----------------------------------------
