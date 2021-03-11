@@ -14,6 +14,8 @@
 #include <hdf5.h>
 #include "hdf5_helper_utils.h"
 
+void read_flash_data_fromc(int *icol,int *np,double temparr[*np], int id[*np]);
+
 void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, int *ierr)
    {
    hid_t     file_id;
@@ -26,21 +28,21 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR opening %s \n",filename); *ierr = 1; return; }
-   
+
    // READ NPART AND NCOL from file
    // Also, why is this #if even neccessary....!
-   
+
 #if H5_VERSION_GE(1,8,0)
    dataset_id   = H5Dopen2(file_id,"tracer particles",H5P_DEFAULT);
 #else
    dataset_id   = H5Dopen(file_id,"tracer particles");
 #endif
-   
-   if (dataset_id == HDF5_error) 
+
+   if (dataset_id == HDF5_error)
       { printf("ERROR opening tracer particle data set \n"); *ierr = 2; return; }
-   
+
    dataspace_id = H5Dget_space(dataset_id);
-      
+
    // get dimensional information from dataspace
    hsize_t HDFxdims[4], HDFmaxdims[4];
    int rank = H5Sget_simple_extent_dims(dataspace_id, HDFxdims, HDFmaxdims);
@@ -54,35 +56,35 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
 
    status = H5Sclose(dataspace_id);
    if (status == HDF5_error) { printf("ERROR closing dataspace \n"); *ierr = 4; }
-   
+
    status = H5Dclose(dataset_id);
    if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
-   
-   /* 
-    * read the time from the file - this is 
+
+   /*
+    * read the time from the file - this is
     * contained in a pointlessly complicated
     * compound structure that we have to replicate here
     *
     */
-   
-   
-   
+
+
+
 #if H5_VERSION_GE(1,8,0)
    dataset_id   = H5Dopen2(file_id,"real scalars",H5P_DEFAULT);
 #else
    dataset_id   = H5Dopen(file_id,"real scalars");
 #endif
-   
-   if (dataset_id == HDF5_error) 
+
+   if (dataset_id == HDF5_error)
       { printf("ERROR opening real scalars data set for time \n"); *ierr = 5; return; }
-   
+
    dataspace_id = H5Dget_space(dataset_id);
    rank = H5Sget_simple_extent_dims(dataspace_id, HDFxdims, HDFmaxdims);
    if (rank > 4) { printf("RANK of dataset exceeds array bounds \n"); *ierr = 3; return; }
-   
+
    int lenheader = HDFxdims[0];
    //printf(" header contains %i items \n",lenheader);
-   
+
    typedef struct h_t {
        char     name[80];
        double   value;
@@ -91,18 +93,18 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
 
    hid_t strtype = H5Tcopy(H5T_C_S1);
    status = H5Tset_size (strtype, 80);
-   
+
    hid_t compound_id = H5Tcreate(H5T_COMPOUND, sizeof(h_t));
    H5Tinsert(compound_id,"name",HOFFSET(h_t, name), strtype);
    H5Tinsert(compound_id,"value",HOFFSET(h_t, value), H5T_NATIVE_DOUBLE);
-   
+
    status = H5Dread(dataset_id,compound_id,H5S_ALL,H5S_ALL,H5P_DEFAULT,header);
    if (status == HDF5_error) { printf("ERROR reading header \n"); *ierr = 6; }
    *time = header[0].value;
-   
+
    status = H5Sclose(dataspace_id);
    if (status == HDF5_error) { printf("ERROR closing dataspace \n"); *ierr = 4; }
-   
+
    status = H5Dclose(dataset_id);
    if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
 
@@ -113,17 +115,17 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    } else {
       printf(" file does not contain SPH_density data set \n");
    }
-   
+
    status = H5Fclose( file_id );
    if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
-   
+
    }
 
 void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired, int *ierr)
    {
    hid_t     file_id;
    hid_t     dataset_id, SPHdataset_id;
-   hid_t     dataspace_id, SPHdataspace_id;
+   hid_t     dataspace_id;
    hid_t     memspace_id;
    herr_t    status;
    herr_t    HDF5_error = -1;
@@ -132,22 +134,22 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
    file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR re-opening %s \n",filename); *ierr = 1; return; }
-   
+
    // re-open tracer particle dataspace
-   
+
 #if H5_VERSION_GE(1,8,0)
    dataset_id   = H5Dopen2(file_id,"tracer particles",H5P_DEFAULT);
 #else
    dataset_id   = H5Dopen(file_id,"tracer particles");
 #endif
 
-   if (dataset_id == HDF5_error) 
+   if (dataset_id == HDF5_error)
       { printf("ERROR opening tracer particle data set \n"); *ierr = 2; return; }
 
    dataspace_id = H5Dget_space(dataset_id);
 
    // Additionally check if an SPH_density data set is present
-    
+
    int ncolloop;
    int gotSPHdata = checkfordataset(file_id,"SPH_density");
    if (gotSPHdata==0) {
@@ -162,18 +164,18 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
    hsize_t nparth[1];
    nparth[0] = *npart;
    memspace_id = H5Screate_simple(1,nparth,NULL);
-   
+
    // dynamically allocate a temporary double array to store one column
    double* temp = 0;
    temp = malloc(*npart*sizeof(double));
 
    // read particle information into one column
    hsize_t offset[2], count[2];
-   
+
    int i;
    count[0] = *npart;
    count[1] = 1;
-   /* 
+   /*
     * read particle IDs first so we can sort into ID order
     */
    offset[0] = 0;
@@ -185,13 +187,13 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
    H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
    int* tempid = 0;
    tempid = malloc(*npart*sizeof(int));
-   
+
    // convert temp (double) into integer array
    for (i=0;i<*npart;i++) {
        tempid[i] = (int)temp[i];
    }
 
-   /* 
+   /*
     * start loop from 1 because first array is a useless "tag" array that
     * we don't need to read.
     *
@@ -213,26 +215,26 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
 
           // call Fortran back, sending values in temp array to fill into the main splash dat array
 
-          receive_data_fromc(&i,&*npart,temp,tempid);
+          read_flash_data_fromc(&i,&*npart,temp,tempid);
        }
    }
 
    status = H5Sclose(dataspace_id);
    if (status == HDF5_error) { printf("ERROR closing dataspace \n"); *ierr = 4; }
-   
+
    status = H5Dclose(dataset_id);
    if (status == HDF5_error) { printf("ERROR closing dataset \n"); *ierr = 4; }
-   
+
    // Additionally read SPH_density data set if it is present
    if (gotSPHdata==1) {
-   
+
 #if H5_VERSION_GE(1,8,0)
    dataset_id   = H5Dopen2(file_id,"tracer particles",H5P_DEFAULT);
 #else
    dataset_id   = H5Dopen(file_id,"tracer particles");
 #endif
-   
-   if (dataset_id == HDF5_error) 
+
+   if (dataset_id == HDF5_error)
       { printf("ERROR opening tracer particle data set \n"); *ierr = 2; return; }
 
 #if H5_VERSION_GE(1,8,0)
@@ -247,12 +249,12 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
       if (status == HDF5_error) { printf("ERROR reading SPH_density dataspace \n"); *ierr = 3; }
 
       // call Fortran back, sending values in temp array to fill into the main splash dat array
-      receive_data_fromc(&ncolloop,&*npart,temp,tempid);
+      read_flash_data_fromc(&ncolloop,&*npart,temp,tempid);
 
       status = H5Dclose(SPHdataset_id);
       if (status == HDF5_error) { printf("ERROR closing SPH_density dataset \n"); *ierr = 4; }
    }
-   
+
    // deallocate memory
    free(tempid);
    free(temp);
@@ -266,7 +268,7 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
    {
    hid_t     file_id;
    hid_t     dataset_id;
-   hid_t     memspace_id, dataspace_id;
+   hid_t     memspace_id;
    herr_t    status;
    herr_t    HDF5_error = -1;
 
@@ -274,10 +276,10 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
    file_id = H5Fopen(filename,H5F_ACC_RDWR,H5P_DEFAULT);
    if (file_id == HDF5_error)
       { printf("ERROR opening %s for write \n",filename); *ierr = 1; return; }
-   
+
    if (checkfordataset(file_id,"SPH_density")==1) {
    // SPH data set already exists, we are going to overwrite it
-   
+
 #if H5_VERSION_GE(1,8,0)
       dataset_id = H5Dopen2(file_id,"SPH_density",H5P_DEFAULT);
 #else
@@ -285,13 +287,13 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
 #endif
       if (dataset_id == HDF5_error)
          { printf("ERROR opening SPH_density data set for overwrite \n"); *ierr = 2; return; }
-   
+
    } else {
    // create new dataspace for tracer particle density
       hsize_t nparth[1];
       nparth[0] = *npart;
       memspace_id = H5Screate_simple(1,nparth,NULL);
- 
+
 #if H5_VERSION_GE(1,8,0)
       dataset_id = H5Dcreate2(file_id,"SPH_density",H5T_NATIVE_DOUBLE,memspace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 #else
@@ -315,4 +317,3 @@ void write_tracer_particle_density(char *filename, int *npart, double *dens, int
    if (status == HDF5_error) { printf("ERROR closing file \n"); *ierr = 7; }
 
    }
-
