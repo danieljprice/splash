@@ -59,7 +59,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
  npts = size(rplot)
  norbits = int(time/(2.*pi))
  phase = phi0*pi/180. ! convert to radians
- if (time > 0.) phase = phase + (time - (2.*pi*norbits))
+ !if (time > 0.) phase = phase + (time - (2.*pi*norbits))
  use_ogilvie = .false.
  select case(ispiral)
  case(2)
@@ -75,6 +75,8 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
  end select
 
  select case(iplot)
+ case(8) ! in planet-wake coordinates
+    yplot(1:npts) = 0.  ! planet wake is a straight line at eta=0
  case(2)
     ! in phi-r plane
     istart = 1
