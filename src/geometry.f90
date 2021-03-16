@@ -84,6 +84,7 @@ module geometry
  real, parameter, private :: pi = 4.*atan(1.)
  real, parameter, private :: Rtorus = 1.0
  real, parameter, public  :: small_number = 1.e-15
+ real, parameter, public  :: large_number = 1.e30
  ! rotated cartesian
  real, private :: sina = 2./3.
  real, private :: cosa = sqrt(5.)/3.
@@ -247,7 +248,11 @@ pure real function planet_wake_t(r) result(t)
 
  rr = r / rp
  coeff = 1.5*hp_on_rp**(-2.5)/(2.**0.25)
- t = coeff*integrate_trap(planet_t_integrand,1.,rr)
+ if (rr > 0.) then
+    t = coeff*integrate_trap(planet_t_integrand,1.,rr)
+ else
+    t = large_number
+ endif
 
 end function planet_wake_t
 
@@ -259,6 +264,10 @@ pure real function planet_wake_r(t) result(r)
  real :: rr,coeff,fr,fr_dash,dr
  integer :: it
 
+ if (t >= large_number) then
+    r  = 0.
+    return
+ endif
  rr = 2. ! initial guess
  coeff = 1.5*hp_on_rp**(-2.5)/(2.**0.25)
  fr = 1e6 ! not converged
@@ -322,6 +331,10 @@ pure real function planet_wake_phiw(r) result(phi_w)
  real :: rr
 
  rr = r / rp
+ if (rr <= 0.) then
+    phi_w = phi_p
+    return
+ endif
  phi_w = phi_p + sign(1.,r-rp)/hp_on_rp*((rr**(q_index-0.5))/(q_index-0.5) &
                                   - (rr**(q_index+1.))/(q_index+1.) &
                                   - 3./((2.*q_index-1.)*(q_index+1.)))
