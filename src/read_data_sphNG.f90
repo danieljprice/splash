@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -1182,17 +1182,18 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
        pmassi = massoftype(itype)
        hi = dat(k,ih)
        if (hi > 0.) then
-         if (required(irho)) dat(k,irho) = pmassi*(hfact/hi)**3
-      elseif (hi < 0.) then
-         npartoftype(itype) = npartoftype(itype) - 1
-         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
-         if (required(irho)) dat(k,irho) = pmassi*(hfact/abs(hi))**3
-      else ! dead particles
-         npartoftype(itype) = npartoftype(itype) - 1
-         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
-         nkilled = nkilled + 1
-         if (required(irho)) dat(k,irho) = 0.
-      endif
+          if (required(irho)) dat(k,irho) = pmassi*(hfact/hi)**3
+       elseif (hi < 0.) then
+          !print*,' accreted: ',k,' type was ',itype,iphase(k)
+          npartoftype(itype) = npartoftype(itype) - 1
+          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+          if (required(irho)) dat(k,irho) = pmassi*(hfact/abs(hi))**3
+       else ! dead particles
+          npartoftype(itype) = npartoftype(itype) - 1
+          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+          nkilled = nkilled + 1
+          if (required(irho)) dat(k,irho) = 0.
+       endif
    enddo
 else
    if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
@@ -1261,6 +1262,33 @@ integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
  if (iloc > ncolmax) iloc = 0  ! error occurred
 
 end function map_sink_property_to_column
+
+!------------------------------------------------------------
+! sanity check of the particle type accounting
+!------------------------------------------------------------
+subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei)
+ use labels, only:labeltype
+ use params, only:int1
+ integer, intent(in) :: i1,i2
+ integer(kind=int1), intent(in) :: iphase(i1:i2)
+ integer, intent(inout) :: npartoftypei(:)
+ integer :: npartoftype_new(size(npartoftypei))
+ integer :: k,itype
+
+ npartoftype_new(:) = 0
+ do k=i1,i2
+    itype = itypemap_phantom(iphase(k))
+    npartoftype_new(itype) = npartoftype_new(itype) + 1
+ enddo
+ do k=1,size(npartoftypei)
+    if (npartoftype_new(k) /= npartoftypei(k)) then
+       print*,' WARNING: got ',npartoftype_new(k),&
+              trim(labeltype(k))//' particles, expecting ',npartoftypei(k)
+       npartoftypei(k) = npartoftype_new(k)
+    endif
+ enddo
+
+end subroutine check_iphase_matches_npartoftype
 
 end module sphNGread
 
@@ -1730,6 +1758,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              gotiphase = .true.
              if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
              read(iunit,end=33,iostat=ierr) iphase(i1:i2)
+             call check_iphase_matches_npartoftype(i1,i2,iphase,npartoftype(:,j))
              !--skip remaining integer arrays
              nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
           endif
@@ -1979,7 +2008,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              !--construct density for phantom dumps based on h, hfact and particle mass
              if (phantomdump .and. icolumn==ih) then
                 icolumn = irho ! density
-                call get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype(:,j),masstype(:,j),hfact,dat(:,:,j),iphase,nkilled)
+                call get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype(:,j),&
+                                    masstype(:,j),hfact,dat(:,:,j),iphase,nkilled)
              endif
           enddo
 !        real 8's need converting
@@ -2318,10 +2348,9 @@ end subroutine reset_corotating_positions
 
 end subroutine read_data_sphNG
 
-!!------------------------------------------------------------
-!! set labels for each column of data
-!!------------------------------------------------------------
-
+!------------------------------------------------------------
+! set labels for each column of data
+!------------------------------------------------------------
 subroutine set_labels_sphNG
  use labels, only:label,unitslabel=>unitslabel_default,&
               labelzintegration=>labelzintegration_default,labeltype,labelvec,iamvec, &
@@ -2601,9 +2630,9 @@ subroutine set_labels_sphNG
     units(0) = 1./tfreefall
     unitslabel(0) = ' '
  case default
-    if (dtmax > 0. .and. (abs(utime-1d0) > 0.d0)) then ! use interval between full dumps
-       call get_nearest_time_unit(utime*dtmax*10.,unitx,unitslabel(0))
-       unitx = unitx/(dtmax*10.)
+    if (dtmax > 0. .and. (abs(utime-1d0) > 0.d0)) then ! use interval between dumps
+       call get_nearest_time_unit(utime*dtmax,unitx,unitslabel(0))
+       unitx = unitx/dtmax
     else
        call get_nearest_time_unit(utime,unitx,unitslabel(0))
     endif
