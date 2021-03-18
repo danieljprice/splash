@@ -2526,11 +2526,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    call set_weights(weight,dat,iamtype,iusetype)
                 endif
                 yplot = 0.
-
-                !call powerspec3D_sph(dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                !    hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), &
-                !    ninterp,nfreqspec,lim(ipowerspecx,1),lim(ipowerspecx,2),xplot(1:nfreqspec), &
-                !       yplot(1:nfreqspec),inormalise)
                 xmin = max(minval(xplot(1:nfreqspec)),1.0)
                 xmax = maxval(xplot(1:nfreqspec))
                 nfreqpts = nfreqspec
@@ -2612,13 +2607,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
 
              !!--uncomment next few lines to plot wavelengths instead
-             !labelx = 'wavelength'
-             !zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
-             !xplot(1:nfreqspec) = zplot(1:nfreqspec)
-             !if (.not.interactivereplot) then
-             !   xmin = minval(xplot(1:nfreqspec))
-             !   xmax = maxval(xplot(1:nfreqspec))
-             !endif
+             labelx = 'period'
+             zplot(1:nfreqspec) = 1./xplot(1:nfreqspec)
+             xplot(1:nfreqspec) = zplot(1:nfreqspec)
+             if (.not.interactivereplot) then
+                xmin = minval(xplot(1:nfreqspec))
+                xmax = maxval(xplot(1:nfreqspec))
+             endif
 
              if (itrans(iploty) /= 0) then
                 call transform(xplot(1:nfreqpts),itrans(iploty))

@@ -66,7 +66,7 @@ subroutine adjust_data_codeunits
  use geometry,        only:labelcoord
  use filenames,       only:ifileopen,nstepsinfile
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
- real :: hmin,dphi,domega
+ real :: hmin,dphi,domega,period
  real, dimension(3) :: vsink,xyzsink,x0,v0
  character(len=20), dimension(3) :: list
  integer :: i,j,nlist,nerr,ierr,isink,isinkpos,itype
@@ -226,6 +226,16 @@ subroutine adjust_data_codeunits
        print "(a)",' One fluid dust: set option in d) menu to make fake dust particles'
     endif
  endif
+
+ !
+ !--phase fold column 1 with a given period
+ !
+ period = renvironment('SPLASH_PHASEFOLD')
+ if (period > 0.) then
+    print "(a,es10.3)",' PHASE FOLDING column 1 with period of ',period
+    dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
+ endif
+
 
 end subroutine adjust_data_codeunits
 

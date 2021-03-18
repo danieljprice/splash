@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.1.1   : (xx/xx/21) automatically plot y vs x given a two-column data file;
+!             planet wake coordinate system added
 !     3.1.0   : (16/02/21) splash calc lightcurve implemented; sink particles ON by default;
 !             changing units rescales plot limits correctly;
 !             further improvements to ray tracing / opacity rendering with physical opacity;
