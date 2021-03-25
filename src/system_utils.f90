@@ -25,7 +25,6 @@
 ! depend on system commands (in the system_commands module)
 !
 module system_utils
- use system_commands, only:get_environment
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
@@ -47,7 +46,7 @@ integer function ienvironment(variable,errval)
  character(len=30) :: string
  integer, intent(in), optional :: errval
 
- call get_environment(variable,string)
+ call get_environment_variable(variable,string)
  if (present(errval)) then
     ienvironment = ienvstring(string,errval)
  else
@@ -70,7 +69,7 @@ real function renvironment(variable,errval)
  real, intent(in), optional :: errval
  integer :: ierr
 
- call get_environment(variable,string)
+ call get_environment_variable(variable,string)
  if (len_trim(string) > 0) then
     read(string,*,iostat=ierr) renvironment
  else
@@ -95,7 +94,7 @@ logical function lenvironment(variable)
  character(len=*), intent(in) :: variable
  character(len=30) :: string
 
- call get_environment(variable,string)
+ call get_environment_variable(variable,string)
  lenvironment = lenvstring(string)
 
 end function lenvironment
@@ -164,7 +163,7 @@ subroutine envlist(variable,nlist,list)
  endif
 
  !--get envlist from the environment
- call get_environment(variable,string)
+ call get_environment_variable(variable,string)
 
  !--split the string on commas
  i1 = 1

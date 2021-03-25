@@ -903,12 +903,13 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        !
        xi = (x(i) - xmin)*ddx
        yi = (y(i) - ymin)*ddy
-       hi = 1.0*pixwidthx  ! in units of pixel spacing
+       hi = 1.0*pixwidthx
+       if (itsmax==1) hi=hi*hfac  ! in units of pixel spacing
 
        ipix = int(xi)
        jpix = int(yi)
        if (its > 1 .and. ipix >= 1 .and. ipix <= npixx.and. jpix >= 1 .and. jpix <= npixy) then
-          hi = min(hfac/sqrt(datold(ipix,jpix)),20.)
+          hi = max(min(hfac/sqrt(datold(ipix,jpix)),100.),1.)
        endif
        hi1 = 1./hi
        termnorm = const*hi1*hi1
