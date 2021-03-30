@@ -886,7 +886,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     endif
 
     !$omp parallel do default(none) &
-    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its) &
+    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its,itsmax) &
     !$omp shared(datold,datsmooth,datnorm,npixx,npixy,const,radkernel,radkernel2,dat) &
     !$omp shared(pixwidthx,pixwidthy,normalise,hfac) &
     !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
