@@ -51,6 +51,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.1.2   : (xx/xx/21) added -gandalf and -f gandalf as shortcut for seren data read;
 !     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
 !             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
 !             phantom dumps when number of particles of each type does not match itype array;

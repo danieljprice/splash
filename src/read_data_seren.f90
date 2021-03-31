@@ -108,20 +108,21 @@ module readdata_seren
 contains
 
 subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
- use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
+ use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep,headervals
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
  use settings_units, only:unitzintegration, unit_interp
  use mem_allocation, only:alloc
- use labels,         only:labeltype,labelzintegration
+ use labels,         only:labeltype,labelzintegration,headertags,print_types
  use system_utils,   only:ienvironment
  use seren_data_store
+ use asciiutils,     only:make_tags_unique
  integer, intent(in) :: istepstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  character(len=len(rootname)+10) :: datfile
  integer, parameter :: iunit = 16
- integer :: i,step,ierr,iambinaryfile,itype
+ integer :: i,j,step,ierr,iambinaryfile,itype
  integer :: npart_max,nstep_max
  logical :: iexist,reallocate,doubleprec
  character(len=50) :: string
@@ -321,41 +322,30 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
 !   npartoftype(1,step) = ptot
  time(step) = timetemp
  gamma(step) = gammatemp
+
+ !--identify integer header variables and copy into headervals
+ headertags(1:8) = (/'ptot      ','stot      ','pboundary ','picm      ',&
+                     'pgas      ','pcdm      ','pdust     ','pion      '/)
+ headervals(1:8,step) = real(idata(1:8))
+
+ !--tag double precision header variables with "dp_data1,dp_data2 etc."
+ do j=1,size(dpdata)
+    headertags(8+j) = 'dp_data'
+    headervals(8+j,step) = dpdata(j)
+ enddo
+ call make_tags_unique(8+size(dpdata),headertags)
  !
  !--read particle data
  !
  if (ptot > 0) then
-!      if (iambinaryfile==1) then
-!         call read_dragonbody_binary(iunit,ierr)
-!      else
-!         call read_dragonbody_ascii(iunit,ierr)
-!      endif
     call read_serenbody(iunit,ierr)
  else
     ptot = 0
-!      npartoftype(1,step) = 0
-!      npartoftype(:,step) = 0
     dat(:,:,step) = 0.
  endif
 
-!   if (allocated(iamtype)) then
-!      !--relabel particle types
  call set_types(iamtype(:,step),ptot+stot,npartoftype(:,step))
-!   endif
- if (any(npartoftype(2:,step) /= 0)) then
-    do itype=1,ntypes
-       if (npartoftype(itype,step) > 0) then
-          string = ' '
-          write(string,"(a)") 'n_'//trim(labeltype(itype))
-          write(string(18:len(string)),"(a)") ':'
-          print*,trim(string),' ',npartoftype(itype,step)
-       endif
-    enddo
- endif
-! !
-! !--set flag to indicate that only part of this file has been read
-! !
-!   if (.not.all(required(1:ncolumns))) ipartialread = .true.
+ if (any(npartoftype(2:,step) /= 0)) call print_types(npartoftype(:,step),labeltype)
 !
 !--close data file and return
 !
