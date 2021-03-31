@@ -1039,6 +1039,10 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  call plot_sls(iExactLineStyle(1))
  call plot_set_opacity(ExactAlpha)
  !
+ !--get exact solution parameters from code input files, if present
+ !
+ if (ifileopen > 0) call read_exactparams(iexact,rootname(ifileopen),ierr)
+ !
  !--allocate memory
  !
  allocate(xexact(maxexactpts),yexact(maxexactpts),xtemp(maxexactpts),stat=ierr)
