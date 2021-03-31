@@ -51,8 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.1.1   : (xx/xx/21) automatically plot y vs x given a two-column data file;
-!             planet wake coordinate system added
+!     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
+!             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
+!             phantom dumps when number of particles of each type does not match itype array;
+!             bug fixes in grid2pdf
 !     3.1.0   : (16/02/21) splash calc lightcurve implemented; sink particles ON by default;
 !             changing units rescales plot limits correctly;
 !             further improvements to ray tracing / opacity rendering with physical opacity;
@@ -457,7 +459,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.1.0 [16th Feb 2021]'
+ character(len=*), parameter :: version = 'v3.1.1 [31st March 2021]'
 
  !
  ! initialise some basic code variables
