@@ -51,7 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.1.2   : (xx/xx/21) added -gandalf and -f gandalf as shortcut for seren data read;
+!     3.1.2   : (xx/xx/21) added --xsec flag for cross section location;
+!             assume default xw device and disable device prompt if any command line flags set;
+!             s/S options now do the same thing;
+!             added -gandalf and -f gandalf as shortcut for seren data read
 !     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
 !             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
 !             phantom dumps when number of particles of each type does not match itype array;
@@ -763,13 +766,14 @@ program splash
     if (irender == 0 .and. iautorender > 0) then
        irender = iautorender
        nomenu = .true.
-       if (len_trim(device)==0) device = '/xw'
     elseif (ncolumns==2) then
        nomenu = .true.
-       if (len_trim(device)==0) device = '/xw'
        if (ipicky==0) ipicky = 2
        if (ipickx==0) ipickx = 1
     endif
+
+    ! set default device to /xw if command line flags set
+    if (nomenu .and. len_trim(device)==0) device = '/xw'
 
     ! read tabulated colour table, if necessary
     if (abs(icolours)==icustom) then
