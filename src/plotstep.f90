@@ -330,9 +330,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !--if series of cross sections (flythru), set position of first one
 !
        if (flythru) then
-          print 32,label(iplotz)
-32        format('enter number of ',a1,' cross-section slices')
-          read*,nxsec
+          nxsec = 10
+          if (.not.nomenu) call prompt(' enter number of '//trim(label(iplotz))// &
+                      ' cross-section slices',nxsec)
           !!--dz is the distance between slices
           dz = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
           zslicepos = lim(iplotz,1) - 0.5*dz
@@ -344,10 +344,10 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
           if (.not.imulti) then
              !--make sure position falls within the limits
              if (xsecpos_nomulti < lim(iplotz,1) &
-              .or.xsecpos_nomulti > lim(iplotz,2)) then
+                 .or. xsecpos_nomulti > lim(iplotz,2)) then
                 xsecpos_nomulti = (lim(iplotz,2)+lim(iplotz,1))/2.
              endif
-             call prompt(' enter '//trim(label(iplotz))// &
+             if (.not.nomenu) call prompt(' enter '//trim(label(iplotz))// &
                        ' position for cross-section slice:', &
                        xsecpos_nomulti,lim(iplotz,1),lim(iplotz,2))
           endif
@@ -371,12 +371,14 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
              endif
              dz = dzsuggest
 
-             if (imulti) then
-                call prompt(' enter thickness for cross section slice(s):', &
+             if (.not.nomenu) then
+                if (imulti) then
+                   call prompt(' enter thickness for cross section slice(s):', &
                            dz,0.0,lim(iplotz,2)-lim(iplotz,1))
-             else
-                call prompt(' enter thickness of cross section slice:', &
+                else
+                   call prompt(' enter thickness of cross section slice:', &
                            dz,0.0,lim(iplotz,2)-lim(iplotz,1))
+                endif
              endif
              !--if dz has been set from the prompt, save the setting,
              !  otherwise suggest (possibly different) value again next time
@@ -395,7 +397,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 !
     elseif (ndim==2 .and. x_sec) then
        ians = .false.
-       call prompt('set cross section position interactively?',ians)
+       if (.not.nomenu) call prompt('set cross section position interactively?',ians)
 
        if (ians) then
           !
@@ -422,11 +424,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
              xseclineY1 = lim(2,1)
              xseclineY2 = lim(2,2)
           endif
-          print*,'enter position of cross section through 2D data:'
-          call prompt('enter xmin of cross section line',xseclineX1)
-          call prompt('enter xmax of cross section line',xseclineX2)
-          call prompt('enter ymin of cross section line',xseclineY1)
-          call prompt('enter ymax of cross section line',xseclineY2)
+          if (.not.nomenu) then
+             print*,'enter position of cross section through 2D data:'
+             call prompt('enter xmin of cross section line',xseclineX1)
+             call prompt('enter xmax of cross section line',xseclineX2)
+             call prompt('enter ymin of cross section line',xseclineY1)
+             call prompt('enter ymax of cross section line',xseclineY2)
+          endif
        endif
     endif
 
@@ -438,7 +442,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
           !--set default values if none set
           if (abs(zobserver) < tiny(zobserver)) zobserver = 10.*lim(iplotz,2)
           if (abs(dzscreenfromobserver) < tiny(dzscreenfromobserver)) dzscreenfromobserver = zobserver
-          call prompt('enter z coordinate of observer ',zobserver)
+          if (.not.nomenu) call prompt('enter z coordinate of observer ',zobserver)
           dzscreenfromobserver = zobserver
        endif
 !       call prompt('enter distance for unit magnification ',dzscreenfromobserver,0.)
@@ -459,13 +463,13 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
           endif
           if (ikappa > 0) then
              if (rkappafac <= 0.) rkappafac = 1.0
-             call prompt('Enter opacity scaling factor ',rkappafac)
+             if (.not.nomenu) call prompt('Enter opacity scaling factor ',rkappafac)
           else
              string = '[code units]'
              if (iRescale) string = trim(unitslabel(ih))//'^2 / '//trim(unitslabel(ipmass))
-             print "(a,es10.3,a)",' suggested value for kappa: ',pi*hav*hav/(pmassav*coltable(0)),trim(string)
+             if (.not.nomenu) print "(a,es10.3,a)",' suggested value for kappa: ',pi*hav*hav/(pmassav*coltable(0)),trim(string)
              if (rkappafac <= 0.) rkappafac = pi*hav*hav/(pmassav*coltable(0))
-             call prompt('enter kappa (in current units)',rkappafac)
+             if (.not.nomenu) call prompt('enter kappa (in current units)',rkappafac)
           endif
        endif
     endif
