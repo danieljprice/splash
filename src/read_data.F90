@@ -108,11 +108,19 @@ contains
 ! subroutine to select string specified data format
 !----------------------------------------------------------------------
 
-subroutine select_data_format(string,ierr)
+subroutine select_data_format(string_in,ierr)
  use asciiutils,        only:lcase
 
- character(len=*),  intent(in)  :: string
+ character(len=*),  intent(in)  :: string_in
  integer,           intent(out) :: ierr
+ character(len=len(string_in)) :: string
+
+ ! allow both -ascii and --ascii in flags
+ if (string_in(1:1)=='-') then
+    string = string_in(2:)
+ else
+    string = string_in
+ endif
 
  !----------------------------
  !  Checks for dependencies
