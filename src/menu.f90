@@ -386,27 +386,14 @@ subroutine menu
        case('l','L')
           call submenu_limits(ichoose)
 !------------------------------------------------------------------------
-!+ The (s)ave option saves the default options to a
+!+ The (s)ave option saves default options to a
 !+ file called `splash.defaults'' in the current directory which
 !+ is read automatically upon the next invocation of splash.
 !+ This file uses namelist formatting and may be edited
-!+ manually prior to startup if so desired. This is quite
-!+ useful for setting multiplots with many plots per page
-!+ The (S)ave option writes both the defaults file and
-!+ also saves the current plot limits to a file called
-!+ 'splash.limits' which is also read automatically
-!+ at startup.
-       case('s')
-          if (ioption(2:2)=='a') then
-             call prompt('enter prefix for defaults file: ',fileprefix,noblank=.true.)
-             if (index(fileprefix,'.defaults')==0) then
-                defaultsfile = trim(fileprefix)//'.defaults'
-             else
-                defaultsfile = trim(fileprefix)
-             endif
-          endif
-          call defaults_write(defaultsfile)
-       case('S')
+!+ manually prior to startup if desired.
+!+ Also save the current plot limits to a file called
+!+ 'splash.limits' which is read automatically
+       case('s','S')
           if (ioption(2:2)=='a' .or. ioption(2:2)=='A') then
              call prompt('enter prefix for filenames: ',fileprefix,noblank=.true.)
              call set_filenames(trim(fileprefix))
