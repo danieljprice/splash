@@ -51,10 +51,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.1.2   : (xx/xx/21) added --xsec flag for cross section location;
+!     3.2.0   : (20/04/21) disable ALL prompts if any command line flags set;
+!             all environment variables can now be given as command line flags using lower case string
+!             after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line;
+!             useful options include --corotate, --sink=1, --debug and more;
+!             splash to grid recognises flags including --periodic, --npix=100,100,100 and --convert=1,4;
+!             added -gandalf and -f gandalf as shortcut for seren data read;
 !             assume default xw device and disable device prompt if any command line flags set;
-!             s/S options now do the same thing;
-!             added -gandalf and -f gandalf as shortcut for seren data read
+!             s/S options now do the same thing
 !     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
 !             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
 !             phantom dumps when number of particles of each type does not match itype array;
@@ -463,7 +467,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.1.1 [31st March 2021]'
+ character(len=*), parameter :: version = 'v3.2.0 [20th April 2021]'
 
  !
  ! initialise some basic code variables
@@ -610,7 +614,7 @@ program splash
           stop
        case default
           if (.not. got_format) call select_data_format(string(2:),ierr)
-          if (ierr /= 0) then
+          if (ierr /= 0 .and. string(2:2) /= '-') then
              call print_usage
              print "(a)",'unknown command line argument '''//trim(string)//''''
              stop
