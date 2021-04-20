@@ -54,10 +54,24 @@ grid size is given by the “set number of pixels” option in the r)ender
 menu — as saved to the ``splash.defaults`` file. Automatic pixel
 determination also works (if npixels = 0) but there is a sensible upper
 limit placed on the grid size determined in this manner to avoid
-ridiculous memory/disk usage. Various environment variable options are
-available (these are output at runtime) that can be used to change
-various aspects of the grid interpolation behaviour (e.g. setting
-``SPLASH_TO_GRID_PERIODIC=yes`` enforces periodic boundary conditions).
+ridiculous memory/disk usage. Options can be set to change
+various aspects of the grid interpolation behaviour. For example you to
+use periodic boundary conditions use::
+
+  splash to grid dump001 --periodic
+
+or alternatively you can set this as an environment variable::
+
+  export SPLASH_TO_GRID_PERIODIC=yes
+  splash to grid dump001
+
+To change the number of pixels, you can use::
+
+  splash to grid dump001 --periodic --npix=100,100,000
+
+and to interpolate only columns 4 and 5 you can use::
+
+  splash to grid dump001 --periodic --npix=100,100,000 --grid=1,5
 
 For all possible output formats, use ``splash --help`` or see the full
 list of command line options in :ref:`sec:commandline`.
@@ -180,10 +194,8 @@ a contour plot with ``-cont``. The full list of command-line flags is
 given in :ref:`sec:commandline`.
 
 If plotting options have been only partially specified on the command
-line, then prompts will appear for only the remaining options. This can
-be used for example to specify the graphics device via the ``-dev``
-command line option, which means that only the device selection prompt
-does not appear.
+line, no prompts will appear for the remaining options and default values will be assumed
+for the remaining options. For example, the default device will be /xw giving an interactive plot.
 
 .. _sec:pdfs:
 
@@ -202,7 +214,7 @@ To use this feature, you will need to output grids in "binary" format, e.g::
 
 or if you want to skip the velocity interpolation (assuming density in column 6)::
 
-   SPLASH_TO_GRID=6 splash to gridbinary turb_00020
+   splash to gridbinary turb_00020 --grid=6
 
 this produces a file called turb_00020.grid, then follow this with::
 
@@ -309,19 +321,19 @@ directly to a file, or series of files by using the ``-o`` command line
 option when you invoke splash. This is useful if you need to compare the
 image to the output from another code (e.g. using a different
 visualisation tool) or if you wish to have a “raw” rendering, that is
-without annotation on the plots. 
+without annotation on the plots.
 
 Invoking splash with ``-o`` lists the currently implemented formats::
 
-  possible formats for -o option: 
+  possible formats for -o option:
   -o ppm   : dump pixel map to portable pixel map file
   -o pfm   : dump pixel map to portable float map file
   -o ascii : dump pixel map to ascii file
-  
+
 For example, to output the pixel map in ascii format, use::
 
    splash discG_00300 -o ascii -r 6 -dev /png
-   
+
 giving::
 
    > writing pixel map to file discG_00300_columndensitygcm2_proj.pix ...OK
@@ -330,7 +342,7 @@ This produces a file as follows::
 
   $ more discG_00300_columndensitygcm2_proj.pix
   # discG_00300_columndensitygcm2_proj.pix created by SPLASH
-  # Contains 2D pixel array 512 x 512 written as 
+  # Contains 2D pixel array 512 x 512 written as
   #   do j=1,512
   #      write(*,*) dat(1:512,j)
   #   enddo

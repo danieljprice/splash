@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -191,7 +191,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  npixx = npix
  npixels = ienvlist('SPLASH_TO_GRID_NPIX',3)
  if (product(npixels) > 0) then
-    print*,'Using npixels = ',npixels,' from SPLASH_TO_GRID_NPIX'
+    print "(a,2(i5,','),i5)",' Using --npix=',npixels
  else
     if (npixx <= 0) then
        print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
@@ -228,7 +228,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           print "(a)",'    so instead we choose npixels = ',npixx
        endif
     endif
-    print "(a,/)",' Set this manually using SPLASH_TO_GRID_NPIX=100,100,100'
+    print "(a,/)",' Set this manually using --npix=100,100,100'
     pixwidth = (xmax(1)-xmin(1))/npixx
     do i=1,ndim
        if (coord_is_length(i,igeom)) then
@@ -394,10 +394,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (rhominset >= 0.) then
     rhomin = rhominset
     print*,'enforcing minimum density on grid = ',rhomin
-    print*,'(based on SPLASH_TO_GRID_RHOMIN setting)'
+    print*,'(based on --rhomin setting)'
  elseif (rhomin > 0.) then
     print*,'enforcing minimum density on grid = ',rhomin
-    print*,'set SPLASH_TO_GRID_RHOMIN=minval to manually set this (e.g. to zero)'
+    print "(a)",' ** set --rhomin=minval to manually set this (e.g. to zero) **'
  endif
 
  if (rhomin > 0.) then
@@ -450,8 +450,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  if (interpolateall .or. ncolstogrid > 0) then
     if (ncolstogrid > 0 .and. .not.present(icols)) then
-       print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from SPLASH_TO_GRID setting:'
-       print "(' got SPLASH_TO_GRID=',10(i2,1x))",icoltogrid(1:ncolstogrid)
+       print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from --grid setting:'
+       print "(' got --grid=',10(i2,1x))",icoltogrid(1:ncolstogrid)
     endif
 
     do i=1,ncolumns
@@ -508,8 +508,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
     if (nvec > 0) then
 
-       print "(/,a,i2,a)",' set SPLASH_TO_GRID=',irho,' to interpolate density ONLY and skip remaining columns'
-       print "(a,i2,a)",  '     SPLASH_TO_GRID=6,8,10 to select particular columns'
+       print "(/,a,i2,a)",' set --grid=',irho,' to interpolate density ONLY and skip remaining columns'
+       print "(a,i2,a)",  '     --grid=6,8,10 to select particular columns'
 
        if (.not.lowmem) then
           if (ndim==3) then
@@ -717,7 +717,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  isperiodic(:) = .false.
  call envlist('SPLASH_TO_GRID_PERIODIC',nstring,strings)
  if (nstring > ndim) then
-    print "(a)",' ERROR in SPLASH_TO_GRID_PERIODIC setting'
+    print "(a)",' ERROR in --periodic setting'
     nstring = ndim
  endif
  do i=1,nstring
@@ -726,23 +726,22 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  if (nstring==1) isperiodic(2:ndim) = isperiodic(1)
 
  if (all(isperiodic(1:ndim))) then
-    print "(/,a)",' using PERIODIC boundaries (from SPLASH_TO_GRID_PERIODIC setting)'
+    print "(/,a)",' using PERIODIC boundaries (from --periodic setting)'
  elseif (isperiodic(1) .or. isperiodic(2) .or. isperiodic(3)) then
     print*
     do i=1,ndim
        if (isperiodic(i)) then
-          print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
+          print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from --periodic flag)'
        else
-          print "(a)",' using NON-PERIODIC bounds in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
+          print "(a)",' using NON-PERIODIC bounds in '//xlab(i)//' (from --periodic flag)'
        endif
     enddo
  else
-    print "(/,a)",' using NON-PERIODIC boundaries'
-    print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic'
+    print "(/,a)",' using NON-PERIODIC boundaries: use --periodic=yes for periodic'
     if (ndim==3) then
-       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'
+       print "(a,/)",'                                 or --periodic=yes,no,yes for mixed'
     else
-       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no for mixed)'
+       print "(a,/)",'                                 or --periodic=yes,no for mixed'
     endif
  endif
 

@@ -77,10 +77,10 @@ end module unit_constants
 
 module readdata_dragon
  implicit none
- 
+
  public :: read_data_dragon, set_labels_dragon
- 
- private 
+
+ private
 contains
 
 subroutine read_data_dragon(rootname,istepstart,ipos,nstepsread)
@@ -749,7 +749,7 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  use params
  use settings_data, only:ndim
  use unit_constants
- use system_commands, only:get_environment
+ use system_utils, only:get_environment_or_flag
 
  real(doub_prec), intent(out)      :: out_unit_interp
  real, intent(out)                 :: out_unitzintegration
@@ -763,10 +763,10 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  character(len=20) :: rho_unit                ! density unit
  character(len=20) :: h_unit                  ! smoothing length unit
 
- call get_environment("DRAGON_R_UNIT",r_unit)
- call get_environment("DRAGON_M_UNIT",m_unit)
- call get_environment("DRAGON_RHO_UNIT",rho_unit)
- call get_environment("DRAGON_H_UNIT",H_unit)
+ call get_environment_or_flag("DRAGON_RUNIT",r_unit)
+ call get_environment_or_flag("DRAGON_MUNIT",m_unit)
+ call get_environment_or_flag("DRAGON_RHOUNIT",rho_unit)
+ call get_environment_or_flag("DRAGON_HUNIT",H_unit)
 
  out_unit_interp = 1.0
  out_unitzintegration = 1.0

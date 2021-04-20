@@ -26,13 +26,13 @@
 !
 ! THIS VERSION IS FOR DATA FORMATS WRITTEN WITH THE H5PART LIBRARY
 !
-! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
+! Some choices for this format can be set using the following
+!  command-line flags or environment variables:
 !
-!  H5SPLASH_NDIM=2     : number of spatial dimensions (overrides value inferred from data)
-!  H5SPLASH_HFAC=1.2   : factor to use in h= hfac*(m/rho)**(1/ndim) if h not present in data
-!  H5SPLASH_HSML=1.0   : value for global smoothing length if h not present in data
-!  H5SPLASH_TYPEID='MatID'  : name of dataset containing the particle types
+!  --ndim=2 or H5SPLASH_NDIM=2     : number of spatial dimensions (overrides value inferred from data)
+!  --hfac=1.2 or H5SPLASH_HFAC=1.2 : factor to use in h= hfac*(m/rho)**(1/ndim) if h not present in data
+!  --hsml=1.0 or H5SPLASH_HSML=1.0 : value for global smoothing length if h not present in data
+!  --typeid=MatID or H5SPLASH_TYPEID='MatID'  : name of dataset containing the particle types
 !
 ! the data is stored in the global array dat
 !
@@ -66,10 +66,10 @@ end module h5partdataread
 
 module readdata_h5part
  implicit none
- 
+
  public :: read_data_h5part, set_labels_h5part
- 
- private 
+
+ private
 contains
 
 subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
@@ -79,8 +79,7 @@ subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  use mem_allocation,  only:alloc
  use iso_c_binding,   only:c_double,c_int64_t
  use asciiutils,      only:lcase
- use system_utils,    only:renvironment
- use system_commands, only:get_environment
+ use system_utils,    only:renvironment,get_environment_or_flag
  use labels,          only:ih,ipmass,irho,ix
  use h5part
  use h5partattrib,    only:h5pt_readstepattrib,h5pt_getnstepattribs,h5pt_getstepattribinfo, &
@@ -152,7 +151,7 @@ subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  !  containing the particle type ID
  !  give default value if this is not set
  !
- call get_environment('H5SPLASH_TYPEID',type_datasetname)
+ call get_environment_or_flag('H5SPLASH_TYPEID',type_datasetname)
  if (len_trim(type_datasetname) <= 0) then
     typeiddefault = .true.
     type_datasetname = 'MatID'
@@ -226,9 +225,9 @@ subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
  !
  if (itypeidcol <= 0) then
     if (typeiddefault) then
-       if (iverbose >= 1) print "(a)",' Particle type dataset not found in file: Use H5SPLASH_TYPEID to give dataset name'
+       if (iverbose >= 1) print "(a)",' Particle type dataset not found in file: Use --typeid=blah to give dataset name'
     else
-       print "(a)",' WARNING: Particle type dataset '//trim(type_datasetname)//' (from H5SPLASH_TYPEID) not found in file '
+       print "(a)",' WARNING: Particle type dataset '//trim(type_datasetname)//' (from --typeid) not found in file '
     endif
  endif
 
@@ -284,18 +283,18 @@ subroutine read_data_h5part(rootname,indexstart,ipos,nstepsread)
        hfac = renvironment('H5SPLASH_HFAC',errval=-1.)
        if (hfac > 0.) then
           if (iverbose >= 1) print "(/,a,f6.2,a,/)",' Setting smoothing length using h = ',hfac,&
-                                  '*(m/rho)**(1/ndim) (from H5SPLASH_HFAC setting)'
+                                  '*(m/rho)**(1/ndim) (from --hfac setting)'
        else
           hfac = 1.2
           if (iverbose >= 1) then
              print "(/,a)",' WARNING: Smoothing length not found in data: using h = hfac*(m/rho)**(1/ndim)'
-             print "(a)",  '          (hfac = 1.2 by default, set H5SPLASH_HFAC to change this)'
-             print "(a,/)",'          (set constant h with H5SPLASH_HSML to give a global value)'
+             print "(a)",  '          (hfac = 1.2 by default, set e.g. --hfac=1.5 to change this)'
+             print "(a,/)",'          (set constant h with --hsml=1.0 to give a global value)'
           endif
        endif
        ncolstep = ncolstep + 1
     else
-       if (iverbose >= 1) print "(/,a,/)",' WARNING: Smoothing length not found in data: Set H5SPLASH_HSML to give a global value'
+       if (iverbose >= 1) print "(/,a,/)",' WARNING: Smoothing length not found in data: Set --hsml to give a global value'
     endif
  endif
  ncolumns = ncolstep
@@ -567,12 +566,12 @@ subroutine set_labels_h5part()
     if (ndimset > 0) then
        if (ndim /= ndimset) then
           print "(2(a,i1))",' WARNING: ndim = ',ndimset, &
-                             ' from H5SPLASH_NDIM setting but coords not found in data: using ndim = ',ndim
+                             ' from --ndim setting but coords not found in data: using ndim = ',ndim
        else
-          print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from H5SPLASH_NDIM setting'
+          print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' from --ndim setting'
        endif
     else
-       if (ndim > 0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set H5SPLASH_NDIM to override)'
+       if (ndim > 0) print "(a,i1,a)",' Assuming number of dimensions = ',ndim,' (set --ndim=3 to override)'
     endif
 
     if (ndimV > 0) print "(a,i1)",' Assuming vectors have dimension = ',ndimV

@@ -32,11 +32,11 @@
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
 !  ENVIRONMENT VARIABLES:
 !
-! RSPLASH_FORMAT can be 'MHD' or 'HYDRO'
-! RSPLASH_RESET_COM if 'YES' then centre of mass is reset for n2=0 (ie single objects)
-! RSPLASH_COROTATING if 'YES' then velocities are transformed to corotating frame
-! RSPLASH_HFACT can be changed to give correct hfact value for particle masses
-!  on minidumps: e.g. setenv RSPLASH_HFACT=1.2
+! --format or RSPLASH_FORMAT can be 'MHD' or 'HYDRO'
+! --com or RSPLASH_RESET_COM if 'YES' then centre of mass is reset for n2=0 (ie single objects)
+! --corotating or RSPLASH_COROTATING if 'YES' then velocities are transformed to corotating frame
+! --hfact or RSPLASH_HFACT can be changed to give correct hfact value for particle masses
+!  on minidumps: e.g. --hfact=1.2
 !
 ! the data is stored in the global array dat
 !
@@ -71,8 +71,7 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  use params
  use settings_data, only:ndim,ndimV,ncolumns,iformat
  use mem_allocation, only:alloc
- use system_utils, only:lenvironment
- use system_commands, only:get_environment
+ use system_utils, only:lenvironment,get_environment_or_flag
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -115,13 +114,13 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  !--get hfact for minidumps
  !
  if (minidump) then
-    call get_environment('RSPLASH_HFACT',string)
+    call get_environment_or_flag('RSPLASH_HFACT',string)
     read(string,*,iostat=ierr) hfacttemp
     if (hfacttemp > 0.5 .and. hfacttemp  < 10.0 .and. ierr==0) then
        hfact = hfacttemp
-       print *,'setting hfact =',hfact,' from RSPLASH_HFACT environment variable'
+       print *,'setting hfact =',hfact,' from --hfact flag'
     else
-       print "(1x,a)",'error reading hfact from RSPLASH_HFACT environment variable'
+       print "(1x,a)",'error reading hfact from --hfact command line flag'
     endif
  endif
  !
@@ -137,7 +136,7 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  !
  !--override this with environment variable
  !
- call get_environment('RSPLASH_FORMAT',string)
+ call get_environment_or_flag('RSPLASH_FORMAT',string)
  select case(trim(adjustl(string)))
  case('MHD','mhd','ns','NS')
     magfield = .true.
@@ -146,9 +145,9 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  end select
 
  if (magfield) then
-    print "(1x,a)",'reading MAGMA code format (set RSPLASH_FORMAT=hydro for hydro format)'
+    print "(1x,a)",'reading MAGMA code format (set --format=hydro for hydro format)'
  else
-    print "(1x,a)",'reading Stephan Rosswog (hydro) code format (set RSPLASH_FORMAT=MHD for MAGMA)'
+    print "(1x,a)",'reading Stephan Rosswog (hydro) code format (set --format=mhd for MAGMA)'
  endif
 
  !

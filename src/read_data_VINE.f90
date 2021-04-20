@@ -30,10 +30,10 @@
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
+!  COMMAND-LINE FLAGS:
 !
-! VINE_MHD or VSPLASH_MHD if 'YES' or 'TRUE', reads MHD dump files
-! VINE_HFAC or VSPLASH_HFAC if 'YES' or 'TRUE', multiplies the
+! --mhd if set, reads MHD dump files
+! --hfac if set, multiplies the
 !  smoothing lengths read from the file by a factor of 2.8 for
 !  compatibility with older VINE dump files.
 !
@@ -105,10 +105,10 @@ end module vineread
 
 module readdata_VINE
  implicit none
- 
+
  public :: read_data_VINE, set_labels_VINE
- 
- private 
+
+ private
 contains
 
 
@@ -179,7 +179,7 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  if (mhdread) then
     print "(a)",' reading VINE MHD format'
  else
-    print "(a)",' reading default VINE format (set VINE_MHD=yes for MHD)'
+    print "(a)",' reading default VINE format (set --mhd for MHD)'
  endif
  !
  !--open the (unformatted) binary file and read the number of particles
@@ -243,8 +243,7 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
     print "(/,a)", '  *** ERROR READING TIMESTEP HEADER: wrong endian? ***'
     print "(/,a)", '   (see splash userguide for compiler-dependent'
     print "(a)", '    ways to change endianness on the command line)'
-    print "(/,a)", '   (set environment variable VINE_MHD to yes or TRUE '
-    print "(a,/)", '    if you are trying to read MHD format)'
+    print "(/,a,/)", '   (set --mhd if you are trying to read MHD format)'
  else
 
     npart_max = max(npart_max,ntoti)
@@ -364,8 +363,7 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
           print "(a)",'*** ERROR READING DATA: MAYBE NOT AN MHD FILE?? ***'
        else
           print "(a)",'*** ERROR READING DATA ***'
-          print "(/,a)", '   (set environment variable VINE_MHD to yes or TRUE '
-          print "(a,/)", '    if you are trying to read MHD format)'
+          print "(/,a,/)", '   (set --mhd if you are trying to read MHD format)'
        endif
     endif
     nstepsread = nstepsread + 1

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -29,11 +29,12 @@ module system_utils
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
- public :: get_command_flag,get_user,get_copyright
+ public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
 
  private
 
 contains
+
 !
 !--this routine returns a variable
 !  from EITHER a command line flag --foo=bar

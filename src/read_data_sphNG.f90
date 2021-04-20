@@ -2365,8 +2365,7 @@ subroutine set_labels_sphNG
                            get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread
  use asciiutils,      only:lcase,make_tags_unique,match_tag
- use system_commands, only:get_environment
- use system_utils,    only:lenvironment
+ use system_utils,    only:lenvironment,get_environment_or_flag
  integer :: i,j,idustlast
  real(doub_prec)   :: unitx,unitvel
  character(len=20) :: string,unitlabelx,unitlabelv
@@ -2608,7 +2607,7 @@ subroutine set_labels_sphNG
  endif
 
  !--use the following two lines for time in years
- call get_environment('SSPLASH_TIMEUNITS',string)
+ call get_environment_or_flag('SSPLASH_TIMEUNITS',string)
  select case(trim(lcase(adjustl(string))))
  case('s','seconds')
     units(0) = utime

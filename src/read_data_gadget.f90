@@ -28,26 +28,31 @@
 ! (works with GADGET v1.0, v2.0 and v3.0)
 !
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
+! COMMAND-LINE FLAGS:
 !
-! GSPLASH_FORMAT if = 2 then reads the block-labelled GADGET format
+! --format=2 reads the block-labelled GADGET format
 !   rather than the default format.
-! GSPLASH_USE_Z if 'YES' uses redshift in the legend instead of time
-! GSPLASH_DARKMATTER_HSOFT if given a value > 0.0 will assign a
-!  smoothing length to dark matter particles which can then be
-!  used in the rendering
-! GSPLASH_EXTRACOLS if set to a comma separated list of column labels,
-!  will attempt to read additional columns containing gas particle
-!  properties beyond the end of file
-! GSPLASH_STARPARTCOLS if set to a comma separated list of column labels,
-!  will attempt to read additional columns containing star particle
-!  properties beyond the end of file
-! GSPLASH_CHECKIDS if 'YES','yes','TRUE' or 'true' then reads and checks
-!  particle IDs for negative values and flags these as accreted particles
-! GSPLASH_HSML_COLUMN if set to a positive integer, specifies the location
-!  of the smoothing length in the columns, overriding any default settings.
-! GSPLASH_IGNORE_IFLAGCOOL if set to 'YES' or `TRUE', does not assume that
-!  extra columns are present even if the cooling flag is set in the header.
+! --usez if set, uses redshift in the legend instead of time
+! --hsoft
+!   if given a value > 0.0 will assign a
+!   smoothing length to dark matter particles which can then be
+!   used in the rendering
+! --extracols=temp,H2 abundance
+!   if set to a comma separated list of column labels,
+!   will attempt to read additional columns containing gas particle
+!   properties beyond the end of file
+! --starpartcols=temp,vel
+!   if set to a comma separated list of column labels,
+!   will attempt to read additional columns containing star particle
+!   properties beyond the end of file
+! --checkids
+!   if set then reads and checks
+!   particle IDs for negative values and flags these as accreted particles
+! --hcolumn=10
+!   if set to a positive integer, specifies the location
+!   of the smoothing length in the columns, overriding any default settings.
+! --ignore-iflagcool if set to 'YES' or `TRUE', does not assume that
+!   extra columns are present even if the cooling flag is set in the header.
 !
 ! the data is stored in the global array dat
 !
@@ -239,8 +244,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        print "(/,a)", '*** ERROR READING TIMESTEP HEADER: wrong endian? ***'
        print "(/,a)", '   (see splash userguide for compiler-dependent'
        print "(a)",   '    ways to change endianness on the command line)'
-       print "(/,a)", '   (set environment variable GSPLASH_FORMAT to 2 '
-       print "(a,/)", '    if you are using the block-labelled Gadget format)'
+       print "(/,a)", '   (set --format=2 if you are using the block-labelled Gadget format)'
        close(iunit)
        if (ifile==1) then
           return
@@ -303,7 +307,8 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     else
 
        iformat = 0
-       if (iFlagCool==1 .and. .not.lenvironment('GSPLASH_IGNORE_IFLAGCOOL')) then
+       if (iFlagCool==1 .and. .not.(lenvironment('GSPLASH_IGNORE-IFLAGCOOL') &
+                               .or. lenvironment('GSPLASH_IGNORE_IFLAGCOOL'))) then
           iformat = 1
           ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
           if (ifile==1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
@@ -967,11 +972,10 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     else
        if (npartoftype(1,i) <= 0 .and. sum(npartoftype(:,i)) > 0) then
           print "(66('*'),4(/,a),/)",'* NOTE!! For GADGET data using dark matter only, column density ',&
-                              '* plots can be produced by setting the GSPLASH_DARKMATTER_HSOFT ',&
-                              '* environment variable to give the dark matter smoothing length', &
-                              '* (for a fixed smoothing length)'
+                              '* plots can be produced by setting --hsoft',&
+                              '* to give a (fixed) dark matter smoothing length'
           hsoft = (maxval(dat(:,1,i)) - minval(dat(:,1,i)))/sum(npartoftype(2:,i))**(1./3.)
-          print*,' suggested value for GSPLASH_DARKMATTER_HSOFT = ',hsoft
+          print*,' suggested value for --hsoft= ',hsoft
           hsoft = 0.
 
           print "(7(/,a),/)",'* Alternatively, and for best results, calculate a number density', &
@@ -989,10 +993,10 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 !
 !--pause with fatal errors
 !
- if (goterrors .and. .not.lenvironment('GSPLASH_IGNORE_ERRORS')) then
+ if (goterrors .and. .not.(lenvironment('GSPLASH_IGNORE_ERRORS').or.lenvironment('GSPLASH_IGNORE-ERRORS'))) then
     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
     print "(a,/)",'    Please REPORT this and/or fix your file ***'
-    print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
+    print "(a)",'     (set --ignore-errors=yes to skip this message)'
     if (iverbose >= 1) then
        print "(a)",'    > Press any key to bravely proceed anyway  <'
        read*
@@ -1278,7 +1282,7 @@ subroutine set_labels_gadget
        ih = 10
        if (iformat==1) label(11) = 'Star formation rate'
     endif
-    ihset = ienvironment('GSPLASH_HSML_COLUMN',errval=-1)
+    ihset = ienvironment('GSPLASH_HCOLUMN',errval=-1)
     if (ihset > 0) ih = ihset
     !
     !--deal with extra columns

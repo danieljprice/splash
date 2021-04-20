@@ -59,14 +59,14 @@ subroutine convert_all(outformat,igotfilenames,useall)
  lowmemorymode = .false. ! must not be true for first file
  listofcolumns = 0
 
- if (.not.doanalysis) then
+ if (.not.(doanalysis .or. converttogrid)) then
     !
     !--for format conversion each dump file is independent
     !
     print "(/,5('-'),a,/)",'> CONVERTING SNAPSHOTS TO '//trim(ucase(outformat))//' FORMAT '
     listofcolumns = ienvlist('SPLASH_CONVERT',ncolumns)
     if (all(listofcolumns==0)) then
-       print "(a,/)",' > to output select columns, export SPLASH_CONVERT=1,4 (for columns 1 & 4)'
+       print "(a,/)",' > to output select columns, --convert=1,4 (for columns 1 & 4)'
     else
        print "(a,32(1x,i2),/)",' > WRITING ONLY COLUMNS ',listofcolumns(1:count(listofcolumns > 0))
     endif

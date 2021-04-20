@@ -26,24 +26,23 @@
 !
 ! THIS VERSION IS FOR GENERAL ASCII DATA FORMATS
 !
-! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
+! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING COMMAND LINE FLAGS:
 !
-! ASPLASH_COLUMNSFILE gives the location of the default 'columns' file
+! --columnsfile gives the location of the default 'columns' file
 ! (overridden by the presence of a `columns' file in the working directory)
 !
-! ASPLASH_NCOLUMNS can be used to override the automatic ncolumns choice
+! --ncolumns can be used to override the automatic ncolumns choice
 !
-! e.g. setenv ASPLASH_NCOLUMNS=10
+! e.g. --ncolumns=10
 !
-! ASPLASH_NHEADERLINES can be used to override the automatic number of header line determination
+! --nheaderlines can be used to override the automatic number of header line determination
 !
-! e.g. setenv ASPLASH_NHEADERLINES=1
+! e.g. --nheaderlines=1
 !
-! ASPLASH_TIMEVAL can be used to set the time (fixed for all files)
-! ASPLASH_GAMMAVAL can be used to set gamma (fixed for all files)
-! ASPLASH_HEADERLINE_TIME can be used to set the header line where the time is listed
-! ASPLASH_HEADERLINE_GAMMA can be used to set the header line where gamma is listed
+! --time=1.0 can be used to set the time (fixed for all files)
+! --gamma=1.6 can be used to set gamma (fixed for all files)
+! --timeheader=3 can be used to set the header line where the time is listed
+! --gammaheader=5 can be used to set the header line where gamma is listed
 !
 ! the data is stored in the global array dat
 !
@@ -144,13 +143,13 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
     !--override header lines setting
     nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
     if (nheaderenv >= 0) then
-       if (iverbose > 0) print*,' setting nheader lines = ',nheaderenv,' from ASPLASH_NHEADERLINES environment variable'
+       if (iverbose > 0) print*,' setting nheader lines = ',nheaderenv,' from --nheaderlines flag'
        nheaderlines = nheaderenv
     endif
     !--override columns setting with environment variable
     ncolenv = ienvironment('ASPLASH_NCOLUMNS',-1)
     if (ncolenv > 0) then
-       if (iverbose > 0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from ASPLASH_NCOLUMNS environment variable'
+       if (iverbose > 0) print "(a,i3,a)",' setting ncolumns = ',ncolenv,' from --ncolumns flag'
        ncolstep = ncolenv
     endif
     if (ncolstep <= 1) then
@@ -210,18 +209,18 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
 !
  timeset = .false.
  gammaset = .false.
- dummyreal = renvironment('ASPLASH_TIMEVAL',errval=-1.)
+ dummyreal = renvironment('ASPLASH_TIME',errval=-1.)
  if (dummyreal > 0.) then
     time(j) = dummyreal
     timeset = .true.
  endif
- dummyreal = renvironment('ASPLASH_GAMMAVAL',errval=-1.)
+ dummyreal = renvironment('ASPLASH_GAMMA',errval=-1.)
  if (dummyreal > 0.) then
     gamma(j) = dummyreal
     gammaset = .true.
  endif
- iheader_time  = ienvironment('ASPLASH_HEADERLINE_TIME',errval=notset)
- iheader_gamma = ienvironment('ASPLASH_HEADERLINE_GAMMA',errval=notset)
+ iheader_time  = ienvironment('ASPLASH_TIMEHEADER',errval=notset)
+ iheader_gamma = ienvironment('ASPLASH_GAMMAHEADER',errval=notset)
 !
 !--read header lines, try to use it to set time
 !
@@ -240,20 +239,20 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
           time(j) = dummyreal
           timeset = .true.
           print*,'setting time = ',dummyreal,' from header line ',i
-          print*,'(determined from ASPLASH_HEADERLINE_TIME setting)'
+          print*,'(determined from --timeheader setting)'
        else
           print "(a,i2,a)",' ** ERROR reading time from header line ',i, &
-                            ' (using ASPLASH_HEADERLINE_TIME)'
+                            ' (using --timeheader)'
        endif
     elseif (i==iheader_gamma .and. .not.gammaset) then
        if (ierr==0) then
           gamma(j) = dummyreal
           gammaset = .true.
           print*,'setting gamma = ',dummyreal,' from header line ',i
-          print*,'(determined from ASPLASH_HEADERLINE_GAMMA setting)'
+          print*,'(determined from --gammaheader setting)'
        else
           print "(a,i2,a)",' ** ERROR reading gamma from header line ',i, &
-                            ' (using ASPLASH_HEADERLINE_GAMMA)'
+                            ' (using --gammaheader)'
        endif
     elseif (timeset .and. .not.gammaset .and. ierr==0 .and. iheader_gamma==notset &
         .and. dummyreal > 1.0 .and. dummyreal < 2.000001) then
@@ -355,7 +354,7 @@ subroutine set_labels_ascii
                             make_vector_label
  use settings_data,   only:ncolumns,ndim,ndimV,UseTypeInRenderings,iverbose
  use geometry,        only:labelcoord
- use system_commands, only:get_environment
+ use system_utils,    only:get_environment_or_flag
  use filenames,       only:fileprefix
  use asciiread,       only:icoltype,label_orig
  integer                 :: i,ierr,ndimVtemp
@@ -379,13 +378,13 @@ subroutine set_labels_ascii
 !  and the corresponding file exists
 !
  if (.not.iexist) then
-    call get_environment('ASPLASH_COLUMNSFILE',columnfile)
+    call get_environment_or_flag('ASPLASH_COLUMNSFILE',columnfile)
     if (len_trim(columnfile) > 0) then
        inquire(file=trim(columnfile),exist=iexist)
        if (iexist) then
-          if (iverbose > 0) print "(a)",' using ASPLASH_COLUMNSFILE='//trim(columnfile)
+          if (iverbose > 0) print "(a)",' using --columnsfile='//trim(columnfile)
        else
-          print "(a)",' ERROR: ASPLASH_COLUMNSFILE='//trim(columnfile)//' DOES NOT EXIST'
+          print "(a)",' ERROR: --columnsfile='//trim(columnfile)//' DOES NOT EXIST'
           columnfile = 'columns'
        endif
     else

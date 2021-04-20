@@ -446,8 +446,8 @@ program splash
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
- use system_commands,    only:get_number_arguments,get_argument,get_environment
- use system_utils,       only:lenvironment
+ use system_commands,    only:get_number_arguments,get_argument
+ use system_utils,       only:lenvironment,get_environment_or_flag
  use asciiutils,         only:read_asciifile,basename
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
@@ -678,7 +678,7 @@ program splash
  !
  inquire(file=defaultsfile,exist=iexist)
  if (.not.iexist .and. trim(fileprefix)=='splash') then
-    call get_environment('SPLASH_DEFAULTS',string)
+    call get_environment_or_flag('SPLASH_DEFAULTS',string)
     if (len_trim(string) /= 0) then
        i = index(string,'.defaults')
        if (i > 0) then
@@ -730,7 +730,7 @@ program splash
 
  if (ikernel==0) then
     !--if no kernel has been set
-    call get_environment('SPLASH_KERNEL',string)
+    call get_environment_or_flag('SPLASH_KERNEL',string)
     if (len_trim(string) > 0) then
        call select_kernel_by_name(string)
     else
