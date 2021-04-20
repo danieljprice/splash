@@ -49,10 +49,10 @@
 
 module readdata_foulkes
  implicit none
- 
+
  public :: read_data_foulkes, set_labels_foulkes
- 
- private 
+
+ private
 contains
 
 subroutine read_data_foulkes(rootname,indexstart,ipos,nstepsread)
@@ -122,7 +122,7 @@ subroutine read_data_foulkes(rootname,indexstart,ipos,nstepsread)
     print "(a)",' reading all columns'
  else
     ncolstep = 15
-    print "(a,i2)",' reading only to column 15 (setenv FSPLASH_READALL ''yes'' to read all)'
+    print "(a,i2)",' reading only to column 15 (use --readall to read all)'
  endif
 !
 !--(re)allocate memory
