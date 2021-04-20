@@ -77,7 +77,8 @@ subroutine adjust_data_codeunits
  !--environment variable setting to enforce a minimum h
  !
  if (ih > 0 .and. ih <= ncolumns) then
-    hmin = renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.)
+    hmin = max(renvironment('SPLASH_HMIN_CODEUNITS',errval=-1.),&  ! for backwards compatibility
+               renvironment('SPLASH_BEAM',errval=-1.))
     if (hmin > 0.) then
        if (.not.allocated(dat)) then
           print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
@@ -92,43 +93,6 @@ subroutine adjust_data_codeunits
     endif
  endif
 
- !
- !--environment variable setting to subtract a mean velocity
- !
- if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) then
-    call envlist('SPLASH_VZERO_CODEUNITS',nlist,list)
-    nerr = 0
-    if (nlist > 0 .and. nlist < ndimV) then
-       print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO_CODEUNITS setting: number of components = ',nlist,', needs to be ',ndimV
-       nerr = 1
-    elseif (nlist > 0) then
-       if (nlist > ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
-                                               ' components: using only first ',ndimV
-       nerr = 0
-       do i=1,ndimV
-          read(list(i),*,iostat=ierr) v0(i)
-          if (ierr /= 0) then
-             print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//&
-                         ' component from SPLASH_VZERO_CODEUNITS setting'
-             nerr = ierr
-          endif
-       enddo
-       if (nerr==0) then
-          print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO_CODEUNITS setting):'
-          if (.not.allocated(dat) .or. size(dat(1,:,1)) < ivx+ndimV-1) then
-             print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
-             return
-          endif
-          do i=1,ndimV
-             print "(4x,a,es10.3)",trim(label(ivx+i-1))//' = '//trim(label(ivx+i-1))//' - ',v0(i)
-             dat(:,ivx+i-1,:) = dat(:,ivx+i-1,:) - v0(i)
-          enddo
-       endif
-    endif
-    if (nerr /= 0) then
-       print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
-    endif
- endif
  if (ndim > 0) then
     !
     !--environment variable to corotate with first two sink particles
@@ -141,14 +105,14 @@ subroutine adjust_data_codeunits
        itype = get_sink_type(ntypes)
        if (itype > 0) then
           if (all(npartoftype(itype,:) < 2)) then
-             print "(a)",' ERROR: SPLASH_COROTATE set but less than 2 sink particles'
+             print "(a)",' ERROR: --corotate set but less than 2 sink particles'
           else
              if (iverbose >= 1) print*
              if (got_sinks) then
                 print "(a,i3,a,i3,a)",' :: COROTATING FRAME WITH SINKS ',isinklist(1),&
-                                      ', ',isinklist(2),' from SPLASH_COROTATE setting'
+                                      ', ',isinklist(2),' from --corotate flag'
              else
-                print "(a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from SPLASH_COROTATE setting'
+                print "(a)",' :: COROTATING FRAME WITH FIRST 2 SINKS from --corotate flag'
              endif
              do j=1,nstepsinfile(ifileopen)
                 if (got_sinks) then
@@ -165,7 +129,7 @@ subroutine adjust_data_codeunits
              enddo
           endif
        else
-          print "(a,/,a)",' ERROR: SPLASH_COROTATE set but could not determine type ', &
+          print "(a,/,a)",' ERROR: --corotate set but could not determine type ', &
                           '        corresponding to sink particles'
        endif
     endif
@@ -185,9 +149,9 @@ subroutine adjust_data_codeunits
           else
              if (iverbose >= 1) print*
              if (isink < 10) then
-                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
+                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              else
-                print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from SPLASH_CENTRE_ON_SINK setting'
+                print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              endif
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
@@ -210,7 +174,7 @@ subroutine adjust_data_codeunits
              enddo
           endif
        else
-          print "(a,/,a)",' ERROR: SPLASH_CENTRE_ON_SINK set but could not determine type ', &
+          print "(a,/,a)",' ERROR: --sink set but could not determine type ', &
                           '        corresponding to sink particles'
        endif
     endif

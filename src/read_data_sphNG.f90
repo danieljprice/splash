@@ -32,12 +32,12 @@
 ! *** CONVERTS TO SINGLE PRECISION ***
 !
 ! SOME CHOICES FOR THIS FORMAT CAN BE SET USING THE FOLLOWING
-!  ENVIRONMENT VARIABLES:
+!  COMMAND LINE FLAGS:
 !
-! SSPLASH_RESET_CM if 'YES' then centre of mass is reset to origin
-! SSPLASH_OMEGA if non-zero subtracts corotating velocities with omega as set
-! SSPLASH_OMEGAT if non-zero subtracts corotating positions and velocities with omega as set
-! SSPLASH_TIMEUNITS sets default time units, either 's','min','hrs','yrs' or 'tfreefall'
+! --cm if set, then centre of mass is reset to origin
+! --omega=3.142 if non-zero subtracts corotating velocities with omega as set
+! --omegat=3.142 if non-zero subtracts corotating positions and velocities with omega as set
+! --timeunits='yrs' sets default time units, either 's','min','hrs','yrs' or 'tfreefall'
 !
 ! the data is stored in the global array dat
 !
