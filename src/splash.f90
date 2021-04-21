@@ -940,6 +940,8 @@ subroutine print_usage(quit)
  print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
  print "(a)",' -c[ontour] column : contoured quantity'
  print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
+ print "(a)",' --xsec=1.0        : specify location of cross section slice'
+ print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
