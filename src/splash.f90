@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.2.1   : (21/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
+!             and opacity, respectively; specifying --xsec automatically switches from projection
+!             to cross section; specifying --kappa turns on opacity rendering
 !     3.2.0   : (20/04/21) disable ALL prompts if any command line flags set;
 !             all environment variables can now be given as command line flags using lower case string
 !             after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line;
@@ -447,7 +450,7 @@ program splash
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
  use system_commands,    only:get_number_arguments,get_argument
- use system_utils,       only:lenvironment,get_environment_or_flag
+ use system_utils,       only:lenvironment,get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
@@ -458,7 +461,7 @@ program splash
  use settings_page,      only:interactive,nomenu
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile
- use settings_xsecrot,   only:xsec_nomulti
+ use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -467,7 +470,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.2.0 [20th April 2021]'
+ character(len=*), parameter :: version = 'v3.2.1 [21st April 2021]'
 
  !
  ! initialise some basic code variables
@@ -692,6 +695,17 @@ program splash
     endif
  endif
 
+ !
+ ! set options based on command line flags that OVERRIDE settings in the defaults file
+ !
+ if (get_command_flag('kappa')) then ! e.g. --kappa=10.0
+    taupartdepth = get_command_option('kappa',default=taupartdepth)
+    use3Dopacityrendering = .true.
+ endif
+ if (get_command_flag('xsec')) then  ! e.g. --xsec=1.0
+    xsecpos_nomulti = get_command_option('xsec',default=xsecpos_nomulti)
+    xsec_nomulti = .true.   ! set cross section to true if --xsec was set
+ endif
  !
  ! check that we have got filenames
  !
