@@ -151,11 +151,11 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
 
  area = count(taupix >= 1.)*dx*dy
  print "(/,a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
- print "(a,1pf10.3,a)",' maximum Temp  = ',(maxval(datpix)/steboltz)**0.25,' K'
+ print "(a,1pg10.3,a)",' maximum Temp  = ',(maxval(datpix)/steboltz)**0.25,' K'
 
  ! effective temperature: total flux equals that of a blackbody at T=Teff
  temp = (sum(datpix)/count(taupix >= 1.)/steboltz)**0.25
- print "(/,a,1pf10.3,a)",' Teff = ',temp,' K'
+ print "(/,a,1pg10.3,a)",' Teff = ',temp,' K'
 
  ! luminosity is integrated flux
  lum = area*steboltz*temp**4

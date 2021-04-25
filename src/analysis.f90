@@ -145,7 +145,7 @@ end function isanalysis
 !  over all dump files
 !----------------------------------------------------------------
 subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
- use labels,     only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,label
+ use labels,     only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label
  use asciiutils, only:read_asciifile
  use filenames,  only:rootname,nfiles,tagline,fileprefix
  use params,     only:maxplot
@@ -373,6 +373,8 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
      required(ih) = .true.
      required(iutherm) = .true.
      required(ipmass) = .true.
+     required(itemp) = .true.
+     required(ikappa) = .true.
      !
      !--set filename and header line
      !
@@ -399,7 +401,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     if (iexist) then
        print "(2(a,/))",' ERROR: analysis file '//trim(fileout(i))//' already exists', &
                         '        delete, move or rename this file and try again'
-       if (nfileout==1) cycle
+       if (nfileout==1) stop
     endif
     !
     !--open the file for output
