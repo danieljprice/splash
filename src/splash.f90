@@ -51,9 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.2.1   : (21/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
+!     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
-!             to cross section; specifying --kappa turns on opacity rendering
+!             to cross section; specifying --kappa turns on opacity rendering;
+!             bug fix in splash calc tracks; can use --track=1,2,3 to specify list of particles
 !     3.2.0   : (20/04/21) disable ALL prompts if any command line flags set;
 !             all environment variables can now be given as command line flags using lower case string
 !             after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line;
@@ -470,7 +471,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.2.1 [21st April 2021]'
+ character(len=*), parameter :: version = 'v3.2.1 [26th April 2021]'
 
  !
  ! initialise some basic code variables
