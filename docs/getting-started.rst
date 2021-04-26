@@ -369,3 +369,350 @@ Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
 utility (``splash to ascii``) see :ref:`sec:convert`. For details
 of the ``-o ppm`` or ``-o ascii`` option see :ref:`sec:writepixmap`. For details of the ``-ev`` option, see :ref:`sec:evsplash`.
+
+
+Options affecting all data reads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Command line flags (or environment variables) that affect all data reads are:
+
++-------------+-----------------------+-------------------------------------------------+
+| ---defaults | SPLASH_DEFAULTS       | gives name of system-wide ``splash.defaults``   |
+|             |                       | file (and splash.limits etc.) that will be      |
+|             |                       | used if there is none in the current dir. e.g.  |
+|             |                       | ``--defaults=$HOME/splash.defaults``            |
++-------------+-----------------------+-------------------------------------------------+
+| ---kernel   | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
+|             |                       | interpolations (e.g. ``cubic`` or ``quintic``). |
+|             |                       | Can also be changed in the :ref:`sec:menu-r`.   |
++-------------+-----------------------+-------------------------------------------------+
+| ---debug    | SPLASH_DEBUG          | if set to ``yes`` or ``true``, turns on verbose |
+|             |                       | debugging output. Useful to trace code crashes  |
+|             |                       | (but of course, this never happens…).           |
++-------------+-----------------------+-------------------------------------------------+
+| ---sink=1   | SPLASH_CENTRE_ON_SINK | if set to a number n, centres coordinates and   |
+|             |                       | velocities on the nth sink/star particle (e.g.  |
+|             |                       | ``export SPLASH_CENTRE_ON_SINK=2``)             |
++-------------+-----------------------+-------------------------------------------------+
+| ---corotate | SPLASH_COROTATE       | plot in corotating frame based on locations of  |
+|             |                       | 2 sink particles (e.g. ``--corotate=1,3``)      |
++-------------+-----------------------+-------------------------------------------------+
+| ---beam=2.0 | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
+|             |                       | smoothing length, specified in code units,      |
+|             |                       | all the particles. Useful to “dumb-down” the    |
+|             |                       | resolution of SPH simulations to match          |
+|             |                       | observational resolution. If this variable is   |
+|             |                       | set the “accelerated rendering" option in the   |
+|             |                       | :ref:`sec:menu-r` is also turned on as otherwise|
+|             |                       | slow rendering can result.                      |
++-------------+-----------------------+-------------------------------------------------+
+| ---xmin=0.1 | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
+| ---xmax=0.1 | SPLASH_MARGIN_XMAX    | page margin (set to fraction of viewport,       |
+| ---ymin=0.1 | SPLASH_MARGIN_YMIN    | negative values are allowed).                   |
+| ---ymax=0.1 | SPLASH_MARGIN_YMAX    |                                                 |
++-------------+-----------------------+-------------------------------------------------+
+
+.. _sec:splash:
+
+Ascii data read
+~~~~~~~~~~~~~~~~
+
+For several data reads there are command-line flags which can be set
+at runtime which are specific to the data read. For the ascii data read
+(``splash -f ascii``) these are:
+
++-------------------------------------+-----------------------------------+
+| ``--ncolumns=10``                   | if given a value :math:`>`\ 0     |
+|                                     | sets the number of columns to be  |
+|                                     | read from ascii data (overrides   |
+|                                     | the automatic number of columns   |
+|                                     | determination).                   |
++-------------------------------------+-----------------------------------+
+| ``--nheaderlines=3``                | if given a value :math:`>=`\ 0    |
+|                                     | sets the number of header lines   |
+|                                     | to skip (overrides the automatic  |
+|                                     | determination).                   |
++-------------------------------------+-----------------------------------+
+| ``--columnsfile=/home/me/mylabels`` | can be used to provide the        |
+|                                     | location of (path to) the default |
+|                                     | ``columns`` file containing the   |
+|                                     | labels for ascii data. Overridden |
+|                                     | by the presence of a local        |
+|                                     | ``columns`` file.                 |
++-------------------------------------+-----------------------------------+
+| ``--time=3.0``                      | if given a nonzero value sets the |
+|                                     | time to use in the legend (fixed  |
+|                                     | for all files)                    |
++-------------------------------------+-----------------------------------+
+| ``--gamma=1.667``                   | if given a nonzero value sets     |
+|                                     | gamma to use in exact solution    |
+|                                     | calculations (fixed for all       |
+|                                     | files)                            |
++-------------------------------------+-----------------------------------+
+| ``--timeheader=1``                  | sets the integer line number      |
+|                                     | where the time appears in the     |
+|                                     | header                            |
++-------------------------------------+-----------------------------------+
+| ``--gammaheader=3``                 | sets the integer line number      |
+|                                     | where gamma appears in the header |
++-------------------------------------+-----------------------------------+
+
+The above options can be set as environment variables by prefixing them
+with ASPLASH, e.g.::
+
+  export ASPLASH_NCOLUMNS=10
+  splash datafile.txt
+
+.. _sec:splash -gadget:
+
+GADGET data read
+~~~~~~~~~~~~~~~~~
+
+For the GADGET read (``splash -f gadget``) the options are:
+
++-----------------------------------+-----------------------------------+
+| ``--format=2``                    | if set = 2, reads the block       |
+|                                   | labelled GADGET format instead of |
+|                                   | the default (non block labelled)  |
+|                                   | format.                           |
++-----------------------------------+-----------------------------------+
+| ``--usez``                        | if ``yes`` or ``true`` uses the   |
+|                                   | redshift in the legend instead of |
+|                                   | code time.                        |
++-----------------------------------+-----------------------------------+
+| ``--hsoft=500.``                  | if given a value :math:`>` 0.0    |
+|                                   | will assign a smoothing length to |
+|                                   | dark matter particles for which   |
+|                                   | rendered plots of column density  |
+|                                   | can then be made.                 |
++-----------------------------------+-----------------------------------+
+| ``--extracols``                   | if set to a comma separated list  |
+|                                   | of column labels, will attempt to |
+|                                   | read additional columns           |
+|                                   | containing gas particle           |
+|                                   | properties beyond the end of the  |
+|                                   | file (not applicable if           |
+|                                   | --format=2).                      |
++-----------------------------------+-----------------------------------+
+| ``--starpartcols``                | if set to a comma separated list  |
+|                                   | of column labels, will attempt to |
+|                                   | read additional columns           |
+|                                   | containing star particle          |
+|                                   | properties beyond the end of the  |
+|                                   | file (and after any extra gas     |
+|                                   | particle columns) (not applicable |
+|                                   | if GSPLASH_FORMAT=2).             |
++-----------------------------------+-----------------------------------+
+| ``--checkids``                    | if set to ``yes`` or ``true``,    |
+|                                   | reads and checks particle IDs,    |
+|                                   | excluding particles with negative |
+|                                   | IDs as accreted (gives them a     |
+|                                   | negative smoothing length which   |
+|                                   | means they are ignored in         |
+|                                   | renderings).                      |
++-----------------------------------+-----------------------------------+
+| ``--hcolumn``                     | if set to a positive integer,     |
+|                                   | specifies the location of the     |
+|                                   | smoothing length in the columns,  |
+|                                   | overriding any default settings.  |
++-----------------------------------+-----------------------------------+
+| ``--ignore-iflagcool``            | if set,does                       |
+|                                   | not assume that extra columns are |
+|                                   | present even if the cooling flag  |
+|                                   | is set in the header.             |
++-----------------------------------+-----------------------------------+
+
+For backwards compatibility, the above options can also be set as
+environment variables by prefixing them with GSPLASH, e.g.::
+
+  export GSPLASH_FORMAT=2
+  splash -gadget snap_00010
+
+which is equivalent to::
+
+  splash -f gadget --format=2 snap_00010
+
+For the GADGET read gsplash will also look for, and read if present,
+files called ``snapshot_xxx.hsml`` and/or ``snapshot_xxx.dens`` (where
+``snapshot_xxx`` is the name of the corresponding GADGET dump file)
+which contain smoothing lengths and/or a density estimate for dark
+matter particles (these should just be one-column ascii files).
+
+VINE data read
+~~~~~~~~~~~~~~~
+
+For the VINE read (``splash -vine``) the options are:
+
++-----------------------------------+-----------------------------------+
+| ``--hfac``                        | if ``yes`` or ``true`` multiplies |
+|                                   | smoothing length read from the    |
+|                                   | dump file by a factor of 2.8 (for |
+|                                   | use with older VINE dumps where   |
+|                                   | the smoothing length is defined   |
+|                                   | as in a Plummer kernel rather     |
+|                                   | than as the usual SPH smoothing   |
+|                                   | length).                          |
++-----------------------------------+-----------------------------------+
+| ``--mhd``                         | if set, reads VINE                |
+|                                   | dumps containing MHD arrays (note |
+|                                   | that setting VINE_MHD also        |
+|                                   | works).                           |
++-----------------------------------+-----------------------------------+
+
+sphNG data read
+~~~~~~~~~~~~~~~~
+
+For the sphNG and PHANTOM read (``splash -phantom``) the options are:
+
++-------------------+-------------------------------------------------------+
+| ``--cm``          | resets the positions such that the centre of          |
+|                   | mass is exactly at the origin.                        |
++-------------------+-------------------------------------------------------+
+| ``--omega=3.142`` | if non-zero, subtracts solid body rotation with omega |
+|                   | as specified to give velocities in co-rotating frame  |
++-------------------+-------------------------------------------------------+
+| ``--omegat=3.142``| same as --omega but applies to velocities also        |
++-------------------+-------------------------------------------------------+
+| ``--timeunit=hrs``| sets default time units, either ’s’, ’min’, ’hrs’,    |
+|                   | ’days’, ’yr’ or ’tfreefall’ (used verbatim in legend) |
++-------------------+-------------------------------------------------------+
+
+dragon data read
+~~~~~~~~~~~~~~~~~
+
+For the dragon read (``splash -dragon``) the options are:
+
++-----------------------------------+-----------------------------------+
+| ``--extracols``                   | specifies number of extra columns |
+|                                   | present in the file which are     |
+|                                   | dumped after the itype array      |
++-----------------------------------+-----------------------------------+
+
+Stephan Rosswog data read
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For the srosph read (``splash``) the options are:
+
++-----------------------------------+-----------------------------------+
+| ``--format=MHD``                  | can be ``MHD`` or ``HYDRO`` which |
+|                                   | read the appropriate data format  |
+|                                   | from either the MHD or            |
+|                                   | hydrodynamic codes                |
++-----------------------------------+-----------------------------------+
+| ``--com``                         | if set resets the                 |
+|                                   | positions such that the centre of |
+|                                   | mass is exactly at the origin.    |
++-----------------------------------+-----------------------------------+
+| ``--corotating``                  | velocities are transformed to     |
+|                                   | corotating frame                  |
++-----------------------------------+-----------------------------------+
+| ``--hfact=1.2``                   | can be changed to give correct    |
+|                                   | parameter in                      |
+|                                   | :math:`h=h_{fact}(m/\rho)^{1/3}`  |
+|                                   | used to set the particle masses   |
+|                                   | when rendering minidumps (i.e.,   |
+|                                   | when the mass is not dumped).     |
+|                                   | Default is RSPLASH_HFACT=1.5      |
++-----------------------------------+-----------------------------------+
+
+ndspmhd data read
+~~~~~~~~~~~~~~~~~~
+
+For the ndspmhd read (``splash -ndspmhd``) the options are:
+
++-----------------------------------+-----------------------------------+
+| ``--barycentric``                 | plots barycentric quantities for  |
+|                                   | one-fluid dust instead of         |
+|                                   | creating fake second set of       |
+|                                   | particles                         |
++-----------------------------------+-----------------------------------+
+
+H5Part data read
+~~~~~~~~~~~~~~~~~
+
+For the H5PART read (``splash -f h5part``) the options are:
+
++-----------------------------------+------------------------------------+
+| ``--ndim=3``                      | number of spatial dimensions       |
+|                                   | :math:`d` (overrides value         |
+|                                   | inferred from data)                |
++-----------------------------------+------------------------------------+
+| ``--hfac=1.2``                    | factor to use to compute h from    |
+|                                   | :math:`h = h_{fac} *(m/\rho)^{1/d}`|
+|                                   | if h not present in data           |
++-----------------------------------+------------------------------------+
+| ``--hsml=3.0``                    | value for global smoothing length  |
+|                                   | h (if h not present in data)       |
++-----------------------------------+------------------------------------+
+| ``--typeid=MatID``                | name of the dataset containing     |
+|                                   | the particle type identification   |
+|                                   | (default is “MatID”)               |
++-----------------------------------+------------------------------------+
+
+.. _sec:envvariables:
+
+Environment variables
+---------------------
+
+Several runtime options for splash can be set using environment
+variables. These are variables set from your unix shell. In the bash
+shell, environment variables are set from the command line using
+
+::
+
+   export VAR='blah'
+
+or by putting this command in your ``.bash_profile``/``.bashrc``. In
+csh, the equivalent is
+
+::
+
+   setenv VAR 'blah'
+
+or by putting the above in your ``.cshrc`` file.
+
+Changing the font
+~~~~~~~~~~~~~~~~~~
+
+Several environment variables affect the backend plotting library.
+Probably the most useful is the ability to change font:
+
+::
+
+   export GIZA_FONT='Helvetica'
+
+where the name is a reasonable guess as to the font you want to use (the
+default is ``Times``). In particular, if you are having trouble displaying
+unicode characters such as greek letters, you can just change the font
+until you find one that works.
+
+Endian changing
+~~~~~~~~~~~~~~~~
+
+On some compilers, the endian-ness (byte order) when reading unformatted
+binary data files can be changed at runtime. This is useful for looking
+at files on different systems to the one on which they were created
+(e.g. x86 machines create little-endian files by default, whereas
+IBM/powerpc machines create big-endian). Environment variables for
+changing the endian-ness of the data read for some common compilers are
+given below:
+
++-------------+----------------------------+----------------+-------------------+----------+
+| Compiler    | Environment variable       | Big endian     | Little endian     | Other    |
++=============+============================+================+===================+==========+
+| gfortran    | ``GFORTRAN_CONVERT_UNIT``  | ``big_endian`` | ``little_endian`` | ``swap`` |
++-------------+----------------------------+----------------+-------------------+----------+
+| ifort       | ``F_UFMTENDIAN``           | ``big``        | ``little``        |          |
++-------------+----------------------------+----------------+-------------------+----------+
+
+For compilers without this feature, almost all can change the
+endian-ness at compile time, and the appropriate flags for doing so can
+be set using
+
+::
+
+   export ENDIAN='BIG'
+
+or LITTLE before *compiling* splash (this adds the appropriate
+compile-time flags for the compiler selected using the SYSTEM
+environment variable in the splash Makefile).
