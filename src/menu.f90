@@ -292,9 +292,8 @@ subroutine menu
                 ivecplot = 0
              endif
           elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
-             if (ipicky==isurfdens) print "(a)",' setting x axis to r for surface density plot'
-             if (ipicky==itoomre) print "(a)",' setting x axis to r for Toomre Q plot'
-             call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
+             print "(a)",' setting x axis to r'
+             if (ipicky==itoomre) call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
              ipickx = 1
              irender = 0
              ivecplot = 0
