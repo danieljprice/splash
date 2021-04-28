@@ -741,7 +741,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
  real, parameter :: tol = 1.e-10 ! used to compare real numbers
  real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
- real(doub_prec) :: unit_mass, unit_r, unit_u, unit_dz
+ real(doub_prec) :: unit_mass,unit_dens,unit_r,unit_u,unit_dz
  real, dimension(:), allocatable    :: xplot,yplot,zplot
  real, dimension(:), allocatable    :: hh,weight
  real, dimension(:), allocatable    :: renderplot
@@ -2369,9 +2369,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    unit_r    = 1.d0
                    unit_u    = 1.d0
                    unit_dz   = 1.d0
+                   unit_dens = 1.d0
                    if (iRescale) then
                       if (ix(1) > 0) unit_r = units(ix(1))
                       if (icol > 0)  unit_u = units(icol)
+                      if (irho > 0)  unit_dens = units(irho)
                       unit_dz = unitzintegration
                    endif
                    !
@@ -2386,13 +2388,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       if (iRescale) unit_mass = units(ipmass)
                       if (icol > 0) then
                          call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
-                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari,&
                             unit_u,dat(1:ntoti,icol),icol==ispsound)
                       else
                          call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
-                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari)
                       endif
@@ -2400,13 +2402,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
                       if (icol > 0) then
                          call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
-                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari,&
                             unit_u,dat(1:ntoti,icol),icol==ispsound)
                       else
                          call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
-                            unit_mass,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
+                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
                             itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
                             iusetype,npartoftype,gammai,mstari)
                       endif

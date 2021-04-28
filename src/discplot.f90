@@ -37,7 +37,7 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_dens,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
                     itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,mstar,&
                     unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
@@ -47,7 +47,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
- real(doub_prec),                  intent(in)  :: unit_mass,unit_r,unit_dz
+ real(doub_prec),                  intent(in)  :: unit_mass,unit_dens,unit_r,unit_dz
  real,                             intent(in)  :: rminin,rmaxin,gamma,mstar
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
@@ -184,7 +184,6 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !$omp end parallel do
 
  print "(1x,a,i10,a,i10,a,i4,a)",'used ',np,' of ',npart,' particles in ',nbins,' bins'
-
 !
 !--calculate Toomre Q parameter in each bin using surface density
 !
@@ -218,9 +217,10 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
     enddo
  else
 !
-!--return surface density in units of [g/cm^2], not [g/cm^3 au]
+!--return surface density in units of [g/cm^2], not [g/cm^3 au] or [Msun/au^2]
 !
-    sigma = sigma*(unit_r/unit_dz)**2
+    sigma = sigma*(unit_r**2/unit_mass)  ! convert back to code units
+    sigma = sigma*unit_dens*unit_dz      ! convert to units of unit_dens * unit_dz
  endif
 !
 !--give very small number instead of zero to avoid problems on log plots
