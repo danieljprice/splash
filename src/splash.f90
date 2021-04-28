@@ -51,6 +51,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.2.2   : (xx/04/21) bug fix with surface density plot with physical units on
 !     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
 !             to cross section; specifying --kappa turns on opacity rendering;
@@ -861,6 +862,10 @@ program splash
              print "(a)",' ERROR: y plot not set or out of bounds (use -y col)'
              stop
           endif
+       endif
+       if (irender > numplot .or. irender < 0) then
+          print "(/,a)",' ERROR: render plot choice out of bounds'
+          stop
        endif
 
        call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
