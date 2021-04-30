@@ -826,7 +826,7 @@ end subroutine interpolate_part1
 
 subroutine interpolate2D_pixels(x,y,itype,npart, &
      xmin,ymin,xmax,ymax,datsmooth,npixx,npixy,&
-     normalise,adaptive,dat,datpix2,fac)
+     normalise,adaptive,dat,datpix2,fac,weights)
 
  use timing, only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
@@ -835,7 +835,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  real, intent(in) :: xmin,ymin,xmax,ymax
  real, intent(out), dimension(npixx,npixy) :: datsmooth
  logical, intent(in) :: normalise,adaptive
- real, intent(in), dimension(npart), optional :: dat
+ real, intent(in), dimension(npart), optional :: dat,weights
  real, dimension(npixx,npixy), intent(out), optional :: datpix2
  real, intent(in), optional :: fac
 
@@ -886,7 +886,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     endif
 
     !$omp parallel do default(none) &
-    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its,itsmax) &
+    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its,itsmax,weights) &
     !$omp shared(datold,datsmooth,datnorm,npixx,npixy,const,radkernel,radkernel2,dat) &
     !$omp shared(pixwidthx,pixwidthy,normalise,hfac) &
     !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
@@ -918,6 +918,9 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        !
        radkernx = radkernel*hi  ! radius of the smoothing kernel
        radkerny = radkernel*hi  ! radius of the smoothing kernel
+       if (present(weights)) then
+          termnorm = termnorm*weights(i)
+       endif
        if (present(dat)) then
           term = termnorm*dat(i)
        else
