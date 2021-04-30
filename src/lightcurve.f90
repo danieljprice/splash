@@ -211,7 +211,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
 
  ! x-ray luminosity
  !print*,' using x-ray band =',nu_to_lam(0.3*keV_to_Hz),' -> ',nu_to_lam(10.*keV_to_Hz)
- lum_x = 4.*pi*integrate_log(spectrum(1:nfreq),freq,0.3*keV_to_Hz,10.*keV_to_Hz)
+ lum_x = 4.*pi*integrate_log(spectrum(1:nfreq),freq,real(0.3*keV_to_Hz),real(10.*keV_to_Hz))
  print "(a,2(es10.3,a))",' L_x   = ',lum_x,' L_bol/L_x = ',lum/lum_x
 
  open(newunit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
@@ -293,7 +293,7 @@ end function get_temp_from_u
 !---------------------------------------------------------
 real elemental function B_nu(temp,nu)
  use physcon, only:c,hplanck,kboltz
- real(doub_prec), intent(in) :: temp,nu
+ real, intent(in) :: temp,nu
  real(doub_prec) :: hnu_on_kT,hnu3_on_c2
 
  hnu_on_kT  = hplanck*nu/(kboltz*temp)
@@ -310,8 +310,8 @@ end function B_nu
 !---------------------------------------------------------
 ! Wien's displacement law, in frequency
 !---------------------------------------------------------
-real(doub_prec) function Wien_T_from_nu(nu) result(T)
- real(doub_prec), intent(in) :: nu
+real function Wien_T_from_nu(nu) result(T)
+ real, intent(in) :: nu
 
  T = nu/5.88e10
 
@@ -320,8 +320,8 @@ end function Wien_T_from_nu
 !---------------------------------------------------------
 ! Wien's displacement law, frequency from temperature
 !---------------------------------------------------------
-real(doub_prec) function Wien_nu_from_T(T) result(nu)
- real(doub_prec), intent(in) :: T
+real function Wien_nu_from_T(T) result(nu)
+ real, intent(in) :: T
 
  nu = 5.88e10*T
 

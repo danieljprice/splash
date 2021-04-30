@@ -2367,7 +2367,7 @@ subroutine set_labels_sphNG
  use asciiutils,      only:lcase,make_tags_unique,match_tag
  use system_utils,    only:lenvironment,get_environment_or_flag
  integer :: i,j,idustlast
- real(doub_prec)   :: unitx,unitvel
+ real(doub_prec)   :: unitx,unitvel,unitmass
  character(len=20) :: string,unitlabelx,unitlabelv
  character(len=20) :: deltav_string
 
@@ -2557,9 +2557,8 @@ subroutine set_labels_sphNG
     unitslabel(1:3) = unitlabelx
  endif
  if (ipmass > 0) then
-    call get_nearest_mass_unit(umass,units(ipmass),unitslabel(ipmass))
-    !units(ipmass) = umass
-    !unitslabel(ipmass) = ' [g]'
+    call get_nearest_mass_unit(umass,unitmass,unitslabel(ipmass))
+    units(ipmass) = unitmass
  endif
  units(ih) = unitx
  unitslabel(ih) = unitlabelx
