@@ -50,7 +50,14 @@ module physcon
  real(doub_prec), parameter :: solarrcgs = 6.955d10  ! cm
  real(doub_prec), parameter :: solarmcgs = 1.989d33  ! g
  real(doub_prec), parameter :: steboltz = 5.67e-5    ! erg cm^-2 K^-4 s-1
- real(doub_prec), parameter :: au = 1.496d13 ! cm
+ real(doub_prec), parameter :: radconst = 7.5646d-15 ! Radiation constant erg cm^-3 K^-4
+ real(doub_prec), parameter :: kboltz = 1.38066d-16
+ real(doub_prec), parameter :: mh = 1.67262158d-24   ! g
+ real(doub_prec), parameter :: au = 1.496d13         ! cm
+ real(doub_prec), parameter :: c = 2.997924d10       ! Speed of light cm/s
+ real(doub_prec), parameter :: hplanck =   6.6260755d-27  ! Planck's Constant erg/s
+ real(doub_prec), parameter :: kb_on_mh = kboltz/mh
+ real(doub_prec), parameter :: Lsun = 3.839d33       ! Solar luminosity, erg/s
 
  public
 end module physcon

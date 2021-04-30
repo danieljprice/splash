@@ -57,7 +57,7 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
- use physcon,               only:steboltz,pi,au
+ use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun
  use write_pixmap,          only:write_pixmap_ascii
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
@@ -66,11 +66,11 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp
- integer :: n,isinktype,npixx,npixy,ierr,j
+ integer :: n,isinktype,npixx,npixy,ierr,j,nfreq
  real, dimension(3) :: xmin,xmax
- real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
+ real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity,freq
  real, dimension(:,:), allocatable :: datpix,taupix
- real :: zobs,dzobs,dx,dy,area
+ real :: zobs,dzobs,dx,dy,area,dlogfreq,freqmin,freqmax
 
  lum = 0.
  rphoto = 0.
@@ -138,6 +138,15 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  ! specify source function for each particle
  !
  flux = steboltz*dat(1:n,itemp)**4
+ !flux = steboltz*5.778e3**4  ! check solar luminosity
+
+ !nfreq = 100
+ !freqmin = 1e4
+ !freqmax = 1e22
+ !freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
+ !flux(1:nfreq) = B_nu(5.778e6,freq)
+ !zobs = integrate_log(flux(1:nfreq),freq,freqmin,freqmax)
+ !print "(3(es10.3))",steboltz*5.778e6**4,pi*zobs
  !
  ! raytrace SPH data to 2D image to get flux
  !
@@ -149,21 +158,21 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
       n,xmin(1),xmin(2),datpix,taupix,npixx,npixy,&
       dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.)
 
+ lum = 4.*sum(datpix)*dx*dy
+
+ ! luminosity is integrated flux
+ print "(/,a,2(es10.3,a))",' luminosity = ',lum,' erg/s = ',lum/Lsun,' L_sun'
+
  area = count(taupix >= 1.)*dx*dy
- print "(/,a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
+ print "(a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
  print "(a,1pg10.3,a)",' maximum Temp  = ',(maxval(datpix)/steboltz)**0.25,' K'
 
  ! effective temperature: total flux equals that of a blackbody at T=Teff
- temp = (sum(datpix)/count(taupix >= 1.)/steboltz)**0.25
+ temp = (lum/area/(4.*steboltz))**0.25
  print "(/,a,1pg10.3,a)",' Teff = ',temp,' K'
 
- ! luminosity is integrated flux
- lum = area*steboltz*temp**4
- print "(a,es10.3,a)",' luminosity = ',lum,' erg/s'
-
  rphoto = sqrt(lum/(4.*pi*steboltz*temp**4))
- print "(a,es10.3,a)",' radius = ',rphoto/au,' au'
-!write(2,*) npixx,area/au**2,(maxval(datpix)/steboltz)**0.25,temp,lum,rphoto/au
+ print "(a,2(es10.3,a))",' radius = ',rphoto/au,' au = ',rphoto/rsun,' rsun'
 
  !if (j==12) call write_pixmap_ascii(datpix,npixx,npixy,xmin(1),xmin(2),dx,minval(datpix),maxval(datpix),'intensity','lum.pix',time)
  !enddo
@@ -187,11 +196,10 @@ end subroutine get_lightcurve
 !    temp - temperature [K]
 !---------------------------------------------------------
 real elemental function get_temp_from_u(rho,u) result(temp)
+ use physcon, only:kb_on_mh,radconst
  real(doub_prec), intent(in) :: rho,u
  real(doub_prec) :: ft,dft,dt
  real(doub_prec), parameter :: tol = 1.e-8
- real(doub_prec), parameter :: radconst = 7.5646d-15
- real(doub_prec), parameter :: kb_on_mh = real(1.38066d-16/1.67262158d-24)
  real(doub_prec), parameter :: mu = 0.6
  integer :: its
 
@@ -215,5 +223,72 @@ real elemental function get_temp_from_u(rho,u) result(temp)
  enddo
 
 end function get_temp_from_u
+
+!---------------------------------------------------------
+! Planck function
+! INPUT:
+!    temp - temperature [K]
+!    nu - frequency [Hz]
+! OUTPUT:
+!    B_nu - Planck function erg/s/cm^2/Hz/steradian
+!---------------------------------------------------------
+real elemental function B_nu(temp,nu)
+ use physcon, only:c,hplanck,kboltz
+ real(doub_prec), intent(in) :: temp,nu
+ real(doub_prec) :: hnu_on_kT,hnu3_on_c2
+
+ hnu_on_kT  = hplanck*nu/(kboltz*temp)
+ hnu3_on_c2 = hplanck*nu**3/c**2
+
+ if (hnu_on_kT < 300.) then
+    B_nu = 2.*hnu3_on_c2/(exp(hnu_on_kT) - 1.d0)
+ else
+    B_nu = epsilon(0.)
+ endif
+
+end function B_nu
+
+!--------------------------------------------------------
+!+
+!  Function to fill an array with equally log-spaced points
+!+
+!--------------------------------------------------------
+function logspace(n,xmin,xmax) result(x)
+ integer, intent(in) :: n
+ real, intent(in)    :: xmin,xmax
+ real, allocatable   :: x(:)
+ integer :: i
+ real    :: dx
+
+ allocate(x(n))
+ dx = log10(xmax/xmin)/real(n-1)
+ do i=1,n
+    x(i) = log10(xmin) + (i-1)*dx
+ enddo
+
+ x = 10.**x
+
+end function logspace
+
+!--------------------------------------------------------
+!+
+!  Integrate function on evenly spaced logarithmic grid
+!  i.e. \int f(x) dx = \int x f(x) d(ln x)
+!+
+!--------------------------------------------------------
+real(doub_prec) function integrate_log(f,x,xmin,xmax) result(fint)
+ real(doub_prec), intent(in) :: xmin,xmax
+ real(doub_prec), intent(in) :: x(:),f(:)
+ real(doub_prec) :: dlogx
+ integer :: n,i
+
+ n = size(f)
+ dlogx = log(xmax/xmin)/(n-1)
+ fint = 0.
+ do i=2,n
+    fint = fint + 0.5*(f(i)*x(i) + f(i-1)*x(i-1))*dlogx
+ enddo
+
+end function integrate_log
 
 end module lightcurve
