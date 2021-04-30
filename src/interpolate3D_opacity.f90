@@ -78,7 +78,7 @@ contains
 
 subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,tausmooth,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
-     rkappa,zcut,iverbose,exact_rendering)
+     rkappa,zcut,iverbose,exact_rendering,datv,datvpix)
 
  real, parameter :: pi=4.*atan(1.)
  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
@@ -88,6 +88,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  logical, intent(in) :: exact_rendering
  real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreenfromobserver,zcut
  real, dimension(npixx,npixy), intent(out) :: datsmooth,tausmooth
+ ! optional arguments for vector opacity rendering
+ real, dimension(:,:),   intent(in),  optional :: datv
+ real, dimension(:,:,:), intent(out), optional :: datvpix
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder
@@ -104,12 +107,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  real :: t_start,t_end,t_used
  logical :: adjustzperspective,rendersink
  real, dimension(npixx) :: xpix,dx2i
+ real, allocatable :: datvi(:)
  real :: xminpix,yminpix
  character(len=10) :: str
 
  datsmooth = 0.
  term = 0.
  tausmooth = 0.
+ if (present(datvpix)) datvpix = 0.
  if (pixwidthx <= 0. .or. pixwidthy <= 0) then
     if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
     return
@@ -250,6 +255,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        else
           dati = dat(i)
        endif
+       if (present(datv)) datvi = datv(:,i)
        !
        !--adjust apparent size of particles if 3D perspective set
        !
@@ -365,6 +371,12 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                     !
                     datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
                     tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                    !
+                    !--same but with frequency-dependent source function
+                    !
+                    if (present(datv) .and. present(datvpix)) then
+                       datvpix(:,ipix,jpix) = (1.-fopacity)*datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                    endif
                  endif
               endif
            enddo

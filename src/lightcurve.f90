@@ -46,7 +46,8 @@ contains
 !
 ! Used to generate synthetic lightcurves
 !---------------------------------------------------------
-subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,lum,rphoto,temp)
+subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
+                          lum,rphoto,temp,specfile)
  use labels,                only:ix,ih,irho,ipmass,itemp,ikappa
  use limits,                only:lim,get_particle_subset
  use interpolate3D_opacity, only:interp3D_proj_opacity
@@ -57,20 +58,23 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
- use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun
+ use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun,c,cm_to_nm,keV_to_Hz
  use write_pixmap,          only:write_pixmap_ascii
+ use filenames,             only:tagline
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
- real,    intent(in)  :: time
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp
- integer :: n,isinktype,npixx,npixy,ierr,j,nfreq
+ character(len=*), intent(in) :: specfile
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq,iu1,iu2
  real, dimension(3) :: xmin,xmax
- real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity,freq
- real, dimension(:,:), allocatable :: datpix,taupix
- real :: zobs,dzobs,dx,dy,area,dlogfreq,freqmin,freqmax
+ real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity,freq,spectrum
+ real, dimension(:,:), allocatable :: img,taupix,flux_nu
+ real, dimension(:,:,:), allocatable :: img_nu
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,Tc,freq_max,bb_scale
+ real :: lum_x,lum_bb,r_bb
 
  lum = 0.
  rphoto = 0.
@@ -98,8 +102,9 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
+
  !
- !--allocate memory for image
+ !--set number of pixels and pixel scale in each direction
  !
  !do j=6,12
  npixx = npix !2**j
@@ -109,9 +114,11 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  dy = (xmax(2)-xmin(2))/npixy
  print "(a,i0,a,i0,a)",' Using ',npixx,' x ',npixy,' pixels'
  print "(2(1x,a,es10.3,'->',es10.3,a,/))",'x = [',xmin(1),xmax(1),']','y = [',xmin(2),xmax(2),']'
-
- if (allocated(datpix) .or. allocated(taupix)) deallocate(datpix,taupix)
- allocate(datpix(npixx,npixy),taupix(npixx,npixy))
+ !
+ !--allocate memory for image
+ !
+ if (allocated(img) .or. allocated(taupix)) deallocate(img,taupix)
+ allocate(img(npixx,npixy),taupix(npixx,npixy))
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
@@ -140,13 +147,18 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  flux = steboltz*dat(1:n,itemp)**4
  !flux = steboltz*5.778e3**4  ! check solar luminosity
 
- !nfreq = 100
- !freqmin = 1e4
- !freqmax = 1e22
- !freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
- !flux(1:nfreq) = B_nu(5.778e6,freq)
- !zobs = integrate_log(flux(1:nfreq),freq,freqmin,freqmax)
- !print "(3(es10.3))",steboltz*5.778e6**4,pi*zobs
+ ! frequency-dependent version
+ nfreq = 128
+ freqmin = 1e8
+ freqmax = 1e22
+ freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
+ allocate(flux_nu(nfreq,n))
+ do i=1,n
+    flux_nu(:,i) = B_nu(dat(i,itemp),freq)
+!    flux_nu(:,i) = B_nu(5.778e3,freq)
+ enddo
+ if (allocated(img_nu)) deallocate(img_nu)
+ allocate(img_nu(nfreq,npixx,npixy))
  !
  ! raytrace SPH data to 2D image to get flux
  !
@@ -155,27 +167,74 @@ subroutine get_lightcurve(time,ncolumns,dat,npartoftype,masstype,itype,ndim,ntyp
  call interp3D_proj_opacity(x,y,z,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
-      n,xmin(1),xmin(2),datpix,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.)
+      n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu)
 
- lum = 4.*sum(datpix)*dx*dy
+ lum = 4.*sum(img)*dx*dy
+ print*,'grey luminosity = ',lum,' erg/s'
+
+ ! integrate flux over all frequencies to give Flux = \int F_\nu d\nu = pi \int B_nu dnu
+ do j=1,npixy
+    do i=1,npixx
+       img(i,j) = pi*integrate_log(img_nu(1:nfreq,i,j),freq,freqmin,freqmax)
+    enddo
+ enddo
+
+ lum = 4.*sum(img)*dx*dy
 
  ! luminosity is integrated flux
- print "(/,a,2(es10.3,a))",' luminosity = ',lum,' erg/s = ',lum/Lsun,' L_sun'
+ print "(/,a,2(es10.3,a))",' L_bol = ',lum,' erg/s = ',lum/Lsun,' L_sun'
 
  area = count(taupix >= 1.)*dx*dy
  print "(a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
- print "(a,1pg10.3,a)",' maximum Temp  = ',(maxval(datpix)/steboltz)**0.25,' K'
+ print "(/,a,1pg10.3,a)",' Tmax  = ',(maxval(img)/steboltz)**0.25,' K'
 
  ! effective temperature: total flux equals that of a blackbody at T=Teff
  temp = (lum/area/(4.*steboltz))**0.25
- print "(/,a,1pg10.3,a)",' Teff = ',temp,' K'
+ freq_max = Wien_nu_from_T(temp)
+ lam_max = c/freq_max*cm_to_nm
+ print "(a,3(1pg10.3,a))",' Teff  = ',temp,' K: Blackbody peak at ',freq_max,' Hz / ',lam_max,' nm'
 
+ ! get integrated spectrum from integrating over all pixels in the image
+ allocate(spectrum(nfreq))
+ do i=1,nfreq
+    spectrum(i) = sum(img_nu(i,1:npixx,1:npixy))*dx*dy
+ enddo
+
+ ! get colour temperature by fitting the blackbody peak
+ call get_colour_temperature(spectrum,freq,Tc,freq_max,bb_scale)
+ print "(a,3(1pg10.3,a))",' Tc    = ',Tc,' K: Blackbody peak at ',freq_max,' Hz / ',nu_to_lam(freq_max),' nm'
+
+ ! effective photospheric radius, using Teff
  rphoto = sqrt(lum/(4.*pi*steboltz*temp**4))
- print "(a,2(es10.3,a))",' radius = ',rphoto/au,' au = ',rphoto/rsun,' rsun'
+ print "(a,2(es10.3,a))",' R_eff = ',rphoto/au,' au = ',rphoto/rsun,' rsun'
 
- !if (j==12) call write_pixmap_ascii(datpix,npixx,npixy,xmin(1),xmin(2),dx,minval(datpix),maxval(datpix),'intensity','lum.pix',time)
- !enddo
+ ! x-ray luminosity
+ !print*,' using x-ray band =',nu_to_lam(0.3*keV_to_Hz),' -> ',nu_to_lam(10.*keV_to_Hz)
+ lum_x = 4.*pi*integrate_log(spectrum(1:nfreq),freq,0.3*keV_to_Hz,10.*keV_to_Hz)
+ print "(a,2(es10.3,a))",' L_x   = ',lum_x,' L_bol/L_x = ',lum/lum_x
+
+ open(newunit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
+ open(newunit=iu2,file=trim(specfile)//'.bbfit',status='replace',iostat=ierr)
+ write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
+ write(iu1,"(a)") '# wavelength [nm], F_\lambda'
+ write(iu2,"(a)") '# best fit blackbody spectrum'
+ write(iu1,"(a)") '# wavelength [nm], F_\lambda'
+ do i=1,nfreq
+    write(iu1,*) nu_to_lam(freq(i)),spectrum(i)
+    write(iu2,*) nu_to_lam(freq(i)),B_nu(Tc,freq(i))*bb_scale
+ enddo
+ close(iu1)
+ close(iu2)
+
+ spectrum = B_nu(Tc,freq(:))*bb_scale
+ lum_bb = 4.*pi*integrate_log(spectrum(1:nfreq),freq,freqmin,freqmax)
+ print "(a,2(es10.3,a))",' L_bb  = ',lum_bb,' L_bb /L_x = ',lum_bb/lum_x
+ r_bb = sqrt(lum_bb/(4.*pi*steboltz*Tc**4))
+ print "(a,2(es10.3,a))",' R_bb  = ',r_bb/au,' au = ',r_bb/rsun,' rsun'
+
+ ! finally, compute x-ray luminosity
+ !print*,' bolometric luminosity = ',4.*pi*integrate_log(spectrum(1:nfreq),freq,freqmin,freqmax)
 
 end subroutine get_lightcurve
 
@@ -248,6 +307,75 @@ real elemental function B_nu(temp,nu)
 
 end function B_nu
 
+!---------------------------------------------------------
+! Wien's displacement law, in frequency
+!---------------------------------------------------------
+real(doub_prec) function Wien_T_from_nu(nu) result(T)
+ real(doub_prec), intent(in) :: nu
+
+ T = nu/5.88e10
+
+end function Wien_T_from_nu
+
+!---------------------------------------------------------
+! Wien's displacement law, frequency from temperature
+!---------------------------------------------------------
+real(doub_prec) function Wien_nu_from_T(T) result(nu)
+ real(doub_prec), intent(in) :: T
+
+ nu = 5.88e10*T
+
+end function Wien_nu_from_T
+
+!---------------------------------------------------------
+! Convert frequency in Hz to wavelength in nm
+!---------------------------------------------------------
+real function nu_to_lam(nu) result(lam)
+ use physcon, only:c,cm_to_nm
+ real, intent(in) :: nu
+
+ lam = (c/nu)*cm_to_nm
+
+end function nu_to_lam
+
+!---------------------------------------------------------
+! colour temperature, from fitting peak of blackbody
+!---------------------------------------------------------
+subroutine get_colour_temperature(spectrum,freq,Tc,freq_max,bb_scale)
+ real, intent(in) :: spectrum(:),freq(:)
+ real, intent(out) :: Tc,freq_max,bb_scale
+ integer :: imax(1),j
+
+ imax = maxloc(spectrum)
+ j = imax(1)
+ freq_max = freq(j)
+ Tc = Wien_T_from_nu(freq_max)
+
+ ! scaling factor by which to shift Blackbody
+ ! in y direction to match the peak flux
+ bb_scale = spectrum(j)/B_nu(Tc,freq_max)
+
+end subroutine get_colour_temperature
+
+!--------------------------------------------------------
+!+
+!  Integrate over a given filter in wavelength
+!  specifying wavelength range in nanometres [nm]
+!+
+!--------------------------------------------------------
+real function filter(spec,freq,lmin,lmax)
+ use physcon, only:cm_to_nm,c
+ real, intent(in) :: lmin,lmax
+ real, intent(in) :: freq(:),spec(:)
+ real :: fmin,fmax
+
+ fmin = c/(lmin/cm_to_nm)  ! freq in Hz, converting lambda to cm
+ fmax = c/(lmax/cm_to_nm)  ! freq in Hz, converting lambda to cm
+
+ filter = integrate_log(spec,freq,fmin,fmax)
+
+end function filter
+
 !--------------------------------------------------------
 !+
 !  Function to fill an array with equally log-spaced points
@@ -276,17 +404,19 @@ end function logspace
 !  i.e. \int f(x) dx = \int x f(x) d(ln x)
 !+
 !--------------------------------------------------------
-real(doub_prec) function integrate_log(f,x,xmin,xmax) result(fint)
- real(doub_prec), intent(in) :: xmin,xmax
- real(doub_prec), intent(in) :: x(:),f(:)
- real(doub_prec) :: dlogx
+real function integrate_log(f,x,xmin,xmax) result(fint)
+ real, intent(in) :: xmin,xmax
+ real, intent(in) :: x(:),f(:)
+ real :: dlogx
  integer :: n,i
 
  n = size(f)
  dlogx = log(xmax/xmin)/(n-1)
  fint = 0.
  do i=2,n
-    fint = fint + 0.5*(f(i)*x(i) + f(i-1)*x(i-1))*dlogx
+    if (x(i-1) > xmin .and. x(i) < xmax) then
+       fint = fint + 0.5*(f(i)*x(i) + f(i-1)*x(i-1))*dlogx
+    endif
  enddo
 
 end function integrate_log

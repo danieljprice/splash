@@ -58,6 +58,9 @@ module physcon
  real(doub_prec), parameter :: hplanck =   6.6260755d-27  ! Planck's Constant erg/s
  real(doub_prec), parameter :: kb_on_mh = kboltz/mh
  real(doub_prec), parameter :: Lsun = 3.839d33       ! Solar luminosity, erg/s
+ real(doub_prec), parameter :: cm_to_nm = 1.d7
+ real(doub_prec), parameter :: keV_to_erg = 1.6022d-9 ! k_eV to erg
+ real(doub_prec), parameter :: keV_to_Hz  = keV_to_erg/hplanck ! k_eV to erg
 
  public
 end module physcon

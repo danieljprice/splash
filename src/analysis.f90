@@ -466,6 +466,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
+ use filenames,     only:rootname,ifileopen
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
@@ -1167,7 +1168,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     endif
     return
   case('lightcurve')
-     call get_lightcurve(time,ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto)
+     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto,rootname(ifileopen))
      print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
      !
      !--write line to output file
