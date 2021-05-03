@@ -129,30 +129,6 @@ real elemental function get_temp_from_u(rho,u) result(temp)
 
 end function get_temp_from_u
 
-
-! subroutine calc_energy(particlemass,poten,xyzh,vxyzu,xyzmh_ptmass,phii,epoti,ekini,einti,etoti)
-!  ! Warning: Do not sum epoti or etoti as it is to obtain a total energy; this would not give the correct
-!  !          total energy due to complications related to double-counting.
-!  use ptmass, only:get_accel_sink_gas
-!  use part,   only:nptmass
-!  real, intent(in)                       :: particlemass
-!  real(4), intent(in)                    :: poten
-!  real, dimension(4), intent(in)         :: xyzh,vxyzu
-!  real, dimension(5,nptmass), intent(in) :: xyzmh_ptmass
-!  real, intent(out)                      :: phii,epoti,ekini,einti,etoti
-!  real                                   :: fxi,fyi,fzi
-
-!  phii = 0.0
-
-!  call get_accel_sink_gas(nptmass,xyzh(1),xyzh(2),xyzh(3),xyzh(4),xyzmh_ptmass,fxi,fyi,fzi,phii)
-
-!  epoti = 2.*poten + particlemass * phii ! For individual particles, need to multiply 2 to poten to get GmM/r
-!  ekini = particlemass * 0.5 * dot_product(vxyzu(1:3),vxyzu(1:3))
-!  einti = particlemass * vxyzu(4)
-!  etoti = epoti + ekini + einti
-! end subroutine calc_energy
-
-
 !----------------------------------------------------------------
 !+
 !  Solves three Saha equations simultaneously to return ion
