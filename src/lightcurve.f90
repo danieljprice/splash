@@ -3,7 +3,7 @@ module lightcurve
  implicit none
 
  ! public :: get_lightcurve
- public :: get_temp_from_u
+ public :: get_temp_from_u,ionisation_fraction
 
  private
 
@@ -128,5 +128,124 @@ real elemental function get_temp_from_u(rho,u) result(temp)
  enddo
 
 end function get_temp_from_u
+
+
+! subroutine calc_energy(particlemass,poten,xyzh,vxyzu,xyzmh_ptmass,phii,epoti,ekini,einti,etoti)
+!  ! Warning: Do not sum epoti or etoti as it is to obtain a total energy; this would not give the correct
+!  !          total energy due to complications related to double-counting.
+!  use ptmass, only:get_accel_sink_gas
+!  use part,   only:nptmass
+!  real, intent(in)                       :: particlemass
+!  real(4), intent(in)                    :: poten
+!  real, dimension(4), intent(in)         :: xyzh,vxyzu
+!  real, dimension(5,nptmass), intent(in) :: xyzmh_ptmass
+!  real, intent(out)                      :: phii,epoti,ekini,einti,etoti
+!  real                                   :: fxi,fyi,fzi
+
+!  phii = 0.0
+
+!  call get_accel_sink_gas(nptmass,xyzh(1),xyzh(2),xyzh(3),xyzh(4),xyzmh_ptmass,fxi,fyi,fzi,phii)
+
+!  epoti = 2.*poten + particlemass * phii ! For individual particles, need to multiply 2 to poten to get GmM/r
+!  ekini = particlemass * 0.5 * dot_product(vxyzu(1:3),vxyzu(1:3))
+!  einti = particlemass * vxyzu(4)
+!  etoti = epoti + ekini + einti
+! end subroutine calc_energy
+
+
+!----------------------------------------------------------------
+!+
+!  Solves three Saha equations simultaneously to return ion
+!  fractions of hydrogen and helium. Assumes inputs in cgs units
+!+
+!----------------------------------------------------------------
+subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
+ real, intent(in) :: dens, temp, X, Y
+ real, intent(out):: xh0, xh1, xhe0, xhe1, xhe2
+ real             :: n, nh, nhe
+ real             :: A, B, C, const
+ real             :: xh1g, xhe1g, xhe2g
+ real             :: f, g, h
+ real, parameter  :: chih0 = 13.6, chihe0 = 24.6, chihe1 = 54.4
+ real, dimension(3,3) :: M, M_inv
+ real, dimension(3) :: dx
+ integer          :: i
+ real, parameter :: twopi=6.2831853072d0,kboltz=1.38066d-16,eV=1.60219d-12,&
+                    planckh=6.6260755d-27,mass_electron_cgs=9.10938291d-28,mass_proton_cgs=1.67262158d-24
+
+ nh = X * dens / mass_proton_cgs
+ nhe = Y * dens / (4. * mass_proton_cgs)
+ n = nh + nhe
+
+ const = (sqrt(twopi * mass_electron_cgs * kboltz) / planckh)**3 / n
+
+ A = 1. * const * temp**(1.5) * exp(-chih0 * eV / (kboltz * temp))
+ B = 4. * const * temp**(1.5) * exp(-chihe0 * eV / (kboltz * temp))
+ C = 1. * const * temp**(1.5) * exp(-chihe1 * eV / (kboltz * temp))
+
+ xh1g = 0.4
+ xhe1g = 0.3
+ xhe2g = 0.2
+
+ do i=1,50
+    f = xh1g * (xh1g + xhe1g + 2*xhe2g) - A * ((nh/n) - xh1g)
+    g = xhe1g * (xh1g + xhe1g + 2*xhe2g) - B * ((nhe/n) - xhe1g - xhe2g)
+    h = xhe2g * (xh1g + xhe1g + 2*xhe2g) - C * xhe1g
+
+    M(1,:) = (/ 2*xh1g + xhe1g + 2*xhe2g + A, xh1g, 2*xh1g /)
+    M(2,:) = (/ xhe1g, xh1g + 2*xhe1g + 2*xhe2g + B, 2*xhe1g + B /)
+    M(3,:) = (/ xhe2g, xhe2g - C, xh1g + xhe1g + 4*xhe2g /)
+
+    call minv(M, M_inv)
+
+    dx = matmul(M_inv, (/ -f, -g, -h/))
+
+    xh1g = xh1g + dx(1)
+    xhe1g = xhe1g + dx(2)
+    xhe2g = xhe2g + dx(3)
+ enddo
+
+ xh1 = xh1g * n / nh
+ xhe1 = xhe1g * n / nhe
+ xhe2 = xhe2g * n / nhe
+ xh0 = ((nh/n) - xh1g) * n / nh
+ xhe0 = ((nhe/n) - xhe1g - xhe2g) * n / nhe
+end subroutine ionisation_fraction
+
+
+
+subroutine minv (M, M_inv)
+
+ implicit none
+
+ real, dimension(3,3), intent(in)  :: M
+ real, dimension(3,3), intent(out) :: M_inv
+
+ real :: det
+ real, dimension(3,3) :: cofactor
+
+
+ det =   M(1,1)*M(2,2)*M(3,3)  &
+       - M(1,1)*M(2,3)*M(3,2)  &
+       - M(1,2)*M(2,1)*M(3,3)  &
+       + M(1,2)*M(2,3)*M(3,1)  &
+       + M(1,3)*M(2,1)*M(3,2)  &
+       - M(1,3)*M(2,2)*M(3,1)
+
+ cofactor(1,1) = +(M(2,2)*M(3,3)-M(2,3)*M(3,2))
+ cofactor(1,2) = -(M(2,1)*M(3,3)-M(2,3)*M(3,1))
+ cofactor(1,3) = +(M(2,1)*M(3,2)-M(2,2)*M(3,1))
+ cofactor(2,1) = -(M(1,2)*M(3,3)-M(1,3)*M(3,2))
+ cofactor(2,2) = +(M(1,1)*M(3,3)-M(1,3)*M(3,1))
+ cofactor(2,3) = -(M(1,1)*M(3,2)-M(1,2)*M(3,1))
+ cofactor(3,1) = +(M(1,2)*M(2,3)-M(1,3)*M(2,2))
+ cofactor(3,2) = -(M(1,1)*M(2,3)-M(1,3)*M(2,1))
+ cofactor(3,3) = +(M(1,1)*M(2,2)-M(1,2)*M(2,1))
+
+ M_inv = transpose(cofactor) / det
+
+ return
+
+end subroutine minv
 
 end module lightcurve
