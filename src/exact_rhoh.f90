@@ -33,7 +33,6 @@ module rhoh
 contains
 
 subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot,ndim
  integer, intent(out) :: ierr
  real, intent(in) :: hfact,pmassval

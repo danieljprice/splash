@@ -49,32 +49,29 @@
 
 module readdata_mhutch
  implicit none
- 
+
  public :: read_data_mhutch, set_labels_mhutch
- 
- private 
+
+ private
 contains
 
 subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol,iamtype
  use params
- use filenames,      only:nfiles
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,debugmode
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment
- implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname
  character(len=len(rootname)+4) :: datfile
- integer :: i,icol,ierr,iunit,ilen,j,ilast,k
- integer :: ihead1,ihead2,ihead3,numdata ! # of items on header lines
+ integer :: i,icol,ierr,iunit,j,ilast
+ integer :: ihead1,ihead2,ihead3 ! # of items on header lines
  integer :: ncol_max,ndim_max,npart_max,ndimV_max,nstep_max
- integer :: ncolstep,np,istep,nstepsinfile
- logical :: reallocate,finished
+ integer :: ncolstep,np,nstepsinfile
 
  integer :: norigin,ncr,istart,iout,nmlmax,index,ratio
- integer :: dimsw,fluidsw,itrace
+ integer :: fluidsw,itrace
  integer, dimension(:), allocatable :: head1
  integer, dimension(:), allocatable :: head2
  real(doub_prec), dimension(:), allocatable :: head3
@@ -83,7 +80,6 @@ subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
  real(doub_prec), dimension(:), allocatable :: dattemp
  integer, dimension(:), allocatable :: iam
  integer, dimension(:), allocatable :: iwas
- real :: dum
 
  iunit = 11 ! file unit number
  ndim_max = 1
@@ -331,21 +327,19 @@ subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
 contains
 
 !--------------------------------------------
-!--------------------------------------------
 subroutine fake_twofluids
  use labels, only:idustfrac,irho,ix,ih,ipmass,ivx,ideltav
- implicit none
  integer :: ndust,jdust
  integer :: ntoti
  real    :: rhodust,rhogas,rhotot,dustfraci,pmassgas,pmassdust,pmassj
  real, dimension(ndimV) :: veli,vgas,vdust,deltav
 
- integer :: itemp
- integer :: ifx,ify,ifz
+ !integer :: itemp
+ !integer :: ifx,ify,ifz
  integer :: ir_grain
- integer :: ics
- integer :: idhdt
- integer :: idepsdt
+ !integer :: ics
+ !integer :: idhdt
+ !integer :: idepsdt
 
  !do i=1,ndim
  !   ix(i) = i             ! x,y,z positions
@@ -439,24 +433,19 @@ subroutine fake_twofluids
  endif
 
 end subroutine fake_twofluids
-!--------------------------------------------
-!--------------------------------------------
-end subroutine read_data_mhutch
 
+end subroutine read_data_mhutch
 
 !------------------------------------------------------------
 ! set labels for each column of data
 !------------------------------------------------------------
-
 subroutine set_labels_mhutch
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,    &
                   iamvec,labelvec,label,labeltype,  &
                   idustfrac,ideltav
  use params
- use settings_data, only:ndim,ndimV,iformat,ntypes, &
-                    UseTypeInRenderings
+ use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  integer :: idendt,itemp
@@ -565,8 +554,6 @@ subroutine set_labels_mhutch
  UseTypeInRenderings(2) = .true.
  UseTypeInRenderings(3) = .false.
 
-!-----------------------------------------------------------
-
- return
 end subroutine set_labels_mhutch
+
 end module readdata_mhutch

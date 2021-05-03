@@ -34,8 +34,9 @@ module write_pixmap
  logical, public :: ireadpixmap = .false.
  character(len=5), public :: pixmapformat = ' '
  character(len=5), public :: readpixformat = ' '
- public :: isoutputformat,writepixmap,write_pixmap_ppm
- public :: isinputformat,readpixmap
+ public :: writepixmap,write_pixmap_ppm,write_pixmap_ascii
+ public :: isinputformat,isoutputformat
+ public :: readpixmap
 
  private
 
@@ -89,13 +90,13 @@ end function isinputformat
 !-----------------------------------------------------------------
 !  wrapper routine for all output formats
 !-----------------------------------------------------------------
-subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
+subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile,time)
  use write_pfm,     only:write_pixmap_pfm
  use iso_c_binding, only:c_float
  use labels,        only:shortlabel
  integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
- real,    intent(in) :: xmin,ymin,dx,datmin,datmax
+ real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
  logical, intent(in) :: xsec
  character(len=*), intent(in) :: label,labu,dumpfile
  integer, intent(in) :: istep
@@ -105,7 +106,8 @@ subroutine writepixmap(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,
 
  select case(trim(pixmapformat))
  case('ascii')
-    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
+    call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pix',xsec)
+    call write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
  case('ppm')
     call write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,istep)
  case('pfm')
@@ -128,23 +130,18 @@ end subroutine writepixmap
 !-----------------------------------------------------------------
 !   output pixmap as an ascii file
 !-----------------------------------------------------------------
-subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,labu,istep,xsec,dumpfile)
- use labels, only:shortlabel
- integer, intent(in) :: npixx,npixy,istep
+subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
+ integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
- real,    intent(in) :: xmin,ymin,dx,datmin,datmax
- logical, intent(in) :: xsec
- character(len=*), intent(in) :: label,labu,dumpfile
+ real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
+ character(len=*), intent(in) :: label,filename
  character(len=10) :: stringx,stringy
  character(len=30) :: fmtstring
- character(len=len(dumpfile)+10) :: filename
  integer :: ierr,j
  integer, parameter :: iunit = 166
 !
 !--write ascii file
 !
- !write(filename,"(a,i5.5,a)") trim(fileprefix)//'_',istep,'.dat'
- call get_pixmap_filename(filename,dumpfile,shortlabel(label,labu),'.pix',xsec)
  open(unit=iunit,file=filename,status='replace',form='formatted',iostat=ierr)
  if (ierr /=0) then
     print*,'error opening '//trim(filename)
@@ -162,6 +159,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
+ write(iunit,"(a,1pe14.6)",          err=66) '# time = ',time
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
 
  write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'

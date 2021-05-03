@@ -32,7 +32,6 @@ subroutine indexx(n, arr, indx)
 !  This is INDEXX using the quicksort algorithm.            *
 !                                                           *
 !************************************************************
- implicit none
  integer, parameter :: m=7, nstack=500
  integer, intent(in) :: n
  real, dimension(n), intent(in) :: arr
@@ -132,7 +131,6 @@ subroutine indexxi(n, arr, indx)
 !  This is INDEXX using the quicksort algorithm.            *
 !                                                           *
 !************************************************************
- implicit none
  integer, parameter :: m=7, nstack=500
  integer, intent(in) :: n
  integer, dimension(n), intent(in)  :: arr

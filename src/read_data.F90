@@ -108,11 +108,19 @@ contains
 ! subroutine to select string specified data format
 !----------------------------------------------------------------------
 
-subroutine select_data_format(string,ierr)
+subroutine select_data_format(string_in,ierr)
  use asciiutils,        only:lcase
 
- character(len=*),  intent(in)  :: string
+ character(len=*),  intent(in)  :: string_in
  integer,           intent(out) :: ierr
+ character(len=len(string_in)) :: string
+
+ ! allow both -ascii and --ascii in flags
+ if (string_in(1:1)=='-') then
+    string = string_in(2:)
+ else
+    string = string_in
+ endif
 
  !----------------------------
  !  Checks for dependencies
@@ -194,7 +202,7 @@ subroutine select_data_format(string,ierr)
    read_data=>read_data_dragon
    set_labels=>set_labels_dragon
 
- case('seren')
+ case('seren','gandalf')
    read_data=>read_data_seren
    set_labels=>set_labels_seren
 
@@ -347,7 +355,7 @@ subroutine print_available_formats(string)
  print "(a)"  ,' -ascii,-csv          : ascii text/csv format (default)'
  print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes'
  print "(a)"  ,' -ndspmhd             : ndspmhd code'
- print "(a)"  ,' -seren               : Seren code'
+ print "(a)"  ,' -gandalf,-seren      : Gandalf/Seren code'
 #ifdef HDF5
  print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'

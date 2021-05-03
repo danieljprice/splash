@@ -38,7 +38,6 @@ contains
 !  line plotting, with blanking
 !
 subroutine plotline(npts,xline,yline,blank)
- implicit none
  integer, intent(in) :: npts
  real, intent(in), dimension(:) :: xline,yline
  real, intent(in), optional :: blank
@@ -68,7 +67,6 @@ end subroutine plotline
 !  binned histogram plotting, with blanking
 !
 subroutine plotbins(nbins,xbins,ybins,blank)
- implicit none
  integer, intent(in) :: nbins
  real, intent(in), dimension(:) :: xbins,ybins
  real, intent(in), optional :: blank
@@ -98,7 +96,6 @@ end subroutine plotbins
 !  formatting of real variables into strings (like PGNUMB)
 !
 subroutine formatreal(val,string,ierror)
- implicit none
  real, intent(in) :: val
  character(len=*), intent(out) :: string
  integer, intent(out), optional :: ierror

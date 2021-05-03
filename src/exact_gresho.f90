@@ -29,7 +29,6 @@ module gresho
 contains
 
 subroutine exact_gresho(iplot,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot
  real, intent(in),  dimension(:) :: xplot
  real, intent(out), dimension(size(xplot)) :: yplot

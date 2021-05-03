@@ -421,19 +421,18 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
  use parsetext,     only:parse_text,rn
  use params,        only:ltag
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
- real,    intent(in) :: time 
+ real,    intent(in) :: time
  integer, intent(in) :: nvar
  real, intent(in), dimension(nvar) :: allvars
  character(len=*), dimension(nvar), intent(in) :: tags
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
- integer :: i,j,ierr,iplotonthispanel,ndec,nc
+ integer :: i,j,ierr,iplotonthispanel
  integer, parameter :: maxfuncpts = 1000
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,charheightprev
  real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust,xmini,xmaxi
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
  character(len=lentext) :: text
- character(len=30)      :: string
  real(kind=rn),       dimension(nvar+1) :: vals
  character(len=ltag), dimension(nvar+1) :: vars
 !
@@ -680,12 +679,70 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
 
 end subroutine add_textshape
 
+!------------------------------------------------------------
+! utility routine to add a new text shape non-interactively
+!-----------------------------------------------------------
+subroutine add_text(xpos,ypos,string)
+ use plotlib, only:plot_qch
+ real, intent(in) :: xpos,ypos
+ character(len=*), intent(in) :: string
+ integer :: i,ierr
+ real :: charheight
+
+ ierr = 0
+ ! do nothing if string is blank
+ if (len_trim(string) <= 0) return
+
+ call delete_text(string) ! delete if already exists
+ nshapes = nshapes + 1
+ if (nshapes > maxshapes) then
+    print*,' *** cannot add shape: array limits reached, delete some shapes first ***'
+    nshapes = maxshapes
+    ierr = 1
+    return
+ endif
+ i = nshapes
+ shape(i)%itype = 6
+ !print*,' adding shape '//trim(labelshapetype(shape(i)%itype))
+ shape(i)%icolour = 1
+ shape(i)%linestyle = 1
+ shape(i)%linewidth = 1
+ shape(i)%ifillstyle = 2
+ shape(i)%iplotonpanel = 1
+ shape(i)%iunits = 2
+ shape(i)%xpos = xpos
+ shape(i)%ypos = ypos
+
+ call plot_qch(charheight)
+ shape(i)%xlen = charheight
+ shape(i)%ylen = 1.
+ shape(i)%angle = 0.
+ shape(i)%text = string
+ shape(i)%fjust = 0.
+
+end subroutine add_text
+
+!------------------------------------------------------------
+! delete matching text shape
+!-----------------------------------------------------------
+subroutine delete_text(string)
+ character(len=*), intent(in) :: string
+ integer :: i,nshapesold
+
+ nshapesold = nshapes
+ do i=1,nshapesold
+    if (shape(i)%itype == 6 .and. shape(i)%text == trim(string)) then
+       call delete_shape(i,nshapes)
+    endif
+ enddo
+
+end subroutine delete_text
+
 !-----------------------------------------------------------------
 ! utility routine to convert between units used in shape plotting
 !-----------------------------------------------------------------
 subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itransx,itransy)
  use transforms, only:transform
- implicit none
  type(shapedef), intent(in) :: shape
  real, intent(out)   :: xpos,ypos,xlen,ylen
  real, intent(in)    :: xmin,ymin,dxplot,dyplot

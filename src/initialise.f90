@@ -12,7 +12,6 @@ subroutine defaults_set_initial
  use limits, only:lim,range
  use particle_data, only:maxpart,maxstep,maxcol
  use settings_data, only:UseTypeInRenderings,device
- implicit none
  integer :: i
 !
 !--limits (could set them to anything but min & max must be different

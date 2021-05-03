@@ -46,8 +46,21 @@ end module params
 module physcon
  use params, only:doub_prec
  implicit none
- real(doub_prec), parameter :: solarrcgs = 6.955d10
- real(doub_prec), parameter :: solarmcgs = 1.989d33
+ real, parameter :: pi = 4.*atan(1.)
+ real(doub_prec), parameter :: solarrcgs = 6.955d10  ! cm
+ real(doub_prec), parameter :: solarmcgs = 1.989d33  ! g
+ real(doub_prec), parameter :: steboltz = 5.67e-5    ! erg cm^-2 K^-4 s-1
+ real(doub_prec), parameter :: radconst = 7.5646d-15 ! Radiation constant erg cm^-3 K^-4
+ real(doub_prec), parameter :: kboltz = 1.38066d-16
+ real(doub_prec), parameter :: mh = 1.67262158d-24   ! g
+ real(doub_prec), parameter :: au = 1.496d13         ! cm
+ real(doub_prec), parameter :: c = 2.997924d10       ! Speed of light cm/s
+ real(doub_prec), parameter :: hplanck =   6.6260755d-27  ! Planck's Constant erg/s
+ real(doub_prec), parameter :: kb_on_mh = kboltz/mh
+ real(doub_prec), parameter :: Lsun = 3.839d33       ! Solar luminosity, erg/s
+ real(doub_prec), parameter :: cm_to_nm = 1.d7
+ real(doub_prec), parameter :: keV_to_erg = 1.6022d-9 ! k_eV to erg
+ real(doub_prec), parameter :: keV_to_Hz  = keV_to_erg/hplanck ! k_eV to erg
 
  public
 end module physcon
@@ -99,7 +112,6 @@ module filenames
 contains
 
 subroutine set_filenames(prefix)
- implicit none
  character(len=*), intent(in) :: prefix
 
  fileprefix   = trim(adjustl(prefix))
@@ -131,13 +143,14 @@ module settings_data
  integer :: ndusttypes
  integer :: idustfrac_plot = 0
  integer :: ideltav_plot = 0
+ integer :: iautorender
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
  integer :: itracktype,itrackoffset,iverbose
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
- logical :: iRescale_has_been_set
+ logical :: idefaults_file_read
  logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)

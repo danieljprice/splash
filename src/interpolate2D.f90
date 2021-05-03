@@ -826,7 +826,7 @@ end subroutine interpolate_part1
 
 subroutine interpolate2D_pixels(x,y,itype,npart, &
      xmin,ymin,xmax,ymax,datsmooth,npixx,npixy,&
-     normalise,adaptive,dat,datpix2,fac)
+     normalise,adaptive,dat,datpix2,fac,weights)
 
  use timing, only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
@@ -835,7 +835,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  real, intent(in) :: xmin,ymin,xmax,ymax
  real, intent(out), dimension(npixx,npixy) :: datsmooth
  logical, intent(in) :: normalise,adaptive
- real, intent(in), dimension(npart), optional :: dat
+ real, intent(in), dimension(npart), optional :: dat,weights
  real, dimension(npixx,npixy), intent(out), optional :: datpix2
  real, intent(in), optional :: fac
 
@@ -886,7 +886,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     endif
 
     !$omp parallel do default(none) &
-    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its) &
+    !$omp shared(npart,itype,x,y,xmin,ymin,ddx,ddy,its,itsmax,weights) &
     !$omp shared(datold,datsmooth,datnorm,npixx,npixy,const,radkernel,radkernel2,dat) &
     !$omp shared(pixwidthx,pixwidthy,normalise,hfac) &
     !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
@@ -903,12 +903,13 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        !
        xi = (x(i) - xmin)*ddx
        yi = (y(i) - ymin)*ddy
-       hi = 1.0*pixwidthx  ! in units of pixel spacing
+       hi = 1.0*pixwidthx
+       if (itsmax==1) hi=hi*hfac  ! in units of pixel spacing
 
        ipix = int(xi)
        jpix = int(yi)
        if (its > 1 .and. ipix >= 1 .and. ipix <= npixx.and. jpix >= 1 .and. jpix <= npixy) then
-          hi = min(hfac/sqrt(datold(ipix,jpix)),20.)
+          hi = max(min(hfac/sqrt(datold(ipix,jpix)),100.),1.)
        endif
        hi1 = 1./hi
        termnorm = const*hi1*hi1
@@ -917,6 +918,9 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        !
        radkernx = radkernel*hi  ! radius of the smoothing kernel
        radkerny = radkernel*hi  ! radius of the smoothing kernel
+       if (present(weights)) then
+          termnorm = termnorm*weights(i)
+       endif
        if (present(dat)) then
           term = termnorm*dat(i)
        else

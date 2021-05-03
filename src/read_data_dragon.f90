@@ -77,10 +77,10 @@ end module unit_constants
 
 module readdata_dragon
  implicit none
- 
+
  public :: read_data_dragon, set_labels_dragon
- 
- private 
+
+ private
 contains
 
 subroutine read_data_dragon(rootname,istepstart,ipos,nstepsread)
@@ -91,7 +91,6 @@ subroutine read_data_dragon(rootname,istepstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use labels, only:label,labeltype,labelzintegration
  use system_utils, only:ienvironment
- implicit none
  integer, intent(in) :: istepstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -374,7 +373,6 @@ contains
 ! binary header read
 !----------------------------------------------------
 subroutine read_dragonheader_binary(iunitb,ierr)
- implicit none
  integer, intent(in) :: iunitb
  integer, intent(out) :: ierr
 
@@ -398,7 +396,6 @@ end subroutine read_dragonheader_binary
 ! ascii header read
 !----------------------------------------------------
 subroutine read_dragonheader_ascii(iunita,ierr,iwarn)
- implicit none
  integer, intent(in) :: iunita,iwarn
  integer, intent(out) :: ierr
 
@@ -423,7 +420,6 @@ end subroutine read_dragonheader_ascii
 ! binary body read
 !----------------------------------------------------
 subroutine read_dragonbody_binary(iunitb,ierr)
- implicit none
  integer, intent(in) :: iunitb
  integer, intent(out) :: ierr
  real(doub_prec), dimension(:,:), allocatable :: dummyx
@@ -543,7 +539,6 @@ end subroutine read_dragonbody_binary
 ! ascii body read
 !----------------------------------------------------
 subroutine read_dragonbody_ascii(iunita,ierr)
- implicit none
  integer, intent(in) :: iunita
  integer, intent(out) :: ierr
  integer :: nerr,idumtype
@@ -612,7 +607,6 @@ end subroutine read_dragonbody_ascii
 ! translate types into order (for old dragon read)
 !----------------------------------------------------
 subroutine set_types(itypei,ntotal,noftype)
- implicit none
  integer(kind=int1), dimension(:), intent(inout) :: itypei
  integer, intent(in) :: ntotal
  integer, dimension(:), intent(out) :: noftype
@@ -694,7 +688,6 @@ subroutine set_labels_dragon
  use params
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -756,8 +749,7 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  use params
  use settings_data, only:ndim
  use unit_constants
- use system_commands, only:get_environment
- implicit none
+ use system_utils, only:get_environment_or_flag
 
  real(doub_prec), intent(out)      :: out_unit_interp
  real, intent(out)                 :: out_unitzintegration
@@ -771,10 +763,10 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  character(len=20) :: rho_unit                ! density unit
  character(len=20) :: h_unit                  ! smoothing length unit
 
- call get_environment("DRAGON_R_UNIT",r_unit)
- call get_environment("DRAGON_M_UNIT",m_unit)
- call get_environment("DRAGON_RHO_UNIT",rho_unit)
- call get_environment("DRAGON_H_UNIT",H_unit)
+ call get_environment_or_flag("DRAGON_RUNIT",r_unit)
+ call get_environment_or_flag("DRAGON_MUNIT",m_unit)
+ call get_environment_or_flag("DRAGON_RHOUNIT",rho_unit)
+ call get_environment_or_flag("DRAGON_HUNIT",H_unit)
 
  out_unit_interp = 1.0
  out_unitzintegration = 1.0

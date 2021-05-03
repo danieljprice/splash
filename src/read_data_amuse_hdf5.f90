@@ -93,42 +93,39 @@ end module amusehdf5read
 
 module readdata_amuse_hdf5
  implicit none
- 
+
  public :: read_data_amuse_hdf5, set_labels_amuse_hdf5
- 
- private 
+
+ private
 contains
 
 subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
- use params,         only:doub_prec,maxparttypes,maxplot
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
-                           ntypes,debugmode,iverbose
+ use params,         only:doub_prec,maxplot
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread, &
+                           ntypes,iverbose,debugmode
  use settings_page,  only:legendtext
  use mem_allocation, only:alloc
- use labels,         only:ih,irho,ipmass,labeltype
+ use labels,         only:ih,irho,ipmass
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  use asciiutils,     only:cstring
- use amusehdf5read, only:hsoft,blocklabel,havewarned,read_amuse_hdf5_header, &
-                           read_amuse_hdf5_data,maxtypes
- implicit none
+ use amusehdf5read,  only:havewarned,read_amuse_hdf5_header,read_amuse_hdf5_data
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
- character(len=len(rootname)+10)    :: datfile,densfile,hfile
- character(len=20)                  :: string
- integer               :: i,j,itype,ierr
- integer               :: index1,index2,nhfac
- integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall,idot
- integer, parameter    :: iunit = 11
- logical               :: iexist,reallocate,usez,debug,goterrors
- real(doub_prec)       :: timetemp,ztemp
+ character(len=len(rootname)+10)    :: datfile
+ integer               :: i,j,ierr
+ integer               :: nhfac
+ integer               :: ncolstep,npart_max,nstep_max,ntoti
+ logical               :: iexist,reallocate,debug,goterrors
+ real(doub_prec)       :: timetemp
  real :: hfact,hfactmean,pmassi
  real, parameter :: pi = 3.1415926536
  integer, dimension(maxplot) :: isrequired
 
  nstepsread = 0
  goterrors  = .false.
+ debug = debugmode
 
  if (len_trim(rootname) > 0) then
     datfile = trim(rootname)
@@ -185,7 +182,7 @@ subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
     reallocate = .true.
     if (maxpart > 0) then
        ! if we are reallocating, try not to do it again
-       npart_max = int(1.1*ntotall)
+       npart_max = int(1.1*ntoti)
     else
        ! if first time, save on memory
        npart_max = int(ntoti)
@@ -291,12 +288,10 @@ subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
  use particle_data,  only:dat,iamtype
  use settings_data,  only:debugmode
  use labels,         only:label
- implicit none
  integer(kind=c_int), intent(in) :: icol,npartoftypei,itype
  real(kind=c_double), intent(in) :: temparr(npartoftypei)
  integer(kind=c_int) :: i,icolput
- integer :: nmax,nerr,idi
- logical :: useids
+ integer :: nmax
 
  icolput = icol
  if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))
@@ -316,11 +311,10 @@ subroutine read_amuse_hdf5_data_fromc(icol,npartoftypei,temparr,itype) bind(c)
  ! set particle type
  if (size(iamtype(:,1)) > 1) then
     do i=1,nmax
-       iamtype(i,1) = itype + 1
+       iamtype(i,1) = int(itype + 1,kind=kind(iamtype))
     enddo
  endif
 
- return
 end subroutine read_amuse_hdf5_data_fromc
 
 !!------------------------------------------------------------
@@ -329,15 +323,14 @@ end subroutine read_amuse_hdf5_data_fromc
 
 subroutine set_labels_amuse_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax
+                          ih,irho,iutherm,iax,make_vector_label
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
+ use settings_data,  only:ndim,ndimV,UseTypeInRenderings
  use geometry,       only:labelcoord
  use system_utils,   only:envlist,ienvironment
- use amusehdf5read,  only:hsoft,blocklabel
+ use amusehdf5read,  only:blocklabel
  use asciiutils,     only:lcase
- implicit none
- integer :: i,j,icol,irank
+ integer :: icol
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_amuse_hdf5 ***'
@@ -374,27 +367,10 @@ subroutine set_labels_amuse_hdf5
 
  ! set labels of the quantities read in
  if (ix(1) > 0)   label(ix(1:ndim)) = labelcoord(1:ndim,1)
- !if (irho > 0)    label(irho)       = 'density'
- !if (iutherm > 0) label(iutherm)    = 'u'
- !if (ipmass > 0)  label(ipmass)     = 'particle mass'
- !if (ih > 0)      label(ih)         = 'h'
 
  ! set labels for vector quantities
- if (ivx > 0) then
-    iamvec(ivx:ivx+ndimV-1) = ivx
-    labelvec(ivx:ivx+ndimV-1) = 'v'
-    do i=1,ndimV
-       label(ivx+i-1) = trim(labelvec(ivx))//'_'//labelcoord(i,1)
-    enddo
- endif
-
- if (iax > 0) then
-    iamvec(iax:iax+ndimV-1) = iax
-    labelvec(iax:iax+ndimV-1) = 'a'
-    do i=1,ndimV
-       label(iax+i-1) = trim(labelvec(iax))//'_'//labelcoord(i,1)
-    enddo
- endif
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  ! set labels for each particle type
  labeltype(1) = 'gas'
@@ -409,7 +385,6 @@ subroutine set_blocklabel(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  use amusehdf5read, only:blocklabel
  use asciiutils,    only:fstring
- implicit none
  integer(kind=c_int),    intent(in) :: icol
  character(kind=c_char), intent(in) :: name(256)
 

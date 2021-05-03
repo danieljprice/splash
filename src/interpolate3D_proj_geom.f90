@@ -29,7 +29,7 @@
 
 module projections3Dgeom
  use interpolation, only:iroll
- use projections3D, only:setup_integratedkernel,wfromtable,coltable
+ use projections3D, only:setup_integratedkernel,wfromtable,have_setup_kernel
  use kernels,       only:radkernel,radkernel2
  use geometry,      only:igeom_cartesian,coord_transform,coord_is_length, &
                          coord_transform_limits,igeom_cylindrical,&
@@ -147,9 +147,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
  !
  !--check column density table has actually been setup
  !
- if (abs(coltable(1)) <= 1.e-5) then
-    call setup_integratedkernel
- endif
+ if (.not.have_setup_kernel) call setup_integratedkernel
  !
  !--print a progress report if it is going to take a long time
  !  (a "long time" is, however, somewhat system dependent)

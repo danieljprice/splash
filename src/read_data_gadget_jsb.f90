@@ -62,7 +62,6 @@ subroutine read_data_gadget_jsb(rootname,istart,ipos,nstepsread)
  use labels
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
  use mem_allocation
- implicit none
  integer, intent(IN) :: istart,ipos
  integer, intent(OUT) :: nstepsread
  character(LEN=*), intent(IN) :: rootname
@@ -317,7 +316,6 @@ subroutine set_labels_gadget_jsb
  use params
  use settings_data
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

@@ -69,7 +69,6 @@ subroutine read_data_sphysics(rootname,indexstart,ipos,nstepsread)
                           buffer_data,iverbose,debugmode,ntypes
  use mem_allocation, only:alloc
  use labels,         only:ipr,ivx,ih,irho,labeltype
- implicit none
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname
@@ -264,7 +263,6 @@ subroutine set_labels_sphysics
  use params
  use settings_data, only:ndim,ndimV,UseTypeInRenderings
  use geometry,      only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

@@ -58,7 +58,6 @@ contains
 subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
      xmin,ymin,zslice,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
- implicit none
  integer, intent(in) :: npart,npixx,npixy,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
@@ -229,7 +228,6 @@ end subroutine interpolate3D_fastxsec
 subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      xmin,ymin,zslice,vecsmoothx,vecsmoothy,npixx,npixy,pixwidthx,pixwidthy,normalise,iverbose)
 
- implicit none
  integer, intent(in) :: npart,npixx,npixy,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
  integer, intent(in), dimension(npart) :: itype

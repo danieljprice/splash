@@ -52,7 +52,6 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_render
- implicit none
 
  icolours = 2               ! colour scheme to use
  npix = 0                 ! pixels in x direction for rendering
@@ -108,7 +107,6 @@ subroutine submenu_render(ichoose)
  use kernels,   only:select_kernel,kernelname,nkernels
  use projections3D, only:setup_integratedkernel
  use asciiutils,    only:read_asciifile
- implicit none
  integer, intent(in) :: ichoose
  character(len=5)    :: string
  character(len=20)   :: kname

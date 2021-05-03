@@ -40,7 +40,6 @@ contains
 subroutine pdf_calc(npart,xpart,xminplot,xmaxplot,nbins,xbin,pdf,pdfmin,pdfmax,&
                     usefixedbins,ierr,mask,weight)
  !use transforms, only:transform,transform_inverse,transform_limits,convert_to_ln_fac
- implicit none
  integer, intent(in)                 :: npart,nbins
  real, dimension(:), intent(in)      :: xpart
  real, intent(in)                    :: xminplot,xmaxplot
@@ -169,7 +168,6 @@ end subroutine pdf_calc
 !-----------------------------------------------------------------
 subroutine pdf_write(nbins,xbin,pb,labelx,rootname,tagline)
  use asciiutils, only:safename
- implicit none
  character(len=*), intent(in)       :: labelx,rootname,tagline
  integer, intent(in)                :: nbins !,itransx
  real, intent(in), dimension(nbins) :: xbin,pb
@@ -188,6 +186,7 @@ subroutine pdf_write(nbins,xbin,pb,labelx,rootname,tagline)
  write(iunit,"(a)",iostat=ierr) '# probability density function, calculated using '//trim(tagline)
  if (ierr /= 0) print "(a)",' ERROR writing header line'
  write(iunit,"(a,i5,a)",iostat=ierr) '# ',nbins,' bins evenly spaced in '//trim(labelx)
+ write(iunit,"(a)") '# '//trim(labelx)//','//' P('//trim(labelx)//')'
 
  warned = .false.
  !--dump bins to file
@@ -212,7 +211,6 @@ end subroutine pdf_write
 ! this is similar to their subroutine avevar
 !-------------------------------------------------
 subroutine mean_variance(x,npts,xmean,xvariance)
- implicit none
  integer, intent(in) :: npts
  real, intent(in), dimension(npts) :: x
  real, intent(out) :: xmean, xvariance

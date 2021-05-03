@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -25,15 +25,41 @@
 ! depend on system commands (in the system_commands module)
 !
 module system_utils
- use system_commands, only:get_environment
+ use asciiutils, only:lcase
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
- public :: get_command_flag
+ public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
 
  private
 
 contains
+
+!
+!--this routine returns a variable
+!  from EITHER a command line flag --foo=bar
+!  OR from an environment variable MY_FOO=bar
+!
+!  The flag takes priority over the environment variable
+!
+subroutine get_environment_or_flag(variable,string)
+ character(len=*), intent(in)  :: variable
+ character(len=*), intent(out) :: string
+ character(len=len(variable))  :: vartmp
+ integer :: ierr,iloc
+
+ ! try as command flag, excluding everything before the last
+ ! underscore, e.g. MY_GOOD_FOO becomes --foo
+ iloc = index(variable,'_',back=.true. )
+ call get_option(variable(iloc+1:),string,ierr)
+
+ ! then try as environment variable, including underscores
+ ! e.g. MY_GOOD_FOO=bar
+ if (ierr /= 0) call get_environment_variable(variable,string)
+ !print*,' GOT ',trim(variable),' = ',trim(string)
+
+end subroutine get_environment_or_flag
+
  !
  !--this routine returns an integer variable
  !  from an environment variable setting
@@ -47,7 +73,7 @@ integer function ienvironment(variable,errval)
  character(len=30) :: string
  integer, intent(in), optional :: errval
 
- call get_environment(variable,string)
+ call get_environment_or_flag(variable,string)
  if (present(errval)) then
     ienvironment = ienvstring(string,errval)
  else
@@ -70,7 +96,7 @@ real function renvironment(variable,errval)
  real, intent(in), optional :: errval
  integer :: ierr
 
- call get_environment(variable,string)
+ call get_environment_or_flag(variable,string)
  if (len_trim(string) > 0) then
     read(string,*,iostat=ierr) renvironment
  else
@@ -95,7 +121,7 @@ logical function lenvironment(variable)
  character(len=*), intent(in) :: variable
  character(len=30) :: string
 
- call get_environment(variable,string)
+ call get_environment_or_flag(variable,string)
  lenvironment = lenvstring(string)
 
 end function lenvironment
@@ -164,7 +190,7 @@ subroutine envlist(variable,nlist,list)
  endif
 
  !--get envlist from the environment
- call get_environment(variable,string)
+ call get_environment_or_flag(variable,string)
 
  !--split the string on commas
  i1 = 1
@@ -231,6 +257,34 @@ function lenvlist(variable,nlist)
  enddo
 
 end function lenvlist
+
+!
+!--find logical-valued option from command line arguments
+!  as in --arg (true if present, false if not)
+!
+subroutine get_option(variable,value,err)
+ character(len=*), intent(in) :: variable
+ character(len=*), intent(out) :: value
+ character(len=80) :: string
+ integer, intent(out) :: err
+ integer :: nargs,iarg,ieq
+
+ err = 1
+ nargs = command_argument_count()
+ do iarg=1,nargs
+    call get_command_argument(iarg,string)
+    if (string(1:2)=='--' .and. index(lcase(string),lcase(variable)) > 0) then
+       err = 0
+       ieq = index(string,'=',back=.true.)
+       if (ieq > 0) then
+          value = string(ieq+1:)
+       else
+          value = 'True'  ! raw flag --foo, equivalent to --foo=True
+       endif
+    endif
+ enddo
+
+end subroutine get_option
 !
 !--find real-valued option from command line arguments
 !  as in --arg=blah
@@ -255,13 +309,13 @@ real function get_command_option(variable,default) result(val)
 end function get_command_option
 
 !
-!--find real-valued option from command line arguments
-!  as in --arg=blah
+!--find logical-valued option from command line arguments
+!  as in --arg (true if present, false if not)
 !
 logical function get_command_flag(variable) result(val)
  character(len=*), intent(in) :: variable
  character(len=80) :: string
- integer :: ierr,nargs,ieq,iarg
+ integer :: nargs,iarg
 
  val = .false.
  nargs = command_argument_count()
@@ -280,7 +334,7 @@ integer function count_matching_args(string,id) result(n)
  character(len=*), intent(in) :: string
  integer, intent(out), optional :: id(:)
  character(len=80) :: myarg
- integer :: ierr,nargs,ieq,iarg
+ integer :: iarg,nargs
 
  n = 0
  nargs = command_argument_count()
@@ -295,5 +349,44 @@ integer function count_matching_args(string,id) result(n)
  enddo
 
 end function count_matching_args
+
+!
+!--get the name of the logged in user
+!
+subroutine get_user(string)
+ character(len=*), intent(out) :: string
+ character(len=*), parameter :: tempfile = '/tmp/splash.username'
+ logical :: iexist
+ integer :: ierr,iu
+
+ string = ''
+ inquire(file='/proc/cpuinfo',exist=iexist) ! exists only in Linux
+ if (.not.iexist) then
+    call system('id -F $USER > '//trim(tempfile)) ! Mac
+ else
+    call system('getent passwd "$USER" | cut -d: -f5 | cut -d, -f1 > '//trim(tempfile)) ! Linux
+ endif
+ inquire(file=tempfile,exist=iexist)
+ if (iexist) then
+    open(newunit=iu,file=tempfile,action='read',status='old',iostat=ierr)
+    read(iu,"(a)",iostat=ierr) string
+    close(iu,status='delete',iostat=ierr)
+ endif
+
+end subroutine get_user
+
+!
+!--get copyright string involving logged in user and current year
+!
+function get_copyright() result(string)
+ character(len=30) :: string
+ character(len=8) :: year
+
+ call get_user(string)
+ call date_and_time(date=year)
+
+ string = '(c) '//year(1:4)//' '//trim(string)
+
+end function get_copyright
 
 end module system_utils

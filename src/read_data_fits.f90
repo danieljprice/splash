@@ -63,14 +63,13 @@ module readdata_fits
 contains
 
 subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
- use particle_data,    only:dat,npartoftype,masstype,time,gamma,maxcol,maxpart,headervals
+ use particle_data,    only:dat,npartoftype,masstype,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
  use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,&
                             get_floats_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
- implicit none
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -214,9 +213,8 @@ end subroutine read_data_fits
 !------------------------------------------------------------
 subroutine set_labels_fits
  use labels,         only:label,labeltype,ix,ipmass,ih,irho
- use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings
+ use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings,iautorender
  use geometry,       only:labelcoord
- implicit none
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_fits ***'
@@ -239,6 +237,8 @@ subroutine set_labels_fits
  if (irho > 0)    label(irho)       = 'intensity'
  if (ipmass > 0)  label(ipmass)     = 'flux'
  if (ih > 0)      label(ih)         = 'sigma'
+
+ if (ndim==2) iautorender = irho ! automatically select this column for first plot
 
  ! set labels for each particle type
  ntypes = 1

@@ -51,7 +51,6 @@ subroutine set_blocklabel_cactus(icol,name,lenname) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
  ! use cactushdf5read, only:blocklabel
  use asciiutils,     only:fstring
- implicit none
  integer(kind=c_int),    intent(in) :: icol,lenname
  character(kind=c_char), intent(in) :: name(lenname)
  character(len=24) :: temp
@@ -72,7 +71,6 @@ end subroutine set_blocklabel_cactus
 subroutine sort_cactus_data(n,iter,iorder) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int
  use sort, only:indexxi
- implicit none
  integer(kind=c_int), intent(in)  :: n
  integer(kind=c_int), intent(in)  :: iter(n)
  integer(kind=c_int), intent(out) :: iorder(n)

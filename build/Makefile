@@ -18,7 +18,7 @@ KNOWN_SYSTEM=no
 SRCDIR=../src
 BINDIR=../bin
 TESTDIR=../tests
-VPATH=$(SRCDIR) $(SRCDIR)/H5Part
+VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../utils
 SHELL=/bin/bash
 
 #
@@ -156,16 +156,6 @@ ifeq ($(SYSTEM), gfortran)
    KNOWN_SYSTEM=yes
 endif
 
-ifeq ($(SYSTEM),nagf95)
-#  NAG f95 compiler
-   FC= f95
-   FFLAGS= -O3
-   DBLFLAGS= -r8
-   SYSTEMFILE= system_unix_NAG.f90
-   PARALLEL= no
-   KNOWN_SYSTEM=yes
-endif
-
 ifeq ($(SYSTEM),sunf95)
 #  sun f95 compiler on linux
    FC= sunf95
@@ -203,7 +193,7 @@ ifeq ($(SYSTEM),pgf90)
    DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
               -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
    OMPFLAGS= -mp
-   SYSTEMFILE= system_unix.f90
+   SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -Mbyteswapio  # only works on a little-endian machine
    ENDIANFLAGLITTLE=
    KNOWN_SYSTEM=yes

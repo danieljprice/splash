@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2020 Daniel Price
+!     Copyright (C) 2005-2021 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,6 +51,32 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.2.2   : (xx/04/21) bug fix with surface density plot with physical units on
+!     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
+!             and opacity, respectively; specifying --xsec automatically switches from projection
+!             to cross section; specifying --kappa turns on opacity rendering;
+!             bug fix in splash calc tracks; can use --track=1,2,3 to specify list of particles
+!     3.2.0   : (20/04/21) disable ALL prompts if any command line flags set;
+!             all environment variables can now be given as command line flags using lower case string
+!             after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line;
+!             useful options include --corotate, --sink=1, --debug and more;
+!             splash to grid recognises flags including --periodic, --npix=100,100,100 and --convert=1,4;
+!             added -gandalf and -f gandalf as shortcut for seren data read;
+!             assume default xw device and disable device prompt if any command line flags set;
+!             s/S options now do the same thing
+!     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
+!             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
+!             phantom dumps when number of particles of each type does not match itype array;
+!             bug fixes in grid2pdf
+!     3.1.0   : (16/02/21) splash calc lightcurve implemented; sink particles ON by default;
+!             changing units rescales plot limits correctly;
+!             further improvements to ray tracing / opacity rendering with physical opacity;
+!             can change units temporarily without writing .units file;
+!             auto-select closest velocity and mass unit and better default time unit
+!             in phantom/sphNG read; error message if Inf or NaN read from .units file;
+!             bug fix with units prompt; floating colour bars are white not black;
+!             automatically write copyright in Hollywood mode; auto-render fits files;
+!             read softening length from phantom sinks if accretion radius is zero;
 !     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
 !             use opacity defined on particles; can track multiple particles with
 !             'splash calc tracks' by specifying ids in splash.tracks file;
@@ -424,9 +450,9 @@ program splash
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata
- use system_commands,    only:get_number_arguments,get_argument,get_environment
- use system_utils,       only:lenvironment
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
+ use system_commands,    only:get_number_arguments,get_argument
+ use system_utils,       only:lenvironment,get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
@@ -437,7 +463,7 @@ program splash
  use settings_page,      only:interactive,nomenu
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile
- use settings_xsecrot,   only:xsec_nomulti
+ use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -446,7 +472,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.0.2 [20th Jan 2021]'
+ character(len=*), parameter :: version = 'v3.2.1 [26th April 2021]'
 
  !
  ! initialise some basic code variables
@@ -570,6 +596,8 @@ program splash
           lowmemorymode = .true.
        case('nolowmem','nlm')
           lowmemorymode = .false.
+       case('-buffer','b','buffer')
+          buffer_data = .true.
        case('f','-format')
           i = i + 1
           call get_argument(i,string)
@@ -591,7 +619,7 @@ program splash
           stop
        case default
           if (.not. got_format) call select_data_format(string(2:),ierr)
-          if (ierr /= 0) then
+          if (ierr /= 0 .and. string(2:2) /= '-') then
              call print_usage
              print "(a)",'unknown command line argument '''//trim(string)//''''
              stop
@@ -655,7 +683,7 @@ program splash
  !
  inquire(file=defaultsfile,exist=iexist)
  if (.not.iexist .and. trim(fileprefix)=='splash') then
-    call get_environment('SPLASH_DEFAULTS',string)
+    call get_environment_or_flag('SPLASH_DEFAULTS',string)
     if (len_trim(string) /= 0) then
        i = index(string,'.defaults')
        if (i > 0) then
@@ -669,6 +697,17 @@ program splash
     endif
  endif
 
+ !
+ ! set options based on command line flags that OVERRIDE settings in the defaults file
+ !
+ if (get_command_flag('kappa')) then ! e.g. --kappa=10.0
+    taupartdepth = get_command_option('kappa',default=taupartdepth)
+    use3Dopacityrendering = .true.
+ endif
+ if (get_command_flag('xsec')) then  ! e.g. --xsec=1.0
+    xsecpos_nomulti = get_command_option('xsec',default=xsecpos_nomulti)
+    xsec_nomulti = .true.   ! set cross section to true if --xsec was set
+ endif
  !
  ! check that we have got filenames
  !
@@ -707,7 +746,7 @@ program splash
 
  if (ikernel==0) then
     !--if no kernel has been set
-    call get_environment('SPLASH_KERNEL',string)
+    call get_environment_or_flag('SPLASH_KERNEL',string)
     if (len_trim(string) > 0) then
        call select_kernel_by_name(string)
     else
@@ -741,6 +780,20 @@ program splash
     ! (e.g. switch on sink particles if there is no gas)
     !
     call set_options_dataread()
+    !
+    ! for some data reads we can automatically plot a particular column
+    !
+    if (irender == 0 .and. iautorender > 0) then
+       irender = iautorender
+       nomenu = .true.
+    elseif (ncolumns==2) then
+       nomenu = .true.
+       if (ipicky==0) ipicky = 2
+       if (ipickx==0) ipickx = 1
+    endif
+
+    ! set default device to /xw if command line flags set
+    if (nomenu .and. len_trim(device)==0) device = '/xw'
 
     ! read tabulated colour table, if necessary
     if (abs(icolours)==icustom) then
@@ -810,6 +863,10 @@ program splash
              stop
           endif
        endif
+       if (irender > numplot .or. irender < 0) then
+          print "(/,a)",' ERROR: render plot choice out of bounds'
+          stop
+       endif
 
        call timestep_loop(ipicky,ipickx,irender,icontour,ivecplot)
        !
@@ -835,7 +892,6 @@ contains
 ! this subroutine prints the splash screen on startup
 !------------------------------------------------------
 subroutine print_header
- implicit none
 
  print 10
 10 format( &
@@ -864,7 +920,6 @@ end subroutine print_header
 
 subroutine print_usage(quit)
  use filenames, only:tagline
- implicit none
  logical, intent(in), optional :: quit
  logical :: ltemp
 
@@ -881,6 +936,7 @@ subroutine print_usage(quit)
  !print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
  print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
  print "(a)",' -360              : set default options suited to 360 video'
+ print "(a)",' -b, --buffer      : buffer all data files into memory'
  !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
  print "(/,a,/)",'Command line plotting mode:'
@@ -890,6 +946,8 @@ subroutine print_usage(quit)
  print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
  print "(a)",' -c[ontour] column : contoured quantity'
  print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
+ print "(a)",' --xsec=1.0        : specify location of cross section slice'
+ print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

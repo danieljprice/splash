@@ -26,20 +26,20 @@ contains
 
 subroutine set_options_dataread()
  use exact,          only:read_exactparams
- use settings_part,  only:iplotpartoftype
+ use settings_part,  only:iplotpartoftype,PlotonRenderings
  use particle_data,  only:npartoftype
- use settings_data,  only:ndim,ncolumns,ntypes,iexact,iverbose,UseTypeInRenderings
+ use settings_data,  only:ndim,ncolumns,ntypes,iexact,iverbose,UseTypeInRenderings,idefaults_file_read
  use filenames,      only:rootname,nsteps,ifileopen
- use labels,         only:labeltype,irho,ih
+ use labels,         only:labeltype,irho,ih,get_sink_type
  use asciiutils,     only:ucase
  use settings_render, only:icolour_particles
  integer :: itype,nplot,ierr
  !
  !--check for errors in data read / print warnings
  !
- if (ndim /= 0 .and. ncolumns > 0 .and. nsteps > 0 .and. iverbose==1) then
+ if (ndim > 0 .and. ncolumns > 0 .and. nsteps > 0 .and. .not.idefaults_file_read) then
     if (sum(npartoftype(:,1)) > 0 .and. npartoftype(1,1)==0 .and. .not.any(iplotpartoftype(2:))) then
-       print "(/,a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
+       if (iverbose >= 1) print "(/,a)",' WARNING! DATA APPEARS TO CONTAIN NO '//trim(ucase(labeltype(1)))//' PARTICLES'
        itype = 0
        nplot = 0
        do while (nplot==0 .and. itype < ntypes)
@@ -47,7 +47,7 @@ subroutine set_options_dataread()
           if (npartoftype(itype,1) > 0) then
              iplotpartoftype(itype) = .true.
              if (UseTypeInRenderings(itype)) nplot = nplot + npartoftype(itype,1)
-             print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
+             if (iverbose >= 1) print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
           endif
        enddo
        print*
@@ -57,7 +57,18 @@ subroutine set_options_dataread()
        icolour_particles = .true.
     endif
  endif
-
+ !
+ !--turn sink particles ON by default
+ !
+ if (ndim > 0 .and. .not.idefaults_file_read) then  ! only on first data read
+    itype = get_sink_type(ntypes)
+    if (itype > 0) then
+       if (npartoftype(itype,1) > 0 .and. .not.UseTypeInRenderings(itype)) then
+          iplotpartoftype(itype) = .true.
+          PlotOnRenderings(itype) = .true.
+       endif
+    endif
+ endif
  !
  !--read exact solution parameters from files if present
  !

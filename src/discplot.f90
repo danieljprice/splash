@@ -37,17 +37,17 @@ module disc
 
 contains
 
-subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
+subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_dens,unit_r,unit_dz,rminin,rmaxin,ymin,ymax,&
                     itransx,itransy,icolourpart,iamtype,usetype,noftype,gamma,mstar,&
                     unit_u,u,u_is_spsound)
  use transforms, only:transform_limits_inverse,transform_inverse,transform
  use params,     only:int1,maxparttypes,doub_prec
+ use physcon,    only:pi
  use part_utils, only:igettype
- implicit none
  integer,                          intent(in)  :: iplot,npart,npmass,itransx,itransy
  real, dimension(npart),           intent(in)  :: rpart
  real, dimension(npmass),          intent(in)  :: pmass
- real(doub_prec),                  intent(in)  :: unit_mass,unit_r,unit_dz
+ real(doub_prec),                  intent(in)  :: unit_mass,unit_dens,unit_r,unit_dz
  real,                             intent(in)  :: rminin,rmaxin,gamma,mstar
  real,                             intent(out) :: ymin,ymax
  integer, dimension(npart),        intent(in)  :: icolourpart
@@ -59,7 +59,6 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
  logical,                          intent(in), optional :: u_is_spsound
 
  integer :: i,ibin
- real, parameter :: pi = 3.1415926536
  real :: pmassi,rbin,deltar,area,rmin,rmax
  real(doub_prec) :: sigmai,toomreq,epicyclic,Omegai,spsoundi,unit_cs2
  real, dimension(1) :: rad
@@ -87,7 +86,7 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !
  select case(iplot)
  case(1)
-    print "(a,i4,a)",' calculating disc surface density profile using',nbins,' bins'
+    print "(a)",' calculating disc surface density profile '
  case(2)
     if (present(u)) then
        print "(a,es10.3,a)",' calculating Toomre Q parameter (assuming Mstar=',mstar,' and Keplerian rotation)'
@@ -185,7 +184,6 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
 !$omp end parallel do
 
  print "(1x,a,i10,a,i10,a,i4,a)",'used ',np,' of ',npart,' particles in ',nbins,' bins'
-
 !
 !--calculate Toomre Q parameter in each bin using surface density
 !
@@ -219,11 +217,15 @@ subroutine disccalc(iplot,npart,rpart,npmass,pmass,unit_mass,unit_r,unit_dz,rmin
     enddo
  else
 !
-!--return surface density in units of [g/cm^2], not [g/cm^3 au]
+!--return surface density in units of [g/cm^2], not [g/cm^3 au] or [Msun/au^2]
 !
-    sigma = sigma*(unit_r/unit_dz)**2
+    sigma = sigma*(unit_r**2/unit_mass)  ! convert back to code units
+    sigma = sigma*unit_dens*unit_dz      ! convert to units of unit_dens * unit_dz
  endif
- sigma(1:nbins) = max(sigma(1:nbins),epsilon(0.))
+!
+!--give very small number instead of zero to avoid problems on log plots
+!
+ where (sigma(1:nbins) < tiny(0.)) sigma(1:nbins) = minval(sigma,mask=sigma>0.)
 
  if (itransx > 0) call transform(radius,itransx)
  if (itransy > 0) call transform(sigma,itransy)
@@ -243,7 +245,6 @@ end subroutine disccalc
 !---------------------------------------------------
 subroutine discplot
  use plotlib, only:plot_line
- implicit none
 
  call plot_line(nbins,radius,sigma)
 

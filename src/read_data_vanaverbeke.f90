@@ -69,7 +69,6 @@ subroutine read_data_vanaverbeke(rootname,indexstart,ipos,nstepsread)
  use settings_data, only:ndim,ndimV,ncolumns
  use mem_allocation, only:alloc
  use system_utils, only:lenvironment,ienvironment
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -235,7 +234,6 @@ subroutine set_labels_vanaverbeke
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
  !use settings_units, only:units,unitslabel
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

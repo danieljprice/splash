@@ -49,7 +49,6 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
  use plotlib,          only:plot_qci,plot_bbuf,plot_ebuf,plot_sci,plot_sfs,plot_circ, &
                              plot_pt,plot_numb,plot_text,plot_pt1,plot_qls,plot_sls, &
                              plot_line,plot_qlw,plot_slw,plot_errb,plotlib_maxlinestyle
- implicit none
  integer,            intent(in) :: ntot,iplotx, iploty
  integer(kind=int1), intent(in) :: iamtype(:)
  integer,            intent(in) :: icolourpart(:)
@@ -460,7 +459,6 @@ end subroutine particleplot
 subroutine plot_particle(imarktype,x,y,h)
  use plotlib,       only:plot_circ,plot_sfs,plot_sci,plot_pt1
  use settings_part, only:hfacmarkers
- implicit none
  integer, intent(in) :: imarktype
  real,    intent(in) :: x,y,h
  integer :: imarker
@@ -532,7 +530,6 @@ subroutine plot_kernel_gr(igeom,igeomold,iplotx,iploty,x,y,z,h)
  use geometry, only:coord_transform,maxcoordsys,labelcoordsys
  use plotlib,  only:plot_line
  use labels,   only:ix
- implicit none
  integer, intent(in) :: igeom,igeomold,iplotx,iploty
  real, intent(in) :: x,y,z,h
 
@@ -601,7 +598,6 @@ subroutine plot_errorbarsy(npts,x,y,err,itrans)
  use transforms, only:transform,transform_inverse,islogged
  use settings_part, only:ErrorBarType
  use settings_data, only:iverbose
- implicit none
  integer, intent(in) :: npts,itrans
  real, intent(in), dimension(:) :: x,y,err
  real :: yval,errval
@@ -664,7 +660,6 @@ end subroutine plot_errorbarsy
 subroutine plot_errorbarsx(npts,x,y,err,itrans)
  use transforms, only:transform,transform_inverse,islogged
  use plotlib,    only:plot_bbuf,plot_ebuf,plot_err1,plot_errb
- implicit none
  integer, intent(in) :: npts,itrans
  real, intent(in), dimension(:) :: x,y,err
  real :: xval,errval

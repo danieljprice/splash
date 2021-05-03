@@ -45,7 +45,6 @@ contains
 ! set default values for these options
 !---------------------------------------------
 subroutine defaults_set_vecplot
- implicit none
 
  npixvec = 40        ! pixels in x direction on vector plots
  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
@@ -77,7 +76,6 @@ subroutine submenu_vecplot(ichoose)
  use labels,        only:iutherm
  use limits,        only:lim
  use legends,       only:prompt_panelselect
- implicit none
  integer, intent(in) :: ichoose
  integer :: ians
 

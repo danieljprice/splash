@@ -255,7 +255,7 @@ end subroutine read_fits_cube
 !---------------------------------------------------
 ! error code handling
 !---------------------------------------------------
- character(len=30) function fits_error(ierr)
+ character(len=50) function fits_error(ierr)
   integer, intent(in) :: ierr
 
   select case(ierr)

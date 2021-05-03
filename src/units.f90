@@ -25,13 +25,15 @@
 !--------------------------------------------------------------------
 module settings_units
  use params
- use labels, only:unitslabel,labelzintegration,lenlabel
+ use labels, only:unitslabel,unitslabel_default,lenlabel,&
+                  labelzintegration,labelzintegration_default
  implicit none
- real, dimension(0:maxplot), public :: units
- real, public :: unitzintegration
+ real, dimension(0:maxplot), public :: units,units_default,units_old
+ real, public :: unitzintegration,unitzintegration_default
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
+ public :: get_nearest_mass_unit,get_nearest_velocity_unit
 
  integer, parameter :: nx = 9
  real(doub_prec), parameter :: unit_length(nx) = &
@@ -86,6 +88,23 @@ module settings_units
       ' [m/s]  ',&
       ' [km/s] '/)
 
+ integer, parameter :: nm = 6
+ real(doub_prec), parameter :: unit_mass(nm) = &
+    (/1.d0,  &
+      1.d3,  &
+      8.958d23,  &  ! Ceres mass
+      5.979d27,  &  ! Earth mass
+      1.898d30,  &  ! Jupiter mass
+      1.989d33/)    ! Solar mass
+
+ character(len=*), parameter :: unit_labels_mass(nm) = &
+    (/' [g]         ',&
+      ' [kg]        ',&
+      ' [M_{Ceres}] ',&
+      ' [M_{Earth}] ',&
+      ' [M_{Jup}]   ',&
+      ' [M_{Sun}]   '/)
+
  private
 
 contains
@@ -97,10 +116,14 @@ contains
 subroutine defaults_set_units
 
  units(:) = 1.0
+ units_default(:) = 1.0
  unitzintegration = 1.0
+ unitzintegration_default = 1.0
  unit_interp      = 1.0d0
  unitslabel(:) = ' '
+ unitslabel_default(:) = ' '
  labelzintegration = ' '
+ labelzintegration_default = ' '
 
 end subroutine defaults_set_units
 
@@ -131,6 +154,34 @@ subroutine get_nearest_time_unit(utime,unit,unitlabel)
  call get_nearest_unit(nt,unit_time,unit_labels_time,utime,unit,unitlabel)
 
 end subroutine get_nearest_time_unit
+
+!-------------------------------------------
+!
+!  find the nearest 'sensible' velocity unit
+!
+!-------------------------------------------
+subroutine get_nearest_velocity_unit(uvel,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: uvel
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+
+ call get_nearest_unit(nv,unit_vel,unit_labels_vel,uvel,unit,unitlabel)
+
+end subroutine get_nearest_velocity_unit
+
+!-------------------------------------------
+!
+!  find the nearest 'sensible' mass unit
+!
+!-------------------------------------------
+subroutine get_nearest_mass_unit(umass,unit,unitlabel)
+ real(doub_prec),  intent(in)  :: umass
+ real(doub_prec),  intent(out) :: unit
+ character(len=*), intent(out) :: unitlabel
+
+ call get_nearest_unit(nm,unit_mass,unit_labels_mass,umass,unit,unitlabel)
+
+end subroutine get_nearest_mass_unit
 
 !-------------------------------------------------------
 !
@@ -166,15 +217,15 @@ end subroutine get_nearest_unit
 !-------------------------------------------------------
 subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  use prompting,     only:prompt
- use labels,        only:label,ix,ih,ivx,idivB,iamvec,labelvec,headertags,strip_units
+ use labels,        only:label,ix,ih,ivx,ipmass,idivB,iamvec,labelvec,headertags,strip_units
  use settings_data, only:ndim,ndimV,ivegotdata
  use particle_data, only:headervals,maxstep
- use asciiutils,    only:match_tag
+ use asciiutils,    only:get_value
  integer, intent(in) :: ncolumns,numplot
  logical, intent(out) :: UnitsHaveChanged
- integer :: icol,ibs,ibc,itime,idist
+ integer :: icol,ibs,ibc
  real(doub_prec) :: unitsprev
- real(doub_prec) :: udist,utime
+ real(doub_prec) :: udist,utime,umass
  logical :: applytoall,got_label
  character(len=lenlabel) :: mylabel
 
@@ -182,11 +233,11 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
  ! try to extract code units from the file headers, these only exist in some data reads
  utime = 0.d0
  udist = 0.d0
- itime = match_tag(headertags,'utime')
- idist = match_tag(headertags,'udist')
+ umass = 0.d0
  if (maxstep > 0 .and. ivegotdata) then
-    if (itime > 0) utime = headervals(itime,1)
-    if (idist > 0) udist = headervals(idist,1)
+    utime = get_value('utime',headertags,headervals(:,1))
+    udist = get_value('udist',headertags,headervals(:,1))
+    umass = get_value('umass',headertags,headervals(:,1))
  endif
 
  do while(icol >= 0)
@@ -206,11 +257,15 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
        elseif (any(ix==icol) .or. icol==ih .and. udist > 0.) then
           ! give hints for possible length units, if udist is read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
-                                     nx,unit_labels_length,unit_length,udist,mylabel)
+                                     nx,unit_labels_length,unit_length,udist,'length')
        elseif (ivx==icol .and. udist > 0. .and. utime > 0.) then
           ! give hints for velocity units, if both udist and utime read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
-                                     nv,unit_labels_vel,unit_vel,udist/utime,mylabel)
+                                     nv,unit_labels_vel,unit_vel,udist/utime,'velocity')
+       elseif (ipmass==icol .and. umass > 0.) then
+          ! give hints for velocity units, if both udist and utime read from data file
+          call choose_unit_from_list(units(icol),unitslabel(icol),&
+                                     nm,unit_labels_mass,unit_mass,umass,'mass')
        elseif (icol > 0) then
           mylabel = strip_units(label(icol),unitslabel(icol))
           call prompt('enter '//trim(mylabel)//' units (new=old*units)',units(icol))
@@ -326,10 +381,14 @@ subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_cod
  real :: unitsprev
 
  iselect = n+1
+ ! get default value of iselect if one of the units is already chosen
  do i=1,n
-    print "(i1,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
+    if (abs(unit-unit_code/unit_vals(i)) < tiny(0.)) iselect = i
  enddo
- print "(i1,') custom')",n+1
+ do i=1,n
+    print "(i2,')',a,' ( x ',1pg11.4,')')",i,unit_labels(i),unit_code/unit_vals(i)
+ enddo
+ print "(i2,') custom')",n+1
  call prompt('Enter choice of '//trim(tag)//' unit ',iselect,1,n+1)
  if (iselect==n+1) then
     unitsprev = unit
@@ -463,7 +522,9 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
 !    now get units from the first part of the line
 !
     read(line,*,iostat=itemp) units(i)
-    if (itemp /= 0) print*,'error reading units for column ',i
+    if (itemp /= 0) print*,'ERROR reading units for column ',i
+    if (units(i) > huge(units)) print "(/,a,i2)",' ERROR: UNITS ARE INFINITE FOR COLUMN ',i
+    if (isnan(units(i))) print "(/,a,i2)",' ERROR: UNITS ARE NaN FOR COLUMN ',i
 !
 !    units label is what comes after the semicolon
 !

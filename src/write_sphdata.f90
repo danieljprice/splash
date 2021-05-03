@@ -27,6 +27,7 @@
 !     (c) D. Price 22/01/08
 !-----------------------------------------------------------------
 module write_sphdata
+ implicit none
  public :: issphformat,write_sphdump
  private
 
@@ -89,7 +90,6 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  use write_data_gadget,  only:write_sphdata_gadget
  use filenames,      only:tagline
  use geomutils,      only:change_coords
- implicit none
  integer, intent(in)                          :: npart,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype

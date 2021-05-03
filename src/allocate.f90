@@ -34,7 +34,6 @@ contains
 !----------------------------------------------------------------------------
 subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
  use particle_data
- implicit none
  integer, intent(in) :: npartin,nstep,ncolumnsin
  logical, intent(in), optional :: mixedtypes
  integer :: maxpartold,maxstepold,maxcolold
@@ -270,7 +269,6 @@ end subroutine alloc
 subroutine deallocate_all
  use particle_data, only:dat,icolourme,iamtype,npartoftype,masstype,&
                          time,gamma,headervals
- implicit none
 
  if (allocated(dat)) deallocate(dat)
  if (allocated(icolourme)) deallocate(icolourme)

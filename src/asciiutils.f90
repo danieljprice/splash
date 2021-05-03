@@ -39,7 +39,7 @@ module asciiutils
  public :: get_line_containing
  public :: enumerate,isdigit,split
  public :: get_column_labels
- public :: match_tag,match_taglist,append_number,make_tags_unique
+ public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: count_non_blank,find_repeated_tags
  public :: get_extensions
 
@@ -1007,7 +1007,8 @@ logical function is_sensible_label(string)
 end function is_sensible_label
 
 !------------------------------------------
-! match tag against a list of string_sub
+! match tag against a list of tags
+! returns index of matching tag in the list
 !------------------------------------------
 integer function match_tag(tags,tag)
  character(len=*), intent(in) :: tags(:)
@@ -1023,6 +1024,25 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!----------------------------------------------
+! match tag against a list of tags
+! and extract the value from an array of reals
+!----------------------------------------------
+real function get_value(tag,tags,vals)
+ character(len=*), intent(in) :: tag
+ character(len=*), intent(in) :: tags(:)
+ real, intent(in) :: vals(:)
+ integer :: itag
+
+ itag = match_tag(tags,tag)
+ if (itag > 0 .and. itag <= size(vals)) then
+    get_value = vals(itag)
+ else
+    get_value = 0.
+ endif
+
+end function get_value
 
 !-----------------------------------------------
 ! match multiple tags against a list of strings

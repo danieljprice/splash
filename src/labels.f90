@@ -35,12 +35,12 @@ module labels
  character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
- character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel
- character(len=lenunitslabel), public :: labelzintegration
+ character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel,unitslabel_default
+ character(len=lenunitslabel), public :: labelzintegration,labelzintegration_default
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
- integer :: ipmass,ike,ispsound
+ integer :: ipmass,ike,ispsound,itemp,ikappa
  integer :: idivb,iJfirst,irhostar
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
@@ -60,7 +60,6 @@ contains
 !
 !--------------------------------------------------------------
 subroutine reset_columnids
- implicit none
  !
  !--array positions of specific quantities
  !  Identification is used in exact solution
@@ -84,6 +83,8 @@ subroutine reset_columnids
  igrainsize = 0 ! grainsize
  igraindens = 0 ! graindens
  ivrel = 0      ! relative velocity
+ itemp = 0      ! temperature
+ ikappa = 0     ! opacity
  iacplane = 0
  ike = 0
  idivB = 0
@@ -98,7 +99,6 @@ subroutine reset_columnids
  ideltavsum = 0
  headertags = ''
 
- return
 end subroutine reset_columnids
 
 !--------------------------------------------------------------
@@ -107,7 +107,6 @@ end subroutine reset_columnids
 !
 !--------------------------------------------------------------
 logical function is_coord(icol,ndim)
- implicit none
  integer, intent(in) :: icol,ndim
  integer :: i
 
@@ -126,7 +125,6 @@ end function is_coord
 !
 !--------------------------------------------------------------
 integer function get_z_dir(ndim,iplotx,iploty) result(iplotz)
- implicit none
  integer, intent(in) :: ndim,iplotx,iploty
  integer :: i
 
@@ -145,7 +143,6 @@ end function get_z_dir
 !
 !--------------------------------------------------------------
 integer function get_z_coord(ndim,iplotx,iploty) result(iplotz)
- implicit none
  integer, intent(in) :: ndim,iplotx,iploty
  integer :: i
 
@@ -188,7 +185,6 @@ end function strip_units
 !-----------------------------------------------------------------
 elemental function shortstring(string,unitslab)
  use asciiutils, only:string_delete
- implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortstring
@@ -216,7 +212,6 @@ end function shortstring
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab)
  use asciiutils, only:string_delete
- implicit none
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortlabel
@@ -252,7 +247,6 @@ end function shortlabel
 function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
                          projlabelformat,iapplyprojformat)
  use asciiutils,      only:string_replace,string_delete
- implicit none
  character(len=*), intent(in) :: labelin,labelzint,projlabelformat
  integer, intent(in) :: iplot,izcol,iapplyprojformat
  logical, intent(in) :: normalise,iRescale
@@ -310,7 +304,7 @@ function get_unitlabel_coldens(iRescale,labelzint,unitlabel)
  character(len=*), intent(in) :: labelzint,unitlabel
  character(len=lenunitslabel) :: get_unitlabel_coldens
 
- if (iRescale) then
+ if (iRescale .and. len_trim(labelzint) > 0) then
     get_unitlabel_coldens = trim(unitlabel)//trim(labelzint)
     call string_delete(get_unitlabel_coldens,']')
     call string_delete(get_unitlabel_coldens,'[')
@@ -330,7 +324,6 @@ end function get_unitlabel_coldens
 !
 !-----------------------------------------------------------------
 integer function get_sink_type(ntypes)
- implicit none
  integer, intent(in) :: ntypes
  integer :: i
 
@@ -430,6 +423,9 @@ function get_label_grain_size(sizecm) result(string)
  elseif (sizecm >= 1.e-7) then
     write(string,"(1pg10.3)") sizecm*1.e7
     ulab = 'nm'
+ else
+    write(string,"(1pg10.3)") sizecm
+    ulab = 'cm'
  endif
  string = adjustl(string)
  call string_delete(string,'.0 ')

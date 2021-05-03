@@ -39,6 +39,10 @@ module projections3D
  public :: interpolate3D_projection
  public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
+ public :: coltable
+ logical, public :: have_setup_kernel = .false.
+
+ private
 
 contains
 
@@ -48,13 +52,13 @@ subroutine setup_integratedkernel
 !     tabulated in (r/h)**2 so that sqrt is not necessary
 !-------------------------------------------------------------
  use kernels, only:wfunc,radkernel2,cnormk3D,select_kernel
- implicit none
  integer :: i,j
  real :: rxy2,deltaz,dz,z,q2,wkern,coldens
  integer, parameter :: npts = 100
 
  ! force cubic kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)
+ have_setup_kernel = .true.
 
  !print "(1x,a)",'setting up integrated kernel table...'
  dq2table = radkernel2/maxcoltable
@@ -93,7 +97,6 @@ end subroutine setup_integratedkernel
 ! to give w(q)
 !
 real function wfromtable(q2)
- implicit none
  real, intent(in) :: q2
  real :: dxx,dwdx
  integer :: index, index1
@@ -159,7 +162,6 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
  use kernels, only:radkernel,radkernel2,cnormk3D,wallint
  use timing,  only:wall_time,print_time
- implicit none
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
@@ -221,9 +223,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  !
  !--check column density table has actually been setup
  !
- if (abs(coltable(1)) <= 1.e-5) then
-    call setup_integratedkernel
- endif
+ if (.not.have_setup_kernel) call setup_integratedkernel
  !
  !--print a progress report if it is going to take a long time
  !  (a "long time" is, however, somewhat system dependent)
@@ -547,7 +547,6 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      zobserver,dscreen,iverbose)
 
  use kernels, only:radkernel,radkernel2
- implicit none
  integer, intent(in) :: npart,npixx,npixy,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
  integer, intent(in), dimension(npart) :: itype
@@ -723,7 +722,6 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
      qpixwidth,getIonly,utherm,uthermcutoff)
 
  use kernels, only:radkernel,radkernel2
- implicit none
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,vecx,vecy
  integer, intent(in), dimension(npart) :: itype

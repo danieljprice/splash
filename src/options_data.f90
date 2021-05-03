@@ -61,7 +61,7 @@ subroutine defaults_set_data
  iCalcQuantities = .false.
  DataIsBuffered = .false.
  iRescale = .false.
- iRescale_has_been_set = .false.
+ idefaults_file_read = .false.
  ivegotdata = .false.
  ntypes = 1
  xorigin = 0.
@@ -70,8 +70,8 @@ subroutine defaults_set_data
  ipartialread = .false.  ! strictly unnecessary as set in get_data
  iverbose = 1
  UseFakeDustParticles = .false.
+ iautorender = 0
 
- return
 end subroutine defaults_set_data
 
 !----------------------------------------------------------------------
@@ -79,24 +79,21 @@ end subroutine defaults_set_data
 ! (read new data or change timesteps plotted)
 !----------------------------------------------------------------------
 subroutine submenu_data(ichoose)
- use filenames,      only:nsteps,nstepsinfile,ifileopen,unitsfile
+ use filenames,      only:nsteps,nstepsinfile,ifileopen
  use prompting,      only:prompt,print_logical
- use getdata,        only:get_data,get_labels
- use settings_data,  only:istartatstep,iendatstep,nfreq,iUseStepList, &
-                          isteplist,buffer_data,iCalcQuantities,iRescale, &
-                          DataIsBuffered,numplot,ncalc,ncolumns,iRescale_has_been_set,&
-                          UseFakeDustParticles
+ use getdata,        only:get_data
+ use settings_data,  only:buffer_data,iCalcQuantities,iRescale, &
+                          DataIsBuffered,numplot,ncalc,ncolumns,UseFakeDustParticles
  use calcquantities, only:calc_quantities,setup_calculated_quantities
- use limits,         only:set_limits
+ use limits,         only:set_limits,rescale_limits
  use labels,         only:label,unitslabel,labelzintegration,lenlabel,strip_units,idustfrac
- use settings_units, only:units,set_units,write_unitsfile,unitzintegration
+ use settings_units, only:units,units_old,set_units,write_unitsfile,unitzintegration
  use fparser,        only:rn,mu0
  integer, intent(in) :: ichoose
  integer             :: ians,i,ncalcwas,maxopt,len_max
- character(len=30)   :: fmtstring
  character(len=1)    :: charp
- character(len=lenlabel) :: labeli
- logical             :: ireadnow,UnitsHaveChanged,iRescaleprev,iwriteunitsfile,oldval
+ character(len=lenlabel) :: labeli,labelui
+ logical             :: UnitsHaveChanged,iRescaleprev,oldval
 
  ians = ichoose
 
@@ -121,14 +118,6 @@ subroutine submenu_data(ichoose)
 !--options
 !
  select case(ians)
-!------------------------------------------------------------------------
-!  case(1)
-!     if (buffer_data) then
-!        call get_data(-1,.false.)
-!     else
-!        call get_data(1,.false.,firsttime=.true.)
-!     endif
-! !------------------------------------------------------------------------
 !  case(2)
 !     iUseStepList = .false.
 !     call prompt('Start at timestep ',istartatstep,1,nsteps)
@@ -148,17 +137,6 @@ subroutine submenu_data(ichoose)
 !        write(fmtstring,"(a,i2)") 'Enter step ',i
 !        call prompt(fmtstring,isteplist(i),1,nsteps)
 !     enddo
-! !------------------------------------------------------------------------
-!  case(4)
-!     buffer_data = .not.buffer_data
-!     print "(/a)",' Buffering of data = '//print_logical(buffer_data)
-!     if (buffer_data) then
-!        call prompt('Do you want to read all files into memory now?',ireadnow)
-!        if (ireadnow) then
-!           call get_data(-1,.true.)
-!        endif
-!     endif
-!------------------------------------------------------------------------
  case(1)
     ncalcwas = ncalc
     call setup_calculated_quantities(ncalc)
@@ -179,8 +157,6 @@ subroutine submenu_data(ichoose)
     endif
 !------------------------------------------------------------------------
  case(2)
-    iRescale_has_been_set = .true.
-    call get_labels ! reset labels for printing
     print "(/,a,/)",' Current settings for physical units:'
     len_max = min(maxval(len_trim(label(:))),20)
     labeli = 'dz '//trim(labelzintegration)
@@ -189,12 +165,15 @@ subroutine submenu_data(ichoose)
     print "('  0) ',a,es10.3,a)",labeli(1:len_max)//' = ',units(0),' x time'
     do i=1,ncolumns
        labeli = strip_units(label(i),unitslabel(i))
-       print "(i3,') ',a,es10.3,a)",i,label(i)(1:len_max)//' = ',units(i),' x '//trim(labeli)
+       labelui = trim(labeli)//trim(unitslabel(i))
+       print "(i3,') ',a,es10.3,a)",i,labelui(1:len_max)//' = ',units(i),' x '//trim(labeli)
     enddo
     print "(a)"
 
     UnitsHaveChanged = .false.
     iRescaleprev = iRescale
+    units_old = 1.d0
+    if (iRescale) units_old = units
     charp='y'
     if (iRescale) charp = 'n'
     call prompt('Use physical units? y)es, n)o, e)dit',charp,&
@@ -204,11 +183,7 @@ subroutine submenu_data(ichoose)
        iRescale = .true.
     case('e','E')
        call set_units(ncolumns,numplot,UnitsHaveChanged)
-       iwriteunitsfile = UnitsHaveChanged
-       call prompt(' save units to file? ',iwriteunitsfile)
-       if (iwriteunitsfile) call write_unitsfile(trim(unitsfile),numplot)
        if (.not.iRescale .and. UnitsHaveChanged) iRescale = .true.
-       if (.not.UnitsHaveChanged) call get_labels
     case default
        iRescale = .false.
     end select
@@ -223,7 +198,13 @@ subroutine submenu_data(ichoose)
        if (buffer_data) then
           call get_data(-1,.true.)
        else
-          call get_data(1,.true.,firsttime=.true.)
+          call get_data(1,.true.,firsttime=.false.)
+       endif
+       if (iRescale) then
+          call rescale_limits(fac=units(1:)/units_old(1:))
+       else ! switching from physical back to code units
+          units_old = 1.d0
+          call rescale_limits(fac=units_old(1:)/units(1:))
        endif
     endif
  case(3)

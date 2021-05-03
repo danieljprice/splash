@@ -31,7 +31,6 @@ contains
 
 subroutine exact_function(string,xplot,yplot,time,ierr)
  use fparser, only:initf,evalf,endf,EvalErrType,EvalErrMsg,rn
- implicit none
  character(len=*), intent(in) :: string
  real, intent(in), dimension(:) :: xplot
  real, intent(in)               :: time
@@ -96,7 +95,6 @@ end subroutine exact_function
 !----------------------------------------------------------------
 subroutine check_function(string,ierr,verbose)
 ! use fparser, only:checkf
- implicit none
  character(len=*), intent(in)  :: string
  integer, intent(out)          :: ierr
  logical, intent(in), optional :: verbose
@@ -117,7 +115,6 @@ end subroutine check_function
 !----------------------------------------------------------------
 subroutine parse_subfunctions(string,nvars,check,ierr,verbose)
  use fparser, only:checkf,parsef,EvalErrMsg,EvalErrType
- implicit none
  character(len=*), intent(in) :: string
  integer, intent(in)          :: nvars
  logical, intent(in)          :: check
@@ -200,7 +197,6 @@ end subroutine parse_subfunctions
 ! query the number of sub-functions (number of commas)
 !----------------------------------------------------------------
 subroutine get_nvars(string,nvars)
- implicit none
  character(len=*), intent(in) :: string
  integer, intent(out) :: nvars
  integer :: j

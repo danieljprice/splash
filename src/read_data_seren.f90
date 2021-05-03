@@ -101,28 +101,28 @@ end module seren_data_store
 
 module readdata_seren
  implicit none
- 
+
  public :: read_data_seren, set_labels_seren
- 
- private 
+
+ private
 contains
 
 subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
- use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
+ use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep,headervals
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
  use settings_units, only:unitzintegration, unit_interp
  use mem_allocation, only:alloc
- use labels,         only:labeltype,labelzintegration
+ use labels,         only:labeltype,labelzintegration,headertags,print_types
  use system_utils,   only:ienvironment
  use seren_data_store
- implicit none
+ use asciiutils,     only:make_tags_unique
  integer, intent(in) :: istepstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  character(len=len(rootname)+10) :: datfile
  integer, parameter :: iunit = 16
- integer :: i,step,ierr,iambinaryfile,itype
+ integer :: i,j,step,ierr,iambinaryfile,itype
  integer :: npart_max,nstep_max
  logical :: iexist,reallocate,doubleprec
  character(len=50) :: string
@@ -142,7 +142,6 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  ipartialread = .false. ! we always read full data file
 
  seren_maxparttypes = min(maxparttypes,7)
-
  nstepsread = 0
 
  if (len_trim(rootname) > 0) then
@@ -184,8 +183,7 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  !  try binary format first, and if unsuccessful try ascii
  !
  read (unit=iunit,iostat=ierr) format_id
-
- if (ierr /= 0 .OR. trim(adjustl(format_id)) /= "SERENBINARYDUMPV2") then
+ if (ierr /= 0 .OR. index(format_id,'BINARYDUMP')==0) then
     ! Ascii format
     iambinaryfile = 0
     close (unit=iunit)
@@ -204,12 +202,25 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
        print "(a)",'*** ERROR OPENING '//trim(datfile)//' AS ASCII - WRONG FILE FORMAT ***'
        return
     endif
+ elseif (format_id(1:7)=='NBINARY') then
+    ! format is SEREN v3 which does not contain the 4byte Fortran tags
+    close (unit=iunit)
+    !print "(a)",' attempting to read Seren v3 format'
+    open(unit=iunit,file=datfile,status='old',form='unformatted',access='stream',iostat=ierr)
+    if (ierr /= 0) then
+       print "(a)",'*** ERROR OPENING '//trim(datfile)//' - UNKNOWN FILE FORMAT '//format_id//' ***'
+       return
+    endif
+    read (unit=iunit,iostat=ierr) format_id
+    !print "(a)",trim(format_id)
+    iambinaryfile = 2
+    print "(a)",' reading binary seren v3 format '
  else
     iambinaryfile = 1
+    print "(a)",' reading binary seren v2 format '
  endif
 
- if (iambinaryfile==1) then
-    print "(a)",' reading binary seren v2 format '
+ if (iambinaryfile >= 1) then
     read (iunit) PR
     read (iunit) NDIMtemp
     read (iunit) VDIMtemp
@@ -240,7 +251,7 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
 
  typedata = 0
 
- if (iambinaryfile==1) then
+ if (iambinaryfile>=1) then
     call read_serenheader_binary(iunit)
  elseif (iambinaryfile==0) then
     call read_serenheader_ascii(iunit)
@@ -260,10 +271,11 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  pdust = idata(7)
  pion = idata(8)
  dmdt_range = idata(30)
+ !print*,' GOT ',idata(:),data(:)
 
  !--check for errors in integer header (either from corrupt file or wrong endian)
  if (ptot+stot <= 0 .or. ptot+stot > 1.e10) then
-    if (iambinaryfile==1) then
+    if (iambinaryfile>=1) then
        print "(a)",' ERROR reading binary file header: wrong endian? '
     else
        print "(a)",' ERROR reading ascii file header '
@@ -322,41 +334,30 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
 !   npartoftype(1,step) = ptot
  time(step) = timetemp
  gamma(step) = gammatemp
+
+ !--identify integer header variables and copy into headervals
+ headertags(1:8) = (/'ptot      ','stot      ','pboundary ','picm      ',&
+                     'pgas      ','pcdm      ','pdust     ','pion      '/)
+ headervals(1:8,step) = real(idata(1:8))
+
+ !--tag double precision header variables with "dp_data1,dp_data2 etc."
+ do j=1,size(dpdata)
+    headertags(8+j) = 'dp_data'
+    headervals(8+j,step) = dpdata(j)
+ enddo
+ call make_tags_unique(8+size(dpdata),headertags)
  !
  !--read particle data
  !
  if (ptot > 0) then
-!      if (iambinaryfile==1) then
-!         call read_dragonbody_binary(iunit,ierr)
-!      else
-!         call read_dragonbody_ascii(iunit,ierr)
-!      endif
     call read_serenbody(iunit,ierr)
  else
     ptot = 0
-!      npartoftype(1,step) = 0
-!      npartoftype(:,step) = 0
     dat(:,:,step) = 0.
  endif
 
-!   if (allocated(iamtype)) then
-!      !--relabel particle types
  call set_types(iamtype(:,step),ptot+stot,npartoftype(:,step))
-!   endif
- if (any(npartoftype(2:,step) /= 0)) then
-    do itype=1,ntypes
-       if (npartoftype(itype,step) > 0) then
-          string = ' '
-          write(string,"(a)") 'n_'//trim(labeltype(itype))
-          write(string(18:len(string)),"(a)") ':'
-          print*,trim(string),' ',npartoftype(itype,step)
-       endif
-    enddo
- endif
-! !
-! !--set flag to indicate that only part of this file has been read
-! !
-!   if (.not.all(required(1:ncolumns))) ipartialread = .true.
+ if (any(npartoftype(2:,step) /= 0)) call print_types(npartoftype(:,step),labeltype)
 !
 !--close data file and return
 !
@@ -370,7 +371,6 @@ contains
 ! binary header read
 !----------------------------------------------------
 subroutine read_serenheader_binary(iunitb)
- implicit none
  integer, intent(in) :: iunitb
 
  read (iunitb,end=55) idata
@@ -402,7 +402,6 @@ end subroutine read_serenheader_binary
 ! ascii header read
 !----------------------------------------------------
 subroutine read_serenheader_ascii(iunita)
- implicit none
  integer, intent(in) :: iunita
 
  do i=1,size(idata)
@@ -450,7 +449,6 @@ end subroutine read_serenheader_ascii
 subroutine read_serenbody(iunit,ierr_out)
  use seren_data_store
  use labels, only:ix,ivx,ipmass,ih,irho,iBfirst,iutherm
- implicit none
  integer, intent(in)  :: iunit
  integer, intent(out) :: ierr_out
  integer              :: ierr, ierr1
@@ -529,7 +527,7 @@ subroutine read_serenbody(iunit,ierr_out)
        ! Original particle number
        ! Read through porig numbers
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           read(iunit,end=55,iostat=ierr) dummy_int(pfirst:plast)
        else
           do k=pfirst,plast
@@ -553,7 +551,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (doubleprec) allocate(dummy_dp(1:NDIMtemp,1:ptot),stat=ierr)
        allocate(dummy(1:NDIMtemp,1:ptot),stat=ierr)
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:NDIMtemp,pfirst:plast)
              dummy(1:NDIMtemp,pfirst:plast) = real(dummy_dp(1:NDIMtemp,pfirst:plast))
@@ -578,7 +576,7 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("h")
        ! Smoothing lengths
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -601,7 +599,7 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("m")
        ! Mass
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -626,7 +624,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (doubleprec) allocate(dummy_dp(1:VDIMtemp,1:ptot),stat=ierr)
        allocate(dummy(1:VDIMtemp,1:ptot),stat=ierr)
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:VDIMtemp,pfirst:plast)
              dummy(1:VDIMtemp,pfirst:plast) = real(dummy_dp(1:VDIMtemp,pfirst:plast))
@@ -651,7 +649,7 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("rho")
        ! Densities
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -674,7 +672,7 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("temp")
        ! Temperatures
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -697,7 +695,7 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("u")
        ! Internal energy
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
              dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -722,7 +720,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (doubleprec) allocate(dummy_dp(1:BDIMtemp,1:ptot),stat=ierr)
        allocate(dummy(1:BDIMtemp,1:ptot),stat=ierr)
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:BDIMtemp,pfirst:plast)
              dummy(1:BDIMtemp,pfirst:plast) = real(dummy_dp(1:BDIMtemp,pfirst:plast))
@@ -747,13 +745,13 @@ subroutine read_serenbody(iunit,ierr_out)
     case ("sink_v1")
        ! Load sinks in sink data storage, will add them later
        pfirst = typedata(2,i); plast = typedata(3,i)
-       if (iambinaryfile==1) then
+       if (iambinaryfile>=1) then
           read(iunit,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
        else
           read(iunit,fmt=*,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
        endif
        do s=pfirst,plast
-          if (iambinaryfile==1) then
+          if (iambinaryfile>=1) then
              read(iunit,end=55,iostat=ierr) ldummy
              read(iunit,end=55,iostat=ierr) idummy2
              if (doubleprec) then
@@ -783,7 +781,7 @@ subroutine read_serenbody(iunit,ierr_out)
        unknown = unknown + 1
        if (typecode == 7) then
           ! Special data structure we don't understand; read and skip
-          if (iambinaryfile==1) then
+          if (iambinaryfile>=1) then
              read(iunit,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
           else
              read(iunit,fmt=*,end=55,iostat=ierr) nl,ni,nli,npr,ndp,nchar
@@ -797,7 +795,7 @@ subroutine read_serenbody(iunit,ierr_out)
              if (doubleprec) allocate(dp_data_st(1:npr))
           endif
           if (ndp > 0) allocate(dp_data_st2(1:ndp))
-          if (iambinaryfile==1) then
+          if (iambinaryfile>=1) then
              do j=pfirst, plast
                 if (nl > 0) read(iunit,end=55,iostat=ierr) l_data_st
                 if (ni > 0) read(iunit,end=55,iostat=ierr) i_data_st
@@ -858,7 +856,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 ! Logical data array
                 allocate(dummy_logical(1:ptot))
                 dummy_logical = .FALSE.
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_logical(pfirst:plast)
                 else
                    do k=pfirst,plast
@@ -875,7 +873,7 @@ subroutine read_serenbody(iunit,ierr_out)
              elseif (typecode==2) then
                 ! Integer data array
                 dummy_int = 0
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_int(pfirst:plast)
                 else
                    do k=pfirst,plast
@@ -888,7 +886,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 ! Long integer data array
                 allocate(dummy_ilp_int(1:ptot))
                 dummy_ilp_int = 0
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_ilp_int(pfirst:plast)
                 else
                    do k=pfirst,plast
@@ -900,7 +898,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 deallocate(dummy_ilp_int)
              elseif (typecode==4) then
                 ! PR data array
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    if (doubleprec) then
                       read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
                       dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -915,7 +913,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 endif
              elseif (typecode==5) then
                 ! DP data array
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    if (.NOT.doubleprec) allocate(dummy_dp_scalar(pfirst:plast))
                    read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
                    dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
@@ -941,7 +939,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 ! Logical data array
                 allocate(dummy_logical_2D(1:width,1:ptot))
                 dummy_logical_2D = .FALSE.
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_logical_2D(1:width,pfirst:plast)
                 else
                    write (format_string,'(A,I0,A)') "(",width,"L1)"
@@ -960,7 +958,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 ! Integer data array
                 allocate(dummy_int_2D(1:width,1:ptot))
                 dummy_int_2D = 0
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_int_2D(1:width,pfirst:plast)
                 else
                    do k=pfirst,plast
@@ -974,7 +972,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 ! Long integer data array
                 allocate(dummy_ilp_int_2D(1:width,1:ptot))
                 dummy_ilp_int_2D = 0
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    read(iunit,end=55,iostat=ierr) dummy_ilp_int_2D(1:width,pfirst:plast)
                 else
                    do k=pfirst,plast
@@ -987,7 +985,7 @@ subroutine read_serenbody(iunit,ierr_out)
              elseif (typecode == 4) then
                 ! PR data array
                 if (doubleprec) allocate(dummy_dp(1:width,1:ptot),stat=ierr)
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    if (doubleprec) then
                       read(iunit,end=55,iostat=ierr) dummy_dp(1:width,pfirst:plast)
                       dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast))
@@ -1003,7 +1001,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 if (doubleprec) deallocate(dummy_dp)
              elseif (typecode == 5) then
                 ! DP data array
-                if (iambinaryfile==1) then
+                if (iambinaryfile>=1) then
                    allocate(dummy_dp(1:width,1:ptot),stat=ierr)
                    read(iunit,end=55,iostat=ierr) dummy_dp(1:width,pfirst:plast)
                    dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast))
@@ -1038,7 +1036,7 @@ subroutine read_serenbody(iunit,ierr_out)
  return
 
 55 continue
- if (iambinaryfile==1) print "(a)",' ERROR: end of file in binary read'
+ if (iambinaryfile>=1) print "(a)",' ERROR: end of file in binary read'
  if (iambinaryfile==0) print "(a)",' ERROR: end of file in ascii read'
  ierr_out = -3
  return
@@ -1053,7 +1051,6 @@ end subroutine
 ! translate types into order (for old dragon read)
 !----------------------------------------------------
 subroutine set_types(itypei,ntotal,noftype)
- implicit none
  integer(kind=int1), dimension(:), intent(inout) :: itypei
  integer, intent(in) :: ntotal
  integer, dimension(:), intent(out) :: noftype
@@ -1101,14 +1098,13 @@ end subroutine read_data_seren
 !!------------------------------------------------------------
 
 subroutine set_labels_seren
- use labels, only:label,iamvec,labelvec,labeltype,unitslabel,&
+ use labels, only:label,iamvec,labelvec,labeltype,unitslabel=>unitslabel_default,&
  &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
- use settings_units, only:units
+ use settings_units, only:units=>units_default
  use seren_data_store
- implicit none
  integer :: i, j, width, unit_no
  integer :: nunknown                ! Number of unknown data types
  character(len=lenunitslabel) :: unit_base, unit_string
@@ -1267,7 +1263,6 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
  use labels, only:lenunitslabel
  use params
  use seren_data_store
- implicit none
 
  real(doub_prec), intent(out)      :: out_unit_interp
  real, intent(out)                 :: out_unitzintegration
@@ -1417,7 +1412,6 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
 end subroutine find_weights
 
 subroutine translate_unit_names(unit_name)
- implicit none
  character(len=*), intent(inout) :: unit_name
 
  select case (trim(unit_name))

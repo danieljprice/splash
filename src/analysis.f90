@@ -27,6 +27,7 @@
 !  Command is "splash calc X" where X is analysis type.
 !-------------------------------------------------------------------
 module analysis
+ implicit none
  public :: isanalysis,open_analysis,close_analysis,write_analysis
  private
  integer, private, parameter :: iunit = 89
@@ -48,7 +49,6 @@ contains
 ! and if not, to print the available options
 !-----------------------------------------------------------------
 logical function isanalysis(string,noprint)
- implicit none
  character(len=*), intent(in) :: string
  logical, intent(in), optional :: noprint
  logical :: doprint,verbose
@@ -86,8 +86,8 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('tracks')
     isanalysis = .true.
- ! case('lightcurve')
- !    isanalysis = .true.
+ case('lightcurve')
+    isanalysis = .true.
  case('none')
     verbose = .false.
  end select
@@ -120,12 +120,10 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''meanvals.out'''
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
     print "(a)",'                             output to file called ''rmsvals.out'''
-    print "(a)",'         calc tracks       : track particle data vs time for selected* particle,'
-    print "(a)",'                             output to file called ''tracks-123.out'''
+    print "(a)",'         calc tracks       : track particle data vs time for selected particles,'
+    print "(a)",'           --tracks=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out'
 !    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
 !    print "(a)",'                             output to file called ''rmsvals-vw.out'''
-    print "(a)",'          ( * select "xy limits relative to particle" in l)imits menu",'
-    print "(a)",'            or "t" in interactive mode and save, or list ids in ''splash.tracks'' )'
     print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
     print "(a)",'  the following option produces a file equivalent in size to one input file (in ascii format):'
     print "(/,a)",'         calc timeaverage  : time average of *all* entries for every particle'
@@ -145,11 +143,11 @@ end function isanalysis
 !  over all dump files
 !----------------------------------------------------------------
 subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
- use labels,     only:ix,ivx,iBfirst,iutherm,irho,ipmass,label
- use asciiutils, only:read_asciifile
- use filenames,  only:rootname,nfiles,tagline,fileprefix
- use params,     only:maxplot
- implicit none
+ use labels,       only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label
+ use asciiutils,   only:read_asciifile
+ use filenames,    only:rootname,nfiles,tagline,fileprefix
+ use params,       only:maxplot
+ use system_utils, only:ienvlist
  integer, intent(in) :: ncolumns,ndim,ndimV
  character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
@@ -221,8 +219,8 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
           stop 'ERROR creating levels file'
        else
           nlevels = 10
-          rholevels(1:nlevels) = (/1.e-20,1.e-19,1.e-18,1.e-17,1.e-16, &
-                                   1.e-15,1.e-14,1.e-13,1.e-12,1.e-11/)
+          rholevels(1:nlevels) = (/1e-20,1e-19,1e-18,1e-17,1e-16, &
+                                   1e-15,1e-14,1e-13,1e-12,1e-11/)
           write(iunit+1,*) rholevels(1:nlevels)
           close(iunit+1)
        endif
@@ -359,27 +357,40 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !--look for a file "splash.tracks" for particle ids to track
     !
     call read_asciifile(trim(fileprefix)//'.tracks',nfileout,itracks,ierr)
-    if (ierr == 0) then
-       do i=1,nfileout
-          write(fileout(i),"(a,i0,a)") 'tracks-',itracks(i),'.out'
-       enddo
+    if (ierr /= 0) then
+       !
+       !--otherwise use --tracks=1,2,3
+       !
+       itracks = ienvlist('SPLASH_TRACK',size(itracks))
+       nfileout = count(itracks > 0)
     endif
+    if (nfileout > 0) then
+       print "(a,i0,a)",' TRACKING ',nfileout,' PARTICLES'
+    else
+       print "(a)",' Use --track=1,2,3 or splash.tracks file to specify particle IDs to track'
+    endif
+    do i=1,nfileout
+       write(fileout(i),"(a,i0,a)") 'tracks-',itracks(i),'.out'
+    enddo
+    nfileout = 1
     standardheader = .true.
 
- ! case('lightcurve')
- !    !
- !    !--for lightcurve need to h, mass and utherm
- !    !
- !    required(ix(1:ndim)) = .true.
- !    required(ih) = .true.
- !    required(iutherm) = .true.
- !    required(ipmass) = .true.
- !    !
- !    !--set filename and header line
- !    !
- !    fileout = 'lightcurve.out'
- !    write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
- !          1,'time',2,'Luminosity',3,'Rphoto',4,'Tphoto'
+  case('lightcurve')
+     !
+     !--for lightcurve need to h, mass and utherm
+     !
+     required(ix(1:ndim)) = .true.
+     required(ih) = .true.
+     required(iutherm) = .true.
+     required(ipmass) = .true.
+     required(itemp) = .true.
+     required(ikappa) = .true.
+     !
+     !--set filename and header line
+     !
+     fileout = 'lightcurve.out'
+     write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
+           1,'time',2,'Luminosity',3,'Rphoto',4,'Tphoto'
 
  end select
 
@@ -400,7 +411,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     if (iexist) then
        print "(2(a,/))",' ERROR: analysis file '//trim(fileout(i))//' already exists', &
                         '        delete, move or rename this file and try again'
-       if (nfileout==1) cycle
+       stop
     endif
     !
     !--open the file for output
@@ -429,6 +440,10 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
        write(lunit,"(a)") trim(headerline)
     endif
  enddo
+ !if (nfileout == 0) then
+    !print "(a)",' ERROR: no output from analysis, missing options?'
+    !stop
+ !endif
  nfilesread = 0
 
  return
@@ -450,8 +465,8 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use settings_data, only:xorigin,icoords,icoordsnew,itracktype,itrackoffset
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
- !use lightcurve,    only:get_lightcurve
- implicit none
+ use lightcurve,    only:get_lightcurve
+ use filenames,     only:rootname,ifileopen
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
@@ -468,7 +483,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real(kind=doub_prec) :: lmin(maxplot),lmax(maxplot),lmean(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
- !real                 :: lum,rphoto,tphoto
+ real                 :: lum,rphoto,tphoto
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
@@ -492,7 +507,11 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
  v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
 
- itrack = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+ if (itracks(1) > 0) then
+    itrack = itracks(1)  ! override particle id saved to splash.defaults file if --tracks specified
+ else
+    itrack = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+ endif
  if (itrack==0) itrack = 1
 
  select case(trim(analysistype))
@@ -704,7 +723,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           !--write line to output file
           !
           write(iunit+ifile-1,fmtstring) timei,coltemp(1:ncolumns)
-          print "(1x,'>>> ',a,' <<<')",'written to '//trim(fileout(ifile))
+          if (nfileout > 1) print "(1x,'>>> ',a,' <<<')",'written to '//trim(fileout(ifile))
        endif
     enddo
     if (nused > 0) lmean(:) = lmean(:)/real(nused)
@@ -1148,13 +1167,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        endif
     endif
     return
- ! case('lightcurve')
- !    call get_lightcurve(time,ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto)
- !    print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
- !    !
- !    !--write line to output file
- !    !
- !    write(iunit,"(4(es18.10,1x))") timei,lum,rphoto,tphoto
+  case('lightcurve')
+     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto,rootname(ifileopen))
+     print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
+     !
+     !--write line to output file
+     !
+     write(iunit,"(4(es18.10,1x))") timei,lum,rphoto,tphoto
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
@@ -1171,7 +1190,6 @@ contains
 !  (which depends whether or not mixed types are stored)
 !
 integer function igettype(i)
- implicit none
  integer :: np
  integer, intent(in) :: i
 
@@ -1193,7 +1211,6 @@ end function igettype
 !   or only for each type)
 !
 real function particlemass(i,iparttype)
- implicit none
  integer, intent(in) :: i,iparttype
 
  if (ipmass > 0 .and. ipmass <= ncolumns) then
@@ -1208,7 +1225,6 @@ end subroutine write_analysis
 
 subroutine cross_product3D(veca,vecb,vecc)
  use params, only:doub_prec
- implicit none
  real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
  real(kind=doub_prec), dimension(3), intent(out) :: vecc
 
@@ -1222,7 +1238,6 @@ end subroutine cross_product3D
 ! close output file
 !---------------------
 subroutine close_analysis(analysistype)
- implicit none
  character(len=*), intent(in) :: analysistype
  integer :: i
 

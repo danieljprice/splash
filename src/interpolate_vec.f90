@@ -47,7 +47,6 @@ contains
 !--------------------------------------------------------------------------
 subroutine mask_vectors(xplot,yplot,itype,npart,xmin,xmax,ymin,ymax, &
                         vecpixx,vecpixy,npixvecx,npixvecy,minincell,blankval)
- implicit none
  integer, intent(in) :: npart,npixvecx,npixvecy,minincell
  integer, dimension(npart), intent(in) :: itype
  real, dimension(npart), intent(in) :: xplot,yplot
@@ -112,7 +111,6 @@ end subroutine mask_vectors
 subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
      xmin,ymin,dx,dy,vecpixx,vecpixy,npart,npixx,npixy,z,zmin,zmax)
 
- implicit none
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,vecx,vecy
  integer, intent(in), dimension(npart) :: itype

@@ -68,7 +68,6 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
      xmin,datsmooth,npixx,pixwidth,normalise)
 
  use kernels, only:cnormk1D,radkernel,wfunc
- implicit none
  integer, intent(in) :: npart,npixx
  real, intent(in), dimension(npart) :: x,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype

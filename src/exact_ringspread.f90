@@ -37,7 +37,6 @@ module ringspread
 contains
 
 subroutine exact_ringspread(iplot,time,Mdisk,Rdisk,viscnu,xplot,yplot,ierr)
- implicit none
  integer, intent(in) :: iplot
  real, intent(in) :: time,Mdisk,Rdisk,viscnu
  real, intent(in), dimension(:) :: xplot
@@ -94,7 +93,6 @@ end subroutine exact_ringspread
 ! evaluates the surface density as a function of x and tau
 !----------------------------------------------------------------------
 double precision function ringspreadfunc(x,tau)
- implicit none
  double precision, intent(in) :: x, tau
  double precision :: xfunc,besfunc,dummy,term
 
@@ -125,7 +123,6 @@ end function ringspreadfunc
 !----------------------------------------------------------------------
 
 subroutine bessik(x,xnu,ri,rk,rip,rkp)
- implicit none
  integer, parameter :: maxit = 10000
  double precision, intent(in) :: x, xnu
  double precision, intent(out) :: ri,rip,rk,rkp
@@ -273,7 +270,6 @@ subroutine bessik(x,xnu,ri,rk,rip,rkp)
 end subroutine bessik
 
 subroutine beschb(x,gam1,gam2,gampl,gammi)
- implicit none
  integer, parameter :: nuse1=7,nuse2=8
  double precision, intent(in) :: x
  double precision, intent(out) :: gam1,gam2,gammi,gampl
@@ -305,7 +301,6 @@ subroutine beschb(x,gam1,gam2,gampl,gammi)
 end subroutine beschb
 
 double precision function chebev(a,b,c,m,x)
- implicit none
  integer, intent(in) :: m
  double precision, intent(in) :: a,b,x,c(m)
 !

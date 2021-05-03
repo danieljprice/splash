@@ -38,7 +38,7 @@ module fparser
  !
  !  5th Mar 2019: added atan2 function (and parsing of functions with two arguments)
 
- IMPLICIT NONE
+ implicit none
 !--modification here by D.Price: define type parameters here rather than in a separate module
  integer, parameter, public  :: rn = KIND(0.0d0)          ! Precision of real numbers
 !--modification (22/6/2018), adjusted integer kind to allow more than 128 variables

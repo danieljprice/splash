@@ -62,8 +62,8 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  use particle_data
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,buffer_steps_in_file
- use settings_units, only:units,get_nearest_length_unit,get_nearest_time_unit
- use labels,         only:unitslabel,headertags
+ use settings_units, only:units=>units_default,get_nearest_length_unit,get_nearest_time_unit
+ use labels,         only:unitslabel=>unitslabel_default,headertags
  use mem_allocation
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread

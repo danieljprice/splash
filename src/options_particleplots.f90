@@ -50,7 +50,6 @@ contains
 !---------------------------------------------
 subroutine defaults_set_part
  use settings_data, only:icoords
- implicit none
  integer :: i
 
  ncircpart = 0
@@ -93,7 +92,6 @@ end subroutine defaults_set_part
 ! changed default values for these options
 !---------------------------------------------
 subroutine defaults_set_part_ev
- implicit none
 
  iplotline = .true.     ! plot line joining the particles
  iplotpartoftype(1:maxparttypes) = .false. ! whether or not to plot particles of certain types
@@ -125,7 +123,8 @@ subroutine submenu_particleplots(ichoose)
  use particle_data,   only:npartoftype,iamtype
  use prompting,       only:prompt,print_logical,print_logicals
  use geometry,        only:maxcoordsys,labelcoordsys,coord_transform_limits,&
-                            igeom_flaredcyl,igeom_logflared,set_flaring_index
+                            igeom_flaredcyl,igeom_logflared,set_flaring_index,&
+                            igeom_planetwake,set_planet_wake
  use multiplot,       only:itrans
  use plotlib,         only:plotlib_maxlinestyle,plotlib_maxlinecolour
  use calcquantities,  only:calc_quantities
@@ -134,7 +133,7 @@ subroutine submenu_particleplots(ichoose)
  use geomutils,       only:set_coordlabels
  use calcquantities,  only:setup_calculated_quantities
  use asciiutils,      only:enumerate
- implicit none
+ use exact,           only:HonR,rplanet,q_index,phase
  integer, intent(in) :: ichoose
  integer             :: i,iaction,n,itype,icoordsprev,ierr,icol,isinktype,nt
  character(len=2)    :: charntypes
@@ -382,6 +381,11 @@ subroutine submenu_particleplots(ichoose)
                          ' where q is sound speed index i.e. cs = cs_0(R/R_0)^-q '
        call prompt('enter flaring index beta',betaflare)
        call set_flaring_index(rref,betaflare)
+    case(igeom_planetwake)
+       call prompt('enter radial location of planet (r0)',rplanet)
+       call prompt('enter disc aspect ratio H/R at rp',HonR)
+       call prompt('enter sound speed index q (cs = R^-q)',q_index)
+       call set_planet_wake(rplanet,phase,1.0,q_index,HonR)
     end select
 
     if (icoordsnew /= icoordsprev) then

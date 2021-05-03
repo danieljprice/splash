@@ -32,7 +32,6 @@ module rotation
 contains
 
 subroutine rotate2D(xcoords,anglez)
- implicit none
  real, intent(inout) :: xcoords(2)
  real, intent(in) :: anglez
  real :: x, y, r, phi
@@ -59,7 +58,6 @@ end subroutine rotate2D
 !  This is done in the order z-y-x
 !
 subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
- implicit none
  real, intent(inout) :: xcoords(3)
  real, intent(in) :: anglex, angley, anglez, zobs, dz1
  real :: x, y, z, r, phi, zfrac
@@ -119,7 +117,6 @@ end subroutine rotate3D
 !
 subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
  use plotlib, only:plot_arro,plot_sfs,plot_poly
- implicit none
  integer, intent(in) :: ioption
  real, intent(in), dimension(2) :: xmin,xmax,xorigin
  real, intent(in) :: anglez
@@ -184,7 +181,6 @@ end subroutine rotate_axes2D
 subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
                          anglex,angley,anglez,zobs,dz1)
  use plotlib, only:plot_poly,plot_sfs,plot_arro,plot_line
- implicit none
  integer, intent(in) :: ioption,iplotx,iploty
  real, intent(in), dimension(3) :: xmin,xmax,xorigin
  real, intent(in) :: anglex, angley, anglez, zobs, dz1

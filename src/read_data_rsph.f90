@@ -64,7 +64,6 @@ subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
                           buffer_data
  use mem_allocation, only:alloc
  use geometry, only:labelcoordsys
- implicit none
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -296,7 +295,6 @@ subroutine set_labels_rsph
  use settings_data, only:ndim,ndimV,ncolumns,ntypes, &
                     UseTypeInRenderings
  use geometry, only:labelcoord
- implicit none
  integer :: i,j
  character(len=10), dimension(maxplot) :: cheader
  common /chead/ cheader

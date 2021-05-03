@@ -61,7 +61,6 @@ subroutine read_data_jjmmulti(rootname,indexstart,ipos,nstepsread)
  use params
  use settings_data, only:ndim,ndimV,ncolumns
  use mem_allocation
- implicit none
  integer, intent(IN) :: indexstart,ipos
  integer, intent(OUT) :: nstepsread
  character(LEN=*), intent(IN) :: rootname
@@ -212,7 +211,6 @@ subroutine set_labels_jjmmulti
  use params
  use settings_data
  use geometry, only:labelcoord
- implicit none
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then

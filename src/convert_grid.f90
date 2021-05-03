@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -43,11 +43,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use settings_units,       only:units,unit_interp
  use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin,iverbose
  use settings_part,        only:iplotpartoftype
- use settings_render,      only:npix,inormalise_interpolations,idensityweightedinterpolation,exact_rendering
+ use settings_render,      only:npix,inormalise=>inormalise_interpolations,&
+                                idensityweightedinterpolation,exact_rendering
  use settings_xsecrot,     only:anglex,angley,anglez
  use rotation,             only:rotate3D
  use params,               only:int1
- use interpolation,        only:set_interpolation_weights
+ use interpolation,        only:set_interpolation_weights,get_n_interp
  use interpolations3D,     only:interpolate3D,interpolate3D_vec
  use interpolations3Dgeom, only:interpolate3Dgeom,interpolate3Dgeom_vec
  use interpolations2D,     only:interpolate2D,interpolate2D_vec
@@ -71,7 +72,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real,    intent(out), allocatable, optional  :: rhogrid(:,:,:),dat3D(:,:,:)
  integer, parameter :: iunit = 89
  integer            :: ierr,i,k,ncolsgrid,ivec,nvec,iloc,j,nzero
- integer            :: npixx,ntoti,ninterp,isinktype
+ integer            :: npixx,ninterp,isinktype
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
@@ -92,7 +93,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
  real    :: mtot,mtotgrid,err,t2,t1,xi(3),ax,ay,az
  real, parameter :: pi=4.0*atan(1.0)
- logical :: inormalise,lowmem,do_output
+ logical :: lowmem,do_output
  logical, dimension(3) :: isperiodic
  character(len=len(labelcoord)), dimension(3) :: xlab
  character(len=120) :: origin
@@ -162,13 +163,9 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  !
  !--set number of particles to use in the interpolation routines
- !  (by default, only the gas particles)
+ !  and allocate memory for weights
  !
- ntoti = sum(npartoftype)
- ninterp = npartoftype(1)
- if (any(UseTypeInRenderings(2:ntypes).and.iplotpartoftype(2:ntypes)) &
-     .or. size(itype) > 1) ninterp = ntoti
-
+ ninterp = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
  allocate(weight(ninterp),stat=ierr)
  allocate(x(ninterp),y(ninterp),z(ninterp),stat=ierr)
  if (ierr /= 0) then
@@ -178,18 +175,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
- inormalise = inormalise_interpolations
  isinktype = get_sink_type(ntypes)
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
       idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.,isinktype)
  !
- !--set colours (just in case)
+ !--set default mask and apply range restrictions to data
  !
  icolourme(:) = 1
- !
- !--apply range restrictions to data
- !
  call get_particle_subset(icolourme,dat,ncolumns)
 
  !
@@ -198,7 +191,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  npixx = npix
  npixels = ienvlist('SPLASH_TO_GRID_NPIX',3)
  if (product(npixels) > 0) then
-    print*,'Using npixels = ',npixels,' from SPLASH_TO_GRID_NPIX'
+    print "(a,2(i5,','),i5)",' Using --npix=',npixels
  else
     if (npixx <= 0) then
        print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
@@ -235,7 +228,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           print "(a)",'    so instead we choose npixels = ',npixx
        endif
     endif
-    print "(a,/)",' Set this manually using SPLASH_TO_GRID_NPIX=100,100,100'
+    print "(a,/)",' Set this manually using --npix=100,100,100'
     pixwidth = (xmax(1)-xmin(1))/npixx
     do i=1,ndim
        if (coord_is_length(i,igeom)) then
@@ -293,10 +286,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  endif
  if (ierr /= 0) then
     write(*,*) 'FAILED: NOT ENOUGH MEMORY'
-    if (allocated(weight)) deallocate(weight)
-    if (allocated(x)) deallocate(x)
-    if (allocated(y)) deallocate(y)
-    if (allocated(z)) deallocate(z)
+    call deallocate_memory()
     return
  else
     write(*,*) 'OK'
@@ -312,12 +302,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                          xmind(1:ndim),xmaxd(1:ndim),dtime,ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR: could not open grid file for output, skipping...'
-       if (allocated(datgrid)) deallocate(datgrid)
-       if (allocated(datgrid)) deallocate(datgrid2D)
-       if (allocated(weight)) deallocate(weight)
-       if (allocated(x)) deallocate(x)
-       if (allocated(y)) deallocate(y)
-       if (allocated(z)) deallocate(z)
+       call deallocate_memory()
        return
     endif
  endif
@@ -409,10 +394,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (rhominset >= 0.) then
     rhomin = rhominset
     print*,'enforcing minimum density on grid = ',rhomin
-    print*,'(based on SPLASH_TO_GRID_RHOMIN setting)'
+    print*,'(based on --rhomin setting)'
  elseif (rhomin > 0.) then
     print*,'enforcing minimum density on grid = ',rhomin
-    print*,'set SPLASH_TO_GRID_RHOMIN=minval to manually set this (e.g. to zero)'
+    print "(a)",' ** set --rhomin=minval to manually set this (e.g. to zero) **'
  endif
 
  if (rhomin > 0.) then
@@ -465,8 +450,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  if (interpolateall .or. ncolstogrid > 0) then
     if (ncolstogrid > 0 .and. .not.present(icols)) then
-       print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from SPLASH_TO_GRID setting:'
-       print "(' got SPLASH_TO_GRID=',10(i2,1x))",icoltogrid(1:ncolstogrid)
+       print "(/,a,i2,a)",' Interpolating ',ncolstogrid,' columns to grid from --grid setting:'
+       print "(' got --grid=',10(i2,1x))",icoltogrid(1:ncolstogrid)
     endif
 
     do i=1,ncolumns
@@ -523,8 +508,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
     if (nvec > 0) then
 
-       print "(/,a,i2,a)",' set SPLASH_TO_GRID=',irho,' to interpolate density ONLY and skip remaining columns'
-       print "(a,i2,a)",  '     SPLASH_TO_GRID=6,8,10 to select particular columns'
+       print "(/,a,i2,a)",' set --grid=',irho,' to interpolate density ONLY and skip remaining columns'
+       print "(a,i2,a)",  '     --grid=6,8,10 to select particular columns'
 
        if (.not.lowmem) then
           if (ndim==3) then
@@ -668,16 +653,26 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  close(iunit)
 
- if (allocated(datgrid))      deallocate(datgrid)
- if (allocated(datgrid2D))    deallocate(datgrid2D)
- if (allocated(datgridvec))   deallocate(datgridvec)
- if (allocated(datgridvec2D)) deallocate(datgridvec2D)
- if (allocated(weight)) deallocate(weight)
- if (allocated(x)) deallocate(x)
- if (allocated(y)) deallocate(y)
- if (allocated(z)) deallocate(z)
-
+ call deallocate_memory()
  return
+
+contains
+!------------------------------------------------------------
+! manual mop-up of allocatable memory
+!------------------------------------------------------------
+ subroutine deallocate_memory()
+
+  if (allocated(datgrid))      deallocate(datgrid)
+  if (allocated(datgrid2D))    deallocate(datgrid2D)
+  if (allocated(datgridvec))   deallocate(datgridvec)
+  if (allocated(datgridvec2D)) deallocate(datgridvec2D)
+  if (allocated(weight)) deallocate(weight)
+  if (allocated(x)) deallocate(x)
+  if (allocated(y)) deallocate(y)
+  if (allocated(z)) deallocate(z)
+
+ end subroutine deallocate_memory
+
 end subroutine convert_to_grid
 
 !------------------------------------------------------------
@@ -722,7 +717,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  isperiodic(:) = .false.
  call envlist('SPLASH_TO_GRID_PERIODIC',nstring,strings)
  if (nstring > ndim) then
-    print "(a)",' ERROR in SPLASH_TO_GRID_PERIODIC setting'
+    print "(a)",' ERROR in --periodic setting'
     nstring = ndim
  endif
  do i=1,nstring
@@ -731,23 +726,22 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  if (nstring==1) isperiodic(2:ndim) = isperiodic(1)
 
  if (all(isperiodic(1:ndim))) then
-    print "(/,a)",' using PERIODIC boundaries (from SPLASH_TO_GRID_PERIODIC setting)'
+    print "(/,a)",' using PERIODIC boundaries (from --periodic setting)'
  elseif (isperiodic(1) .or. isperiodic(2) .or. isperiodic(3)) then
     print*
     do i=1,ndim
        if (isperiodic(i)) then
-          print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
+          print "(a)",' using PERIODIC boundaries in '//xlab(i)//' (from --periodic flag)'
        else
-          print "(a)",' using NON-PERIODIC bounds in '//xlab(i)//' (from SPLASH_TO_GRID_PERIODIC setting)'
+          print "(a)",' using NON-PERIODIC bounds in '//xlab(i)//' (from --periodic flag)'
        endif
     enddo
  else
-    print "(/,a)",' using NON-PERIODIC boundaries'
-    print "(a)",' (set SPLASH_TO_GRID_PERIODIC=yes for periodic'
+    print "(/,a)",' using NON-PERIODIC boundaries: use --periodic=yes for periodic'
     if (ndim==3) then
-       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no,yes for mixed)'
+       print "(a,/)",'                                 or --periodic=yes,no,yes for mixed'
     else
-       print "(a)",'   or SPLASH_TO_GRID_PERIODIC=yes,no for mixed)'
+       print "(a,/)",'                                 or --periodic=yes,no for mixed'
     endif
  endif
 
