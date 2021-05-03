@@ -63,6 +63,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use filenames,             only:tagline
  use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
                                  integrate_log,get_colour_temperature
+ use settings_xsecrot,      only:anglex,angley,anglez
+ use rotation,              only:rotate3D
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -70,13 +72,15 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq,iu1
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq
+ integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu
  real, dimension(:,:,:), allocatable :: img_nu
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
+ real :: ax,ay,az,xi(3)
 
  lum = 0.
  rphoto = 0.
@@ -104,6 +108,19 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
+ if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
+    print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
+    ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
+    ay = angley*pi/180.0
+    az = anglez*pi/180.0
+    do i=1,n
+       xi = (/x(i),y(i),z(i)/)
+       call rotate3D(xi,ax,ay,az,0.,0.)
+       x(i) = xi(1)
+       y(i) = xi(2)
+       z(i) = xi(3)
+    enddo
+ endif
 
  !
  !--set number of pixels and pixel scale in each direction
@@ -217,7 +234,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(a,2(es10.3,a))",' R_bb  = ',r_bb/au,' au = ',r_bb/rsun,' rsun'
 
  print "(a)",' WRITING '//trim(specfile)//'.spec'
- open(newunit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
+ open(unit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
  write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
  write(iu1,"(a)") '# wavelength [nm], F_\lambda'
  do i=1,nfreq

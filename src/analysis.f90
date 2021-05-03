@@ -144,8 +144,8 @@ end function isanalysis
 !----------------------------------------------------------------
 subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  use labels,       only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label
- use asciiutils,   only:read_asciifile
- use filenames,    only:rootname,nfiles,tagline,fileprefix
+ use asciiutils,   only:read_asciifile,basename
+ use filenames,    only:rootname,nfiles,tagline,fileprefix,ifileopen
  use params,       only:maxplot
  use system_utils, only:ienvlist
  integer, intent(in) :: ncolumns,ndim,ndimV
@@ -388,7 +388,11 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
      !
      !--set filename and header line
      !
-     fileout = 'lightcurve.out'
+     if (nfiles==1) then
+        fileout = 'lightcurve_'//trim(basename(rootname(ifileopen)))//'.out'
+     else
+        fileout = 'lightcurve.out'
+     endif
      write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
            1,'time',2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
            5,'L_{bol}',6,'R_{bb}',7,'T_c'
