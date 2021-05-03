@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol,iHIIcol,iHeIIcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol,iHIIcol,iHeIIcol,iHeIIIcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1301,6 +1301,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  itempcol = 0
  iHIIcol = 0
  iHeIIcol = 0
+ iHeIIIcol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1575,10 +1576,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              itempcol = ncolstep
           endif
           if (lenvironment("SPLASH_COMMON_ENVELOPE")) then
-             ncolstep = ncolstep+1
-             iHIIcol = ncolstep
-             ncolstep = ncolstep+1
-             iHeIIcol = ncolstep
+             iHIIcol   = ncolstep + 1
+             iHeIIcol  = ncolstep + 2
+             iHeIIIcol = ncolstep + 3
+             ncolstep  = ncolstep + 3
           endif
        endif
     endif
@@ -1999,7 +2000,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     else
        read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading divv from file'
-       print*,"ierr =",ierr
        if (any(required(icurlvxcol:icurlvzcol))) then
           read(66,iostat=ierr) dat(1:ntotal,icurlvxcol,j)
           read(66,iostat=ierr) dat(1:ntotal,icurlvycol,j)
@@ -2017,11 +2017,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
 
-    if (iHIIcol > 0. .and. required(iHIIcol) .and. iHeIIcol > 0. .and. required(iHeIIcol)) then
+    if (iHIIcol > 0. .and. iHeIIcol > 0. .and. iHeIIIcol > 0. .and. any(required(iHIIcol:iHeIIIcol))) then
       do i=1,ntotal
          call ionisation_fraction(dat(k,irho,j)*unit_dens,dat(i,itempcol,j),0.69843,0.28731,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
          dat(i,iHIIcol,j)=xHIIi
          dat(i,iHeIIcol,j)=xHeIIi
+         dat(i,iHeIIIcol,j)=xHeIIIi
       enddo
    endif
  endif
@@ -2469,6 +2470,7 @@ subroutine set_labels_sphNG
  if (itempcol > 0) label(itempcol) = 'temperature'
  if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'
  if (iHeIIcol > 0) label(iHeIIcol) = 'HeII fraction'
+ if (iHeIIIcol > 0) label(iHeIIIcol) = 'HeIII fraction'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif
