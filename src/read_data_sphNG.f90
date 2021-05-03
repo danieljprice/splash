@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,itempcol,iHIIcol,iHeIIcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
@@ -1249,7 +1249,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
- use lightcurve,     only:get_temp_from_u
+ use lightcurve,     only:get_temp_from_u,ionisation_fraction
  use settings_units, only:units
  implicit none
  integer, intent(in)  :: indexstart,iposn
@@ -1282,7 +1282,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega
+ real :: hfact,omega,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi
  logical :: skip_corrupted_block_3
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
@@ -1299,6 +1299,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvycol = 0
  icurlvzcol = 0
  itempcol = 0
+ iHIIcol = 0
+ iHeIIcol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1571,6 +1573,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
             !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
+          endif
+          if (lenvironment("SPLASH_COMMON_ENVELOPE")) then
+             ncolstep = ncolstep+1
+             iHIIcol = ncolstep
+             ncolstep = ncolstep+1
+             iHeIIcol = ncolstep
           endif
        endif
     endif
@@ -1991,6 +1999,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     else
        read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading divv from file'
+       print*,"ierr =",ierr
        if (any(required(icurlvxcol:icurlvzcol))) then
           read(66,iostat=ierr) dat(1:ntotal,icurlvxcol,j)
           read(66,iostat=ierr) dat(1:ntotal,icurlvycol,j)
@@ -2007,7 +2016,16 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j)=get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density, etc. ! make this temperature
+
+    if (iHIIcol > 0. .and. required(iHIIcol) .and. iHeIIcol > 0. .and. required(iHeIIcol)) then
+      do i=1,ntotal
+         call ionisation_fraction(dat(k,irho,j)*unit_dens,dat(i,itempcol,j),0.69843,0.28731,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
+         dat(i,iHIIcol,j)=xHIIi
+         dat(i,iHeIIcol,j)=xHeIIi
+      enddo
+   endif
  endif
+
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
@@ -2449,6 +2467,8 @@ subroutine set_labels_sphNG
  if (idivB > 0) label(idivB) = 'div B'
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itempcol > 0) label(itempcol) = 'temperature'
+ if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'
+ if (iHeIIcol > 0) label(iHeIIcol) = 'HeII fraction'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif
