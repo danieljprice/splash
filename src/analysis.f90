@@ -463,7 +463,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
                           iamtype,ncolumns,ndim,ndimV,analysistype)
  use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
  use params,        only:int1,doub_prec,maxplot
- use asciiutils,    only:ucase
+ use asciiutils,    only:ucase,basename
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
@@ -1174,7 +1174,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     return
   case('lightcurve')
      call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
-         lum,rphoto,tphoto,l_bb,r_bb,t_bb,rootname(ifileopen))
+         lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)))
      print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
      !
      !--write line to output file
