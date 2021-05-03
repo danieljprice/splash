@@ -390,7 +390,8 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
      !
      fileout = 'lightcurve.out'
      write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
-           1,'time',2,'Luminosity',3,'Rphoto',4,'Tphoto'
+           1,'time',2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
+           5,'L_{bol}',6,'R_{bb}',7,'T_c'
 
  end select
 
@@ -483,7 +484,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real(kind=doub_prec) :: lmin(maxplot),lmax(maxplot),lmean(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
- real                 :: lum,rphoto,tphoto
+ real                 :: lum,rphoto,tphoto,l_bb,r_bb,t_bb
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
@@ -1168,12 +1169,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     endif
     return
   case('lightcurve')
-     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,lum,rphoto,tphoto,rootname(ifileopen))
+     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
+         lum,rphoto,tphoto,l_bb,r_bb,t_bb,rootname(ifileopen))
      print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
      !
      !--write line to output file
      !
-     write(iunit,"(4(es18.10,1x))") timei,lum,rphoto,tphoto
+     write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'

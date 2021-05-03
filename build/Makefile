@@ -398,7 +398,7 @@ endif
 SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
-         plotutils.f90 colourbar.f90 \
+         plotutils.f90 blackbody.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
          rotate.f90 interpolate3D_projection.f90 interpolate3D_geom.f90 interpolate3D_xsec.f90 \
