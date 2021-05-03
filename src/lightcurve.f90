@@ -70,7 +70,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq,iu1
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq
+ integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
@@ -217,7 +218,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(a,2(es10.3,a))",' R_bb  = ',r_bb/au,' au = ',r_bb/rsun,' rsun'
 
  print "(a)",' WRITING '//trim(specfile)//'.spec'
- open(newunit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
+ open(unit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
  write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
  write(iu1,"(a)") '# wavelength [nm], F_\lambda'
  do i=1,nfreq
