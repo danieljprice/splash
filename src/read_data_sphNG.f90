@@ -1350,7 +1350,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega
+ real :: hfact,omega,Xfrac
  logical :: skip_corrupted_block_3,get_temperature
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
@@ -2071,8 +2071,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     unit_dens = umass/(udist**3)
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itemp,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
+    Xfrac = 0.7
     where(dat(1:ntotal,itemp,j) > 7000.)
-       dat(1:ntotal,ikappa,j) = 0.3   ! electron scattering opacity
+       dat(1:ntotal,ikappa,j) = 0.2*(1. + Xfrac)   ! electron scattering opacity cm^2/g
     elsewhere
        dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
     end where
