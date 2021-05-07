@@ -472,6 +472,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
  use filenames,     only:rootname,ifileopen
+ use vectorutils,   only:cross_product3D
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
  integer, intent(in), dimension(:) :: npartoftype
  real, intent(in), dimension(:)    :: massoftype
@@ -1228,17 +1229,6 @@ real function particlemass(i,iparttype)
 end function particlemass
 
 end subroutine write_analysis
-
-subroutine cross_product3D(veca,vecb,vecc)
- use params, only:doub_prec
- real(kind=doub_prec), dimension(3), intent(in) :: veca,vecb
- real(kind=doub_prec), dimension(3), intent(out) :: vecc
-
- vecc(1) = veca(2)*vecb(3) - veca(3)*vecb(2)
- vecc(2) = veca(3)*vecb(1) - veca(1)*vecb(3)
- vecc(3) = veca(1)*vecb(2) - veca(2)*vecb(1)
-
-end subroutine cross_product3D
 
 !---------------------
 ! close output file

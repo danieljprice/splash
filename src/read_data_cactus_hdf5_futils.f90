@@ -89,12 +89,13 @@ subroutine calc_trK(gxxd,gxyd,gxzd,gyyd,gyzd,gzzd,kxxd,kxyd,kxzd,kyyd,kyzd,kzzd,
  ! Subroutine to calculate trace K ( trK = g^{ij} K_{ij} )
  ! Takes g_{ij} and K_{ij} at one position and time, returns trK
  !
+ use vectorutils,only:matrixinvert3D
  real, intent(in) :: gxxd,gxyd,gxzd,gyyd,gyzd,gzzd ! spatial down metric components
  real, intent(in) :: kxxd,kxyd,kxzd,kyyd,kyzd,kzzd ! down extrinsic curvature components
  real :: gxxu,gxyu,gxzu,gyyu,gyzu,gzzu             ! spatial up metric components
  real, intent(out) :: trk
  real, dimension(3,3) :: gijd, giju  ! 4x4 metric down and up respectively
- real :: det
+ integer :: ierr
 
  ! down components
  gijd(1,1) = gxxd
@@ -107,7 +108,7 @@ subroutine calc_trK(gxxd,gxyd,gxzd,gyyd,gyzd,gzzd,kxxd,kxyd,kxzd,kyyd,kyzd,kzzd,
  gijd(3,2) = gyzd
  gijd(3,3) = gzzd
 
- call inv3x3(gijd,giju,det)
+ call matrixinvert3D(gijd,giju,ierr)
 
  ! up (inverse) components
  gxxu = giju(1,1)
@@ -123,28 +124,6 @@ subroutine calc_trK(gxxd,gxyd,gxzd,gyyd,gyzd,gzzd,kxxd,kxyd,kxzd,kyyd,kyzd,kzzd,
 
 end subroutine calc_trK
 
-pure subroutine inv3x3(A,B,det)
- real, intent(in), dimension(3,3) :: A
- real, intent(out), dimension(3,3) :: B ! inverse matrix
- real, intent(out) :: det
-
- det = A(1,1)*A(2,2)*A(3,3) - A(1,1)*A(2,3)*A(3,2) - &
- & A(1,2)*A(2,1)*A(3,3) + A(1,2)*A(2,3)*A(3,1) + &
- & A(1,3)*A(2,1)*A(3,2) - A(1,3)*A(2,2)*A(3,1)
-
- B(1,1) = A(2,2)*A(3,3) - A(2,3)*A(3,2)
- B(2,1) = A(2,3)*A(3,1) - A(2,1)*A(3,3)
- B(3,1) = A(2,1)*A(3,2) - A(2,2)*A(3,1)
- B(1,2) = A(1,3)*A(3,2) - A(1,2)*A(3,3)
- B(2,2) = A(1,1)*A(3,3) - A(1,3)*A(3,1)
- B(3,2) = A(1,2)*A(3,1) - A(1,1)*A(3,2)
- B(1,3) = A(1,2)*A(2,3) - A(1,3)*A(2,2)
- B(2,3) = A(1,3)*A(2,1) - A(1,1)*A(2,3)
- B(3,3) = A(1,1)*A(2,2) - A(1,2)*A(2,1)
-
- B(:,:) = B(:,:)/det
-
-end subroutine inv3x3
 
  !
  ! find location of metric and extrinsic curvature in columns

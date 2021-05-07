@@ -66,8 +66,9 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
  integer :: nhydroreal4,istart_extra_real4
+ integer :: itempcol = 0
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
@@ -1319,7 +1320,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
- use lightcurve,     only:get_temp_from_u
+ use lightcurve,     only:get_temp_from_u,ionisation_fraction
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1350,8 +1351,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac
- logical :: skip_corrupted_block_3,get_temperature
+ real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi
+ logical :: skip_corrupted_block_3,get_temperature,get_ionfrac
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1366,6 +1367,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
+ iHIIcol = 0
+ iHeIIcol = 0
+ iHeIIIcol = 0
  nhydroreal4 = 0
  umass = 1.d0
  utime = 1.d0
@@ -1400,9 +1404,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  nstepsread = 0
  doubleprec = .true.
  get_temperature = lenvironment("SPLASH_GET_TEMP")
- if (get_temperature .and. itemp > 0 .and. required(itemp)) then
+ get_ionfrac = lenvironment("SPLASH_GET_ION")
+ if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
     required(iutherm) = .true.
+ endif
+ if (get_ionfrac) then
+    required(irho) = .true.
+    required(itemp) = .true.
  endif
  ilastrequired = 0
  do i=1,size(required)-1
@@ -1642,9 +1651,15 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           if (get_temperature) then
             !add a column for the temperature
              ncolstep = ncolstep+1
-             itemp = ncolstep
+             itempcol = ncolstep
              ncolstep = ncolstep+1
              ikappa = ncolstep
+          endif
+          if (get_ionfrac) then
+             iHIIcol   = ncolstep + 1
+             iHeIIcol  = ncolstep + 2
+             iHeIIIcol = ncolstep + 3
+             ncolstep  = ncolstep + 3
           endif
        endif
     endif
@@ -2067,17 +2082,28 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !
  !--calculate the temperature from density and internal energy (using physical units)
  !
- if (get_temperature .and. itemp > 0 .and. required(itemp)) then
-    unit_dens = umass/(udist**3)
+ unit_dens = umass/(udist**3)
+ Xfrac = 0.69843
+ Yfrac = 0.28731
+ if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
-    dat(1:ntotal,itemp,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    Xfrac = 0.7
+    dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
     where(dat(1:ntotal,itemp,j) > 7000.)
        dat(1:ntotal,ikappa,j) = 0.2*(1. + Xfrac)   ! electron scattering opacity cm^2/g
     elsewhere
        dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
     end where
  endif
+ if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
+     .and. any(required(iHIIcol:iHeIIIcol))) then
+    do i=1,ntotal
+       call ionisation_fraction(dat(i,irho,j)*unit_dens,dat(i,itemp,j),Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
+       dat(i,iHIIcol,j)=xHIIi
+       dat(i,iHeIIcol,j)=xHeIIi
+       dat(i,iHeIIIcol,j)=xHeIIIi
+    enddo
+ endif
+
  !
  !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
  !
@@ -2494,6 +2520,8 @@ subroutine set_labels_sphNG
           igrainsize = i
        case('graindens')
           igraindens = i
+       case('temperature')
+          itemp = i
        case('vrel')
           ivrel = i
        case default
@@ -2508,6 +2536,8 @@ subroutine set_labels_sphNG
           iradenergy,icv,udist,utime,units,unitslabel)
  endif
 
+ if (itemp==0) itemp=itempcol ! if temperature not found in file, use computed one
+
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  if (irho > 0) label(irho) = 'density'
  if (iutherm > 0) label(iutherm) = 'u'
@@ -2517,6 +2547,9 @@ subroutine set_labels_sphNG
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itemp > 0) label(itemp) = 'temperature'
  if (ikappa > 0) label(ikappa) = 'kappa'
+ if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'
+ if (iHeIIcol > 0) label(iHeIIcol) = 'HeII fraction'
+ if (iHeIIIcol > 0) label(iHeIIIcol) = 'HeIII fraction'
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif
