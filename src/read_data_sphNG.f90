@@ -2097,7 +2097,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
     do i=1,ntotal
-       call ionisation_fraction(dat(i,irho,j)*unit_dens,dat(i,itemp,j),Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
+       call ionisation_fraction(real(dat(i,irho,j)*unit_dens),dat(i,itemp,j),Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
        dat(i,iHIIcol,j)=xHIIi
        dat(i,iHeIIcol,j)=xHeIIi
        dat(i,iHeIIIcol,j)=xHeIIIi

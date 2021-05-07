@@ -24,6 +24,10 @@ module vectorutils
  public :: minmaxave,cross_product3D,curl3D_epsijk,det
  public :: matrixinvert3D,rotatevec
 
+ interface cross_product3D
+  module procedure cross_product3D_r4, cross_product3D_r8
+ end interface
+
  private
 
 contains
@@ -49,15 +53,25 @@ subroutine minmaxave(x,xmin,xmax,xav,npts)
  return
 end subroutine minmaxave
 
-pure subroutine cross_product3D(veca,vecb,vecc)
- real, intent(in)  :: veca(3),vecb(3)
- real, intent(out) :: vecc(3)
+pure subroutine cross_product3D_r4(veca,vecb,vecc)
+ real(4), intent(in)  :: veca(3),vecb(3)
+ real(4), intent(out) :: vecc(3)
 
  vecc(1) = veca(2)*vecb(3) - veca(3)*vecb(2)
  vecc(2) = veca(3)*vecb(1) - veca(1)*vecb(3)
  vecc(3) = veca(1)*vecb(2) - veca(2)*vecb(1)
 
-end subroutine cross_product3D
+end subroutine cross_product3D_r4
+
+pure subroutine cross_product3D_r8(veca,vecb,vecc)
+ real(8), intent(in)  :: veca(3),vecb(3)
+ real(8), intent(out) :: vecc(3)
+
+ vecc(1) = veca(2)*vecb(3) - veca(3)*vecb(2)
+ vecc(2) = veca(3)*vecb(1) - veca(1)*vecb(3)
+ vecc(3) = veca(1)*vecb(2) - veca(2)*vecb(1)
+
+end subroutine cross_product3D_r8
 
 pure subroutine curl3D_epsijk(gradAvec,curlA)
  real, intent(in)  :: gradAvec(3,3)
@@ -144,4 +158,3 @@ pure subroutine rotatevec(u,v,theta)
 end subroutine rotatevec
 
 end module vectorutils
-    
