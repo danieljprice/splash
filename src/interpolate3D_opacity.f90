@@ -91,6 +91,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  ! optional arguments for vector opacity rendering
  real, dimension(:,:),   intent(in),  optional :: datv
  real, dimension(:,:,:), intent(out), optional :: datvpix
+ !real, dimension(:),     intent(in),  optional :: v_on_c
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder
@@ -110,6 +111,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  real, allocatable :: datvi(:)
  real :: xminpix,yminpix
  character(len=10) :: str
+ logical :: backwards
 
  datsmooth = 0.
  term = 0.
@@ -140,6 +142,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     zcutoff = huge(zobserver)
  endif
  !
+ !--whether to raytrace backwards from observer, or forwards to observer
+ !
+ backwards = .false.
+
+ !
  !--setup kernel table if not already set
  !
  if (.not.have_setup_kernel) call setup_integratedkernel
@@ -166,10 +173,15 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !--get starting CPU time
 !
  call cpu_time(t_start)
+
 !
 !--first sort the particles in z so that we do the opacity in the correct order
 !
- call indexx(npart,z,iorder)
+ if (backwards) then
+    call indexx(npart,-z,iorder)   ! sort front-to-back
+ else
+    call indexx(npart,z,iorder)    ! sort back-to-front
+ endif
  !
  !--store x value for each pixel (for optimisation)
  !
@@ -364,18 +376,19 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                     wab = wfromtable(q2)
 
                     tau = wab*term
-                    fopacity = 1. - exp(-tau)
+                    tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
                     !
                     !--render, obscuring previously drawn pixels by relevant amount
                     !  also calculate total optical depth for each pixel
                     !
-                    datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
-                    tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
-                    !
-                    !--same but with frequency-dependent source function
-                    !
-                    if (present(datv) .and. present(datvpix)) then
-                       datvpix(:,ipix,jpix) = (1.-fopacity)*datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                    if (backwards) then
+                       fopacity = exp(-tausmooth(ipix,jpix))*tau
+                       datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
+                       if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                    else
+                       fopacity = 1. - exp(-tau)
+                       datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
+                       if (present(datv)) datvpix(:,ipix,jpix) = (1.-fopacity)*datvpix(:,ipix,jpix) + fopacity*datvi(:)
                     endif
                  endif
               endif
