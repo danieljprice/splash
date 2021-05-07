@@ -24,7 +24,7 @@ module lightcurve
  implicit none
 
  public :: get_lightcurve
- public :: get_temp_from_u
+ public :: get_temp_from_u,ionisation_fraction
 
  private
 
@@ -288,5 +288,61 @@ real elemental function get_temp_from_u(rho,u) result(temp)
  enddo
 
 end function get_temp_from_u
+
+!----------------------------------------------------------------
+!+
+!  Solves three Saha equations simultaneously to return ion
+!  fractions of hydrogen and helium. Assumes inputs in cgs units
+!+
+!----------------------------------------------------------------
+subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
+ use vectorutils, only:matrixinvert3D
+ use physcon,     only:pi,kboltz,hplanck,mh
+ real, intent(in) :: dens,temp,X,Y
+ real, intent(out):: xh0,xh1,xhe0,xhe1,xhe2
+ real             :: n,nh,nhe,A,B,C,const,xh1g,xhe1g,xhe2g,f,g,h
+ real, dimension(3,3) :: M,M_inv
+ real, dimension(3) :: dx
+ integer          :: i,ierr
+ real, parameter  :: twopi=2.*pi,eV=1.60219d-12,mass_electron_cgs=9.10938291d-28,&
+                     chih0=13.6,chihe0=24.6,chihe1=54.4
+
+ nh = X * dens / mh
+ nhe = Y * dens / (4. * mh)
+ n = nh + nhe
+
+ const = (sqrt(twopi * mass_electron_cgs * kboltz) / hplanck)**3 / n
+
+ A = 1. * const * temp**(1.5) * exp(-chih0 * eV / (kboltz * temp))
+ B = 4. * const * temp**(1.5) * exp(-chihe0 * eV / (kboltz * temp))
+ C = 1. * const * temp**(1.5) * exp(-chihe1 * eV / (kboltz * temp))
+
+ xh1g = 0.4
+ xhe1g = 0.3
+ xhe2g = 0.2
+
+ do i=1,50
+    f = xh1g * (xh1g + xhe1g + 2*xhe2g) - A * ((nh/n) - xh1g)
+    g = xhe1g * (xh1g + xhe1g + 2*xhe2g) - B * ((nhe/n) - xhe1g - xhe2g)
+    h = xhe2g * (xh1g + xhe1g + 2*xhe2g) - C * xhe1g
+
+    M(1,:) = (/ 2*xh1g + xhe1g + 2*xhe2g + A, xh1g, 2*xh1g /)
+    M(2,:) = (/ xhe1g, xh1g + 2*xhe1g + 2*xhe2g + B, 2*xhe1g + B /)
+    M(3,:) = (/ xhe2g, xhe2g - C, xh1g + xhe1g + 4*xhe2g /)
+
+    call matrixinvert3D(M,M_inv,ierr)
+    dx = matmul(M_inv, (/ -f, -g, -h/))
+
+    xh1g = xh1g + dx(1)
+    xhe1g = xhe1g + dx(2)
+    xhe2g = xhe2g + dx(3)
+ enddo
+
+ xh1 = xh1g * n / nh
+ xhe1 = xhe1g * n / nhe
+ xhe2 = xhe2g * n / nhe
+ xh0 = ((nh/n) - xh1g) * n / nh
+ xhe0 = ((nhe/n) - xhe1g - xhe2g) * n / nhe
+end subroutine ionisation_fraction
 
 end module lightcurve
