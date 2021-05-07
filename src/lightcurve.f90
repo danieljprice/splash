@@ -296,21 +296,22 @@ end function get_temp_from_u
 !+
 !----------------------------------------------------------------
 subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
+ use vectorutils, only:matrixinvert3D
+ use physcon,     only:pi,kboltz,hplanck,mh
  real, intent(in) :: dens,temp,X,Y
  real, intent(out):: xh0,xh1,xhe0,xhe1,xhe2
  real             :: n,nh,nhe,A,B,C,const,xh1g,xhe1g,xhe2g,f,g,h
- real, parameter  :: chih0=13.6,chihe0=24.6,chihe1=54.4
- real, dimension(3,3) :: M, M_inv
+ real, dimension(3,3) :: M,M_inv
  real, dimension(3) :: dx
- integer          :: i
- real, parameter :: twopi=6.2831853072d0,kboltz=1.38066d-16,eV=1.60219d-12,&
-                    planckh=6.6260755d-27,mass_electron_cgs=9.10938291d-28,mass_proton_cgs=1.67262158d-24
+ integer          :: i,ierr
+ real, parameter  :: twopi=2.*pi,eV=1.60219d-12,mass_electron_cgs=9.10938291d-28,&
+                     chih0=13.6,chihe0=24.6,chihe1=54.4
 
- nh = X * dens / mass_proton_cgs
- nhe = Y * dens / (4. * mass_proton_cgs)
+ nh = X * dens / mh
+ nhe = Y * dens / (4. * mh)
  n = nh + nhe
 
- const = (sqrt(twopi * mass_electron_cgs * kboltz) / planckh)**3 / n
+ const = (sqrt(twopi * mass_electron_cgs * kboltz) / hplanck)**3 / n
 
  A = 1. * const * temp**(1.5) * exp(-chih0 * eV / (kboltz * temp))
  B = 4. * const * temp**(1.5) * exp(-chihe0 * eV / (kboltz * temp))
@@ -329,8 +330,7 @@ subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
     M(2,:) = (/ xhe1g, xh1g + 2*xhe1g + 2*xhe2g + B, 2*xhe1g + B /)
     M(3,:) = (/ xhe2g, xhe2g - C, xh1g + xhe1g + 4*xhe2g /)
 
-    call minv(M, M_inv)
-
+    call matrixinvert3D(M,M_inv,ierr)
     dx = matmul(M_inv, (/ -f, -g, -h/))
 
     xh1g = xh1g + dx(1)
@@ -344,41 +344,5 @@ subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
  xh0 = ((nh/n) - xh1g) * n / nh
  xhe0 = ((nhe/n) - xhe1g - xhe2g) * n / nhe
 end subroutine ionisation_fraction
-
-
-
-subroutine minv (M, M_inv)
-
- implicit none
-
- real, dimension(3,3), intent(in)  :: M
- real, dimension(3,3), intent(out) :: M_inv
-
- real :: det
- real, dimension(3,3) :: cofactor
-
-
- det =   M(1,1)*M(2,2)*M(3,3)  &
-       - M(1,1)*M(2,3)*M(3,2)  &
-       - M(1,2)*M(2,1)*M(3,3)  &
-       + M(1,2)*M(2,3)*M(3,1)  &
-       + M(1,3)*M(2,1)*M(3,2)  &
-       - M(1,3)*M(2,2)*M(3,1)
-
- cofactor(1,1) = +(M(2,2)*M(3,3)-M(2,3)*M(3,2))
- cofactor(1,2) = -(M(2,1)*M(3,3)-M(2,3)*M(3,1))
- cofactor(1,3) = +(M(2,1)*M(3,2)-M(2,2)*M(3,1))
- cofactor(2,1) = -(M(1,2)*M(3,3)-M(1,3)*M(3,2))
- cofactor(2,2) = +(M(1,1)*M(3,3)-M(1,3)*M(3,1))
- cofactor(2,3) = -(M(1,1)*M(3,2)-M(1,2)*M(3,1))
- cofactor(3,1) = +(M(1,2)*M(2,3)-M(1,3)*M(2,2))
- cofactor(3,2) = -(M(1,1)*M(2,3)-M(1,3)*M(2,1))
- cofactor(3,3) = +(M(1,1)*M(2,2)-M(1,2)*M(2,1))
-
- M_inv = transpose(cofactor) / det
-
- return
-
-end subroutine minv
 
 end module lightcurve

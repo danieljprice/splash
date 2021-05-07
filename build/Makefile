@@ -395,7 +395,7 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 asciiutils.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
          plotutils.f90 blackbody.f90 colourbar.f90 \
