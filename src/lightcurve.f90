@@ -48,7 +48,7 @@ contains
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                           lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
- use labels,                only:ix,ih,irho,ipmass,itemp,ikappa
+ use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx
  use limits,                only:lim,get_particle_subset
  use interpolate3D_opacity, only:interp3D_proj_opacity
  use particle_data,         only:icolourme
@@ -59,7 +59,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
  use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun,c,cm_to_nm
- use write_pixmap,          only:write_pixmap_ascii
+ !use write_pixmap,          only:write_pixmap_ascii
  use filenames,             only:tagline
  use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
                                  integrate_log,get_colour_temperature
@@ -77,10 +77,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
- real, dimension(:,:), allocatable :: img,taupix,flux_nu
+ real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c
  real, dimension(:,:,:), allocatable :: img_nu
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
- real :: ax,ay,az,xi(3)
+ real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,beta_max,taui
 
  lum = 0.
  rphoto = 0.
@@ -100,7 +100,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !  and allocate memory for weights
  !
  n = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
- allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),stat=ierr)
+ allocate(weight(n),x(n),y(n),z(n),v_on_c(3,n),flux(n),opacity(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     return
@@ -108,6 +108,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
+ do i=1,3
+    v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
+ enddo
  if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
     print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
     ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
@@ -119,6 +122,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        x(i) = xi(1)
        y(i) = xi(2)
        z(i) = xi(3)
+       call rotate3D(v_on_c(:,i),ax,ay,az,0.,0.)
     enddo
  endif
 
@@ -171,9 +175,21 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  freqmax = 1e22
  freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
  allocate(flux_nu(nfreq,n))
+ beta_max = 0.
  do i=1,n
+    !betaz = 1. + v_on_c(3,i)
+    !lorentz = 1./sqrt(1. - dot_product(v_on_c(:,i),v_on_c(:,i)))
+    !doppler_factor = betaz*lorentz
+    !if (abs(doppler_factor) > beta_max) then
+      ! beta_max = doppler_factor
+       !print*,x(i)/au,y(i)/au,z(i)/au,'au v/c=',betaz,' factor=',doppler_factor**3
+    !endif
+    !opacity(i) = opacity(i)/doppler_factor
+    !flux_nu(:,i) = doppler_factor**3*B_nu(dat(i,itemp),freq)
     flux_nu(:,i) = B_nu(dat(i,itemp),freq)
  enddo
+ !print*,' max opacity reduction from v/c=',1./doppler_factor
+
  if (allocated(img_nu)) deallocate(img_nu)
  allocate(img_nu(nfreq,npixx,npixy))
  !
@@ -185,7 +201,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu)
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu) !,v_on_c=v_on_c(3,1:n))
 
  lum = 4.*sum(img)*dx*dy
  print*,'grey luminosity = ',lum,' erg/s'
@@ -241,6 +257,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     write(iu1,*) nu_to_lam(freq(i)),spectrum(i)
  enddo
  close(iu1)
+
+ !call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
+ !      minval(img),maxval(img),'intensity','lum.pix',0.)
 
 end subroutine get_lightcurve
 
