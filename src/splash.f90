@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -51,7 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.2.2   : (xx/04/21) bug fix with surface density plot with physical units on
+!     3.2.2   : (04/05/21) bug fix with surface density plot with physical units on;
+!             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
+!             lightcurve now perfoms frequency-dependent ray tracing; --anglex,--angley,--anglez flags added
 !     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
 !             to cross section; specifying --kappa turns on opacity rendering;
@@ -463,7 +465,8 @@ program splash
  use settings_page,      only:interactive,nomenu
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile
- use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering
+ use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
+                              irotate,anglex,angley,anglez
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -472,7 +475,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.2.1 [26th April 2021]'
+ character(len=*), parameter :: version = 'v3.2.2 [4th May 2021]'
 
  !
  ! initialise some basic code variables
@@ -707,6 +710,18 @@ program splash
  if (get_command_flag('xsec')) then  ! e.g. --xsec=1.0
     xsecpos_nomulti = get_command_option('xsec',default=xsecpos_nomulti)
     xsec_nomulti = .true.   ! set cross section to true if --xsec was set
+ endif
+ if (get_command_flag('anglex')) then  ! e.g. --anglex=1.0
+    anglex = get_command_option('anglex',default=anglex)
+    irotate = .true.
+ endif
+ if (get_command_flag('angley')) then  ! e.g. --angley=1.0
+    angley = get_command_option('angley',default=angley)
+    irotate = .true.
+ endif
+ if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
+    anglez = get_command_option('anglez',default=anglez)
+    irotate = .true.
  endif
  !
  ! check that we have got filenames
@@ -948,6 +963,7 @@ subroutine print_usage(quit)
  print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
+ print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

@@ -47,7 +47,7 @@ contains
 ! Used to generate synthetic lightcurves
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
-                          lum,rphoto,temp,specfile)
+                          lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
  use labels,                only:ix,ih,irho,ipmass,itemp,ikappa
  use limits,                only:lim,get_particle_subset
  use interpolate3D_opacity, only:interp3D_proj_opacity
@@ -58,23 +58,29 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
- use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun,c,cm_to_nm,keV_to_Hz
+ use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun,c,cm_to_nm
  use write_pixmap,          only:write_pixmap_ascii
  use filenames,             only:tagline
+ use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
+                                 integrate_log,get_colour_temperature
+ use settings_xsecrot,      only:anglex,angley,anglez
+ use rotation,              only:rotate3D
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
- real,    intent(out) :: lum,rphoto,temp
+ real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq,iu1,iu2
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq
+ integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
- real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity,freq,spectrum
+ real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
+ real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu
  real, dimension(:,:,:), allocatable :: img_nu
- real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,Tc,freq_max,bb_scale
- real :: lum_x,lum_bb,r_bb
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
+ real :: ax,ay,az,xi(3)
 
  lum = 0.
  rphoto = 0.
@@ -102,6 +108,19 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
+ if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
+    print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
+    ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
+    ay = angley*pi/180.0
+    az = anglez*pi/180.0
+    do i=1,n
+       xi = (/x(i),y(i),z(i)/)
+       call rotate3D(xi,ax,ay,az,0.,0.)
+       x(i) = xi(1)
+       y(i) = xi(2)
+       z(i) = xi(3)
+    enddo
+ endif
 
  !
  !--set number of pixels and pixel scale in each direction
@@ -144,8 +163,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  ! specify source function for each particle
  !
- flux = steboltz*dat(1:n,itemp)**4
- !flux = steboltz*5.778e3**4  ! check solar luminosity
+ flux = steboltz*dat(1:n,itemp)**4 ! grey version
 
  ! frequency-dependent version
  nfreq = 128
@@ -155,7 +173,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(flux_nu(nfreq,n))
  do i=1,n
     flux_nu(:,i) = B_nu(dat(i,itemp),freq)
-!    flux_nu(:,i) = B_nu(5.778e3,freq)
  enddo
  if (allocated(img_nu)) deallocate(img_nu)
  allocate(img_nu(nfreq,npixx,npixy))
@@ -196,7 +213,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(a,3(1pg10.3,a))",' Teff  = ',temp,' K: Blackbody peak at ',freq_max,' Hz / ',lam_max,' nm'
 
  ! get integrated spectrum from integrating over all pixels in the image
- allocate(spectrum(nfreq))
+ allocate(spectrum(nfreq),bb_spectrum(nfreq))
  do i=1,nfreq
     spectrum(i) = sum(img_nu(i,1:npixx,1:npixy))*dx*dy
  enddo
@@ -209,32 +226,21 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  rphoto = sqrt(lum/(4.*pi*steboltz*temp**4))
  print "(a,2(es10.3,a))",' R_eff = ',rphoto/au,' au = ',rphoto/rsun,' rsun'
 
- ! x-ray luminosity
- !print*,' using x-ray band =',nu_to_lam(0.3*keV_to_Hz),' -> ',nu_to_lam(10.*keV_to_Hz)
- lum_x = 4.*pi*integrate_log(spectrum(1:nfreq),freq,real(0.3*keV_to_Hz),real(10.*keV_to_Hz))
- print "(a,2(es10.3,a))",' L_x   = ',lum_x,' L_bol/L_x = ',lum/lum_x
-
- open(newunit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
- open(newunit=iu2,file=trim(specfile)//'.bbfit',status='replace',iostat=ierr)
- write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
- write(iu1,"(a)") '# wavelength [nm], F_\lambda'
- write(iu2,"(a)") '# best fit blackbody spectrum'
- write(iu1,"(a)") '# wavelength [nm], F_\lambda'
- do i=1,nfreq
-    write(iu1,*) nu_to_lam(freq(i)),spectrum(i)
-    write(iu2,*) nu_to_lam(freq(i)),B_nu(Tc,freq(i))*bb_scale
- enddo
- close(iu1)
- close(iu2)
-
- spectrum = B_nu(Tc,freq(:))*bb_scale
- lum_bb = 4.*pi*integrate_log(spectrum(1:nfreq),freq,freqmin,freqmax)
- print "(a,2(es10.3,a))",' L_bb  = ',lum_bb,' L_bb /L_x = ',lum_bb/lum_x
+ ! L_bb and effective photospheric radius, using blackbody at T=Tc
+ bb_spectrum = B_nu(Tc,freq(:))*bb_scale
+ lum_bb = 4.*pi*integrate_log(bb_spectrum(1:nfreq),freq,freqmin,freqmax)
+ print "(a,2(es10.3,a))",' L_bb  = ',lum_bb
  r_bb = sqrt(lum_bb/(4.*pi*steboltz*Tc**4))
  print "(a,2(es10.3,a))",' R_bb  = ',r_bb/au,' au = ',r_bb/rsun,' rsun'
 
- ! finally, compute x-ray luminosity
- !print*,' bolometric luminosity = ',4.*pi*integrate_log(spectrum(1:nfreq),freq,freqmin,freqmax)
+ print "(a)",' WRITING '//trim(specfile)//'.spec'
+ open(unit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
+ write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
+ write(iu1,"(a)") '# wavelength [nm], F_\lambda'
+ do i=1,nfreq
+    write(iu1,*) nu_to_lam(freq(i)),spectrum(i)
+ enddo
+ close(iu1)
 
 end subroutine get_lightcurve
 
@@ -290,13 +296,10 @@ end function get_temp_from_u
 !+
 !----------------------------------------------------------------
 subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
- real, intent(in) :: dens, temp, X, Y
- real, intent(out):: xh0, xh1, xhe0, xhe1, xhe2
- real             :: n, nh, nhe
- real             :: A, B, C, const
- real             :: xh1g, xhe1g, xhe2g
- real             :: f, g, h
- real, parameter  :: chih0 = 13.6, chihe0 = 24.6, chihe1 = 54.4
+ real, intent(in) :: dens,temp,X,Y
+ real, intent(out):: xh0,xh1,xhe0,xhe1,xhe2
+ real             :: n,nh,nhe,A,B,C,const,xh1g,xhe1g,xhe2g,f,g,h
+ real, parameter  :: chih0=13.6,chihe0=24.6,chihe1=54.4
  real, dimension(3,3) :: M, M_inv
  real, dimension(3) :: dx
  integer          :: i
@@ -377,142 +380,5 @@ subroutine minv (M, M_inv)
  return
 
 end subroutine minv
-!---------------------------------------------------------
-! Planck function
-! INPUT:
-!    temp - temperature [K]
-!    nu - frequency [Hz]
-! OUTPUT:
-!    B_nu - Planck function erg/s/cm^2/Hz/steradian
-!---------------------------------------------------------
-real elemental function B_nu(temp,nu)
- use physcon, only:c,hplanck,kboltz
- real, intent(in) :: temp,nu
- real(doub_prec) :: hnu_on_kT,hnu3_on_c2
-
- hnu_on_kT  = hplanck*nu/(kboltz*temp)
- hnu3_on_c2 = hplanck*nu**3/c**2
-
- if (hnu_on_kT < 300.) then
-    B_nu = 2.*hnu3_on_c2/(exp(hnu_on_kT) - 1.d0)
- else
-    B_nu = epsilon(0.)
- endif
-
-end function B_nu
-
-!---------------------------------------------------------
-! Wien's displacement law, in frequency
-!---------------------------------------------------------
-real function Wien_T_from_nu(nu) result(T)
- real, intent(in) :: nu
-
- T = nu/5.88e10
-
-end function Wien_T_from_nu
-
-!---------------------------------------------------------
-! Wien's displacement law, frequency from temperature
-!---------------------------------------------------------
-real function Wien_nu_from_T(T) result(nu)
- real, intent(in) :: T
-
- nu = 5.88e10*T
-
-end function Wien_nu_from_T
-
-!---------------------------------------------------------
-! Convert frequency in Hz to wavelength in nm
-!---------------------------------------------------------
-real function nu_to_lam(nu) result(lam)
- use physcon, only:c,cm_to_nm
- real, intent(in) :: nu
-
- lam = (c/nu)*cm_to_nm
-
-end function nu_to_lam
-
-!---------------------------------------------------------
-! colour temperature, from fitting peak of blackbody
-!---------------------------------------------------------
-subroutine get_colour_temperature(spectrum,freq,Tc,freq_max,bb_scale)
- real, intent(in) :: spectrum(:),freq(:)
- real, intent(out) :: Tc,freq_max,bb_scale
- integer :: imax(1),j
-
- imax = maxloc(spectrum)
- j = imax(1)
- freq_max = freq(j)
- Tc = Wien_T_from_nu(freq_max)
-
- ! scaling factor by which to shift Blackbody
- ! in y direction to match the peak flux
- bb_scale = spectrum(j)/B_nu(Tc,freq_max)
-
-end subroutine get_colour_temperature
-
-!--------------------------------------------------------
-!+
-!  Integrate over a given filter in wavelength
-!  specifying wavelength range in nanometres [nm]
-!+
-!--------------------------------------------------------
-real function filter(spec,freq,lmin,lmax)
- use physcon, only:cm_to_nm,c
- real, intent(in) :: lmin,lmax
- real, intent(in) :: freq(:),spec(:)
- real :: fmin,fmax
-
- fmin = c/(lmin/cm_to_nm)  ! freq in Hz, converting lambda to cm
- fmax = c/(lmax/cm_to_nm)  ! freq in Hz, converting lambda to cm
-
- filter = integrate_log(spec,freq,fmin,fmax)
-
-end function filter
-
-!--------------------------------------------------------
-!+
-!  Function to fill an array with equally log-spaced points
-!+
-!--------------------------------------------------------
-function logspace(n,xmin,xmax) result(x)
- integer, intent(in) :: n
- real, intent(in)    :: xmin,xmax
- real, allocatable   :: x(:)
- integer :: i
- real    :: dx
-
- allocate(x(n))
- dx = log10(xmax/xmin)/real(n-1)
- do i=1,n
-    x(i) = log10(xmin) + (i-1)*dx
- enddo
-
- x = 10.**x
-
-end function logspace
-
-!--------------------------------------------------------
-!+
-!  Integrate function on evenly spaced logarithmic grid
-!  i.e. \int f(x) dx = \int x f(x) d(ln x)
-!+
-!--------------------------------------------------------
-real function integrate_log(f,x,xmin,xmax) result(fint)
- real, intent(in) :: xmin,xmax
- real, intent(in) :: x(:),f(:)
- real :: dlogx
- integer :: n,i
-
- n = size(f)
- dlogx = log(xmax/xmin)/(n-1)
- fint = 0.
- do i=2,n
-    if (x(i-1) > xmin .and. x(i) < xmax) then
-       fint = fint + 0.5*(f(i)*x(i) + f(i-1)*x(i-1))*dlogx
-    endif
- enddo
-
-end function integrate_log
 
 end module lightcurve
