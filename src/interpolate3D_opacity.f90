@@ -91,7 +91,6 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  ! optional arguments for vector opacity rendering
  real, dimension(:,:),   intent(in),  optional :: datv
  real, dimension(:,:,:), intent(out), optional :: datvpix
- !real, dimension(:),     intent(in),  optional :: v_on_c
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder

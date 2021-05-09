@@ -59,12 +59,13 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                                  idensityweightedinterpolation,exact_rendering
  use settings_units,        only:units,unit_interp
  use physcon,               only:steboltz,pi,au,rsun=>solarrcgs,Lsun,c,cm_to_nm
- !use write_pixmap,          only:write_pixmap_ascii
+ use write_pixmap,          only:write_pixmap_ascii
  use filenames,             only:tagline
  use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
                                  integrate_log,get_colour_temperature
- use settings_xsecrot,      only:anglex,angley,anglez
+ use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
  use rotation,              only:rotate3D
+ use system_utils,          only:get_command_flag
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -81,6 +82,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(:,:,:), allocatable :: img_nu
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
  real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,beta_max,taui
+ logical :: photon_trapping
 
  lum = 0.
  rphoto = 0.
@@ -93,6 +95,12 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     print "(a)",' ERROR: could not locate h,mass,rho or temperature in data'
     return
  endif
+ !
+ !--allow for reduction in opacity by factor of v/c for photon trapping
+ !
+ photon_trapping = get_command_flag('trap')
+ if (photon_trapping) print "(a)",' photon trapping is ON, multiplying opacity by v/c'
+
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)
  !
@@ -100,7 +108,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !  and allocate memory for weights
  !
  n = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
- allocate(weight(n),x(n),y(n),z(n),v_on_c(3,n),flux(n),opacity(n),stat=ierr)
+ allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     return
@@ -108,9 +116,13 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
- do i=1,3
-    v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
- enddo
+
+ if (photon_trapping) then
+    allocate(v_on_c(3,n),stat=ierr)
+    do i=1,3
+       v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
+    enddo
+ endif
  if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
     print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
     ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
@@ -160,9 +172,14 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  if (ikappa > 0) then
     opacity = dat(1:n,ikappa)
+    if (abs(taupartdepth - 1.0) > tiny(0.) .and. taupartdepth > 0.) then
+       print "(a,es10.2)",' opacity = opacity x ',taupartdepth
+       opacity = opacity*taupartdepth
+    endif
  else
-    print*,' WARNING: using fixed opacity kappa = 0.3 cm^2/g for lightcurve'
     opacity = 0.3
+    if (taupartdepth > 0.) opacity = taupartdepth
+    print*,' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
  !
  ! specify source function for each particle
@@ -184,6 +201,14 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
       ! beta_max = doppler_factor
        !print*,x(i)/au,y(i)/au,z(i)/au,'au v/c=',betaz,' factor=',doppler_factor**3
     !endif
+    if (photon_trapping) then
+       if (v_on_c(3,i) > 1.e-4) then
+          opacity(i) = opacity(i)*v_on_c(3,i)
+       !elseif (v_on_c(3,i) < -1.e-4) then
+      !    opacity(i) = opacity(i)/abs(v_on_c(3,i))
+       endif
+    endif
+
     !opacity(i) = opacity(i)/doppler_factor
     !flux_nu(:,i) = doppler_factor**3*B_nu(dat(i,itemp),freq)
     flux_nu(:,i) = B_nu(dat(i,itemp),freq)
@@ -201,7 +226,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu) !,v_on_c=v_on_c(3,1:n))
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu)
 
  lum = 4.*sum(img)*dx*dy
  print*,'grey luminosity = ',lum,' erg/s'
@@ -258,8 +283,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  enddo
  close(iu1)
 
- !call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
- !      minval(img),maxval(img),'intensity','lum.pix',0.)
+ if (get_command_flag('writepix')) then
+    call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
+         minval(img),maxval(img),'intensity','lum.pix',0.)
+ endif
 
 end subroutine get_lightcurve
 
