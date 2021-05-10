@@ -134,7 +134,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        x(i) = xi(1)
        y(i) = xi(2)
        z(i) = xi(3)
-       call rotate3D(v_on_c(:,i),ax,ay,az,0.,0.)
+       if (allocated(v_on_c)) call rotate3D(v_on_c(:,i),ax,ay,az,0.,0.)
     enddo
  endif
 

@@ -53,7 +53,8 @@ program splash
 !     Version history/ Changelog:
 !     3.2.2   : (04/05/21) bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
-!             lightcurve now perfoms frequency-dependent ray tracing; --anglex,--angley,--anglez flags added
+!             lightcurve now perfoms frequency-dependent ray tracing;
+!             added --anglex,--angley,--anglez flags; added --trap option to lightcurve
 !     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
 !             to cross section; specifying --kappa turns on opacity rendering;
