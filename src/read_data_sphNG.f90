@@ -1356,6 +1356,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
+ real, parameter :: Xfrac_default=0.69843,Yfrac_default=0.28731
 
  nstepsread = 0
  nstep_max = 0
@@ -1412,6 +1413,23 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_ionfrac) then
     required(irho) = .true.
     required(itemp) = .true.
+    Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
+    Yfrac = renvironment("SPLASH_YFRAC",Yfrac_default)
+
+    if ( Xfrac < 0. .or. Xfrac > 1.) then
+       Xfrac = Xfrac_default
+       print "(1x,a,f5.3)",'ERROR: Input Xfrac is not between 0 and 1, using default value of ',Xfrac
+    endif
+    if ( Yfrac < 0. .or. Yfrac > 1.) then
+       Yfrac = Yfrac_default
+       print "(1x,a,f5.3)",'ERROR: Input Yfrac is not between 0 and 1, using default value of ',Yfrac
+    endif
+    if ( Xfrac + Yfrac > 1.) then
+      print "(1x,a,f5.3,a,f5.3,a,f5.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
+         Xfrac_default,' and Yfrac = ',Yfrac_default
+      Xfrac = Xfrac_default
+      Yfrac = Yfrac_default
+    endif
  endif
  ilastrequired = 0
  do i=1,size(required)-1
@@ -2083,8 +2101,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !--calculate the temperature from density and internal energy (using physical units)
  !
  unit_dens = umass/(udist**3)
- Xfrac = 0.69843
- Yfrac = 0.28731
  Tcut = renvironment('SSPLASH_TCUT',errval=7000.)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
