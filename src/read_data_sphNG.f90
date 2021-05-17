@@ -1351,7 +1351,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi
+ real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,Tcut
  logical :: skip_corrupted_block_3,get_temperature,get_ionfrac
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
@@ -2085,10 +2085,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  unit_dens = umass/(udist**3)
  Xfrac = 0.69843
  Yfrac = 0.28731
+ Tcut = renvironment('SSPLASH_TCUT',errval=7000.)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    where(dat(1:ntotal,itemp,j) > 7000.)
+    print*,' setting opacity constant for T > ',Tcut
+    where(dat(1:ntotal,itemp,j) > Tcut)
        dat(1:ntotal,ikappa,j) = 0.2*(1. + Xfrac)   ! electron scattering opacity cm^2/g
     elsewhere
        dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
