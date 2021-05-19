@@ -2268,7 +2268,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !
           !--redraw axes over what has been plotted
           !
-          if (plotlib_is_pgplot) call redraw_axes(iaxis,just,yscalealt,itransy)
+          if (plotlib_is_pgplot .or. ismooth_particle_plots > 0) call redraw_axes(iaxis,just,yscalealt,itransy)
           !
           !--annotate with time / marker legend and title
           !
