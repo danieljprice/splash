@@ -1351,11 +1351,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi
+ real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,Tcut
  logical :: skip_corrupted_block_3,get_temperature,get_ionfrac
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
+ real, parameter :: Xfrac_default=0.69843,Yfrac_default=0.28731
 
  nstepsread = 0
  nstep_max = 0
@@ -1412,6 +1413,23 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_ionfrac) then
     required(irho) = .true.
     required(itemp) = .true.
+    Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
+    Yfrac = renvironment("SPLASH_YFRAC",Yfrac_default)
+
+    if ( Xfrac < 0. .or. Xfrac > 1.) then
+       Xfrac = Xfrac_default
+       print "(1x,a,f5.3)",'ERROR: Input Xfrac is not between 0 and 1, using default value of ',Xfrac
+    endif
+    if ( Yfrac < 0. .or. Yfrac > 1.) then
+       Yfrac = Yfrac_default
+       print "(1x,a,f5.3)",'ERROR: Input Yfrac is not between 0 and 1, using default value of ',Yfrac
+    endif
+    if ( Xfrac + Yfrac > 1.) then
+      print "(1x,a,f5.3,a,f5.3,a,f5.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
+         Xfrac_default,' and Yfrac = ',Yfrac_default
+      Xfrac = Xfrac_default
+      Yfrac = Yfrac_default
+    endif
  endif
  ilastrequired = 0
  do i=1,size(required)-1
@@ -2083,12 +2101,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !--calculate the temperature from density and internal energy (using physical units)
  !
  unit_dens = umass/(udist**3)
- Xfrac = 0.69843
- Yfrac = 0.28731
+ Tcut = renvironment('SSPLASH_TCUT',errval=7000.)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    where(dat(1:ntotal,itemp,j) > 7000.)
+    print*,' setting opacity constant for T > ',Tcut
+    where(dat(1:ntotal,itemp,j) > Tcut)
        dat(1:ntotal,ikappa,j) = 0.2*(1. + Xfrac)   ! electron scattering opacity cm^2/g
     elsewhere
        dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
