@@ -2545,7 +2545,10 @@ subroutine set_labels_sphNG
  if (ipmass > 0) label(ipmass) = 'particle mass'
  if (idivB > 0) label(idivB) = 'div B'
  if (idivvcol > 0) label(idivvcol) = 'div v'
- if (itemp > 0) label(itemp) = 'temperature'
+ if (itemp > 0) then
+    label(itemp) = 'temperature'
+    unitslabel(itemp) = ' [K]'
+ endif
  if (ikappa > 0) label(ikappa) = 'kappa'
  if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'
  if (iHeIIcol > 0) label(iHeIIcol) = 'HeII fraction'
