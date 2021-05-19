@@ -71,7 +71,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
   zobserver,dscreen,use3Dopacity,rkappa,double_rendering,irerender,itrackpart,icolourscheme, &
   iColourBarStyle,labelrender,iadvance,istep,ilaststep,iframe,nframes,interactivereplot)
  use settings_xsecrot, only:setsequenceend
- use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_textshape
+ use shapes,           only:inshape,edit_shape,edit_textbox,delete_shape,nshapes,add_shape_interactive
  use multiplot,        only:itrans
  use labels,           only:is_coord,ix,get_sink_type
  use limits,           only:assert_sensible_limits
@@ -343,7 +343,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        print*,' p/c      : label closest (p)article/plot (c)ircle of interaction'
        print*,' t        : t)rack closest particle/turn tracking off (coord plots only)'
        print*,' g        : plot a line and find its g)radient'
-       print*,' ctrl-t   : add text annotation at current position'
+       print*,' ctrl-t, ^: add text or arrow(^) annotation at current position'
        print*,' ctrl-m   : toggle Hollywood mode'
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
@@ -435,11 +435,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        elseif (iamincolourbar .and. irender > 0 .and. leftclick) then
           if (incolourbarlabel(iColourBarStyle,4,xpt,ypt,xmin,xmax,ymin,ymax)) then
              if (verticalbar) then
-                call edit_textbox(xpt,ypt,90.,labelrender)
+                call edit_textbox(xpt,ypt,90.,0.,labelrender)
                 projlabelformat = trim(labelrender)
                 iapplyprojformat = irender
              else
-                call edit_textbox(xpt,ypt,0.,labelrender)
+                call edit_textbox(xpt,ypt,0.,0.,labelrender)
                 projlabelformat = trim(labelrender)
                 iapplyprojformat = irender
              endif
@@ -1272,8 +1272,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        iadvance = 0
        interactivereplot = .true.
        iexit = .true.
+    case('^') ! add arrow
+       call add_shape_interactive(xpt,ypt,itrans(iplotx),itrans(iploty),0,ierr,shape_type=3)
+       if (ierr==0) then
+          iadvance = 0
+          interactivereplot = .true.
+          iexit = .true.
+       endif
     case(achar(20)) ! add text shape
-       call add_textshape(xpt,ypt,itrans(iplotx),itrans(iploty),0,ierr)
+       call add_shape_interactive(xpt,ypt,itrans(iplotx),itrans(iploty),0,ierr,shape_type=6)
        if (ierr==0) then
           iadvance = 0
           interactivereplot = .true.
@@ -1604,7 +1611,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  use labels,    only:is_coord,iamvec
  use limits,    only:assert_sensible_limits
  use multiplot, only:itrans
- use shapes,    only:add_textshape,inshape,edit_shape,delete_shape,nshapes
+ use shapes,    only:add_shape_interactive,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
@@ -1729,7 +1736,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        print*,' r        : (r)eplot current plot'
        print*,' R        : (R)eset/remove all range restrictions'
        print*,' g        : plot a line and find its g)radient'
-       print*,' ctrl-t   : add text at current position'
+       print*,' ctrl-t, ^: add text or arrow(^) at current position'
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
        print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
@@ -2185,10 +2192,19 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        istep = istepnew
        interactivereplot = .true.
        iexit = .true.
+    case('^') ! add arrow shape
+       call set_panel(ipanel)
+       print*,' adding arrow in panel ',ipanel
+       call add_shape_interactive(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel,ierr,shape_type=3)
+       if (ierr==0) then
+          istep = istepnew
+          interactivereplot = .true.
+          iexit = .true.
+       endif
     case(achar(20)) ! add text shape
        call set_panel(ipanel)
        print*,' adding text in panel ',ipanel
-       call add_textshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel,ierr)
+       call add_shape_interactive(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotyarr(ipanel)),ipanel,ierr)
        if (ierr==0) then
           istep = istepnew
           interactivereplot = .true.

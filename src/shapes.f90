@@ -61,6 +61,16 @@ module shapes
       'marker   '/)
  namelist /shapeopts/ nshapes,shape
 
+ integer, parameter, public :: &
+     ishape_square    = 1, &
+     ishape_rectangle = 2, &
+     ishape_arrow     = 3, &
+     ishape_circle    = 4, &
+     ishape_line      = 5, &
+     ishape_text      = 6, &
+     ishape_function  = 7, &
+     ishape_marker    = 8
+
  integer, parameter, private :: maxunits = 2
  character(len=20), dimension(maxunits), &
     parameter, private :: labelunits = &
@@ -141,7 +151,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
  character(len=20), parameter :: fmtstring = "('Shape ',i2,': ',a)"
 
  select case(itype)
- case(1)
+ case(ishape_square)
     print "(10x,a)",'    --'
     write(*,fmtstring,advance='no') inum,'   |  |   '//labelshapetype(itype)
     if (present(shapein)) then
@@ -150,7 +160,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",'    --'
- case(2)
+ case(ishape_rectangle)
     print "(10x,a)",'  -----'
     write(*,fmtstring,advance='no') inum,' |     |  '//labelshapetype(itype)
     if (present(shapein)) then
@@ -159,17 +169,17 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",'  -----'
- case(3)
+ case(ishape_arrow)
     print "(10x,a)"
     write(*,fmtstring,advance='no') inum,' ------>  '//labelshapetype(itype)
     if (present(shapein)) then
-       print "(6x,'length = ',es10.2,', angle = ',f5.1,' deg.')",&
-             shapein%xlen,shapein%angle
+       print "(2x,'(x,y) = (',es10.2,es10.2,') to (x,y) = (',es10.2,es10.2,')')",&
+             shapein%xpos,shapein%ypos,shapein%xlen,shapein%ylen
     else
        print*
     endif
     print "(10x,a)"
- case(4)
+ case(ishape_circle)
     print "(10x,a)",'   ___ '
     print "(10x,a)",'  /   \ '
     write(*,fmtstring,advance='no') inum,' (     )  '//labelshapetype(itype)
@@ -180,7 +190,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",'  \___/ '
- case(5)
+ case(ishape_line)
     print "(10x,a)"
     write(*,fmtstring,advance='no') inum,' -------- '//labelshapetype(itype)
     if (present(shapein)) then
@@ -189,7 +199,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)"
- case(6)
+ case(ishape_text)
     print "(10x,a)",                  '        '
     write(*,fmtstring,advance='no') inum,'   TEXT   '
     if (present(shapein)) then
@@ -198,7 +208,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",                  '        '
- case(7)
+ case(ishape_function)
     print "(10x,a)",'  _     / '
     write(*,fmtstring,advance='no') inum,' / \   /  '//trim(labelshapetype(itype))
     if (present(shapein)) then
@@ -207,7 +217,7 @@ subroutine print_shapeinfo(inum,itype,shapein)
        print*
     endif
     print "(10x,a)",'/   \_/     '
- case(8)
+ case(ishape_marker)
     write(*,fmtstring,advance='no') inum,' (x)  '//labelshapetype(itype)
     print "(a)"
  case default
@@ -266,7 +276,7 @@ subroutine add_shape(istart,iend,nshape)
     else
        call print_shapeinfo(ishape,itype)
 
-       if (itype==7) then
+       if (itype==ishape_function) then
           shape(ishape)%iunits = 1
        else
           !--choose units
@@ -278,34 +288,39 @@ subroutine add_shape(istart,iend,nshape)
        iunits = shape(ishape)%iunits
 
        select case(itype)
-       case(1) ! square
+       case(ishape_square) ! square
           call prompt('enter length of side (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           shape(ishape)%ylen = shape(ishape)%xlen
           poslabel = ' centre'
-       case(2) ! rectangle
+       case(ishape_rectangle) ! rectangle
           call prompt('enter x position of left edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xpos,0.)
           call prompt('enter x position of right edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter y position of bottom edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ypos,0.)
           call prompt('enter y position of top edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
           poslabel = ''
-       case(3) ! arrow
-          call prompt('enter arrow length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
-          call prompt('enter angle in degrees (0 = horizontal) ',shape(ishape)%angle)
-          call prompt('enter justification factor (0.0=tail at x,y 1.0=head at x,y)',shape(ishape)%fjust)
+       case(ishape_arrow) ! arrow
+          call prompt('enter starting x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
+          call prompt('enter starting y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
+          call prompt('enter finishing x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xlen)
+          call prompt('enter finishing y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ylen)
+          call prompt('enter (optional) text string ',shape(ishape)%text)
+          if (len_trim(shape(ishape)%text) > 0) then
+             call prompt('enter justification factor (0.0=left 1.0=right)',shape(ishape)%fjust)
+          endif
           poslabel = ''
-       case(4) ! circle
+       case(ishape_circle) ! circle
           call prompt('enter radius (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           poslabel = ' centre'
-       case(5) ! line
+       case(ishape_line) ! line
           call prompt('enter line length (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
           call prompt('enter angle of line in degrees (0.0 = horizontal) ',shape(ishape)%angle)
           poslabel = ' starting'
-       case(6) ! text
+       case(ishape_text) ! text
           call prompt('enter text string ',shape(ishape)%text)
           call prompt('enter angle for text in degrees (0 = horizontal) ',shape(ishape)%angle)
           call prompt('enter justification factor (0.0=left 1.0=right)',shape(ishape)%fjust)
           poslabel = ' starting'
-       case(7) ! arbitrary function
+       case(ishape_function) ! arbitrary function
           ierr = 1
           itry = 1
           do while(ierr /= 0 .and. itry <= 3)
@@ -325,28 +340,28 @@ subroutine add_shape(istart,iend,nshape)
              cycle over_shapes
           endif
           poslabel = ' starting'
-       case(8)
+       case(ishape_marker)
           print "(/,' Marker options (for all from -8->31, see plot library userguide):',12(/,i2,') ',a))", &
                       0,'square',1,'.',2,'+',3,'*',4,'o',5,'x',12,'5-pointed star',17,'bold circle',-8,'large bold circle'
           call prompt('Enter marker type ',shape(ishape)%ifillstyle)
           poslabel = ''
        end select
-       if (itype /= 7 .and. itype /= 2) then
+       if (itype /= ishape_function .and. itype /= ishape_rectangle .and. itype /= ishape_arrow) then
           call prompt('enter'//trim(poslabel)//' x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)
           call prompt('enter'//trim(poslabel)//' y position (in '//trim(labelunits(iunits))//') ',shape(ishape)%ypos)
        elseif (itype==7) then
           call prompt('enter xmin for line segment (0=ignore)',shape(ishape)%xpos)
           call prompt('enter xmax for line segment (0=ignore)',shape(ishape)%xlen)
        endif
-       if (itype==1 .or. itype==2 .or. itype==4) then
+       if (itype==ishape_square .or. itype==ishape_rectangle .or. itype==ishape_circle) then
           call prompt('enter fill style (1=solid,2=outline,3=hatch,4=crosshatch) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%ifillstyle,0,plotlib_maxfillstyle)
        endif
-       if (itype /= 6 .and. itype /= 8) then
+       if (itype /= ishape_text .and. itype /= ishape_marker) then
           call prompt('enter line style (1=solid,2=dash,3=dotdash,4=dot,5=dashdot) for '// &
                       trim(labelshapetype(itype)),shape(ishape)%linestyle,0,plotlib_maxlinestyle)
        endif
-       if (itype==6 .or. itype==8) then
+       if (itype==ishape_text .or. itype==ishape_marker) then
           call prompt('enter character height for '//trim(labelshapetype(itype)),shape(ishape)%xlen,0.,10.)
        else
           call prompt('enter line width for '//trim(labelshapetype(itype)),shape(ishape)%linewidth,0)
@@ -417,7 +432,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
  use asciiutils,    only:string_replace
  use plotlib, only:plot_qci,plot_qls,plot_qlw,plot_qfs,plot_qwin,plot_sci,plot_sfs,plot_slw, &
       plot_sci,plot_rect,plot_sls,plot_line,plot_arro,plot_circ,plot_ptxt,plot_numb,&
-      plotlib_supports_alpha,plot_set_opacity,plot_pt1,plot_sch,plot_qch
+      plotlib_supports_alpha,plot_set_opacity,plot_pt1,plot_sch,plot_qch,plot_qcs
  use parsetext,     only:parse_text,rn
  use params,        only:ltag
  integer, intent(in) :: ipanel,irow,icolumn,itransx,itransy
@@ -428,8 +443,8 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
  integer :: icolourprev,linestyleprev,linewidthprev,ifillstyle
  integer :: i,j,ierr,iplotonthispanel
  integer, parameter :: maxfuncpts = 1000
- real :: xmin,xmax,ymin,ymax,dxplot,dyplot,charheightprev
- real :: xpos,ypos,xlen,ylen,anglerad,dx,dy,fjust,xmini,xmaxi
+ real :: xmin,xmax,ymin,ymax,dxplot,dyplot,charheightprev,ysign
+ real :: xpos,ypos,xlen,ylen,anglerad,dx,xmini,xmaxi,xch,ych
  real, dimension(2) :: xline,yline
  real, dimension(maxfuncpts) :: xfunc,yfunc
  character(len=lentext) :: text
@@ -462,7 +477,9 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
 
        call plot_sci(shape(i)%icolour)
        call plot_sls(shape(i)%linestyle)
-       if (shape(i)%itype==6 .or. shape(i)%itype==8) call plot_sch(shape(i)%xlen)
+       if (shape(i)%itype==ishape_text .or. shape(i)%itype==ishape_marker) then
+          call plot_sch(shape(i)%xlen)
+       endif
        call plot_slw(shape(i)%linewidth)
        call plot_sfs(shape(i)%ifillstyle)
        if (plotlib_supports_alpha) call plot_set_opacity(shape(i)%opacity)
@@ -475,7 +492,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
        !call print_shapeinfo(i,shape(i)%itype,shape(i))
        !print "(a)",'> plotting shape: '//trim(labelshapetype(shape(i)%itype))
        select case(shape(i)%itype)
-       case(1,2) ! square, rectangle
+       case(ishape_square,ishape_rectangle) ! square, rectangle
           if (xlen > dxplot .or. ylen > dyplot) then
              print "(2x,a)",'Error: shape size exceeds plot dimensions: not plotted'
           else
@@ -485,17 +502,17 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
                 call plot_rect(xpos,xlen,ypos,ylen)
              endif
           endif
-       case(3) ! arrow
-          dx = xlen*cos(anglerad)
-          dy = xlen*sin(anglerad)
-          !--do not plot if length > size of plot
-          if (dx > dxplot .or. dy > dyplot) then
-             print "(2x,a)",'Error: arrow length exceeds plot dimensions: arrow not plotted'
-          else
-             fjust = shape(i)%fjust
-             call plot_arro(xpos-fjust*dx,ypos-fjust*dy,xpos+(1.-fjust)*dx,ypos+(1.-fjust)*dy)
+       case(ishape_arrow) ! arrow
+          print*,'plotting arrow from ',xpos,ypos,' to ',xlen,ylen
+          call plot_arro(xpos,ypos,xlen,ylen)
+          !--plot text label under the arrow, if present
+          call plot_qcs(4,xch,ych)
+          text = trim(shape(i)%text)
+          if (len_trim(text) > 0) then
+             ysign = max(sign(1.,ylen-ypos),0.)
+             call plot_ptxt(xpos,ypos-ysign*ych,shape(i)%angle,shape(i)%fjust,trim(text))
           endif
-       case(4) ! circle
+       case(ishape_circle) ! circle
           if (xlen > dxplot .or. xlen > dyplot) then
              print "(2x,a)",'Error: circle radius exceeds plot dimensions: circle not plotted'
           else
@@ -505,13 +522,13 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
                 call plot_circ(xpos,ypos,xlen)
              endif
           endif
-       case(5) ! line
+       case(ishape_line) ! line
           xline(1) = xpos
           yline(1) = ypos
           xline(2) = xpos + xlen*cos(anglerad)
           yline(2) = ypos + xlen*sin(anglerad)
           call plot_line(2,xline,yline)
-       case(6) ! text
+       case(ishape_text) ! text
           text = trim(shape(i)%text)
           !--handle special characters in text strings (e.g. replace %t with time)
           if (index(text,'%') /= 0) then
@@ -525,7 +542,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
           endif
           !--plot text string
           call plot_ptxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(text))
-       case(7) ! arbitrary function
+       case(ishape_function) ! arbitrary function
           !--set x to be evenly spaced in transformed (plot) coordinates
           xmini = xmin
           xmaxi = xmax
@@ -548,7 +565,7 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
              !--plot the line
              call plot_line(maxfuncpts,xfunc,yfunc)
           endif
-       case(8) ! marker
+       case(ishape_marker) ! marker
           call plot_pt1(xpos,ypos,shape(i)%ifillstyle)
        end select
     endif
@@ -568,11 +585,11 @@ end subroutine plot_shapes
 ! a shape object
 !------------------------------------------------------------
 integer function inshape(xpt,ypt,itransx,itransy)
- use plotlib, only:plot_qwin,plot_qtxt
+ use plotlib, only:plot_qwin,plot_qtxt,plot_qcs
  real, intent(in) :: xpt,ypt
  integer, intent(in) :: itransx,itransy
  integer :: i
- real :: xpos,ypos,xlen,ylen
+ real :: xpos,ypos,xlen,ylen,ysign,xch,ych
  real :: xmin,ymin,xmax,ymax,dxplot,dyplot
  real, dimension(4) :: xbox,ybox
 
@@ -587,15 +604,26 @@ integer function inshape(xpt,ypt,itransx,itransy)
                        xmin,ymin,dxplot,dyplot,itransx,itransy)
 
     select case(shape(i)%itype)
-    case(1,2)  ! square, rectangle
+    case(ishape_square,ishape_rectangle)  ! square, rectangle
 
-    case(3) ! arrow
+    case(ishape_arrow) ! arrow
+       if (near_pt(xpos,ypos,xpt,ypt,dxplot,dyplot) .or. &
+           near_pt(xlen,ylen,xpt,ypt,dxplot,dyplot)) then
+          inshape = i
+       endif
+       call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
+       call plot_qcs(4,xch,ych)
+       ysign = max(sign(1.,ylen-ypos),0.)
+       call plot_qtxt(xpos,ypos-ysign*ych,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
+       if (xpt > minval(xbox) .and. xpt <= maxval(xbox) &
+           .and. ypt > minval(ybox) .and. ypt <= maxval(ybox)) then
+          inshape = i
+       endif
+    case(ishape_circle) ! circle
 
-    case(4) ! circle
+    case(ishape_line) ! line
 
-    case(5) ! line
-
-    case(6) ! text
+    case(ishape_text) ! text
        call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
        if (xpt > minval(xbox) .and. xpt <= maxval(xbox) &
           .and. ypt > minval(ybox) .and. ypt <= maxval(ybox)) then
@@ -606,15 +634,30 @@ integer function inshape(xpt,ypt,itransx,itransy)
 
 end function inshape
 
+!--------------------------------------------
+! work out whether a mouse click is "close"
+! to a plotted point
+!--------------------------------------------
+logical function near_pt(x1,y1,xc,yc,dx,dy)
+ real, intent(in) :: x1,y1,xc,yc,dx,dy
+ real :: xtol,ytol
+
+ xtol = dx/128.  ! as in 1/128th of the page width
+ ytol = dy/128.  ! as in 1/128th of the page height
+ near_pt = ((x1-xc)**2 < xtol*xtol) .and. &
+           ((y1-yc)**2 < ytol*ytol)
+
+end function near_pt
+
 !---------------------------------------
 ! routine to edit shapes interactively
 !---------------------------------------
 subroutine edit_shape(i,xpt,ypt,itransx,itransy)
- use plotlib, only:plot_qwin
+ use plotlib, only:plot_qwin,plot_qtxt,plot_qcs
  integer, intent(in) :: i,itransx,itransy
  real, intent(in)    :: xpt,ypt
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,xlen,ylen
- real :: xpos,ypos
+ real :: xpos,ypos,xbox(4),ybox(4),xch,ych,ysign
 
  call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
@@ -624,10 +667,23 @@ subroutine edit_shape(i,xpt,ypt,itransx,itransy)
                     xmin,ymin,dxplot,dyplot,itransx,itransy)
 
  select case(shape(i)%itype)
- case(6)
-    call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%text)
- case default
-
+ case(ishape_text)
+    call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%fjust,shape(i)%text)
+ case(ishape_arrow)
+    call plot_qtxt(xpos,ypos,shape(i)%angle,shape(i)%fjust,trim(shape(i)%text),xbox,ybox)
+    call plot_qcs(4,xch,ych)
+    ysign = max(sign(1.,ylen-ypos),0.0)
+    if (near_pt(xlen,ylen,xpt,ypt,dxplot,dyplot)) then
+       ! if click on head of arrow, move the tail
+       call edit_arrow(xlen,ylen,shape(i)%xpos,shape(i)%ypos)
+    elseif (xpt > minval(xbox) .and. xpt <= maxval(xbox) &
+      .and. ypt-0.5*ysign*ych > minval(ybox) .and. ypt-0.5*ysign*ych <= maxval(ybox)) then
+       ! if click on text box, edit text
+       call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%fjust,shape(i)%text)
+    else
+       ! if click on tail of arrow, move the head
+       call edit_arrow(xpos,ypos,shape(i)%xlen,shape(i)%ylen)
+    endif
  end select
 
 end subroutine edit_shape
@@ -635,13 +691,17 @@ end subroutine edit_shape
 !--------------------------------------------------------
 ! utility routine to add a new text shape interactively
 !--------------------------------------------------------
-subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
+subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
  use plotlib, only:plot_qwin,plot_qch
  real, intent(in)     :: xpt,ypt
  integer, intent(in)  :: itransx,itransy,ipanel
  integer, intent(out) :: ierr
- integer :: i
+ integer, intent(in), optional :: shape_type
+ integer :: i,itype
  real :: xmin,xmax,ymin,ymax,xposi,yposi,charheight
+
+ itype = ishape_text ! text shape by default
+ if (present(shape_type)) itype = shape_type
 
  ierr = 0
  nshapes = nshapes + 1
@@ -652,7 +712,7 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
     return
  endif
  i = nshapes
- shape(i)%itype = 6
+ shape(i)%itype = itype
  print*,' adding shape '//trim(labelshapetype(shape(i)%itype))
  shape(i)%icolour = 1
  shape(i)%linestyle = 1
@@ -660,7 +720,7 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
  shape(i)%ifillstyle = 2
  shape(i)%iplotonpanel = ipanel
 !
-!--position text relative to viewport
+!--position shapes relative to viewport
 !
  shape(i)%iunits = 2
  call plot_qwin(xmin,xmax,ymin,ymax)
@@ -675,9 +735,10 @@ subroutine add_textshape(xpt,ypt,itransx,itransy,ipanel,ierr)
  shape(i)%angle = 0.
  shape(i)%text = 'click to edit'
  shape(i)%fjust = 0.
+ if (itype==ishape_arrow) shape(i)%fjust = 0.5
  call edit_shape(i,xposi,yposi,itransx,itransy)
 
-end subroutine add_textshape
+end subroutine add_shape_interactive
 
 !------------------------------------------------------------
 ! utility routine to add a new text shape non-interactively
@@ -757,8 +818,13 @@ subroutine convert_units(shape,xpos,ypos,xlen,ylen,xmin,ymin,dxplot,dyplot,itran
  case(2) ! translate from viewport coordinates into plot coordinates
     xpos = xmin + xpos*dxplot
     ypos = ymin + ypos*dyplot
-    xlen = xlen*dxplot
-    ylen = ylen*dyplot
+    if (shape%itype == ishape_circle) then
+       xlen = xlen*dxplot
+       ylen = ylen*dyplot
+    else
+       xlen = xmin + xlen*dxplot
+       ylen = ymin + ylen*dyplot
+    endif
  case(1)
     if (itransx > 0) then
        call transform(xpos,itransx)
@@ -778,9 +844,9 @@ end subroutine convert_units
 !--------------------------------------------------------
 ! utility routine to edit a text object interactively
 !--------------------------------------------------------
-subroutine edit_textbox(xpt,ypt,angle,string)
+subroutine edit_textbox(xpt,ypt,angle,fjust,string)
  use plotlib, only:plot_stbg,plot_ptxt,plot_curs
- real, intent(in) :: xpt,ypt,angle
+ real, intent(in) :: xpt,ypt,angle,fjust
  character(len=1) :: mychar
  real :: xpt2,ypt2
  character(len=*), intent(inout) :: string
@@ -792,7 +858,7 @@ subroutine edit_textbox(xpt,ypt,angle,string)
  mychar = ' '
  oldstring = string
  i = max(len_trim(string)+1,1)
- call plot_ptxt(xpt,ypt,angle,0.,string(1:i)//'_')
+ call plot_ptxt(xpt,ypt,angle,fjust,string(1:i)//'_')
 
  xpt2 = xpt
  ypt2 = ypt
@@ -803,7 +869,7 @@ subroutine edit_textbox(xpt,ypt,angle,string)
     if (mychar==achar(8)) then   ! backspace
        i = max(i - 1,1)
        string(i:i) = '_'
-       call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
+       call plot_ptxt(xpt,ypt,angle,fjust,string(1:i))
        string(i:i) = ' '
     else
        if (trim(string)=='click to edit') then
@@ -812,7 +878,7 @@ subroutine edit_textbox(xpt,ypt,angle,string)
           i = 1
        endif
        string(i:i) = mychar
-       call plot_ptxt(xpt,ypt,angle,0.,string(1:i))
+       call plot_ptxt(xpt,ypt,angle,fjust,string(1:i))
        i = min(i + 1,len(string))
        if (i==len(string)) print*,' reached end of string'
     endif
@@ -829,5 +895,26 @@ subroutine edit_textbox(xpt,ypt,angle,string)
  call plot_stbg(-1)
 
 end subroutine edit_textbox
+
+!--------------------------------------------------------
+! utility routine to edit a text object interactively
+!--------------------------------------------------------
+subroutine edit_arrow(xpt,ypt,x2,y2)
+ use plotlib, only:plot_band,plot_qwin
+ real, intent(in)  :: xpt,ypt
+ real, intent(out) :: x2,y2
+ character(len=1) :: char2
+ integer :: ierr
+ real :: xmin,xmax,ymin,ymax
+
+ ! get point in plot units
+ ierr = plot_band(1,1,xpt,ypt,x2,y2,char2)
+
+ ! transform point to viewport coordinates
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ x2 = (x2 - xmin)/(xmax-xmin)
+ y2 = (y2 - ymin)/(ymax-ymin)
+
+end subroutine edit_arrow
 
 end module shapes
