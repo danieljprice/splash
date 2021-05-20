@@ -51,11 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.2.2   : (20/05/21) bug fix with surface density plot with physical units on;
+!     3.3.0   : (20/05/21) bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
 !             lightcurve now performs frequency-dependent ray tracing;
-!             added --anglex,--angley,--anglez flags; --kappa option scales opacity in lightcurve;
-!             can add labelled arrows by typing ^ in interactive mode, can also delete/edit;
+!             added --anglex,--angley,--anglez flags;
+!             can add labelled arrows by typing ^ in interactive mode, also delete/edit;
 !             capital M, 0 or ncols+1 from main menu gives multiplot;
 !             added -multi flag for multiplot from command line
 !     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
@@ -479,7 +479,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.2.2 [4th May 2021]'
+ character(len=*), parameter :: version = 'v3.3.0 [20th May 2021]'
 
  !
  ! initialise some basic code variables
