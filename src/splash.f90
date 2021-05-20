@@ -51,10 +51,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.2.2   : (04/05/21) bug fix with surface density plot with physical units on;
+!     3.2.2   : (20/05/21) bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
-!             lightcurve now perfoms frequency-dependent ray tracing;
-!             added --anglex,--angley,--anglez flags; added --trap option to lightcurve
+!             lightcurve now performs frequency-dependent ray tracing;
+!             added --anglex,--angley,--anglez flags; --kappa option scales opacity in lightcurve;
+!             can add labelled arrows by typing ^ in interactive mode, can also delete/edit;
+!             capital M, 0 or ncols+1 from main menu gives multiplot;
+!             added -multi flag for multiplot from command line
 !     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
 !             to cross section; specifying --kappa turns on opacity rendering;
@@ -473,7 +476,7 @@ program splash
  use set_options_from_dataread, only:set_options_dataread
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
- logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format
+ logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=*), parameter :: version = 'v3.2.2 [4th May 2021]'
@@ -516,6 +519,7 @@ program splash
  icontour = 0
  ivecplot = 0
  use_360 = .false.
+ do_multiplot = .false.
 
  do while (i < nargs)
     i = i + 1
@@ -534,6 +538,9 @@ program splash
           call get_argument(i,string)
           read(string,*,iostat=ierr) ipicky
           if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
+          nomenu = .true.
+       case('multi','-multiplot','-multi')
+          do_multiplot = .true.
           nomenu = .true.
        case('render','r','ren')
           i = i + 1
@@ -840,7 +847,10 @@ program splash
        !
        ! check command line plot invocation
        !
-
+       if (do_multiplot) then
+          if (ipicky > 0) print "(a)",' WARNING: ignoring -y option with -multi flag'
+          ipicky = numplot+1
+       endif
        if (ipicky > 0 .and. ipicky <= numplot+1) then
           if (ipicky <= numplot .and. (ipickx==0 .or. ipickx > numplot)) then
              print "(a)",' ERROR: x plot not set or out of bounds (use -x col)'
@@ -961,6 +971,7 @@ subroutine print_usage(quit)
  print "(a)",' -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)'
  print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
  print "(a)",' -c[ontour] column : contoured quantity'
+ print "(a)",' -multi            : multiplot'
  print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'

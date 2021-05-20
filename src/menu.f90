@@ -148,10 +148,9 @@ subroutine menu
 !--multiplot
 !
        print sep
-       fmtstr3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a,'[ '," &
+       fmtstr3 = "(1x,' M)',1x,a,'[ '," &
                      //trim(adjustl(fmtstrlen))//",' ]',5x,a2,') ',a)"
-       print fmtstr3, &
-           numplot+1,'multiplot ',nyplotmulti,'m','set multiplot '
+       print fmtstr3,'multiplot ',nyplotmulti,'m','set multiplot '
     else
 !
 !--if no data
@@ -192,6 +191,9 @@ subroutine menu
        call set_instant_multiplot(string,ipicky,ipickx,numplot,nyplotmulti,&
                                 multiplotx,multiploty,nacross,ndown)
     endif
+
+    !--allow capital M to select the multiplot option
+    if (ioption(1:1)=='M' .or. ipicky==0) ipicky = numplot+1
 
     if (ipicky > 0 .and. ipicky <= numplot+1) then
 
@@ -342,7 +344,7 @@ subroutine menu
        select case(ioption(1:1))
 !------------------------------------------------------------------------
 !+ Sets up plotting of (m)ultiple quantities per timestep
-       case('m','M')
+       case('m')
           call options_multiplot
 !------------------------------------------------------------------------
 !+ This submenu sets options relating to the (d)ata read
