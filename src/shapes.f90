@@ -503,13 +503,13 @@ subroutine plot_shapes(ipanel,irow,icolumn,itransx,itransy,time,nvar,allvars,tag
              endif
           endif
        case(ishape_arrow) ! arrow
-          print*,'plotting arrow from ',xpos,ypos,' to ',xlen,ylen
+          !print "(1x,2(a,es10.2,es10.2))",trim(shape(i)%text),xpos,ypos,'->',xlen,ylen
           call plot_arro(xpos,ypos,xlen,ylen)
           !--plot text label under the arrow, if present
           call plot_qcs(4,xch,ych)
           text = trim(shape(i)%text)
           if (len_trim(text) > 0) then
-             ysign = max(sign(1.,ylen-ypos),0.)
+             ysign = max(sign(1.,ylen-ypos),-0.15)
              call plot_ptxt(xpos,ypos-ysign*ych,shape(i)%angle,shape(i)%fjust,trim(text))
           endif
        case(ishape_circle) ! circle
@@ -584,16 +584,15 @@ end subroutine plot_shapes
 ! query function asking whether or not a point falls within
 ! a shape object
 !------------------------------------------------------------
-integer function inshape(xpt,ypt,itransx,itransy)
+integer function inshape(xpt,ypt,itransx,itransy,xmin,xmax,ymin,ymax)
  use plotlib, only:plot_qwin,plot_qtxt,plot_qcs
- real, intent(in) :: xpt,ypt
+ real, intent(in) :: xpt,ypt,xmin,ymin,xmax,ymax
  integer, intent(in) :: itransx,itransy
  integer :: i
  real :: xpos,ypos,xlen,ylen,ysign,xch,ych
- real :: xmin,ymin,xmax,ymax,dxplot,dyplot
+ real :: dxplot,dyplot
  real, dimension(4) :: xbox,ybox
 
- call plot_qwin(xmin,xmax,ymin,ymax)
  dxplot = xmax - xmin
  dyplot = ymax - ymin
 
@@ -652,10 +651,11 @@ end function near_pt
 !---------------------------------------
 ! routine to edit shapes interactively
 !---------------------------------------
-subroutine edit_shape(i,xpt,ypt,itransx,itransy)
+subroutine edit_shape(i,xpt,ypt,itransx,itransy,first)
  use plotlib, only:plot_qwin,plot_qtxt,plot_qcs
  integer, intent(in) :: i,itransx,itransy
  real, intent(in)    :: xpt,ypt
+ logical, intent(in) :: first
  real :: xmin,xmax,ymin,ymax,dxplot,dyplot,xlen,ylen
  real :: xpos,ypos,xbox(4),ybox(4),xch,ych,ysign
 
@@ -683,6 +683,7 @@ subroutine edit_shape(i,xpt,ypt,itransx,itransy)
     else
        ! if click on tail of arrow, move the head
        call edit_arrow(xpos,ypos,shape(i)%xlen,shape(i)%ylen)
+       if (first) call edit_textbox(xpos,ypos,shape(i)%angle,shape(i)%fjust,shape(i)%text)
     endif
  end select
 
@@ -736,7 +737,7 @@ subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
  shape(i)%text = 'click to edit'
  shape(i)%fjust = 0.
  if (itype==ishape_arrow) shape(i)%fjust = 0.5
- call edit_shape(i,xposi,yposi,itransx,itransy)
+ call edit_shape(i,xposi,yposi,itransx,itransy,first=.true.)
 
 end subroutine add_shape_interactive
 

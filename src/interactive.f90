@@ -426,9 +426,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !--change colour bar limits
        !
        leftclick = (char == plot_left_click)
-       ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
+       ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty),xmin,xmax,ymin,ymax)
        if (ishape > 0) then
-          call edit_shape(ishape,xpt,ypt,itrans(iplotx),itrans(iploty))
+          call edit_shape(ishape,xpt,ypt,itrans(iplotx),itrans(iploty),first=.false.)
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
@@ -1287,7 +1287,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           iexit = .true.
        endif
     case(achar(8)) ! delete plot annotation / colour bar (backspace)
-       ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
+       ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty),xmin,xmax,ymin,ymax)
        if (ishape > 0) then
           call delete_shape(ishape,nshapes)
           iadvance = 0
@@ -1807,6 +1807,13 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        call save_windowsize()
        print*,'> interactively set limits saved <'
     case(plot_left_click) ! left click
+       !ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty))
+       !if (ishape > 0) then
+      !    call edit_shape(ishape,xpt,ypt,itrans(iplotx),itrans(iploty),first=.false.)
+      !    iadvance = 0
+      !    interactivereplot = .true.
+      !!    iexit = .true.
+       !endif
        !
        !--draw rectangle from the point and reset the limits
        !
@@ -2211,7 +2218,9 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
           iexit = .true.
        endif
     case(achar(8)) ! delete plot annotation / colour bar (backspace)
-       ishape = inshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotxarr(ipanel)))
+       ishape = inshape(xpti,ypti,itrans(iplotxarr(ipanel)),itrans(iplotxarr(ipanel)),&
+                        xmin(iplotxarr(ipanel)),xmax(iplotxarr(ipanel)),&
+                        xmin(iplotyarr(ipanel)),xmax(iplotyarr(ipanel)))
        if (ishape > 0) then
           call delete_shape(ishape,nshapes)
           istep = istepnew
