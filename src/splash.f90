@@ -55,7 +55,7 @@ program splash
 !             bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
 !             lightcurve now performs frequency-dependent ray tracing;
-!             added --anglex,--angley,--anglez flags;
+!             added "--anglex","--angley","--anglez" flags;
 !             can add labelled arrows by typing ^ in interactive mode, also delete/edit;
 !             capital M, 0 or ncols+1 from main menu gives multiplot;
 !             added -multi flag for multiplot from command line
@@ -353,7 +353,7 @@ program splash
 !             minor bug fixes/improvements to multiple plots per page; colour bar labelling
 !             tiled plots; legend; Accelerated rendering option for projections.
 !     1.5.2 : (11/5/06)
-!             S) option for saving limits and defaults; MUCH faster interactive
+!             "S)" option for saving limits and defaults; MUCH faster interactive
 !             replotting (no unnecessary re-rendering); a few other minor things
 !     1.5.1 : (26/4/06)
 !             docs updated for v1.5, other minor changes
