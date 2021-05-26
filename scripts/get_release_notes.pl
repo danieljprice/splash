@@ -17,14 +17,14 @@ while (<FILE>) {
         }
         if ($do_all==1) {
            $out = "";
-           print "\n:$1:\n\n";
+           print "\n**$1:**\n\n";
         } else {
            close(FILE);
            exit()
         };
      } else {
         if ($do_all==1) {
-           print "\n:$1:\n\n";
+           print "\n**$1:**\n\n";
         }
         $start = 1;
         $out = $2;
