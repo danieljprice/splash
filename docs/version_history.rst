@@ -1,6 +1,6 @@
 
-3.3.0:
-~~~~~~~~~
+:3.3.0:
+
 - bug fix with surface density plot with physical units on
 - splash calc lightcurve computes spectra from local blackbody emission if T and kappa given
 - lightcurve now performs frequency-dependent ray tracing
@@ -9,16 +9,16 @@
 - capital M, 0 or ncols+1 from main menu gives multiplot
 - added -multi flag for multiplot from command line
 
-3.2.1:
-~~~~~~~~~
+:3.2.1:
+
 - added --xsec=1.0 and --kappa=1.0 flags to specify cross section position and opacity, respectively
 - specifying --xsec automatically switches from projection to cross section
 - specifying --kappa turns on opacity rendering
 - bug fix in splash calc tracks
 - can use --track=1,2,3 to specify list of particles
 
-3.2.0:
-~~~~~~~~~
+:3.2.0:
+
 - disable ALL prompts if any command line flags set
 - all environment variables can now be given as command line flags using lower case string after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line
 - useful options include --corotate, --sink=1, --debug and more
@@ -27,16 +27,16 @@
 - assume default xw device and disable device prompt if any command line flags set
 - s/S options now do the same thing
 
-3.1.1:
-~~~~~~~~~
+:3.1.1:
+
 - automatically plot y vs x given a two-column data file
 - planet wake coordinate system added
 - bug fix with SPLASH_COROTATE
 - bug fix reading phantom dumps when number of particles of each type does not match itype array
 - bug fixes in grid2pdf
 
-3.1.0:
-~~~~~~~~~
+:3.1.0:
+
 - splash calc lightcurve implemented
 - sink particles ON by default
 - changing units rescales plot limits correctly
@@ -50,8 +50,8 @@
 - auto-render fits files
 - read softening length from phantom sinks if accretion radius is zero
 
-3.0.2:
-~~~~~~~~~
+:3.0.2:
+
 - opacity rendering uses physical value of kappa, can also use opacity defined on particles
 - can track multiple particles with 'splash calc tracks' by specifying ids in splash.tracks file
 - support for SWIFT code in gadget_hdf5
@@ -64,8 +64,8 @@
 - seg fault in gadget data read fixed
 - bug fix in x-menu options
 
-3.0.0:
-~~~~~~~~~
+:3.0.0:
+
 - Unified splash binary with -f flag to specify format
 - automated format recognition for phantom, gadget (and hdf5 variants) and fits
 - cleaner d) menu
@@ -75,8 +75,8 @@
 - pysplash utility for reading SPH data formats into python
 - libsplash.so, libexact.so and libread.so libraries
 
-2.10.1:
-~~~~~~~~~
+:2.10.1:
+
 - exact solution can appear in legend
 - can also plot under data
 - fits reader and denoise utility can read/write spectral cubes
@@ -92,8 +92,8 @@
 - physical units are ON by default
 - prompts only for particle types present in data
 
-2.10.0:
-~~~~~~~~~
+:2.10.0:
+
 - much improved splash to grid - bug fixes with pixel number and roundoff error
 - use Petkova (2018) method for sub-pixel rendering to 3D grid and 3D projections
 - added bytestream output formats for splash to grid and splash to ascii
@@ -104,8 +104,8 @@
 - plasma beta correct in both code and physical units
 - working fits reader and splash-denoise utility
 
-2.9.1:
-~~~~~~~~~
+:2.9.1:
+
 - cleaner menu options for units and calculated quantities
 - surface rendering allowed with 3D perspective turned off
 - automatic labelling of grain sizes in density and column density plots
@@ -114,8 +114,8 @@
 - bug fixes with r-z rendering
 - Toomre Q prompts for mass
 
-2.9.0:
-~~~~~~~~~
+:2.9.0:
+
 - general header quantities are read and available in function parser
 - more robust label detection and parsing during ascii data read
 - splash to grid works in non-cartesian geometries
@@ -131,8 +131,8 @@
 - exact rendering implemented in 2D
 - libsplash implemented for use as Python splash backend
 
-2.8.0:
-~~~~~~~~~
+:2.8.0:
+
 - 360/4pi video mode added
 - automatically read labels from ascii file headers
 - nearest sensible unit (e.g. au or pc) used by default
@@ -147,8 +147,8 @@
 - support for multi-grain dust in Phantom
 - bug fix with NaNs in ascii files
 
-2.7.0:
-~~~~~~~~~
+:2.7.0:
+
 - Hollywood mode added (ctrl-m in interactive mode)
 - better handling of dust/gas phantom data
 - added rotated cartesian geometry
@@ -161,8 +161,8 @@
 - splash to gridascii2 implemented
 - bugs with r-phi rendering fixed
 
-2.6.0:
-~~~~~~~~~
+:2.6.0:
+
 - SILO, falcON and .pbob data reads implemented
 - bug fixes in gadget-hdf5 reader
 - can recognise particle types in ascii read
@@ -175,8 +175,8 @@
 - splash to ascii keeps precision
 - better power spectra
 
-2.5.1:
-~~~~~~~~~
+:2.5.1:
+
 - error bar style options
 - support for 5K displays
 - can plot vectors and render with colours if h not read
@@ -187,8 +187,8 @@
 - phantom read handles star/dm particles
 - various bugs fixed
 
-2.5.0:
-~~~~~~~~~
+:2.5.0:
+
 - instant multiplots by giving multiple columns as y axis
 - ability to plot multiple exact solution files on same plot
 - compiles in parallel by default
@@ -196,29 +196,29 @@
 - AMUSE hdf5 format reader added
 - various bug fixes
 
-2.4.1:
-~~~~~~~~~
+:2.4.1:
+
 - Roche-lobe plotting vastly improved
 - newunit= issue fixed
 - bug fix with reading sink velocities from Phantom
 - other minor bug fixes.
 
-2.4.0:
-~~~~~~~~~
+:2.4.0:
+
 - time formatting in legend can include general functions like %(t + 1000)
 - option to include sinks in opacity rendering
 - supports one-fluid dust visualisation
 - C-shock exact solution
 - better polytrope solution
 
-2.3.1:
-~~~~~~~~~
+:2.3.1:
+
 - SPLASH_COROTATE option to plot in frame corotating with sinks
 - bug fixes with handling of dead/accreted/boundary particles in sphNG/phantom
 - various other bugs fixed.
 
-2.3.0:
-~~~~~~~~~
+:2.3.0:
+
 - can customise time formatting in legend
 - improvements to legends
 - less verboseness
@@ -226,8 +226,8 @@
 - 3D vector field plotting improved
 - bug fix with gfortran 4.8
 
-2.2.2:
-~~~~~~~~~
+:2.2.2:
+
 - particle tracking by type implemented
 - can interpolate specific columns in splash to grid
 - SPLASH_CENTRE_ON_SINK option generic to all data reads
@@ -236,15 +236,15 @@
 - bug fix with X11 linking on Ubuntu
 - can read gadget ICs files
 
-2.2.1:
-~~~~~~~~~
+:2.2.1:
+
 - minor bug with axes plotting fixed
 - Wendland kernels added
 - bugs with exact solution plotting fixed
 - bug fix with tracking of dark matter particles
 
-2.2.0:
-~~~~~~~~~
+:2.2.0:
+
 - option to use different kernels for interpolation
 - floating/inset colour bars added
 - splash to gadget conversion implemented
@@ -253,8 +253,8 @@
 - automatically turns on dark matter particle plotting if no gas
 - interactive mode help displayed automatically
 
-2.1.1:
-~~~~~~~~~
+:2.1.1:
+
 - irregular/circular particle selection using shift-left/middle click
 - improved h5part and GADGET HDF5 data reads
 - splash can be compiled in double precision
@@ -262,8 +262,8 @@
 - improved vector plot legend
 - option for box+numbers but no labels added
 
-2.1.0:
-~~~~~~~~~
+:2.1.0:
+
 - 3D vector field visualisation added
 - GADGET HDF5 read implemented
 - page sizes can be specified in pixels
@@ -272,8 +272,8 @@
 - tiling works with one colour bar per row
 - splash calc handles different particle types
 
-2.0.0:
-~~~~~~~~~
+:2.0.0:
+
 - new giza backend - antialiased lines
 - real fonts
 - pdf, eps and svg drivers
@@ -281,8 +281,8 @@
 - support for semi-transparent text
 - Double rendering (with transparent background) implemented.
 
-1.15.0:
-~~~~~~~~~
+:1.15.0:
+
 - Multiplot with different particle types implemented
 - calculated quantities list is now pre-filled automatically
 - preliminary support for r-phi and r-z rendering
@@ -293,8 +293,8 @@
 - better support for non-square pixels
 - clipping of numbers at edge of viewport fixed
 
-1.14.1:
-~~~~~~~~~
+:1.14.1:
+
 - SEREN data read added
 - dragon read updated
 - build follows Gnu conventions on DEST and DESTDIR (needed for macports build)
@@ -302,8 +302,8 @@
 - exact solutions re-ordered
 - dusty wave exact solution added
 
-1.14.0:
-~~~~~~~~~
+:1.14.0:
+
 - Can flip between rendered quantities in interactive mode using 'f/F'
 - SPLASH_DEFAULTS variable can be set for system-wide defaults
 - can plot arbitrary functions of x,t as exact solution
@@ -316,16 +316,16 @@
 - new directory layout and more helpful error messages during build
 - PGPLOT linking is easier to get right.
 
-1.13.1:
-~~~~~~~~~
+:1.13.1:
+
 - bugs with new calc_quantities module fixed
 - generic library interface implemented so backend can be changed easily
 - bug fix with auto pixel selection
 - simpler foreground/background colour setting
 - added subgrid interpolation warning
 
-1.13.0:
-~~~~~~~~~
+:1.13.0:
+
 - function parser incorporated
 - calculated quantities can now be specified at runtime, arbitrary function plotting implemented as an exact solution
 - command-line SPH->grid conversion ("splash to grid") implemented
@@ -334,8 +334,8 @@
 - bug fix with tiling and y-axis labels
 - various other bug fixes.
 
-1.12.2:
-~~~~~~~~~
+:1.12.2:
+
 - Variable marker sizes added, can plot particles as circles with size proportional to h
 - dark matter rendering with block-labelled GADGET format fixed
 - VINE read handles star particles
@@ -348,8 +348,8 @@
 - more robust memory handling
 - bug fix with automatic pixel selection causing seg fault.
 
-1.12.1:
-~~~~~~~~~
+:1.12.1:
+
 - Can edit/delete text shapes interactively, also the colour bar label
 - can customise the label on projection plots
 - contour levels better defined
@@ -358,8 +358,8 @@
 - contour limits can be set separately to render limits for same quantity
 - minor bug fixes.
 
-1.12.0:
-~~~~~~~~~
+:1.12.0:
+
 - Command-line plotting implemented
 - ln transform added
 - bug fixes in GADGET read
@@ -367,8 +367,8 @@
 - "splash calc" command line utility calculates time sequences of global quantities from a sequence of dump files
 - bug fix causing seg fault.
 
-1.11.1:
-~~~~~~~~~
+:1.11.1:
+
 - automatic number of pixels and exact pixel boundaries implemented
 - mass does not have to be read from dump file
 - frame changes are per-page not per-dump file for animation sequences
@@ -377,8 +377,8 @@
 - bug fixes with block-labelled GADGET read
 - Steve Foulkes data read added.
 
-1.11.0:
-~~~~~~~~~
+:1.11.0:
+
 - ability to use subset of particles in restricted parameter range(s)
 - probability density function plot option
 - plot-hugging colour bars added
@@ -386,8 +386,8 @@
 - v,V,w and H implemented in interactive mode for >1 panel
 - various bug fixes (including one with vphi).
 
-1.10.2:
-~~~~~~~~~
+:1.10.2:
+
 - disc surface density / toomre q parameter plotting added
 - flash colour schemes added
 - splash to binary convert option
@@ -396,15 +396,15 @@
 - vanaverbeke format read
 - various bug fixes.
 
-1.10.1:
-~~~~~~~~~
+:1.10.1:
+
 - "splash to" command line option converts binary dumps to ascii format
 - vector plots + rotation now implemented
 - block labelled GADGET format read
 - ring-spreading exact solution added.
 
-1.10.0:
-~~~~~~~~~
+:1.10.0:
+
 - horizontal colour bars implemented
 - -p, -o command line options
 - can have mixed types in data reads
@@ -415,47 +415,47 @@
 - save as option
 - various bug fixes
 
-1.9.2:
-~~~~~~~~~
+:1.9.2:
+
 - improvements to ascii read including asplash -e option
 - smarter foreground/background colour changing for titles
 - min=max problem fixed (caught by splash not pgplot)
 - fixed vector arrow length option
 - other minor changes and bug fixes
 
-1.9.1:
-~~~~~~~~~
+:1.9.1:
+
 - environment variables + improvements to gadget data read
 - better prompting
 - 3 new colour schemes
 - improved legend/title options
 - other minor changes
 
-1.9.0:
-~~~~~~~~~
+:1.9.0:
+
 - animation sequences implemented
 - origin settings now affect radius calculation and are relative to tracked particle
 - automatic line width choice for postscript devices
 - w key adapts vector arrows
 - vastly improved userguide
 
-1.8.1:
-~~~~~~~~~
+:1.8.1:
+
 - option to hide vector arrows where there are no particles added
 - smoother 3D plotting at low pixel numbers
 - smoother vector plots
 - bug fixes with a)
 - issues with round-off error with z integration of vectors fixed.
 
-1.8.0:
-~~~~~~~~~
+:1.8.0:
+
 - hidden particles not used in rendering
 - units for z integration added
 - a) & g) implemented in interactive mode for multiple-plots-per-page
 - improved cross section using x in interactive mode
 
-1.7.2:
-~~~~~~~~~
+:1.7.2:
+
 - Menu shortcuts implemented
 - bug fix/ more sensible transformation of angular vector components in different co-ordinate systems
 - improvements to interactive zoom and origin recentreing
@@ -463,61 +463,61 @@
 - restrictions on page size removed
 - minor bug fixes
 
-1.7.1:
-~~~~~~~~~
+:1.7.1:
+
 - command line options for defaults and limits files added
 - minor bug fixes
 
-1.7.0:
-~~~~~~~~~
+:1.7.0:
+
 - renamed SPLASH instead of SUPERSPHPLOT
 - much faster data read for gadget and sphNG reads (only required columns read)
 - physical units can be saved to file
 - new menu formats
 - various other bug fixes
 
-1.6.2:
-~~~~~~~~~
+:1.6.2:
+
 - fast particle plotting and streamline plotting implemented
 - more bug fixes with interactive mode on multiplots
 - various other bug fixes
 
-1.6.1:
-~~~~~~~~~
+:1.6.1:
+
 - bug fixes to 1.6.0, further improvements to interactive mode on multiplots
 
-1.6.0:
-~~~~~~~~~
+:1.6.0:
+
 - Interactive mode on multiple plots per page
 - highly optimised interpolation + parallel version
 - new Makefile
 - various bug fixes
 
-1.5.4:
-~~~~~~~~~
+:1.5.4:
+
 - Handles multiple SPH/non-SPH particle types
 - axes redrawn after rendering
 - minor bug fixes
 
-1.5.3:
-~~~~~~~~~
+:1.5.3:
+
 - minor bug fixes/improvements to multiple plots per page
 - colour bar labelling tiled plots
 - legend
 - Accelerated rendering option for projections.
 
-1.5.2:
-~~~~~~~~~
+:1.5.2:
+
 - S) option for saving limits and defaults
 - MUCH faster interactive replotting (no unnecessary re-rendering)
 - a few other minor things
 
-1.5.1:
-~~~~~~~~~
+:1.5.1:
+
 - docs updated for v1.5, other minor changes
 
-1.5.0:
-~~~~~~~~~
+:1.5.0:
+
 - 3D perspective added
 - 3D opacity rendering
 - improved rotation, colour schemes
@@ -526,8 +526,8 @@
 - speed enhancements
 - physical unit rescaling
 
-1.0.5:
-~~~~~~~~~
+:1.0.5:
+
 - error calculation for exact solutions
 - legend for plot markers
 - exact_densityprofiles added
@@ -535,31 +535,31 @@
 - unit rescaling improved
 - other minor changes + bug fixes
 
-1.0.4:
-~~~~~~~~~
+:1.0.4:
+
 - better colour schemes
 - interactive colour scheme changing
 - various minor changes and bug fixes
 
-1.0.3:
-~~~~~~~~~
+:1.0.3:
+
 - rescale data option
 - better page setup
 - improved zooming
 - interactive particle tracking
 - various minor changes and bug fixes
 
-1.0.2:
-~~~~~~~~~
+:1.0.2:
+
 - much improved ascii data read
 - better line plotting
 - zoom on powerspectrum plots + various bug fixes
 
-1.0.1:
-~~~~~~~~~
+:1.0.1:
+
 - bug fixes relating to colour bars on multiplots
 
-1.0.0:
-~~~~~~~~~
+:1.0.0:
+
 - first official release
 - version given to many people at IPAM meeting and put on web 
