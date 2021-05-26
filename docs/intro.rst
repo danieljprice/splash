@@ -106,12 +106,12 @@ and please do so as it is my only form of thanks.
 Version History
 ---------------
 
-.. include:: version_history
+.. include:: version_history.rst
 
 License
 -------
 
-splash - a visualisation tool for SPH data ©2004-2020 Daniel Price. This
+splash - a visualisation tool for SPH data ©2004-2021 Daniel Price. This
 program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
 Software Foundation; either version 2 of the License, or (at your

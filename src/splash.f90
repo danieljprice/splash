@@ -51,18 +51,21 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.3.0   : (20/05/21) bug fix with surface density plot with physical units on;
+!     3.3.0   : (20/05/21)
+!             bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
 !             lightcurve now performs frequency-dependent ray tracing;
 !             added --anglex,--angley,--anglez flags;
 !             can add labelled arrows by typing ^ in interactive mode, also delete/edit;
 !             capital M, 0 or ncols+1 from main menu gives multiplot;
 !             added -multi flag for multiplot from command line
-!     3.2.1   : (26/04/21) added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
+!     3.2.1   : (26/04/21)
+!             added --xsec=1.0 and --kappa=1.0 flags to specify cross section position
 !             and opacity, respectively; specifying --xsec automatically switches from projection
 !             to cross section; specifying --kappa turns on opacity rendering;
 !             bug fix in splash calc tracks; can use --track=1,2,3 to specify list of particles
-!     3.2.0   : (20/04/21) disable ALL prompts if any command line flags set;
+!     3.2.0   : (20/04/21)
+!             disable ALL prompts if any command line flags set;
 !             all environment variables can now be given as command line flags using lower case string
 !             after last underscore e.g. SPLASH_CENTRE_ON_SINK=1 becomes --sink=1 on command line;
 !             useful options include --corotate, --sink=1, --debug and more;
@@ -70,11 +73,13 @@ program splash
 !             added -gandalf and -f gandalf as shortcut for seren data read;
 !             assume default xw device and disable device prompt if any command line flags set;
 !             s/S options now do the same thing
-!     3.1.1   : (31/03/21) automatically plot y vs x given a two-column data file;
+!     3.1.1   : (31/03/21)
+!             automatically plot y vs x given a two-column data file;
 !             planet wake coordinate system added; bug fix with SPLASH_COROTATE; bug fix reading
 !             phantom dumps when number of particles of each type does not match itype array;
 !             bug fixes in grid2pdf
-!     3.1.0   : (16/02/21) splash calc lightcurve implemented; sink particles ON by default;
+!     3.1.0   : (16/02/21)
+!             splash calc lightcurve implemented; sink particles ON by default;
 !             changing units rescales plot limits correctly;
 !             further improvements to ray tracing / opacity rendering with physical opacity;
 !             can change units temporarily without writing .units file;
@@ -83,7 +88,8 @@ program splash
 !             bug fix with units prompt; floating colour bars are white not black;
 !             automatically write copyright in Hollywood mode; auto-render fits files;
 !             read softening length from phantom sinks if accretion radius is zero;
-!     3.0.2   : (20/01/21) opacity rendering uses physical value of kappa, can also
+!     3.0.2   : (20/01/21)
+!             opacity rendering uses physical value of kappa, can also
 !             use opacity defined on particles; can track multiple particles with
 !             'splash calc tracks' by specifying ids in splash.tracks file;
 !             support for SWIFT code in gadget_hdf5; auto-recognise format for .csv files;
@@ -91,13 +97,15 @@ program splash
 !             exact solution lines can be plotted in background colour;
 !             bug fix for dead particles in phantom dumps; seg fault in fits reader fixed;
 !             seg fault in gadget data read fixed; bug fix in x-menu options
-!     3.0.0   : (26/08/20) Unified splash binary with -f flag to specify format;
+!     3.0.0   : (26/08/20)
+!             Unified splash binary with -f flag to specify format;
 !             automated format recognition for phantom, gadget (and hdf5 variants) and fits;
 !             cleaner d) menu; splash is compiled in double precision by default;
 !             rotation settings used in splash to grid to rotate particles;
 !             bug fix in mbatesph data read; pysplash utility for reading SPH
 !             data formats into python; libsplash.so, libexact.so and libread.so libraries
-!     2.10.1  : (24/06/20) exact solution can appear in legend; can also plot under data;
+!     2.10.1  : (24/06/20)
+!             exact solution can appear in legend; can also plot under data;
 !             fits reader and denoise utility can read/write spectral cubes; text shapes can
 !             print header variables using %(var); can shift cross section by precise amounts
 !             in interactive mode using number followed by u/d; fits reader includes header
@@ -195,8 +203,8 @@ program splash
 !             floating/inset colour bars added;
 !             splash to gadget conversion implemented;
 !             splash to grid works in 2D;
-!             improved interfaces to shapes and animation sequences
-!             automatically turns on dark matter particle plotting if no gas
+!             improved interfaces to shapes and animation sequences;
+!             automatically turns on dark matter particle plotting if no gas;
 !             interactive mode help displayed automatically
 !     2.1.1  : (31/08/12)
 !             irregular/circular particle selection using shift-left/middle click;
@@ -212,7 +220,7 @@ program splash
 !             more general exact solution from file option;
 !             tiling works with one colour bar per row;
 !             splash calc handles different particle types
-!       2.0  : (29/08/11)
+!     2.0.0  : (29/08/11)
 !             new giza backend - antialiased lines; real fonts; pdf, eps and svg drivers;
 !             fewer build dependencies (only cairo, X11);
 !             support for semi-transparent text;
@@ -281,7 +289,7 @@ program splash
 !             in interactive mode for >1 panel; various bug fixes (including one with vphi).
 !     1.10.2 : (08/05/08)
 !             disc surface density / toomre q parameter plotting added; flash colour
-!             schemes added; splash to binary convert option, can change order in
+!             schemes added; splash to binary convert option; can change order in
 !             which particle types are plotted; splash.columns file overrides
 !             column label settings; vanaverbeke format read; various bug fixes.
 !     1.10.1 : (11/03/08)
@@ -310,7 +318,7 @@ program splash
 !     1.8.1 : (28/03/07)
 !             option to hide vector arrows where there are no particles added;
 !             smoother 3D plotting at low pixel numbers;
-!             (smoother vector plots); bug fixes with a); issues with
+!             smoother vector plots; bug fixes with a); issues with
 !             round-off error with z integration of vectors fixed.
 !     1.8.0 : (14/03/07)
 !             hidden particles not used in rendering; units for z integration added;
@@ -329,45 +337,48 @@ program splash
 !             renamed SPLASH instead of SUPERSPHPLOT; much faster data read
 !             for gadget and sphNG reads (only required columns read);
 !             physical units can be saved to file; new menu formats; various
-!             other bug fixes.
-!     1.6.2   (24/10/06)
-!           : fast particle plotting and streamline plotting implemented;
-!             more bug fixes with interactive mode on multiplots; various other bug fixes.
-!     1.6.1   (24/8/06)
-!           : bug fixes to 1.6.0, further improvements to interactive mode on multiplots.
-!     1.6.0   (10/8/06)
-!           : Interactive mode on multiple plots per page; highly optimised interpolation
+!             other bug fixes
+!     1.6.2 : (24/10/06)
+!             fast particle plotting and streamline plotting implemented;
+!             more bug fixes with interactive mode on multiplots; various other bug fixes
+!     1.6.1 : (24/8/06)
+!             bug fixes to 1.6.0, further improvements to interactive mode on multiplots
+!     1.6.0 : (10/8/06)
+!             Interactive mode on multiple plots per page; highly optimised interpolation
 !             + parallel version; new Makefile; various bug fixes
-!     1.5.4 (06/7/06)
-!           : Handles multiple SPH/non-SPH particle types; axes redrawn after rendering;
+!     1.5.4 : (06/7/06)
+!             Handles multiple SPH/non-SPH particle types; axes redrawn after rendering;
 !             minor bug fixes
-!     1.5.3 (27/6/06)
-!           : minor bug fixes/improvements to multiple plots per page, colour bar labelling
-!             tiled plots, legend. Accelerated rendering option for projections.
-!     1.5.2 (11/5/06)
-!           : S) option for saving limits and defaults; MUCH faster interactive
-!             replotting (no unnecessary re-rendering), a few other minor things
-!     1.5.1 (26/4/06)
-!           : docs updated for v1.5, other minor changes
-!     1.5.0 (17/3/06)
-!           : 3D perspective added, 3D opacity rendering, improved rotation,
-!             colour schemes, adjustable vector arrows (+legend), improved timestepping
-!             behaviour, speed enhancements, physical unit rescaling
-!     1.0.5 (28/9/05)
-!           : error calculation for exact solutions, legend for plot markers,
-!             exact_densityprofiles added, more colour schemes,
-!             unit rescaling improved, other minor changes + bug fixes
-!     1.0.4 (17/8/05)
-!           : better colour schemes; interactive colour scheme changing;
+!     1.5.3 : (27/6/06)
+!             minor bug fixes/improvements to multiple plots per page; colour bar labelling
+!             tiled plots; legend; Accelerated rendering option for projections.
+!     1.5.2 : (11/5/06)
+!             S) option for saving limits and defaults; MUCH faster interactive
+!             replotting (no unnecessary re-rendering); a few other minor things
+!     1.5.1 : (26/4/06)
+!             docs updated for v1.5, other minor changes
+!     1.5.0 : (17/3/06)
+!             3D perspective added; 3D opacity rendering; improved rotation,
+!             colour schemes; adjustable vector arrows (+legend); improved timestepping
+!             behaviour; speed enhancements; physical unit rescaling
+!     1.0.5 : (28/9/05)
+!             error calculation for exact solutions; legend for plot markers;
+!             exact_densityprofiles added; more colour schemes;
+!             unit rescaling improved; other minor changes + bug fixes
+!     1.0.4 : (17/8/05)
+!             better colour schemes; interactive colour scheme changing;
 !             various minor changes and bug fixes
-!     1.0.3 (5/7/05)
-!           : rescale data option; better page setup; improved zooming;
-!             interactive particle tracking + various minor changes and bug fixes
-!     1.0.2 : much improved ascii data read; better line plotting; zoom on
+!     1.0.3 : (5/7/05)
+!             rescale data option; better page setup; improved zooming;
+!             interactive particle tracking; various minor changes and bug fixes
+!     1.0.2 :
+!             much improved ascii data read; better line plotting; zoom on
 !             powerspectrum plots + various bug fixes
-!     1.0.1 : bug fixes relating to colour bars on multiplots
-!     1.0   : first "official" release: version given to many people at IPAM
-!             meeting and put on web.
+!     1.0.1 :
+!             bug fixes relating to colour bars on multiplots
+!     1.0.0 :
+!             first official release; version given to many people at IPAM
+!             meeting and put on web
 !
 !     -------------------------------------------------------------------------
 !
