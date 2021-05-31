@@ -24,7 +24,7 @@ module lightcurve
  implicit none
 
  public :: get_lightcurve
- public :: get_temp_from_u,ionisation_fraction
+ public :: get_temp_from_u,ionisation_fraction,get_opacity
 
  private
 
@@ -48,12 +48,12 @@ contains
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                           lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
- use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx
+ use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx
  use limits,                only:lim,get_particle_subset
  use interpolate3D_opacity, only:interp3D_proj_opacity
  use particle_data,         only:icolourme
  use interpolation,         only:get_n_interp,set_interpolation_weights
- use settings_data,         only:iRescale,iverbose,required,UseTypeInRenderings
+ use settings_data,         only:iRescale,iverbose,required,UseTypeInRenderings,ndimV
  use settings_part,         only:iplotpartoftype
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
                                  idensityweightedinterpolation,exact_rendering
@@ -73,7 +73,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,nfreq
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,k,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
@@ -81,8 +81,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c
  real, dimension(:,:,:), allocatable :: img_nu
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
- real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,beta_max,taui
- logical :: photon_trapping
+ real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev
+ logical :: relativistic
+ character(len=20) :: tmpfile
 
  lum = 0.
  rphoto = 0.
@@ -98,8 +99,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  !--allow for reduction in opacity by factor of v/c for photon trapping
  !
- photon_trapping = get_command_flag('trap')
- if (photon_trapping) print "(a)",' photon trapping is ON, multiplying opacity by v/c'
+ relativistic = .not.get_command_flag('nonrel') .and. (ivx > 0 .and. ndimV >= 3 .and. ipmomx > 0)
+ if (relativistic) print "(a)",' relativistic corrections ON (use --nonrel to switch off)'
 
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)
@@ -117,7 +118,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
 
- if (photon_trapping) then
+ if (relativistic) then
     allocate(v_on_c(3,n),stat=ierr)
     do i=1,3
        v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
@@ -141,8 +142,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  !--set number of pixels and pixel scale in each direction
  !
- !do j=6,12
- npixx = npix !2**j
+ npixx = npix
  if (npixx < 8) npixx = 1024
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
@@ -177,7 +177,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        opacity = opacity*taupartdepth
     endif
  else
-    opacity = 0.3
+    opacity = 0.35
     if (taupartdepth > 0.) opacity = taupartdepth
     print*,' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
@@ -191,29 +191,22 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  freqmin = 1e8
  freqmax = 1e22
  freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
+ if (allocated(flux_nu)) deallocate(flux_nu)
  allocate(flux_nu(nfreq,n))
- beta_max = 0.
+ doppler_factor = 1.
+ doppler_factor_max = 0.
  do i=1,n
-    !betaz = 1. + v_on_c(3,i)
-    !lorentz = 1./sqrt(1. - dot_product(v_on_c(:,i),v_on_c(:,i)))
-    !doppler_factor = betaz*lorentz
-    !if (abs(doppler_factor) > beta_max) then
-      ! beta_max = doppler_factor
-       !print*,x(i)/au,y(i)/au,z(i)/au,'au v/c=',betaz,' factor=',doppler_factor**3
-    !endif
-    if (photon_trapping) then
-       if (v_on_c(3,i) > 1.e-4) then
-          opacity(i) = opacity(i)*v_on_c(3,i)
-       !elseif (v_on_c(3,i) < -1.e-4) then
-      !    opacity(i) = opacity(i)/abs(v_on_c(3,i))
-       endif
+    if (relativistic) then
+       betaz = 1. + v_on_c(3,i)
+       lorentz = 1./sqrt(1. - dot_product(v_on_c(:,i),v_on_c(:,i)))
+       doppler_factor = betaz*lorentz   ! nu / nu_0
+       doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
-
-    !opacity(i) = opacity(i)/doppler_factor
-    !flux_nu(:,i) = doppler_factor**3*B_nu(dat(i,itemp),freq)
-    flux_nu(:,i) = B_nu(dat(i,itemp),freq)
+    opacity(i) = opacity(i)/doppler_factor
+    flux_nu(:,i) = doppler_factor**3*B_nu(dat(i,itemp),freq*doppler_factor)
+    !flux_nu(:,i) = B_nu(dat(i,itemp),freq)
  enddo
- !print*,' max opacity reduction from v/c=',1./doppler_factor
+ if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
  if (allocated(img_nu)) deallocate(img_nu)
  allocate(img_nu(nfreq,npixx,npixy))
@@ -254,6 +247,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(a,3(1pg10.3,a))",' Teff  = ',temp,' K: Blackbody peak at ',freq_max,' Hz / ',lam_max,' nm'
 
  ! get integrated spectrum from integrating over all pixels in the image
+ if (allocated(spectrum)) deallocate(spectrum,bb_spectrum)
  allocate(spectrum(nfreq),bb_spectrum(nfreq))
  do i=1,nfreq
     spectrum(i) = sum(img_nu(i,1:npixx,1:npixy))*dx*dy
@@ -277,9 +271,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(a)",' WRITING '//trim(specfile)//'.spec'
  open(unit=iu1,file=trim(specfile)//'.spec',status='replace',iostat=ierr)
  write(iu1,"(a)") '# model spectrum, computed with '//trim(tagline)
- write(iu1,"(a)") '# wavelength [nm], F_\lambda'
+ write(iu1,"(a)") '# frequency [Hz], F_\nu'
  do i=1,nfreq
-    write(iu1,*) nu_to_lam(freq(i)),spectrum(i)
+    write(iu1,*) freq(i),spectrum(i)
  enddo
  close(iu1)
 
@@ -334,6 +328,31 @@ real elemental function get_temp_from_u(rho,u) result(temp)
  enddo
 
 end function get_temp_from_u
+
+!---------------------------------------------------------
+! routine to return simple gas opacities
+! from electron scattering and free-free absorption
+!
+! INPUT:
+!    rho - density [g/cm^3]
+!    T -  temperature [K]
+! OUTPUT:
+!    kappa - cm^2/g
+!---------------------------------------------------------
+
+real elemental function get_opacity(rho,T,Xfrac) result(kappa)
+ real(kind=8), intent(in) :: rho,T,Xfrac
+ real(kind=8) :: kappa_ff,kappa_es
+
+ kappa_ff = 0.64e23*rho*T**(-3.5)
+ if (T > 7000.) then
+    kappa_es = 0.2*(1. + Xfrac)
+ else
+    kappa_es = 0.
+ endif
+ kappa = kappa_es + kappa_ff
+
+end function get_opacity
 
 !----------------------------------------------------------------
 !+

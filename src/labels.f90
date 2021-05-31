@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -41,7 +41,7 @@ module labels
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
  integer :: ipmass,ike,ispsound,itemp,ikappa
- integer :: idivb,iJfirst,irhostar
+ integer :: idivb,iJfirst,irhostar,ipmomx
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy
  integer :: isurfdens,itoomre
@@ -97,6 +97,7 @@ subroutine reset_columnids
  idustfracsum = 0
  ideltav = 0
  ideltavsum = 0
+ ipmomx = 0
  headertags = ''
 
 end subroutine reset_columnids

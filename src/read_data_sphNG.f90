@@ -1320,7 +1320,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
- use lightcurve,     only:get_temp_from_u,ionisation_fraction
+ use lightcurve,     only:get_temp_from_u,ionisation_fraction,get_opacity
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -2101,16 +2101,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !--calculate the temperature from density and internal energy (using physical units)
  !
  unit_dens = umass/(udist**3)
- Tcut = renvironment('SSPLASH_TCUT',errval=7000.)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    print*,' setting opacity constant for T > ',Tcut
-    where(dat(1:ntotal,itemp,j) > Tcut)
-       dat(1:ntotal,ikappa,j) = 0.2*(1. + Xfrac)   ! electron scattering opacity cm^2/g
-    elsewhere
-       dat(1:ntotal,ikappa,j) = 0.0   ! transparent if T < 7000K
-    end where
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
@@ -2401,7 +2395,7 @@ subroutine set_labels_sphNG
               labelzintegration=>labelzintegration_default,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
-              ivrel,make_vector_label,get_label_grain_size,itemp,ikappa
+              ivrel,make_vector_label,get_label_grain_size,itemp,ikappa,ipmomx
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
@@ -2542,6 +2536,8 @@ subroutine set_labels_sphNG
           itemp = i
        case('vrel')
           ivrel = i
+       case('px')
+          ipmomx = i
        case default
           if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
           label(i) = tagarr(i)
@@ -2594,6 +2590,7 @@ subroutine set_labels_sphNG
  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('J',iJfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('p',ipmomx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  !
  !--ensure labels are unique by appending numbers where necessary
  !
