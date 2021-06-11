@@ -1411,7 +1411,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     required(irho) = .true.
     required(iutherm) = .true.
  endif
- if (get_ionfrac) then
+ if (get_ionfrac .or. get_temperature) then
     required(irho) = .true.
     required(itemp) = .true.
     Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
@@ -2111,7 +2111,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac)
+    print*,'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac,Yfrac)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
