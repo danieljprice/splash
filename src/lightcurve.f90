@@ -179,7 +179,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  else
     opacity = 0.35
     if (taupartdepth > 0.) opacity = taupartdepth
-    print "(a,1pg8.2,a)",' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
+    print "(a,1pg10.2,a)",' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
  !
  ! specify source function for each particle
@@ -451,11 +451,11 @@ end subroutine ionisation_fraction
 !  Assumes inputs in cgs units.
 !+
 !----------------------------------------------------------------
-pure subroutine ionisation_fraction_Honly(dens,temp,xfrac,ne)
+pure subroutine ionisation_fraction_Honly(dens,temp,xh1,ne)
  use physcon,     only:pi,kboltz,hplanck,mh
  real(doub_prec), intent(in) :: dens,temp
- real(doub_prec), intent(out):: xfrac,ne
- real(doub_prec)             :: n,nh,nhe,A,const,xh1
+ real(doub_prec), intent(out):: xh1,ne
+ real(doub_prec)             :: n,nh,nhe,A,const
  real(doub_prec), parameter  :: twopi=2.*pi,eV=1.60219d-12,mass_electron_cgs=9.10938291d-28,&
                                 chih0=13.6
 
