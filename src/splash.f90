@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.3.1   : (20/05/21)
+!             bug fix with relativistic corrections in splash calc lightcurve
 !     3.3.0   : (20/05/21)
 !             bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
