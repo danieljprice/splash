@@ -80,7 +80,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c
  real, dimension(:,:,:), allocatable :: img_nu
- real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor
  real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev
  logical :: relativistic
  character(len=20) :: tmpfile
@@ -179,7 +179,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  else
     opacity = 0.35
     if (taupartdepth > 0.) opacity = taupartdepth
-    print*,' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
+    print "(a,1pg10.2,a)",' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
  !
  ! specify source function for each particle
@@ -194,17 +194,18 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (allocated(flux_nu)) deallocate(flux_nu)
  allocate(flux_nu(nfreq,n))
  doppler_factor = 1.
+ opacity_factor = 1.
  doppler_factor_max = 0.
  do i=1,n
     if (relativistic) then
        betaz = 1. + v_on_c(3,i)
        lorentz = 1./sqrt(1. - dot_product(v_on_c(:,i),v_on_c(:,i)))
-       doppler_factor = betaz*lorentz   ! nu / nu_0
+       doppler_factor = betaz*lorentz               ! nu / nu_0, Lorentz transform
+       opacity_factor = lorentz*(1. - v_on_c(3,i))  ! nu_0 / nu, inverse Lorentz transform
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
-    opacity(i) = opacity(i)/doppler_factor
-    flux_nu(:,i) = doppler_factor**3*B_nu(dat(i,itemp),freq*doppler_factor)
-    !flux_nu(:,i) = B_nu(dat(i,itemp),freq)
+    opacity(i) = opacity(i)*opacity_factor
+    flux_nu(:,i) = B_nu(dat(i,itemp),freq*doppler_factor)
  enddo
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
@@ -340,17 +341,47 @@ end function get_temp_from_u
 !    kappa - cm^2/g
 !---------------------------------------------------------
 
-real elemental function get_opacity(rho,T,Xfrac) result(kappa)
- real(kind=8), intent(in) :: rho,T,Xfrac
- real(kind=8) :: kappa_ff,kappa_es
+real elemental function get_opacity(rho,T,X,Y) result(kappa)
+ real(doub_prec), intent(in) :: rho,T,X,Y
+ real(doub_prec) :: kappa_ff,kappa_es,kappa_H,kappa_mol,kappa_abs
+ !real(doub_prec) :: Z
+ real(doub_prec) :: xfrac,ne,xh0,xh1,xhe0,xhe1,xhe2
+ real(doub_prec), parameter :: sigma_e = 6.652e-25 ! Thomson cross section
 
- kappa_ff = 0.64e23*rho*T**(-3.5)
- if (T > 7000.) then
-    kappa_es = 0.2*(1. + Xfrac)
- else
-    kappa_es = 0.
- endif
- kappa = kappa_es + kappa_ff
+ call ionisation_fraction_Honly(rho,T,xfrac,ne)
+ !call ionisation_fraction(rho,T,X,Y,xh0,xh1,xhe0,xhe1,xhe2,ne)
+
+ !Z = max(1. - X - Y,0.)  ! metallicity
+
+ ! free-free emission (Kramer's law)
+! kappa_ff = 0.64e23*rho*T**(-3.5)
+ !kappa_ff = 4.e25*(1. + X)*(Z + 0.001)*rho*T**(-3.5)
+
+ ! opacity due to negative Hydrogen
+ !kappa_H = 1.1e-25*sqrt(Z)*sqrt(rho)*T**7.7
+ !kappa_H = 1.1e-25*sqrt(Z)*sqrt(rho)*T**7.7
+
+ ! opacity due to molecules
+ !kappa_mol = 0.1*Z
+
+ ! electron scattering
+! if (T > 7000.) then
+!    kappa_es = 0.2*(1. + X)
+! else
+!    kappa_es = 0.
+ !endif
+ kappa_es = sigma_e*ne/rho !*0.5*(1. + X) ! 0.2*(1 + X) if fully ionised
+
+ ! total opacity, valid between T = 1.5 x 10^3 and 10^9 K
+ !kappa = kappa_mol + 1./(1./kappa_H + 1./(kappa_es + kappa_ff))
+
+ !kappa = 1./(1./kappa_H + 1./(kappa_es + kappa_ff))
+ kappa = kappa_es
+
+ ! absorption opacity
+ !kappa_abs = kappa_ff + kappa_H !+ kappa_ff
+ !kappa = sqrt((kappa_ff + kappa_es + kappa_H)*kappa_abs)
+ !kappa = sqrt(kappa*(kappa_abs))
 
 end function get_opacity
 
@@ -360,11 +391,11 @@ end function get_opacity
 !  fractions of hydrogen and helium. Assumes inputs in cgs units
 !+
 !----------------------------------------------------------------
-subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
+pure subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2,ne)
  use vectorutils, only:matrixinvert3D
  use physcon,     only:pi,kboltz,hplanck,mh
  real, intent(in) :: dens,temp,X,Y
- real, intent(out):: xh0,xh1,xhe0,xhe1,xhe2
+ real, intent(out):: xh0,xh1,xhe0,xhe1,xhe2,ne
  real             :: n,nh,nhe,A,B,C,const,xh1g,xhe1g,xhe2g,f,g,h
  real, dimension(3,3) :: M,M_inv
  real, dimension(3) :: dx
@@ -408,6 +439,38 @@ subroutine ionisation_fraction(dens,temp,X,Y,xh0,xh1,xhe0,xhe1,xhe2)
  xhe2 = xhe2g * n / nhe
  xh0 = ((nh/n) - xh1g) * n / nh
  xhe0 = ((nhe/n) - xhe1g - xhe2g) * n / nhe
+
+ ne = xh1*nh + xhe1*nhe + xhe2*nhe
+
 end subroutine ionisation_fraction
+
+!----------------------------------------------------------------
+!+
+!  Same as above but for H-only, can be solved analytically
+!  without any matrix inversion or iterations.
+!  Assumes inputs in cgs units.
+!+
+!----------------------------------------------------------------
+pure subroutine ionisation_fraction_Honly(dens,temp,xh1,ne)
+ use physcon,     only:pi,kboltz,hplanck,mh
+ real(doub_prec), intent(in) :: dens,temp
+ real(doub_prec), intent(out):: xh1,ne
+ real(doub_prec)             :: n,nh,nhe,A,const
+ real(doub_prec), parameter  :: twopi=2.*pi,eV=1.60219d-12,mass_electron_cgs=9.10938291d-28,&
+                                chih0=13.6
+
+ nh = dens / mh
+ n = nh
+
+ const = (sqrt(twopi * mass_electron_cgs * kboltz) / hplanck)**3 / n
+ A = const * temp**(1.5) * exp(-chih0 * eV / (kboltz * temp))
+
+ ! solve quadratic equation x^2/(1-x) = A, i.e. x^2 + Ax - A = 0
+ xh1 = 0.5*(-A + sqrt(A**2 + 4.*A))
+
+ ! electron density
+ ne = xh1*n
+
+end subroutine ionisation_fraction_Honly
 
 end module lightcurve

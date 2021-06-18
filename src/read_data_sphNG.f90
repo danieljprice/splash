@@ -1316,7 +1316,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
- use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,iutherm,itemp,ikappa
+ use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,&
+                          iutherm,itemp,ikappa,irhorestframe
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
@@ -1333,7 +1334,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: iblock,nblocks,ntotblock,ncolcopy
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr,nkilled
- integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc
+ integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
@@ -1351,7 +1352,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,Tcut
+ real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei,Tcut
  logical :: skip_corrupted_block_3,get_temperature,get_ionfrac
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
@@ -1411,7 +1412,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     required(irho) = .true.
     required(iutherm) = .true.
  endif
- if (get_ionfrac) then
+ if (get_ionfrac .or. get_temperature) then
     required(irho) = .true.
     required(itemp) = .true.
     Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
@@ -2102,15 +2103,23 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !--calculate the temperature from density and internal energy (using physical units)
  !
  unit_dens = umass/(udist**3)
+ !
+ !--use primitive density for relativistic code
+ !
+ idenscol = irho
+ if (irhorestframe > 0) idenscol = irhorestframe
+
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
-    dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,irho,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac)
+    dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
+    print*,'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac,Yfrac)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
     do i=1,ntotal
-       call ionisation_fraction(real(dat(i,irho,j)*unit_dens),dat(i,itemp,j),Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi)
+       call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
+                                Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
        dat(i,iHIIcol,j)=xHIIi
        dat(i,iHeIIcol,j)=xHeIIi
        dat(i,iHeIIIcol,j)=xHeIIIi
@@ -2396,7 +2405,7 @@ subroutine set_labels_sphNG
               labelzintegration=>labelzintegration_default,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
-              ivrel,make_vector_label,get_label_grain_size,itemp,ikappa,ipmomx
+              ivrel,make_vector_label,get_label_grain_size,itemp,ikappa,ipmomx,irhorestframe
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
  use geometry,        only:labelcoord
@@ -2543,6 +2552,8 @@ subroutine set_labels_sphNG
           ivrel = i
        case('px')
           ipmomx = i
+       case('dens prim')
+          irhorestframe = i
        case default
           if (debugmode) print "(a,i2)",' DEBUG: Unknown label '''//trim(tagarr(i))//''' in column ',i
           label(i) = tagarr(i)

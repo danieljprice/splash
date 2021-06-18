@@ -88,7 +88,7 @@ end subroutine curl3D_epsijk
 !  Internal subroutine that inverts a 3x3 matrix
 !+
 !----------------------------------------------------------------
-subroutine matrixinvert3D(A,Ainv,ierr)
+pure subroutine matrixinvert3D(A,Ainv,ierr)
  real,    intent(in)  :: A(3,3)
  real,    intent(out) :: Ainv(3,3)
  integer, intent(out) :: ierr

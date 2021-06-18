@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.3.1   : (20/05/21)
+!             bug fix with relativistic corrections in splash calc lightcurve
 !     3.3.0   : (20/05/21)
 !             bug fix with surface density plot with physical units on;
 !             splash calc lightcurve computes spectra from local blackbody emission if T and kappa given;
@@ -469,7 +471,8 @@ program splash
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
  use system_commands,    only:get_number_arguments,get_argument
- use system_utils,       only:lenvironment,get_environment_or_flag,get_command_option,get_command_flag
+ use system_utils,       only:lenvironment,renvironment, &
+                              get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
@@ -477,7 +480,7 @@ program splash
  use readwrite_griddata, only:isgridformat,print_gridformats
  use analysis,           only:isanalysis
  use timestepping,       only:timestep_loop
- use settings_page,      only:interactive,nomenu
+ use settings_page,      only:interactive,nomenu,xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
@@ -742,6 +745,10 @@ program splash
     anglez = get_command_option('anglez',default=anglez)
     irotate = .true.
  endif
+ xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
+ xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
+ yminpagemargin = renvironment('SPLASH_MARGIN_YMIN',errval=0.)
+ ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX',errval=0.)
  !
  ! check that we have got filenames
  !
