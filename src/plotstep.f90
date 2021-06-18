@@ -115,7 +115,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  real                :: hav,pmassav,dzsuggest
  integer, dimension(:), allocatable :: ifirstinrow,ifirstincolumn
  character(len=1)    :: char
- character(len=20)   :: devstring
+ character(len=120)  :: devstring
  character(len=30)   :: string
 
  !------------------------------------------------------------------------
@@ -579,6 +579,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
     endif
     if (ierr /= 0) print "(a)",' ERROR opening plotting device'
     if (ntries > 10) stop
+    device='' ! reset the device after first time
  enddo
 
  !--query whether or not device is interactive
@@ -1955,9 +1956,12 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !!--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
                       if (double_rendering) then
+                         !if (.not.allocated(brightness)) allocate(brightness(npixx,npixy))
+                         !brightness = min(4.*(datpixcont-contmin)/(contmax-contmin),1.0)
+                         !print*,' HERE brightness = ',minval(brightness),maxval(brightness)
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
                             npixx,npixy,xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
-                            0,ncontours,.false.,ilabelcont,transparent=.true.)
+                            0,ncontours,.false.,ilabelcont,transparent=.true.) !alpha=brightness)
                       else
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
                             npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,&
