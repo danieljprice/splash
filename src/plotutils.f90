@@ -16,7 +16,7 @@
 !     stating that you changed the files and the date of any change.
 !
 !  Copyright (C) 2005-2009 Daniel Price. All rights reserved.
-!  Contact: daniel.price@sci.monash.edu.au
+!  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 

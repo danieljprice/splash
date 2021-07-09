@@ -703,7 +703,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use projections3Dgeom,     only:interpolate3D_proj_geom,interpolate3D_xsec_geom
  use interpolate3D_opacity, only:interp3D_proj_opacity
  use xsections3D,           only:interpolate3D_fastxsec,interpolate3D_xsec_vec
- use render,                only:render_pix
+ use render,                only:render_pix,set_transparency
  use pagesetup,             only:redraw_axes
  use disc,                  only:disccalc,discplot
  use exactfromfile,         only:exact_fromfile
@@ -733,7 +733,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: ntoti,iz,iseqpos,itrackpart
  integer :: i,j,k,icolumn,irow
  integer :: nyplot,nframesloop
- integer :: irenderpart
+ integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
  integer :: icolourprev,linestyleprev
  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
@@ -1941,27 +1941,25 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (irenderplot > 0) then
                 if ((ndim==3).or.(ndim==2.and. .not.x_sec)) then
 
-                   !!--call subroutine to actually render the image
+                   !--if double rendering, plot first image in greyscale
                    if (gotcontours .and. double_rendering) then
-                      !--if double rendering, plot first image in greyscale
-                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy, &
-                      1,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                      icolours_temp = 1
                    else
-                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                      icolours,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                      icolours_temp = icolours
                    endif
+                   !--call subroutine to actually render the image
+                   call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                      icolours_temp,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
 
-                   !!--contour/2nd render plot of different quantity on top of 1st rendering
+                   !--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
                       if (double_rendering) then
-                         !if (.not.allocated(brightness)) allocate(brightness(npixx,npixy))
-                         !brightness = min(4.*(datpixcont-contmin)/(contmax-contmin),1.0)
-                         !print*,' HERE brightness = ',minval(brightness),maxval(brightness)
+                         call set_transparency(npixx,npixy,datpixcont,brightness,contmin,contmax)
+
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
                             npixx,npixy,xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
-                            0,ncontours,.false.,ilabelcont,transparent=.true.) !alpha=brightness)
+                            0,ncontours,.false.,ilabelcont,alpha=brightness)
                       else
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
                             npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,&
@@ -1975,9 +1973,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       PlotOnRender_tmp(isinktype) = .false.
                    endif
 
-                   !!--dump pixmap to file if option set
+                   !--dump pixmap to file if option set
                    if (iwritepixmap) then
-                      !!--plot non-gas particle types (e.g. sink particles) on top (and to pixmap)
+                      !--plot non-gas particle types (e.g. sink particles) on top (and to pixmap)
                       call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
@@ -1987,7 +1985,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       call writepixmap(datpix,npixx,npixy,xmin,ymin,pixwidth,rendermin,rendermax,labelrender,&
                                        unitslabel(irenderplot),((istep-1)*nframesloop+iframe),x_sec,rootname(ifileopen),timei)
                    else
-                      !!--plot non-gas particle types (e.g. sink particles) on top
+                      !--plot non-gas particle types (e.g. sink particles) on top
                       call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
@@ -2009,14 +2007,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    if (debugmode .and. size(icolourme) >= 10) &
                     print*,'DEBUG: starting particle plot with ',ntoti,' particles ',&
                            zplot(1:10),icolourme(1:10),npartoftype(:),iusetype(:)
-                   !!--plot all particle types
+                   !--plot all particle types
                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),iusetype(:), &
                    (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
                    xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
                 else
-                   !!--plot non-gas particle types on top of vector plots (e.g. sinks)
+                   !--plot non-gas particle types on top of vector plots (e.g. sinks)
                    call particleplot(xplot(1:ntoti),yplot(1:ntoti), &
                    zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                    icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRenderings(:), &
@@ -2136,7 +2134,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !--slightly different interactive mode if multiple plots on page
                    !
                    iadvance = nfreq
-!                 call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
                    nplots = ipanel
                    irerender = .true.
                    call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
@@ -2311,7 +2308,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 !--timestep control only if multiple plots on page
                 !
                 iadvance = nfreq
-!              call interactive_step(iadvance,ipos,iendatstep,xmin,xmax,ymin,ymax)
                 nplots = ipanel
                 irerender = .true.
                 call interactive_multi(iadvance,ipos,ifirststeponpage,iendatstep,iframe,nframefirstonpage, &
@@ -2940,16 +2936,16 @@ subroutine page_setup(dummy)
  ! output some muff to the screen
  !--------------------------------------------------------------
  if ((((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
-        .or. (iadapt .and. lastinpanel)) .and. .not.dum).and. iverbose > 1) then
+        .or. (iadapt .and. lastinpanel)) .and. .not.dum).and. iverbose >= 0) then
     if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
-          print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelx),xmin,xmax
+          print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelx),xmin,xmax
     if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
-          print "(1x,a,' min, max = ',g0,2x,g0)",trim(labely),ymin,ymax
+          print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labely),ymin,ymax
     if (irender > 0 .and. .not.(ndim==2 .and. x_sec)) then
        if (.not.same_limits(rendermin,rendermax,renderminwas,rendermaxwas)) &
-             print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelrender),rendermin,rendermax
+             print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelrender),rendermin,rendermax
        if (gotcontours .and. .not.same_limits(contmin,contmax,contminwas,contmaxwas)) &
-             print "(1x,a,' min, max = ',g0,2x,g0)",trim(labelcont),contmin,contmax
+             print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelcont),contmin,contmax
     endif
  endif
  !--------------------------------------------------------------
