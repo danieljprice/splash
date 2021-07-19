@@ -51,7 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.3.1   : (20/05/21)
+!     3.3.1   : (19/07/21)
+!             f/F in interactive mode flips y axis on 2D plots to next column;
+!             gradual transparency in double rendering rather than sharp cutoff;
+!             removed S from main menu as now redundant; allow longer paths with -dev flag;
+!             added --xmin,--xmax,--ymin,--ymax flags for manual margin adjustment;
 !             bug fix with relativistic corrections in splash calc lightcurve
 !     3.3.0   : (20/05/21)
 !             bug fix with surface density plot with physical units on;
@@ -493,7 +497,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.0 [20th May 2021]'
+ character(len=*), parameter :: version = 'v3.3.1 [19th July 2021]'
 
  !
  ! initialise some basic code variables
