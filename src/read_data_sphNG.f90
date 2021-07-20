@@ -1410,6 +1410,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  get_ionfrac = lenvironment("SPLASH_GET_ION")
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
+    required(irhorestframe) = .true.
     required(iutherm) = .true.
  endif
  if (get_ionfrac .or. get_temperature) then
@@ -1498,7 +1499,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     close(iunit)
     return
  else
-    if (iverbose > 0) print "(a)",' File ID: '//trim(fileident)
+    if (iverbose >= 0) print "(1x,a)",trim(fileident)
  endif
  mhddump = .false.
  rtdump = .false.

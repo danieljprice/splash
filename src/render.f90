@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -27,7 +27,7 @@
 module render
  use colourbar, only:plotcolourbar
  implicit none
- public :: render_pix, render_vec
+ public :: render_pix, render_vec, set_transparency
  private
 
 contains
@@ -272,8 +272,28 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
 
  call plot_sch(charheight)
 
- return
-
 end subroutine render_vec
+
+!--------------------------------------------------------------------------
+! set opacity for double-rendering, i.e.:
+! - data values below colour bar minimum are transparent
+! - data values above 25% of colour bar range are opaque
+! - linear scaling in between
+!--------------------------------------------------------------------------
+subroutine set_transparency(nx,ny,datpix,brightness,dmin,dmax)
+ integer, intent(in) :: nx,ny
+ real,    intent(in) :: datpix(nx,ny)
+ real,    intent(out), allocatable :: brightness(:,:)
+ real,    intent(in) :: dmin,dmax
+
+ if (.not.allocated(brightness)) allocate(brightness(nx,ny))
+
+ if (abs(dmax-dmin) < tiny(0.)) then
+    brightness = 1.  ! avoid divide by zero if max=min
+ else
+    brightness = max(min(4.*(datpix-dmin)/(dmax-dmin),1.0),0.)
+ endif
+
+end subroutine set_transparency
 
 end module render

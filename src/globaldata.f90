@@ -160,7 +160,7 @@ module settings_data
  logical, dimension(0:maxplot) :: required
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
- character(len=60)       :: device
+ character(len=120) :: device
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
                      itracktype,itrackoffset,idustfrac_plot,ideltav_plot,UseFakeDustParticles

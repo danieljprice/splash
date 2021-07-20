@@ -355,7 +355,7 @@ subroutine submenu_particleplots(ichoose)
                 endif
              endif
              call prompt('Enter particle number to plot circle around', &
-                       icircpart(n),1,maxval(npartoftype(1,:)))
+                       icircpart(n),1,sum(npartoftype(:,1)))
           enddo
        endif
     endif

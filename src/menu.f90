@@ -163,10 +163,10 @@ subroutine menu
 !
     print sep
     if (ndim <= 1) then
-       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s,S(ave) q(uit)'
+       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s(ave) q(uit)'
     else
        print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
-       print "(a)",' r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)'
+       print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
     endif
     print sep
 

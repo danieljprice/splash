@@ -1227,8 +1227,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           irerender = .true.
           iexit = .true.
-       else
-          print*,'ERROR: f has no effect if not rendering'
+       else  ! flip y axis
+          iploty = iploty + 1
+          if (iploty > ndataplots) iploty = 1
+          iadvance = 0
+          interactivereplot = .true.
+          iexit = .true.
        endif
     case('F') ! change rendered quantity (previous)
        if (irender /= 0 .and. ndim > 0) then
@@ -1240,8 +1244,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           irerender = .true.
           iexit = .true.
-       else
-          print*,'ERROR: F has no effect if not rendering'
+       else  ! flip y axis
+          iploty = iploty - 1
+          if (iploty < 1) iploty = ndataplots
+          iadvance = 0
+          interactivereplot = .true.
+          iexit = .true.
        endif
     case(achar(13))
        if (in_movie_mode) then
