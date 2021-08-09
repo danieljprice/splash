@@ -71,7 +71,6 @@ subroutine defaults_set_data
  iverbose = 1
  UseFakeDustParticles = .false.
  iautorender = 0
- device = ''
 
 end subroutine defaults_set_data
 
