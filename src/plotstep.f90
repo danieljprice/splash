@@ -755,9 +755,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  character(len=lenunitslabel) :: labeltimeunits,labelvecunits
  character(len=12) :: string
 
- logical :: iPlotColourBar, rendering, inormalise, logged, loggedcont
- logical :: dumxsec, isetrenderlimits, iscoordplot, inorm_label, plot_exact
- logical :: ichangesize, initx, inity, initz, isameweights, got_h
+ logical :: iPlotColourBar,rendering,inormalise,logged,loggedcont
+ logical :: dumxsec,isetrenderlimits,isetvectorlimits,iscoordplot,inorm_label,plot_exact
+ logical :: ichangesize,initx,inity,initz,isameweights,got_h
  logical, parameter :: isperiodicx = .false. ! feature not implemented
  logical, parameter :: isperiodicy = .false. ! feature not implemented
  logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -801,6 +801,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  labeltimeunits = ' '
  dumxsec = .false.
  isetrenderlimits = .false.
+ isetvectorlimits = .false.
+
  k = nxsec ! matters for lastplot in page_setup for non-coord plots
  if (iReScale) labeltimeunits = unitslabel(0)
  iaxistemp = iaxis
@@ -1167,9 +1169,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
           !--override settings based on positions in sequence
           if (nseq > 0) then
-             call getsequencepos(iseqpos,iframe,iplotx,iploty,irender, &
+             call getsequencepos(iseqpos,iframe,iplotx,iploty,irender,ivectorplot, &
                 angletempx,angletempy,angletempz,zobservertemp,dzscreentemp,rkappatemp,&
-                zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
+                zslicepos,xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,isetrenderlimits,isetvectorlimits)
           endif
           !--for 3D perspective, do not plot particles behind the observer
           if (ndim==3) then
@@ -1911,7 +1913,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    ivecx = iamvec(ivectorplot) + iplotx - 1
                    ivecy = iamvec(ivectorplot) + iploty - 1
 
-                   if (.not.interactivereplot) then ! not if vecmax changed interactively
+                   if (.not.interactivereplot .and. .not.isetvectorlimits) then ! not if vecmax changed interactively
                       if (iadapt) then
                          vecmax = -1.0  ! plot limits then set in vectorplot
                       else

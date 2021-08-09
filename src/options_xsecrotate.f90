@@ -614,21 +614,23 @@ end function insidesequence
 ! based on the position in each sequence
 ! (given the current frame & dump position)
 !----------------------------------------------------------------------
-subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
+subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender,ivectorplot, &
                           anglexi,angleyi,anglezi,zobserveri,dzscreen,taupartdepthi, &
-                          xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax,isetrenderlimits)
+                          xsecposi,xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax,&
+                          isetrenderlimits,isetvectorlimits)
  use limits,     only:lim
  use multiplot,  only:itrans
  use transforms, only:transform_limits
- integer, intent(in)  :: ipos,iframe,iplotx,iploty,irender
+ integer, intent(in)  :: ipos,iframe,iplotx,iploty,irender,ivectorplot
  real, intent(out)    :: anglexi,angleyi,anglezi,zobserveri,dzscreen,taupartdepthi,xsecposi
- real, intent(out)    :: xmin,xmax,ymin,ymax,rendermin,rendermax
- logical, intent(out) :: isetrenderlimits
+ real, intent(out)    :: xmin,xmax,ymin,ymax,rendermin,rendermax,vecmax
+ logical, intent(out) :: isetrenderlimits,isetvectorlimits
  logical :: logtaudepth
  integer :: i,iposinseq,iposend
  real    :: xfrac,xminstart,xmaxstart,xminend,xmaxend,yminstart,ymaxstart,yminend,ymaxend
 
  isetrenderlimits = .false.
+ isetvectorlimits = .false.
 
  do i=1,nseq
     !--set starting values based on first position
@@ -699,6 +701,15 @@ subroutine getsequencepos(ipos,iframe,iplotx,iploty,irender, &
              rendermin = xminstart + xfrac*(xminend - xminstart)
              rendermax = xmaxstart + xfrac*(xmaxend - xmaxstart)
              isetrenderlimits = .true.
+          elseif (ivectorplot==icolchange) then
+             xminstart = lim(ivectorplot,1)
+             xmaxstart = lim(ivectorplot,2)
+             call transform_limits(xminstart,xmaxstart,itrans(ivectorplot))
+             xminend = xmincolend
+             xmaxend = xmaxcolend
+             call transform_limits(xminend,xmaxend,itrans(ivectorplot))
+             vecmax = xmaxstart + xfrac*(xmaxend - xmaxstart)
+             isetvectorlimits = .true.
           endif
        case(4)
           zobserveri = zobserver + xfrac*(zobserverend - zobserver)
