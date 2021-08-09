@@ -136,12 +136,13 @@ end function itypemap_phantom
  !------------------------------------------
  ! extraction of single integer variables
  !------------------------------------------
-subroutine extract_int(tag,ival,intarr,tags,ntags,ierr)
+subroutine extract_int(tag,ival,intarr,tags,ntags,ierr,verbose)
  character(len=*),      intent(in)  :: tag
  integer,               intent(out) :: ival
  integer,               intent(in)  :: ntags,intarr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(out) :: ierr
+ logical, intent(in),   optional :: verbose
  logical :: matched
  integer :: i
 
@@ -158,7 +159,8 @@ subroutine extract_int(tag,ival,intarr,tags,ntags,ierr)
     endif
  enddo over_tags
  if (matched) ierr = 0
- if (ierr /= 0) print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
+ if (ierr /= 0 .and. .not.present(verbose)) &
+    print "(a)",' WARNING: could not find '//trim(adjustl(tag))//' in header'
 
 end subroutine extract_int
 
@@ -1129,21 +1131,20 @@ integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttype
  character(len=lentag), intent(in) :: tags(maxinblock),tagsreal(maxinblock)
  integer, intent(in) :: intarr(:),nints
  integer :: i,idust,ierr,ndustsmall
- logical :: igotndusttypes = .false.
+ logical :: igotndusttypes
 
  ! Look for ndusttypes in the header
+ igotndusttypes = .false.
  do i = 1,maxinblock
-    if (trim(tags(i))=='ndusttypes') then
-       igotndusttypes = .true.
-    endif
+    if (trim(tags(i))=='ndusttypes') igotndusttypes = .true.
  enddo
 
  ! Retreive/guess the value of ndusttypes
  if (igotndusttypes) then
     call extract('ndusttypes',idust,intarr,tags,nints,ierr)
  else
-    call extract('ndustsmall',ndustsmall,intarr,tags,nints,ierr)
-    call extract('ndustlarge',ndustlarge,intarr,tags,nints,ierr)
+    call extract('ndustsmall',ndustsmall,intarr,tags,nints,ierr,verbose=.false.)
+    call extract('ndustlarge',ndustlarge,intarr,tags,nints,ierr,verbose=.false.)
     idust = ndustsmall+ndustlarge
     ! For older files where ndusttypes is not output to the header
     if (ierr /= 0) then
@@ -1151,8 +1152,10 @@ integer function extract_ndusttypes(tags,tagsreal,intarr,nints) result(ndusttype
        do i = 1,maxinblock
           if (tagsreal(i)=='grainsize') idust = idust + 1
        enddo
-       write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
-       write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+       if (idust > 0) then
+          write(*,"(a)")    ' Warning! Could not find ndusttypes in header'
+          write(*,"(a,I4)") '          ...counting grainsize arrays...ndusttypes =',idust
+       endif
     endif
  endif
  ndusttypes = idust
