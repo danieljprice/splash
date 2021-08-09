@@ -48,16 +48,16 @@
 !-------------------------------------------------------------------------
 
 module readdata_ndspmhd
+ use params, only:doub_prec,sing_prec
  implicit none
 
- public :: read_data_ndspmhd, set_labels_ndspmhd
+ public :: read_data_ndspmhd, set_labels_ndspmhd, file_format_is_ndspmhd
 
  private
 contains
 
 subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:npartoftype,time,gamma,headervals,dat,maxpart,maxstep,maxcol,iamtype
- use params
  use filenames,      only:nfiles
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,icoords,iformat, &
                           buffer_data,iverbose,debugmode
@@ -496,4 +496,44 @@ subroutine set_labels_ndspmhd
 
  return
 end subroutine set_labels_ndspmhd
+
+!-----------------------------------------------------------
+!
+! check if a file is in ndspmhd format
+!
+!-----------------------------------------------------------
+logical function file_format_is_ndspmhd(filename) result(is_ndspmhd)
+ character(len=*), intent(in) :: filename
+ integer :: iunit,npartin,ntotin,ndim_max,ndimV_max,ncol_max,iformat,ierr
+ real(kind=doub_prec) :: header_dp(3)
+
+ is_ndspmhd = .false.
+ !
+ ! filename must end in .dat
+ !
+ if (index(filename,'.dat') <= 0) return
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted')
+ if (ierr /= 0) return
+!
+!--read first header line
+!
+ read(iunit,iostat=ierr) header_dp(1),npartin,ntotin,header_dp(2), &
+     header_dp(3),ndim_max,ndimV_max,ncol_max,iformat
+
+ if (ierr /= 0 .or. ndim_max <= 0 .or. ndim_max > 3 &
+     .or. ndimV_max <= 0 .or. ndimV_max > 3 &
+     .or. ncol_max <= 0 .or. ncol_max > 100 &
+     .or. npartin <= 0 .or. npartin > 1e7 .or. ntotin <= 0 .or. ntotin > 1e7 &
+     .or. iformat < 0 .or. iformat > 10) then
+    is_ndspmhd = .false.
+ else
+    is_ndspmhd = .true.
+ endif
+ close(iunit)    ! close the file
+
+end function file_format_is_ndspmhd
+
 end module readdata_ndspmhd
