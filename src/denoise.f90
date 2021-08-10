@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 program denoise
  use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image,get_from_header
- use imageutils,      only:image_denoise,image_denoise3D
+ use imageutils,      only:image_denoise,image_denoise3D,image_rotate
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args,get_command_flag
  implicit none
@@ -31,12 +31,12 @@ program denoise
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
  character(len=:), allocatable :: fitsheader(:)
- real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1
+ real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1,rotate
  logical :: iexist,use_3D,skip
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'denoise: a SPLASH imaging utility (c) 2020 Daniel Price'
+ tagline = 'denoise: a SPLASH imaging utility (c) 2020-2021 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: denoise [options] infile.fits [outfile.fits]'
@@ -47,6 +47,7 @@ program denoise
     print "(a)",  '          --start=1         [denoise from channel 1 onwards]'
     print "(a,/)",'          --end=10          [denoise only up to channel 10]'
     print "(a)",  '          --nosubsample     [do not subsample if beam size >> pixel scale]'
+    print "(a)",  '          --rotate=30       [rotate image by 30 degrees]'
     stop
  endif
 
@@ -74,6 +75,7 @@ program denoise
  kend   = nint(get_command_option('end',default=0.))
  its    = nint(get_command_option('its',default=4.))
  skip   = .not.get_command_flag('nosubsample')
+ rotate = get_command_option('rotate',default=0.)
 
  !print*,' GOT imax=',imax,' fac =  ',fac,trim(file1),trim(file2),trim(fileout)
 
@@ -151,7 +153,12 @@ program denoise
     if (kend > 0 .and. kend <= naxes(3)) k2 = kend
     do k=k1,k2
        if (naxes(3) > 1) print "(a,i5,a,i5)",'>> channel ',k, ' of ',naxes(3)
-       call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
+       if (abs(rotate) > tiny(0.)) then
+          write(stdout,'(/,a,es10.3,a)') 'rotating by ',rotate,' deg'
+          call image_rotate(naxes(1:2),image(:,:,k),rotate,ierr)
+       else
+          call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
+       endif
        !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
 
        ! for polarised images, denoise individual polarisations
