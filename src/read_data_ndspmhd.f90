@@ -408,7 +408,7 @@ subroutine set_labels_ndspmhd
     !--more scalars
     !
     icol = icol + 1
-    label(icol) = 'psi'
+    label(icol) = '\psi'
 
     icol = icol + 1
     ipr = icol !  pressure
