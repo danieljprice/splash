@@ -248,7 +248,7 @@ subroutine image_rotate(naxes,image,angle,err)
  real, allocatable      :: x(:),y(:),weight(:),dat(:),hh(:)
  integer, allocatable   :: mask(:)
  integer :: npixels,i,j,n,ierr
- real :: dx,dy,xmin,ymin,anglerad,xpos(2)
+ real :: dx,dy,xmin,ymin,anglerad,xpos(2),x0,y0
 
  ! choose default kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)
@@ -259,18 +259,20 @@ subroutine image_rotate(naxes,image,angle,err)
  if (present(err)) err = ierr
  if (ierr /= 0) return
 
+ x0 = 0.5*naxes(1)
+ y0 = 0.5*naxes(2)
  dy = 1.
  dx = 1.
- xmin = 0.0
- ymin = 0.0
+ xmin = -x0
+ ymin = -y0
  mask(:) = 1 ! do not mask any pixels
  hh(:) = 1.0 ! do not blur image
  n = 0
  do j=1,naxes(2)
     do i=1,naxes(1)
        n = n + 1
-       x(n) = i - 0.5*dx
-       y(n) = j - 0.5*dy
+       x(n) = i - x0
+       y(n) = j - y0
        dat(n) = image(i,j)
     enddo
  enddo
@@ -280,7 +282,7 @@ subroutine image_rotate(naxes,image,angle,err)
 
  ! rotate particles
  do i=1,n
-    call rotatez(x(n),y(n),anglerad)
+    call rotatez(x(i),y(i),anglerad)
  enddo
 
  ! set weights for interpolation
