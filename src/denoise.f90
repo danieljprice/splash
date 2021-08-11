@@ -30,9 +30,11 @@ program denoise
  real, allocatable :: hh(:)
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
+ real, allocatable :: snrmap(:,:)
  character(len=:), allocatable :: fitsheader(:)
  real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1,rotate
- logical :: iexist,use_3D,skip
+ real :: signal,noise
+ logical :: iexist,use_3D,skip,get_residuals
 
  nfiles = count_matching_args('.fits',iarglist)
 
@@ -40,13 +42,14 @@ program denoise
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: denoise [options] infile.fits [outfile.fits]'
-    print "(/,a)",'Options:  --imax=3.4e-2     [intensity value above which no smoothing is applied]'
-    print "(a)",  '          --beam=1.0        [beam size in pixels at max intensity]'
+    print "(/,a)",'Options:  --beam=1.0        [beam size in pixels at max intensity]'
+    print "(a)",  '          --imax=3.4e-2     [intensity value above which no smoothing is applied]'
     print "(a)",  '          --its=4           [maximum number of smoothing length iterations]'
     print "(a)",  '          --use3D=1         [denoise in 3D for spectral cubes]'
     print "(a)",  '          --start=1         [denoise from channel 1 onwards]'
-    print "(a,/)",'          --end=10          [denoise only up to channel 10]'
+    print "(a)",  '          --end=10          [denoise only up to channel 10]'
     print "(a)",  '          --nosubsample     [do not subsample if beam size >> pixel scale]'
+    print "(a)",  '          --residuals       [output residual image as residuals.fits]'
     print "(a)",  '          --rotate=30       [rotate image by 30 degrees]'
     stop
  endif
@@ -76,6 +79,7 @@ program denoise
  its    = nint(get_command_option('its',default=4.))
  skip   = .not.get_command_flag('nosubsample')
  rotate = get_command_option('rotate',default=0.)
+ get_residuals = get_command_flag('residuals')
 
  !print*,' GOT imax=',imax,' fac =  ',fac,trim(file1),trim(file2),trim(fileout)
 
@@ -114,6 +118,7 @@ program denoise
     npixels = naxes(1)*naxes(2)
  endif
  allocate(hh(npixels))
+ !allocate(hh(naxes(1),naxes(2)))
 
  image_max = maxval(image)
  if (imax > 0.) then
@@ -128,7 +133,6 @@ program denoise
     bmaj = get_from_header('BMAJ',fitsheader,ierr)
     bmin = get_from_header('BMIN',fitsheader,ierr)
     cdelt1 = get_from_header('CDELT1',fitsheader,ierr)
-!    beam = sqrt(bmaj*bmin)/abs(cdelt1)
     if (abs(cdelt1) > 0. .and. ierr == 0) then
        beam = bmaj/abs(cdelt1) !sqrt(bmin*bmaj)/abs(cdelt1)
        print*,' bmin = ',bmin/abs(cdelt1),' bmaj = ',bmaj/abs(cdelt1), ' mean = ',sqrt(bmin*bmaj)/abs(cdelt1)
@@ -136,7 +140,6 @@ program denoise
     if (beam < 1. .or. beam > 20.) beam = 1.
  endif
  print "(3(a,1pg16.4))",'>> max intensity = ',imagemax,' of ',image_max,', min pix per beam = ',beam
- !imagemax = beam**2*imagemax
 
  if (use_3D) then
     !
@@ -153,44 +156,65 @@ program denoise
     if (kend > 0 .and. kend <= naxes(3)) k2 = kend
     do k=k1,k2
        if (naxes(3) > 1) print "(a,i5,a,i5)",'>> channel ',k, ' of ',naxes(3)
-       if (abs(rotate) > tiny(0.)) then
+       !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
+
+       ! for polarised images, denoise individual polarisations
+       ! then stitch the denoised images back together
+       if (nfiles >= 3) then
+          write(stdout,'(/,a)') '>> de-noising p...'
+          call image_denoise(naxes,image1,hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
+          write(stdout,'(/,a)') '>> de-noising q...'
+          call image_denoise(naxes,image2,hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
+          write(stdout,'(/,a)') '>> recombining to get total intensity...'
+          image = sqrt(image1**2 + image2**2)
+       elseif (abs(rotate) > tiny(0.)) then
           write(stdout,'(/,a,es10.3,a)') 'rotating by ',rotate,' deg'
           call image_rotate(naxes(1:2),image(:,:,k),rotate,ierr)
        else
           call image_denoise(naxes(1:2),image(:,:,k),hh,iterations=its,imax=imagemax,beam=beam,skip=skip)
-       endif
-       !print*,'min, max,mean h = ',minval(hh),maxval(hh),sum(hh)/real(npixels)
-
-       ! for polarised images, denoise individual polarisations
-       ! using h computed from the total intensity
-       ! and stitch the denoised images back together
-       if (nfiles >= 3) then
-          write(stdout,'(/,a)') '>> de-noising p...'
-          call image_denoise(naxes,image1,hh,iterations=0,skip=skip)
-          write(stdout,'(/,a)') '>> de-noising q...'
-          call image_denoise(naxes,image2,hh,iterations=0,skip=skip)
-          write(stdout,'(/,a)') '>> recombining to get total intensity...'
-          image = sqrt(image1**2 + image2**2)
        endif
 
        fluxold = sum(image_old(:,:,k))
        fluxnew = sum(image(:,:,k))
        print "(a,g16.8,a,g16.8,a,1pg10.2,a)",'>> total intensity =',fluxnew,' was ',fluxold,&
                        ' err=',100.*(fluxnew-fluxold)/abs(fluxold),' %'
+
+       !signal = fluxold/(naxes(1)*naxes(2))
+       !noise  = sqrt(sum((image_old(:,:,k)-signal)**2)/(naxes(1)*naxes(2)))
+       !print*,' Orig SNR = ',signal/noise, ' signal = ',signal,' noise = ',noise
+       !signal = fluxnew/(naxes(1)*naxes(2))
+       !noise  = sqrt(sum((image(:,:,k)-signal)**2)/(naxes(1)*naxes(2)))
+       !print*,' New  SNR = ',signal/noise, ' signal = ',signal,' noise = ',noise
+
+       !call write_fits_image('hh.fits',hh,naxes(1:2),ierr)
+
+       ! if only one channel is selected, also print it out as a separate .fits file
        if (naxes(3) > 1 .and. k2==k1) then
           i = index(fileout,'.fits')
           write(filek,*) k
           filek = fileout(1:i-1)//'-c'//trim(adjustl(filek))//'.fits'
           call write_fits_image(filek,image(:,:,k),naxes(1:2),ierr,hdr=fitsheader)
+          if (get_residuals) then
+             image_residuals = image - image_old ! to allocate memory
+             !image_residuals(:,:,k) = image(:,:,k) - image_old(:,:,k)
+             write(filek,*) k
+             filek = fileout(1:i-1)//'-c'//trim(adjustl(filek))//'_original.fits'
+             call write_fits_image(filek,image_old(:,:,k),naxes(1:2),ierr,hdr=fitsheader)
+             write(filek,*) k
+             filek = fileout(1:i-1)//'-c'//trim(adjustl(filek))//'_residuals.fits'
+             call write_fits_image(filek,image_residuals(:,:,k),naxes(1:2),ierr)
+          endif
        endif
     enddo
  endif
 
  call write_fits_cube(fileout,image,naxes,ierr,hdr=fitsheader)
- image_residuals = image - image_old
- !call write_fits_cube('old.fits',image_old,naxes,ierr)
- !call write_fits_cube('residuals.fits',image_residuals,naxes,ierr)
-
+ if (get_residuals) then
+    image_residuals = image - image_old
+    jext = index(fileout,'.fits')
+    fileout = fileout(1:jext-1)//'_residuals.fits'
+    call write_fits_cube(fileout,image_residuals,naxes,ierr)
+ endif
  if (ierr /= 0) write(stderr,*) 'error writing output file(s)'
 
  deallocate(image,hh)

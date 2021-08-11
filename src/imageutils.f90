@@ -263,16 +263,16 @@ subroutine image_rotate(naxes,image,angle,err)
  y0 = 0.5*naxes(2)
  dy = 1.
  dx = 1.
- xmin = -x0
- ymin = -y0
+ xmin = -0.5*naxes(1)
+ ymin = -0.5*naxes(2)
  mask(:) = 1 ! do not mask any pixels
  hh(:) = 1.0 ! do not blur image
  n = 0
  do j=1,naxes(2)
     do i=1,naxes(1)
        n = n + 1
-       x(n) = i - x0
-       y(n) = j - y0
+       x(n) = xmin + (i-0.5)*dx
+       y(n) = ymin + (j-0.5)*dy
        dat(n) = image(i,j)
     enddo
  enddo

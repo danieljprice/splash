@@ -53,7 +53,8 @@ program splash
 !     Version history/ Changelog:
 !     3.3.2   : (20/07/21)
 !             bug fix with -dev flag; silenced unnecessary dust warnings in sphNG read;
-!             change-of-limits animation sequence works for vector plots
+!             change-of-limits animation sequence works for vector plots;
+!             automatic recognition of ndspmhd format;
 !     3.3.1   : (19/07/21)
 !             f/F in interactive mode flips y axis on 2D plots to next column;
 !             gradual transparency in double rendering rather than sharp cutoff;
