@@ -1230,7 +1230,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !
           if (ndim >= 2 .and. (irotate .or. (ndim==3 .and.use3Dperspective)) &
             .and. icoordsnew==1) then
-             if ((irotate .and. (angletempx > tiny(0.) .or. angletempy > tiny(0.))) &
+             if ((irotate .and. ((angletempx > tiny(0.) .and. abs(angletempx-180.) > tiny(0.)) &
+                            .or. (angletempy > tiny(0.) .and. abs(angletempy-180.) > tiny(0.)))) &
                .or.(ndim==3 .and.use3Dperspective .and. dzscreentemp > tiny(0.))) then
                 if (iaxis >= 0) iaxistemp = -3
              endif
