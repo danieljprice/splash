@@ -60,16 +60,18 @@ end subroutine get_adjust_data_dependencies
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist
- use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype
- use settings_data,   only:ncolumns,ndimV,ndim,debugmode,ntypes,iverbose,UseFakeDustParticles,UseFastRender
+ use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
+ use settings_data,   only:ncolumns,ndimV,ndim,debugmode,ntypes,iverbose,UseFakeDustParticles,UseFastRender,icoords
  use particle_data,   only:dat,npartoftype,iamtype
  use filenames,       only:ifileopen,nstepsinfile
+ use geometry,        only:labelcoord
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
  real :: hmin,dphi,domega,period
  real, dimension(3) :: vsink,xyzsink,x0,v0
- integer :: j,ierr,isink,isinkpos,itype
+ integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2)
  logical :: centreonsink,got_sinks,no_dust_particles
+ character(len=20), dimension(3) :: list
 
  !
  !--environment variable setting to enforce a minimum h
@@ -174,6 +176,43 @@ subroutine adjust_data_codeunits
        else
           print "(a,/,a)",' ERROR: --sink set but could not determine type ', &
                           '        corresponding to sink particles'
+       endif
+    endif
+    !
+    !--environment variable setting to subtract a mean velocity
+    !
+    if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) then
+       call envlist('SPLASH_VZERO_CODEUNITS',nlist,list)
+       nerr = 0
+       if (nlist > 0 .and. nlist < ndimV) then
+          print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO_CODEUNITS setting: number of components = ',nlist,', needs to be ',ndimV
+          nerr = 1
+       elseif (nlist > 0) then
+          if (nlist > ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
+                                                  ' components: using only first ',ndimV
+          nerr = 0
+          do i=1,ndimV
+             read(list(i),*,iostat=ierr) v0(i)
+             if (ierr /= 0) then
+                print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//&
+                            ' component from SPLASH_VZERO_CODEUNITS setting'
+                nerr = ierr
+             endif
+          enddo
+          if (nerr==0) then
+             print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO_CODEUNITS setting):'
+             if (.not.allocated(dat) .or. size(dat(1,:,1)) < ivx+ndimV-1) then
+                print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
+                return
+             endif
+             do i=1,ndimV
+                print "(4x,a,es10.3)",trim(label(ivx+i-1))//' = '//trim(label(ivx+i-1))//' - ',v0(i)
+                dat(:,ivx+i-1,:) = dat(:,ivx+i-1,:) - v0(i)
+             enddo
+          endif
+       endif
+       if (nerr /= 0) then
+          print "(4x,a)",'SPLASH_VZERO_CODEUNITS setting not used'
        endif
     endif
  endif
