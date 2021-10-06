@@ -185,22 +185,22 @@ subroutine adjust_data_codeunits
        call envlist('SPLASH_VZERO',nlist,list)
        nerr = 0
        if (nlist > 0 .and. nlist < ndimV) then
-          print "(/,2(a,i1))",' >> ERROR in SPLASH_VZERO setting: number of components = ',nlist,', needs to be ',ndimV
+          print "(/,2(a,i1))",' >> ERROR in --vzero setting: number of components = ',nlist,', needs to be ',ndimV
           nerr = 1
        elseif (nlist > 0) then
-          if (nlist > ndimV) print "(a,i1,a,i1)",' >> WARNING! SPLASH_VZERO_CODEUNITS setting has ',nlist, &
+          if (nlist > ndimV) print "(a,i1,a,i1)",' >> WARNING! --vzero setting has ',nlist, &
                                                   ' components: using only first ',ndimV
           nerr = 0
           do i=1,ndimV
              read(list(i),*,iostat=ierr) v0(i)
              if (ierr /= 0) then
                 print "(a)",' >> ERROR reading v'//trim(labelcoord(i,icoords))//&
-                            ' component from SPLASH_VZERO_CODEUNITS setting'
+                            ' component from --vzero setting'
                 nerr = ierr
              endif
           enddo
           if (nerr==0) then
-             print "(a)",' >> SUBTRACTING MEAN VELOCITY (from SPLASH_VZERO setting):'
+             print "(a)",' >> SUBTRACTING MEAN VELOCITY (from --vzero setting):'
              if (.not.allocated(dat) .or. size(dat(1,:,1)) < ivx+ndimV-1) then
                 print*,' INTERNAL ERROR: dat not allocated in adjust_data_codeunits'
                 return
@@ -212,7 +212,7 @@ subroutine adjust_data_codeunits
           endif
        endif
        if (nerr /= 0) then
-          print "(4x,a)",'SPLASH_VZERO setting not used'
+          print "(4x,a)",'WARNING: --vzero setting ignored'
        endif
     endif
  endif
