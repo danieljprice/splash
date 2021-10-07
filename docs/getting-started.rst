@@ -376,41 +376,44 @@ Options affecting all data reads
 
 Command line flags (or environment variables) that affect all data reads are:
 
-+-------------+-----------------------+-------------------------------------------------+
-| ---defaults | SPLASH_DEFAULTS       | gives name of system-wide ``splash.defaults``   |
-|             |                       | file (and splash.limits etc.) that will be      |
-|             |                       | used if there is none in the current dir. e.g.  |
-|             |                       | ``--defaults=$HOME/splash.defaults``            |
-+-------------+-----------------------+-------------------------------------------------+
-| ---kernel   | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
-|             |                       | interpolations (e.g. ``cubic`` or ``quintic``). |
-|             |                       | Can also be changed in the :ref:`sec:menu-r`.   |
-+-------------+-----------------------+-------------------------------------------------+
-| ---debug    | SPLASH_DEBUG          | if set to ``yes`` or ``true``, turns on verbose |
-|             |                       | debugging output. Useful to trace code crashes  |
-|             |                       | (but of course, this never happens…).           |
-+-------------+-----------------------+-------------------------------------------------+
-| ---sink=1   | SPLASH_CENTRE_ON_SINK | if set to a number n, centres coordinates and   |
-|             |                       | velocities on the nth sink/star particle (e.g.  |
-|             |                       | ``export SPLASH_CENTRE_ON_SINK=2``)             |
-+-------------+-----------------------+-------------------------------------------------+
-| ---corotate | SPLASH_COROTATE       | plot in corotating frame based on locations of  |
-|             |                       | 2 sink particles (e.g. ``--corotate=1,3``)      |
-+-------------+-----------------------+-------------------------------------------------+
-| ---beam=2.0 | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
-|             |                       | smoothing length, specified in code units,      |
-|             |                       | all the particles. Useful to “dumb-down” the    |
-|             |                       | resolution of SPH simulations to match          |
-|             |                       | observational resolution. If this variable is   |
-|             |                       | set the “accelerated rendering" option in the   |
-|             |                       | :ref:`sec:menu-r` is also turned on as otherwise|
-|             |                       | slow rendering can result.                      |
-+-------------+-----------------------+-------------------------------------------------+
-| ---xmin=0.1 | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
-| ---xmax=0.1 | SPLASH_MARGIN_XMAX    | page margin (set to fraction of viewport,       |
-| ---ymin=0.1 | SPLASH_MARGIN_YMIN    | negative values are allowed).                   |
-| ---ymax=0.1 | SPLASH_MARGIN_YMAX    |                                                 |
-+-------------+-----------------------+-------------------------------------------------+
++----------------------+-----------------------+-------------------------------------------------+
+| ---defaults          | SPLASH_DEFAULTS       | gives name of system-wide ``splash.defaults``   |
+|                      |                       | file (and splash.limits etc.) that will be      |
+|                      |                       | used if there is none in the current dir. e.g.  |
+|                      |                       | ``--defaults=$HOME/splash.defaults``            |
++----------------------+-----------------------+-------------------------------------------------+
+| ---kernel            | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
+|                      |                       | interpolations (e.g. ``cubic`` or ``quintic``). |
+|                      |                       | Can also be changed in the :ref:`sec:menu-r`.   |
++----------------------+-----------------------+-------------------------------------------------+
+| ---debug             | SPLASH_DEBUG          | if set to ``yes`` or ``true``, turns on verbose |
+|                      |                       | debugging output. Useful to trace code crashes  |
+|                      |                       | (but of course, this never happens…).           |
++----------------------+-----------------------+-------------------------------------------------+
+| ---sink=1            | SPLASH_CENTRE_ON_SINK | if set to a number n, centres coordinates and   |
+|                      |                       | velocities on the nth sink/star particle (e.g.  |
+|                      |                       | ``export SPLASH_CENTRE_ON_SINK=2``)             |
++----------------------+-----------------------+-------------------------------------------------+
+| ---corotate          | SPLASH_COROTATE       | plot in corotating frame based on locations of  |
+|                      |                       | 2 sink particles (e.g. ``--corotate=1,3``)      |
++----------------------+-----------------------+-------------------------------------------------+
+| ---vzero=1.0,1.0,1.0 | SPLASH_VZERO          | subtract reference velocity from all particles  |
+|                      |                       | (velocity should be specified in code units)    |
++----------------------+-----------------------+-------------------------------------------------+
+| ---beam=2.0          | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
+|                      |                       | smoothing length, specified in code units,      |
+|                      |                       | all the particles. Useful to “dumb-down” the    |
+|                      |                       | resolution of SPH simulations to match          |
+|                      |                       | observational resolution. If this variable is   |
+|                      |                       | set the “accelerated rendering" option in the   |
+|                      |                       | :ref:`sec:menu-r` is also turned on as otherwise|
+|                      |                       | slow rendering can result.                      |
++----------------------+-----------------------+-------------------------------------------------+
+| ---xmin=0.1          | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
+| ---xmax=0.1          | SPLASH_MARGIN_XMAX    | page margin (set to fraction of viewport,       |
+| ---ymin=0.1          | SPLASH_MARGIN_YMIN    | negative values are allowed).                   |
+| ---ymax=0.1          | SPLASH_MARGIN_YMAX    |                                                 |
++----------------------+-----------------------+-------------------------------------------------+
 
 .. _sec:splash:
 
