@@ -364,5 +364,10 @@ See above for how to output the raw pixel map to a file. The resulting .pix file
 
   array = np.loadtxt('discG_00300_columndensitygcm2_proj.pix',skiprows=9)
   print (array.shape)
+  plt.imshow(img)
+  
+A slightly more advanced script that also reads the x and y limits from the .pix file is provided in `splash/scripts/plot_pix.py <https://github.com/danieljprice/splash/blob/master/scripts/plot_pix.py>`_::
+
+  python plot_pix.py discG_00300_columndensitygcm2_proj.pix
 
 For other command line options, see :ref:`sec:commandline`.
