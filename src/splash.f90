@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.3.3   : (03/11/21)
+!             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
 !     3.3.2   : (20/07/21)
 !             bug fix with -dev flag; silenced unnecessary dust warnings in sphNG read;
 !             change-of-limits animation sequence works for vector plots;
@@ -696,6 +698,15 @@ program splash
     endif
  enddo
 
+ !
+ ! select -ev mode automatically if filename ends in .ev, .mdot or .out
+ !
+ if (nfiles > 0 .and. &
+    (index(rootname(1),'.ev') > 0  .or. &
+     index(rootname(1),'.mdot') > 0  .or. &
+     index(rootname(1),'.out') > 0)) then
+    evsplash = .true.
+ endif
  !
  ! print header
  !
