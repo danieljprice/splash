@@ -247,29 +247,6 @@ this is just a two-column ascii file, so you can then plot this with your favour
    splash -ev turb_00020.grid_pdf_ln_density.dat
 
 
-Making frames across multiple processors
-----------------------------------------
-
-Making identical plots of a series of dump files for a movie is a task
-which can inherently be done in parallel. Included in the splash/scripts
-directory is a perl wrapper for splash (“``splash_parallel.pl``”) which
-distributes multiple instances of splash across multiple machines,
-either via ssh or using Apple’s xgrid, with a common input file as
-described in :ref:`sec:batchmode`. The limitation to this is that
-you need to have a disk which can be mounted from all client machines
-(i.e., they can read the data files) and preferably with password-less
-access (e.g. using an ssh key-exchange or Kerberos authentication). The
-script itself may need some slight adjustment for your particular
-system.
-
-However, with large datasets often the slowest part of the rendering
-process can be reading the data file. A good way of crippling a system
-is therefore to set 100 jobs going which all decide to read a large data
-file from disk at the same time. To avoid this the script allows the
-user to set a delay between launching jobs (preferably slightly longer
-than the length of time it takes to read a single dump file), but some
-care is needed to avoid disaster. You have been warned!
-
 Using special characters in the plot labels
 -------------------------------------------
 
@@ -369,7 +346,7 @@ This produces a file as follows::
     0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+00  0.000000E+0
   ...
 
-The number of pixels in the image can be controlled using the `set number of pixels' option in the :ref:`sec:menu-r` (making sure you save the settings to the splash.defaults file using the :ref:`sec:menu-s`).
+The number of pixels in the image can be controlled using the 'set number of pixels' option in the :ref:`sec:menu-r` (making sure you save the settings to the splash.defaults file using the :ref:`sec:menu-s`).
 
 .. _sec:readpixmap:
 
@@ -380,5 +357,10 @@ See above for how to output the raw pixel map to a file. The resulting .pix file
 
   array = np.loadtxt('discG_00300_columndensitygcm2_proj.pix',skiprows=9)
   print (array.shape)
+  plt.imshow(img)
+  
+A slightly more advanced script that also reads the x and y limits from the .pix file is provided in `splash/scripts/plot_pix.py <https://github.com/danieljprice/splash/blob/master/scripts/plot_pix.py>`_::
+
+  python plot_pix.py discG_00300_columndensitygcm2_proj.pix
 
 For other command line options, see :ref:`sec:commandline`.
