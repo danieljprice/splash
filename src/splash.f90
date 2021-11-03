@@ -52,6 +52,7 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     3.3.3   : (03/11/21)
+!             splash to csv exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
 !     3.3.2   : (20/07/21)
 !             bug fix with -dev flag; silenced unnecessary dust warnings in sphNG read;

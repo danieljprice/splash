@@ -24,6 +24,22 @@ be output in physical units if a ``splash.units`` file is present.
 
 For other command line options, see :ref:`sec:commandline`.
 
+Conversion of binary data files to csv
+-----------------------------------------
+
+To export data in csv format, just use:
+
+::
+
+   splash to csv dump001 dump002 dump???
+
+which will convert all of the files listed on the command line into
+csv format (called ``dump001.csv``, ``dump002.csv`` etc.), with
+columns as would be listed in the main menu if you opened the dump file
+in splash.
+
+See also :ref:`sec:commandline`.
+
 .. _sec:converttogrid:
 
 Interpolation of SPH data to 2D and 3D grids
