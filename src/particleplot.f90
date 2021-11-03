@@ -354,7 +354,7 @@ subroutine particleplot(x,y,z,h,ntot,iplotx,iploty,icolourpart,iamtype,noftype,i
  if (iplotline .and. .not.(use_zrange .and. abs(zmax-zmin) < 0.5*huge(0.))) then
     call plot_qls(oldlinestyle)
     call plot_sls(linestylethisstep)
-    if (ndim <= 1) then ! sort particles by x in 1D
+    if (ndim <= 1 .and. .false.) then ! sort particles by x in 1D
        allocate(iorder(noftype(1)))
        call indexx(noftype(1),x(1:noftype(1)),iorder)
        call plot_line(noftype(1),x(iorder),y(iorder))
