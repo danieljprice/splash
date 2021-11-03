@@ -479,7 +479,7 @@ program splash
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,itrackoffset,itracktype
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -495,6 +495,7 @@ program splash
  use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
                               irotate,anglex,angley,anglez
+ use settings_limits,    only:get_itrackpart
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -503,7 +504,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.2 [20th July 2021]'
+ character(len=*), parameter :: version = 'v3.3.3 [3rd Nov 2021]'
 
  !
  ! initialise some basic code variables
@@ -764,6 +765,10 @@ program splash
  if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
     anglez = get_command_option('anglez',default=anglez)
     irotate = .true.
+ endif
+ if (get_command_flag('track')) then  ! e.g. --track=508264
+    call get_environment_or_flag('SPLASH_TRACK',string)
+    call get_itrackpart(string,itracktype,itrackoffset,ierr)
  endif
  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)

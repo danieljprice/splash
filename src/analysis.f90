@@ -84,7 +84,7 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('ratio')
     isanalysis = .true.
- case('tracks')
+ case('tracks','track')
     isanalysis = .true.
  case('lightcurve')
     isanalysis = .true.
@@ -121,7 +121,7 @@ logical function isanalysis(string,noprint)
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
     print "(a)",'                             output to file called ''rmsvals.out'''
     print "(a)",'         calc tracks       : track particle data vs time for selected particles,'
-    print "(a)",'           --tracks=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out'
+    print "(a)",'           --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out'
 !    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
 !    print "(a)",'                             output to file called ''rmsvals-vw.out'''
     print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
@@ -344,7 +344,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
     endif
- case('tracks')
+ case('tracks','track')
     !
     !--read all of dump file
     !
@@ -719,7 +719,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           endif
        enddo
 
-       if (trim(analysistype)=='tracks') then
+       if (trim(analysistype)=='tracks' .or. trim(analysistype)=='track') then
           if (ifile==1) then
              do i=1,ncolumns
                 print "(1x,' particle ',i8,': ',a20,' = ',es18.10)",itrack,label(i),coltemp(i)
@@ -759,7 +759,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     !
     !--write line to output file
     !
-    if (trim(analysistype) /= 'tracks') then
+    if (trim(analysistype) /= 'tracks' .and. trim(analysistype) /= 'track') then
        write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     endif
 
