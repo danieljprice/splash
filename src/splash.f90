@@ -505,7 +505,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.3 [3rd Nov 2021]'
+ character(len=*), parameter :: version = 'v3.3.3 [19th Nov 2021]'
 
  !
  ! initialise some basic code variables
@@ -708,6 +708,8 @@ program splash
      index(rootname(1),'.mdot') > 0  .or. &
      index(rootname(1),'.out') > 0)) then
     evsplash = .true.
+    fileprefix = 'evsplash'
+    call set_filenames(trim(fileprefix))
  endif
  !
  ! print header
@@ -978,9 +980,8 @@ subroutine print_header
  print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
  print 30
 30 format(/,    &
-   ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
-   '   This is free software; and you are welcome to redistribute it ',/, &
-   '   under certain conditions (see LICENCE file for details). *',/,/, &
+   ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
+   '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
    ' http://users.monash.edu.au/~dprice/splash ',/, &
    ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
