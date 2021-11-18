@@ -129,6 +129,8 @@ following options:
                                 output to file called 'meanvals.out'
             calc rms          : (mass weighted) root mean square of each column vs. time
                                 output to file called 'rmsvals.out'
+            calc tracks       : track particle data vs time for selected particles,
+               --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out
             calc timeaverage  : time average of *all* entries for every particle
                                output to file called 'time_average.out'
             calc ratio        : ratio of *all* entries in each file compared to first
@@ -358,7 +360,7 @@ See above for how to output the raw pixel map to a file. The resulting .pix file
   array = np.loadtxt('discG_00300_columndensitygcm2_proj.pix',skiprows=9)
   print (array.shape)
   plt.imshow(img)
-  
+
 A slightly more advanced script that also reads the x and y limits from the .pix file is provided in `splash/scripts/plot_pix.py <https://github.com/danieljprice/splash/blob/master/scripts/plot_pix.py>`_::
 
   python plot_pix.py discG_00300_columndensitygcm2_proj.pix
