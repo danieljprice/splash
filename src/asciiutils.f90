@@ -72,9 +72,9 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
  integer, intent(out) :: nlinesread
  character(len=*), dimension(:), intent(out) :: charline
  integer, intent(out), optional :: ierror
- integer, parameter :: iunit = 66 ! logical unit number for read operation
- integer :: ierr,i,maxlines
+ integer :: ierr,i,j,maxlines,iunit
  logical :: iexist
+ character(len=1) :: temp
 
  nlinesread = 0
  if (present(ierror)) ierror = 0
@@ -86,7 +86,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     return
  endif
 
- open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+ open(newunit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
  !--error opening file (but file does exist)
  if (ierr /= 0) then
     print "(a)",' ERROR opening '//trim(filename)
@@ -94,33 +94,34 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     return
  endif
 
+ ! read lines from file, skipping blank lines
  maxlines = size(charline)
- do i=1,maxlines
-    read(iunit,"(a)",err=66,end=99) charline(i)
- enddo
- !--end of array limits
- !  check to see if there is anything more in the file. Report error if there is.
- read(iunit,"(a)",iostat=ierr)
- if (ierr==0) then
-    print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ i = 0
+ j = 1
+ ierr = 0
+ over_lines: do while(j <= maxlines .and. ierr == 0)
+    i = i + 1
+    read(iunit,"(a)",iostat=ierr) charline(j)
+    ! skip blank and comment lines
+    temp = adjustl(charline(j))
+    if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
+ enddo over_lines
+ nlinesread = j
+
+ ! emit warnings if errors or reached array limits
+ if (nlinesread >= maxlines) then
+    !--end of array limits
+    !  check to see if there is anything more in the file. Report error if there is.
+    read(iunit,"(a)",iostat=ierr)
+    if (ierr==0) then
+       print "(/,a,i6,/)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+    endif
+    nlinesread = min(maxlines,nlinesread-1)
+ elseif (ierr > 0) then
+    print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i
+    if (present(ierror)) ierror = 1
  endif
- nlinesread = maxlines
  close(unit=iunit)
- return
-
- !--error encountered
-66 continue
- print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
- if (present(ierror)) ierror = 1
- nlinesread = i-1
- close(unit=iunit)
- return
-
- !--reached end of file (the expected behaviour)
-99 continue
- nlinesread = i-1
- close(unit=iunit)
- return
 
 end subroutine read_asciifile_char
 
