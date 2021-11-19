@@ -366,13 +366,12 @@ subroutine rescale_data(firsttime,nsteps_read)
  ! 1) the data read has set the physical units
  ! 2) they have not been switched off
  !
- if (firsttime .and. any(abs(units_default(0:ncolumns)-1.0) > tiny(units)) &
-     .and. .not.idefaults_file_read) then
+ if (firsttime .and. any(abs(units_default(0:ncolumns)-1.0) > tiny(units))) then
     units = units_default
     unitslabel = unitslabel_default
     unitzintegration = unitzintegration_default
     labelzintegration = labelzintegration_default
-    iRescale = .true.
+    if (.not.idefaults_file_read) iRescale = .true.
  endif
 
  !
