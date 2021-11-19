@@ -255,7 +255,7 @@ subroutine submenu_particleplots(ichoose)
            '  1 = foreground ',&
            '  2->10 = various colours (see default colour indices for plot library)'
     over_types3: do itype=1,ntypes
-       if (all(npartoftype(itype,:) == 0)) cycle over_types3
+       if (all(npartoftype(itype,:) == 0) .and. itype/=isinktype) cycle over_types3
        call prompt(' Enter default colour for '//trim(labeltype(itype)) &
                 //' particles:',idefaultcolourtype(itype),-1,14)
     enddo over_types3

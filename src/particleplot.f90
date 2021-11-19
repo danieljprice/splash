@@ -464,6 +464,8 @@ subroutine plot_particle(imarktype,x,y,h)
  integer :: imarker
  real    :: size
 
+ if (h < 0.) return ! this will prevent plotting of merged sinks in Phantom
+
  select case(imarktype)
  case(32:35)
     imarker = imarktype - 31
