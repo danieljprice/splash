@@ -40,7 +40,7 @@ module asciiutils
  public :: enumerate,isdigit,split
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
- public :: count_non_blank,find_repeated_tags
+ public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions
 
  private
@@ -880,17 +880,21 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,nlabels,labels,method)
+subroutine get_column_labels(line,nlabels,labels,method,ndesired)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
  integer,          intent(out), optional :: method
- integer :: i1,i2,i,nlabelstmp,istyle
+ integer,          intent(in),  optional :: ndesired
+ integer :: i1,i2,i,nlabelstmp,nlabels_prev,istyle,ntarget
  character(len=1) :: leadingchar
+ character(len=4), parameter :: spaces = '    '
 
  nlabels = 0
  i1 = 1
  istyle = 0
+ ntarget = -1
+ if (present(ndesired)) ntarget = ndesired
  !
  ! strip leading comment character ('#')
  !
@@ -907,7 +911,12 @@ subroutine get_column_labels(line,nlabels,labels,method)
     ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
     !
     istyle = 1
-    call split(line(i1:),']',labels,nlabels)
+    i1 = max(index(line,'[')+1,i1)    ! strip leading square bracket
+    ! try with different number of spaces between brackets (if labels not found)
+    over_spaces1: do i=4,0,-1
+       call split(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
+       if (nlabels > 1) exit over_spaces1
+    enddo over_spaces1
  elseif (index(line,',') > 1) then
     !
     ! format style 2: mylabel1,mylabel2,mylabel3
@@ -920,7 +929,23 @@ subroutine get_column_labels(line,nlabels,labels,method)
     ! format style 3: #     mylabel1     mylabel2     mylabel3
     !
     istyle = 3
-    call split(line(i1:),'  ',labels,nlabelstmp)
+    ! try splitting with 4, then 3, then 2 spaces until the number of labels decreases
+    nlabels_prev = 0
+    over_spaces: do i=4,2,-1
+       call split(line(i1:),spaces(1:i),labels,nlabelstmp)
+       ! quit if we already have the target number of labels
+       if (nlabelstmp == ntarget) exit over_spaces
+
+       ! if the number of labels is > 1 but has decreased, quit, unless nlabels
+       ! still exceeds the number of labels we are hoping for (ntarget)
+       if ((nlabelstmp < nlabels_prev .or. nlabelstmp >= max(nlabels_prev,2)  &
+            .and. i < 4 .and. .not. (ntarget > 0 .and. nlabelstmp > ntarget))) then
+          ! take the answer with the previous number of spaces
+          call split(line(i1:),spaces(1:i+1),labels,nlabelstmp)
+          exit over_spaces
+       endif
+       nlabels_prev = nlabelstmp
+    enddo over_spaces
     !
     ! this style is dangerous, so perform sanity checks
     ! on the labels to ensure they are sensible
@@ -944,10 +969,6 @@ subroutine get_column_labels(line,nlabels,labels,method)
     ! delete brackets
     if (nlabels <= size(labels)) then
        call string_delete(labels(i),',')
-       if (istyle==1) then
-          call string_delete(labels(i),'[')
-          call string_delete(labels(i),']')
-       endif
        if (istyle==1 .or. istyle==2) then
           labels(i) = trim(adjustl(labels(i)))
           ! delete leading numbers
@@ -960,6 +981,21 @@ subroutine get_column_labels(line,nlabels,labels,method)
        labels(i) = trim(adjustl(labels(i)))
     endif
  enddo
+ ! delete loose trailing square bracket but only if not matching
+ if (istyle==1) then
+    if (index(labels(nlabels),']') > 0) then
+       i1 = count_char(labels(nlabels),'[') ! number of open brackets
+       i2 = count_char(labels(nlabels),']') ! number of closed brackets
+       if (i2 > i1) then ! if brackets do not match
+          ! find last trailing bracket
+          i2 = index(labels(nlabels),']',back=.true.)
+          ! delete it, but only if followed by spaces
+          if (i2==len_trim(labels(nlabels))) then
+             labels(nlabels) = labels(nlabels)(1:i2-1)
+          endif
+       endif
+    endif
+ endif
 
 end subroutine get_column_labels
 
@@ -1130,6 +1166,23 @@ integer function count_non_blank(string)
  enddo
 
 end function count_non_blank
+
+!-----------------------------------------------------------------
+!
+!  utility to count number of times a character appears in a string
+!
+!-----------------------------------------------------------------
+integer function count_char(string,mychar)
+ character(len=*), intent(in) :: string
+ character(len=1), intent(in) :: mychar
+ integer :: i
+
+ count_char = 0
+ do i=1,len(string)
+    if (string(i:i)==mychar) count_char = count_char + 1
+ enddo
+
+end function count_char
 
 !---------------------------------------------------------------------
 !  utility to identify repeated tags in a list, written
