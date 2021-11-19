@@ -52,9 +52,12 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     3.3.3   : (19/11/21)
-!             splash to csv exports to comma separated variable (.csv) format;
+!             "splash to csv" exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
-!             improved label recognition from ascii file headers
+!             improved label recognition from ascii file headers;
+!             additional divergent colour schemes (thanks to Sahl Rowther);
+!             deal with merged sink particles from phantom (thanks to James Wurster);
+!             bug fix with units resetting to 1; skip blank and comment lines in splash.filenames
 !     3.3.2   : (20/07/21)
 !             bug fix with -dev flag; silenced unnecessary dust warnings in sphNG read;
 !             change-of-limits animation sequence works for vector plots;
