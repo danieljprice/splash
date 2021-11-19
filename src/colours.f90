@@ -27,7 +27,7 @@
 module colours
  implicit none
  integer, parameter :: ncolourmax = 256
- integer, parameter :: ncolourschemes = 40
+ integer, parameter :: ncolourschemes = 42
  character(len=17), dimension(ncolourschemes), parameter :: schemename = &
     (/'greyscale        ', &
       'red              ', &
@@ -68,7 +68,9 @@ module colours
       'ocean            ', &
       'casa blue        ', &
       'green-brown      ', &
-      'Doppler shift    '/)
+      'Doppler shift    ', &
+      'PuOr             ', &
+      'PRGn             '/)
  integer, parameter :: icustom = 100 ! number 100 is custom colour table
 !
 !--rgb colours of the colour table are stored in the array below
@@ -517,6 +519,20 @@ subroutine colour_set(icolourscheme)
        redarr(1:nset)  = (/0.40,0.69,0.84,0.95,0.99,0.97,0.82,0.58,0.27,0.14,0.02/)
        greenarr(1:nset)= (/0.00,0.09,0.38,0.63,0.86,0.96,0.90,0.77,0.58,0.41,0.20/)
        bluearr(1:nset) = (/0.12,0.16,0.30,0.49,0.78,0.96,0.94,0.87,0.77,0.68,0.39/)
+    case(41)
+       !--PuOr
+       nset = 11
+       lumarr(1:nset)  = (/0.00,0.10,0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1.00/)
+       redarr(1:nset)  = (/0.50,0.70,0.88,0.99,1.00,0.97,0.85,0.70,0.50,0.33,0.18/)
+       greenarr(1:nset)= (/0.23,0.34,0.51,0.72,0.88,0.97,0.85,0.67,0.45,0.16,0.00/)
+       bluearr(1:nset) = (/0.03,0.02,0.08,0.38,0.71,0.96,0.92,0.83,0.67,0.54,0.29/)
+    case(42)
+       !--PRGn
+       nset = 11
+       lumarr(1:nset)  = (/0.00,0.10,0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1.00/)
+       redarr(1:nset)  = (/0.25,0.46,0.60,0.76,0.91,0.97,0.85,0.65,0.35,0.11,0.00/)
+       greenarr(1:nset)= (/0.00,0.16,0.44,0.64,0.83,0.97,0.94,0.86,0.68,0.47,0.27/)
+       bluearr(1:nset) = (/0.29,0.51,0.67,0.81,0.91,0.97,0.83,0.63,0.38,0.22,0.11/)
     end select
 
     if (debugmode) print*,'DEBUG: setting colour table'

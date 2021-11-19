@@ -1225,6 +1225,23 @@ endif
 end subroutine get_rho_from_h
 
 !----------------------------------------------------------------------
+!  Set a negative smoothing length for merged sinks, so that
+!  they can be ignored when plotting
+!----------------------------------------------------------------------
+subroutine set_sink_merged(i1,i2,ih,ipmass,dat)
+ integer, intent(in) :: i1,i2,ih,ipmass
+ real, intent(inout) :: dat(:,:)
+ integer :: i
+
+ if (ih > 0 .and. ipmass > 0) then
+    do i=i1,i2
+       if (dat(i,ipmass) < 0.) dat(i,ih) = -1.
+    enddo
+ endif
+
+end subroutine set_sink_merged
+
+!----------------------------------------------------------------------
 !  Set density on sink particles based on the mass and radius
 !  this is useful for opacity rendering, but also provides useful
 !  information rather than just having zero density on sinks
@@ -1901,6 +1918,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       endif
                    enddo
                 endif
+                ! PSEUDO-remove accreted sinks
+                call set_sink_merged(npart+1,int(npart+isize(iarr)),ih,ipmass,dat(:,:,j))
                 ! DEFINE density on sink particles (needed for opacity rendering)
                 if (required(irho)) call set_sink_density(npart+1,int(npart+isize(iarr)),ih,ipmass,irho,dat(:,:,j))
                 npart  = npart + isize(iarr)
