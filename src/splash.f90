@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.3.4   : (xx/12/21)
+!             improved visual appearance of normalised renderings with free boundaries;
 !     3.3.3   : (19/11/21)
 !             "splash to csv" exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
@@ -509,7 +511,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.3 [19th Nov 2021]'
+ character(len=*), parameter :: version = 'v3.3.4 [6th Dec 2021]'
 
  !
  ! initialise some basic code variables

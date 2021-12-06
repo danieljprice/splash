@@ -160,7 +160,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
      useaccelerate,exact_rendering,iverbose)
 
- use kernels, only:radkernel,radkernel2,cnormk3D,wallint
+ use kernels, only:radkernel,radkernel2,cnormk3D,wallint,soft_func
  use timing,  only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -183,12 +183,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
  real :: hmin,fac,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact,termnorm_exact
  real, dimension(npixx) :: xpix,dx2i
- real :: t_start,t_end,t_used
+ real :: t_start,t_end,t_used,datnorm_min
  logical :: iprintprogress,use3Dperspective,accelerate
  character(len=32) :: string
 
  datsmooth = 0.
  term = 0.
+ datnorm_min = huge(0.)
  string = 'projecting'
  if (normalise) then
     string = trim(string)//' (normalised)'
@@ -502,9 +503,15 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
  if (normalise) then
     !--normalise everywhere (required if not using SPH weighting)
-    where (datnorm > tiny(datnorm))
-       datsmooth = datsmooth/datnorm
-    end where
+    !where (datnorm > tiny(datnorm))
+      ! datsmooth = datsmooth/(datnorm)
+    !end where
+    !
+    ! compute the minimum possible value for datnorm, then multiply
+    ! with a kernel-softened version of 1/x to avoid dividing by zero
+    !
+    datnorm_min = minval(weight*hh,mask=(weight > tiny(0.)))
+    datsmooth = datsmooth*soft_func(datnorm,datnorm_min)
  endif
 !
 !--warn about subgrid interpolation

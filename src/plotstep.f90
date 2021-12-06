@@ -1148,8 +1148,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (itransy /= 0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty,iaxis,interactivereplot)
           endif
 
-          !--write username, date on plot
-          !         if (nacross <= 2.and.ndown <= 2) call pgiden
           !
           !--adjust plot limits if adaptive plot limits set
           !  (find minimum/maximum only on particle types actually plotted)
