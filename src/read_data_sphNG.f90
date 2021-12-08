@@ -795,6 +795,7 @@ subroutine extract_variables_from_header(tags,realarr,nreals,iverbose,debug,&
        massoftype(itype)  = massoftypei(i)
     enddo
     npartoftype(itypemap_sink_phantom) = nptmasstot  ! sink particles
+    if (debug) print*,'DEBUG: npart of type sink ',itypemap_sink_phantom,' = ',nptmasstot
     if (nblocks > 1) then
        print "(a)",' setting ngas=npart for MPI code '
        npartoftype(1)  = npart
@@ -1192,11 +1193,13 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
           npartoftype(itype) = npartoftype(itype) - 1
           npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
           if (required(irho)) dat(k,irho) = pmassi*(hfact/abs(hi))**3
+          iphase(k) = -1
        else ! dead particles
           npartoftype(itype) = npartoftype(itype) - 1
           npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
           nkilled = nkilled + 1
           if (required(irho)) dat(k,irho) = 0.
+          iphase(k) = -2
        endif
    enddo
 else
@@ -1813,7 +1816,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              gotiphase = .true.
              if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
              read(iunit,end=33,iostat=ierr) iphase(i1:i2)
-             call check_iphase_matches_npartoftype(i1,i2,iphase,npartoftype(:,j))
              !--skip remaining integer arrays
              nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
           endif
@@ -2179,7 +2181,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !--set flag to indicate that only part of this file has been read
  if (.not.all(required(1:ncolstep))) ipartialread = .true.
 
-
  nptmassi = 0
  nunknown = 0
  ngas  = 0
@@ -2187,6 +2188,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  nstar = 0
  !--can only do this loop if we have read the iphase array
  iphasealloc: if (allocated(iphase)) then
+!
+!--sanity check the iphase array
+!
+    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j))
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -2326,6 +2331,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     npartoftype(5,j) = nstar
     npartoftype(6,j) = nunknown
  else
+    if (debug) print*,' DEBUG: nunknown = ',nunknown
     npartoftype(1,j) = npartoftype(1,j) - nunknown
     npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
  endif
