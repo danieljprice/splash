@@ -53,7 +53,8 @@ program splash
 !     Version history/ Changelog:
 !     3.3.4   : (xx/12/21)
 !             improved visual appearance of normalised renderings with free boundaries;
-!             automatically read planet-wake parameters from phantom file headers
+!             automatically read planet-wake parameters from phantom file headers;
+!             added --wake=1,3 flag to plot wake from sink particle 3 around star 1
 !     3.3.3   : (19/11/21)
 !             "splash to csv" exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
@@ -486,7 +487,7 @@ program splash
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
- use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
+ use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,itrackoffset,itracktype
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
@@ -507,6 +508,7 @@ program splash
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
+ use exact,              only:ispiral
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
@@ -779,6 +781,10 @@ program splash
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',string)
     call get_itrackpart(string,itracktype,itrackoffset,ierr)
+ endif
+ if (get_command_flag('wake')) then
+    iexact = 17
+    ispiral = 1
  endif
  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)

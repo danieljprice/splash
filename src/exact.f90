@@ -976,6 +976,7 @@ subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
  use part_utils,    only:locate_nth_particle_of_type,get_binary
  use labels,        only:get_sink_type,ix,ivx,ipmass,headertags
  use asciiutils,    only:get_value
+ use system_utils,  only:ienvlist
  real, intent(inout) :: rp,HR,q,angle
  integer, intent(out) :: ierr
  integer :: isinklist(2),isink1,isink2,itype,j,ntot
@@ -987,7 +988,11 @@ subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
  if (ifileopen <= 0) return
  if (size(npartoftype(1,:)) < j) return
 
- isinklist = (/1,2/)
+ ! either use --wake to get which planet, or --corotate
+ isinklist = ienvlist('SPLASH_WAKE',2)
+ if (all(isinklist==0)) isinklist = ienvlist('SPLASH_COROTATE',2)
+ if (all(isinklist==0)) isinklist = (/1,2/)
+
  itype = get_sink_type(ntypes)
  got_sinks = all(isinklist > 0) .and. (npartoftype(itype,j) > 0)
  if (got_sinks .and. all(ix > 0)) then
