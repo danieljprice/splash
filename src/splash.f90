@@ -53,6 +53,7 @@ program splash
 !     Version history/ Changelog:
 !     3.3.4   : (xx/12/21)
 !             improved visual appearance of normalised renderings with free boundaries;
+!             automatically read planet-wake parameters from phantom file headers
 !     3.3.3   : (19/11/21)
 !             "splash to csv" exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;

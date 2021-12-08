@@ -95,6 +95,7 @@ module exact
  real :: HonR,rplanet,q_index,phase
  real :: spiral_params(7,maxexact)
  integer :: ispiral,narms
+ logical :: iread_wakeparams
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
@@ -118,7 +119,7 @@ module exact
        mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params,phase
+       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -209,6 +210,7 @@ subroutine defaults_set_exact
  phase = 0.
  spiral_params = 0.
  spiral_params(2,:) = 360.
+ iread_wakeparams = .true.
 !   Bondi
  relativistic  = .true.
  geodesic_flow = .false.
@@ -586,10 +588,15 @@ subroutine submenu_exact(iexact)
           call prompt('enter a4 in r = \sum a_i phi^i',spiral_params(7,i))
        enddo
     case default
-       call prompt('enter disc aspect ratio at planet location (H/R)',HonR,0.,1.)
-       call prompt('enter planet orbital radius ',rplanet,0.)
-       call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
-       call prompt('enter orbital phase at t=0 in degrees ',phase)
+       if (ifileopen > 0) call get_planetdisc_parameters_from_data(rplanet,HonR,q_index,phase,ierr)
+       if (ierr == 0) call prompt(' use wake parameters above?',iread_wakeparams)
+       if (ierr /= 0) iread_wakeparams = .false.
+       if (.not.iread_wakeparams) then
+          call prompt('enter disc aspect ratio at planet location (H/R)',HonR,0.,1.)
+          call prompt('enter planet orbital radius ',rplanet,0.)
+          call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
+          call prompt('enter orbital phase in degrees ',phase)
+       endif
     end select
  case(18)
     prompt_for_gamma = .true.
@@ -705,7 +712,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  use settings_data,  only:ndim,iverbose
  use prompting,      only:prompt
  use exactfunction,  only:check_function
- use filenames,      only:fileprefix
+ use filenames,      only:fileprefix,ifileopen
  use asciiutils,     only:read_asciifile,get_line_containing
  integer,          intent(in)  :: iexact
  character(len=*), intent(in)  :: rootname
@@ -931,54 +938,108 @@ subroutine read_exactparams(iexact,rootname,ierr)
     !
     !--spiral arm parameters from .spirals file
     !
-    filename=trim(rootname)//'.spirals'
-    call read_asciifile(trim(filename),narmsread,spiral_params,ierr)
-    if (ierr==-1) then
-       if (iverbose > 0) write(*,"(a)",advance='no') ' no file '//trim(filename)//'; '
-       filename = trim(fileprefix)//'.spirals'
+    select case(ispiral)
+    case(2)
+       filename=trim(rootname)//'.spirals'
+       narmsread = 0
        call read_asciifile(trim(filename),narmsread,spiral_params,ierr)
        if (ierr==-1) then
-          if (iverbose > 0) print "(a)",' no file '//trim(filename)
-          return
+          if (iverbose > 0) write(*,"(a)",advance='no') ' no file '//trim(filename)//'; '
+          filename = trim(fileprefix)//'.spirals'
+          call read_asciifile(trim(filename),narmsread,spiral_params,ierr)
+          if (ierr==-1) then
+             if (iverbose > 0) print "(a)",' no file '//trim(filename)
+          else
+             if (iverbose > 0) print*,trim(filename)//' read ',narmsread,' arms, err = ',ierr
+             if (narmsread >= 0) narms = narmsread
+          endif
        else
           if (iverbose > 0) print*,trim(filename)//' read ',narmsread,' arms, err = ',ierr
-          if (narmsread >= 0) narms = narmsread
+          narms = max(narmsread,0)
        endif
-    else
-       if (iverbose > 0) print*,trim(filename)//' read ',narmsread,' arms, err = ',ierr
-       narms = max(narmsread,0)
-    endif
+    case default
+       if (ifileopen > 0 .and. iread_wakeparams) call get_planetdisc_parameters_from_data(rplanet,HonR,q_index,phase,ierr)
+    end select
  end select
 
- return
 end subroutine read_exactparams
 
- !-----------------------------------------------------------------------
- ! this subroutine drives the exact solution plotting using the
- ! parameters which have been set
- !
- ! acts as an interface between the main plotting loop and the
- ! exact solution calculation subroutines
- !
- ! The exact solution is returned from the calculation via the arrays
- ! xexact and yexact. This means that the appropriate transformations
- ! can be applied (e.g. if the graph is logarithmic) and also ensures
- ! that the line style and colour settings are applied properly.
- !
- ! Note that we attempt to space the solution evenly in the transformed
- ! space (ie. in the current plot window), but this can be overwritten
- ! in the subroutines (for example if an uneven sampling is desired or
- ! the plotting is via some similarity variable as in the Sedov solution).
- ! In these cases the resulting arrays are then transformed, possibly leading
- ! to poor sampling in some regions (e.g. an evenly spaced array will become
- ! highly uneven in logarithmic space).
- !
- ! Note that any subroutine could in principle do its own plotting,
- ! provided that it returns ierr > 0 which means that the generic line
- ! is not plotted. Obviously transformations could not be applied in
- ! this case.
- !
- !-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+! subroutine to automatically extract parameters needed for
+! planet wake exact solution from the data
+!-----------------------------------------------------------------------
+subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
+ use physcon,       only:pi
+ use filenames,     only:ifileopen
+ use settings_data, only:ntypes,ndim,ndimV,ncolumns
+ use particle_data, only:headervals,dat,iamtype,npartoftype
+ use part_utils,    only:locate_nth_particle_of_type,get_binary
+ use labels,        only:get_sink_type,ix,ivx,ipmass,headertags
+ use asciiutils,    only:get_value
+ real, intent(inout) :: rp,HR,q,angle
+ integer, intent(out) :: ierr
+ integer :: isinklist(2),isink1,isink2,itype,j,ntot
+ logical :: got_sinks
+ real :: x0(3),v0(3),domega,omega,polyk,cs
+
+ ! do nothing if there is no data
+ j = 1  ! use first data in memory
+ if (ifileopen <= 0) return
+ if (size(npartoftype(1,:)) < j) return
+
+ isinklist = (/1,2/)
+ itype = get_sink_type(ntypes)
+ got_sinks = all(isinklist > 0) .and. (npartoftype(itype,j) > 0)
+ if (got_sinks .and. all(ix > 0)) then
+    call locate_nth_particle_of_type(isinklist(1),isink1,itype,iamtype(:,j),npartoftype(:,j),ntot)
+    call locate_nth_particle_of_type(isinklist(2),isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
+    call get_binary(isink1,isink2,dat(:,:,j),x0,v0,angle,domega,ndim,ndimV,ncolumns,ix,ivx,ipmass,0,ierr)
+    if (ierr /= 0) return
+    ! phase angle for planet
+    angle = -angle*180./pi ! convert to degrees
+    ! radial location of planet
+    rp = norm2(dat(isink2,ix(:),j) - x0)
+    ! power law index of sound speed profile, if found in file header
+    q = get_value('qfacdisc',headertags,headervals(:,j))
+    if (q <= 0.) q = q_index  ! revert to previous value if not read
+    ! disc scale height, convert to aspect ratio
+    polyk = 2./3.*get_value('RK2',headertags,headervals(:,j))  ! polytropic K
+    cs = sqrt(polyk*(rp**2)**(-q))  ! sound speed in code units
+    omega = sqrt(dat(isink1,ipmass,j)/rp**3) ! Keplerian speed
+    HR = (cs/omega)/rp                       ! pressure scale height
+    if (HR < 0.001 .or. HR > 0.5) HR = HonR  ! do not grab stupid numbers
+    ! report results
+    print "(4(a,g10.3))",' planet wake parameters: rp is ',rp,' phase is ',angle,' q is ',q,' HonR is ',HR
+ endif
+
+end subroutine get_planetdisc_parameters_from_data
+
+!-----------------------------------------------------------------------
+! this subroutine drives the exact solution plotting using the
+! parameters which have been set
+!
+! acts as an interface between the main plotting loop and the
+! exact solution calculation subroutines
+!
+! The exact solution is returned from the calculation via the arrays
+! xexact and yexact. This means that the appropriate transformations
+! can be applied (e.g. if the graph is logarithmic) and also ensures
+! that the line style and colour settings are applied properly.
+!
+! Note that we attempt to space the solution evenly in the transformed
+! space (ie. in the current plot window), but this can be overwritten
+! in the subroutines (for example if an uneven sampling is desired or
+! the plotting is via some similarity variable as in the Sedov solution).
+! In these cases the resulting arrays are then transformed, possibly leading
+! to poor sampling in some regions (e.g. an evenly spaced array will become
+! highly uneven in logarithmic space).
+!
+! Note that any subroutine could in principle do its own plotting,
+! provided that it returns ierr > 0 which means that the generic line
+! is not plotted. Obviously transformations could not be applied in
+! this case.
+!
+!-----------------------------------------------------------------------
 
 subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             ndim,ndimV,time,xmin,xmax,gamma,xplot,yplot,&
