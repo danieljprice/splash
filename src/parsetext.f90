@@ -150,7 +150,7 @@ subroutine parse_text(string,vars,vals)
        r = parse_formula(newstring(i1:i2),vars,vals,ierr)
        if (ierr==0) then
           !print*,' r = ',r,' ierr = ',ierr
-          call get_varstring(r,ndecimal,varstring)
+          call number_to_string(r,ndecimal,varstring)
           !print*,'varstring: "',varstring,'"'
           call string_sub(newstring,istart,iend,trim(varstring))
        endif
@@ -180,7 +180,7 @@ end subroutine parse_text
 ! uses plot_numb to do the formatting
 !
 !---------------------------------------------------------------------------
-subroutine get_varstring(r,ndec,string)
+subroutine number_to_string(r,ndec,string)
  use plotlib, only:plot_numb
  real,    intent(in) :: r
  integer, intent(in)  :: ndec
@@ -190,7 +190,6 @@ subroutine get_varstring(r,ndec,string)
 
  if (abs(r) < tiny(r)) then
     string = '0'
-    nc = 1
  else
     rtmp = abs(r)
     mm = nint(r/10.**(int(log10(rtmp)-ndec)))
@@ -198,7 +197,7 @@ subroutine get_varstring(r,ndec,string)
     call plot_numb(mm,pp,1,string,nc)
  endif
 
-end subroutine get_varstring
+end subroutine number_to_string
 
 !---------------------------------------------------------------------------
 !

@@ -33,6 +33,7 @@ module legends
 
  public :: legend, legend_vec, legend_markers, legend_scale
  public :: prompt_panelselect, ipanelselect
+ public :: plot_box_around_text_xy
 
  private
 
@@ -94,21 +95,16 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  if (usebox) call plot_box_around_text(trim(label),hpos,vpos,fjust)
  call plot_annotate('T',-vpos,hpos,fjust,trim(label))
 
- return
 end subroutine legend
 
 !-----------------------------------------------------------------
 !  utility routine for plotting translucent box in legends
 !-----------------------------------------------------------------
 subroutine plot_box_around_text(string,hpos,vpos,fjust)
- use plotlib, only:plot_qwin,plot_qcs,plot_qtxt,plot_qci,plot_sci,plot_sfs, &
-              plot_set_opacity, plot_rect
+ use plotlib, only:plot_qwin,plot_qcs
  character(len=*), intent(in) :: string
  real, intent(in) :: hpos,vpos,fjust
- real :: xmin,xmax,ymin,ymax,xpos,ypos
- real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
- real, dimension(4) :: xbox,ybox
- integer :: ic
+ real :: xmin,xmax,ymin,ymax,xpos,ypos,xch,ych
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -117,30 +113,49 @@ subroutine plot_box_around_text(string,hpos,vpos,fjust)
  call plot_qcs(4,xch,ych)
  ypos = ymax - (vpos + 1.)*ych
 !
+!--plot box behind string
+!
+ call plot_box_around_text_xy(xpos,ypos,fjust,0.5,trim(string))
+
+end subroutine plot_box_around_text
+
+!-----------------------------------------------------------------
+!  utility routine for plotting translucent box behind text
+!-----------------------------------------------------------------
+subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
+ use plotlib, only:plot_qcs,plot_qtxt,plot_qci,plot_sci,plot_sfs, &
+              plot_set_opacity,plot_rect
+ real, intent(in) :: xpos,ypos,fjust,alpha
+ character(len=*), intent(in) :: string
+ real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
+ real, dimension(4) :: xbox,ybox
+ integer :: ic
+
+ call plot_qcs(4,xch,ych) ! get character height
+!
 !--enquire bounding box of string
 !
- call plot_qtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
-
+ call plot_qtxt(xpos,ypos,0.0,0.0,string,xbox,ybox)
  xbuf = 0.25*xch
- ybuf = 0.5*ych
+ ybuf = 0.33*ych
  dx = xbox(3) - xbox(1)
  dy = ybox(3) - ybox(1) + 0.25*ych
  x1 = xpos - fjust*dx - xbuf
  x2 = x1 + dx + 2.*xbuf
- y1 = ypos
- y2 = y1 + dy + ybuf
+ y1 = ypos - ybuf
+ y2 = y1 + dy + 2*ybuf
 !
 !--draw box around the string
 !
  call plot_qci(ic) ! query colour index
  call plot_sci(0)  ! background colour
  call plot_sfs(1)  ! solid fill style
- call plot_set_opacity(0.5)
+ call plot_set_opacity(alpha)
  call plot_rect(x1,x2,y1,y2,0.2*ych) ! draw a (rounded) rectangle
  call plot_set_opacity(1.0)
  call plot_sci(ic) ! restore colour index
 
-end subroutine plot_box_around_text
+end subroutine plot_box_around_text_xy
 
 !-----------------------------------------------------------------
 !     plots vector plot legend
@@ -156,9 +171,10 @@ end subroutine plot_box_around_text
 !-----------------------------------------------------------------
 
 subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
- use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_numb,plot_qtxt, &
+ use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_qtxt, &
                    plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
                    plot_qvp,plot_svp,plot_swin,plot_arro,plot_set_opacity
+ use parsetext, only:number_to_string
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
  real :: xmin,xmax,ymin,ymax
@@ -166,7 +182,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
  real :: dxbuffer,dybuffer,dxbox,dybox
  real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
- integer :: icolindex,mm,pp,nc,ndec
+ integer :: icolindex
  character(len=len(label)+20) :: string
 
 !
@@ -186,15 +202,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !
  adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
  vecmaxnew = adjustlength*vecmax
- ndec = 2
- if (vecmaxnew < tiny(vecmaxnew)) then
-    string = '0'
-    nc = 1
- else
-    mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
-    pp=int(log10(vecmaxnew)-ndec)
-    call plot_numb(mm,pp,0,string,nc)
- endif
+ call number_to_string(vecmaxnew,2,string) ! 2 decimal places
  string = '='//trim(string)
 ! write(string,"('=',1pe7.1)") vecmax
 !
@@ -269,8 +277,23 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !--restore colour index
  call plot_sci(icolindex)
 
- return
 end subroutine legend_vec
+
+!-------------------------------------------------------------------------
+!  wrapper to plot_numb to give the desired number of decimal places
+!-------------------------------------------------------------------------
+subroutine number_to_string(x,ndec,string)
+ use plotlib, only:plot_numb
+ real,    intent(in) :: x
+ integer, intent(in) :: ndec  ! number of decimal places
+ character(len=*), intent(out) :: string
+ integer :: mm,pp,nc
+
+ mm=int(x/10.**(int(log10(x)-ndec)))
+ pp=int(log10(x)-ndec)
+ call plot_numb(mm,pp,0,string,nc)
+
+end subroutine number_to_string
 
 !-------------------------------------------------------------------------
 !  draw a legend for different line/marker styles

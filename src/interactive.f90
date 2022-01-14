@@ -80,7 +80,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
                              plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
-                             plot_shift_click,plot_lcur,plot_poly
+                             plot_shift_click,plot_lcur,plot_poly,plot_set_motion_callback
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
@@ -141,6 +141,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  !
  call plot_qwin(xminwin,xmaxwin,yminwin,ymaxwin)
  call get_posxy(xcursor,ycursor,xpt,ypt,xminwin,xmaxwin,yminwin,ymaxwin)
+
+ ierr = plot_set_motion_callback(handle_cursor_motion)
 
 !  xpt = 0.
 !  ypt = 0.
@@ -3113,5 +3115,108 @@ subroutine unset_movie_mode()
  call delete_text(get_copyright())
 
 end subroutine unset_movie_mode
+
+!
+!--callback function to handle cursor movement
+!
+subroutine handle_cursor_motion(xpt,ypt)
+ use iso_c_binding,   only:c_double
+ use plotlib,         only:plot_text,plot_stbg,plot_qwin,plot_sch,plot_qch,&
+                           plotlib_supports_alpha,plot_set_opacity
+ use settings_render, only:iColourBarStyle
+ use legends,         only:plot_box_around_text_xy
+ use parsetext,       only:number_to_string
+ use timing,          only:wall_time
+ real(kind=c_double), intent(in) :: xpt,ypt
+ character(len=64) :: string
+ character(len=20) :: strx,stry
+ logical :: iamincolourbar
+ integer :: imessage,ierr
+ real :: xmin,xmax,ymin,ymax,xpti,ypti,x0,y0,oldch
+ real, save :: tprev = -1.
+ real :: t
+
+ call wall_time(t)
+ if (tprev < 0.) tprev = t
+ xpti = xpt
+ ypti = ypt
+ ! save settings
+ call plot_qch(oldch)
+
+ ! plot x,y position as cursor moves
+ call plot_stbg(0)
+ call plot_sch(1.0)
+ if (plotlib_supports_alpha) call plot_set_opacity(0.25)
+
+ call plot_qwin(xmin,xmax,ymin,ymax)
+
+ ! write text at the viewport location -0.02,-0.02
+ call get_posxy(-0.01,-0.02,x0,y0,xmin,xmax,ymin,ymax)
+ ! block out pixels behind text
+ write(string,"(64('g'))")
+ call plot_box_around_text_xy(x0,y0,0.,1.0,string)
+
+ imessage = mod(int((t-tprev)/2.),10) ! change message every 2 seconds
+
+ iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin,xmax,ymin,ymax)
+ if (iamincolourbar) then ! cursor is inside the colour bar
+    select case(imessage)
+    case(10)
+       string = 'press m or M to change colour map'
+    case(9)
+       string = 'press i to invert the colour map'
+    case(8)
+       string = 'press f/F to flip rendered quantity to next/previous column'
+    case(7)
+       string = 'backspace to delete the colour bar'
+    case(4:6)
+       string = 'click to zoom on colour bar'
+    case default
+       string = 'press l for log, a to adapt'
+    end select
+ else ! cursor is not inside the colour bar
+    select case(imessage)
+    case(10)
+       string = 'press o to recentre plot on the origin'
+    case(9)
+       string = 'type 3 and space to advance 3 timesteps'
+    case(8)
+       string = 'backspace to delete annotation'
+    case(7)
+       string = 'press space for next snapshot, b for previous'
+    case(6)
+       string = 'type a number and -/+ to zoom in/out by factor'
+    case(5)
+       string = 'press p to label closest particle'
+    case(4)
+       string = 'press g to draw line and measure a gradient'
+    case(3)
+       string = 'ctrl-t to add text annotation'
+    case(2)
+       string = 'press Enter for Hollywood mode'
+    case(1)
+       string = 'click to zoom'
+    case default
+       string = ''
+    end select
+ endif
+
+ ! write (x,y) position
+ call number_to_string(xpti,3,strx)
+ call number_to_string(ypti,3,stry)
+ string = '('//trim(strx)//', '//trim(stry)//') '//trim(string)
+
+ ! block out pixels behind text by drawing a box
+ call plot_box_around_text_xy(x0,y0,0.,1.0,string)
+
+ ! plot the text
+ call plot_text(x0,y0,string)
+
+ ! restore settings
+ if (plotlib_supports_alpha) call plot_set_opacity(1.0)
+ call plot_stbg(-1)
+ call plot_sch(oldch)
+
+end subroutine handle_cursor_motion
 
 end module interactive_routines
