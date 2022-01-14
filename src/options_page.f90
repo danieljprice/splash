@@ -91,7 +91,7 @@ subroutine defaults_set_page
  vpostitle = 1.0       ! vertical title position in character heights
  fjusttitle = 0.5      ! justification factor for title
  iPageColours = 0
- charheight = 1.0    ! character height
+ charheight = 1.5    ! character height
  linewidth = 0       ! line width
  linepalette = 0
 
