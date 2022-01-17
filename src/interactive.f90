@@ -3119,8 +3119,8 @@ end subroutine unset_movie_mode
 !
 !--callback function to handle cursor movement
 !
-subroutine handle_cursor_motion(xpt,ypt)
- use iso_c_binding,   only:c_double
+subroutine handle_cursor_motion(xpt,ypt,mode)
+ use iso_c_binding,   only:c_double,c_int
  use plotlib,         only:plot_text,plot_stbg,plot_qwin,plot_sch,plot_qch,&
                            plotlib_supports_alpha,plot_set_opacity
  use settings_render, only:iColourBarStyle
@@ -3128,6 +3128,7 @@ subroutine handle_cursor_motion(xpt,ypt)
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
  real(kind=c_double), intent(in) :: xpt,ypt
+ integer(kind=c_int), intent(in) :: mode
  character(len=64) :: string
  character(len=20) :: strx,stry
  logical :: iamincolourbar
