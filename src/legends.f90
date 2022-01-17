@@ -143,7 +143,7 @@ subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
  x1 = xpos - fjust*dx - xbuf
  x2 = x1 + dx + 2.*xbuf
  y1 = ypos - ybuf
- y2 = y1 + dy + 2*ybuf
+ y2 = y1 + dy + 3*ybuf
 !
 !--draw box around the string
 !
@@ -278,22 +278,6 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call plot_sci(icolindex)
 
 end subroutine legend_vec
-
-!-------------------------------------------------------------------------
-!  wrapper to plot_numb to give the desired number of decimal places
-!-------------------------------------------------------------------------
-subroutine number_to_string(x,ndec,string)
- use plotlib, only:plot_numb
- real,    intent(in) :: x
- integer, intent(in) :: ndec  ! number of decimal places
- character(len=*), intent(out) :: string
- integer :: mm,pp,nc
-
- mm=int(x/10.**(int(log10(x)-ndec)))
- pp=int(log10(x)-ndec)
- call plot_numb(mm,pp,0,string,nc)
-
-end subroutine number_to_string
 
 !-------------------------------------------------------------------------
 !  draw a legend for different line/marker styles

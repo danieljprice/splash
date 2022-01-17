@@ -3122,96 +3122,137 @@ end subroutine unset_movie_mode
 subroutine handle_cursor_motion(xpt,ypt,mode)
  use iso_c_binding,   only:c_double,c_int
  use plotlib,         only:plot_text,plot_stbg,plot_qwin,plot_sch,plot_qch,&
-                           plotlib_supports_alpha,plot_set_opacity
+                           plotlib_supports_alpha,plot_set_opacity,plot_ptxt,plot_qcs
  use settings_render, only:iColourBarStyle
  use legends,         only:plot_box_around_text_xy
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
  real(kind=c_double), intent(in) :: xpt,ypt
  integer(kind=c_int), intent(in) :: mode
- character(len=64) :: string
+ character(len=128) :: string
  character(len=20) :: strx,stry
- logical :: iamincolourbar
- integer :: imessage,ierr
- real :: xmin,xmax,ymin,ymax,xpti,ypti,x0,y0,oldch
+ character(len=20) :: strxy
+ logical :: iamincolourbar,plot_xy,plot_help
+ integer :: imessage
+ real :: xmin,xmax,ymin,ymax,xpti,ypti,x0,y0,x1,y1,oldch,xpos,ypos,xch,ych
+ real :: xminvp,xmaxvp,yminvp,ymaxvp
  real, save :: tprev = -1.
+ character(len=len(string)) :: prev_msg = ''
  real :: t
 
  call wall_time(t)
  if (tprev < 0.) tprev = t
  xpti = xpt
  ypti = ypt
- ! save settings
+ ! save settings and query window
  call plot_qch(oldch)
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ call get_posxy(0.,0.,xminvp,yminvp,xmin,xmax,ymin,ymax)
+ call get_posxy(1.,1.,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
+ plot_xy = .true.
+ plot_help = .true.
+
+ ! print nothing if cursor is outside the viewport, so do not contaminate screenshots
+ if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
+    plot_xy = .false.
+    plot_help = .false.
+ endif
 
  ! plot x,y position as cursor moves
  call plot_stbg(0)
  call plot_sch(1.0)
+ call plot_qcs(0,xch,ych)
+
  if (plotlib_supports_alpha) call plot_set_opacity(0.25)
-
- call plot_qwin(xmin,xmax,ymin,ymax)
-
- ! write text at the viewport location -0.02,-0.02
- call get_posxy(-0.01,-0.02,x0,y0,xmin,xmax,ymin,ymax)
- ! block out pixels behind text
- write(string,"(64('g'))")
- call plot_box_around_text_xy(x0,y0,0.,1.0,string)
 
  imessage = mod(int((t-tprev)/2.),10) ! change message every 2 seconds
 
+ ! work out if cursor is in the colour bar
  iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin,xmax,ymin,ymax)
- if (iamincolourbar) then ! cursor is inside the colour bar
-    select case(imessage)
-    case(10)
-       string = 'press m or M to change colour map'
-    case(9)
-       string = 'press i to invert the colour map'
-    case(8)
-       string = 'press f/F to flip rendered quantity to next/previous column'
-    case(7)
-       string = 'backspace to delete the colour bar'
-    case(4:6)
-       string = 'click to zoom on colour bar'
-    case default
-       string = 'press l for log, a to adapt'
-    end select
- else ! cursor is not inside the colour bar
-    select case(imessage)
-    case(10)
-       string = 'press o to recentre plot on the origin'
-    case(9)
-       string = 'type 3 and space to advance 3 timesteps'
-    case(8)
-       string = 'backspace to delete annotation'
-    case(7)
-       string = 'press space for next snapshot, b for previous'
-    case(6)
-       string = 'type a number and -/+ to zoom in/out by factor'
-    case(5)
-       string = 'press p to label closest particle'
-    case(4)
-       string = 'press g to draw line and measure a gradient'
-    case(3)
-       string = 'ctrl-t to add text annotation'
-    case(2)
-       string = 'press Enter for Hollywood mode'
-    case(1)
-       string = 'click to zoom'
-    case default
-       string = ''
-    end select
- endif
 
- ! write (x,y) position
+ string = '' ! no message by default
+ select case(mode)
+ case(3,4) ! line selection i.e. have clicked on colour bar
+    string = 'click to zoom'
+    plot_xy = .false.
+ case(2)   ! rectangle selection
+    string = 'zoom; 0=hide; 1-9=colours; p=select; c=circles; '//&
+             'x/y=restrict x/y; r=restrict x & y; R=reset; q=quit'
+ case(1) ! line drawing
+    string = 'draw the line you want to find the gradient of'
+ case(0) ! no band mode, just a free cursor
+    if (iamincolourbar) then ! cursor is inside the colour bar
+       select case(imessage)
+       case(10)
+          string = 'press m or M to change colour map'
+       case(9)
+          string = 'press i to invert the colour map'
+       case(8)
+          string = 'press f/F to flip rendered quantity to next/previous column'
+       case(7)
+          string = 'backspace to delete colour bar / annotation'
+       case(4:6)
+          string = 'click to zoom on colour bar'
+       case default
+          string = 'press l for log, a to adapt'
+       end select
+    else ! cursor is not inside the colour bar
+       if (xpti > xmin .and. xpti < xmax .and. ypti < ymin) then
+          string = '+/- zoom x; a=adapt x; l=log x; o=centre x on zero; C=centre x on cursor'
+       elseif (ypti > ymin .and. ypti < ymax .and. xpti < xmin) then
+          string = '+/- zoom y; a=adapt y; l=log y; o=centre y on zero; C=centre y on cursor'
+       else
+          ! cursor inside plot boundaries
+          select case(imessage)
+          case(10)
+              string = 'press o to recentre plot on the origin'
+          case(9)
+              string = 'type 3 and space to advance 3 timesteps'
+          case(8)
+              string = 'press space for next snapshot, b for previous'
+          case(7)
+              string = 'type a number and -/+ to zoom in/out by factor'
+          case(6)
+              string = 'press p to label closest particle'
+          case(5)
+              string = 'press g to draw line and measure a gradient'
+          case(4)
+              string = 'ctrl-t to add text; \^ to add arrow + text'
+          case(2:3)
+              string = 'press Enter for Hollywood mode'
+          case default
+              string = 'click to zoom'
+          end select
+       endif
+    endif
+ end select
+ if (.not.plot_help) string = ''
+
+ xpos = -0.01
+ ypos = -0.02
+ ! write (x,y) position at the desired viewport location
+ call get_posxy(xpos,ypos+1.5*ych,x0,y0,xmin,xmax,ymin,ymax)
  call number_to_string(xpti,3,strx)
  call number_to_string(ypti,3,stry)
- string = '('//trim(strx)//', '//trim(stry)//') '//trim(string)
+ strxy = '('//trim(strx)//', '//trim(stry)//')'
+ call plot_box_around_text_xy(x0,y0,0.,1.0,strxy)
+ if (plot_xy) call plot_text(x0,y0,strxy)
 
- ! block out pixels behind text by drawing a box
- call plot_box_around_text_xy(x0,y0,0.,1.0,string)
+ ! only overwrite the string if it has changed
+ ! this is to avoid flickering on the screen
+ if (trim(string) /= trim(prev_msg)) then
 
- ! plot the text
- call plot_text(x0,y0,string)
+    call get_posxy(xpos,ypos,x1,y1,xmin,xmax,ymin,ymax)
+
+    ! block out pixels behind text by drawing a box
+    call plot_box_around_text_xy(x1,y1,0.,1.0,string)
+
+    ! plot the help text
+    if (plot_help) call plot_text(x1,y1,string)
+
+    ! save previous message
+    prev_msg = string
+ endif
 
  ! restore settings
  if (plotlib_supports_alpha) call plot_set_opacity(1.0)
