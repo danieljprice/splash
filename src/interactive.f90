@@ -2735,9 +2735,7 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  if (present(ipanel)) then
     if (ipanel > 0 .and. iPlotLegendOnlyOnPanel > 0) iPlotLegendOnlyOnPanel = ipanel
  endif
- print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
 
- return
 end subroutine mvlegend
 !
 !--move the vector legend to the current position
@@ -2753,9 +2751,7 @@ subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  !--query character height in world coordinates
  call plot_qcs(4,xch,ych)
  vposlegendvec = (ymax - yi)/ych
- print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
 
- return
 end subroutine mvlegendvec
 !
 !--move the title to the current position
@@ -2780,9 +2776,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  else
     fjusttitle = 0.5
  endif
- print*,'hpos = ',hpostitle,' vpos = ',vpostitle,' just = ',fjusttitle
 
- return
 end subroutine mvtitle
 
 !
@@ -3354,13 +3348,15 @@ subroutine print_message_xy(xpt,ypt,msg)
  real, intent(in) :: xpt,ypt
  character(len=*), intent(in) :: msg
  character(len=20) :: strx,stry,strxy
+ character(len=64) :: string
 
  ! plot x,y position as cursor moves
  call number_to_string(xpt,3,strx)
  call number_to_string(ypt,3,stry)
  strxy = '('//trim(strx)//', '//trim(stry)//')'
 
- call print_message(strxy,msg)
+ string = trim(msg)
+ call print_message(strxy,string)
 
 end subroutine print_message_xy
 
