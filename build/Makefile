@@ -414,7 +414,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
          exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
-         exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
+         exact_ringspread.f90 exact_gresho.f90 exact.f90 \
+         interactive_utils.f90 interactive_help.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 lightcurve.f90 $(READFILES) \

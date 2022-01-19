@@ -693,7 +693,8 @@ end subroutine edit_shape
 ! utility routine to add a new text shape interactively
 !--------------------------------------------------------
 subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
- use plotlib, only:plot_qwin,plot_qch
+ use plotlib,          only:plot_qwin,plot_qch
+ use interactive_help, only:print_message
  real, intent(in)     :: xpt,ypt
  integer, intent(in)  :: itransx,itransy,ipanel
  integer, intent(out) :: ierr
@@ -714,7 +715,7 @@ subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
  endif
  i = nshapes
  shape(i)%itype = itype
- print*,' adding shape '//trim(labelshapetype(shape(i)%itype))
+ call print_message(' adding shape '//trim(labelshapetype(shape(i)%itype)))
  shape(i)%icolour = 1
  shape(i)%linestyle = 1
  shape(i)%linewidth = 1
@@ -734,7 +735,7 @@ subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
  shape(i)%xlen = charheight
  shape(i)%ylen = 1.
  shape(i)%angle = 0.
- shape(i)%text = 'click to edit'
+ shape(i)%text = 'type in box to edit'
  shape(i)%fjust = 0.
  if (itype==ishape_arrow) shape(i)%fjust = 0.5
  call edit_shape(i,xposi,yposi,itransx,itransy,first=.true.)
@@ -847,18 +848,22 @@ end subroutine convert_units
 !--------------------------------------------------------
 subroutine edit_textbox(xpt,ypt,angle,fjust,string)
  use plotlib, only:plot_stbg,plot_ptxt,plot_curs
+ use legends, only:plot_box_around_text_xy
+ use interactive_help, only:print_message
  real, intent(in) :: xpt,ypt,angle,fjust
  character(len=1) :: mychar
  real :: xpt2,ypt2
  character(len=*), intent(inout) :: string
  character(len=len(string)) :: oldstring
- integer :: i,ierr
+ integer :: i,ierr,len_show
 
- print*,'editing text box, esc or ctrl-c to quit'
  call plot_stbg(0)
  mychar = ' '
  oldstring = string
  i = max(len_trim(string)+1,1)
+ len_show = len_trim(string)
+ ! block out pixels behind text by drawing a box
+ call plot_box_around_text_xy(xpt,ypt,fjust,1.0,string(1:len_show))
  call plot_ptxt(xpt,ypt,angle,fjust,string(1:i)//'_')
 
  xpt2 = xpt
@@ -870,28 +875,36 @@ subroutine edit_textbox(xpt,ypt,angle,fjust,string)
     if (mychar==achar(8)) then   ! backspace
        i = max(i - 1,1)
        string(i:i) = '_'
+       len_show = max(len_show,i)
+       ! block out pixels behind text by drawing a box
+       call plot_box_around_text_xy(xpt,ypt,fjust,1.0,string(1:len_show)//'  ')
        call plot_ptxt(xpt,ypt,angle,fjust,string(1:i))
        string(i:i) = ' '
     else
-       if (trim(string)=='click to edit') then
+       if (trim(string)=='type in box to edit') then
           !print*,'erasing string'
+          call plot_box_around_text_xy(xpt,ypt,fjust,1.0,string(1:len_show))
           string = ' '
           i = 1
        endif
        string(i:i) = mychar
+       len_show = max(len_show,i)
+       ! block out pixels behind text by drawing a box
+       call plot_box_around_text_xy(xpt,ypt,fjust,1.0,string(1:len_show))
        call plot_ptxt(xpt,ypt,angle,fjust,string(1:i))
        i = min(i + 1,len(string))
-       if (i==len(string)) print*,' reached end of string'
+       if (i==len(string)) call print_message('reached end of string')
     endif
     ierr = plot_curs(xpt2,ypt2,mychar)
+    call print_message('type to edit text: Esc=cancel; Enter=finish; Backspace=delete')
  enddo
 
  !--if ctrl-c or esc, restore original string
  if (mychar==achar(3) .or. mychar==achar(27)) then
     string = oldstring
-    print*,'cancelled'
+    call print_message('cancelled')
  else
-    print*,'done: text = "'//trim(string)//'"'
+    call print_message('done: text = "'//trim(string)//'"')
  endif
  call plot_stbg(-1)
 

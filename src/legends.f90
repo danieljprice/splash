@@ -128,14 +128,18 @@ subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
  real, intent(in) :: xpos,ypos,fjust,alpha
  character(len=*), intent(in) :: string
  real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
- real, dimension(4) :: xbox,ybox
+ real, dimension(4) :: xbox,ybox,xbox_tmp,ybox_tmp
  integer :: ic
 
  call plot_qcs(4,xch,ych) ! get character height
 !
-!--enquire bounding box of string
+!--enquire bounding box of fake string that includes p,q,f, g and l
 !
- call plot_qtxt(xpos,ypos,0.0,0.0,string,xbox,ybox)
+ call plot_qtxt(xpos,ypos,0.0,0.0,"pqflg",xbox_tmp,ybox)
+!
+!--enquire bounding box of actual string
+!
+ call plot_qtxt(xpos,ypos,0.0,0.0,string,xbox,ybox_tmp)
  xbuf = 0.25*xch
  ybuf = 0.33*ych
  dx = xbox(3) - xbox(1)
@@ -143,7 +147,7 @@ subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
  x1 = xpos - fjust*dx - xbuf
  x2 = x1 + dx + 2.*xbuf
  y1 = ypos - ybuf
- y2 = y1 + dy + 3*ybuf
+ y2 = y1 + dy + ybuf
 !
 !--draw box around the string
 !
