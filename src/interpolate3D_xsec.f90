@@ -83,14 +83,14 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
        print*,'taking fast cross section (non-normalised)...',zslice
     endif
  endif
- if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= -1) then
+ if (pixwidthx <= 0. .or. pixwidthy <= 0. .and. iverbose >= 1) then
     print*,'interpolate3D_xsec: error: pixel width <= 0'
     return
- elseif (npart <= 0 .and. iverbose >= -1) then
+ elseif (npart <= 0 .and. iverbose >= 1) then
     print*,'interpolate3D_xsec: error: npart = 0'
     return
  endif
- if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= -1) then
+ if (any(hh(1:npart) <= tiny(hh)) .and. iverbose >= 1) then
     print*,'interpolate3D_xsec: WARNING: ignoring some or all particles with h < 0'
  endif
  const = cnormk3D
