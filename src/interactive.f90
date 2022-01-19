@@ -76,11 +76,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use labels,           only:is_coord,ix,get_sink_type
  use limits,           only:assert_sensible_limits
  use settings_render,  only:projlabelformat,iapplyprojformat
- use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
+ use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew,iverbose
  use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
                              plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
-                             plot_shift_click,plot_lcur,plot_poly,plot_set_motion_callback
+                             plot_shift_click,plot_lcur,plot_poly,plot_set_motion_callback,&
+                             plot_scroll_down,plot_scroll_up
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
@@ -119,9 +120,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  logical :: iadvanceset, leftclick, iselectpoly, iselectcircle
  logical, save :: print_help = .true.
  logical, save :: in_movie_mode = .false.
+ character(len=15) :: string
 
  if (plot_qcur()) then
-    if (.not.print_help) print*,'entering interactive mode...press h in plot window for help'
+    if (.not.print_help .and. iverbose > 0) print*,'entering interactive mode...press h in plot window for help'
     !print*, plot_left_click
  else
     !print*,'cannot enter interactive mode: device has no cursor'
@@ -135,6 +137,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  char = 'A'
  xline = 0.
  yline = 0.
+ if (x_sec .and. ndim==3) call init_zbar(xmin,xmax,ymin,ymax,zslicepos-10.*dzslice,zslicepos+10.*dzslice)
  !
  !--convert saved cursor position (saved in viewport coords)
  !  back to coordinates
@@ -228,6 +231,14 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
 
     !--query the position of the colour bar
     iamincolourbar = incolourbar(iColourBarStyle,4,xpt,ypt,xmin,xmax,ymin,ymax)
+
+    !--handle scroll keys differently depending on context
+    select case(char)
+    case(plot_scroll_up)
+       if (iplotz > 0 .and. ndim==3 .and. (x_sec .or. use3Dperspective)) char = 'u'
+    case(plot_scroll_down)
+       if (iplotz > 0 .and. ndim==3 .and. (x_sec .or. use3Dperspective)) char = 'd'
+    end select
 
     select case(char)
        !
@@ -952,7 +963,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           irerender = .true.
           iexit = .true.
        endif
-    case('/')
+    case('/',plot_scroll_left)
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by -15 degrees...'
           if (int(scalefac) > 1) then
@@ -978,7 +989,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           irerender = .true.
           iexit = .true.
        endif
-    case('\')
+    case('\',plot_scroll_right)
        if (rotation .and. ndim >= 2) then
           !print*,'changing y rotation angle by 15 degrees...'
           if (int(scalefac) > 1) then
@@ -1114,18 +1125,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
              if (int(scalefac) > 1) dzslice = scalefac
-             print*,'shifting cross section position up by ',dzslice
+             !print*,'shifting cross section position up by ',dzslice
              zslicepos = zslicepos + dzslice
+             write(string,"(1x,a,1pg10.3)") 'z=',zslicepos
+             call print_message(string)
              iadvance = 0
              interactivereplot = .true.
              irerender = .true.
              iexit = .true.
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
+                !print*,'resetting z position'
                 zobserver = 1.
              else
-                print*,'shifting perspective position up by factor of ',scalefac
+                !print*,'shifting perspective position up by factor of ',scalefac
                 zobserver = scalefac*zoomfac*zobserver
              endif
              iadvance = 0
@@ -1161,14 +1174,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
              if (int(scalefac) > 1) dzslice = scalefac
-             print*,'shifting cross section position down by ',dzslice
+             !print*,'shifting cross section position down by ',dzslice
              zslicepos = zslicepos - dzslice
+             write(string,"(1x,a,1pg10.3)") 'z=',zslicepos
+             call print_message(string)
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
+                !print*,'resetting z position'
                 zobserver = 1.
              else
-                print*,'shifting perspective position down'
+                !print*,'shifting perspective position down'
                 zobserver = zobserver/(zoomfac*scalefac)
              endif
           endif
@@ -1323,7 +1338,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        iadvance = -666
        !print*,'quitting...'
        iexit = .true.
-    case('b','B',plot_scroll_left) ! right click -> go back
+    case('b','B') ! right click -> go back
        iadvance = -abs(iadvance)
        iexit = .true.
     case('r') ! replot
@@ -1331,7 +1346,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        interactivereplot = .true.
        irerender = .true.
        iexit = .true.
-    case(' ',plot_scroll_right) ! space
+    case(' ') ! space
        iadvance = abs(iadvance)
        iexit = .true.
     case('0','1','2','3','4','5','6','7','8','9')
@@ -1413,8 +1428,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     endif
 
+    iverbose = 0
+    if (interactivereplot) iverbose = -1
+
  enddo interactiveloop
- return
+
 end subroutine interactive_part
 
 !
@@ -2612,7 +2630,6 @@ subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
  x = xmini + (vptx-vptxmini)/(vptxmaxi-vptxmini)*(xmaxi-xmini)
  y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
 
- return
 end subroutine get_posxy
 
 !-----------------------------------------------------------
@@ -3175,7 +3192,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  case(3,4) ! line selection i.e. have clicked on colour bar
     string = 'click to zoom'
     plot_xy = .false.
- case(2)   ! rectangle selection
+ case(2,8)   ! rectangle or circle selection
     string = 'zoom; 0=hide; 1-9=colours; p=select; c=circles; '//&
              'x/y=restrict x/y; r=restrict x & y; R=reset; q=quit'
  case(1) ! line drawing
@@ -3260,5 +3277,67 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  call plot_sch(oldch)
 
 end subroutine handle_cursor_motion
+
+!--------------------------------
+! print message into help area
+!--------------------------------
+subroutine print_message(string)
+ use plotlib, only:plot_qch,plot_qwin,plot_sch,plot_qcs,plot_set_opacity,&
+                   plotlib_supports_alpha,plot_text,plot_stbg
+ use legends, only:plot_box_around_text_xy
+ character(len=*), intent(in) :: string
+ real :: xmin,xmax,ymin,ymax,xpos,ypos,x1,y1
+ real :: xch,ych,oldch
+
+ xpos = -0.01
+ ypos = -0.02
+ call plot_qch(oldch)
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ call plot_qcs(0,xch,ych)
+
+ call plot_stbg(0)
+ call plot_sch(1.0)
+ if (plotlib_supports_alpha) call plot_set_opacity(0.25)
+
+ call get_posxy(xpos,ypos,x1,y1,xmin,xmax,ymin,ymax)
+
+ ! block out pixels behind text by drawing a box
+ call plot_box_around_text_xy(x1,y1,0.,1.0,string)
+
+ ! plot the help text
+ call plot_text(x1,y1,string)
+
+ ! restore settings
+ if (plotlib_supports_alpha) call plot_set_opacity(1.0)
+ call plot_stbg(-1)
+ call plot_sch(oldch)
+
+end subroutine print_message
+
+!--------------------------------
+! plot z axis interactive slider
+!--------------------------------
+subroutine init_zbar(xmin,xmax,ymin,ymax,zmin,zmax)
+ use plotlib, only:plot_axis,plot_qch,plot_sch,plot_set_opacity
+ real, intent(in) :: xmin,xmax,ymin,ymax,zmin,zmax
+ real, parameter :: disp = -1.2 ! label offset
+ real :: x1,x2,y1,y2,oldch
+
+ call plot_set_opacity(0.5)
+ call plot_qch(oldch)
+ call plot_sch(1.0)
+
+ ! set viewport location of end points
+ call get_posxy(0.75,0.05,x1,y1,xmin,xmax,ymin,ymax)
+ call get_posxy(0.95,0.05,x2,y2,xmin,xmax,ymin,ymax)
+
+ ! draw an axis between these points
+ call plot_axis("NST",x1,y1,x2,y2,zmin,zmax,&
+                0.,0,0.,0.33,0.5,disp,0.)
+
+ call plot_sch(oldch)
+ call plot_set_opacity(1.0)
+
+end subroutine init_zbar
 
 end module interactive_routines

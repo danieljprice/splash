@@ -1991,7 +1991,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
+                      xmin,xmax,ymin,ymax,ifastparticleplot,(interactive .and. iverbose > 0))
                    endif
 
                 elseif (ndim==2 .and. x_sec) then

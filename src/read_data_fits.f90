@@ -94,7 +94,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
 !
 !--check if first data file exists
 !
- if (iverbose==1 .and. ipos==1) print "(1x,a)",'reading FITS format'
+ !if (iverbose==1 .and. ipos==1) print "(1x,a)",'reading FITS format'
  inquire(file=datfile,exist=iexist)
  if (.not.iexist) then
     !

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -36,6 +36,7 @@ module plotlib
  use giza, only: &
       plot_arro=>giza_arrow, &
       plot_annotate=>giza_annotate, &
+      plot_axis=>giza_axis, &
       plot_band=>giza_band, &
       plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
