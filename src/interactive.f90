@@ -89,7 +89,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use particleplots,    only:plot_kernel_gr
  use interactive_buttons, only:draw_buttons,press_button_if_inside,inbutton,button_type,&
                                press_button,ibutton_plus,ibutton_minus,ibutton_rectangle,&
-                               ibutton_forward,ibutton_backward,ibutton_text,ibutton_circle
+                               ibutton_forward,ibutton_backward,ibutton_text,ibutton_circle,&
+                               ibutton_adapt,ibutton_irregular
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -266,6 +267,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              char = achar(20)
           case(ibutton_circle)  ! deferred action
              char = plot_right_click
+          case(ibutton_irregular)  ! deferred action
+             char = plot_shift_click
           end select
           ibutton = 0
        else
@@ -289,7 +292,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 xpt = 0.5*(xmin + xmax)
                 ypt = 0.5*(ymin + ymax)
                 ibutton = 0
-             case(ibutton_text,ibutton_circle,ibutton_rectangle)
+             case(ibutton_adapt)
+                char = 'a'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_text,ibutton_circle,ibutton_rectangle,ibutton_irregular)
                 cycle ! does not match instant type, use deferred action
              end select
           endif
@@ -544,7 +552,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           !--zoom or mark particles
           !
        else
-          print*,'select area: '
+          call print_message(xpt,ypt,'select area')
           !--Note: circle selection is not implemented in PGPLOT
           iselectpoly = (char==plot_shift_click .or.((.not.leftclick).and.plotlib_is_pgplot))
           iselectcircle = (char==plot_right_click .and. .not.plotlib_is_pgplot)
@@ -588,6 +596,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              xptmax = maxval(xpts(1:npts))
              yptmin = minval(ypts(1:npts))
              yptmax = maxval(ypts(1:npts))
+             call press_button()
           elseif (iselectcircle) then
              ierr = plot_band(8,1,xpt,ypt,xpt2,ypt2,char2)
              rptmax2 = (xpt2-xpt)**2 + (ypt2-ypt)**2
@@ -596,6 +605,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              xptmax = xpt + rr
              yptmin = ypt - rr
              yptmax = ypt + rr
+             call press_button()
           else ! left click: rectangle selection
              ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
              xptmin = min(xpt,xpt2)
@@ -3141,7 +3151,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
     string = 'zoom; 0=hide; 1-9=colours; p=select; c=circles; '//&
              'x/y=restrict x/y; r=restrict x & y; R=reset; q=quit'
  case(1) ! line drawing
-    string = 'draw the line you want to find the gradient of'
+    string = 'click to draw line'
  case(0) ! no band mode, just a free cursor
     if (iamincolourbar) then ! cursor is inside the colour bar
        select case(imessage)

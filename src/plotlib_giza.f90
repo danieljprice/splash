@@ -325,7 +325,7 @@ subroutine plot_qinf(item,value,length)
 
  select case(item)
  case('VERSION','version')
-    value = 'giza-1.1'
+    value = 'giza-1.3'
  case('STATE','state')
     print*,' WARNING: query for STATE not yet implemented in giza'
  case('USER','user')
@@ -477,6 +477,17 @@ subroutine plot_pap(widthin,aspect,paperunits)
  call giza_set_paper_size(units,width,width*aspect)
 
 end subroutine plot_pap
+
+subroutine plot_line1(x1, y1, x2, y2)
+ real,intent(in) :: x1, y1, x2, y2
+ real :: xpts(2),ypts(2)
+
+ xpts = (/x1,x2/)
+ ypts = (/y1,y2/)
+
+ call plot_line(2,xpts,ypts)
+
+end subroutine plot_line1
 
 !
 !--this subroutine can be called  to

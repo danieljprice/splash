@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 module interactive_buttons
  implicit none
- integer, parameter :: maxbuttons = 12
+ integer, parameter :: maxbuttons = 10
  integer, parameter :: maxtypes = 6
  integer, parameter, public :: &
     ibutton_rectangle = 1, &
@@ -32,7 +32,8 @@ module interactive_buttons
     ibutton_backward  = 6, &
     ibutton_plus      = 7, &
     ibutton_minus     = 8, &
-    ibutton_erase     = 9
+    ibutton_adapt     = 9, &
+    ibutton_erase     = 10 ! erase must always be the last one
 
  type button
     real :: x(2),y(2)
@@ -40,10 +41,10 @@ module interactive_buttons
     character(len=64) :: help
  end type button
 
- integer, parameter, public  :: max_button_instant = 4
+ integer, parameter, public  :: max_button_instant = 5
 
  ! these are just temporarily set to some default values
- integer, parameter, private :: button_default = 5
+ integer, parameter, private :: button_default = 6
  integer, public :: button_pressed = button_default
  logical, private :: buttons_drawn = .false.
  integer, private :: nbuttons = 0
@@ -78,13 +79,15 @@ subroutine draw_buttons(onclick)
  ! instant-action buttons, change max_button_instant if you add more
  call draw_button(1,ibutton_backward,'previous timestep (keystroke ''b'')')    ! backward arrow
  call draw_button(2,ibutton_forward,'next timestep (space bar)')         ! forward arrow
- call draw_button(3,ibutton_plus,'zoom in (keystroke ''+'')')   ! plus
- call draw_button(4,ibutton_minus,'zoom out (keystroke ''-'')') ! minus
+ call draw_button(3,ibutton_plus,'zoom in (keystroke ''+'')')            ! plus
+ call draw_button(4,ibutton_minus,'zoom out (keystroke ''-'')')          ! minus
+ call draw_button(5,ibutton_adapt,'adapt plot limits (keystroke ''a'')') ! a
 
  ! deferred-action buttons
- call draw_button(5,ibutton_rectangle,'rectangle selection (left click)') ! rectangle selection
- call draw_button(6,ibutton_circle,'circular selection (right click)')     ! circle selection
- call draw_button(7,ibutton_text,'add text annotation (ctrl-t)')      ! text annotation
+ call draw_button(6,ibutton_rectangle,'rectangle selection (left click)') ! rectangle selection
+ call draw_button(7,ibutton_irregular,'irregular selection (shift + left click)') ! rectangle selection
+ call draw_button(8,ibutton_circle,'circular selection (right click)')     ! circle selection
+ call draw_button(9,ibutton_text,'add text annotation (ctrl-t)')      ! text annotation
  buttons_drawn = .true.
 
 end subroutine draw_buttons
@@ -112,7 +115,7 @@ end subroutine erase_buttons
 subroutine draw_button(i,itype,msg)
  use plotlib, only:plot_qwin,plot_qcs,plot_qfs,plot_sfs,plot_rect,plot_sls,&
                    plot_set_opacity,plot_set_clipping,plot_get_clipping,&
-                   plot_qls,plot_qch,plot_sch,plot_pt1,plot_text
+                   plot_qls,plot_qch,plot_sch,plot_pt1,plot_text,plot_line1,plot_poly
  use interactive_utils, only:get_posxy
  integer, intent(in) :: i,itype
  character(len=*), intent(in) :: msg
@@ -120,6 +123,8 @@ subroutine draw_button(i,itype,msg)
  real :: xleft_vp,ytop_vp,oldch,x0,y0,width
  real :: xleft,xright,ybottom,ytop,xch,ych,xsize,ysize,xbuf,ybuf
  integer :: oldfill,oldclip,oldls
+ integer, parameter :: npts = 14
+ real :: xpts(npts),ypts(npts)
 
  if (i > maxbuttons .or. i < 0) return
  nbuttons = i
@@ -205,6 +210,27 @@ subroutine draw_button(i,itype,msg)
     xbuf = 0.8*xch
     ybuf = 0.45*ych
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'-')
+ case(ibutton_adapt)
+    xbuf = 0.1*xch
+    ybuf = 0.1*ych
+!    call plot_sah(1,20.,1.0)
+!    call plot_sah(2,45.,0.7)
+   ! call plot_sah(2,45.0,0.7)
+    xsize = 5.5
+    call plot_sls(1)
+    call plot_line1(x0+xbuf,y0+ybuf,x0+xsize*xbuf,y0+xsize*ybuf)
+    call plot_line1(x0-xbuf,y0-ybuf,x0-xsize*xbuf,y0-xsize*ybuf)
+    call plot_line1(x0-xbuf,y0+ybuf,x0-xsize*xbuf,y0+xsize*ybuf)
+    call plot_line1(x0+xbuf,y0-ybuf,x0+xsize*xbuf,y0-xsize*ybuf)
+ case(ibutton_irregular)
+    call plot_sch(0.33)
+    xpts(:) = (/0.1258,0.1830,0.3393,0.5224,0.7149,0.8179,0.8279,&
+                0.8479,0.8370,0.8127,0.7187,0.4499,0.2631,0.1487/)
+    ypts(:) = (/0.5490,0.7558,0.7616,0.7888,0.7727,0.7462,0.6163,&
+                0.4769,0.4346,0.3383,0.2358,0.1834,0.1787,0.3446/)
+    xpts(:) = buttons(i)%x(1) + xpts(:)*(buttons(i)%x(2) - buttons(i)%x(1))
+    ypts(:) = buttons(i)%y(1) + ypts(:)*(buttons(i)%y(2) - buttons(i)%y(1))
+    call plot_poly(npts,xpts,ypts)
  end select
 
  ! restore settings
@@ -267,7 +293,7 @@ subroutine press_button(i)
 
  if (i > 0 .and. i <= nbuttons) button_pressed = i
  call erase_buttons()
- call draw_buttons()
+ call draw_buttons(onclick=.true.)
 
 end subroutine press_button
 

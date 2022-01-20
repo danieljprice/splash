@@ -735,7 +735,7 @@ subroutine add_shape_interactive(xpt,ypt,itransx,itransy,ipanel,ierr,shape_type)
  shape(i)%xlen = charheight
  shape(i)%ylen = 1.
  shape(i)%angle = 0.
- shape(i)%text = 'type in box to edit'
+ shape(i)%text = ''
  shape(i)%fjust = 0.
  if (itype==ishape_arrow) shape(i)%fjust = 0.5
  call edit_shape(i,xposi,yposi,itransx,itransy,first=.true.)
