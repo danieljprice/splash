@@ -88,6 +88,8 @@ module plotlib
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
       plot_rgb_from_table=>giza_rgb_from_table, &
+      plot_set_clipping=>giza_set_clipping, &
+      plot_get_clipping=>giza_get_clipping, &
       giza_contour,            &
       giza_get_character_size, &
       giza_get_surface_size,   &
