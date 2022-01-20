@@ -423,7 +423,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
-         particleplot.f90 interactive.f90  \
+         particleplot.f90 interactive_buttons.f90 interactive.f90  \
          convert_grid.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \

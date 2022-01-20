@@ -87,6 +87,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
+ use interactive_buttons, only:draw_buttons,press_button_if_inside,inbutton,button_type,&
+                               press_button,ibutton_plus,ibutton_minus,ibutton_rectangle,&
+                               ibutton_forward,ibutton_backward,ibutton_text,ibutton_circle
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -108,6 +111,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  integer, parameter :: maxpts = 64
  integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,itype,npts
  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew,itypesink
+ integer :: ibutton,new_button
  integer, dimension(1000) :: icircpart
  real :: xpt,ypt
  real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
@@ -173,6 +177,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     zptmin = -huge(zptmin)
     zptmax = huge(zptmax)
  endif
+ ibutton = 0
+ call draw_buttons(onclick=.true.)
 
  interactiveloop: do while (.not.iexit)
     if (print_help) then
@@ -246,6 +252,47 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           char = 'd'
        elseif (iplotz > 0 .and. rotation .and. ndim >= 3) then
           char = ']'
+       endif
+    case(plot_left_click)
+       if (ibutton > 0) then
+          new_button = inbutton(xpt,ypt)
+          if (new_button > 0 .and. (new_button /= ibutton)) then
+             ibutton = press_button_if_inside(xpt,ypt)
+             cycle
+          endif
+          ! button was pressed last click, so now take deferred action
+          select case(button_type(ibutton))
+          case(ibutton_text)    ! deferred action
+             char = achar(20)
+          case(ibutton_circle)  ! deferred action
+             char = plot_right_click
+          end select
+          ibutton = 0
+       else
+          ibutton = press_button_if_inside(xpt,ypt)
+          if (ibutton > 0) then
+             ! take instant action on these buttons
+             select case(button_type(ibutton))
+             case(ibutton_forward)
+                char = ' '
+                ibutton = 0
+             case(ibutton_backward)
+                char = 'b'
+                ibutton = 0
+             case(ibutton_plus)
+                char = '+'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_minus)
+                char = '_'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_text,ibutton_circle,ibutton_rectangle)
+                cycle ! does not match instant type, use deferred action
+             end select
+          endif
        endif
     end select
 
@@ -750,7 +797,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           iexit = .true.
        else
-          if (xpt >= xmin .and. xpt <= xmax .and. ypt <= ymaxin) then
+          if (xpt >= xmin .and. xpt <= xmax .and. ypt <= ymaxin .or. ibutton > 0) then
              xmin = xcen - 0.5*xlength
              xmax = xcen + 0.5*xlength
              call assert_sensible_limits(xmin,xmax)
@@ -759,7 +806,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              irerender = .true.
              iexit = .true.
           endif
-          if (ypt >= ymin .and. ypt <= ymax .and. xpt <= xmaxin) then
+          if (ypt >= ymin .and. ypt <= ymax .and. xpt <= xmaxin .or. ibutton > 0) then
              ymin = ycen - 0.5*ylength
              ymax = ycen + 0.5*ylength
              call assert_sensible_limits(ymin,ymax)
@@ -1324,6 +1371,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           iexit = .true.
        endif
+       call press_button()
     case(achar(8)) ! delete plot annotation / colour bar (backspace)
        ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty),xmin,xmax,ymin,ymax)
        if (ishape > 0) then
@@ -3024,12 +3072,14 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  use legends,         only:plot_box_around_text_xy
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
+ use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
+                               xleft_vp0,ytop_vp0,button_pressed,press_button,inbutton
  real(kind=c_double), intent(in) :: xpt,ypt
  integer(kind=c_int), intent(in) :: mode
  character(len=128) :: string
  character(len=20) :: strx,stry,strxy
  logical :: iamincolourbar,plot_xy,plot_help
- integer :: imessage
+ integer :: imessage,ibutton
  real :: xmin,xmax,ymin,ymax,xpti,ypti
  real :: xminvp,xmaxvp,yminvp,ymaxvp
  real, save :: tprev = -1.
@@ -3039,18 +3089,36 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  if (tprev < 0.) tprev = t
  xpti = xpt
  ypti = ypt
+ ibutton = 0
 
  ! save settings and query window
  call plot_qwin(xmin,xmax,ymin,ymax)
- call get_posxy(0.,0.,xminvp,yminvp,xmin,xmax,ymin,ymax)
- call get_posxy(1.,1.,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
+ call get_posxy(xleft_vp0,0.,xminvp,yminvp,xmin,xmax,ymin,ymax)
+ call get_posxy(1.,ytop_vp0,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
  plot_xy = .true.
  plot_help = .true.
+ if (.not.(mode==0 .or. mode==2 .or. mode==8)) call erase_buttons()
+ if (mode==0) then
+    call print_button_help(xpt,ypt,ibutton)
+ endif
+ if (ibutton > 0) return
+
+ ! restore default button press if not cursor is no longer hovering
+ ! over one of the instant-action buttons
+ if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpt,ypt) > 0)) then
+    call press_button()
+ endif
 
  ! print nothing if cursor is outside the viewport, so do not contaminate screenshots
  if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
     plot_xy = .false.
     plot_help = .false.
+    if (mode==0 .or. mode==2 .or. mode==8) call erase_buttons()
+ else
+ !
+ ! draw the button set if the mouse is moving
+ !
+    if (mode==0 .or. mode==2 .or. mode==8) call draw_buttons(onclick=.false.)
  endif
 
  ! plot x,y position as cursor moves
