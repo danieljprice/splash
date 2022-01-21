@@ -11,7 +11,7 @@ file as follows:
 
 ::
 
-   dprice/dustfrag> ssplash omuk162
+   dprice/dustfrag> splash omuk162
 
 after which we get output along the lines of:
 
@@ -379,12 +379,12 @@ the following:
    ../mbossbod_f7.5/mbos268
    ...
 
-Then invoke splash (ssplash for sphNG) with these filenames on the
+Then invoke splash with these filenames on the
 command line:
 
 ::
 
-   ssplash `cat filelistplot`
+   splash `cat filelistplot`
 
 after which the first dump file should be read, indicated by output
 along the lines of:
@@ -557,11 +557,11 @@ Surface rendering
 Here I will give an example of how to use the 3D surface rendering
 feature starting with a dump file kindly supplied by Giuseppe Lodato
 from an SPH simulation of a warped accretion disc. First we read the
-file (in sphNG format, so we use ssplash):
+file:
 
 ::
 
-   dprice$ ssplash warp001
+   dprice$ splash warp001
 
 after which we reach the main menu:
 
@@ -778,7 +778,7 @@ splash again with multiple files:
 
 ::
 
-   ssplash warp???
+   splash warp???
 
 then plotting the same plot as previously to a non-interactive device
 will cycle through all dump files producing a sequence of plots with

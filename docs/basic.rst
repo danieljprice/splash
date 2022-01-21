@@ -14,15 +14,15 @@ file(s) on the command line, e.g.
 
    splash myrun*.dat
 
-| where splash should be replaced with `ssplash`, `gsplash` etc.
+| where splash should be replaced with `splash -f gadget`, `splash -f magma` etc.
   depending on the data format.
 | After a successful data read, the menu should appear as something like
   the following (the example given is for a “minidump” from Stephan
-  Rosswog’s SPH code):
+  Rosswog’s SPH code, MAGMA):
 
 ::
 
-   dprice$ rsplash minidump.00001
+   dprice$ splash -magma minidump.00001
 
 ::
 
