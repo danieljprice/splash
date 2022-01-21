@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     4.0.0   : (21/01/22)
+!             user-friendly interactive mode;
+!             interactive buttons now appear in the plotting window;
+!             cursor movement generates context-dependent help;
+!             cube viz: slice through data using scroll wheel on your mouse
 !     3.3.4   : (21/01/22)
 !             improved visual appearance of normalised renderings with free boundaries;
 !             automatically read planet-wake parameters from phantom file headers;
@@ -515,7 +520,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.4 [21st Jan 2022]'
+ character(len=*), parameter :: version = 'v4.0.0 [21st Jan 2022]'
 
  !
  ! initialise some basic code variables
@@ -991,7 +996,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2022 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
