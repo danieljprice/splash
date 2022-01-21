@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2021 Daniel Price
+!     Copyright (C) 2005-2022 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,10 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.3.4   : (xx/12/21)
+!     3.3.4   : (21/01/22)
 !             improved visual appearance of normalised renderings with free boundaries;
 !             automatically read planet-wake parameters from phantom file headers;
-!             added --wake=1,3 flag to plot wake from sink particle 3 around star 1
+!             added --wake=1,3 flag to plot wake from sink particle 3 around star 1;
+!             bug fix with disappearing sinks in phantom MPI dumps; fixed seg fault in fits reader
 !     3.3.3   : (19/11/21)
 !             "splash to csv" exports to comma separated variable (.csv) format;
 !             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
@@ -514,7 +515,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.4 [6th Dec 2021]'
+ character(len=*), parameter :: version = 'v3.3.4 [21st Jan 2022]'
 
  !
  ! initialise some basic code variables
