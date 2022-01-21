@@ -146,8 +146,8 @@ subroutine draw_button(i,itype,msg)
  call plot_set_clipping(0)
  call plot_qwin(xmin,xmax,ymin,ymax)
  call plot_qcs(0,xch,ych)
- xsize = 2.0*xch
- ysize = 1.5*ych
+ xsize = 1.5*xch
+ ysize = 1.125*ych
  xbuf = 0.075*xch
  ybuf = 0.075*ych
  if (itype==ibutton_erase) then
@@ -178,6 +178,8 @@ subroutine draw_button(i,itype,msg)
  else
     call plot_rect(buttons(i)%x(1),buttons(i)%x(2),buttons(i)%y(1),buttons(i)%y(2),0.2*ych)
  endif
+ xsize = xright-xleft
+ ysize = ytop-ybottom
  x0 = 0.5*(xleft + xright)
  y0 = 0.5*(ybottom + ytop)
 
@@ -197,21 +199,21 @@ subroutine draw_button(i,itype,msg)
  case(ibutton_circle)
     call plot_pt1(x0,y0,23)
  case(ibutton_text)
-    xbuf = 0.6*xch
-    ybuf = 0.33*ych
+    xbuf = 0.25*xsize
+    ybuf = 0.15*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'T')
  case(ibutton_plus)
-    xbuf = 0.6*xch
-    ybuf = 0.45*ych
+    xbuf = 0.3*xsize
+    ybuf = 0.3*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'+')
  case(ibutton_minus)
-    xbuf = 0.8*xch
-    ybuf = 0.45*ych
+    xbuf = 0.4*xsize
+    ybuf = 0.3*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'-')
  case(ibutton_adapt)
-    xbuf = 0.1*xch
-    ybuf = 0.1*ych
-    xsize = 5.5
+    xbuf = 0.1*xsize
+    ybuf = 0.1*ysize
+    xsize = 4.
     call plot_sls(1)
     call plot_line1(x0+xbuf,y0+ybuf,x0+xsize*xbuf,y0+xsize*ybuf)
     call plot_line1(x0-xbuf,y0-ybuf,x0-xsize*xbuf,y0-xsize*ybuf)
