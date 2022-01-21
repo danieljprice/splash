@@ -44,6 +44,7 @@ module plotlib
       plot_close=>giza_close, &
       plot_curs=>giza_get_key_press, &
       plot_set_motion_callback=>giza_set_motion_callback, &
+      plot_end_motion_callback=>giza_end_motion_callback, &
       plot_ebuf=>giza_end_buffer, &
       plot_end=>giza_close_device, &
       plot_env=>giza_set_environment, &
