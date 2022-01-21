@@ -103,7 +103,6 @@ subroutine erase_buttons()
  call plot_sci(0)
  call draw_button(nbuttons,ibutton_erase,'')
  call plot_sci(1)
- !button_pressed = 0
  buttons_drawn = .false.
  nbuttons = 0
 
@@ -174,7 +173,6 @@ subroutine draw_button(i,itype,msg)
  buttons(i)%y(2) = ytop
  buttons(i)%type = itype
  buttons(i)%help = trim(msg)
- !print*,'button ',i,buttons(i)%x,buttons(i)%y
  if (itype==ibutton_erase) then
     call plot_rect(buttons(i)%x(1),buttons(i)%x(2),buttons(i)%y(1),buttons(i)%y(2))
  else
@@ -213,9 +211,6 @@ subroutine draw_button(i,itype,msg)
  case(ibutton_adapt)
     xbuf = 0.1*xch
     ybuf = 0.1*ych
-!    call plot_sah(1,20.,1.0)
-!    call plot_sah(2,45.,0.7)
-   ! call plot_sah(2,45.0,0.7)
     xsize = 5.5
     call plot_sls(1)
     call plot_line1(x0+xbuf,y0+ybuf,x0+xsize*xbuf,y0+xsize*ybuf)
@@ -302,6 +297,10 @@ end subroutine press_button
 !---------------------------------------------
 subroutine press_button_default()
 
+ ! do this in case buttons are not drawn
+ button_pressed = button_default
+
+ ! should have same effect, but nbuttons=0 if buttons not drawn
  call press_button(button_default)
 
 end subroutine press_button_default

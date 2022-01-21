@@ -3083,12 +3083,13 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
  use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
-                               xleft_vp0,ytop_vp0,button_pressed,press_button,inbutton
+                               xleft_vp0,ytop_vp0,button_pressed,press_button,inbutton,&
+                               button_type,ibutton_irregular
  real(kind=c_double), intent(in) :: xpt,ypt
  integer(kind=c_int), intent(in) :: mode
  character(len=128) :: string
  character(len=20) :: strx,stry,strxy
- logical :: iamincolourbar,plot_xy,plot_help
+ logical :: iamincolourbar,plot_xy,plot_help,show_buttons
  integer :: imessage,ibutton
  real :: xmin,xmax,ymin,ymax,xpti,ypti
  real :: xminvp,xmaxvp,yminvp,ymaxvp
@@ -3107,7 +3108,12 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  call get_posxy(1.,ytop_vp0,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
  plot_xy = .true.
  plot_help = .true.
- if (.not.(mode==0 .or. mode==2 .or. mode==8)) call erase_buttons()
+
+ ! whether or not to show buttons (hide if not in default mode)
+ show_buttons = (mode==0 .or. mode==2 .or. mode==8) &
+           .or. (mode==1 .and. button_type(button_pressed)==ibutton_irregular)
+
+ if (.not.show_buttons) call erase_buttons()
  if (mode==0) then
     call print_button_help(xpt,ypt,ibutton)
  endif
@@ -3123,12 +3129,12 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
  if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
     plot_xy = .false.
     plot_help = .false.
-    if (mode==0 .or. mode==2 .or. mode==8) call erase_buttons()
+    if (show_buttons) call erase_buttons()
  else
  !
  ! draw the button set if the mouse is moving
  !
-    if (mode==0 .or. mode==2 .or. mode==8) call draw_buttons(onclick=.false.)
+    if (show_buttons) call draw_buttons(onclick=.false.)
  endif
 
  ! plot x,y position as cursor moves
@@ -3151,7 +3157,11 @@ subroutine handle_cursor_motion(xpt,ypt,mode)
     string = 'zoom; 0=hide; 1-9=colours; p=select; c=circles; '//&
              'x/y=restrict x/y; r=restrict x & y; R=reset; q=quit'
  case(1) ! line drawing
-    string = 'click to draw line'
+    if (button_type(button_pressed)==ibutton_irregular) then
+       string='left click/a)dd points; middle click/d)elete points; q)uit/abort; 0=hide; 1-9=colours; p=select'
+    else
+       string = 'click to draw line'
+    endif
  case(0) ! no band mode, just a free cursor
     if (iamincolourbar) then ! cursor is inside the colour bar
        select case(imessage)
