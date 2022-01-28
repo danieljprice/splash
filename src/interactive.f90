@@ -3075,7 +3075,7 @@ end subroutine unset_movie_mode
 !
 !--callback function to handle cursor movement
 !
-subroutine handle_cursor_motion(xpt,ypt,mode)
+subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  use iso_c_binding,   only:c_double,c_int
  use plotlib,         only:plot_qwin
  use settings_render, only:iColourBarStyle
