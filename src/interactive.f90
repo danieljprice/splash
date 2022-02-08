@@ -179,7 +179,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     zptmax = huge(zptmax)
  endif
  ibutton = 0
- call draw_buttons(onclick=.true.)
+ !call draw_buttons(onclick=.true.)
 
  interactiveloop: do while (.not.iexit)
     if (print_help) then
@@ -3129,12 +3129,12 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
     plot_xy = .false.
     plot_help = .false.
-    if (show_buttons) call erase_buttons()
+    !if (show_buttons) call erase_buttons()
  else
  !
  ! draw the button set if the mouse is moving
  !
-    if (show_buttons) call draw_buttons(onclick=.false.)
+    !if (show_buttons) call draw_buttons(onclick=.false.)
  endif
 
  ! plot x,y position as cursor moves
