@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.3.5   : (01/03/22)
+!             bug fix with disappearing sinks in phantom MPI dumps
 !     3.3.4   : (21/01/22)
 !             improved visual appearance of normalised renderings with free boundaries;
 !             automatically read planet-wake parameters from phantom file headers;
@@ -515,7 +517,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.4 [21st Jan 2022]'
+ character(len=*), parameter :: version = 'v3.3.5 [1st March 2022]'
 
  !
  ! initialise some basic code variables

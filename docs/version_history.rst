@@ -1,4 +1,8 @@
 
+**3.3.5: (01/03/22)**
+
+- bug fix with disappearing sinks in phantom MPI dumps
+
 **3.3.4: (21/01/22)**
 
 - improved visual appearance of normalised renderings with free boundaries
