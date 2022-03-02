@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.4.0   : (02/03/22)
+!             added flags --codeunits or --code to enforce code units from command line
 !     3.3.5   : (01/03/22)
 !             bug fix with disappearing sinks in phantom MPI dumps
 !     3.3.4   : (21/01/22)
@@ -491,7 +493,8 @@ program splash
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,itrackoffset,itracktype
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
+                              itrackoffset,itracktype,iRescale,enforce_code_units
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -517,7 +520,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.5 [1st March 2022]'
+ character(len=*), parameter :: version = 'v3.4.0 [2nd March 2022]'
 
  !
  ! initialise some basic code variables
@@ -789,6 +792,10 @@ program splash
     iexact = 17
     ispiral = 1
  endif
+ if (get_command_flag('codeunits') .or. get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
+ endif
  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
  yminpagemargin = renvironment('SPLASH_MARGIN_YMIN',errval=0.)
@@ -993,7 +1000,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2022 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
