@@ -1415,7 +1415,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
  real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
- logical :: skip_corrupted_block_3,get_temperature,get_ionfrac
+ logical :: skip_corrupted_block_3,get_temperature,get_ionfrac,need_to_allocate_iphase
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1760,13 +1760,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        enddo
     endif
 
+    need_to_allocate_iphase = (npart_max > maxpart)
     if (npart_max > maxpart .or. j > maxstep .or. ncolumns > maxcol) then
        if (lowmemorymode) then
           call alloc(max(npart_max+2,maxpart),j,ilastrequired)
        else
           call alloc(max(npart_max+2,maxpart),j,ncolumns,mixedtypes=.true.)
        endif
-       call allocate_iphase(iphase,max(npart_max+2,maxpart),phantomdump,gotbinary)
     endif
 !
 !--now that memory has been allocated, copy info from the header into
@@ -1791,6 +1791,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        !
        if (ilastrequired==0) exit over_MPIblocks
     endif
+!
+!--allocate memory for iphase array now that gotbinary is known
+!
+    if (need_to_allocate_iphase) call allocate_iphase(iphase,max(npart_max+2,maxpart),phantomdump,gotbinary)
 !
 !--Arrays
 !
