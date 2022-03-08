@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -89,7 +89,6 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
     endif
  endif
 
- return
 end subroutine set_limits
 
 !----------------------------------------------------------
@@ -139,7 +138,6 @@ subroutine write_limits(limitsfile)
 999 continue
  print*,'*** error saving limits'
  close(unit=55)
- return
 
 end subroutine write_limits
 
@@ -211,7 +209,6 @@ subroutine read_limits(limitsfile,ierr)
  call print_rangeinfo()
  call print_lim2info()
  close(unit=54)
- return
 
 end subroutine read_limits
 
@@ -253,7 +250,6 @@ subroutine get_particle_subset(icolours,datstep,ncolumns)
     enddo
  endif
 
- return
 end subroutine get_particle_subset
 
 !----------------------------------------------------------
@@ -270,7 +266,6 @@ subroutine reset_all_ranges()
  endwhere
  range(:,:) = 0.
 
- return
 end subroutine reset_all_ranges
 
 !----------------------------------------------------------
@@ -283,7 +278,6 @@ logical function rangeset(icol)
  rangeset = .false.
  if (abs(range(icol,2)-range(icol,1)) > tiny(range)) rangeset = .true.
 
- return
 end function rangeset
 
 !----------------------------------------------------------
@@ -296,7 +290,6 @@ logical function lim2set(icol)
  lim2set = .false.
  if (abs(lim2(icol,2)) > tiny(lim2) .or. abs(lim2(icol,1)) > tiny(lim2)) lim2set = .true.
 
- return
 end function lim2set
 
 !----------------------------------------------------------
@@ -308,9 +301,7 @@ subroutine reset_lim2(icol)
  print "(a)",' contour limits same as render limits'
  if (icol > 0 .and. icol <= maxplot) lim2(icol,:) = 0
 
- return
 end subroutine reset_lim2
-
 
 !----------------------------------------------------------
 ! function which returns whether or not a range
@@ -325,7 +316,6 @@ logical function anyrangeset()
     if (rangeset(i)) anyrangeset = .true.
  enddo
 
- return
 end function anyrangeset
 
 !----------------------------------------------------------
@@ -385,7 +375,6 @@ subroutine warn_minmax(labelx,xmin,xmax,first)
     print "(a,a20,a,1pe9.2)",'  warning: ',labelx,' min = max = ',xmin
  endif
 
- return
 end subroutine warn_minmax
 
 !----------------------------------------------------------
@@ -407,7 +396,6 @@ subroutine assert_range(x,min,max)
  if (x > xmax) x = xmax
  if (x /= x) x = 0.
 
- return
 end subroutine assert_range
 
 !----------------------------------------------------------
@@ -416,18 +404,10 @@ end subroutine assert_range
 !----------------------------------------------------------
 subroutine assert_sensible_limits(xmin,xmax)
  real, intent(inout) :: xmin,xmax
- real :: xtmp
 
  call assert_range(xmin)
  call assert_range(xmax)
 
-! if (xmax < xmin) then
-!    xtmp = xmin
-!    xmin = xmax
-!    xmax = xtmp
-! endif
-
- return
 end subroutine assert_sensible_limits
 
 !----------------------------------------------------------
@@ -447,7 +427,6 @@ subroutine fix_equal_limits(xmin,xmax)
     endif
  endif
 
- return
 end subroutine fix_equal_limits
 
 !----------------------------------------------------------

@@ -353,7 +353,7 @@ end subroutine get_labels
 subroutine rescale_data(firsttime,nsteps_read)
  use filenames,      only:unitsfile
  use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default
- use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode
+ use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
  use settings_units, only:units,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
  use params,         only:maxplot
@@ -371,7 +371,7 @@ subroutine rescale_data(firsttime,nsteps_read)
     unitslabel = unitslabel_default
     unitzintegration = unitzintegration_default
     labelzintegration = labelzintegration_default
-    if (.not.idefaults_file_read) iRescale = .true.
+    if (.not.idefaults_file_read .and. .not.enforce_code_units) iRescale = .true.
  endif
 
  !

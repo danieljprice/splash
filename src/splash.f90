@@ -56,6 +56,12 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.4.0   : (04/03/22)
+!             density weighted interpolation now applied automatically to projection
+!             plots of quantities that are not densities;
+!             added flags --codeunits or --code to enforce code units from command line
+!     3.3.5   : (01/03/22)
+!             bug fix with disappearing sinks in phantom MPI dumps
 !     3.3.4   : (21/01/22)
 !             improved visual appearance of normalised renderings with free boundaries;
 !             automatically read planet-wake parameters from phantom file headers;
@@ -494,7 +500,8 @@ program splash
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,itrackoffset,itracktype
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
+                              itrackoffset,itracktype,iRescale,enforce_code_units
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -520,7 +527,11 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
+<<<<<<< HEAD
  character(len=*), parameter :: version = 'v4.0.0 [21st Jan 2022]'
+=======
+ character(len=*), parameter :: version = 'v3.4.0 [4th March 2022]'
+>>>>>>> master
 
  !
  ! initialise some basic code variables
@@ -792,6 +803,10 @@ program splash
     iexact = 17
     ispiral = 1
  endif
+ if (get_command_flag('codeunits') .or. get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
+ endif
  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
  yminpagemargin = renvironment('SPLASH_MARGIN_YMIN',errval=0.)
@@ -1040,6 +1055,7 @@ subroutine print_usage(quit)
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
+ print "(a)",' --codeunits       : enforce code units (also --code)'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

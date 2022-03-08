@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -61,6 +61,7 @@ subroutine defaults_set_data
  iCalcQuantities = .false.
  DataIsBuffered = .false.
  iRescale = .false.
+ enforce_code_units = .false.
  idefaults_file_read = .false.
  ivegotdata = .false.
  ntypes = 1

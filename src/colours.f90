@@ -54,7 +54,7 @@ module colours
       'blue-red         ', &
       'menacing         ', &
       'rt               ', &
-      'Dolag I          ', &
+      'Smallwood        ', &
       'Dolag II         ', &
       'Dolag III        ', &
       'Alice WBYR       ', &
@@ -356,14 +356,13 @@ subroutine colour_set(icolourscheme)
        greenarr(1:nset)= (/0.000,0.000,0.478,0.980,1.000,1.000/)
        bluearr(1:nset) = (/0.000,0.000,0.000,0.588,0.608,0.737/)
     case(26)
-!     !--these are Klaus Dolag colour schemes
-       nset = 3
-       !--blue-green-red ("highlight")
-       lumarr(1:nset) =   (/0.0,0.5,1.0/)
-       redarr(1:nset) =   (/0.0,0.5,1.0/)
-       greenarr(1:nset) = (/0.0,1.0,0.0/)
-       bluearr(1:nset) =  (/1.0,0.5,0.0/)
+       nset = 10
+       lumarr(1:nset)  = (/0.00,0.25,0.44,0.62,0.86,0.91,0.96,0.98,1.00,1.00/)
+       redarr(1:nset)  = (/1.00,0.90,0.82,0.73,0.44,0.33,0.24,0.16,0.09,0.00/)
+       greenarr(1:nset)= (/1.00,0.90,0.71,0.46,0.27,0.21,0.15,0.11,0.06,0.00/)
+       bluearr(1:nset) = (/1.00,0.68,0.57,0.46,0.27,0.21,0.15,0.11,0.06,0.00/)
     case(27)
+!     !--these are Klaus Dolag colour schemes
        nset = 3
        !--red-greeny-blue
        lumarr(1:nset) =   (/0.0,0.5,1.0/)
