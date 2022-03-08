@@ -527,11 +527,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
-<<<<<<< HEAD
- character(len=*), parameter :: version = 'v4.0.0 [21st Jan 2022]'
-=======
- character(len=*), parameter :: version = 'v3.4.0 [4th March 2022]'
->>>>>>> master
+ character(len=*), parameter :: version = 'v4.0.0 [4th March 2022]'
 
  !
  ! initialise some basic code variables
