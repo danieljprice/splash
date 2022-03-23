@@ -994,7 +994,8 @@ subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
  if (all(isinklist==0)) isinklist = (/1,2/)
 
  itype = get_sink_type(ntypes)
- got_sinks = all(isinklist > 0) .and. (npartoftype(itype,j) > 0)
+ got_sinks = .false.
+ if (itype > 0) got_sinks = all(isinklist > 0) .and. (npartoftype(itype,j) > 0)
  if (got_sinks .and. all(ix > 0)) then
     call locate_nth_particle_of_type(isinklist(1),isink1,itype,iamtype(:,j),npartoftype(:,j),ntot)
     call locate_nth_particle_of_type(isinklist(2),isink2,itype,iamtype(:,j),npartoftype(:,j),ntot)
