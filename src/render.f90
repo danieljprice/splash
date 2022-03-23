@@ -179,7 +179,7 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 
        do i=1,nc
           if (ifixed_contours) then
-             string=adjustl(contourtitles(i))
+             string=trim(adjustl(contourtitles(i)))
           else
              call formatreal(levels(i),string)
           endif
@@ -193,8 +193,6 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 !    call pgmtxt('T',-2.0,0.05,0.0,trim(label))
 
  endif
-
- return
 
 end subroutine render_pix
 
