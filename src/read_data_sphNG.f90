@@ -1760,7 +1760,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        enddo
     endif
 
-    need_to_allocate_iphase = (npart_max > maxpart)
+    need_to_allocate_iphase = (npart_max > maxpart) .or. .not.allocated(iphase)
     if (npart_max > maxpart .or. j > maxstep .or. ncolumns > maxcol) then
        if (lowmemorymode) then
           call alloc(max(npart_max+2,maxpart),j,ilastrequired)

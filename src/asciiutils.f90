@@ -41,7 +41,7 @@ module asciiutils
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: count_non_blank,find_repeated_tags,count_char
- public :: get_extensions
+ public :: get_extensions,readline_csv
 
  private
 
@@ -381,13 +381,14 @@ end subroutine read_asciifile_real_string
 ! file must already be open and at the start
 ! slightly ad-hoc but its the best way I could think of!
 !---------------------------------------------------------------------------
-subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
+subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  integer, intent(in) :: lunit
  integer, intent(out) :: ncolumns,nheaderlines
  integer, intent(in), optional :: maxheaderlines
- integer :: ierr,ncolprev,ncolsthisline,maxlines
+ logical, intent(in), optional :: csv
+ integer :: ierr,ncolprev,ncolsthisline,maxlines,ncolstot
  character(len=5000) :: line
- logical :: nansinfile,infsinfile
+ logical :: nansinfile,infsinfile,is_csv
 
  if (present(maxheaderlines)) then
     maxlines = maxheaderlines
@@ -400,8 +401,11 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  ncolumns = 0
  ncolprev = -100
  ncolsthisline = 0
+ ncolstot = 0
  nansinfile = .false.
  infsinfile = .false.
+ is_csv = .false.
+ if (present(csv)) is_csv = csv
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
@@ -414,7 +418,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
     if (len_trim(line)==0) then
        ncolsthisline = -1
     else
-       if (ierr==0) ncolsthisline = ncolumnsline(line)
+       if (ierr==0) ncolsthisline = ncolumnsline(line,csv=is_csv,ntot=ncolstot)
        ncolumns = ncolsthisline
     endif
     nheaderlines = nheaderlines + 1
@@ -422,6 +426,8 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
+ if (is_csv) ncolumns = ncolstot
+
  if (ierr  > 0 .or. ncolumns <= 0) then
     ncolumns = 0
  elseif (ierr  <  0) then
@@ -461,10 +467,24 @@ end subroutine get_nrows
 ! function returning the number of columns of real numbers from a given line
 !
 !---------------------------------------------------------------------------
-integer function ncolumnsline(line)
- character(len=*), intent(in) :: line
+integer function ncolumnsline(line,csv,ntot)
+ character(len=*), intent(in)   :: line
+ logical, intent(in),  optional :: csv
+ integer, intent(out), optional :: ntot
  real :: dummyreal(1000)
  integer :: ierr,i
+ logical :: use_commas
+
+ use_commas= .false.
+ if (present(csv)) use_commas = csv
+ if (use_commas) then
+    if (present(ntot)) then
+       ncolumnsline = ncolumnsline_csv(line,ntot)
+    else
+       ncolumnsline = ncolumnsline_csv(line)
+    endif
+    return
+ endif
 
  dummyreal = -666666.0
 
@@ -484,6 +504,67 @@ integer function ncolumnsline(line)
  enddo
 
 end function ncolumnsline
+
+!---------------------------------------------------------------------------
+!
+! function returning the number of columns of real numbers from a given line
+!
+!---------------------------------------------------------------------------
+integer function ncolumnsline_csv(line,ntot) result(ncols)
+ character(len=*), intent(in) :: line
+ integer, parameter :: lenf = 15
+ character(len=lenf) :: fields(len(line)/lenf)
+ integer, intent(out), optional :: ntot
+ integer :: i,ierr,nfields
+ real :: dum
+
+ ! split line by commas
+ call split(line,',',fields,nfields)
+
+ ! report how many columns contain real numbers
+ ! or blank (non-text) entries
+ ncols = 0
+ do i=1,nfields
+    if (len_trim(fields(i))==0) then
+       ncols = ncols + 1
+    else
+       dum = -666666.
+       read(fields(i),*,iostat=ierr) dum
+       if (ierr==0) then
+          ncols = ncols + 1
+       endif
+    endif
+ enddo
+
+ if (present(ntot)) ntot = nfields
+
+end function ncolumnsline_csv
+
+!---------------------------------------------------------------------------
+!
+! read a line from a csv file and parse for real numbers
+!
+!---------------------------------------------------------------------------
+subroutine readline_csv(line,ncols,datcol)
+ character(len=*), intent(in) :: line
+ integer, intent(in)  :: ncols
+ real,    intent(out) :: datcol(ncols)
+ integer, parameter :: lenf = 15
+ character(len=lenf) :: fields(ncols)
+ !logical, intent(in)  :: mask(ncols)
+ integer :: nfields,i,icol,ierr
+
+ ! split line by commas
+ call split(line,',',fields,nfields)
+
+ ! read only columns that contain real numbers
+ icol = 0
+ do i=1,min(nfields,ncols)
+    icol = icol + 1
+    read(fields(i),*,iostat=ierr) datcol(icol)
+ enddo
+
+end subroutine readline_csv
 
 !----------------------------------------------------------------------
 !
@@ -843,14 +924,17 @@ end function enumerate
 pure subroutine split(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: string
  character(len=*), intent(in)  :: delim
- character(len=*), intent(out), dimension(:) :: stringarr
+ character(len=*), intent(out), dimension(:), optional :: stringarr
  integer,          intent(out) :: nsplit
- integer :: i,j,imax,iend
+ integer :: i,j,imax,iend,nmax
 
  i = 1
  nsplit = 0
  imax = len(string)
- do while(nsplit < size(stringarr) .and. i <= imax)
+ nmax = imax
+ if (present(stringarr)) nmax = size(stringarr)
+
+ do while(nsplit < nmax .and. i <= imax)
     ! find next non-blank character
     if (string(i:i)==' ') then
        do while (string(i:i)==' ')
@@ -868,7 +952,7 @@ pure subroutine split(string,delim,stringarr,nsplit)
     iend = min(i+j-1,imax)
     ! extract the substring
     nsplit = nsplit + 1
-    if (nsplit <= size(stringarr)) then
+    if (nsplit <= nmax .and. present(stringarr)) then
        stringarr(nsplit) = string(i:iend)
     endif
     i = iend + len(delim) + 1

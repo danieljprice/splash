@@ -1,4 +1,10 @@
 
+**3.4.0: (24/03/22)**
+
+- density weighted interpolation now applied automatically to projection plots of quantities that are not densities
+- added flags --codeunits or --code to enforce code units from command line
+- successfully parse csv files where some of the fields are character strings
+
 **3.3.5: (01/03/22)**
 
 - bug fix with disappearing sinks in phantom MPI dumps
