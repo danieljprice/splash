@@ -51,10 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.4.0   : (04/03/22)
+!     3.4.0   : (24/03/22)
 !             density weighted interpolation now applied automatically to projection
 !             plots of quantities that are not densities;
-!             added flags --codeunits or --code to enforce code units from command line
+!             added flags --codeunits or --code to enforce code units from command line;
+!             successfully parse csv files where some of the fields are character strings
 !     3.3.5   : (01/03/22)
 !             bug fix with disappearing sinks in phantom MPI dumps
 !     3.3.4   : (21/01/22)
@@ -522,7 +523,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.4.0 [4th March 2022]'
+ character(len=*), parameter :: version = 'v3.4.0 [24th March 2022]'
 
  !
  ! initialise some basic code variables
