@@ -84,17 +84,18 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  use params
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
  use mem_allocation, only:alloc
- use asciiutils,     only:get_ncolumns,get_column_labels,isdigit
+ use asciiutils,     only:get_ncolumns,get_column_labels,isdigit,readline_csv
  use system_utils,   only:ienvironment,renvironment
  use asciiread,      only:icoltype,label_orig
  use labels,         only:lenlabel,labeltype,print_types,label
+ use, intrinsic :: ieee_arithmetic
  integer, intent(in)          :: indexstart,ipos
  integer, intent(out)         :: nstepsread
  character(len=*), intent(in) :: rootname
  integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
  integer :: nprint,npart_max,nstep_max,nheaderlines,nheaderenv,itype,nlabels
  integer :: noftype(maxparttypes),iverbose_was,imethod
- logical :: iexist,timeset,gammaset,got_labels
+ logical :: iexist,timeset,gammaset,got_labels,csv
  real    :: dummyreal
  real, allocatable :: dattemp(:)
  character(len=len(rootname)+4) :: dumpfile
@@ -131,6 +132,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  icoltype = 0       ! no particle type defined by default
  got_labels = .false.
  label_orig = ''
+ csv = index(dumpfile,'.csv') > 0  ! if filename contains .csv
  !
  !--open the file and read the number of particles
  !
@@ -139,7 +141,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
     return
  else
-    call get_ncolumns(iunit,ncolstep,nheaderlines)
+    call get_ncolumns(iunit,ncolstep,nheaderlines,csv=csv)
     !--override header lines setting
     nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
     if (nheaderenv >= 0) then
@@ -283,7 +285,15 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        npart_max = 10*npart_max
        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
     endif
-    read(iunit,*,iostat=ierr) dattemp(1:ncolstep)
+    dattemp(1:ncolstep) = ieee_value(1., ieee_quiet_nan)  ! NaN if not read
+    if (csv) then
+       read(iunit,"(a)",iostat=ierr) line
+       call readline_csv(line,ncolstep,dattemp)
+    else
+       read(iunit,*,iostat=ierr) dattemp(1:ncolstep)
+    endif
+    !print*,ncolstep,nheaderlines,'line ',i,' got',dattemp(1:10)
+    !read*
     dat(i,1:ncolstep,j) = dattemp(1:ncolstep)
     if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0 .and. (size(iamtype(:,j)) > 1)) then
        !--set particle type from type column
