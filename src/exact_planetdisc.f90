@@ -65,7 +65,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
  case(2)
     print "(a,i2)",' Spiral arm fitting formula r = sum(a_i*phi^i,i=1,4) narms =',narms
  case default
-    print "(a,f6.2,a,f8.1,a)",' Planet-disc interaction: H/R=',HonR,' at ',time/(2.*pi),' orbits)'
+    print "(a,f6.2,a,f8.1,a)",' Planet-disc interaction: H/R=',HonR,' q = ',q
     use_ogilvie = (abs(q - 0.5) < epsilon(q))
     if (use_ogilvie) then
        print "(a)",' Using Ogilvie & Lubow (2002) exact solution'

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2021 Daniel Price
+!     Copyright (C) 2005-2022 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,6 +51,24 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.4.0   : (04/03/22)
+!             density weighted interpolation now applied automatically to projection
+!             plots of quantities that are not densities;
+!             added flags --codeunits or --code to enforce code units from command line
+!     3.3.5   : (01/03/22)
+!             bug fix with disappearing sinks in phantom MPI dumps
+!     3.3.4   : (21/01/22)
+!             improved visual appearance of normalised renderings with free boundaries;
+!             automatically read planet-wake parameters from phantom file headers;
+!             added --wake=1,3 flag to plot wake from sink particle 3 around star 1;
+!             bug fix with disappearing sinks in phantom MPI dumps; fixed seg fault in fits reader
+!     3.3.3   : (19/11/21)
+!             "splash to csv" exports to comma separated variable (.csv) format;
+!             automatically apply -ev flag for filenames ending in .ev, .mdot or .out;
+!             improved label recognition from ascii file headers;
+!             additional divergent colour schemes (thanks to Sahl Rowther);
+!             deal with merged sink particles from phantom (thanks to James Wurster);
+!             bug fix with units resetting to 1; skip blank and comment lines in splash.filenames
 !     3.3.2   : (20/07/21)
 !             bug fix with -dev flag; silenced unnecessary dust warnings in sphNG read;
 !             change-of-limits animation sequence works for vector plots;
@@ -476,8 +494,9 @@ program splash
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
- use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,&
-                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender
+ use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
+                              ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
+                              itrackoffset,itracktype,iRescale,enforce_code_units
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -493,15 +512,17 @@ program splash
  use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
                               irotate,anglex,angley,anglez
+ use settings_limits,    only:get_itrackpart
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
+ use exact,              only:ispiral
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.3.2 [20th July 2021]'
+ character(len=*), parameter :: version = 'v3.4.0 [4th March 2022]'
 
  !
  ! initialise some basic code variables
@@ -697,6 +718,17 @@ program splash
  enddo
 
  !
+ ! select -ev mode automatically if filename ends in .ev, .mdot or .out
+ !
+ if (nfiles > 0 .and. &
+    (index(rootname(1),'.ev') > 0  .or. &
+     index(rootname(1),'.mdot') > 0  .or. &
+     index(rootname(1),'.out') > 0)) then
+    evsplash = .true.
+    fileprefix = 'evsplash'
+    call set_filenames(trim(fileprefix))
+ endif
+ !
  ! print header
  !
  call print_header
@@ -753,6 +785,18 @@ program splash
  if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
     anglez = get_command_option('anglez',default=anglez)
     irotate = .true.
+ endif
+ if (get_command_flag('track')) then  ! e.g. --track=508264
+    call get_environment_or_flag('SPLASH_TRACK',string)
+    call get_itrackpart(string,itracktype,itrackoffset,ierr)
+ endif
+ if (get_command_flag('wake')) then
+    iexact = 17
+    ispiral = 1
+ endif
+ if (get_command_flag('codeunits') .or. get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
  endif
  xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
  xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
@@ -958,12 +1002,11 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2021 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2022 )'
  print 30
 30 format(/,    &
-   ' * SPLASH comes with ABSOLUTELY NO WARRANTY.',/, &
-   '   This is free software; and you are welcome to redistribute it ',/, &
-   '   under certain conditions (see LICENCE file for details). *',/,/, &
+   ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
+   '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
    ' http://users.monash.edu.au/~dprice/splash ',/, &
    ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
    ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
@@ -1003,6 +1046,7 @@ subroutine print_usage(quit)
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
+ print "(a)",' --codeunits       : enforce code units (also --code)'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

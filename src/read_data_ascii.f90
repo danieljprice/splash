@@ -165,7 +165,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        do i=1,nheaderlines
           read(iunit,"(a)",iostat=ierr) line
           !--try to match column labels from this header line, if not already matched (or dubious match)
-          call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
+          call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=ncolstep)
           !--if we get nlabels > ncolumns, use them, but keep trying for a better match
           if ((got_labels .and. nlabels == ncolstep) .or. &
               (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols

@@ -53,7 +53,7 @@ end subroutine defaults_set_limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use settings_data,  only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
+ use settings_data,  only:ndataplots,numplot,ndim,iCalcQuantities, &
                           DataIsBuffered,itracktype,itrackoffset,ntypes
  use calcquantities, only:calc_quantities
  use multiplot,      only:itrans
@@ -142,7 +142,6 @@ subroutine submenu_limits(ichoose)
           endif
        endif
     enddo
-    return
 !------------------------------------------------------------------------
  case(3)
 
@@ -219,7 +218,6 @@ subroutine submenu_limits(ichoose)
        endif
        write(*,*)
     enddo
-    return
 !------------------------------------------------------------------------
  case(5)
 
@@ -247,7 +245,6 @@ subroutine submenu_limits(ichoose)
           endif
        endif
     enddo
-    return
 
  end select
 

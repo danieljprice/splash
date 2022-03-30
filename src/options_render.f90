@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -34,7 +34,7 @@ module settings_render
  logical :: iplotcont_nomulti,ilabelcont
  logical :: icolour_particles,inormalise_interpolations
  logical :: ifastrender,idensityweightedinterpolation
- logical :: double_rendering,exact_rendering
+ logical :: double_rendering,exact_rendering,iauto_densityweighted
  character(len=lenlabel+20) :: projlabelformat
  integer :: iapplyprojformat
  character(len=120) :: rgbfile
@@ -44,7 +44,8 @@ module settings_render
    ifastrender,idensityweightedinterpolation,iColourBarStyle, &
    iplotcolourbarlabel,ilabelcont,projlabelformat,iapplyprojformat, &
    double_rendering,ikernel,ColourBarPosx,ColourBarPosy,ColourBarLen,&
-   ColourBarFmtStr,ColourBarWidth,iColourBarPos,rgbfile,exact_rendering
+   ColourBarFmtStr,ColourBarWidth,iColourBarPos,rgbfile,exact_rendering,&
+   iauto_densityweighted
 
 contains
 
@@ -63,6 +64,7 @@ subroutine defaults_set_render
  inormalise_interpolations = .false.       ! do not normalise interpolations
  ifastrender = .false. ! use accelerated rendering
  idensityweightedinterpolation = .false.
+ iauto_densityweighted = .true.
  iplotcolourbarlabel = .true.
  ilabelcont = .false.   ! print numeric labels on contours
  projlabelformat = ' '
@@ -108,7 +110,7 @@ subroutine submenu_render(ichoose)
  use projections3D, only:setup_integratedkernel
  use asciiutils,    only:read_asciifile
  integer, intent(in) :: ichoose
- character(len=5)    :: string
+ character(len=5)    :: string,stringd
  character(len=20)   :: kname
  integer :: ians,i,ierr,icolourprev
 !
@@ -123,12 +125,17 @@ subroutine submenu_render(ichoose)
     else
        string = 'AUTO'
     endif
+    if (iauto_densityweighted) then
+       stringd = 'AUTO'
+    else
+       stringd = print_logical(idensityweightedinterpolation)
+    endif
     kname = ''
     if (ikernel >= 0 .and. ikernel <= nkernels) kname = trim(kernelname(ikernel))
     print 10,trim(string),icolours,print_logical(iplotcont_nomulti), &
            iColourBarStyle,print_logical(icolour_particles), &
            print_logical(inormalise_interpolations),print_logical(ifastrender),&
-           print_logical(idensityweightedinterpolation),trim(projlabelformat),&
+           trim(stringd),trim(projlabelformat),&
            trim(kname)
 10  format( &
           ' 0) exit ',/,                      &
@@ -282,6 +289,10 @@ subroutine submenu_render(ichoose)
     idensityweightedinterpolation = .not.idensityweightedinterpolation
     print "(a)",' Density weighted interpolation is '// &
                    print_logical(idensityweightedinterpolation)
+    iauto_densityweighted = .not.idensityweightedinterpolation
+
+    if (.not.idensityweightedinterpolation) &
+       call prompt('Switch density weighting on/off automatically?',iauto_densityweighted)
 !------------------------------------------------------------------------
  case(9)
     print "(5(/,a),/,4(/,a),/)", &

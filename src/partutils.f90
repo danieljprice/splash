@@ -128,7 +128,7 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
     ipos = 0
     i = 0
     nfound = 0
-    do while (ipos==0 .and. i <= ntot)
+    do while (ipos==0 .and. i < ntot)
        i = i + 1
        if (iamtype(i)==itype) nfound = nfound + 1
        if (nfound==n) ipos = i

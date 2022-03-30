@@ -1,4 +1,42 @@
 
+**3.3.5: (01/03/22)**
+
+- bug fix with disappearing sinks in phantom MPI dumps
+
+**3.3.4: (21/01/22)**
+
+- improved visual appearance of normalised renderings with free boundaries
+- automatically read planet-wake parameters from phantom file headers
+- added --wake=1,3 flag to plot wake from sink particle 3 around star 1
+- bug fix with disappearing sinks in phantom MPI dumps
+- fixed seg fault in fits reader
+
+**3.3.3: (19/11/21)**
+
+- "splash to csv" exports to comma separated variable (.csv) format
+- automatically apply -ev flag for filenames ending in .ev, .mdot or .out
+- improved label recognition from ascii file headers
+- additional divergent colour schemes (thanks to Sahl Rowther)
+- deal with merged sink particles from phantom (thanks to James Wurster)
+- bug fix with units resetting to 1
+- skip blank and comment lines in splash.filenames
+
+**3.3.2: (20/07/21)**
+
+- bug fix with -dev flag
+- silenced unnecessary dust warnings in sphNG read
+- change-of-limits animation sequence works for vector plots
+- automatic recognition of ndspmhd format
+
+**3.3.1: (19/07/21)**
+
+- f/F in interactive mode flips y axis on 2D plots to next column
+- gradual transparency in double rendering rather than sharp cutoff
+- removed S from main menu as now redundant
+- allow longer paths with -dev flag
+- added --xmin,--xmax,--ymin,--ymax flags for manual margin adjustment
+- bug fix with relativistic corrections in splash calc lightcurve
+
 **3.3.0: (20/05/21)**
 
 - bug fix with surface density plot with physical units on
