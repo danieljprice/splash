@@ -67,13 +67,14 @@ contains
 ! returns array of character strings (one per line)
 ! up to a maximum corresponding to the size of the array
 !---------------------------------------------------------------------------
-subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
+subroutine read_asciifile_char(filename,nlinesread,charline,ierror,skip)
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  character(len=*), dimension(:), intent(out) :: charline
  integer, intent(out), optional :: ierror
+ logical, intent(in), optional :: skip
  integer :: ierr,i,j,maxlines,iunit
- logical :: iexist
+ logical :: iexist,do_skip
  character(len=1) :: temp
 
  nlinesread = 0
@@ -99,12 +100,18 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
  i = 0
  j = 1
  ierr = 0
+ do_skip = .false.
+ if (present(skip)) do_skip = skip
  over_lines: do while(j <= maxlines .and. ierr == 0)
     i = i + 1
     read(iunit,"(a)",iostat=ierr) charline(j)
     ! skip blank and comment lines
-    temp = adjustl(charline(j))
-    if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
+    if (do_skip) then
+       temp = adjustl(charline(j))
+       if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
+    else
+       j = j + 1
+    endif
  enddo over_lines
  nlinesread = j
 
