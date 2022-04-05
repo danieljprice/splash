@@ -545,7 +545,7 @@ program splash
  call set_filenames(trim(fileprefix))
 
  evsplash = .false.
- lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
+ lowmemorymode = lenvironment('SPLASH_LOWMEM')
  debugmode = lenvironment('SPLASH_DEBUG')
  !
  !  read all arguments off command line
@@ -728,8 +728,7 @@ program splash
  !
  if (nfiles > 0 .and. &
     (index(rootname(1),'.ev') > 0  .or. &
-     index(rootname(1),'.mdot') > 0  .or. &
-     index(rootname(1),'.out') > 0)) then
+     index(rootname(1),'.mdot') > 0)) then
     evsplash = .true.
     fileprefix = 'evsplash'
     call set_filenames(trim(fileprefix))
