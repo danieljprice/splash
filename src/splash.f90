@@ -56,6 +56,8 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.4.1   : (05/04/22)
+!             bug fix with blank lines in splash.titles
 !     3.4.0   : (24/03/22)
 !             density weighted interpolation now applied automatically to projection
 !             plots of quantities that are not densities;
@@ -528,7 +530,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v4.0.0 [24th March 2022]'
+ character(len=*), parameter :: version = 'v4.0.0 [5th April 2022]'
 
  !
  ! initialise some basic code variables
@@ -822,7 +824,7 @@ program splash
  else
     ihavereadfilenames = .false.
     !print "(a)",' no filenames read from command line'
-    call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname)
+    call read_asciifile(trim(fileprefix)//'.filenames',nfiles,rootname,skip=.true.)
     !print*,nfiles,' filenames read from '//trim(fileprefix)//'.filenames file'
     if (nfiles > 0) then
        ihavereadfilenames = .true.
