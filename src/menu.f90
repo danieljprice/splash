@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -55,13 +55,13 @@ subroutine menu
  integer            :: i,icol,ihalf,iadjust,indexi,ierr
  integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
  integer            :: iamvecprev, ivecplottemp,ichoose
- integer            :: maxdigits
+ integer            :: maxdigits,ithird
  character(len=5)   :: ioption
  character(len=100) :: vecprompt,string
  character(len=20)  :: rprompt
  character(len=2)   :: fmtstrlen
- character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
- character(len=*), parameter :: sep="(55('-'))"
+ character(len=64)  :: fmtstr1,fmtstr2,fmtstr3
+ character(len=9)   :: sep
  logical            :: iAllowRendering
 
  irender = 0
@@ -127,22 +127,52 @@ subroutine menu
 !--data columns
 !
        call print_header()
-       print sep
-       ihalf = numplot/2                ! print in two columns
-       iadjust = mod(numplot,2)
+
        maxdigits = floor(log10(real(maxplot)))+1
-       write(fmtstrlen,"(A1,I1)") "i",maxdigits
-       fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                     //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-       print fmtstr1, &
-          (i,transform_label(label(i),itrans(i)), &
-          ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
-          itrans(ihalf+i+iadjust)),i=1,ihalf)
-       if (iadjust /= 0) then
-          fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
-          print fmtstr2, &
-              ihalf + iadjust,transform_label(label(ihalf + iadjust), &
-              itrans(ihalf+iadjust))
+       write(fmtstrlen,"(a1,i1)") "i",maxdigits
+       threecol = .false.
+
+       if (numplot > 60) then
+          threecol = .true.
+          sep = "(79('-'))"
+          print sep
+          ithird = numplot/3                ! print in three columns
+          ihalf = 2*numplot/3               ! print in three columns
+          iadjust = 0
+          if (mod(numplot,3) > 0) iadjust = 1
+          fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                         //trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                         //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+          print fmtstr1, &
+             (i,transform_label(label(i),itrans(i)), &
+             ithird + i + iadjust, transform_label(label(ithird + i), &
+             itrans(ithird+i+iadjust)),ihalf+i+2*iadjust,transform_label(label(ihalf + i + 2*iadjust), &
+             itrans(ihalf+i+2*iadjust)),i=1,ithird)
+          if (iadjust /= 0) then
+             fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+             print fmtstr2, &
+                 ithird + iadjust,transform_label(label(ithird + iadjust), &
+                 itrans(ithird+iadjust)),ihalf+2*iadjust,&
+                 transform_label(label(ihalf+2*iadjust),itrans(ihalf+i+2*iadjust))
+          endif
+       else
+          sep="(55('-'))"
+          print sep
+          ihalf = numplot/2                ! print in two columns
+          iadjust = mod(numplot,2)
+          fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+                        //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+          print fmtstr1, &
+             (i,transform_label(label(i),itrans(i)), &
+             ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
+             itrans(ihalf+i+iadjust)),i=1,ihalf)
+          if (iadjust /= 0) then
+             fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+             print fmtstr2, &
+                 ihalf + iadjust,transform_label(label(ihalf + iadjust), &
+                 itrans(ihalf+iadjust))
+          endif
        endif
 !
 !--multiplot
@@ -164,6 +194,8 @@ subroutine menu
     print sep
     if (ndim <= 1) then
        print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s(ave) q(uit)'
+    elseif (threecol) then
+       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end r(ender) v(ector) x(sec) s(ave) q(uit)'
     else
        print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
        print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
