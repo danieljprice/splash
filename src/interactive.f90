@@ -3143,7 +3143,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  strxy = '('//trim(strx)//', '//trim(stry)//')'
 
  ! print help message below this
- imessage = mod(int((t-tprev)/2.),10) ! change message every 2 seconds
+ imessage = 1 ! mod(int((t-tprev)/2.),10) ! change message every 2 seconds
 
  ! work out if cursor is in the colour bar
  iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin,xmax,ymin,ymax)
