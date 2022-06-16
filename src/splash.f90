@@ -51,8 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.4.1   : (05/04/22)
-!             bug fix with blank lines in splash.titles
+!     3.5.0   : (17/06/22)
+!             bug fix with blank lines in splash.titles; bug fix with large line lengths in csv files;
+!             allow blank labels in csv headers; bug fix with display of column labels from ascii/csv files;
+!             log colour bar by default when using -r flag if more than 3 orders of magnitude range
 !     3.4.0   : (24/03/22)
 !             density weighted interpolation now applied automatically to projection
 !             plots of quantities that are not densities;
@@ -492,7 +494,7 @@ program splash
  use geomutils, only:set_coordlabels
  use defaults,  only:defaults_set,defaults_read,defaults_set_360
  use initialise,only:defaults_set_initial
- use limits,    only:read_limits
+ use limits,    only:read_limits,lim
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
@@ -520,12 +522,14 @@ program splash
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral
+ use multiplot,          only:itrans
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
+ logical :: using_default_options
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v3.4.1 [5th April 2022]'
+ character(len=*), parameter :: version = 'v3.5.0 [17th June 2022]'
 
  !
  ! initialise some basic code variables
@@ -750,8 +754,11 @@ program splash
  ! variable SPLASH_DEFAULTS is set, no local file is present
  ! and no alternative prefix has been set.
  !
+ using_default_options = .true.
  inquire(file=defaultsfile,exist=iexist)
- if (.not.iexist .and. trim(fileprefix)=='splash') then
+ if (iexist) then
+    using_default_options = .false.
+ elseif (trim(fileprefix)=='splash') then
     call get_environment_or_flag('SPLASH_DEFAULTS',string)
     if (len_trim(string) /= 0) then
        i = index(string,'.defaults')
@@ -763,6 +770,7 @@ program splash
        print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
        call defaults_read(defaultsfile)
        call set_filenames(trim(fileprefix))
+       using_default_options = .false.
     endif
  endif
 
@@ -909,7 +917,18 @@ program splash
     !
     ! read plot limits from file (overrides get_data limits settings)
     !
-    if (ivegotdata) call read_limits(trim(limitsfile),ierr)
+    if (ivegotdata) then
+       call read_limits(trim(limitsfile),ierr)
+       !
+       ! use log colour bar by default if more than 3 orders of magnitude range
+       ! (and no limits file and using default options)
+       !
+       if (ierr /= 0 .and. irender > 0 .and. using_default_options) then
+          if (all(lim(irender,:) > 0.)) then
+             if (log10(lim(irender,2)/lim(irender,1)) > 3) itrans(irender) = 1
+          endif
+       endif
+    endif
 
     if (nomenu) then
        !

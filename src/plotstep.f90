@@ -1780,8 +1780,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       if (.not.interactivereplot .and. .not.isetrenderlimits) then
                          if (iadapt) then
                             if (iverbose > 1) print*,'adapting render limits'
-                            rendermin = renderminadapt
                             rendermax = rendermaxadapt
+                            rendermin = renderminadapt
+                            if (logged) rendermin = max(rendermin,rendermax/1e6) ! limit to 6 orders of magnitude
                          else
                             !!--or apply transformations to fixed limits
                             rendermin = lim(irenderplot,1)
