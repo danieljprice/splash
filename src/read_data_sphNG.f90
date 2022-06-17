@@ -1383,7 +1383,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique
  use sphNGread
- use lightcurve,     only:get_temp_from_u,ionisation_fraction,get_opacity
+ use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname

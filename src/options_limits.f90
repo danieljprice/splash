@@ -58,7 +58,7 @@ subroutine submenu_limits(ichoose)
  use calcquantities, only:calc_quantities
  use multiplot,      only:itrans
  use prompting,      only:prompt,print_logical
- use limits,         only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
+ use limits,         only:lim,range,rangeset,anyrangeset,print_rangeinfo
  use labels,         only:label,ix,irad,is_coord,labeltype
  use transforms,     only:ntrans,transform_label
  integer, intent(in) :: ichoose
