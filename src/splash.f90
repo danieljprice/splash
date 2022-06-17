@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.5.1   : (17/06/22)
+!             bug fix with autolog limits; build failures in libexact and libread fixed and now tested 
 !     3.5.0   : (17/06/22)
 !             bug fix with blank lines in splash.titles; bug fix with large line lengths in csv files;
 !             allow blank labels in csv headers; bug fix with display of column labels from ascii/csv files;
@@ -501,7 +503,7 @@ program splash
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              itrackoffset,itracktype,iRescale,enforce_code_units
+                              itrackoffset,itracktype,iRescale,enforce_code_units,UseTypeinRenderings
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -524,6 +526,7 @@ program splash
  use exact,              only:ispiral
  use multiplot,          only:itrans
  use labels,             only:lenlabel,label,unitslabel,shortstring
+ use limits,             only:set_limits
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
@@ -531,7 +534,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.5.0 [17th June 2022]'
+ character(len=*), parameter :: version = 'v3.5.1 [17th June 2022]'
 
  !
  ! initialise some basic code variables
@@ -929,16 +932,17 @@ program splash
     !
     ! read plot limits from file (overrides get_data limits settings)
     !
-    if (ivegotdata) then
-       call read_limits(trim(limitsfile),ierr)
-       !
-       ! use log colour bar by default if more than 3 orders of magnitude range
-       ! (and no limits file and using default options)
-       !
-       if (ierr /= 0 .and. irender > 0 .and. using_default_options) then
-          if (all(lim(irender,:) > 0.)) then
-             if (log10(lim(irender,2)/lim(irender,1)) > 3) itrans(irender) = 1
-          endif
+    if (ivegotdata) call read_limits(trim(limitsfile),ierr)
+
+    !
+    ! use log colour bar by default if more than 3 orders of magnitude range
+    ! (and no limits file and using default options)
+    !
+    if (ivegotdata .and. ierr /= 0 .and. irender > 0 .and. using_default_options) then
+       ! get masked limits to avoid dead particles giving 0 as lower bound
+       call set_limits(1,1,irender,irender,UseTypeinRenderings)
+       if (all(lim(irender,:) > 0.)) then
+          if (log10(lim(irender,2)/lim(irender,1)) > 3) itrans(irender) = 1
        endif
     endif
 

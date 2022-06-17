@@ -41,12 +41,13 @@ contains
 ! set plot limits for all columns
 ! NB: does not differentiate between particle types at the moment
 !----------------------------------------------------------
-subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
+subroutine set_limits(ifromstep,itostep,ifromcol,itocol,use_type)
  use labels,        only:label,ix
  use geometry,      only:coord_transform_limits
- use particle_data, only:npartoftype,dat,maxcol
+ use particle_data, only:npartoftype,dat,maxcol,iamtype
  use settings_data, only:ndim,icoords,icoordsnew,iverbose,debugmode
  integer, intent(in) :: ifromstep,itostep,ifromcol,itocol
+ logical, intent(in), optional :: use_type(:)
  integer :: i,j,k,ntoti,itocoli
  logical :: first
 
@@ -62,12 +63,23 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol)
  lim(ifromcol:itocol,2) = -huge(lim)
  do i=ifromstep,itostep
     ntoti = sum(npartoftype(:,i))
-    do j=ifromcol,itocoli
-       do k=1,ntoti
-          lim(j,1) = min(lim(j,1),dat(k,j,i))
-          lim(j,2) = max(lim(j,2),dat(k,j,i))
+    if (allocated(iamtype) .and. present(use_type)) then
+       do j=ifromcol,itocoli
+          do k=1,ntoti
+             if (use_type(iamtype(k,i))) then
+                lim(j,1) = min(lim(j,1),dat(k,j,i))
+                lim(j,2) = max(lim(j,2),dat(k,j,i))
+             endif
+          enddo
        enddo
-    enddo
+    else
+       do j=ifromcol,itocoli
+          do k=1,ntoti
+             lim(j,1) = min(lim(j,1),dat(k,j,i))
+             lim(j,2) = max(lim(j,2),dat(k,j,i))
+          enddo
+       enddo
+    endif
  enddo
  !
  !--warn if limits are the same
