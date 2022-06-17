@@ -40,6 +40,7 @@ module asciiutils
  public :: enumerate,isdigit,split
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
+ public :: match_column
  public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions,readline_csv
 
@@ -1160,6 +1161,25 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!------------------------------------------
+! match tag against a list of tags
+! or by giving the column number explicitly
+! returns index of matching tag in the list
+!------------------------------------------
+integer function match_column(tags,tag)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer :: ierr
+
+ ! try to match the string tag first
+ match_column = match_tag(tags,tag)
+ if (match_column == 0) then
+    ! try to read it as an integer from the string
+    read(tag,*,iostat=ierr) match_column
+ endif
+
+end function match_column
 
 !----------------------------------------------
 ! match tag against a list of tags

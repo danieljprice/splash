@@ -505,7 +505,7 @@ program splash
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename
+ use asciiutils,         only:read_asciifile,basename,match_column
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -523,12 +523,14 @@ program splash
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral
  use multiplot,          only:itrans
+ use labels,             only:lenlabel,label,unitslabel,shortstring
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  logical :: using_default_options
  character(len=120) :: string
  character(len=12)  :: convertformat
+ character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
  character(len=*), parameter :: version = 'v3.5.0 [17th June 2022]'
 
  !
@@ -571,6 +573,11 @@ program splash
  use_360 = .false.
  do_multiplot = .false.
  device = ''
+ stringx = ''
+ stringy = ''
+ stringr = ''
+ stringc = ''
+ stringv = ''
 
  do while (i < nargs)
     i = i + 1
@@ -580,35 +587,30 @@ program splash
        select case(trim(string(2:)))
        case('x')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ipickx
-          if (ierr /= 0 .or. ipickx <= 0) call print_usage(quit=.true.)
+          call get_argument(i,stringx)
+          if (len_trim(stringx)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('y')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ipicky
-          if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
+          call get_argument(i,stringy)
+          if (len_trim(stringy)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('multi','-multiplot','-multi')
           do_multiplot = .true.
           nomenu = .true.
        case('render','r','ren')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) irender
-          if (ierr /= 0 .or. irender < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringr)
+          if (len_trim(stringr)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('contour','c','cont','con')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) icontour
-          if (ierr /= 0 .or. icontour < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringc)
+          if (len_trim(stringc)==0) call print_usage(quit=.true.)
        case('vec','vecplot')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ivecplot
-          if (ierr /= 0 .or. ivecplot < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringv)
+          if (len_trim(stringv)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('dev','device')
           i = i + 1
@@ -885,6 +887,16 @@ program splash
     ! (e.g. switch on sink particles if there is no gas)
     !
     call set_options_dataread()
+    !
+    !  translate from string to column id
+    !
+    if (nomenu) then
+       ipickx = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringx)
+       ipicky = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringy)
+       irender = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringr)
+       icontour = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringc)
+       ivecplot = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringv)
+    endif
     !
     ! for some data reads we can automatically plot a particular column
     !
