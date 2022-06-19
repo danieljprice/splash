@@ -51,8 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.5.1   : (17/06/22)
-!             bug fix with autolog limits; build failures in libexact and libread fixed and now tested 
+!     3.5.1   : (20/06/22)
+!             bug fix with autolog limits; build failures in libexact and libread fixed and now tested;
+!             recognise labels on command line e.g. -r density;
+!             limits option for centred cube (thanks to J. Wurster)
 !     3.5.0   : (17/06/22)
 !             bug fix with blank lines in splash.titles; bug fix with large line lengths in csv files;
 !             allow blank labels in csv headers; bug fix with display of column labels from ascii/csv files;
@@ -534,7 +536,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.5.1 [17th June 2022]'
+ character(len=*), parameter :: version = 'v3.5.1 [20th June 2022]'
 
  !
  ! initialise some basic code variables
