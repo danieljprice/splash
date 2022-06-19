@@ -62,7 +62,7 @@ subroutine menu
  character(len=2)   :: fmtstrlen
  character(len=64)  :: fmtstr1,fmtstr2,fmtstr3
  character(len=9)   :: sep
- logical            :: iAllowRendering
+ logical            :: iAllowRendering,threecol
 
  irender = 0
  icontourplot = 0
