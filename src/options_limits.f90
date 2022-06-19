@@ -130,18 +130,23 @@ subroutine submenu_limits(ichoose)
     do while (ipick > 0)
        ipick = 0
        !write(*,*)
-       write(fmtstring,'(a,I4,a)') 'Enter column number to set limits (0=quit;',numplot+1,'=centred cube in xyz)'
-       call prompt(trim(fmtstring),ipick,0,numplot+1)
-       if (ipick==numplot+1) then
-          call prompt('xy'//trim(label(3))//' max ',lim(3,2))
-          lim(1,2) =  lim(3,2)
-          lim(2,2) =  lim(3,2)
-          lim(1,1) = -lim(3,2)
-          lim(2,1) = -lim(3,2)
-          lim(3,1) = -lim(3,2)
-          print*,'>> '//trim(label(1))//' limits set (min,max) = ',lim(1,1),lim(1,2)
-          print*,'>> '//trim(label(2))//' limits set (min,max) = ',lim(2,1),lim(2,2)
-          print*,'>> '//trim(label(3))//' limits set (min,max) = ',lim(3,1),lim(3,2)
+       if (ndim >= 1) then
+          write(fmtstring,'(a,i3,a)') 'Enter column number to set limits (0=quit;',numplot+1,'=centred cube in xyz)'
+          call prompt(trim(fmtstring),ipick,0,numplot+1)
+       else
+          write(fmtstring,'(a,i3,a)') 'Enter column number to set limits (0=quit)'
+          call prompt(trim(fmtstring),ipick,0,numplot)
+       endif
+       if (ipick==numplot+1 .and. ndim >= 1) then
+          call prompt(trim(label(ix(1)))//' max ',lim(ix(1),2))
+          lim(ix(1),1) = -lim(ix(1),2)
+          print*,'>> '//trim(label(ix(1)))//' limits set (min,max) = ',lim(ix(1),:)
+          if (ndim >= 2) then
+             lim(ix(2:ndim),1) = lim(ix(1),1)
+             lim(ix(2:ndim),2) = lim(ix(1),2)
+             print*,'>> '//trim(label(ix(2)))//' limits set (min,max) = ',lim(ix(2),:)
+             if (ndim >= 3) print*,'>> '//trim(label(ix(3)))//' limits set (min,max) = ',lim(ix(3),:)
+          endif
        elseif (ipick > 0) then
           call prompt(trim(label(ipick))//' min ',lim(ipick,1))
           call prompt(trim(label(ipick))//' max ',lim(ipick,2))
