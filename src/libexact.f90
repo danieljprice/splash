@@ -253,8 +253,8 @@ subroutine planetdisc_c(iplot,npart,ispiral,time,HonR,rplanet,q,narms,&
  real(c_real),  intent(inout) :: rplot(npart)
  real(c_real),  intent(out)   :: yplot(npart)
 
- call exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,narms,&
-                   params,rplot,yplot,ierr)
+ call exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,0.,narms,&
+                       params,rplot,yplot,ierr)
  ierr = 0
 end subroutine planetdisc_c
 

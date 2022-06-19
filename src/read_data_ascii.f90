@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -99,7 +99,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  real    :: dummyreal
  real, allocatable :: dattemp(:)
  character(len=len(rootname)+4) :: dumpfile
- character(len=2048)  :: line
+ character(len=4096)  :: line
  character(len=lenlabel), dimension(size(label)) :: tmplabel
  character(len=10)  :: str,strc
  integer, parameter :: notset = -66
@@ -167,7 +167,8 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        do i=1,nheaderlines
           read(iunit,"(a)",iostat=ierr) line
           !--try to match column labels from this header line, if not already matched (or dubious match)
-          call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=ncolstep)
+          call get_column_labels(trim(line),nlabels,tmplabel,&
+               method=imethod,ndesired=ncolstep,csv=csv)
           !--if we get nlabels > ncolumns, use them, but keep trying for a better match
           if ((got_labels .and. nlabels == ncolstep) .or. &
               (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
@@ -358,7 +359,7 @@ end subroutine read_data_ascii
 !
 !-------------------------------------------------------------------
 subroutine set_labels_ascii
- use asciiutils,      only:lcase,match_taglist,find_repeated_tags
+ use asciiutils,      only:lcase,match_taglist,find_repeated_tags,add_escape_chars
  use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel, &
                             make_vector_label
@@ -442,6 +443,12 @@ subroutine set_labels_ascii
  call match_taglist((/'vx','vy','vz'/),lcase(label(1:ncolumns)),ivx,ndimV)
  call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
  if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+!
+!--make labels safe for plotting
+!
+ do i=1,ncolumns
+    if (len_trim(label_orig(i)) > 0) label(i) = trim(add_escape_chars(label_orig(i)))
+ enddo
 
  got_time = .false.
  do i=1,ncolumns
@@ -545,7 +552,7 @@ subroutine set_labels_ascii
  !
  !--set labels for each particle type
  !
- labeltype(1) = 'gas'
+ labeltype(1) = ''
  UseTypeInRenderings(1) = .true.
 
 end subroutine set_labels_ascii

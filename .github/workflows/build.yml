@@ -33,3 +33,12 @@ jobs:
 
     - name: compile splash
       run: make SYSTEM=gfortran withgiza
+
+    - name: clean
+      run: make clean
+
+    - name: compile libexact
+      run: make SYSTEM=gfortran libexact
+
+    - name: compile libread
+      run: make SYSTEM=gfortran libread

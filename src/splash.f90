@@ -56,8 +56,14 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
-!     3.4.1   : (05/04/22)
-!             bug fix with blank lines in splash.titles
+!     3.5.1   : (20/06/22)
+!             bug fix with autolog limits; build failures in libexact and libread fixed and now tested;
+!             recognise labels on command line e.g. -r density;
+!             limits option for centred cube (thanks to J. Wurster)
+!     3.5.0   : (17/06/22)
+!             bug fix with blank lines in splash.titles; bug fix with large line lengths in csv files;
+!             allow blank labels in csv headers; bug fix with display of column labels from ascii/csv files;
+!             log colour bar by default when using -r flag if more than 3 orders of magnitude range
 !     3.4.0   : (24/03/22)
 !             density weighted interpolation now applied automatically to projection
 !             plots of quantities that are not densities;
@@ -497,18 +503,18 @@ program splash
  use geomutils, only:set_coordlabels
  use defaults,  only:defaults_set,defaults_read,defaults_set_360
  use initialise,only:defaults_set_initial
- use limits,    only:read_limits
+ use limits,    only:read_limits,lim
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              itrackoffset,itracktype,iRescale,enforce_code_units
+                              itrackoffset,itracktype,iRescale,enforce_code_units,UseTypeinRenderings
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename
+ use asciiutils,         only:read_asciifile,basename,match_column
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -525,12 +531,17 @@ program splash
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral
+ use multiplot,          only:itrans
+ use labels,             only:lenlabel,label,unitslabel,shortstring
+ use limits,             only:set_limits
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
+ logical :: using_default_options
  character(len=120) :: string
  character(len=12)  :: convertformat
- character(len=*), parameter :: version = 'v4.0.0 [5th April 2022]'
+ character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
+ character(len=*), parameter :: version = 'v4.0.0 [20th June 2022]'
 
  !
  ! initialise some basic code variables
@@ -572,6 +583,11 @@ program splash
  use_360 = .false.
  do_multiplot = .false.
  device = ''
+ stringx = ''
+ stringy = ''
+ stringr = ''
+ stringc = ''
+ stringv = ''
 
  do while (i < nargs)
     i = i + 1
@@ -581,35 +597,30 @@ program splash
        select case(trim(string(2:)))
        case('x')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ipickx
-          if (ierr /= 0 .or. ipickx <= 0) call print_usage(quit=.true.)
+          call get_argument(i,stringx)
+          if (len_trim(stringx)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('y')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ipicky
-          if (ierr /= 0 .or. ipicky <= 0) call print_usage(quit=.true.)
+          call get_argument(i,stringy)
+          if (len_trim(stringy)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('multi','-multiplot','-multi')
           do_multiplot = .true.
           nomenu = .true.
        case('render','r','ren')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) irender
-          if (ierr /= 0 .or. irender < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringr)
+          if (len_trim(stringr)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('contour','c','cont','con')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) icontour
-          if (ierr /= 0 .or. icontour < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringc)
+          if (len_trim(stringc)==0) call print_usage(quit=.true.)
        case('vec','vecplot')
           i = i + 1
-          call get_argument(i,string)
-          read(string,*,iostat=ierr) ivecplot
-          if (ierr /= 0 .or. ivecplot < 0) call print_usage(quit=.true.)
+          call get_argument(i,stringv)
+          if (len_trim(stringv)==0) call print_usage(quit=.true.)
           nomenu = .true.
        case('dev','device')
           i = i + 1
@@ -754,8 +765,11 @@ program splash
  ! variable SPLASH_DEFAULTS is set, no local file is present
  ! and no alternative prefix has been set.
  !
+ using_default_options = .true.
  inquire(file=defaultsfile,exist=iexist)
- if (.not.iexist .and. trim(fileprefix)=='splash') then
+ if (iexist) then
+    using_default_options = .false.
+ elseif (trim(fileprefix)=='splash') then
     call get_environment_or_flag('SPLASH_DEFAULTS',string)
     if (len_trim(string) /= 0) then
        i = index(string,'.defaults')
@@ -767,6 +781,7 @@ program splash
        print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
        call defaults_read(defaultsfile)
        call set_filenames(trim(fileprefix))
+       using_default_options = .false.
     endif
  endif
 
@@ -882,6 +897,16 @@ program splash
     !
     call set_options_dataread()
     !
+    !  translate from string to column id
+    !
+    if (nomenu) then
+       ipickx = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringx)
+       ipicky = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringy)
+       irender = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringr)
+       icontour = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringc)
+       ivecplot = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringv)
+    endif
+    !
     ! for some data reads we can automatically plot a particular column
     !
     if (irender == 0 .and. iautorender > 0) then
@@ -914,6 +939,18 @@ program splash
     ! read plot limits from file (overrides get_data limits settings)
     !
     if (ivegotdata) call read_limits(trim(limitsfile),ierr)
+
+    !
+    ! use log colour bar by default if more than 3 orders of magnitude range
+    ! (and no limits file and using default options)
+    !
+    if (ivegotdata .and. ierr /= 0 .and. irender > 0 .and. using_default_options) then
+       ! get masked limits to avoid dead particles giving 0 as lower bound
+       call set_limits(1,1,irender,irender,UseTypeinRenderings)
+       if (all(lim(irender,:) > 0.)) then
+          if (log10(lim(irender,2)/lim(irender,1)) > 3) itrans(irender) = 1
+       endif
+    endif
 
     if (nomenu) then
        !

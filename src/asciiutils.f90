@@ -40,6 +40,7 @@ module asciiutils
  public :: enumerate,isdigit,split
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
+ public :: match_column
  public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions,readline_csv
 
@@ -972,20 +973,24 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,nlabels,labels,method,ndesired)
+subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
  integer,          intent(out), optional :: method
  integer,          intent(in),  optional :: ndesired
+ logical,          intent(in),  optional :: csv
  integer :: i1,i2,i,nlabelstmp,nlabels_prev,istyle,ntarget
  character(len=1) :: leadingchar
  character(len=4), parameter :: spaces = '    '
+ logical :: is_csv
 
  nlabels = 0
  i1 = 1
  istyle = 0
  ntarget = -1
+ is_csv = .false.
+ if (present(csv)) is_csv = csv
  if (present(ndesired)) ntarget = ndesired
  !
  ! strip leading comment character ('#')
@@ -998,7 +1003,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired)
  i1 = max(i1,index(line,'=')+1)
  i2 = i1
 
- if (index(nospaces(line),'][') > 0) then
+ if (index(nospaces(line),'][') > 0 .and. .not.is_csv) then
     !
     ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
     !
@@ -1009,13 +1014,17 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired)
        call split(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
        if (nlabels > 1) exit over_spaces1
     enddo over_spaces1
- elseif (index(line,',') > 1) then
+ elseif (index(line,',') > 1 .or. is_csv) then
     !
     ! format style 2: mylabel1,mylabel2,mylabel3
     !
     istyle = 2
     call split(line(i1:),',',labels,nlabelstmp)
-    nlabels = count_sensible_labels(nlabelstmp,labels)
+    if (is_csv) then
+       nlabels = nlabelstmp  ! allow blank/arbitrary labels in csv format
+    else
+       nlabels = count_sensible_labels(nlabelstmp,labels)
+    endif
  else
     !
     ! format style 3: #     mylabel1     mylabel2     mylabel3
@@ -1152,6 +1161,25 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!------------------------------------------
+! match tag against a list of tags
+! or by giving the column number explicitly
+! returns index of matching tag in the list
+!------------------------------------------
+integer function match_column(tags,tag)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer :: ierr
+
+ ! try to match the string tag first
+ match_column = match_tag(tags,tag)
+ if (match_column == 0) then
+    ! try to read it as an integer from the string
+    read(tag,*,iostat=ierr) match_column
+ endif
+
+end function match_column
 
 !----------------------------------------------
 ! match tag against a list of tags

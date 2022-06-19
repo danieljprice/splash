@@ -1,4 +1,19 @@
 
+**3.5.1: (20/06/22)**
+
+- bug fix with autolog limits
+- build failures in libexact and libread fixed and now tested
+- recognise labels on command line e.g. -r density
+- limits option for centred cube (thanks to J. Wurster)
+
+**3.5.0: (17/06/22)**
+
+- bug fix with blank lines in splash.titles
+- bug fix with large line lengths in csv files
+- allow blank labels in csv headers
+- bug fix with display of column labels from ascii/csv files
+- log colour bar by default when using -r flag if more than 3 orders of magnitude range
+
 **3.4.0: (24/03/22)**
 
 - density weighted interpolation now applied automatically to projection plots of quantities that are not densities

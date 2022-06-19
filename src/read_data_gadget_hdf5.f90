@@ -168,11 +168,10 @@ contains
 subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread, &
                            ntypes,debugmode,iverbose
- use settings_page,  only:legendtext
  use mem_allocation, only:alloc
- use labels,         only:ih,irho,ipmass,labeltype
+ use labels,         only:ih,irho,ipmass
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  use asciiutils,     only:cstring
  use gadgethdf5read, only:hsoft,blocklabelgas,havewarned,read_gadget_hdf5_header, &
@@ -189,7 +188,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,usez,debug,goterrors
+ logical               :: iexist,reallocate,debug,goterrors
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
@@ -233,7 +232,6 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  ndimV = 0
 !  idumpformat = ienvironment('GSPLASH_FORMAT')
 !  checkids    = lenvironment('GSPLASH_CHECKIDS')
- usez        = lenvironment('GSPLASH_USE_Z')
  debug       = lenvironment('GSPLASH_DEBUG') .or. debugmode
 !
 !--read data from snapshots
@@ -313,11 +311,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
     if (ifile==1) then
        print*,'time            : ',timetemp
-       if (usez) then
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (using in legend from GSPLASH_USE_Z setting)'
-       else
-          print "(1x,a,f8.2,a)",'z (redshift)    : ',ztemp,' (set GSPLASH_USE_Z=yes to use in legend)'
-       endif
+       print "(1x,a,f8.2)",'z (redshift)    : ',ztemp
     endif
     print "(a,6(1x,i10))",' Npart (by type) : ',npartoftypei(1:6)
     if (any(massoftypei > 0.)) print "(a,6(1x,es10.3))",' Mass  (by type) : ',massoftypei
@@ -422,20 +416,10 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     !--set time to be used in the legend
     !
     if (ifile==1) then
-       if (usez) then
-          !--use this line for redshift
-          legendtext = 'z='
-          time(i) = real(ztemp)
-       else
-          !--use this line for code time
-          time(i) = real(timetemp)
-       endif
+       !--use this line for code time
+       time(i) = real(timetemp)
     else
-       if (usez) then
-          if (abs(real(ztemp)-time(i)) > tiny(0.)) print*,'ERROR: redshift different between files in multiple-file read'
-       else
-          if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
-       endif
+       if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
        if (sum(Nall) /= ntotall) then
           print*,' ERROR: Nall differs between files'
           goterrors = .true.
@@ -563,7 +547,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
              dat(:,ih,i) = 0.
           end where
           print "(a,i10,a,f5.2,a)", &
-            ' SMOOTHING LENGTHS SET for ',j-1-index1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
+            ' SMOOTHING LENGTHS SET for ',index2-index1+1,' DM/star particles using h = ',hfact,'*(m/rho)**(1/3)'
        endif
        hsoft = 1.0 ! just so dark matter rendering is allowed in set_labels_gadget_hdf5 routine
     endif
@@ -705,7 +689,7 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
  use, intrinsic :: iso_c_binding, only:c_int,c_double
  use particle_data,  only:dat,iamtype
  use settings_data,  only:debugmode
- use labels,         only:label,ih
+ use labels,         only:label
  use system_utils,   only:lenvironment
  integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
  real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
@@ -782,14 +766,14 @@ end subroutine read_gadgethdf5_data_fromc
 
 subroutine set_labels_gadget_hdf5
  use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
-                          ih,irho,ipr,iutherm,iBfirst,idivB,iax,make_vector_label
+                          ih,irho,ipr,iutherm,iBfirst,iax,make_vector_label
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat,debugmode
+ use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings,debugmode
  use geometry,       only:labelcoord
  use system_utils,   only:envlist,ienvironment
  use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel,arepo
  use asciiutils,     only:lcase
- integer :: i,j,icol,irank
+ integer :: i,icol,irank
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget_hdf5 ***'
