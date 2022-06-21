@@ -63,7 +63,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol,use_type)
  lim(ifromcol:itocol,2) = -huge(lim)
  do i=ifromstep,itostep
     ntoti = sum(npartoftype(:,i))
-    if (allocated(iamtype) .and. present(use_type)) then
+    if (allocated(iamtype) .and. present(use_type) .and. size(iamtype(:,1)) > 1) then
        do j=ifromcol,itocoli
           do k=1,ntoti
              if (use_type(iamtype(k,i))) then
