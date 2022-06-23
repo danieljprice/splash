@@ -15,9 +15,7 @@ Mac OS via homebrew (recommended)::
   brew tap danieljprice/all
   brew install splash
   
-You will also need to install Xquartz so that the X-windows server launches automatically:
-
-  https://www.xquartz.org
+You will also need to install `Xquartz <https://www.xquartz.org>`_ so that the X-windows server launches automatically.
 
 Mac OS via Macports::
 
