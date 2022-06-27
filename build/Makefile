@@ -365,11 +365,14 @@ READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
 
 RUN_CHECKS=
 
+LDFLAGSLIB=
+
 # link with hdf5 libraries
 ifeq ($(HDF5),yes)
   READFILES+=$(READFILES_HDF5)
   CFLAGS+=$(HDF5INCLUDE)
   LDFLAGS+=$(HDF5LIBS)
+  LDFLAGSLIB+=$(HDF5LIBS)
   FPPFLAGS+=-DHDF5
   RUN_CHECKS+=checkhdf5
 endif
@@ -378,6 +381,7 @@ endif
 ifeq ($(FITS),yes)
   READFILES+= $(READFILES_FITS)
   LDFLAGS+=$(FITSLIBS)
+  LDFLAGSLIB+=$(FITSLIBS)
   FPPFLAGS+=-DFITS
   RUN_CHECKS+=checkfits
 endif
@@ -417,8 +421,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
-         options_limits.f90 options_page.f90 imageutils.f90 lightcurve.f90 $(READFILES) \
-				 read_data.F90 \
+         options_limits.f90 options_page.f90 imageutils.f90 \
+         lightcurve_utils.f90 lightcurve.f90 \
+         $(READFILES) read_data.F90 \
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
@@ -503,9 +508,9 @@ SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolatio
       interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
-      libsplash.f90 libread.f90
+      libsplash.f90 libutils.f90
 OBJLIB1=${SRCLIB:.f90=.o}
-OBJLIB=${OBJECTS:splash.o=} libread.o
+OBJLIB=${OBJLIB1} libread.o
 
 .PHONY: libsplash
 libsplash: lib
@@ -531,26 +536,28 @@ libexact: checksystem $(OBJLIBEXACTALL)
 
 
 #
-# libexact: read library
+# libread: data read library
 #
 SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
-            geomutils.f90 partutils.f90 calc_quantities.f90 \
-            $(READFILES) read_data.F90 \
+            sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
+            utils_vectors.f90 lightcurve_utils.f90 $(READFILES) read_data.F90 \
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
-OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
+OBJLIBREAD1=${OBJLIBREAD:.F90=.o}
+OBJLIBREADALL=${OBJLIBREAD1:.c=.o}
 
 .PHONY: libread
 libread: checksystem $(OBJLIBREADALL)
-		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so $(LDFLAGSLIB)
 
 #
 # splash image manipulation utilities
 #
-SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
-              interpolate3D.f90 imageutils.f90 write_fits.f90 denoise.f90
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+              interpolation.f90 interpolate2D.f90 interpolate3D.f90 \
+              imageutils.f90 write_fits.f90 denoise.f90
 
 OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o)
 

@@ -29,6 +29,9 @@ Otherwise, you can send an email to the `mailing list <mailto:splash-users@googl
 Acknowledgements
 ================
 
+Josh Calcino contributed significantly to development of the unified 
+splash binary used in version 3. James Wetter led original development
+of the giza backend used in version 2 onwards.
 Several of the routines were developed from ideas used by Matthew Bate
 and splash has been refined by many useful discussions with Matthew. The
 polytrope exact solution is from a routine by Joe Monaghan. I am
@@ -93,6 +96,7 @@ helped to improve splash including, but not limited to:
  Alex Pettitt,
  Cody Raskin,
  John Regan,
+ Sahl Rowther,
  Dave Rundle,
  Alison Sills,
  Kevin Sooley,

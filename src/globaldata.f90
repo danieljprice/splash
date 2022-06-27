@@ -105,7 +105,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=*), parameter :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2021 Daniel Price and contributors'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2022 Daniel Price and contributors'
 
  public
 
@@ -150,7 +150,7 @@ module settings_data
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
- logical :: idefaults_file_read
+ logical :: idefaults_file_read,enforce_code_units
  logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)

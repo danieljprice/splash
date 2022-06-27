@@ -18,11 +18,11 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'splash'
-copyright = '2004-2021 Daniel Price'
+copyright = '2004-2022 Daniel Price'
 author = 'Daniel Price'
 
 # The full version, including alpha/beta/rc tags
-release = 'v3.3.1'
+release = 'v3.4.0'
 
 # -- General configuration ---------------------------------------------------
 

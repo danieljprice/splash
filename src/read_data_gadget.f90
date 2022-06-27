@@ -32,7 +32,6 @@
 !
 ! --format=2 reads the block-labelled GADGET format
 !   rather than the default format.
-! --usez if set, uses redshift in the legend instead of time
 ! --hsoft
 !   if given a value > 0.0 will assign a
 !   smoothing length to dark matter particles which can then be

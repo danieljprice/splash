@@ -120,6 +120,31 @@ end function is_coord
 
 !--------------------------------------------------------------
 !
+!  query function for whether column is a density
+!  mainly used to decide whether or not to use
+!  mass-weighted interpolation
+!
+!--------------------------------------------------------------
+logical function is_density(icol)
+ integer, intent(in) :: icol
+
+ is_density = .false.
+
+ ! if we match known density columns
+ if (icol==irho .or. icol==irhorestframe) is_density = .true.
+
+ ! if label contains rho or dens
+ if (icol > 0 .and. icol < size(label)) then
+    if (index(label(icol),'rho') > 0) is_density = .true.
+    if (index(label(icol),'dens') > 0) is_density = .true.
+ else
+    is_density = .true.  ! icol = 0 should be true
+ endif
+
+end function is_density
+
+!--------------------------------------------------------------
+!
 !  query function for whether column is a spatial coordinate
 !  returns the location of the third dimension in the
 !  list of columns

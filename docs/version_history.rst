@@ -1,4 +1,63 @@
 
+**3.5.1: (20/06/22)**
+
+- bug fix with autolog limits
+- build failures in libexact and libread fixed and now tested
+- recognise labels on command line e.g. -r density
+- limits option for centred cube (thanks to J. Wurster)
+
+**3.5.0: (17/06/22)**
+
+- bug fix with blank lines in splash.titles
+- bug fix with large line lengths in csv files
+- allow blank labels in csv headers
+- bug fix with display of column labels from ascii/csv files
+- log colour bar by default when using -r flag if more than 3 orders of magnitude range
+
+**3.4.0: (24/03/22)**
+
+- density weighted interpolation now applied automatically to projection plots of quantities that are not densities
+- added flags --codeunits or --code to enforce code units from command line
+- successfully parse csv files where some of the fields are character strings
+
+**3.3.5: (01/03/22)**
+
+- bug fix with disappearing sinks in phantom MPI dumps
+
+**3.3.4: (21/01/22)**
+
+- improved visual appearance of normalised renderings with free boundaries
+- automatically read planet-wake parameters from phantom file headers
+- added --wake=1,3 flag to plot wake from sink particle 3 around star 1
+- bug fix with disappearing sinks in phantom MPI dumps
+- fixed seg fault in fits reader
+
+**3.3.3: (19/11/21)**
+
+- "splash to csv" exports to comma separated variable (.csv) format
+- automatically apply -ev flag for filenames ending in .ev, .mdot or .out
+- improved label recognition from ascii file headers
+- additional divergent colour schemes (thanks to Sahl Rowther)
+- deal with merged sink particles from phantom (thanks to James Wurster)
+- bug fix with units resetting to 1
+- skip blank and comment lines in splash.filenames
+
+**3.3.2: (20/07/21)**
+
+- bug fix with -dev flag
+- silenced unnecessary dust warnings in sphNG read
+- change-of-limits animation sequence works for vector plots
+- automatic recognition of ndspmhd format
+
+**3.3.1: (19/07/21)**
+
+- f/F in interactive mode flips y axis on 2D plots to next column
+- gradual transparency in double rendering rather than sharp cutoff
+- removed S from main menu as now redundant
+- allow longer paths with -dev flag
+- added --xmin,--xmax,--ymin,--ymax flags for manual margin adjustment
+- bug fix with relativistic corrections in splash calc lightcurve
+
 **3.3.0: (20/05/21)**
 
 - bug fix with surface density plot with physical units on

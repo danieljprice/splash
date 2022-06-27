@@ -30,7 +30,7 @@ module readdata
  ! This list is the reason why we really need a standard file format for SPH
  use readdata_sphNG,        only:read_data_sphNG,        set_labels_sphNG,   file_format_is_sphNG
  use readdata_ascii,        only:read_data_ascii,        set_labels_ascii
- use readdata_ndspmhd,      only:read_data_ndspmhd,      set_labels_ndspmhd
+ use readdata_ndspmhd,      only:read_data_ndspmhd,      set_labels_ndspmhd, file_format_is_ndspmhd
  use readdata_gadget,       only:read_data_gadget,       set_labels_gadget,  file_format_is_gadget
  use readdata_VINE,         only:read_data_VINE,         set_labels_VINE
  use readdata_sro,          only:read_data_sro,          set_labels_sro
@@ -485,6 +485,8 @@ subroutine guess_format_from_file_header(filename,ierr)
     call select_data_format('gadget',ierr)
  elseif (index(filename,'.hdf5') > 0) then
     call select_data_format('gadget_hdf5',ierr)
+ elseif (file_format_is_ndspmhd(filename)) then
+    call select_data_format('ndspmhd',ierr)
  endif
 
 end subroutine guess_format_from_file_header

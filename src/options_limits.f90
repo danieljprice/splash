@@ -53,18 +53,18 @@ end subroutine defaults_set_limits
 !----------------------------------------------------------------------
 subroutine submenu_limits(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use settings_data,  only:ndataplots,numplot,ndim,ivegotdata,iCalcQuantities, &
+ use settings_data,  only:ndataplots,numplot,ndim,iCalcQuantities, &
                           DataIsBuffered,itracktype,itrackoffset,ntypes
  use calcquantities, only:calc_quantities
  use multiplot,      only:itrans
  use prompting,      only:prompt,print_logical
- use limits,         only:lim,set_limits,range,rangeset,anyrangeset,print_rangeinfo
+ use limits,         only:lim,range,rangeset,anyrangeset,print_rangeinfo
  use labels,         only:label,ix,irad,is_coord,labeltype
  use transforms,     only:ntrans,transform_label
  integer, intent(in) :: ichoose
  integer             :: iaction,ipick,i,index,ierr
  integer             :: itracktypeprev,itrackoffsetprev
- character(len=120)  :: transprompt
+ character(len=120)  :: transprompt,fmtstring
  character(len=12)   :: string,string2
  character(len=20)   :: pstring,pstring2
 
@@ -130,8 +130,24 @@ subroutine submenu_limits(ichoose)
     do while (ipick > 0)
        ipick = 0
        !write(*,*)
-       call prompt('Enter column number to set limits (0=quit)',ipick,0,numplot)
-       if (ipick > 0) then
+       if (ndim >= 1) then
+          write(fmtstring,'(a,i3,a)') 'Enter column number to set limits (0=quit;',numplot+1,'=centred cube in xyz)'
+          call prompt(trim(fmtstring),ipick,0,numplot+1)
+       else
+          write(fmtstring,'(a,i3,a)') 'Enter column number to set limits (0=quit)'
+          call prompt(trim(fmtstring),ipick,0,numplot)
+       endif
+       if (ipick==numplot+1 .and. ndim >= 1) then
+          call prompt(trim(label(ix(1)))//' max ',lim(ix(1),2))
+          lim(ix(1),1) = -lim(ix(1),2)
+          print*,'>> '//trim(label(ix(1)))//' limits set (min,max) = ',lim(ix(1),:)
+          if (ndim >= 2) then
+             lim(ix(2:ndim),1) = lim(ix(1),1)
+             lim(ix(2:ndim),2) = lim(ix(1),2)
+             print*,'>> '//trim(label(ix(2)))//' limits set (min,max) = ',lim(ix(2),:)
+             if (ndim >= 3) print*,'>> '//trim(label(ix(3)))//' limits set (min,max) = ',lim(ix(3),:)
+          endif
+       elseif (ipick > 0) then
           call prompt(trim(label(ipick))//' min ',lim(ipick,1))
           call prompt(trim(label(ipick))//' max ',lim(ipick,2))
           print*,'>> '//trim(label(ipick))//' limits set (min,max) = ',lim(ipick,1),lim(ipick,2)
@@ -142,7 +158,6 @@ subroutine submenu_limits(ichoose)
           endif
        endif
     enddo
-    return
 !------------------------------------------------------------------------
  case(3)
 
@@ -219,7 +234,6 @@ subroutine submenu_limits(ichoose)
        endif
        write(*,*)
     enddo
-    return
 !------------------------------------------------------------------------
  case(5)
 
@@ -247,7 +261,6 @@ subroutine submenu_limits(ichoose)
           endif
        endif
     enddo
-    return
 
  end select
 

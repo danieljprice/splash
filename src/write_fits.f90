@@ -219,9 +219,9 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  if (present(hdr)) call read_fits_head(iunit,hdr,ierr)
 
  call ftgidm(iunit,ndim,ierr) ! get_img_dim
+ if (ndim>=3) ndim = 3
  call ftgisz(iunit,3,naxes(1:ndim),ierr)
  if (ndim==2) naxes(3) = 1
- if (ndim>=3) ndim = 3
 
  !if (present(hdr)) bitpix = abs(get_from_header('BITPIX',hdr,ierr))
 
@@ -328,7 +328,7 @@ end subroutine read_fits_cube
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
 
-  img32 = image  ! copy and allocate
+  img32 = real(image,kind=real32)  ! copy and allocate
   if (present(hdr)) then
      call write_fits_image(filename,img32,naxes,ierr,hdr)
   else
@@ -393,7 +393,7 @@ subroutine write_fits_cube64(filename,image,naxes,ierr,hdr)
  integer,           intent(out) :: ierr
  real(kind=real32), allocatable :: img32(:,:,:)
 
- img32 = image  ! copy and allocate
+ img32 = real(image,kind=real32)  ! copy and allocate
  if (present(hdr)) then
     call write_fits_cube(filename,img32,naxes,ierr,hdr)
  else

@@ -14,15 +14,15 @@ file(s) on the command line, e.g.
 
    splash myrun*.dat
 
-| where splash should be replaced with `ssplash`, `gsplash` etc.
+| where splash should be replaced with `splash -f gadget`, `splash -f magma` etc.
   depending on the data format.
 | After a successful data read, the menu should appear as something like
   the following (the example given is for a “minidump” from Stephan
-  Rosswog’s SPH code):
+  Rosswog’s SPH code, MAGMA):
 
 ::
 
-   dprice$ rsplash minidump.00001
+   dprice$ splash -magma minidump.00001
 
 ::
 
@@ -190,6 +190,14 @@ refer to coordinates. For example
    (vector plot) (0=none, 8=B) ([0:8], default=0):0
    Graphics device/type (? to see list, default /xwin): /xw
 
+You can produce the same graph without answering prompts using::
+
+   splash -y 2 -x 1 -r 5 -dev /xw minidump.00001
+
+or, since the other options are default anyway, simply::
+
+   splash -r 5 minidump.00001
+
 Notice that in this case that options appeared for rendered and vector
 plots. Our choice of ``5`` at the (render) prompt corresponds to column 5,
 which in this case is the density, producing the plot shown in the
@@ -214,7 +222,12 @@ screenshot in :numref:`fig:renderplot`.
 Cross section
 --------------
 
-To plot a cross section slice instead of a projection in 3D, type ``x`` at
+To plot a cross section slice instead of a projection in 3D, simply
+use ``--xsec`` flag on the command line::
+
+  splash --xsec -r 5 minidump.00001
+
+Or, type ``x`` at
 the main menu to open the :ref:`sec:menu-x` and
 choose option ``1) switch between cross section and projection``. Then
 re-plot the rendered plot again (exactly as in the previous example
