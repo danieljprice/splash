@@ -10,10 +10,12 @@ Pre-packaged builds of splash exist for most operating systems.
 
 Stable version
 ~~~~~~~~~~~~~~
-Mac OS via homebrew::
+Mac OS via homebrew (recommended)::
 
   brew tap danieljprice/all
   brew install splash
+  
+You will also need to install `Xquartz <https://www.xquartz.org>`_ so that the X-windows server launches automatically.
 
 Mac OS via Macports::
 
