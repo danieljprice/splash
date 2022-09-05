@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,idivvxcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: itempcol = 0
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
@@ -1428,6 +1428,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  iunit = 15
  ipmass = 4
  idivvcol = 0
+ idivvxcol = 0
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
@@ -1724,7 +1725,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           ncolstep = ncolstep + 1
           inquire(file=trim(dumpfile)//'.divv',exist=iexist)
           if (iexist) then
-             idivvcol   = ncolstep + 1
+             idivvxcol   = ncolstep + 1
              icurlvxcol = ncolstep + 2
              icurlvycol = ncolstep + 3
              icurlvzcol = ncolstep + 4
@@ -2138,13 +2139,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !
  !--read .divv file for phantom dumps
  !
- if (phantomdump .and. idivvcol /= 0 .and. any(required(idivvcol:icurlvzcol))) then
+ if (phantomdump .and. idivvxcol /= 0 .and. any(required(idivvxcol:icurlvzcol))) then
     print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
     open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR opening '//trim(dumpfile)//'.divv'
     else
-       read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
+       read(66,iostat=ierr) dat(1:ntotal,idivvxcol,j)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading divv from file'
        if (any(required(icurlvxcol:icurlvzcol))) then
           read(66,iostat=ierr) dat(1:ntotal,icurlvxcol,j)
@@ -2526,6 +2527,10 @@ subroutine set_labels_sphNG
           idivvcol = i
           units(i) = 1./utime
           unitslabel(i) = ' [1/s]'
+       case('divvx')
+          idivvxcol = i
+          units(i) = 1./utime
+          unitslabel(i) = ' [1/s]'
        case('poten')
           units(i) = (udist/utime)**2
           unitslabel(i) = ' [erg/g]'
@@ -2630,6 +2635,7 @@ subroutine set_labels_sphNG
  if (ih > 0) label(ih) = 'h       '
  if (ipmass > 0) label(ipmass) = 'particle mass'
  if (idivB > 0) label(idivB) = 'div B'
+ if (idivvxcol > 0) label(idivvxcol) = 'div vx'
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itemp > 0) then
     label(itemp) = 'temperature'
