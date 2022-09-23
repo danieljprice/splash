@@ -63,7 +63,7 @@ subroutine adjust_data_codeunits
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
  use settings_data,   only:ncolumns,ndimV,ndim,debugmode,ntypes,iverbose,UseFakeDustParticles,UseFastRender,icoords
  use particle_data,   only:dat,npartoftype,iamtype
- use filenames,       only:ifileopen,nstepsinfile
+ use filenames,       only:ifileopen,nstepsinfile,have_origin,have_sinkpos,xyz_origin,isinkid
  use geometry,        only:labelcoord
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
  real :: hmin,dphi,domega,period
@@ -140,6 +140,7 @@ subroutine adjust_data_codeunits
     !--can specify either just "true" for sink #1, or specify a number for a particular sink
     centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK') .or. lenvironment('SPLASH_CENTER_ON_SINK')
     isink        = max(ienvironment('SPLASH_CENTRE_ON_SINK'),ienvironment('SPLASH_CENTER_ON_SINK'))
+    if (have_sinkpos) isink = isinkid(ifileopen)
     if (isink > 0 .or. centreonsink) then
        if (isink==0) isink = 1
        itype = get_sink_type(ntypes)
@@ -147,7 +148,6 @@ subroutine adjust_data_codeunits
           if (all(npartoftype(itype,:) < isink)) then
              print "(a,i10,a)",' ERROR: SPLASH_CENTRE_ON_SINK = ',isink,' but not enough sink particles'
           else
-             if (iverbose >= 1) print*
              if (isink < 10) then
                 print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              else
@@ -178,6 +178,17 @@ subroutine adjust_data_codeunits
                           '        corresponding to sink particles'
        endif
     endif
+
+    !
+    !--environment variable to recentre each file on a given origin
+    !  This will not produce the intended results if any other shifting has occurred
+    if (have_origin) then
+       if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: manual origin =',xyz_origin(1:3,ndim)
+       do j=1,nstepsinfile(ifileopen)
+          call shift_positions(dat(:,:,j),ntot,ndim,xyz_origin(1:3,ifileopen))
+       enddo
+    endif
+
     !
     !--environment variable setting to subtract a mean velocity
     !
