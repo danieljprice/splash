@@ -1415,7 +1415,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
+ real :: hfact,omega
+ real(doub_prec) :: Xfrac,Yfrac
+ real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
  logical :: skip_corrupted_block_3,get_temperature,get_ionfrac,need_to_allocate_iphase
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
@@ -2177,7 +2179,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
      .and. any(required(iHIIcol:iHeIIIcol))) then
     do i=1,ntotal
        call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
-                                Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
+                                real(Xfrac),real(Yfrac),xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
        dat(i,iHIIcol,j)=xHIIi
        dat(i,iHeIIcol,j)=xHeIIi
        dat(i,iHeIIIcol,j)=xHeIIIi
