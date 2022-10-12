@@ -70,12 +70,13 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
                             get_floats_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
+ use system_utils,     only:get_command_option
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
  integer               :: i,j,k,l,n,ierr,nextra,naxes(4)
- integer               :: ncolstep,npixels,nsteps_to_read
+ integer               :: ncolstep,npixels,nsteps_to_read,ihdu
  logical               :: iexist,reallocate
  real(kind=4), dimension(:,:,:), allocatable :: image
  character(len=:), allocatable :: fitsheader(:)
@@ -113,6 +114,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  ndim  = 2
  ndimV = 2
  nextra = 0
+ ihdu = nint(get_command_option('hdu'))
 !
 !--read data from snapshots
 !
@@ -121,7 +123,11 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader)
+ if (ihdu > 0) then
+    call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader,hdu=ihdu)
+ else
+    call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader)
+ endif
  if (ierr /= 0) then
     print*,'ERROR: '//trim(fits_error(ierr))
     if (allocated(image)) deallocate(image)
