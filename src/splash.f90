@@ -51,6 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.6.0   : (xx/xx/22)
+!             splash calc plus and splash calc minus for adding/subtracting snapshots
+!             added --origin=6245 flag to centre the origin on particle 6245
+!             added --hdu=1 flag to read from a particular hdu in a fits file
 !     3.5.1   : (20/06/22)
 !             bug fix with autolog limits; build failures in libexact and libread fixed and now tested;
 !             recognise labels on command line e.g. -r density;
@@ -536,7 +540,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.5.1 [20th June 2022]'
+ character(len=*), parameter :: version = 'v3.6.0 [12th Oct 2022]'
 
  !
  ! initialise some basic code variables
@@ -1087,6 +1091,9 @@ subroutine print_usage(quit)
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --codeunits       : enforce code units (also --code)'
+ print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --track=666       : track particle number 666'
+ print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
