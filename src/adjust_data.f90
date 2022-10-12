@@ -88,7 +88,7 @@ subroutine adjust_data_codeunits
        where (dat(:,ih,:) < hmin .and. dat(:,ih,:) > 0.)
           dat(:,ih,:) = hmin
        end where
-       print "(a)",' >> Recommended to switch accelerated rendering ON'
+       print "(a)",' >> Switching accelerated rendering ON'
        UseFastRender = .true.
     endif
  endif

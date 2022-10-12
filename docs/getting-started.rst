@@ -14,7 +14,7 @@ Mac OS via homebrew (recommended)::
 
   brew tap danieljprice/all
   brew install splash
-  
+
 You will also need to install `Xquartz <https://www.xquartz.org>`_ so that the X-windows server launches automatically.
 
 Mac OS via Macports::
@@ -196,7 +196,7 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash`` command           | Format Read                | ``read_data`` File            |  Comments                                                                                                                                                                                                                                         |
    +==============================+============================+===============================+===================================================================================================================================================================================================================================================+
-   | ``splash -gadget <file>``    | ascii                      | ``read_data_asci.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
+   | ``splash -ascii <file>``     | ascii                      | ``read_data_ascii.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable  options.                                                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -384,7 +384,7 @@ Command line flags (or environment variables) that affect all data reads are:
 |                      |                       | used if there is none in the current dir. e.g.  |
 |                      |                       | ``--defaults=$HOME/splash.defaults``            |
 +----------------------+-----------------------+-------------------------------------------------+
-| ---kernel            | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
+| ---kernel='quintic'  | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
 |                      |                       | interpolations (e.g. ``cubic`` or ``quintic``). |
 |                      |                       | Can also be changed in the :ref:`sec:menu-r`.   |
 +----------------------+-----------------------+-------------------------------------------------+
@@ -399,6 +399,12 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---corotate          | SPLASH_COROTATE       | plot in corotating frame based on locations of  |
 |                      |                       | 2 sink particles (e.g. ``--corotate=1,3``)      |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---origin=666        | SPLASH_ORIGIN         | recentre the coordinate origin and velocities   |
+|                      |                       | to the selected particle (e.g. particle 666)    |
++----------------------+-----------------------+-------------------------------------------------+
+| ---track=4789        | SPLASH_TRACK          | set limits of all quantities relative to those  |
+|                      |                       | of the selected particle (e.g. particle 4789)   |
++----------------------+-----------------------+-------------------------------------------------+
 | ---vzero=1.0,1.0,1.0 | SPLASH_VZERO          | subtract reference velocity from all particles  |
 |                      |                       | (velocity should be specified in code units)    |
 +----------------------+-----------------------+-------------------------------------------------+
@@ -408,7 +414,7 @@ Command line flags (or environment variables) that affect all data reads are:
 |                      |                       | resolution of SPH simulations to match          |
 |                      |                       | observational resolution. If this variable is   |
 |                      |                       | set the “accelerated rendering" option in the   |
-|                      |                       | :ref:`sec:menu-r` is also turned on as otherwise|
+|                      |                       | :ref:`sec:menu-r` is also turned on, otherwise  |
 |                      |                       | slow rendering can result.                      |
 +----------------------+-----------------------+-------------------------------------------------+
 | ---xmin=0.1          | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
@@ -564,8 +570,8 @@ For the VINE read (``splash -vine``) the options are:
 |                                   | works).                           |
 +-----------------------------------+-----------------------------------+
 
-sphNG data read
-~~~~~~~~~~~~~~~~
+Phantom/sphNG data read
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 
