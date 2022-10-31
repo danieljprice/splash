@@ -293,7 +293,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--set h related quantities
     !
@@ -603,7 +603,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--set kernel related quantities
     !
@@ -790,7 +790,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--skip particles with utherm < uthermcutoff
     !
