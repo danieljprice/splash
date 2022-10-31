@@ -706,7 +706,8 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
  endif
  nmax = size(dat(:,1,1))
 
- useids = lenvironment('GSPLASH_USE_IDS') .or. lenvironment('GSPLASH_CHECKIDS')
+ useids = .not.lenvironment('GSPLASH_FIXID')
+ !useids = lenvironment('GSPLASH_USE_IDS') .or. lenvironment('GSPLASH_CHECKIDS')
  if (all(id <= 0) .or. size(iamtype(:,1)) <= 1) useids = .false.
  if (debugmode) print*,'DEBUG: using particle IDs = ',useids,' max = ',nmax
 
