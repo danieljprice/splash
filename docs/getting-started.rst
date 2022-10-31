@@ -157,20 +157,17 @@ from formatted (ascii) output.
 
 A standard ``make`` will create a binary which supports the file formats listed in
 :ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports).
-All data formats in the splash repository that do not
-have an additional dependencies (e.g. ``HDF5``) will be
+All data formats in the splash repository that do not have additional dependencies (e.g. ``HDF5``) will be
 supported in the splash binary as of version ``3.0.0``.
-This means that the user needs to specify the data type
-they are reading as a command line option. For example,
+
+In many cases, the format of the file can be successfully guessed from the file header, so you can simply type::
+
+	splash disc_00000
+
+Otherwise you can specify the data type you are reading using the ``-f`` or ``--format`` flag. For example,
 the following will read a phantom dumpfile::
 
 	splash --format phantom disc_00000
-
-In some cases, the format of the file can be inferred if
-the the file has a known suffix. For example, the above line can be changed if the
-suffixe of the file is recognised::
-
-	splash disc_00000.pb
 
 This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
 previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent::
@@ -225,9 +222,9 @@ Below is a list of the supported data formats that require ``HDF5``.
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash`` Command             | Read Format            | ``read_data`` File            |    Comments                                                                             |
    +================================+========================+===============================+=========================================================================================+
-   | ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget    code.                                              |
+   | ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget code (automatically recognised)                       |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-   | ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE    framework.                                          |
+   | ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE framework.                                             |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
@@ -241,8 +238,7 @@ For example::
 
 	splash -gadget dump_000.h5
 
-will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format,
-and will automatically select the correct ``read_data`` routine.
+will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format, and will automatically select the correct ``read_data`` routine.
 
 Below is a list of other formats supported, but have additional library requirements.
 
@@ -479,7 +475,7 @@ with ASPLASH, e.g.::
 GADGET data read
 ~~~~~~~~~~~~~~~~~
 
-For the GADGET read (``splash -f gadget``) the options are:
+For the GADGET read (``splash -f gadget`` or just ``splash``) the options are:
 
 +-----------------------------------+-----------------------------------+
 | ``--format=2``                    | if set = 2, reads the block       |
