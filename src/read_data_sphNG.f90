@@ -2560,8 +2560,8 @@ subroutine set_labels_sphNG
           units(i) = 1./utime
           unitslabel(i) = ' [1/s]'
        case('poten')
-          units(i) = (udist/utime)**2
-          unitslabel(i) = ' [erg/g]'
+          units(i) = umass*(udist/utime)**2
+          unitslabel(i) = ' [erg]'
        case('dt')
           units(i) = utime
           unitslabel(i) = ' [s]'
