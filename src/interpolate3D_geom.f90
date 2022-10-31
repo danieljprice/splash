@@ -168,7 +168,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_parts
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
 
     hi = hh(i)
     if (hi <= 0.) then
@@ -361,7 +361,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_parts
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
 
     hi = hh(i)
     if (hi <= 0.) then

@@ -203,7 +203,7 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--set h related quantities
     !
@@ -395,7 +395,8 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_parts
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
+
     !
     !--set h related quantities
     !
