@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -145,7 +145,7 @@ subroutine adjust_data_codeunits
        itype = get_sink_type(ntypes)
        if (itype > 0) then
           if (all(npartoftype(itype,:) < isink)) then
-             print "(a,i10,a)",' ERROR: SPLASH_CENTRE_ON_SINK = ',isink,' but not enough sink particles'
+             print "(a,i10,a)",' ERROR: --sink = ',isink,' but not enough sink particles'
           else
              if (iverbose >= 1) print*
              if (isink < 10) then
