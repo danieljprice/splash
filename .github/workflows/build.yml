@@ -42,3 +42,15 @@ jobs:
 
     - name: compile libread
       run: make SYSTEM=gfortran libread
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash in single precision
+      run: make SYSTEM=gfortran DOUBLEPRECISION=no withgiza
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash with debug flags
+      run: make SYSTEM=gfortran DEBUG=yes withgiza

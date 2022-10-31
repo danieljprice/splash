@@ -89,6 +89,10 @@ jobs:
         asset_name: ${{ steps.get_version.outputs.tarfile }}
         asset_content_type: application/gzip
 
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
     - name: Bump Brew
       env:
         HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.BREW_TOKEN_SPLASH }}
