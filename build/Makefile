@@ -413,7 +413,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          write_griddata.f90 write_sphdata.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
-         exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
+         exact_fromfile.f90 exact_Cshock.f90 exact_coolingshock.f90 exact_mhdshock.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
@@ -525,7 +525,7 @@ SRCLIBEXACT= plotlib_mock.f90 libutils.f90 exact_shock.f90 exact_shock_sr.f90 ex
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
 	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
-	exact_Cshock.f90 exact_planetdisc.f90 exact_bondi.f90 \
+	exact_Cshock.f90 exact_coolingshock.f90 exact_planetdisc.f90 exact_bondi.f90 \
 	libexact.f90
 OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}

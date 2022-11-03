@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -274,7 +274,7 @@ subroutine submenu_exact(iexact)
            ' 6) toy star ',/,             &
            ' 7) gresho vortex ',/,          &
            ' 8) mhd shock tubes (tabulated) ',/,  &
-           ' 9) h vs rho ',/, &
+           ' 9) cooling shock ',/, &
            '10) Plummer/Hernquist spheres ',/, &
            '11) torus ',/, &
            '12) ring spreading ',/, &
@@ -517,7 +517,21 @@ subroutine submenu_exact(iexact)
     call prompt('enter solution to plot ',ishk,1,7)
     call prompt('enter initial x position of shock ',xshock)
  case(9)
-    call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
+    !
+    !--read shock parameters from the .shk file
+    !
+    call read_exactparams(iexact,trim(rootname(1)),ierr)
+    if (ierr /= 0) then
+       call prompt('enter initial x position of shock',xshock)
+       call prompt('enter background density   ',rho_L,0.0)
+       call prompt('enter background pressure  ',pr_L,0.0)
+       call prompt('enter injection velocity  ',v_L)
+       rho_R = rho_L
+       pr_R = pr_L
+       v_R = -v_L
+    endif
+    call prompt('enter cooling rate Lambda',lambda)
+    !call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
  case(10)
     print 20
 20  format(' 1) Plummer sphere  [ rho = 3M r_s**2 /(4 pi (r**2 + r_s**2)**5/2) ]',/, &
@@ -774,7 +788,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
     endif
- case(3,13)
+ case(3,9,13)
     !
     !--shock tube parameters from .shk file
     !
@@ -1075,6 +1089,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use rochelobe,       only:exact_rochelobe
  use gresho,          only:exact_gresho
  use Cshock,          only:exact_Cshock
+ use coolingshock,    only:exact_coolingshock
  use planetdisc,      only:exact_planetdisc
  use bondi,           only:exact_bondi
  use transforms,      only:transform,transform_inverse
@@ -1382,9 +1397,12 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
        endif
     endif
  case(9)
+    call exact_coolingshock(1,time,gamma,xshock,rho_L,v_L,pr_L,lambda,xexact,yexact,ierr)
+
+    if (.false.) then
     !--h = (1/rho)^(1/ndim)
-    if (((iploty==ih).and.(iplotx==irho)) .or. &
-           ((iplotx==ih).and.(iploty==irho))) then
+    !if (((iploty==ih).and.(iplotx==irho)) .or. &
+   !        ((iplotx==ih).and.(iploty==irho))) then
        if (iplotx==ih) then
           call exact_rhoh(2,ndim,hfact,pmassmin,xexact,yexact,ierr)
        else
