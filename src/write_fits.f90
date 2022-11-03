@@ -32,6 +32,7 @@ module readwrite_fits
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
  public :: get_floats_from_fits_header,get_from_header
+ public :: append_to_fits_cube
 
  interface write_fits_image
   module procedure write_fits_image,write_fits_image64
@@ -48,6 +49,10 @@ module readwrite_fits
  interface read_fits_cube
   module procedure read_fits_cube,read_fits_cube64
  end interface read_fits_cube
+
+ interface append_to_fits_cube
+  module procedure append_to_fits_cube
+ end interface append_to_fits_cube
 
  private
 
@@ -179,6 +184,7 @@ subroutine write_fits_head(iunit,hdr,ierr)
  ierr = 0
  morekeys = size(hdr)
  call fthdef(iunit,morekeys,ierr)
+ if (ierr /= 0) return
  do i=1,size(hdr)
     select case(hdr(i)(1:6))
     case('SIMPLE','BITPIX','NAXIS ','NAXIS1','NAXIS2','NAXIS3','NAXIS4','EXTEND')
@@ -194,13 +200,14 @@ end subroutine write_fits_head
 ! subroutine to read spectral cube from FITS file
 ! using cfitsio library
 !---------------------------------------------------
-subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
+subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:,:)
  character(len=:), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
+ integer, intent(in), optional :: hdu ! specify which hdu to read
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group
+ integer :: firstpix,nullval,group,hdutype
  logical :: anynull
  integer :: ndim
  !
@@ -214,6 +221,17 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
  if (ierr /= 0) then
     ierr = -1
     return
+ endif
+ !
+ ! switch to specified hdu, if argument is given
+ !
+ if (present(hdu)) then
+    print*,' reading hdu ',hdu
+    call ftmahd(iunit,hdu,hdutype,ierr)   ! hdutype==0
+    if (ierr /= 0 .or. hdutype /= 0) then
+       ierr = -2
+       return
+    endif
  endif
 
  if (present(hdr)) call read_fits_head(iunit,hdr,ierr)
@@ -265,6 +283,8 @@ end subroutine read_fits_cube
      fits_error = 'could not allocate memory'
   case(1)
      fits_error = 'no pixels found'
+  case(-2)
+     fits_error = 'could not open specified hdu in fits file'
   case(-1)
      fits_error = 'could not open fits file'
   case default
@@ -356,8 +376,13 @@ end subroutine read_fits_cube
 
    !  Create the new empty FITS file.
    blocksize=1
-   print "(a)",' writing '//trim(filename)
    call ftinit(iunit,filename,blocksize,ierr)
+   if (ierr /= 0) then
+      print "(a)",' ERROR: '//trim(filename)//' already exists or is not writeable'
+      return
+   else
+      print "(a)",' writing '//trim(filename)
+   endif
 
    !  Initialize parameters about the FITS image
    simple=.true.
@@ -381,6 +406,64 @@ end subroutine read_fits_cube
    call ftfiou(iunit, ierr)
 
  end subroutine write_fits_cube
+
+
+!------------------------------------------------
+! Writing new fits file
+!------------------------------------------------
+ subroutine append_to_fits_cube(filename,image,naxes,ierr,hdr)
+   character(len=*), intent(in) :: filename
+   integer, intent(in)  :: naxes(3)
+   real(kind=real32), intent(in) :: image(naxes(1),naxes(2),naxes(3))
+   integer, intent(out) :: ierr
+   character(len=80), intent(in), optional :: hdr(:)
+   integer :: iunit,blocksize,group,firstpixel,bitpix,npixels,ireadwrite
+   logical :: simple,extend
+
+   !  Get an unused Logical Unit Number to use to open the FITS file.
+   ierr = 0
+   call ftgiou(iunit,ierr)
+
+   !  Open the FITS file for read/write
+   blocksize=1
+   ireadwrite=1
+   call ftopen(iunit,filename,ireadwrite,blocksize,ierr)
+   if (ierr /= 0) then
+      print "(a)",' ERROR: '//trim(filename)//' does not exist or is not read/writeable'
+      return
+   else
+      print "(a)",' appending to '//trim(filename)
+   endif
+
+   !--create new hdu in the fits file
+   call ftcrhd(iunit,ierr)
+   if (ierr /= 0) then
+      print "(a)",'ERROR creating new hdu in '//trim(filename)
+      return
+   endif
+
+   !  Initialize parameters about the FITS image
+   simple=.true.
+   ! data size
+   bitpix=-32
+   extend=.true.
+
+   !  Write the required header keywords.
+   call ftphpr(iunit,simple,bitpix,3,naxes,0,1,extend,ierr)
+   !  Write additional header keywords, if present
+   if (present(hdr)) call write_fits_head(iunit,hdr,ierr)
+
+   group=1
+   firstpixel=1
+   npixels = product(naxes)
+   ! write as real*4
+   call ftppre(iunit,group,firstpixel,npixels,image,ierr)
+
+   !  Close the file and free the unit number
+   call ftclos(iunit, ierr)
+   call ftfiou(iunit, ierr)
+
+ end subroutine append_to_fits_cube
 
 !-------------------------------------------------------------
 ! Writing new fits file (convert from double precision input)

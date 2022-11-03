@@ -56,6 +56,13 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.6.0   : (31/10/22)
+!             skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending);
+!             splash calc plus and splash calc minus for adding/subtracting snapshots;
+!             added --origin=6245 flag to centre the origin on particle 6245;
+!             added --hdu=1 flag to read from a particular hdu in a fits file;
+!             use wcs coordinates / arcseconds for fits images if present in header;
+!             option --dense to reset to densest clump in phantom/sphNG data read (thanks to J. Wurster)
 !     3.5.1   : (20/06/22)
 !             bug fix with autolog limits; build failures in libexact and libread fixed and now tested;
 !             recognise labels on command line e.g. -r density;
@@ -523,7 +530,7 @@ program splash
  use timestepping,       only:timestep_loop
  use settings_page,      only:interactive,nomenu,xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  use settings_part,      only:initialise_coord_transforms
- use settings_render,    only:icolours,rgbfile
+ use settings_render,    only:icolours,rgbfile,npix
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
                               irotate,anglex,angley,anglez
  use settings_limits,    only:get_itrackpart
@@ -541,7 +548,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [20th June 2022]'
+ character(len=*), parameter :: version = 'v4.0.0 [31st Oct 2022]'
 
  !
  ! initialise some basic code variables
@@ -807,6 +814,9 @@ program splash
  if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
     anglez = get_command_option('anglez',default=anglez)
     irotate = .true.
+ endif
+ if (get_command_flag('npix')) then  ! e.g. --npix=128
+    npix = get_command_option('npix',default=real(npix))
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',string)
@@ -1091,6 +1101,9 @@ subroutine print_usage(quit)
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --codeunits       : enforce code units (also --code)'
+ print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --track=666       : track particle number 666'
+ print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

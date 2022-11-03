@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
- integer :: istartmhd,istartrt,nmhd,idivvcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,idivvxcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: itempcol = 0
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
@@ -1397,6 +1397,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
+ integer :: icentre
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
@@ -1414,8 +1415,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
- logical :: skip_corrupted_block_3,get_temperature,get_ionfrac,need_to_allocate_iphase
+ real :: hfact,omega
+ real(doub_prec) :: Xfrac,Yfrac
+ real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
+ logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_ionfrac,need_to_allocate_iphase
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1428,6 +1431,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  iunit = 15
  ipmass = 4
  idivvcol = 0
+ idivvxcol = 0
  icurlvxcol = 0
  icurlvycol = 0
  icurlvzcol = 0
@@ -1468,13 +1472,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  nstepsread = 0
  doubleprec = .true.
  get_temperature = lenvironment("SPLASH_GET_TEMP")
+ get_kappa = lenvironment("SPLASH_GET_KAPPA")
  get_ionfrac = lenvironment("SPLASH_GET_ION")
- if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
+ if ((get_temperature .or. get_kappa) .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
     required(irhorestframe) = .true.
     required(iutherm) = .true.
  endif
- if (get_ionfrac .or. get_temperature) then
+ if (get_ionfrac .or. get_kappa) then
     required(irho) = .true.
     required(itemp) = .true.
     Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
@@ -1724,7 +1729,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           ncolstep = ncolstep + 1
           inquire(file=trim(dumpfile)//'.divv',exist=iexist)
           if (iexist) then
-             idivvcol   = ncolstep + 1
+             idivvxcol   = ncolstep + 1
              icurlvxcol = ncolstep + 2
              icurlvycol = ncolstep + 3
              icurlvzcol = ncolstep + 4
@@ -1734,6 +1739,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
             !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
+          endif
+          if (get_kappa) then
              ncolstep = ncolstep+1
              ikappa = ncolstep
           endif
@@ -2138,13 +2145,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  !
  !--read .divv file for phantom dumps
  !
- if (phantomdump .and. idivvcol /= 0 .and. any(required(idivvcol:icurlvzcol))) then
+ if (phantomdump .and. idivvxcol /= 0 .and. any(required(idivvxcol:icurlvzcol))) then
     print "(a)",' reading divv from '//trim(dumpfile)//'.divv'
     open(unit=66,file=trim(dumpfile)//'.divv',form='unformatted',status='old',iostat=ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR opening '//trim(dumpfile)//'.divv'
     else
-       read(66,iostat=ierr) dat(1:ntotal,idivvcol,j)
+       read(66,iostat=ierr) dat(1:ntotal,idivvxcol,j)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading divv from file'
        if (any(required(icurlvxcol:icurlvzcol))) then
           read(66,iostat=ierr) dat(1:ntotal,icurlvxcol,j)
@@ -2168,14 +2175,16 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
+ endif
+ if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0) then
     print*,'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac,Yfrac)
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
     do i=1,ntotal
        call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
-                                Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
+                                real(Xfrac),real(Yfrac),xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
        dat(i,iHIIcol,j)=xHIIi
        dat(i,iHeIIcol,j)=xHeIIi
        dat(i,iHeIIIcol,j)=xHeIIIi
@@ -2183,11 +2192,15 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  endif
 
  !
- !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set
- !
- if (allocated(dat) .and. n1 > 0 .and. n1 <= size(dat(:,1,1)) &
-       .and. lenvironment('SSPLASH_RESET_CM') .and. allocated(iphase)) then
-    call reset_centre_of_mass(dat(1:n1,1:3,j),dat(1:n1,4,j),iphase(1:n1),n1)
+ !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set,
+ !  or reset centre to densest clump if environment variable "SSPLASH_RESET_DENSE" is set
+ !  the latter will override the former
+ ! (updated from n1 to npart since order is not preserved when dumping data; JHW)
+ icentre = 0
+ if (lenvironment('SSPLASH_RESET_CM'))    icentre = 1
+ if (lenvironment('SSPLASH_RESET_DENSE')) icentre = 2
+ if (allocated(dat) .and. npart > 0 .and. npart <= size(dat(:,1,1)) .and. icentre > 0 .and. allocated(iphase)) then
+    call reset_centre_of_mass(dat(1:npart,1:3,j),dat(1:npart,4,j),dat(1:npart,5,j),iphase(1:npart),npart,icentre)
  endif
  !
  !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
@@ -2380,30 +2393,51 @@ contains
 !
 !--reset centre of mass to zero
 !
-subroutine reset_centre_of_mass(xyz,pmass,iphase,np)
- integer, intent(in) :: np
+subroutine reset_centre_of_mass(xyz,pmass,h,iphase,np,icentre)
+ implicit none
+ integer, intent(in) :: np,icentre
  real, dimension(np,3), intent(inout) :: xyz
- real, dimension(np), intent(in) :: pmass
+ real, dimension(np), intent(in) :: h,pmass
  integer(kind=int1), dimension(np), intent(in) :: iphase
- real :: masstot,pmassi
+ real :: masstot,pmassi,minh
  real, dimension(3) :: xcm
- integer :: i
-
+ integer :: i,ctr
  !
  !--get centre of mass
  !
- xcm(:) = 0.
+ xcm(:)  = 0.
  masstot = 0.
+ minh    = huge(minh)
  do i=1,np
     if (iphase(i) >= 0) then
-       pmassi = pmass(i)
+       pmassi  = pmass(i)
        masstot = masstot + pmass(i)
        where (required(1:3)) xcm(:) = xcm(:) + pmassi*xyz(i,:)
+       minh = min(h(i),minh)
     endif
  enddo
- xcm(:) = xcm(:)/masstot
- print*,'RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
+ !
+ !--if requested, find the location of the densest clump
+ if (icentre==2) then
+    xcm(:)  = 0.
+    masstot = 0.
+    ctr     = 0
+    do i=1,np
+       if (iphase(i) >= 0 .and. h(i) < minh*1.05) then
+          ctr     = ctr + 1
+          pmassi  = pmass(i)
+          masstot = masstot + pmass(i)
+          where (required(1:3)) xcm(:) = xcm(:) + pmassi*xyz(i,:)
+       endif
+    enddo
+ endif
 
+ xcm(:) = xcm(:)/masstot
+ if (icentre==1) then
+    print*,'\n RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
+ elseif (icentre==2) then
+    print*,'\n RESETTING CENTRE OF DENSEST CLUMP (',pack(xcm,required(1:3)),') TO ZERO using ',ctr,' particles'
+ endif
  if (required(1)) xyz(1:np,1) = xyz(1:np,1) - xcm(1)
  if (required(2)) xyz(1:np,2) = xyz(1:np,2) - xcm(2)
  if (required(3)) xyz(1:np,3) = xyz(1:np,3) - xcm(3)
@@ -2526,9 +2560,13 @@ subroutine set_labels_sphNG
           idivvcol = i
           units(i) = 1./utime
           unitslabel(i) = ' [1/s]'
+       case('divvx')
+          idivvxcol = i
+          units(i) = 1./utime
+          unitslabel(i) = ' [1/s]'
        case('poten')
-          units(i) = (udist/utime)**2
-          unitslabel(i) = ' [erg/g]'
+          units(i) = umass*(udist/utime)**2
+          unitslabel(i) = ' [erg]'
        case('dt')
           units(i) = utime
           unitslabel(i) = ' [s]'
@@ -2622,7 +2660,7 @@ subroutine set_labels_sphNG
           iradenergy,icv,udist,utime,units,unitslabel)
  endif
 
- if (itemp==0) itemp=itempcol ! if temperature not found in file, use computed one
+ if (itemp==0 .or. itempcol > 0) itemp=itempcol ! if temperature not found in file, use computed one
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  if (irho > 0) label(irho) = 'density'
@@ -2630,10 +2668,15 @@ subroutine set_labels_sphNG
  if (ih > 0) label(ih) = 'h       '
  if (ipmass > 0) label(ipmass) = 'particle mass'
  if (idivB > 0) label(idivB) = 'div B'
+ if (idivvxcol > 0) label(idivvxcol) = 'div vx'
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itemp > 0) then
     label(itemp) = 'temperature'
     unitslabel(itemp) = ' [K]'
+ endif
+ if (itempcol > 0) then
+    if (itempcol /= itemp) label(itempcol) = 'temperature (from u)'
+    unitslabel(itempcol) = ' [K]'
  endif
  if (ikappa > 0) label(ikappa) = 'kappa'
  if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'

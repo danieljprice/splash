@@ -109,7 +109,7 @@ subroutine interpolate3D_fastxsec(x,y,z,hh,weight,dat,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_parts
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
     !
     !--set kernel related quantities
     !
@@ -268,7 +268,7 @@ subroutine interpolate3D_xsec_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_parts
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
     !
     !--set kernel related quantities
     !

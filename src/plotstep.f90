@@ -2669,8 +2669,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xmax = 1.
                 endif
                 if (ndim >= 2) then
-                   ymin = lim(ix(3),1)
-                   ymax = lim(ix(3),2)
+                   ymin = lim(ix(2),1)
+                   ymax = lim(ix(2),2)
                 else
                    ymin = 0.
                    ymax = 1.
@@ -2678,8 +2678,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
              if (ndim >= 1) iplotx = ix(1)
              if (ndim >= 2) then
-                iploty = ix(3)
-                labely = label(ix(3))
+                iploty = ix(2)
+                labely = label(ix(2))
              endif
              pixwidth = (xmax-xmin)/real(npixx)
 

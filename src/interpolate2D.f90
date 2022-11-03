@@ -925,6 +925,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        else
           term = termnorm
        endif
+       if (termnorm <= 0.) cycle over_parts
        !
        !--for each particle work out which pixels it contributes to
        !
@@ -1023,7 +1024,7 @@ subroutine interpolate2D_fromgrid(x,y,hh,dat,gradh,sigma,mask,npart, &
  real,    intent(in) :: xmin,ymin,pixwidthx,pixwidthy
  real,    intent(in), dimension(npixx,npixy) :: datpix
 
- real, dimension(npixx) :: dx2i,qq2,wabi
+ real, dimension(npixx) :: dx2i,qq2
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
  real :: hi,hi1,radkernx,radkerny,q2,wab,const,datpart
