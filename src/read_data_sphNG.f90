@@ -1415,8 +1415,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
  real, dimension(maxinblock) :: dummyreal
- real :: hfact,omega,Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
- logical :: skip_corrupted_block_3,get_temperature,get_ionfrac,need_to_allocate_iphase
+ real :: hfact,omega
+ real(doub_prec) :: Xfrac,Yfrac
+ real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
+ logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_ionfrac,need_to_allocate_iphase
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1470,13 +1472,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  nstepsread = 0
  doubleprec = .true.
  get_temperature = lenvironment("SPLASH_GET_TEMP")
+ get_kappa = lenvironment("SPLASH_GET_KAPPA")
  get_ionfrac = lenvironment("SPLASH_GET_ION")
- if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
+ if ((get_temperature .or. get_kappa) .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
     required(irhorestframe) = .true.
     required(iutherm) = .true.
  endif
- if (get_ionfrac .or. get_temperature) then
+ if (get_ionfrac .or. get_kappa) then
     required(irho) = .true.
     required(itemp) = .true.
     Xfrac = renvironment("SPLASH_XFRAC",Xfrac_default)
@@ -1736,6 +1739,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
             !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
+          endif
+          if (get_kappa) then
              ncolstep = ncolstep+1
              ikappa = ncolstep
           endif
@@ -2170,14 +2175,16 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
     unit_ergg = (udist/utime)**2
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
+ endif
+ if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0) then
     print*,'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itempcol,j)*1.d0,Xfrac,Yfrac)
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then
     do i=1,ntotal
        call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
-                                Xfrac,Yfrac,xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
+                                real(Xfrac),real(Yfrac),xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
        dat(i,iHIIcol,j)=xHIIi
        dat(i,iHeIIcol,j)=xHeIIi
        dat(i,iHeIIIcol,j)=xHeIIIi
@@ -2558,8 +2565,8 @@ subroutine set_labels_sphNG
           units(i) = 1./utime
           unitslabel(i) = ' [1/s]'
        case('poten')
-          units(i) = (udist/utime)**2
-          unitslabel(i) = ' [erg/g]'
+          units(i) = umass*(udist/utime)**2
+          unitslabel(i) = ' [erg]'
        case('dt')
           units(i) = utime
           unitslabel(i) = ' [s]'
@@ -2653,7 +2660,7 @@ subroutine set_labels_sphNG
           iradenergy,icv,udist,utime,units,unitslabel)
  endif
 
- if (itemp==0) itemp=itempcol ! if temperature not found in file, use computed one
+ if (itemp==0 .or. itempcol > 0) itemp=itempcol ! if temperature not found in file, use computed one
 
  label(ix(1:ndim)) = labelcoord(1:ndim,1)
  if (irho > 0) label(irho) = 'density'
@@ -2666,6 +2673,10 @@ subroutine set_labels_sphNG
  if (itemp > 0) then
     label(itemp) = 'temperature'
     unitslabel(itemp) = ' [K]'
+ endif
+ if (itempcol > 0) then
+    if (itempcol /= itemp) label(itempcol) = 'temperature (from u)'
+    unitslabel(itempcol) = ' [K]'
  endif
  if (ikappa > 0) label(ikappa) = 'kappa'
  if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'

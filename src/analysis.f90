@@ -82,7 +82,7 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('timeaverage','timeav')
     isanalysis = .true.
- case('ratio')
+ case('ratio','minus','plus')
     isanalysis = .true.
  case('tracks','track')
     isanalysis = .true.
@@ -330,7 +330,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
     endif
- case('ratio')
+ case('ratio','minus','add')
     !
     !--read all columns from dump file
     !
@@ -338,7 +338,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout(1) = 'ratio.out'
+    fileout(1) = trim(analysistype)//'.out'
     if (ncolumns > 0 .and. ncolumns /= maxplot) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
@@ -1106,7 +1106,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     !sum1(:,:) = sum1(:,:) + dat(1:ntot1,1:ncol1)
     !sum2(:,:) = sum2(:,:) + dat(1:ntot1,1:ncol1)**2
 
- case('ratio')
+ case('ratio','minus','add')
     if (.not.allocated(datmean)) then
        allocate(datmean(size(dat(:,1)),size(dat(1,:))),stat=ierr)
        if (ierr /= 0) stop 'error allocating temporary memory in calc'
@@ -1144,11 +1144,18 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        !--store first dump
        datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
     else
-       where (abs(datmean(1:ntot1,1:ncol1)) > epsilon(0.))
-          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
-       elsewhere
-          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
-       end where
+       select case(trim(analysistype))
+       case('add')
+          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1) + datmean(1:ntot1,1:ncol1)    ! sum of current data and first step
+       case('minus')
+          datvar(1:ntot1,1:ncol1) = datmean(1:ntot1,1:ncol1) - dat(1:ntot1,1:ncol1)   ! first step minus current data
+       case default ! ratio
+          where (abs(datmean(1:ntot1,1:ncol1)) > epsilon(0.))
+             datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
+          elsewhere
+             datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
+          end where
+       end select
        valmin = datvar(1,1)
        valmax = datvar(1,1)
        valmean = 0.
@@ -1160,10 +1167,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           enddo
        enddo
        valmean = valmean/real(ntot1*ncol1)
-       print "(/,a,es10.3)",' max  ratio = ',valmax
-       print "(a,es10.3)",' min  ratio = ',valmin
-       print "(a,es10.3,/)",' mean ratio = ',valmean
-       print "(a)",'----> WRITING ratio.out ...'
+       print "(/,a,es10.3)",' max '//trim(analysistype)//' = ',valmax
+       print "(a,es10.3)",' min '//trim(analysistype)//' = ',valmin
+       print "(a,es10.3,/)",' mean '//trim(analysistype)//' = ',valmean
+       print "(a)",'----> WRITING '//trim(analysistype)//'.out ...'
        if (allocated(datmean) .and. allocated(datvar)) then
           write(iunit,"('# ',i4,1x,i4)") ntot1,ncol1
           write(fmtstring,"(a,i6,a)",iostat=ierr) '(',ncol1,'(es14.6,1x,))'

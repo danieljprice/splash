@@ -70,16 +70,18 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
                             get_floats_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
+ use system_utils,     only:get_command_option
+ use asciiutils,       only:get_value
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
  character(len=len(rootname)+10)    :: datfile
  integer               :: i,j,k,l,n,ierr,nextra,naxes(4)
- integer               :: ncolstep,npixels,nsteps_to_read
+ integer               :: ncolstep,npixels,nsteps_to_read,ihdu
  logical               :: iexist,reallocate
  real(kind=4), dimension(:,:,:), allocatable :: image
  character(len=:), allocatable :: fitsheader(:)
- real :: dx,dy,dz,j0,k0
+ real :: dx,dy,dz,j0,k0,pixelscale
  logical :: centre_image
 
  nstepsread = 0
@@ -113,6 +115,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  ndim  = 2
  ndimV = 2
  nextra = 0
+ ihdu = nint(get_command_option('hdu'))
 !
 !--read data from snapshots
 !
@@ -121,7 +124,11 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  !
  !--open file and read header information
  !
- call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader)
+ if (ihdu > 0) then
+    call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader,hdu=ihdu)
+ else
+    call read_fits_cube(datfile,image,naxes,ierr,hdr=fitsheader)
+ endif
  if (ierr /= 0) then
     print*,'ERROR: '//trim(fits_error(ierr))
     if (allocated(image)) deallocate(image)
@@ -160,6 +167,10 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  ipartialread = .false.
  masstype(1,i) = 0.0
  npartoftype(1,i) = npixels
+
+ pixelscale = get_value('CDELT2',headertags,headervals(:,i),default=1.)
+ if (abs(pixelscale - 1.) > tiny(1.)) pixelscale = pixelscale * 3600. ! arcsec
+
 !
 ! set x,y and other things needed for splash
 !
@@ -167,22 +178,22 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  j0 = 0.5*naxes(1)
  k0 = 0.5*naxes(2)
  n = 0
- dx = 1.
- dy = 1.
- dz = 1.
+ dx = 1.*pixelscale
+ dy = 1.*pixelscale
+ dz = 1.*pixelscale
  do l=1,naxes(3)
     do k=1,naxes(2)
        do j=1,naxes(1)
           n = n + 1
           if (centre_image) then
-             dat(n,1,i) = j - j0
-             dat(n,2,i) = k - k0
+             dat(n,1,i) = (j - j0)*dx
+             dat(n,2,i) = (k - k0)*dy
           else
-             dat(n,1,i) = j
-             dat(n,2,i) = k
+             dat(n,1,i) = j*dx
+             dat(n,2,i) = k*dy
           endif
-          if (ndim >= 3) dat(n,3,i) = l
-          dat(n,ndim+1,i) = 1.  ! smoothing length == pixel scale
+          if (ndim >= 3) dat(n,3,i) = l*dz
+          dat(n,ndim+1,i) = 1.*pixelscale  ! smoothing length == pixel scale
           dat(n,ndim+2,i) = image(j,k,l)
           dat(n,ndim+3,i) = image(j,k,l)*dx*dy*dz  ! flux==equivalent of "mass"
        enddo

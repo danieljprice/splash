@@ -1185,17 +1185,22 @@ end function match_column
 ! match tag against a list of tags
 ! and extract the value from an array of reals
 !----------------------------------------------
-real function get_value(tag,tags,vals)
+real function get_value(tag,tags,vals,default)
  character(len=*), intent(in) :: tag
  character(len=*), intent(in) :: tags(:)
  real, intent(in) :: vals(:)
+ real, intent(in), optional :: default
  integer :: itag
 
  itag = match_tag(tags,tag)
  if (itag > 0 .and. itag <= size(vals)) then
     get_value = vals(itag)
  else
-    get_value = 0.
+    if (present(default)) then
+       get_value = default
+    else
+       get_value = 0.
+    endif
  endif
 
 end function get_value

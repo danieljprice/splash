@@ -14,7 +14,7 @@ Mac OS via homebrew (recommended)::
 
   brew tap danieljprice/all
   brew install splash
-  
+
 You will also need to install `Xquartz <https://www.xquartz.org>`_ so that the X-windows server launches automatically.
 
 Mac OS via Macports::
@@ -157,20 +157,17 @@ from formatted (ascii) output.
 
 A standard ``make`` will create a binary which supports the file formats listed in
 :ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports).
-All data formats in the splash repository that do not
-have an additional dependencies (e.g. ``HDF5``) will be
+All data formats in the splash repository that do not have additional dependencies (e.g. ``HDF5``) will be
 supported in the splash binary as of version ``3.0.0``.
-This means that the user needs to specify the data type
-they are reading as a command line option. For example,
+
+In many cases, the format of the file can be successfully guessed from the file header, so you can simply type::
+
+	splash disc_00000
+
+Otherwise you can specify the data type you are reading using the ``-f`` or ``--format`` flag. For example,
 the following will read a phantom dumpfile::
 
 	splash --format phantom disc_00000
-
-In some cases, the format of the file can be inferred if
-the the file has a known suffix. For example, the above line can be changed if the
-suffixe of the file is recognised::
-
-	splash disc_00000.pb
 
 This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
 previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent::
@@ -196,7 +193,7 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash`` command           | Format Read                | ``read_data`` File            |  Comments                                                                                                                                                                                                                                         |
    +==============================+============================+===============================+===================================================================================================================================================================================================================================================+
-   | ``splash -gadget <file>``    | ascii                      | ``read_data_asci.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
+   | ``splash -ascii <file>``     | ascii                      | ``read_data_ascii.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable  options.                                                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -225,9 +222,9 @@ Below is a list of the supported data formats that require ``HDF5``.
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash`` Command             | Read Format            | ``read_data`` File            |    Comments                                                                             |
    +================================+========================+===============================+=========================================================================================+
-   | ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget    code.                                              |
+   | ``splash -gadget_hdf5 <file>`` | gadget HDF5 Files.     | ``read_data_gadget_hdf5.f90`` | Reads HDF5 format from the gadget code (automatically recognised)                       |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-   | ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE    framework.                                          |
+   | ``splash -amuse <file>``       | AMUSE HDF5             | ``read_data_amuse_hdf5.f90``  | Reads HDF5 format from the AMUSE framework.                                             |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
@@ -241,8 +238,7 @@ For example::
 
 	splash -gadget dump_000.h5
 
-will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format,
-and will automatically select the correct ``read_data`` routine.
+will recognise that the file ``dump_000.h5`` is in the ``HDF5`` format, and will automatically select the correct ``read_data`` routine.
 
 Below is a list of other formats supported, but have additional library requirements.
 
@@ -384,7 +380,7 @@ Command line flags (or environment variables) that affect all data reads are:
 |                      |                       | used if there is none in the current dir. e.g.  |
 |                      |                       | ``--defaults=$HOME/splash.defaults``            |
 +----------------------+-----------------------+-------------------------------------------------+
-| ---kernel            | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
+| ---kernel='quintic'  | SPLASH_KERNEL         | changes the smoothing kernel used in the        |
 |                      |                       | interpolations (e.g. ``cubic`` or ``quintic``). |
 |                      |                       | Can also be changed in the :ref:`sec:menu-r`.   |
 +----------------------+-----------------------+-------------------------------------------------+
@@ -399,6 +395,12 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---corotate          | SPLASH_COROTATE       | plot in corotating frame based on locations of  |
 |                      |                       | 2 sink particles (e.g. ``--corotate=1,3``)      |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---origin=666        | SPLASH_ORIGIN         | recentre the coordinate origin and velocities   |
+|                      |                       | to the selected particle (e.g. particle 666)    |
++----------------------+-----------------------+-------------------------------------------------+
+| ---track=4789        | SPLASH_TRACK          | set limits of all quantities relative to those  |
+|                      |                       | of the selected particle (e.g. particle 4789)   |
++----------------------+-----------------------+-------------------------------------------------+
 | ---vzero=1.0,1.0,1.0 | SPLASH_VZERO          | subtract reference velocity from all particles  |
 |                      |                       | (velocity should be specified in code units)    |
 +----------------------+-----------------------+-------------------------------------------------+
@@ -408,7 +410,7 @@ Command line flags (or environment variables) that affect all data reads are:
 |                      |                       | resolution of SPH simulations to match          |
 |                      |                       | observational resolution. If this variable is   |
 |                      |                       | set the “accelerated rendering" option in the   |
-|                      |                       | :ref:`sec:menu-r` is also turned on as otherwise|
+|                      |                       | :ref:`sec:menu-r` is also turned on, otherwise  |
 |                      |                       | slow rendering can result.                      |
 +----------------------+-----------------------+-------------------------------------------------+
 | ---xmin=0.1          | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
@@ -473,7 +475,7 @@ with ASPLASH, e.g.::
 GADGET data read
 ~~~~~~~~~~~~~~~~~
 
-For the GADGET read (``splash -f gadget``) the options are:
+For the GADGET read (``splash -f gadget`` or just ``splash``) the options are:
 
 +-----------------------------------+-----------------------------------+
 | ``--format=2``                    | if set = 2, reads the block       |
@@ -564,8 +566,8 @@ For the VINE read (``splash -vine``) the options are:
 |                                   | works).                           |
 +-----------------------------------+-----------------------------------+
 
-sphNG data read
-~~~~~~~~~~~~~~~~
+Phantom/sphNG data read
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 
