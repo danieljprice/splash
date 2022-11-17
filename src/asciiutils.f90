@@ -107,14 +107,16 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror,skip)
     i = i + 1
     read(iunit,"(a)",iostat=ierr) charline(j)
     ! skip blank and comment lines
-    if (do_skip) then
-       temp = adjustl(charline(j))
-       if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
-    else
-       j = j + 1
+    if (ierr == 0) then
+       if (do_skip) then
+          temp = adjustl(charline(j))
+          if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
+       else
+          j = j + 1
+       endif
     endif
  enddo over_lines
- nlinesread = j
+ nlinesread = j-1
 
  ! emit warnings if errors or reached array limits
  if (nlinesread >= maxlines) then
