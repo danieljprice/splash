@@ -26,6 +26,8 @@
 !
 module rotation
  implicit none
+
+ public :: rotate2D,rotate3D,rotate_particles
 !
 !--2D rotation (about z axis)
 !
@@ -307,7 +309,32 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
     !--do nothing
  end select
 
- return
 end subroutine rotate_axes3D
+
+subroutine rotate_particles(n,x,y,z,anglex,angley,anglez,v)
+ integer, intent(in) :: n
+ real,    intent(inout) :: x(n),y(n),z(n)
+ real,    intent(in) :: anglex,angley,anglez
+ real,    intent(inout), optional :: v(3,n)
+ real :: ax,ay,az,xi(3)
+ real, parameter :: pi = 4.*atan(1.)
+ integer :: i
+
+ if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
+    print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
+    ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
+    ay = angley*pi/180.0
+    az = anglez*pi/180.0
+    do i=1,n
+       xi = (/x(i),y(i),z(i)/)
+       call rotate3D(xi,ax,ay,az,0.,0.)
+       x(i) = xi(1)
+       y(i) = xi(2)
+       z(i) = xi(3)
+       if (present(v)) call rotate3D(v(:,i),ax,ay,az,0.,0.)
+    enddo
+ endif
+
+end subroutine rotate_particles
 
 end module rotation
