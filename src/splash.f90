@@ -516,7 +516,7 @@ program splash
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename,match_column
+ use asciiutils,         only:read_asciifile,basename,match_column,reorder_filenames_for_comparison
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -864,6 +864,10 @@ program splash
  !
  if (.not. got_format .and. ihavereadfilenames) then
     call guess_format(nfiles,rootname,ierr)
+ endif
+
+ if (ihavereadfilenames .and. get_command_flag('interleave')) then
+    call reorder_filenames_for_comparison(nfiles,rootname)
  endif
 
  if (ikernel==0) then

@@ -64,7 +64,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
                                  integrate_log,get_colour_temperature
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
- use rotation,              only:rotate3D
+ use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
@@ -124,19 +124,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
     enddo
  endif
- if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
-    print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
-    ax = anglex*pi/180.0 ! convert degrees to radians to pass into rotate
-    ay = angley*pi/180.0
-    az = anglez*pi/180.0
-    do i=1,n
-       xi = (/x(i),y(i),z(i)/)
-       call rotate3D(xi,ax,ay,az,0.,0.)
-       x(i) = xi(1)
-       y(i) = xi(2)
-       z(i) = xi(3)
-       if (allocated(v_on_c)) call rotate3D(v_on_c(:,i),ax,ay,az,0.,0.)
-    enddo
+ if (allocated(v_on_c)) then
+    call rotate_particles(n,x,y,z,anglex,angley,anglez,v=v_on_c)
+ else
+    call rotate_particles(n,x,y,z,anglex,angley,anglez)
  endif
 
  !

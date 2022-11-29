@@ -88,6 +88,8 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('lightcurve')
     isanalysis = .true.
+ case('extinction')
+    isanalysis = .true.
  case('none')
     verbose = .false.
  end select
@@ -142,13 +144,13 @@ end function isanalysis
 !  open output file/ initialise quantities needed for analysis
 !  over all dump files
 !----------------------------------------------------------------
-subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
+subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
  use labels,       only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label
- use asciiutils,   only:read_asciifile,basename
+ use asciiutils,   only:read_asciifile,basename,integer_to_string
  use filenames,    only:rootname,nfiles,tagline,fileprefix,ifileopen
  use params,       only:maxplot
  use system_utils, only:ienvlist
- integer, intent(in) :: ncolumns,ndim,ndimV
+ integer, intent(in) :: ncolumns,ndim,ndimV,nsinks
  character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=maxplot*18) :: headerline   ! len=maxplot x 18 characters
@@ -397,6 +399,25 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
            1,'time',2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
            5,'L_{bol}',6,'R_{bb}',7,'T_c'
 
+  case('extinction')
+     !
+     !--for extinction of stars need h, mass and density
+     !
+     required(ix(1:ndim)) = .true.
+     required(ih) = .true.
+     required(ipmass) = .true.
+     required(irho) = .true.
+     !
+     !--set filename and header line
+     !
+     if (nfiles==1) then
+        fileout = 'extinction_'//trim(basename(rootname(ifileopen)))//'.out'
+     else
+        fileout = 'extinction.out'
+     endif
+     write(headerline,"('#',100(1x,'[',i2.2,1x,a15,']',2x))") &
+           1,'time',(i+1,'Sigma to sink'//trim(adjustl(integer_to_string(i))),i=1,nsinks)
+
  end select
 
  if (standardheader) then
@@ -451,7 +472,6 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  !endif
  nfilesread = 0
 
- return
 end subroutine open_analysis
 
 !----------------------------------------------------------------
@@ -471,6 +491,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
+ use extinction,    only:get_extinction
  use filenames,     only:rootname,ifileopen
  use vectorutils,   only:cross_product3D
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
@@ -481,7 +502,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile,nsinks
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
@@ -1180,7 +1201,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        endif
     endif
     return
-  case('lightcurve')
+ case('lightcurve')
      call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
          lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)))
      print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
@@ -1188,6 +1209,14 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
      !--write line to output file
      !
      write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
+
+ case('extinction')
+     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,nsinks,coltemp)
+     print "(100(/,1x,a20,i0,' = ',es9.2))",('Sigma to sink ',i,coltemp(i),i=1,nsinks)
+     !
+     !--write line to output file
+     !
+     write(iunit,"(100(es18.10,5x))") timei,coltemp(1:nsinks)
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
