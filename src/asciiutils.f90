@@ -37,12 +37,13 @@ module asciiutils
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase,strip
  public :: get_line_containing
- public :: enumerate,isdigit,split
+ public :: enumerate,isdigit,get_digits,integer_to_string,split
  public :: get_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: match_column
  public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions,readline_csv
+ public :: reorder_filenames_for_comparison
 
  private
 
@@ -881,6 +882,57 @@ pure elemental logical function isdigit(string)
 
 end function isdigit
 
+!------------------------------------------------------------------------
+!     get_digits: for an integer i returns number of digits it contains
+!     and a list of these *without* using write statements
+!
+!     i            : integer to split into digits
+!     nmax           : dimensions of digits array
+!     digits(nmax) : array of digits
+!     ndigits      : number of digits in i
+!------------------------------------------------------------------------
+pure subroutine get_digits(i,digits,ndigits)
+ integer, intent(in) :: i
+ integer, intent(out) :: ndigits
+ integer, intent(out), dimension(:) :: digits
+ integer :: j,isubtract,idigit
+
+ ndigits = 0
+
+ isubtract = 0
+
+ do j=size(digits),0,-1
+    if (i >= 10**j) then
+       ndigits = ndigits + 1
+       idigit = (i - isubtract)/10**j
+       digits(ndigits) = idigit
+       isubtract = isubtract + digits(ndigits)*10**j
+    endif
+ enddo
+
+end subroutine get_digits
+
+!---------------------------------------------------------------------------
+!
+! convert a string to an integer WITHOUT using write statement
+! (so this can be used in a write or print statement)
+!
+!---------------------------------------------------------------------------
+pure elemental function integer_to_string(i) result(string)
+ integer, intent(in) :: i
+ character(len=12) :: string
+ integer :: i0,ndigits,j
+ integer :: idigit(12)
+
+ string = ''
+ i0 = iachar('0')
+ call get_digits(i,idigit,ndigits)
+ do j=2,ndigits
+    string(j:j) = achar(i0+idigit(j))
+ enddo
+
+end function integer_to_string
+
 !---------------------------------------------------------------------------
 !
 ! search a file for the line containing a particular string
@@ -1380,5 +1432,96 @@ subroutine get_extensions(string,extensions)
  enddo
 
 end subroutine get_extensions
+
+!---------------------------------------------------------------------------
+!+
+!  extract the start of the file extension, if the filename does not
+!  end with digits
+!+
+!---------------------------------------------------------------------------
+pure integer function get_idot(string)
+ character(len=*), intent(in) :: string
+ integer :: ilen
+
+ ilen = len_trim(string)
+ get_idot = 0
+ !
+ ! if file ends in at least two numbers then use the numbers at the end
+ ! (two is to avoid problems with .hdf5 etc)
+ !
+ if (ilen >= 2) then
+    if (isdigit(string(ilen:ilen)) .and. isdigit(string(ilen-1:ilen-1))) then
+       get_idot = ilen + 1
+    endif
+ endif
+ !
+ ! otherwise, look for numbers before the file extension (e.g. _0000.dat)
+ !
+ if (get_idot==0) then
+    get_idot = index(string,'.',back=.true.)
+    if (get_idot==0) get_idot = len_trim(string) + 1
+ endif
+
+end function get_idot
+
+!----------------------------------------------------------------
+!+
+!  this function extracts the number at the end of the filename
+!+
+!----------------------------------------------------------------
+integer function numfromfile(filename)
+ character(len=*), intent(in) :: filename
+ character(len=len(filename)) :: string
+ integer :: idot,istartnum,ilen,i,ierr
+!
+!--extract current number from filename
+!
+ string = basename(filename)
+ idot = get_idot(string)
+ istartnum = 0
+ do i=idot-1,1,-1
+    if (istartnum==0) then
+       if (.not.isdigit(string(i:i))) istartnum = i
+    endif
+ enddo
+ if (istartnum /= 0) istartnum = istartnum + 1
+ ilen = idot - istartnum
+
+ if (ilen > 0) then
+    read(string(istartnum:istartnum+ilen-1),*,iostat=ierr) numfromfile
+    if (ierr /= 0) then
+       !print*,'internal error in numfromfilename'
+       numfromfile = -1
+    endif
+ else
+    numfromfile = 0
+ endif
+
+end function numfromfile
+
+!------------------------------------------------------------
+! utility to reorder a list of files
+!------------------------------------------------------------
+subroutine reorder_filenames_for_comparison(nfiles,filenames)
+ integer, intent(in) :: nfiles
+ character(len=*), intent(inout) :: filenames(nfiles)
+ integer :: i,n,nprev,nseq
+
+ nseq = 0
+ nprev = 0
+ do i=1,nfiles
+    n = numfromfile(filenames(i))
+    if (i > 1) then
+       if (n == nprev + 1) then
+          nseq = nseq + 1
+          print*,i,n,nseq,trim(filenames(i))
+       else
+          nseq = 0
+       endif
+       nprev = n
+    endif
+ enddo
+
+end subroutine reorder_filenames_for_comparison
 
 end module asciiutils
