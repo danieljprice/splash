@@ -36,13 +36,14 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  use limits,           only:get_particle_subset
  use projections3D,    only:interpolate3D_proj_points
  use particle_data,    only:icolourme
+ use part_utils,       only:get_positions_of_type
  use interpolation,    only:get_n_interp,set_interpolation_weights
  use settings_data,    only:iRescale,iverbose,required,UseTypeInRenderings
  use settings_part,    only:iplotpartoftype
  use settings_render,  only:npix,inormalise=>inormalise_interpolations,&
                             idensityweightedinterpolation,exact_rendering
  use settings_xsecrot, only:anglex,angley,anglez
- use settings_units,   only:units,unit_interp
+ use settings_units,   only:units,unit_interp,unitzintegration
  use rotation,         only:rotate_particles
  use params,           only:int1
  integer, intent(in)  :: ncolumns,ntypes,ndim
@@ -52,10 +53,12 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  real,    intent(in)  :: dat(:,:)
  integer, intent(out) :: nsinks
  real,    intent(out) :: coldens(:)
- integer :: n,isinktype,ierr,j,i
+ integer :: n,isinktype,ierr
  real, dimension(:), allocatable :: weight,x,y,z,xpts,ypts,zpts
- integer, dimension(:), allocatable :: isinklist
 
+ !
+ !--sanity checks
+ !
  if (ndim /= 3) then
     print "(a)",' ERROR: extinction only works with 3 dimensional data'
     return
@@ -81,7 +84,6 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  !--rotate positions if necessary
  !
  call rotate_particles(n,x,y,z,anglex,angley,anglez)
-
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
@@ -93,42 +95,30 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  !
  icolourme(:) = 1
  call get_particle_subset(icolourme,dat,ncolumns)
-
  !
  !--get list of sink particle positions
  !
- nsinks = 0
  isinktype = get_sink_type(ntypes)
- if (isinktype > 0) nsinks = npartoftype(isinktype)
-
- allocate(xpts(nsinks),ypts(nsinks),zpts(nsinks),isinklist(nsinks),stat=ierr)
- if (ierr /= 0) then
-    print*,' ERROR allocating memory for sink particle positions, aborting...'
+ call get_positions_of_type(dat,npartoftype,itype,isinktype,ix,nsinks,xpts,ypts,zpts,ierr)
+ if (ierr /= 0 .or. nsinks <= 0) then
+    print*,' ERROR obtaining sink particle positions, aborting...'
     return
  endif
- j = 0
- do i=1,sum(npartoftype)
-    if (itype(i)==isinktype) then
-       j = j + 1
-       isinklist(j) = i
-    endif
- enddo
- if (j /= nsinks) print*,' WARNING: found ',j,' sinks but expecting ',nsinks
- if (j < nsinks) nsinks = j
-
- xpts = dat(isinklist(1:nsinks),ix(1))
- ypts = dat(isinklist(1:nsinks),ix(2))
- zpts = dat(isinklist(1:nsinks),ix(3))
-
  !
  !--rotate positions if necessary
  !
  call rotate_particles(nsinks,xpts,ypts,zpts,anglex,angley,anglez)
  !
- ! interpolate SPH data to sink particle locations
+ ! interpolate column density to sink particle locations
  !
  call interpolate3D_proj_points(x,y,z,dat(1:n,ih),weight,dat(1:n,irho),icolourme,n,&
                                 xpts,ypts,zpts,coldens,nsinks,inormalise,iverbose)
+ !
+ ! adjust units of z-integrated quantity
+ !
+ if (iRescale .and. units(ih) > 0. .and. .not.inormalise) then
+    coldens = coldens*(unitzintegration/units(ih))
+ endif
 
  deallocate(xpts,ypts,zpts,x,y,z,weight)
 

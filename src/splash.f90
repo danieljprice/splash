@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.7.0   : (30/11/22)
+!             splash calc extinction computes column density to all sink particles in the simulation;
 !     3.6.0   : (31/10/22)
 !             skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending);
 !             splash calc plus and splash calc minus for adding/subtracting snapshots;
@@ -543,7 +545,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.6.0 [31st Oct 2022]'
+ character(len=*), parameter :: version = 'v3.7.0 [30th Nov 2022]'
 
  !
  ! initialise some basic code variables

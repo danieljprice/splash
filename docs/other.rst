@@ -111,30 +111,32 @@ following options:
 
 ::
 
-     splash calc energies     : calculate KE,PE,total energy vs time
-                                output to file called 'energy.out'
-            calc massaboverho : mass above a series of density thresholds vs time
-                                output to file called 'massaboverho.out'
-            calc max          : maximum of each column vs. time
-                                output to file called 'maxvals.out'
-            calc min          : minimum of each column vs. time
-                                output to file called 'minvals.out'
-            calc diff         : (max - min) of each column vs. time
-                                output to file called 'diffvals.out'
-            calc amp          : 0.5*(max - min) of each column vs. time
-                                output to file called 'ampvals.out'
-            calc delta        : 0.5*(max - min)/mean of each column vs. time
-                                output to file called 'deltavals.out'
-            calc mean         : mean of each column vs. time
-                                output to file called 'meanvals.out'
-            calc rms          : (mass weighted) root mean square of each column vs. time
-                                output to file called 'rmsvals.out'
-            calc tracks       : track particle data vs time for selected particles,
-               --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out
-            calc timeaverage  : time average of *all* entries for every particle
-                               output to file called 'time_average.out'
-            calc ratio        : ratio of *all* entries in each file compared to first
-                                output to file called 'ratio.out'
+  splash calc energies     : calculate KE,PE,total energy vs time
+                             output to file called 'energy.out'
+         calc massaboverho : mass above a series of density thresholds vs time
+                             output to file called 'massaboverho.out'
+         calc extinction   : column density to all sink particles vs time
+                             output to file called 'extinction.out'
+         calc max          : maximum of each column vs. time
+                             output to file called 'maxvals.out'
+         calc min          : minimum of each column vs. time
+                             output to file called 'minvals.out'
+         calc diff         : (max - min) of each column vs. time
+                             output to file called 'diffvals.out'
+         calc amp          : 0.5*(max - min) of each column vs. time
+                             output to file called 'ampvals.out'
+         calc delta        : 0.5*(max - min)/mean of each column vs. time
+                             output to file called 'deltavals.out'
+         calc mean         : mean of each column vs. time
+                             output to file called 'meanvals.out'
+         calc rms          : (mass weighted) root mean square of each column vs. time
+                             output to file called 'rmsvals.out'
+         calc tracks       : track particle data vs time for selected particles,
+           --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out
+         calc timeaverage  : time average of *all* entries for every particle
+                             output to file called 'time_average.out'
+         calc ratio        : ratio of *all* entries in each file compared to first
+                             output to file called 'ratio.out'
 
 For the ``energies`` and ``massaboverho`` options to be successful, splash
 must be aware of the locations of the corresponding columns in the data
@@ -142,6 +144,41 @@ must be aware of the locations of the corresponding columns in the data
 corresponding to the data read). For the ``massaboverho`` option an input
 file is required specifying the density thresholds (a default version is
 written if the appropriate file is not already present).
+
+Using splash to calculate line-of-sight extinction to sink particles
+------------------------------------------------------------------
+
+For observations one is often interested in how much obscuring material
+is present in front of stars in a model. In splash stars are usually represented
+as sink particles, so there is a simple command line function to compute
+the column density of material between the observer and each "star".
+
+To compute this, use::
+
+  splash calc extinction dump_0*
+
+which will produce something like::
+
+  -----> CALCULATING EXTINCTION, TIME= 8.80E+02 yrs FILE #   20
+
+  projecting from particles to points...
+
+       Sigma to sink 1 =  1.63E-07 [g/cm^2]
+       Sigma to sink 2 =  1.19E-03 [g/cm^2]
+       Sigma to sink 3 =  2.18E-06 [g/cm^2]
+
+and write the results to a file called "extinction.out". Note that
+the observer is by default in the +z direction, but can be changed
+by setting the viewing angles on the command line or in the splash.defaults file::
+
+   splash calc extinction dump_0* --anglex=30. --angley=60. --anglez=120.
+
+Similarly physical unit scaling will be applied based on what is saved in the
+splash.defaults and splash.units files. For example, to compute everything in
+code units you can just use the --code flag::
+
+   splash calc extinction dump_0* --code
+
 
 Using splash to time average a series of files
 ----------------------------------------------

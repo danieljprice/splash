@@ -33,6 +33,7 @@ module part_utils
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
  public :: get_binary,got_particles_of_type
+ public :: get_positions_of_type
  private
 
 contains
@@ -230,5 +231,56 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipm
  endif
 
 end subroutine get_binary
+
+!----------------------------------------------------------
+! routine to extract positions of sink particles
+! INPUT:
+!   dat(npart,ncolumns) : particle data
+!   ix(3) : columns containing positions
+!   itype : type of each particle
+!   ntypes : number of particle types
+!   npartoftype : number of particles of each type
+! OUTPUT:
+!   nsinks : number of sink particles
+!   xpts : x positions of sink particles
+!   ypts : y positions of sink particles
+!   zpts : z positions of sink particles
+!   ierr : error code, ierr=0 means no error was encountered
+!----------------------------------------------------------
+subroutine get_positions_of_type(dat,npartoftype,itype,iget_type,ix,n,xpts,ypts,zpts,ierr)
+ integer, intent(in) :: npartoftype(:),ix(3),iget_type
+ integer(kind=int1), intent(in) :: itype(:)
+ real, intent(in)     :: dat(:,:)
+ integer, intent(out) :: n,ierr
+ real, intent(out), allocatable :: xpts(:),ypts(:),zpts(:)
+ integer :: i,j
+ integer, allocatable :: ilist(:)
+
+ ierr = 0
+ n = 0
+ if (iget_type > 0) n = npartoftype(iget_type)
+
+ allocate(xpts(n),ypts(n),zpts(n),ilist(n),stat=ierr)
+ if (ierr /= 0) then
+    print*,' ERROR allocating memory for sink particle positions, aborting...'
+    return
+ endif
+ j = 0
+ do i=1,sum(npartoftype)
+    if (itype(i)==iget_type) then
+       j = j + 1
+       ilist(j) = i
+    endif
+ enddo
+ if (j /= n) print*,' WARNING: found ',j,' particles but expecting ',n
+ if (j < n) n = j
+
+ xpts = dat(ilist(1:n),ix(1))
+ ypts = dat(ilist(1:n),ix(2))
+ zpts = dat(ilist(1:n),ix(3))
+
+ deallocate(ilist)
+
+end subroutine get_positions_of_type
 
 end module part_utils
