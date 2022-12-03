@@ -333,7 +333,7 @@ end function get_command_flag
 integer function count_matching_args(string,id) result(n)
  character(len=*), intent(in) :: string
  integer, intent(out), optional :: id(:)
- character(len=80) :: myarg
+ character(len=1024) :: myarg
  integer :: iarg,nargs
 
  n = 0

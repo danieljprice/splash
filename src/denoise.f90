@@ -25,7 +25,7 @@ program denoise
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args,get_command_flag
  implicit none
- character(len=120) :: file1,file2,fileout,tagline,filek
+ character(len=1024) :: file1,file2,fileout,tagline,filek
  integer :: ierr,jext,nfiles,its,naxes(4),npixels,k,i,iarglist(3),kstart,kend,k1,k2
  real, allocatable :: hh(:)
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
@@ -38,7 +38,7 @@ program denoise
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'denoise: a SPLASH imaging utility (c) 2020-2021 Daniel Price'
+ tagline = 'denoise: a SPLASH imaging utility (c) 2020-2022 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: denoise [options] infile.fits [outfile.fits]'
