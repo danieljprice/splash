@@ -533,6 +533,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
 ! array with one value for each column
 !
  real(kind=doub_prec) :: coltemp(maxplot), vals(maxplot), rmsval(maxplot)
+ real :: coltemps(maxplot)
 
  labelt = ''
  labelc = ''
@@ -1231,13 +1232,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
      write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
 
  case('extinction')
-     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,nsinks,coltemp)
+     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,nsinks,coltemps)
      labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
-     print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemp(i),trim(labelc),i=1,nsinks)
+     print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemps(i),trim(labelc),i=1,nsinks)
      !
      !--write line to output file
      !
-     write(iunit,"(100(es18.10,5x))") timei,coltemp(1:nsinks)
+     write(iunit,"(100(es18.10,5x))") timei,coltemps(1:nsinks)
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
