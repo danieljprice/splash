@@ -1936,6 +1936,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
                       if (double_rendering) then
+                         call colour_set(icolours)
                          call set_transparency(npixx,npixy,datpixcont,brightness,contmin,contmax)
 
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
