@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2022 Daniel Price
+!     Copyright (C) 2005-2023 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,8 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.7.0   : (30/11/22)
+!     3.7.0   : (08/02/23)
 !             splash calc extinction computes column density to all sink particles in the simulation;
+!             bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems;
 !     3.6.0   : (31/10/22)
 !             skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending);
 !             splash calc plus and splash calc minus for adding/subtracting snapshots;
@@ -545,7 +546,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.7.0 [30th Nov 2022]'
+ character(len=*), parameter :: version = 'v3.7.0 [8th Feb 2023]'
 
  !
  ! initialise some basic code variables
