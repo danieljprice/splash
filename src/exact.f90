@@ -1215,25 +1215,32 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(3)! shock tube
     if (iplotx==ix(1) .and. igeom <= 1) then
-       if (iploty==irho) then
-          call exact_shock(1,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       elseif (iploty==ipr) then
-          call exact_shock(2,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       elseif (iploty==ivx) then
-          call exact_shock(3,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       elseif (iploty==iutherm) then
-          call exact_shock(4,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       elseif (iploty==ideltav) then
-          call exact_shock(5,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       elseif (iploty==idustfrac) then
-          call exact_shock(6,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
-                              rdust_to_gas,xexact,yexact,ierr)
-       endif
+       do i=1,1  ! make 2 to plot both adiabatic and isothermal solutions
+          if (i==2) then
+             call plot_sls(4)
+             gammai = 1.0
+          endif
+          if (iploty==irho) then
+             call exact_shock(1,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty==ipr) then
+             call exact_shock(2,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty==ivx) then
+             call exact_shock(3,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty==iutherm) then
+             call exact_shock(4,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty==ideltav) then
+             call exact_shock(5,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          elseif (iploty==idustfrac) then
+             call exact_shock(6,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
+                                 rdust_to_gas,xexact,yexact,ierr)
+          endif
+          if (i==1 .and. ierr==0) call plot_line(iexactpts,xexact,yexact)
+       enddo
     endif
 
  case(4)! sedov blast wave
