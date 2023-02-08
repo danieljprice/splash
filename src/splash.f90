@@ -56,6 +56,8 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.7.1   : (09/02/23)
+!             libexact build failure fixed
 !     3.7.0   : (09/02/23)
 !             splash calc extinction computes column density to all sink particles in the simulation;
 !             bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems;
