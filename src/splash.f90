@@ -51,9 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.7.0   : (08/02/23)
+!     3.7.0   : (09/02/23)
 !             splash calc extinction computes column density to all sink particles in the simulation;
 !             bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems;
+!             bug fix with both quantities appearing in black and white when double rendering
 !     3.6.0   : (31/10/22)
 !             skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending);
 !             splash calc plus and splash calc minus for adding/subtracting snapshots;
@@ -546,7 +547,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.7.0 [8th Feb 2023]'
+ character(len=*), parameter :: version = 'v3.7.0 [9th Feb 2023]'
 
  !
  ! initialise some basic code variables
@@ -1059,7 +1060,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2022 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2023 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
