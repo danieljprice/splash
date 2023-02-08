@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.7.1   : (09/02/23)
+!             libexact build failure fixed
 !     3.7.0   : (09/02/23)
 !             splash calc extinction computes column density to all sink particles in the simulation;
 !             bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems;
@@ -547,7 +549,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.7.0 [9th Feb 2023]'
+ character(len=*), parameter :: version = 'v3.7.1 [9th Feb 2023]'
 
  !
  ! initialise some basic code variables
