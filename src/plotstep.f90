@@ -580,7 +580,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        stop
     endif
     if (ierr /= 0) print "(a)",' ERROR opening plotting device'
-    if (ntries > 10) stop
+    if (ntries > 10) return
     device='' ! reset the device after first time
  enddo
 
@@ -747,7 +747,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  real(doub_prec) :: unit_mass,unit_dens,unit_r,unit_u,unit_dz
  real, dimension(:), allocatable    :: xplot,yplot,zplot
  real, dimension(:), allocatable    :: hh,weight
- real, dimension(:), allocatable    :: renderplot
+ real, dimension(:), allocatable    :: renderplot,contourplot
  real, dimension(:,:), allocatable  :: vecplot
  real, dimension(:), allocatable    :: rkappa
  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
@@ -796,7 +796,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  if (allocated(yplot)) yplot = 0.
  if (allocated(zplot)) zplot = 0.
 
- allocate(hh(maxpart),weight(maxpart),stat=ierr)
+ allocate(hh(maxpart),weight(maxpart),renderplot(maxpart),stat=ierr)
  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary h,weight arrays'
  hh = 0.
  if (debugmode) print*,'DEBUG: in plotstep, allocated local memory successfully'
@@ -1130,6 +1130,22 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (iamvecx > 0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
              if (iamvecy > 0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
           endif
+          !
+          !--change coordinate system in the quantity being rendered
+          !
+          if (irender > 0 .and. rendering) then
+             renderplot(1:ntoti) = dat(1:ntoti,irender)
+             if (icoordsnew /= icoords .and. iamvec(irender) > 0) then
+                call changeveccoords(irender,renderplot,ntoti,ndim,itrackpart,dat)
+             endif
+             if (icontourplot > 0) then
+                if (.not.allocated(contourplot)) allocate(contourplot(size(renderplot))) ! only do this once
+                contourplot(1:ninterp) = dat(1:ninterp,icontourplot)
+                if (icoordsnew /= icoords .and. iamvec(icontourplot) > 0) then
+                   call changeveccoords(icontourplot,contourplot,ntoti,ndim,itrackpart,dat)
+                endif
+             endif
+          endif
 
           !--apply transformations (log, 1/x etc) if appropriate
           !  also change labels and limits appropriately
@@ -1330,14 +1346,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !!  allocate memory for rendering array
                    if (.not. x_sec) then
                       call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
-                         hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                         hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
                          pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                       !--also get contour plot data
                       if (icontourplot > 0 .and. icontourplot <= numplot) then
                          call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
                          call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
-                            hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                            hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
                             pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                          gotcontours = .true.
@@ -1353,7 +1369,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       !!--interpolate from particles to 3D grid
                       call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                         dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                         renderplot(1:ninterp),icolourme(1:ninterp), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,&
                          pixwidth,pixwidth,dz, &
                          inormalise,isperiodicx,isperiodicy,isperiodicz)
@@ -1368,7 +1384,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          !!--interpolate from particles to 3D grid
                          call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                             zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                            dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                            contourplot(1:ninterp),icolourme(1:ninterp), &
                             ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,&
                             pixwidth,pixwidth,dz, &
                             inormalise,isperiodicx,isperiodicy,isperiodicz)
@@ -1464,7 +1480,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
-                                  dat(1:ninterp,icontourplot), &
+                                  contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
@@ -1476,7 +1492,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp), &
-                               dat(1:ninterp,irenderplot), &
+                               renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
@@ -1486,7 +1502,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
@@ -1497,7 +1513,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
@@ -1515,14 +1531,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             if (icoordsnew /= icoords) then
                                call interpolate3D_xsec_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp),icolourme(1:ninterp),&
                                   ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                             else
                                call interpolate3D_fastxsec( &
                                   xplot(1:ninterp),yplot(1:ninterp), &
                                   zplot(1:ninterp),hh(1:ninterp), &
-                                  weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                                  weight(1:ninterp),renderplot(1:ninterp),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,iverbose)
                             endif
@@ -1533,14 +1549,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_xsec_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp),icolourme(1:ninterp),&
                                      ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                                else
                                   call interpolate3D_fastxsec( &
                                      xplot(1:ninterp),yplot(1:ninterp), &
                                      zplot(1:ninterp),hh(1:ninterp), &
-                                     weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                                     weight(1:ninterp),contourplot(1:ninterp),icolourme(1:ninterp), &
                                      ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,iverbose)
                                endif
@@ -1557,7 +1573,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
-                                  dat(1:ninterp,icontourplot), &
+                                  contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
@@ -1569,7 +1585,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),&
-                               weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
@@ -1580,7 +1596,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
@@ -1590,7 +1606,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
@@ -1604,13 +1620,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             if (icoordsnew /= icoords) then
                                call interpolate3D_proj_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                             else
                                call interpolate3D_projection( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                             endif
@@ -1621,13 +1637,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_proj_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                                else
                                   call interpolate3D_projection( &
                                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                                endif
@@ -1666,7 +1682,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                 call interpolate2D_xsec( &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
-                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                   hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                    icolourme(1:ninterp),ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx,inormalise)
                 !
@@ -1840,12 +1856,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 !   similar but where particle colouring is used instead of interpolation
                 !-------------------------------------------------------------------------
              elseif (irenderpart > 0 .and. iplotpart) then
-                !--allocate memory for particle colouring
-                if (.not.allocated(renderplot)) then
-                   allocate(renderplot(ntoti),stat=ierr)
-                   if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
-                endif
-
                 !--apply transformations to render array and set label
                 renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
                 call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -1876,9 +1886,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 !
                 call colour_particles(renderplot(1:ntoti), &
                    rendermin,rendermax,icolourme(1:ntoti),ntoti)
-
-                !--deallocate memory
-                if (allocated(renderplot)) deallocate(renderplot)
 
              endif
 
@@ -1936,6 +1943,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
                       if (double_rendering) then
+                         call colour_set(icolours)
                          call set_transparency(npixx,npixy,datpixcont,brightness,contmin,contmax)
 
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
@@ -2145,12 +2153,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  (at present this is NOT used -can't render if not co-ord plot)
           !
           if (irenderpart > 0 .and. irenderpart <= numplot) then
-             !--allocate memory for particle colouring
-             if (.not.allocated(renderplot)) then
-                allocate(renderplot(ntoti),stat=ierr)
-                if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
-             endif
-
              !--apply transformations to render array and set label
              renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
              call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -2228,9 +2230,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
                 zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
           endif
-
-          !--deallocate memory
-          if (allocated(renderplot)) deallocate(renderplot)
 
           !--------------------------------
           ! plot error bars
@@ -2826,6 +2825,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  if (allocated(hh)) deallocate(hh)
  if (allocated(weight)) deallocate(weight)
  if (allocated(rkappa)) deallocate(rkappa)
+ if (allocated(renderplot)) deallocate(renderplot)
+ if (allocated(contourplot)) deallocate(contourplot)
 
  return
 

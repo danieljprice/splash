@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2022 Daniel Price
+!     Copyright (C) 2005-2023 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,11 +51,15 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     4.0.0   : (28/01/22)
+!     4.0.0   : (09/02/23)
 !             user-friendly interactive mode;
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.7.0   : (09/02/23)
+!             splash calc extinction computes column density to all sink particles in the simulation;
+!             bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems;
+!             bug fix with both quantities appearing in black and white when double rendering
 !     3.6.0   : (31/10/22)
 !             skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending);
 !             splash calc plus and splash calc minus for adding/subtracting snapshots;
@@ -521,7 +525,7 @@ program splash
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename,match_column
+ use asciiutils,         only:read_asciifile,basename,match_column,reorder_filenames_for_comparison
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -548,7 +552,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [31st Oct 2022]'
+ character(len=*), parameter :: version = 'v4.0.0 [9th Feb 2023]'
 
  !
  ! initialise some basic code variables
@@ -870,6 +874,10 @@ program splash
     call guess_format(nfiles,rootname,ierr)
  endif
 
+ if (ihavereadfilenames .and. get_command_flag('interleave')) then
+    call reorder_filenames_for_comparison(nfiles,rootname)
+ endif
+
  if (ikernel==0) then
     !--if no kernel has been set
     call get_environment_or_flag('SPLASH_KERNEL',string)
@@ -1056,7 +1064,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2022 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2023 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &

@@ -423,7 +423,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 \
-         lightcurve_utils.f90 lightcurve.f90 \
+         lightcurve_utils.f90 lightcurve.f90 extinction.f90 \
          $(READFILES) read_data.F90 \
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
