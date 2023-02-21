@@ -227,6 +227,8 @@ elemental function shortstring(string,unitslab)
  call string_delete(shortstring,'\g')
  call string_delete(shortstring,'\')
  call string_delete(shortstring,'_')
+ call string_delete(shortstring,'{')
+ call string_delete(shortstring,'}')
 
 end function shortstring
 

@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.7.2   : (21/02/23)
+!             bug fix recognising labels like v_{phi} on command line, can now use -r vphi
 !     3.7.1   : (09/02/23)
 !             libexact build failure fixed
 !     3.7.0   : (09/02/23)
@@ -549,7 +551,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.7.1 [9th Feb 2023]'
+ character(len=*), parameter :: version = 'v3.7.2 [21st Feb 2023]'
 
  !
  ! initialise some basic code variables
