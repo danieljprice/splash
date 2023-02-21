@@ -227,8 +227,6 @@ elemental function shortstring(string,unitslab)
  call string_delete(shortstring,'\g')
  call string_delete(shortstring,'\')
  call string_delete(shortstring,'_')
- call string_delete(shortstring,'{')
- call string_delete(shortstring,'}')
 
 end function shortstring
 
@@ -238,11 +236,12 @@ end function shortstring
 ! should be applied to variable names, but not function strings
 !
 !-----------------------------------------------------------------
-elemental function shortlabel(string,unitslab)
- use asciiutils, only:string_delete
+elemental function shortlabel(string,unitslab,lc)
+ use asciiutils, only:string_delete,lcase
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortlabel
+ logical, intent(in), optional :: lc
 
  if (present(unitslab)) then
     shortlabel = shortstring(string,unitslab)
@@ -266,6 +265,10 @@ elemental function shortlabel(string,unitslab)
  call string_delete(shortlabel,'<')
  call string_delete(shortlabel,'>')
  call string_delete(shortlabel,'\(2268)')
+
+ if (present(lc)) then
+    if (lc) shortlabel = lcase(shortlabel)
+ endif
 
 end function shortlabel
 

@@ -542,7 +542,7 @@ program splash
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral
  use multiplot,          only:itrans
- use labels,             only:lenlabel,label,unitslabel,shortstring
+ use labels,             only:lenlabel,label,unitslabel,shortlabel
  use limits,             only:set_limits
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
@@ -918,11 +918,11 @@ program splash
     !  translate from string to column id
     !
     if (nomenu) then
-       ipickx = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringx)
-       ipicky = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringy)
-       irender = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringr)
-       icontour = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringc)
-       ivecplot = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringv)
+       ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
+       ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
+       irender = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringr)
+       icontour = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringc)
+       ivecplot = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringv)
     endif
     !
     ! for some data reads we can automatically plot a particular column
