@@ -398,6 +398,11 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---origin=666        | SPLASH_ORIGIN         | recentre the coordinate origin and velocities   |
 |                      |                       | to the selected particle (e.g. particle 666)    |
 +----------------------+-----------------------+-------------------------------------------------+
+| --dontcentrevel='y'  | SPLASH_DONTCENTREVEL  | used along with SPLASH_CENTRE_ON_SINK or        |
+|                      |                       | SPLASH_ORIGIN. If true, then the velocities     |
+|                      |                       | will not be made relative to the sink or        |
+|                      |                       | particle.                                       |
++----------------------+-----------------------+-------------------------------------------------+
 | ---track=4789        | SPLASH_TRACK          | set limits of all quantities relative to those  |
 |                      |                       | of the selected particle (e.g. particle 4789)   |
 +----------------------+-----------------------+-------------------------------------------------+
