@@ -1935,10 +1935,23 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    else
                       icolours_temp = icolours
                    endif
+
                    !--call subroutine to actually render the image
-                   call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                      icolours_temp,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                   if (nstepsperpage > 1) then
+                      !--if there is more than one rendering plotted, make the
+                      !  background colour transparent
+                      call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
+                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours_temp,iplotcont,0,ncontours,.false.,&
+                         ilabelcont,contmin,contmax,alpha=brightness)
+                   else
+                      !--usual plot, no opacity
+                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours_temp,iplotcont,0,ncontours,.false.,&
+                         ilabelcont,contmin,contmax)
+                   endif
 
                    !--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
@@ -2956,7 +2969,7 @@ subroutine page_setup(dummy)
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
  inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if (inewpage .and. .not.dum) then
+ if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting
@@ -3038,7 +3051,7 @@ subroutine page_setup(dummy)
           if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = ' '
        else
-          if (debugmode) print*,'DEBUG: not printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: NOT printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = 'NOPGBOX'
        endif
        call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -3114,7 +3127,6 @@ subroutine page_setup(dummy)
  endif
  if (debugmode) print*,'DEBUG: finished page setup'
 
- return
 end subroutine page_setup
 
 !------------------------------------------------------
@@ -3159,7 +3171,7 @@ subroutine legends_and_title
            (OneColourBarPerRow.and.icolumn==nacross) .or. &
            (OneColourBarPerColumn .and. irow==ndown))) iPlotColourBar = .false.
 
-    if (iPlotColourBar) then
+    if (iPlotColourBar .and. istepsonpage==1) then
        xlabeloffsettemp = xlabeloffset + 1.0
        if (iaxistemp < 0) xlabeloffsettemp = 0.
        if (iUseBackGroundColourForAxes .and. isfloating(iColourBarStyle)) call plot_sci(0)
@@ -3305,7 +3317,6 @@ subroutine legends_and_title
  call plot_sci(icoloursave)
  call plot_set_opacity(1.0)
 
- return
 end subroutine legends_and_title
 
 !--------------------------------------------
@@ -3825,6 +3836,7 @@ subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,i
     endif
     if (.not.intreplot) call transform_limits(xmini,xmaxi,itransxi)
  endif
+
 end subroutine applytrans
 
 !-------------------------------------------------------------------
@@ -3944,7 +3956,6 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 !$omp enddo
 !$omp end parallel
 
- return
 end subroutine rotationandperspective
 
 !-------------------------------------------------------------------
@@ -3980,7 +3991,6 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
                        xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
  endif
 
- return
 end subroutine rotatedaxes
 
 end module timestep_plotting
