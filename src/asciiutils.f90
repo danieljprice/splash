@@ -38,12 +38,13 @@ module asciiutils
  public :: ucase,lcase,strip
  public :: get_line_containing
  public :: enumerate,isdigit,get_digits,integer_to_string,split
- public :: get_column_labels
+ public :: get_column_labels,read_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
- public :: match_column
+ public :: match_column,match_tag_start,match_integer,match_lists
  public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions,readline_csv
  public :: reorder_filenames_for_comparison
+ public :: read_var_from_file
 
  private
 
@@ -1156,6 +1157,45 @@ end subroutine get_column_labels
 
 !---------------------------------------------------------------------------
 !
+! interface to the above routine that also searches for the line
+! containing the column labels in the list of header lines
+!
+!---------------------------------------------------------------------------
+subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv)
+ integer,          intent(in)  :: iunit,nheaderlines,ncols
+ integer,          intent(out) :: nlabels
+ character(len=*), dimension(:), intent(out) :: labels
+ logical, intent(in), optional :: csv
+ character(len=len(labels(1))), dimension(size(labels)) :: tmplabel
+ character(len=4096)  :: line
+ logical :: is_csv,got_labels
+ integer :: i,imethod,ierr
+
+ is_csv = .false.
+ if (present(csv)) is_csv = csv
+ got_labels = .false.
+ nlabels = 0
+ labels = ''
+
+ rewind(iunit)
+ do i=1,nheaderlines
+    read(iunit,"(a)",iostat=ierr) line
+    !--try to match column labels from this header line, if not already matched (or dubious match)
+    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=ncols,csv=csv)
+    !--if we get nlabels > ncolumns, use them, but keep trying for a better match
+    if ((got_labels .and. nlabels == ncols) .or. &
+        (.not.got_labels .and. nlabels >= ncols  & ! only allow single-spaced labels if == ncols
+         .and. (.not.(imethod>=4) .or. nlabels==ncols))) then
+       labels(1:ncols) = tmplabel(1:ncols)
+       got_labels = .true.
+       !print*,'DEBUG: line ',i,' nlabels = ',nlabels,' LABELS= '//tmplabel(1:ncolstep)
+    endif
+ enddo
+
+end subroutine read_column_labels
+
+!---------------------------------------------------------------------------
+!
 ! count the number of sensible labels in a list of possible labels
 !
 !---------------------------------------------------------------------------
@@ -1215,6 +1255,32 @@ integer function match_tag(tags,tag)
  enddo
 
 end function match_tag
+
+!--------------------------------------------
+! as above but only match first N characters
+! where N=5 by default
+!--------------------------------------------
+integer function match_tag_start(tags,tag,n)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer, intent(in), optional :: n
+ integer :: i,ilen
+ character(len=len(tag)) :: str1,str2
+
+ ilen = 5
+ if (present(n)) ilen = n
+
+ match_tag_start = 0 ! default if not found
+ do i=1,size(tags)
+    str1 = tags(i)(1:ilen)
+    str2 = tag(1:ilen)
+    if (trim(lcase(str2))==trim(lcase(str1))) then
+       match_tag_start = i
+       exit  ! only match first occurrence
+    endif
+ enddo
+
+end function match_tag_start
 
 !------------------------------------------
 ! match tag against a list of tags
@@ -1285,6 +1351,43 @@ subroutine match_taglist(taglist,tags,istartmatch,nmatch)
  enddo
 
 end subroutine match_taglist
+
+!------------------------------------------
+! find first integer that matches in a
+! list of integers
+!------------------------------------------
+integer function match_integer(ivals,i)
+ integer, intent(in) :: ivals(:)
+ integer, intent(in) :: i
+ integer :: k
+
+ match_integer = 0
+ do k=1,size(ivals)
+    if (ivals(k)==i) then
+       match_integer = k
+       exit
+    endif
+ enddo
+
+end function match_integer
+
+!------------------------------------------
+! find labels that match between two lists
+! (match == first N characters are the same)
+! output is a list of indices of labels
+! from list1 that match list2
+!------------------------------------------
+function match_lists(list1,list2) result(imap)
+ character(len=*), intent(in) :: list1(:),list2(:)
+ integer :: imap(size(list2))
+ integer :: j,icol
+
+ do j=1,size(list2)
+    icol = match_tag_start(list1,list2(j))
+    if (icol > 0) imap(icol) = j
+ enddo
+
+end function match_lists
 
 !------------------------------
 ! Append a number to a string
@@ -1501,6 +1604,7 @@ end function numfromfile
 
 !------------------------------------------------------------
 ! utility to reorder a list of files
+! NOT YET IMPLEMENTED...
 !------------------------------------------------------------
 subroutine reorder_filenames_for_comparison(nfiles,filenames)
  integer, intent(in) :: nfiles
@@ -1523,5 +1627,51 @@ subroutine reorder_filenames_for_comparison(nfiles,filenames)
  enddo
 
 end subroutine reorder_filenames_for_comparison
+
+!------------------------------------------------------------
+! utility to read a variable from an ascii file
+! in the form:
+!
+!   var = val   ! comment
+!
+! val is returned as a string, if not found leaves the
+! input value unmodified
+!------------------------------------------------------------
+subroutine read_var_from_file(var,val,filename,ierr)
+ character(len=*), intent(in) :: var
+ character(len=*), intent(inout) :: val
+ character(len=*), intent(in) :: filename
+ integer, intent(out) :: ierr
+ character(len=130) :: line
+ integer :: j,lu,ieq,istart
+ logical :: match
+
+ open(newunit=lu,file=filename,status='old',iostat=ierr)
+ match = .false.
+ do while(ierr==0 .and. .not.match)
+    read(lu,"(a)",iostat=ierr) line
+    if (index(line,var) /= 0) then
+       istart = index(line,var)
+       ieq = index(line(istart:),'=')
+       val = line(istart+ieq+1:)
+       match = .true.
+    endif
+ enddo
+ close(lu)
+
+ if (match) then
+    val = trim(adjustl(val))
+    ! now cull the variable at a space or comma
+    do j=1,len_trim(val)
+       if (any((/' ',',',';',':','=','!'/)==val(j:j))) then
+          val = val(1:j)
+          exit
+       endif
+    enddo
+ !else
+ !print*,trim(var)//' not found in '//trim(filename)
+ endif
+
+end subroutine read_var_from_file
 
 end module asciiutils

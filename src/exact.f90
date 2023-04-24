@@ -73,7 +73,7 @@ module exact
  !--rho vs h
  real :: hfact
  !--read from file
- integer :: ixcolfile(maxexact),iycolfile(maxexact),nfiles
+ integer :: imapexact(maxexact),nfiles
  character(len=120) :: filename_exact(maxexact)
  !--equilibrium torus
  real :: Mstar,Rtorus,distortion
@@ -116,7 +116,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
+       mprim,msec,imapexact,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
        const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
@@ -166,8 +166,7 @@ subroutine defaults_set_exact
 !   read from file
  nfiles = 1
  filename_exact = ' '
- ixcolfile = 1
- iycolfile = 2
+ imapexact = 0
  iexactplotx = 0
  iexactploty = 0
 !   density profile parameters
@@ -250,19 +249,25 @@ end subroutine defaults_set_exact
  ! sets which exact solution to calculate + parameters for this
  !----------------------------------------------------------------------
 subroutine submenu_exact(iexact)
- use settings_data, only:ndim
+ use settings_data, only:ndim,ncolumns,ncalc
  use prompting,     only:prompt
  use filenames,     only:rootname,ifileopen,fileprefix
  use exactfunction, only:check_function
+ use exactfromfile, only:map_columns_in_file
  use mhdshock,      only:nmhdshocksolns,mhdprob
  use planetdisc,    only:maxspirals,labelspiral
- use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars,read_asciifile
+ use asciiutils,    only:get_ncolumns,get_nrows,string_replace,match_tag_start,&
+                         add_escape_chars,read_asciifile,read_column_labels
+ use labels,        only:label
+ use map_columns,   only:map_columns_interactive
  integer, intent(inout) :: iexact
- integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows,nfilestmp
+ integer :: ierr,itry,i,ncols,nadjust,nrows,nlab_exact
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
  character(len=len(funcstring)) :: func_prev
+ integer, parameter :: maxlabels = 64
+ character(len=30)  :: exact_labels(maxlabels)
 
  print 10
 10 format(' 0) none ',/,               &
@@ -331,9 +336,7 @@ subroutine submenu_exact(iexact)
     !
     ! try to read filenames from .exactfiles if it exists
     !
-    filename_tmp = trim(fileprefix)//'.exactfiles'
-    call read_asciifile(trim(filename_tmp),nfilestmp,filename_exact,ierr)
-    if (nfilestmp > 0) nfiles = nfilestmp
+    call read_exactparams(iexact,trim(rootname(1)),ierr)
     !
     ! then prompt user
     !
@@ -360,23 +363,12 @@ subroutine submenu_exact(iexact)
           if (iexist) then
              open(unit=33,file=filename_tmp,status='old',iostat=ierr)
              if (ierr==0) then
-                call get_ncolumns(33,ncols,nheaderlines)
-                call get_nrows(33,nheaderlines,nrows)
-                if (nrows < 100000) then
-                   print "(a,i5,a)",' got ',nrows,' lines in file'
-                else
-                   print "(a,i10,a)",' got ',nrows,' lines in file'
-                endif
+                call map_columns_in_file(33,ncols,nrows,imapexact,label(1:ncolumns+ncalc),exact_labels,nlab_exact)
+                call map_columns_interactive(imapexact,label(1:ncolumns+ncalc),exact_labels,nlab_exact)
                 if (nrows > maxexactpts) maxexactpts = nrows
-                if (ncols > 2) then
-                   if (i==1 .or. .not.apply_to_all) then
-                      print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
-                      call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
-                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
-                   endif
-                elseif (ncols==2) then
-                   print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
-                else
+                if (count(imapexact > 0) < 2) print "(/,a,/)",' WARNING: not enough columns mapped to plot anything'
+                ! re-prompt if there are less than two useable columns in the file
+                if (ncols < 2) then
                    iexist = .false.
                    call prompt('Error: file contains < 2 readable columns: try again?',ians)
                    if (.not.ians) then
@@ -402,19 +394,19 @@ subroutine submenu_exact(iexact)
              endif
           endif
        enddo
-       if (i==1 .or. .not.apply_to_all) then
-          call prompt('enter y axis of exact solution ',iexactploty(i),1)
-          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
-       endif
-       if (i==1) then
-          call prompt('Apply above settings to all files?',apply_to_all)
-          if (apply_to_all) then
-             iycolfile(:) = iycolfile(i)
-             ixcolfile(:) = ixcolfile(i)
-             iexactploty(:) = iexactploty(i)
-             iexactplotx(:) = iexactplotx(i)
-          endif
-       endif
+       !if (i==1 .or. .not.apply_to_all) then
+      !    call prompt('enter y axis of exact solution ',iexactploty(i),1)
+      !    call prompt('enter x axis of exact solution ',iexactplotx(i),1)
+      ! endif
+       !if (i==1) then
+      !    call prompt('Apply above settings to all files?',apply_to_all)
+      !    if (apply_to_all) then
+      !       iycolfile(:) = iycolfile(i)
+      !       ixcolfile(:) = ixcolfile(i)
+      !       iexactploty(:) = iexactploty(i)
+      !       iexactplotx(:) = iexactplotx(i)
+      !    endif
+       !endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
        !call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
@@ -713,7 +705,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  use prompting,      only:prompt
  use exactfunction,  only:check_function
  use filenames,      only:fileprefix,ifileopen
- use asciiutils,     only:read_asciifile,get_line_containing
+ use asciiutils,     only:read_asciifile,get_line_containing,read_var_from_file
  integer,          intent(in)  :: iexact
  character(len=*), intent(in)  :: rootname
  integer,          intent(out) :: ierr
@@ -769,7 +761,14 @@ subroutine read_exactparams(iexact,rootname,ierr)
     filename = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename),nfiles_got,filename_exact,ierr)
     if (ierr==-1) then
-       if (iverbose > 0) print "(a)",' no file '//trim(filename)
+       if (iverbose > 1) print "(a)",' no file '//trim(filename)
+       !
+       ! if no .exactfiles, see if the phantom .setup file exists
+       ! and have a look for "outputfilename"
+       !
+       filename = trim(rootname(1:idash-1))//'.setup'
+       call read_var_from_file('outputfilename',filename_exact(1),filename,ierr)
+       if (ierr == 0) nfiles = 1
        return
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
@@ -1055,7 +1054,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
                               irhorestframe,is_coord,ideltav,idustfrac
  use filenames,       only:ifileopen,rootname
- use asciiutils,      only:string_replace
+ use asciiutils,      only:string_replace,match_integer
  use prompting,       only:prompt
  use exactfromfile,   only:exact_fromfile
  use mhdshock,        only:exact_mhdshock
@@ -1089,7 +1088,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer,       intent(in) :: noftype(maxparttypes)
  logical,       intent(in) :: iplot_type(maxparttypes)
  logical,       intent(in) :: irescale
- integer :: itrans
+ integer :: itrans,imapx,imapy
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
@@ -1184,12 +1183,14 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(2) ! exact solution read from file
     do i=1,nfiles
-       if (iplotx==iexactplotx(i) .and. iploty==iexactploty(i)) then
+       imapx = match_integer(imapexact,iplotx)
+       imapy = match_integer(imapexact,iploty)
+       if (imapx > 0 .and. imapy > 0) then
           !--substitute %f for filename
           filename_tmp = filename_exact(i)
           call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
           !--read exact solution from file
-          call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile(i),iycolfile(i),iexactpts,ierr)
+          call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
              if (iApplyTransExactFile) then
