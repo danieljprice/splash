@@ -99,11 +99,13 @@ end module particle_data
 module filenames
  implicit none
  integer, parameter :: maxfile = 10001
- integer :: nfiles,nsteps,ifileopen,iposopen
+ integer :: nfiles,nsteps,ifileopen,iposopen,i,io
+ real    :: xyz_origin(3,maxfile)
  character(len=120), dimension(maxfile) :: rootname
  character(len=100) :: fileprefix
- character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
- integer, dimension(maxfile) :: nstepsinfile
+ character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile,originfile,sinkposfile
+ integer, dimension(maxfile) :: nstepsinfile,isinkid
+ logical :: have_origin,have_sinkpos
  character(len=*), parameter :: tagline = &
   'SPLASH: A visualisation tool for SPH data (c)2004-2022 Daniel Price and contributors'
 
@@ -113,6 +115,7 @@ contains
 
 subroutine set_filenames(prefix)
  character(len=*), intent(in) :: prefix
+ logical                      :: fexists
 
  fileprefix   = trim(adjustl(prefix))
  if (fileprefix(len_trim(fileprefix):len_trim(fileprefix))=='.') then
@@ -122,6 +125,39 @@ subroutine set_filenames(prefix)
  limitsfile   = trim(adjustl(fileprefix))//'.limits'
  unitsfile    = trim(adjustl(fileprefix))//'.units'
  coloursfile  = trim(adjustl(fileprefix))//'.colours'
+ originfile   = trim(adjustl(fileprefix))//'.origin'
+ sinkposfile  = trim(adjustl(fileprefix))//'.sinkpos'
+
+ inquire(file=originfile,exist=fexists)
+ xyz_origin = 0.
+ have_origin = .false.
+ if (fexists) then
+    print*, 'Reading in ',trim(originfile)
+    print*, 'WARNING: this will not provided the desired result if other shifting applied'
+    print*, 'WARNING: This method has not yet been fully tested'
+    have_origin = .true.
+    open(unit=1701,file=originfile)
+    io = 0
+    i = 1
+    do while (io==0)
+       read(1701,*,iostat=io) xyz_origin(:,i)
+       i = i + 1
+    enddo
+ endif
+ inquire(file=sinkposfile,exist=fexists)
+ isinkid = 0
+ have_sinkpos = .false.
+ if (fexists) then
+    print*, 'Reading in ',trim(sinkposfile)
+    have_sinkpos = .true.
+    open(unit=1701,file=sinkposfile)
+    io = 0
+    i = 1
+    do while (io==0)
+       read(1701,*,iostat=io) isinkid(i)
+       i = i + 1
+    enddo
+ endif
 
  return
 end subroutine set_filenames
