@@ -1120,10 +1120,11 @@ subroutine print_usage(quit)
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
- print "(a)",' --codeunits       : enforce code units (also --code)'
+ print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
  print "(a)",' --track=666       : track particle number 666'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
+ print "(a)",' --exact=myfile    : read and plot exact solution from ascii file myfile'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
