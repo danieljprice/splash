@@ -143,6 +143,57 @@ logical function is_density(icol)
 
 end function is_density
 
+!----------------------------------------------------------------
+!
+!  function returning the synonym of a label
+!  so two different labels can be identified as the same
+!  physical quantity,  e.g. "radius" and "r" are both the radius
+!
+!----------------------------------------------------------------
+elemental function label_synonym(string)
+ use asciiutils, only:lcase,string_delete
+ character(len=*), intent(in) :: string
+ character(len=8) :: label_synonym
+ character(len=len(string)) :: labeli
+ integer :: k
+
+ ! remove leading spaces and make lower case
+ labeli = trim(adjustl(lcase(string)))
+
+ ! split at whitespace or [ to avoid unit labels
+ k = max(index(labeli,' '),index(labeli,'['))
+ if (k > 1) then
+    labeli = labeli(1:k-1)
+ endif
+ ! also remove special characters
+ call string_delete(labeli,'\d')
+ call string_delete(labeli,'\u')
+ call string_delete(labeli,'\g')
+ call string_delete(labeli,'\')
+ call string_delete(labeli,'_')
+
+ if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:3)=='\gr' .or. &
+     (index(labeli,'density') /= 0 .and. irho==0)) then
+    label_synonym = 'density'
+ elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass') then
+    label_synonym = 'pmass'
+ elseif (labeli(1:1)=='h' .or. labeli(1:6)=='smooth') then
+    label_synonym = 'h'
+ elseif (trim(labeli)=='u' .or. labeli(1:6)=='utherm' .or. labeli(1:5)=='eint' &
+     .or.(index(labeli,'internal energy') /= 0)) then
+    label_synonym = 'u'
+ elseif (labeli(1:2)=='pr' .or. trim(labeli)=='p' .or. &
+        (index(labeli,'pressure') /= 0 .and. ipr==0)) then
+    label_synonym = 'pressure'
+ elseif (trim(labeli)=='r' .or. labeli(1:3)=='rad') then
+    label_synonym = 'radius'
+ else
+    ! by default the label synonym is the same as the original label
+    label_synonym = labeli
+ endif
+
+end function label_synonym
+
 !--------------------------------------------------------------
 !
 !  query function for whether column is a spatial coordinate

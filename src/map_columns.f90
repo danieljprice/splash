@@ -38,6 +38,43 @@ module map_columns
 
 contains
 
+!---------------------------------------------------
+! map labels in one list onto corresponding labels
+! in another list
+!---------------------------------------------------
+function map_labels(list1,list2) result(imap)
+ use asciiutils, only:match_lists
+ use labels,     only:label_synonym
+ character(len=*), intent(in) :: list1(:),list2(:)
+ integer :: imap(size(list1))
+
+ imap = match_lists(label_synonym(list1),label_synonym(list2))
+
+end function map_labels
+
+!---------------------------------------------------
+! map labels in the ascii file read as the exact
+! solution onto corresponding labels in the data
+! (i.e. find which columns correspond to which)
+!---------------------------------------------------
+subroutine map_columns_in_file(iunit,ncols,nrows,imap,label,exact_labels,nlabels)
+ use asciiutils, only:get_ncolumns,get_nrows,read_column_labels
+ integer, intent(in)  :: iunit
+ integer, intent(out) :: ncols,nrows,nlabels
+ integer, intent(out) :: imap(:)
+ character(len=*), intent(in)  :: label(:)
+ character(len=*), intent(out) :: exact_labels(:)
+ integer :: nheaderlines,ncolumns
+
+ ncolumns = size(label)
+ call get_ncolumns(iunit,ncols,nheaderlines)
+ call get_nrows(iunit,nheaderlines,nrows)
+ call read_column_labels(iunit,nheaderlines,ncols,nlabels,exact_labels)
+ print "(/,a,i0,a,/)",' got ',nrows,' lines in file'
+ imap(1:nlabels) = map_labels(exact_labels(1:nlabels),label(1:ncolumns))
+
+end subroutine map_columns_in_file
+
 !-----------------------------------------------------------------
 ! interactive prompting for mapping list
 !-----------------------------------------------------------------
@@ -77,8 +114,9 @@ end subroutine map_columns_interactive
 ! print the current list of column mappings
 !-------------------------------------------
 subroutine print_map(nmap)
+ use labels, only:label_synonym
  integer, intent(in) :: nmap
- integer :: j,k,icol
+ integer :: j
 
  print "(/,a,i2)", ' Current mapping:'
  if (nmap==0) imap = 0 ! reset if nmap = 0, happens after clear operation
@@ -99,14 +137,12 @@ end subroutine print_map
 subroutine add_map(istart,iend,nmap)
  use prompting,  only:prompt
  use asciiutils, only:match_tag_start
+ use labels,     only:label_synonym
  integer, intent(in)    :: istart,iend
  integer, intent(inout) :: nmap
- integer :: i,icol
+ integer :: icol
 
  if (istart == nmap) then
-    !do i=1,nlab
-   !    print "(i2,': ',a)",i,trim(exact_label_local(i))
-    !enddo
     ! default prompt is the first column not already mapped
     icol = 1
     do while (imap(icol) > 0)
@@ -119,7 +155,8 @@ subroutine add_map(istart,iend,nmap)
  if (icol <= 0) return
 
  if (imap(icol)==0) then
-    imap(icol) = match_tag_start(label_local,exact_label_local(icol))
+    imap(icol) = match_tag_start(label_synonym(label_local),&
+                                 label_synonym(exact_label_local(icol)))
  endif
  call prompt('which splash column to map '//trim(exact_label_local(icol))//' to?',imap(icol),0)
 

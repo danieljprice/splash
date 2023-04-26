@@ -1379,12 +1379,12 @@ end function match_integer
 !------------------------------------------
 function match_lists(list1,list2) result(imap)
  character(len=*), intent(in) :: list1(:),list2(:)
- integer :: imap(size(list2))
+ integer :: imap(size(list1))
  integer :: j,icol
 
- do j=1,size(list2)
-    icol = match_tag_start(list1,list2(j))
-    if (icol > 0) imap(icol) = j
+ do j=1,size(list1)
+    icol = match_tag_start(list2,list1(j))
+    if (icol > 0) imap(j) = icol
  enddo
 
 end function match_lists

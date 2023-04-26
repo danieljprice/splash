@@ -31,7 +31,7 @@
 module exactfromfile
  implicit none
 
- public :: exact_fromfile,map_columns_in_file
+ public :: exact_fromfile
 
  private
 
@@ -92,29 +92,5 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
  return
 
 end subroutine exact_fromfile
-
-!---------------------------------------------------
-! map labels in the ascii file read as the exact
-! solution onto corresponding labels in the data
-! (i.e. find which columns correspond to which)
-!---------------------------------------------------
-subroutine map_columns_in_file(iunit,ncols,nrows,imap,label,exact_labels,nlabels)
- use asciiutils, only:get_ncolumns,get_nrows,read_column_labels,match_lists
- integer, intent(in)  :: iunit
- integer, intent(out) :: ncols,nrows,nlabels
- integer, intent(out) :: imap(:)
- character(len=*), intent(in)  :: label(:)
- character(len=*), intent(out) :: exact_labels(:)
- integer :: nheaderlines,ncolumns
- integer :: j,icol
-
- ncolumns = size(label)
- call get_ncolumns(iunit,ncols,nheaderlines)
- call get_nrows(iunit,nheaderlines,nrows)
- call read_column_labels(iunit,nheaderlines,ncols,nlabels,exact_labels)
- print "(/,a,i0,a,/)",' got ',nrows,' lines in file'
- imap = match_lists(exact_labels(1:nlabels),label(1:ncolumns))
-
-end subroutine map_columns_in_file
 
 end module exactfromfile

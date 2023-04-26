@@ -253,13 +253,12 @@ subroutine submenu_exact(iexact)
  use prompting,     only:prompt
  use filenames,     only:rootname,ifileopen,fileprefix
  use exactfunction, only:check_function
- use exactfromfile, only:map_columns_in_file
  use mhdshock,      only:nmhdshocksolns,mhdprob
  use planetdisc,    only:maxspirals,labelspiral
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,match_tag_start,&
                          add_escape_chars,read_asciifile,read_column_labels
  use labels,        only:label
- use map_columns,   only:map_columns_interactive
+ use map_columns,   only:map_columns_in_file,map_columns_interactive
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nadjust,nrows,nlab_exact
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
