@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -51,8 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.8.0   : (14/03/23)
-!             plots multiple renderings with transparent background if more than one timestep per page selected
+!     3.8.0   : (26/04/23)
+!             plots multiple renderings with transparent background if more than one timestep per page selected;
+!             auto-magically map exact solution columns onto splash columns;
+!             added --exact=file to switch on plotting of exact solution from file
 !     3.7.2   : (21/02/23)
 !             bug fix recognising labels like v_{phi} on command line, can now use -r vphi
 !     3.7.1   : (09/02/23)
@@ -524,7 +526,7 @@ program splash
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
                               itrackoffset,itracktype,iRescale,enforce_code_units,UseTypeinRenderings
  use system_commands,    only:get_number_arguments,get_argument
- use system_utils,       only:lenvironment,renvironment, &
+ use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename,match_column,reorder_filenames_for_comparison
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
@@ -542,7 +544,7 @@ program splash
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
- use exact,              only:ispiral
+ use exact,              only:ispiral,nfiles_exact=>nfiles,filename_exact
  use multiplot,          only:itrans
  use labels,             only:lenlabel,label,unitslabel,shortlabel
  use limits,             only:set_limits
@@ -553,7 +555,7 @@ program splash
  character(len=120) :: string
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.0 [14th Mar 2023]'
+ character(len=*), parameter :: version = 'v3.8.0 [26th Apr 2023]'
 
  !
  ! initialise some basic code variables
@@ -831,6 +833,14 @@ program splash
  if (get_command_flag('wake')) then
     iexact = 17
     ispiral = 1
+ endif
+ if (get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
+    iexact = 2
+    call envlist('exact',nfiles_exact,filename_exact)
+    if (len_trim(filename_exact(1))==0) then
+       print "(a)",'error command line argument --exact=file requires filename'
+       stop
+    endif
  endif
  if (get_command_flag('codeunits') .or. get_command_flag('code')) then
     iRescale = .false.

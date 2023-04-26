@@ -36,6 +36,11 @@ module map_columns
  procedure(add_map),    pointer, private :: addmap => null()
  procedure(delete_map), pointer, private :: delmap => null()
 
+ public :: map_labels,map_columns_in_file,map_columns_interactive
+ public :: print_mapping
+
+ private
+
 contains
 
 !---------------------------------------------------
@@ -113,21 +118,32 @@ end subroutine map_columns_interactive
 !-------------------------------------------
 ! print the current list of column mappings
 !-------------------------------------------
-subroutine print_map(nmap)
- use labels, only:label_synonym
- integer, intent(in) :: nmap
+subroutine print_mapping(ncols1,imap1,list1,list2)
+ integer, intent(in) :: ncols1
+ integer, intent(in) :: imap1(ncols1)
+ character(len=*), intent(in) :: list1(:),list2(:)
  integer :: j
 
  print "(/,a,i2)", ' Current mapping:'
- if (nmap==0) imap = 0 ! reset if nmap = 0, happens after clear operation
 
- do j=1,nlab
-    if (imap(j) > 0) then
-       print "(i2,': ',a12,a,i2,a)",j,exact_label_local(j),' -> ',imap(j),') '//trim(label_local(imap(j)))
+ do j=1,ncols1
+    if (imap1(j) > 0) then
+       print "(i2,': ',a12,a,i2,a)",j,list1(j),' -> ',imap1(j),') '//trim(list2(imap(j)))
     else
-       print "(i2,': ',a)",j,trim(exact_label_local(j))
+       print "(i2,': ',a12,a)",j,list1(j),' -> None'
     endif
  enddo
+
+end subroutine print_mapping
+
+!-------------------------------------------
+! print the current list of column mappings
+!-------------------------------------------
+subroutine print_map(nmap)
+ integer, intent(in) :: nmap
+
+ if (nmap==0) imap = 0 ! reset if nmap = 0, happens after clear operation
+ call print_mapping(nlab,imap,exact_label_local,label_local)
 
 end subroutine print_map
 
@@ -158,7 +174,8 @@ subroutine add_map(istart,iend,nmap)
     imap(icol) = match_tag_start(label_synonym(label_local),&
                                  label_synonym(exact_label_local(icol)))
  endif
- call prompt('which splash column to map '//trim(exact_label_local(icol))//' to?',imap(icol),0)
+ call prompt('which splash column to map '//trim(exact_label_local(icol))// &
+             ' to?',imap(icol),0,size(label_local))
 
  nmap = nlab
 

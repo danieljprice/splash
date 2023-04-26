@@ -35,6 +35,8 @@ module exact
  !--maximum number of solutions in any one plot
  !
  integer, parameter :: maxexact=32
+ integer, parameter :: maxlabels = 64
+ character(len=30)  :: exact_labels(maxlabels)
  !
  !--options used to plot the exact solution line
  !
@@ -68,6 +70,7 @@ module exact
  real, dimension(2) :: Msphere,rsoft
  !--from file
  integer :: iexactplotx(maxexact), iexactploty(maxexact)
+ logical :: iauto_map_columns
  !--shock tube
  real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
  !--rho vs h
@@ -116,7 +119,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       mprim,msec,imapexact,xshock,totmass,machs,macha,&
+       mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
        const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
@@ -167,6 +170,7 @@ subroutine defaults_set_exact
  nfiles = 1
  filename_exact = ' '
  imapexact = 0
+ iauto_map_columns = .true.
  iexactplotx = 0
  iexactploty = 0
 !   density profile parameters
@@ -258,15 +262,13 @@ subroutine submenu_exact(iexact)
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,match_tag_start,&
                          add_escape_chars,read_asciifile,read_column_labels
  use labels,        only:label
- use map_columns,   only:map_columns_in_file,map_columns_interactive
+ use map_columns,   only:map_columns_in_file,map_columns_interactive,print_mapping
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nadjust,nrows,nlab_exact
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
  character(len=len(funcstring)) :: func_prev
- integer, parameter :: maxlabels = 64
- character(len=30)  :: exact_labels(maxlabels)
 
  print 10
 10 format(' 0) none ',/,               &
@@ -362,8 +364,19 @@ subroutine submenu_exact(iexact)
           if (iexist) then
              open(unit=33,file=filename_tmp,status='old',iostat=ierr)
              if (ierr==0) then
-                call map_columns_in_file(33,ncols,nrows,imapexact,label(1:ncolumns+ncalc),exact_labels,nlab_exact)
-                call map_columns_interactive(imapexact,label(1:ncolumns+ncalc),exact_labels,nlab_exact)
+                call map_columns_in_file(33,ncols,nrows,imapexact,&
+                                         label(1:ncolumns+ncalc),exact_labels,nlab_exact)
+                ! if more than two columns mapped successfully, prompt to keep this automatic
+                if (count(imapexact > 0) >= 2) then
+                   call print_mapping(nlab_exact,imapexact,exact_labels,label(1:ncolumns+ncalc))
+                   call prompt('use automatic mapping above?',iauto_map_columns)
+                else
+                   iauto_map_columns = .false.
+                endif
+                ! manual assignment of column mappings
+                if (.not.iauto_map_columns) then
+                   call map_columns_interactive(imapexact,label(1:ncolumns+ncalc),exact_labels,nlab_exact)
+                endif
                 if (nrows > maxexactpts) maxexactpts = nrows
                 if (count(imapexact > 0) < 2) print "(/,a,/)",' WARNING: not enough columns mapped to plot anything'
                 ! re-prompt if there are less than two useable columns in the file
@@ -393,15 +406,9 @@ subroutine submenu_exact(iexact)
              endif
           endif
        enddo
-       !if (i==1 .or. .not.apply_to_all) then
-      !    call prompt('enter y axis of exact solution ',iexactploty(i),1)
-      !    call prompt('enter x axis of exact solution ',iexactplotx(i),1)
-      ! endif
        !if (i==1) then
       !    call prompt('Apply above settings to all files?',apply_to_all)
       !    if (apply_to_all) then
-      !       iycolfile(:) = iycolfile(i)
-      !       ixcolfile(:) = ixcolfile(i)
       !       iexactploty(:) = iexactploty(i)
       !       iexactplotx(:) = iexactplotx(i)
       !    endif
@@ -1050,8 +1057,9 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             itag,iamtype,noftype,iplot_type, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
  use params,          only:int1,maxparttypes
+ use settings_data,   only:ncolumns,ncalc
  use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
-                              irhorestframe,is_coord,ideltav,idustfrac
+                              irhorestframe,is_coord,ideltav,idustfrac,label
  use filenames,       only:ifileopen,rootname
  use asciiutils,      only:string_replace,match_integer
  use prompting,       only:prompt
@@ -1076,6 +1084,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use planetdisc,      only:exact_planetdisc
  use bondi,           only:exact_bondi
  use transforms,      only:transform,transform_inverse
+ use map_columns,     only:map_columns_in_file
  use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle,plot_set_opacity
  integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
  integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
@@ -1087,10 +1096,11 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer,       intent(in) :: noftype(maxparttypes)
  logical,       intent(in) :: iplot_type(maxparttypes)
  logical,       intent(in) :: irescale
- integer :: itrans,imapx,imapy
+ integer :: itrans,imapx,imapy,iu
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
+ integer :: ncols,nrows,nlab_exact
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
  real :: dx,timei,gammai
  character(len=len(filename_exact)) :: filename_tmp
@@ -1182,12 +1192,19 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(2) ! exact solution read from file
     do i=1,nfiles
+       !--substitute %f for filename
+       filename_tmp = filename_exact(i)
+       call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+       if (iauto_map_columns) then
+          open(newunit=iu,file=filename_tmp,status='old',iostat=ierr)
+          imapexact = 0
+          call map_columns_in_file(iu,ncols,nrows,imapexact,&
+               label(1:ncolumns+ncalc),exact_labels,nlab_exact)
+          close(iu)
+       endif
        imapx = match_integer(imapexact,iplotx)
        imapy = match_integer(imapexact,iploty)
        if (imapx > 0 .and. imapy > 0) then
-          !--substitute %f for filename
-          filename_tmp = filename_exact(i)
-          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
           !--read exact solution from file
           call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
@@ -1211,6 +1228,8 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                                          ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
           endif
+       else
+          ierr = 2
        endif
     enddo
  case(3)! shock tube
