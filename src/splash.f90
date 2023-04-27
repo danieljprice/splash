@@ -1138,6 +1138,7 @@ subroutine print_usage(quit)
  print "(a)",' --sink=1          : centre on sink particle number 1'
  print "(a)",' --track=666       : track particle number 666'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
+ print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
  print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  call print_available_formats('short')
  print "(a)"

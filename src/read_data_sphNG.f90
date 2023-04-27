@@ -2434,9 +2434,9 @@ subroutine reset_centre_of_mass(xyz,pmass,h,iphase,np,icentre)
 
  xcm(:) = xcm(:)/masstot
  if (icentre==1) then
-    print*,'\n RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
+    print*,' RESETTING CENTRE OF MASS (',pack(xcm,required(1:3)),') TO ZERO '
  elseif (icentre==2) then
-    print*,'\n RESETTING CENTRE OF DENSEST CLUMP (',pack(xcm,required(1:3)),') TO ZERO using ',ctr,' particles'
+    print*,' RESETTING CENTRE OF DENSEST CLUMP (',pack(xcm,required(1:3)),') TO ZERO using ',ctr,' particles'
  endif
  if (required(1)) xyz(1:np,1) = xyz(1:np,1) - xcm(1)
  if (required(2)) xyz(1:np,2) = xyz(1:np,2) - xcm(2)

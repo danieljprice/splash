@@ -59,19 +59,22 @@ end subroutine get_adjust_data_dependencies
 !
 !----------------------------------------------------
 subroutine adjust_data_codeunits
- use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist
+ use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist,&
+                           ienvstring,get_environment_or_flag
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
  use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,UseFastRender,icoords
  use particle_data,   only:dat,npartoftype,iamtype
  use filenames,       only:ifileopen,nstepsinfile
  use geometry,        only:labelcoord
- use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,get_binary,got_particles_of_type
+ use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,&
+                           locate_particle_from_string,get_binary,got_particles_of_type
  real :: hmin,dphi,domega,period
  real, dimension(3) :: x0,v0
  integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2),iorigin
  logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles
  character(len=20), dimension(3) :: list
+ character(len=30) :: string
 
  !
  !--environment variable setting to enforce a minimum h
@@ -168,14 +171,28 @@ subroutine adjust_data_codeunits
     !
     !--center on a particular particle
     !
-    iorigin = ienvironment('SPLASH_ORIGIN')
-    if (iorigin > 0 .and. all(ix(1:ndim) > 0) .and. ndim > 0) then
+    call get_environment_or_flag('SPLASH_ORIGIN',string)
+    iorigin = ienvstring(string) ! first try to read the string as an integer
+
+    if (iorigin > 0 .or. (len_trim(string) > 0) .and. all(ix(1:ndim) > 0) .and. ndim > 0) then
        if (centreonsink)  then
           print "(/,a,/)",' ERROR: cannot use --sink and --origin at the same time'
        else
-          print "(a,i12,a)",' :: CENTREING ON PARTICLE ',iorigin,' from --origin flag'
-          if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
           do j=1,nstepsinfile(ifileopen)
+             !
+             !--handle strings like --origin=maxdens to locate the particle for the origin
+             !
+             if (len_trim(string) > 0 .and. iorigin==0) then
+                iorigin = locate_particle_from_string(string,ntot,ncolumns,dat(:,:,j),irho)
+                if (iorigin <= 0) exit ! quit loop over steps
+             endif
+             if (j==1 .or. ienvstring(string) == 0) then
+                print "(a,i0,a)",' :: CENTREING ON PARTICLE ',iorigin,' from --origin='//trim(string)//' flag'
+                if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
+             endif
+             !
+             !--now centre on the chosen particle
+             !
              ntot = sum(npartoftype(:,j))
              call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='')
           enddo
@@ -290,7 +307,7 @@ end subroutine rotate_particles
 subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label)
  use labels, only:ix,ivx
  integer, intent(in) :: ipart,np,ndim,ndimV,ncol,iverbose
- logical, intent(in) :: dontCentreVelocity 
+ logical, intent(in) :: dontCentreVelocity
  real, dimension(:,:), intent(inout) :: dat
  real, dimension(ndim)  :: x0
  real, dimension(ndimV) :: v0

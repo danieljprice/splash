@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -32,6 +32,7 @@ module part_utils
  public :: igettype,get_tracked_particle
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
+ public :: locate_particle_from_string
  public :: get_binary,got_particles_of_type
  public :: get_positions_of_type
  private
@@ -137,6 +138,27 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  endif
 
 end subroutine locate_nth_particle_of_type
+
+!-------------------------------------------------------------
+! locate the particle corresponding to various strings
+!  e.g. maxdens = particle of maximum density
+!-------------------------------------------------------------
+integer function locate_particle_from_string(string,ntot,ncolumns,dat,irho) result(ipos)
+ character(len=*), intent(in)  :: string
+ integer,          intent(in)  :: ntot,ncolumns
+ real,             intent(in)  :: dat(:,:)
+ integer,          intent(in)  :: irho
+ integer :: ipos_tmp(1)
+
+ ipos = 0
+ ipos_tmp = 0
+ select case(string(1:7))
+ case('maxdens')
+    if (irho > 0 .and. irho <= size(dat(1,:))) ipos_tmp = maxloc(dat(1:ntot,irho))
+    ipos = ipos_tmp(1)
+ end select
+
+end function locate_particle_from_string
 
 !-------------------------------------------------------------
 ! check if any particles of type 'mytype' exist
