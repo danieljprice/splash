@@ -60,9 +60,10 @@ end subroutine get_adjust_data_dependencies
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist,&
-                           ienvstring,get_environment_or_flag
+                           ienvstring,get_environment_or_flag,get_command_flag
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
- use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,UseFastRender,icoords
+ use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,&
+                           UseFastRender,icoords
  use particle_data,   only:dat,npartoftype,iamtype
  use filenames,       only:ifileopen,nstepsinfile
  use geometry,        only:labelcoord

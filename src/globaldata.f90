@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -146,7 +146,7 @@ module settings_data
  integer :: iautorender
  integer :: icoords,icoordsnew,iformat,ntypes,iexact
  integer :: istartatstep,iendatstep,nfreq
- integer :: itracktype,itrackoffset,iverbose
+ integer :: iverbose
  integer, dimension(10) :: isteplist
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
@@ -161,9 +161,10 @@ module settings_data
  logical, dimension(maxparttypes) :: UseTypeInRenderings
  real, dimension(3) :: xorigin
  character(len=120) :: device
+ character(len=20)  :: track_string
 
  namelist /dataopts/ buffer_data,iCalcQuantities,iRescale,xorigin, &
-                     itracktype,itrackoffset,idustfrac_plot,ideltav_plot,UseFakeDustParticles
+                     track_string,idustfrac_plot,ideltav_plot,UseFakeDustParticles
 
  public
 

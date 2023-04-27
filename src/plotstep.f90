@@ -663,7 +663,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use particle_data,      only:maxpart,maxcol,icolourme
  use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,&
                                nfreq,iRescale,iendatstep,ntypes,&
-                               UseTypeInRenderings,itracktype,itrackoffset,&
+                               UseTypeInRenderings,track_string,&
                                required,ipartialread,xorigin,lowmemorymode,&
                                debugmode,iverbose
  use settings_limits,    only:iadapt
@@ -693,7 +693,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   transform_inverse,islogged
  use interactive_routines
  use part_utils,            only:get_tracked_particle,locate_first_two_of_type,&
-                                  get_binary,locate_nth_particle_of_type
+                                  get_binary,locate_nth_particle_of_type,get_itrackpart
  use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
  use powerspectrums,        only:powerspectrum
  use interpolation,         only:get_n_interp
@@ -740,7 +740,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: icolourprev,linestyleprev
  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
- integer :: iframe,isize,isinktype,isink1,isink2
+ integer :: iframe,isize,isinktype,isink1,isink2,itrackoffset,itracktype
 
  real, parameter :: tol = 1.e-10 ! used to compare real numbers
  real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
@@ -848,9 +848,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                         (use3Dopacityrendering .and. rendersinks))
 
  !--work out the identity of a particle being tracked
- if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
- itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+ if (debugmode) print*,'DEBUG: track_string = ',track_string
+ itrackpart = get_tracked_particle(track_string,npartoftype,iamtype,numplot,dat,irho)
  if (itrackpart == 0) then
+    call get_itrackpart(track_string,itracktype,itrackoffset,ierr)
     write(string,"(i12)") itrackoffset
     string = adjustl(string)
     if (itracktype > 0 .and. itracktype <= ntypes) then

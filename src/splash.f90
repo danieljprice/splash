@@ -524,7 +524,7 @@ program splash
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              itrackoffset,itracktype,iRescale,enforce_code_units,UseTypeinRenderings
+                              track_string,iRescale,enforce_code_units,UseTypeinRenderings
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
@@ -541,7 +541,6 @@ program splash
  use settings_render,    only:icolours,rgbfile,npix
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
                               irotate,anglex,angley,anglez
- use settings_limits,    only:get_itrackpart
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -556,7 +555,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.0 [26th Apr 2023]'
+ character(len=*), parameter :: version = 'v3.8.0 [28th Apr 2023]'
 
  !
  ! initialise some basic code variables
@@ -838,8 +837,7 @@ program splash
     npix = get_command_option('npix',default=real(npix))
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
-    call get_environment_or_flag('SPLASH_TRACK',string)
-    call get_itrackpart(string,itracktype,itrackoffset,ierr)
+    call get_environment_or_flag('SPLASH_TRACK',track_string)
  endif
  if (get_command_flag('wake')) then
     iexact = 17
@@ -1136,9 +1134,10 @@ subroutine print_usage(quit)
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
- print "(a)",' --track=666       : track particle number 666'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
+ print "(a)",' --track=666       : track particle number 666'
+ print "(a)",' --track=maxdens   : track particle at maximum density'
  print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  call print_available_formats('short')
  print "(a)"

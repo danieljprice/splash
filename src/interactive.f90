@@ -2874,21 +2874,22 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
     xmaxoffset_track(iplot) = abs(xmax - xi)
  endif
 
- return
 end subroutine save_limits_track
 !
 !--recalculates radius
 !
 subroutine save_itrackpart_recalcradius(itrackpart)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities, &
-                          itracktype,itrackoffset
+ use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities,track_string
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
+ use part_utils,     only:is_trackstring
  integer, intent(in) :: itrackpart
 
- itracktype   = 0  ! cannot interactively track by type
- itrackoffset = itrackpart
-
+ if (is_trackstring(track_string)) then
+    return  ! do not overwrite strings like "maxdens"
+ else
+    write(track_string,"(i12)") itrackpart
+ endif
  if (iCalcQuantities .and. itrackpart > 0) then
     if (ncalc > 0 .and. calc_quantities_use_x0()) then
        print "(a)",' Recalculating radius relative to tracked particle'
@@ -2900,7 +2901,6 @@ subroutine save_itrackpart_recalcradius(itrackpart)
     endif
  endif
 
- return
 end subroutine save_itrackpart_recalcradius
 !
 !--toggles log/unlog

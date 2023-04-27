@@ -706,11 +706,11 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
- use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
+ use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,irho,shortstring, &
                            count_non_blank,headertags
  use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
+                           icoords,icoordsnew,ipartialread,track_string
  use mem_allocation, only:alloc
  use settings_units, only:units
  use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -805,7 +805,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
        !--set origin position
        !
        v0(:) = 0.
-       itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype(:,i),iamtype(:,i))
+       itrackpart = get_tracked_particle(track_string,npartoftype(:,i),iamtype(:,i),ncolumns,dat(:,:,i),irho)
        if (itrackpart > 0 .and. itrackpart <= ntoti) then
           x0(:) = 0.
           if (ix(1) > 0 .and. ix(1) <= ncolumns) then

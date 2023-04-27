@@ -29,12 +29,12 @@ module part_utils
  use params, only:int1
  implicit none
 
- public :: igettype,get_tracked_particle
+ public :: igettype,get_tracked_particle,get_itrackpart
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
  public :: locate_particle_from_string
  public :: get_binary,got_particles_of_type
- public :: get_positions_of_type
+ public :: get_positions_of_type,is_trackstring
  private
 
 contains
@@ -66,22 +66,56 @@ end function igettype
 ! routine to find which particle is being tracked, when it is
 ! given in the form of type:offset
 !-------------------------------------------------------------------
-integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
- integer, intent(in) :: itype,ioffset
+integer function get_tracked_particle(string,noftype,iamtype,ncolumns,dat,irho)
+ character(len=*), intent(in) :: string
  integer, dimension(:), intent(in) :: noftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
- integer :: ntot
+ integer, intent(in) :: ncolumns,irho
+ real, dimension(:,:), intent(in) :: dat
+ integer :: ntot,itype,ioffset,ierr
 
- if (itype <= 0 .or. itype > size(noftype)) then
+ call get_itrackpart(string,itype,ioffset,ierr)
+ if ((itype <= 0 .or. itype > size(noftype)) .and. ioffset > 0) then
     !--type not set, itrackpart = itrackoffset
     get_tracked_particle = ioffset
- else
+ elseif (ierr == 0 .and. ioffset > 0) then
     !--want to select nth particle of a particular type
     call locate_nth_particle_of_type(ioffset,get_tracked_particle, &
          itype,iamtype,noftype,ntot)
+ elseif (ierr == 0) then
+    ntot = sum(noftype)
+    get_tracked_particle = locate_particle_from_string(string,&
+                                       ntot,ncolumns,dat,irho)
+ else
+    get_tracked_particle = 0
  endif
 
 end function get_tracked_particle
+
+!-------------------------------------------------------------------
+! routine to find which particle is being tracked, when it is
+! given in the form of type:offset
+!-------------------------------------------------------------------
+subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
+ character(len=*), intent(in)  :: string
+ integer,          intent(out) :: itracktype,itrackpart,ierr
+ integer :: ic
+
+ ic = index(string,':')
+ if (ic > 0) then
+    read(string(1:ic-1),*,iostat=ierr) itracktype
+    read(string(ic+1:),*,iostat=ierr) itrackpart
+    if (itrackpart==0) itracktype = 0
+ else
+    itracktype = 0
+    read(string,*,iostat=ierr) itrackpart
+    if (itrackpart < 0 .or. ierr /= 0) itrackpart = 0
+    ! return ierr = 0 if the string is not a particle id but is still valid
+    ! e.g. string='maxdens'
+    if (ierr /= 0 .and. is_trackstring(string)) ierr = 0
+ endif
+
+end subroutine get_itrackpart
 
 !-------------------------------------------------------------------
 ! routine to locate first two particles of a given type in the data
@@ -159,6 +193,21 @@ integer function locate_particle_from_string(string,ntot,ncolumns,dat,irho) resu
  end select
 
 end function locate_particle_from_string
+
+!-------------------------------------------------------------
+! validate strings for function above
+!-------------------------------------------------------------
+logical function is_trackstring(string)
+ character(len=*), intent(in) :: string
+
+ select case(string(1:7))
+ case('maxdens')
+    is_trackstring = .true.
+ case default
+    is_trackstring = .false.
+ end select
+
+end function is_trackstring
 
 !-------------------------------------------------------------
 ! check if any particles of type 'mytype' exist
