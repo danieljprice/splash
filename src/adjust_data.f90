@@ -70,7 +70,7 @@ subroutine adjust_data_codeunits
  real, dimension(3) :: x0,v0
  integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2),iorigin
- logical :: centreonsink,got_sinks,no_dust_particles
+ logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles
  character(len=20), dimension(3) :: list
 
  !
@@ -140,6 +140,7 @@ subroutine adjust_data_codeunits
     !--can specify either just "true" for sink #1, or specify a number for a particular sink
     centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK') .or. lenvironment('SPLASH_CENTER_ON_SINK')
     isink        = max(ienvironment('SPLASH_CENTRE_ON_SINK'),ienvironment('SPLASH_CENTER_ON_SINK'))
+    dontCentreVelocity = lenvironment('SPLASH_DONTCENTREVEL') .or. lenvironment('SPLASH_DONTCENTERVEL')
     if (isink > 0 .or. centreonsink .and. all(ix(1:ndim) > 0)) then
        if (isink==0) isink = 1
        itype = get_sink_type(ntypes)
@@ -153,9 +154,10 @@ subroutine adjust_data_codeunits
              else
                 print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              endif
+             if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
-                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,iverbose,label='sink')
+                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='sink')
              enddo
           endif
        else
@@ -172,9 +174,10 @@ subroutine adjust_data_codeunits
           print "(/,a,/)",' ERROR: cannot use --sink and --origin at the same time'
        else
           print "(a,i12,a)",' :: CENTREING ON PARTICLE ',iorigin,' from --origin flag'
+          if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
           do j=1,nstepsinfile(ifileopen)
              ntot = sum(npartoftype(:,j))
-             call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,iverbose,label='')
+             call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='')
           enddo
        endif
     endif
@@ -284,9 +287,10 @@ end subroutine rotate_particles
 ! routine to centre particle positions and velocities
 ! on a particle location
 !------------------------------------------------------
-subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,iverbose,label)
+subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label)
  use labels, only:ix,ivx
  integer, intent(in) :: ipart,np,ndim,ndimV,ncol,iverbose
+ logical, intent(in) :: dontCentreVelocity 
  real, dimension(:,:), intent(inout) :: dat
  real, dimension(ndim)  :: x0
  real, dimension(ndimV) :: v0
@@ -305,7 +309,7 @@ subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,iverbose,label)
  x0(1:ndim) = dat(ipart,ix(1:ndim))
  if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: '//trim(label)//' position =',x0(1:ndim)
  !--make velocities relative to origin particle
- if (ivx > 0 .and. ivx+ndimV-1 <= ncol) then
+ if ((ivx > 0 .and. ivx+ndimV-1 <= ncol) .and. (.not. dontCentreVelocity)) then
     v0(1:ndimV) = dat(ipart,ivx:ivx+ndimV-1)
     if (iverbose >= 1) print "(a,3(1x,es10.3))",' :: '//trim(label)//' velocity =',v0(1:ndimV)
  else
