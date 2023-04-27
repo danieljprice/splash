@@ -8,7 +8,7 @@ contains
 
 subroutine defaults_set_initial
  use filenames, only:rootname
- use labels, only:label,labeltype,iamvec,labelvec,labeldefault,reset_columnids
+ use labels, only:label,labeltype,iamvec,labelvec,set_default_labels,reset_columnids
  use limits, only:lim,range
  use particle_data, only:maxpart,maxstep,maxcol
  use settings_data, only:UseTypeInRenderings,device
@@ -34,10 +34,8 @@ subroutine defaults_set_initial
  !
  !--labels
  !
- !  column labels
- do i=1,size(label)
-    write(label(i),"(a,1x,i3)") trim(labeldefault),i
- enddo
+ call set_default_labels(label)
+
  !  particle types
  labeltype(1) = 'gas'
  do i=2,size(labeltype)
@@ -57,7 +55,6 @@ subroutine defaults_set_initial
  !  device from command line
  device = ' '
 
- return
 end subroutine defaults_set_initial
 
 end module initialise

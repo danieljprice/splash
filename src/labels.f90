@@ -104,6 +104,21 @@ end subroutine reset_columnids
 
 !--------------------------------------------------------------
 !
+!  set default column labels
+!
+!--------------------------------------------------------------
+subroutine set_default_labels(mylabel)
+ character(len=*), intent(out) :: mylabel(:)
+ integer :: i
+
+ do i=1,size(mylabel)
+    write(mylabel(i),"(a,1x,i3)") trim(labeldefault),i
+ enddo
+
+end subroutine set_default_labels
+
+!--------------------------------------------------------------
+!
 !  query function for whether column is a spatial coordinate
 !
 !--------------------------------------------------------------

@@ -62,21 +62,34 @@ end function map_labels
 ! solution onto corresponding labels in the data
 ! (i.e. find which columns correspond to which)
 !---------------------------------------------------
-subroutine map_columns_in_file(iunit,ncols,nrows,imap,label,exact_labels,nlabels)
+subroutine map_columns_in_file(filename,ncols,nrows,imap,label,exact_labels,nlabels,ierr)
  use asciiutils, only:get_ncolumns,get_nrows,read_column_labels
- integer, intent(in)  :: iunit
+ use labels,     only:set_default_labels
+ character(len=*), intent(in) :: filename
  integer, intent(out) :: ncols,nrows,nlabels
- integer, intent(out) :: imap(:)
+ integer, intent(out) :: imap(:), ierr
  character(len=*), intent(in)  :: label(:)
  character(len=*), intent(out) :: exact_labels(:)
- integer :: nheaderlines,ncolumns
+ integer :: nheaderlines,ncolumns,iu
 
  ncolumns = size(label)
- call get_ncolumns(iunit,ncols,nheaderlines)
- call get_nrows(iunit,nheaderlines,nrows)
- call read_column_labels(iunit,nheaderlines,ncols,nlabels,exact_labels)
- print "(/,a,i0,a,/)",' got ',nrows,' lines in file'
- imap(1:nlabels) = map_labels(exact_labels(1:nlabels),label(1:ncolumns))
+ nlabels = 0; ncols = 0; nrows = 0
+
+ open(newunit=iu,file=filename,status='old',iostat=ierr)
+ if (ierr == 0) then
+    call get_ncolumns(iu,ncols,nheaderlines)
+    call get_nrows(iu,nheaderlines,nrows)
+    call read_column_labels(iu,nheaderlines,ncols,nlabels,exact_labels)
+    close(iu)
+    !if (nlabels > 0) print "(/,1x,a,2(i0,a),/)",trim(filename)//': ',nrows,' lines, ',nlabels,' columns'
+ endif
+ if (nlabels > 0) then
+    imap(1:nlabels) = map_labels(exact_labels(1:nlabels),label(1:ncolumns))
+ else
+    nlabels = ncols
+    call set_default_labels(exact_labels(1:nlabels))
+    imap = 0
+ endif
 
 end subroutine map_columns_in_file
 
@@ -96,7 +109,7 @@ subroutine map_columns_interactive(imapexact,label,exact_label,nlab_exact)
  exact_label_local = exact_label
  nlab = nlab_exact
  !maxlabels = size(label)
- if (nlab <= 2) return
+ if (nlab < 2) return
 
  nmap = nlab
 
@@ -124,11 +137,11 @@ subroutine print_mapping(ncols1,imap1,list1,list2)
  character(len=*), intent(in) :: list1(:),list2(:)
  integer :: j
 
- print "(/,a,i2)", ' Current mapping:'
+ print "(/,a)", ' Current mapping:'
 
  do j=1,ncols1
     if (imap1(j) > 0) then
-       print "(i2,': ',a12,a,i2,a)",j,list1(j),' -> ',imap1(j),') '//trim(list2(imap(j)))
+       print "(i2,': ',a12,a,i2,a)",j,list1(j),' -> ',imap1(j),') '//trim(list2(imap1(j)))
     else
        print "(i2,': ',a12,a)",j,list1(j),' -> None'
     endif

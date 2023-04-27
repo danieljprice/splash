@@ -528,7 +528,8 @@ program splash
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename,match_column,reorder_filenames_for_comparison
+ use asciiutils,         only:read_asciifile,basename,match_column,&
+                              reorder_filenames_for_comparison,split
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -551,8 +552,8 @@ program splash
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
- logical :: using_default_options
- character(len=120) :: string
+ logical :: using_default_options,got_exact
+ character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
  character(len=*), parameter :: version = 'v3.8.0 [26th Apr 2023]'
@@ -589,6 +590,7 @@ program splash
  useall = .false.
  nomenu = .false.
  got_format = .false.
+ got_exact = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -680,6 +682,15 @@ program splash
           ipickx = 2
           ipicky = 3
           nomenu = .true.
+       case('exact')
+          i = i + 1
+          call get_argument(i,string)
+          if (len_trim(string) > 0) then
+             exactfile = string
+             got_exact = .true.
+          else
+             stop 'error in -exact flag'
+          endif
        case('lowmem','lm')
           lowmemorymode = .true.
        case('nolowmem','nlm')
@@ -834,13 +845,16 @@ program splash
     iexact = 17
     ispiral = 1
  endif
- if (get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
+ if (.not.got_exact .and. get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
     iexact = 2
     call envlist('exact',nfiles_exact,filename_exact)
     if (len_trim(filename_exact(1))==0) then
        print "(a)",'error command line argument --exact=file requires filename'
        stop
     endif
+ elseif (got_exact) then
+    iexact = 2 ! override setting in defaults file
+    call split(exactfile,',',filename_exact,nfiles_exact)
  endif
  if (get_command_flag('codeunits') .or. get_command_flag('code')) then
     iRescale = .false.
@@ -1124,7 +1138,7 @@ subroutine print_usage(quit)
  print "(a)",' --sink=1          : centre on sink particle number 1'
  print "(a)",' --track=666       : track particle number 666'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
- print "(a)",' --exact=myfile    : read and plot exact solution from ascii file myfile'
+ print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
