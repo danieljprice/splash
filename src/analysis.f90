@@ -558,7 +558,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  if (itracks(1) > 0) then
     itrack = itracks(1)  ! override particle id saved to splash.defaults file if --tracks specified
  else
-    itrack = get_tracked_particle(track_string,npartoftype,iamtype,ncolumns,dat,irho)
+    itrack = get_tracked_particle(track_string,npartoftype,iamtype,dat,irho)
  endif
  if (itrack==0) itrack = 1
 

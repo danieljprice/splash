@@ -849,7 +849,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
  !--work out the identity of a particle being tracked
  if (debugmode) print*,'DEBUG: track_string = ',track_string
- itrackpart = get_tracked_particle(track_string,npartoftype,iamtype,numplot,dat,irho)
+ itrackpart = get_tracked_particle(track_string,npartoftype,iamtype,dat,irho)
  if (itrackpart == 0) then
     call get_itrackpart(track_string,itracktype,itrackoffset,ierr)
     write(string,"(i12)") itrackoffset

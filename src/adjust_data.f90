@@ -183,8 +183,9 @@ subroutine adjust_data_codeunits
              !
              !--handle strings like --origin=maxdens to locate the particle for the origin
              !
+             ntot = sum(npartoftype(:,j))
              if (len_trim(string) > 0 .and. iorigin==0) then
-                iorigin = locate_particle_from_string(string,ntot,ncolumns,dat(:,:,j),irho)
+                iorigin = locate_particle_from_string(string,ntot,dat(:,:,j),irho)
                 if (iorigin <= 0) exit ! quit loop over steps
              endif
              if (j==1 .or. ienvstring(string) == 0) then
@@ -194,7 +195,6 @@ subroutine adjust_data_codeunits
              !
              !--now centre on the chosen particle
              !
-             ntot = sum(npartoftype(:,j))
              call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='')
           enddo
        endif

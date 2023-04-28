@@ -66,11 +66,11 @@ end function igettype
 ! routine to find which particle is being tracked, when it is
 ! given in the form of type:offset
 !-------------------------------------------------------------------
-integer function get_tracked_particle(string,noftype,iamtype,ncolumns,dat,irho)
+integer function get_tracked_particle(string,noftype,iamtype,dat,irho)
  character(len=*), intent(in) :: string
  integer, dimension(:), intent(in) :: noftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
- integer, intent(in) :: ncolumns,irho
+ integer, intent(in) :: irho
  real, dimension(:,:), intent(in) :: dat
  integer :: ntot,itype,ioffset,ierr
 
@@ -84,8 +84,7 @@ integer function get_tracked_particle(string,noftype,iamtype,ncolumns,dat,irho)
          itype,iamtype,noftype,ntot)
  elseif (ierr == 0) then
     ntot = sum(noftype)
-    get_tracked_particle = locate_particle_from_string(string,&
-                                       ntot,ncolumns,dat,irho)
+    get_tracked_particle = locate_particle_from_string(string,ntot,dat,irho)
  else
     get_tracked_particle = 0
  endif
@@ -177,18 +176,19 @@ end subroutine locate_nth_particle_of_type
 ! locate the particle corresponding to various strings
 !  e.g. maxdens = particle of maximum density
 !-------------------------------------------------------------
-integer function locate_particle_from_string(string,ntot,ncolumns,dat,irho) result(ipos)
+pure integer function locate_particle_from_string(string,ntot,dat,irho) result(ipos)
  character(len=*), intent(in)  :: string
- integer,          intent(in)  :: ntot,ncolumns
+ integer,          intent(in)  :: ntot
  real,             intent(in)  :: dat(:,:)
  integer,          intent(in)  :: irho
- integer :: ipos_tmp(1)
+ integer :: ipos_tmp(1),ntoti
 
  ipos = 0
  ipos_tmp = 0
+ ntoti = min(ntot,size(dat(:,1))) ! prevent bounds overflow
  select case(string(1:7))
  case('maxdens')
-    if (irho > 0 .and. irho <= size(dat(1,:))) ipos_tmp = maxloc(dat(1:ntot,irho))
+    if (irho > 0 .and. irho <= size(dat(1,:))) ipos_tmp = maxloc(dat(1:ntoti,irho))
     ipos = ipos_tmp(1)
  end select
 

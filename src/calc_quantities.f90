@@ -805,7 +805,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
        !--set origin position
        !
        v0(:) = 0.
-       itrackpart = get_tracked_particle(track_string,npartoftype(:,i),iamtype(:,i),ncolumns,dat(:,:,i),irho)
+       itrackpart = get_tracked_particle(track_string,npartoftype(:,i),iamtype(:,i),dat(:,:,i),irho)
        if (itrackpart > 0 .and. itrackpart <= ntoti) then
           x0(:) = 0.
           if (ix(1) > 0 .and. ix(1) <= ncolumns) then
