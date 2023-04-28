@@ -63,7 +63,7 @@ subroutine adjust_data_codeunits
                            ienvstring,get_environment_or_flag,get_command_flag
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
  use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,&
-                           UseFastRender,icoords
+                           UseFastRender,icoords,track_string
  use particle_data,   only:dat,npartoftype,iamtype
  use filenames,       only:ifileopen,nstepsinfile
  use geometry,        only:labelcoord
@@ -176,6 +176,10 @@ subroutine adjust_data_codeunits
     iorigin = ienvstring(string) ! first try to read the string as an integer
 
     if (iorigin > 0 .or. (len_trim(string) > 0) .and. all(ix(1:ndim) > 0) .and. ndim > 0) then
+       if (track_string(1:1) /= '0' .and. len_trim(track_string) > 0) then
+          print "(/,a,/)",' ERROR: cannot use --track and --origin at the same time, disabling particle tracking'
+          track_string = '0'
+       endif
        if (centreonsink)  then
           print "(/,a,/)",' ERROR: cannot use --sink and --origin at the same time'
        else
