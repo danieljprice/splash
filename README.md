@@ -40,11 +40,11 @@ Usage
 
 Command line mode (to screen):
 ```
-    splash -r 6 dump_0*
+    splash -r density dump_0*
 ```
 Command line mode (to file):
 ```
-    splash -r 6 -dev myplot.pdf dump_0*
+    splash -r density -dev myplot.pdf dump_0*
 ```
 
 See the [userguide](https://splash-viz.readthedocs.io) for more.
@@ -67,4 +67,4 @@ License
 -------
 See [LICENCE](LICENCE) file for usage and distribution conditions
 
-Copyright (c) 2004-2022 Daniel Price and contributors
+Copyright (c) 2004-2023 Daniel Price and contributors
