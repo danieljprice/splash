@@ -2733,6 +2733,10 @@ subroutine set_labels_sphNG
     units(ivx:ivx+ndimV-1) = unitvel
     unitslabel(ivx:ivx+ndimV-1) = unitlabelv
  endif
+ if (ipmomx > 0) then
+    units(ipmomx:ipmomx+ndimV-1) = unitvel
+    unitslabel(ipmomx:ipmomx+ndimV-1) = unitlabelv
+ endif
  if (ideltavsum > 0) then
     units(ideltavsum:ideltav+ndimV-1) = unitvel
     unitslabel(ideltavsum:ideltav+ndimV-1) = unitlabelv
