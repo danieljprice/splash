@@ -1312,6 +1312,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 npixz = nxsec
              endif
 
+             ! set interpolation weights (skips if they are the same)
+             call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
              if (.not.interactivereplot .or. irerender) then
                 if (allocated(datpix)) then
                    if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
@@ -1337,9 +1340,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       allocate(datpixcont(npixx,npixy))
                    endif
                 endif
-
-                ! set interpolation weights (skips if they are the same)
-                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
 
                 select case(ndim)
                 case(2)
@@ -3379,14 +3379,18 @@ subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
  i_col = 0
  if (present(icol)) i_col = icol
 
+ ! do nothing if weights do not need to change
+ if (i_col == icol_prev .and. all(usetype .eqv. use_type_prev)) return
+
  isinktype = get_sink_type(ntypes)
  inormalise = inormalise_interpolations
  idensityweighted = idensityweightedinterpolation
- ichangedweights = .false.
+ ichangedweights = any(usetype .neqv. use_type_prev)
+
  ! decide whether to use density weighted rendering automatically
  ! based on the column being rendered. i.e. do NOT use density weighting
  ! if the column is a density, but do if it is some other quantity
- if (i_col /= icol_prev .and. iauto_densityweighted) then
+ if (iauto_densityweighted) then
     if (.not.is_density(i_col)) then
        if (.not.(idensityweighted .and. inormalise)) ichangedweights = .true.
        idensityweighted = .true.
@@ -3394,7 +3398,7 @@ subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
     endif
     icol_prev = i_col
  endif
- if (ichangedweights .or. any(usetype .neqv. use_type_prev)) then
+ if (ichangedweights) then
     use_type_prev = usetype
     call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
          ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,&
