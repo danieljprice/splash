@@ -54,7 +54,9 @@ program splash
 !     3.8.0   : (26/04/23)
 !             plots multiple renderings with transparent background if more than one timestep per page selected;
 !             auto-magically map exact solution columns onto splash columns;
-!             added --exact=file to switch on plotting of exact solution from file
+!             added --exact=file1,file2 to switch on plotting of exact solution from file(s);
+!             added --track=maxdens and --origin=maxdens to track/recentre on maximum density;
+!             pressing backspace over legends deletes them
 !     3.7.2   : (21/02/23)
 !             bug fix recognising labels like v_{phi} on command line, can now use -r vphi
 !     3.7.1   : (09/02/23)
