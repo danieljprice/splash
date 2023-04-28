@@ -52,7 +52,7 @@ file(s) on the command line, e.g.
     12) multiplot [  4 ]      m) set multiplot
    -------------------------------------------------------
     d(ata) p(age) o(pts) l(imits) le(g)end h(elp)
-    r(ender) v(ector) x(sec/rotate) s,S(ave) q(uit)
+    r(ender) v(ector) x(sec/rotate) s(ave) q(uit)
    -------------------------------------------------------
    Please enter your selection now (y axis or option):
 

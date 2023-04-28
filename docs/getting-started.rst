@@ -272,23 +272,26 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 
    Command line options:
 
+    -f format         : input file format to be read (default is ascii, --formats for full list)
     -p fileprefix     : change prefix to ALL settings files read/written by splash
-    -d defaultsfile   : change name of defaults file read/written by splash
-    -l limitsfile     : change name of limits file read/written by splash
     -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
-    -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]
+    -360              : set default options suited to 360 video
+    -b, --buffer      : buffer all data files into memory
     -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
-    -f                : input file format to be read (ascii is default)
 
    To select data formats, use the shortcuts below, or use the -f or --format command line options
    Multiple data formats are not support in a single instance.
    Supported data formats:
-    -ascii            : ascii file format (default)
-    -phantom -sphng   : Phantom and sphNG codes
-    -ndspmhd          : ndsphmd code
-    -gadget           : Gadget code
-    -seren            : Seren code
-   ..plus many others. Type --formats for a full list
+     -ascii,-csv          : ascii text/csv format (default)
+     -phantom -sphng      : Phantom and sphNG codes
+     -ndspmhd             : ndspmhd code
+     -gandalf,-seren      : Gandalf/Seren code
+     -gadget -gadget_hdf5 : Gadget code
+     -falcon -falcon_hdf5 : FalcON code
+     -flash  -flash_hdf5  : FLASH code
+     -cactus -cactus_hdf5 : Cactus code
+     -amuse  -amuse_hdf5  : AMUSE Framework
+     -fits                : FITS format
 
    The following formats support HDF5:
     -flash            : FLASH code
@@ -308,6 +311,18 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
     -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
     -dev device       : specify plotting device on command line (ie. do not prompt)
+    -multi            : multiplot
+
+    --xsec=1.0        : specify location of cross section slice
+    --kappa=1.0       : specify opacity, and turn on opacity rendering
+    --anglex=30       : rotate around x axis (similarly --angley, --anglez)
+    --code            : enforce code units (also --codeunits)
+    --sink=1          : centre on sink particle number 1
+    --origin=666      : set coordinate system origin to particle number 666
+    --origin=maxdens  : set coordinate system origin to particle at maximum density
+    --track=666       : track particle number 666
+    --track=maxdens   : track particle at maximum density
+    --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
 
     convert mode ("splash to X dumpfiles"):
     splash to ascii   : convert SPH data to ascii file dumpfile.ascii
@@ -353,6 +368,8 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
                                 output to file called 'meanvals.out'
             calc rms          : (mass weighted) root mean square of each column vs. time
                                 output to file called 'rmsvals.out'
+            calc tracks       : track particle data vs time for selected particles,
+               --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out
 
      the above options all produce a small ascii file with one row per input file.
      the following option produces a file equivalent in size to one input file (in ascii format):
@@ -362,6 +379,9 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 
             calc ratio        : ratio of *all* entries in each file compared to first
                                 output to file called 'ratio.out'
+
+            calc plus         : add two snapshots together
+                                output to file called 'plus.out'
 
 Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
@@ -398,6 +418,8 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---origin=666        | SPLASH_ORIGIN         | recentre the coordinate origin and velocities   |
 |                      |                       | to the selected particle (e.g. particle 666)    |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---origin=maxdens    | SPLASH_ORIGIN         | reset origin to particle at maximum density     |
++----------------------+-----------------------+-------------------------------------------------+
 | --dontcentrevel='y'  | SPLASH_DONTCENTREVEL  | used along with SPLASH_CENTRE_ON_SINK or        |
 |                      |                       | SPLASH_ORIGIN. If true, then the velocities     |
 |                      |                       | will not be made relative to the sink or        |
@@ -406,8 +428,12 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---track=4789        | SPLASH_TRACK          | set limits of all quantities relative to those  |
 |                      |                       | of the selected particle (e.g. particle 4789)   |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---track=maxdens     | SPLASH_TRACK          | track the particle at maximum density           |
++----------------------+-----------------------+-------------------------------------------------+
 | ---vzero=1.0,1.0,1.0 | SPLASH_VZERO          | subtract reference velocity from all particles  |
 |                      |                       | (velocity should be specified in code units)    |
++----------------------+-----------------------+-------------------------------------------------+
+| ---exact=file1,file2 |                       | plot exact solution from files file1 and file2  |
 +----------------------+-----------------------+-------------------------------------------------+
 | ---beam=2.0          | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
 |                      |                       | smoothing length, specified in code units,      |
@@ -579,6 +605,9 @@ For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 +-------------------+-------------------------------------------------------+
 | ``--cm``          | resets the positions such that the centre of          |
 |                   | mass is exactly at the origin.                        |
++-------------------+-------------------------------------------------------+
+| ``--dense``       | resets the positions such that the centre of          |
+|                   | mass of the densest clump is exactly at the origin.   |
 +-------------------+-------------------------------------------------------+
 | ``--omega=3.142`` | if non-zero, subtracts solid body rotation with omega |
 |                   | as specified to give velocities in co-rotating frame  |
