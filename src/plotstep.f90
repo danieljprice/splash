@@ -2031,21 +2031,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              ! vector maps (can be on top of particle plots and renderings)
              !--------------------------------------------------------------
              if (ivecx > 0 .and. ivecy > 0 .and. ivectorplot > 0) then
-                labelvecplot = trim(labelvec(ivectorplot))
-                labelvecunits = ''
-                if (iRescale) then
-                   labelvecunits = trim(unitslabel(ivectorplot))
-                   call string_delete(labelvecunits,(/'[',']'/))
-                endif
-                !!--set label for projection plots (2268 or 2412 for integral sign)
-                if (ndim==3 .and..not. x_sec) then
-                   if (iRescale) then
-                      labelvecplot = '\int '//trim(labelvecplot)//' d'// &
-                      trim(label(iz)(1:index(label(iz),unitslabel(iz))-1))//' [code units]'
-                   else
-                      labelvecplot = '\int '//trim(labelvecplot)//' d'//trim(label(iz))
-                   endif
-                endif
                 pixwidthvec  = (xmax-xmin)/real(npixvec)
                 if (just==1) then
                    pixwidthvecy = pixwidthvec !(xmax-xmin)/real(npixvec)
@@ -2060,6 +2045,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 else
                    call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings))
                 endif
+
+                !--set label for the vector plot legend
+                labelvecplot = trim(labelvec(ivectorplot))
+                labelvecunits = ''
+                if (iRescale) labelvecunits = trim(unitslabel(ivectorplot))
+                !--set label for projection plots
+                if (ndim==3 .and..not. x_sec) then
+                   labelvecplot = integrate_label(labelvecplot,ivecx,iz,inormalise,&
+                                                  .false.,shortlabel(label(iz),unitslabel(iz)),'',0)
+                   if (.not.inormalise) labelvecunits = get_unitlabel_coldens(iRescale,&
+                                                       labelzintegration,unitslabel(ivectorplot))
+                endif
+                call string_delete(labelvecunits,(/'[',']'/))
 
                 call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,&
                    pixwidthvecy,vecmax,labelvecplot,labelvecunits,got_h)
@@ -3542,14 +3540,14 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
                        weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,&
-                       .false.,zobservertemp,dzscreentemp,iverbose)
+                       inormalise,zobservertemp,dzscreentemp,iverbose)
                 else
                    call interpolate3D_proj_vec(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                        weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy, &
-                       .false.,zobservertemp,dzscreentemp,iverbose)
+                       inormalise,zobservertemp,dzscreentemp,iverbose)
                 endif
              else
                 ! don't have smoothing length, use averaging

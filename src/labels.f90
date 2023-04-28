@@ -372,7 +372,7 @@ function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
           !integrate_label = '\int '//trim(labelin)//' d'// &
           !  trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
        else
-          integrate_label = '\int '//trim(labelin)//' d'//trim(label(izcol))
+          integrate_label = '\int '//trim(labelin)//' d'//trim(shortlabel(label(izcol),unitslabel(izcol)))
        endif
        if (index(labelin,'\rho_{d,') > 0) then
           integrate_label = labelin(1:index(labelin,unitslabel(iplot))-1)

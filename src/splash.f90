@@ -56,7 +56,8 @@ program splash
 !             auto-magically map exact solution columns onto splash columns;
 !             added --exact=file1,file2 to switch on plotting of exact solution from file(s);
 !             added --track=maxdens and --origin=maxdens to track/recentre on maximum density;
-!             pressing backspace over legends deletes them
+!             pressing backspace over legends deletes them;
+!             use density weighted and normalised rendering by default in projection plots of vector fields
 !     3.7.2   : (21/02/23)
 !             bug fix recognising labels like v_{phi} on command line, can now use -r vphi
 !     3.7.1   : (09/02/23)
