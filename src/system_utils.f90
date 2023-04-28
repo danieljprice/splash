@@ -45,7 +45,6 @@ contains
 subroutine get_environment_or_flag(variable,string)
  character(len=*), intent(in)  :: variable
  character(len=*), intent(out) :: string
- character(len=len(variable))  :: vartmp
  integer :: ierr,iloc
 
  ! try as command flag, excluding everything before the last
