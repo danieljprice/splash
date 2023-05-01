@@ -1583,7 +1583,7 @@ integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
  use transforms, only:islogged
  use asciiutils, only:lcase
  integer, intent(in) :: itrans
- logical, intent(out) :: apply_trans
+ logical, intent(in) :: apply_trans
  character(len=3), intent(in) :: label_start
 
  ! by default, the data transformation is also applied to the exact solution
