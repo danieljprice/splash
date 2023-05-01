@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -45,6 +45,7 @@ module asciiutils
  public :: get_extensions,readline_csv
  public :: reorder_filenames_for_comparison
  public :: read_var_from_file
+ integer, parameter :: max_line_length = 10000 ! for finding number of columns
 
  private
 
@@ -399,7 +400,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  integer, intent(in), optional :: maxheaderlines
  logical, intent(in), optional :: csv
  integer :: ierr,ncolprev,ncolsthisline,maxlines,ncolstot
- character(len=5000) :: line
+ character(len=max_line_length) :: line
  logical :: nansinfile,infsinfile,is_csv
 
  if (present(maxheaderlines)) then
@@ -1161,35 +1162,38 @@ end subroutine get_column_labels
 ! containing the column labels in the list of header lines
 !
 !---------------------------------------------------------------------------
-subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv)
+subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
  integer,          intent(in)  :: iunit,nheaderlines,ncols
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
- logical, intent(in), optional :: csv
+ logical, intent(in), optional :: csv,debug
  character(len=len(labels(1))), dimension(size(labels)) :: tmplabel
- character(len=4096)  :: line
- logical :: is_csv,got_labels
- integer :: i,imethod,ierr
+ character(len=max_line_length) :: line
+ logical :: is_csv,verbose,got_labels
+ integer :: i,imethod,ierr,nwanted
 
  is_csv = .false.
+ verbose = .false.
  if (present(csv)) is_csv = csv
+ if (present(debug)) verbose = debug
  got_labels = .false.
  nlabels = 0
+ nwanted = min(ncols,size(labels)) ! can either retrieve all labels or completely fill the labels array
  labels = ''
-
  rewind(iunit)
  do i=1,nheaderlines
     read(iunit,"(a)",iostat=ierr) line
     !--try to match column labels from this header line, if not already matched (or dubious match)
-    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=ncols,csv=csv)
+    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
     !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-    if ((got_labels .and. nlabels == ncols) .or. &
-        (.not.got_labels .and. nlabels >= ncols  & ! only allow single-spaced labels if == ncols
-         .and. (.not.(imethod>=4) .or. nlabels==ncols))) then
-       labels(1:ncols) = tmplabel(1:ncols)
+    if ((got_labels .and. nlabels == nwanted) .or. &
+        (.not.got_labels .and. nlabels >= nwanted  & ! only allow single-spaced labels if == ncols
+         .and. (.not.(imethod>=4) .or. nlabels==nwanted))) then
+       labels(1:nwanted) = tmplabel(1:nwanted)
        got_labels = .true.
-       !print*,'DEBUG: line ',i,' nlabels = ',nlabels,' LABELS= '//tmplabel(1:ncolstep)
     endif
+    if (verbose) print "(5(1x,a,i0))",'DEBUG: line ',i,'nlabels = ',nlabels,&
+                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line) !,' LABELS= '//tmplabel(1:ncols)
  enddo
 
 end subroutine read_column_labels

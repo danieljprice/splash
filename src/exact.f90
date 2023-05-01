@@ -30,12 +30,13 @@
 ! it is called under different circumstances to the other solutions).
 !
 module exact
+ use params, only:maxplot
  implicit none
  !
  !--maximum number of solutions in any one plot
  !
  integer, parameter :: maxexact=32
- integer, parameter :: maxlabels = 64
+ integer, parameter :: maxlabels = maxplot
  character(len=30)  :: exact_labels(maxlabels)
  !
  !--options used to plot the exact solution line
@@ -76,7 +77,7 @@ module exact
  !--rho vs h
  real :: hfact
  !--read from file
- integer :: imapexact(maxexact),nfiles
+ integer :: imapexact(maxlabels),nfiles
  character(len=120) :: filename_exact(maxexact)
  !--equilibrium torus
  real :: Mstar,Rtorus,distortion
@@ -246,7 +247,6 @@ subroutine defaults_set_exact
  ExactLegendText = ''
  ExactAlpha = 1.0
 
- return
 end subroutine defaults_set_exact
 
  !----------------------------------------------------------------------
@@ -265,7 +265,7 @@ subroutine submenu_exact(iexact)
  use map_columns,   only:map_columns_in_file,map_columns_interactive,print_mapping
  integer, intent(inout) :: iexact
  integer :: ierr,itry,i,ncols,nadjust,nrows,nlab_exact
- integer :: imapauto(maxexact)
+ integer, allocatable :: imapauto(:)
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
@@ -364,6 +364,7 @@ subroutine submenu_exact(iexact)
           !--check the first file for errors
           inquire(file=filename_tmp,exist=iexist)
           if (iexist) then
+             allocate(imapauto(size(imapexact)))
              imapauto = 0
              call map_columns_in_file(filename_tmp,ncols,nrows,imapauto,&
                                       label(1:ncolumns+ncalc),exact_labels,nlab_exact,ierr)
@@ -396,6 +397,7 @@ subroutine submenu_exact(iexact)
                    exit over_files
                 endif
              endif
+             if (allocated(imapauto)) deallocate(imapauto)
           else
              ians = .true.
              call prompt('file does not exist: try again? ',ians)
@@ -696,7 +698,6 @@ subroutine options_exact(iexact)
 
  call prompt('Enter selection ',iPlotExactOnlyOnPanel,-2)
 
- return
 end subroutine options_exact
 
  !-----------------------------------------------------------------------

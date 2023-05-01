@@ -74,20 +74,21 @@ subroutine map_columns_in_file(filename,ncols,nrows,imap,label,exact_labels,nlab
 
  ncolumns = size(label)
  nlabels = 0; ncols = 0; nrows = 0
+ call set_default_labels(exact_labels(:))
 
  open(newunit=iu,file=filename,status='old',iostat=ierr)
  if (ierr == 0) then
     call get_ncolumns(iu,ncols,nheaderlines)
     call get_nrows(iu,nheaderlines,nrows)
-    call read_column_labels(iu,nheaderlines,ncols,nlabels,exact_labels)
+    call read_column_labels(iu,nheaderlines,ncols,nlabels,exact_labels) !,debug=.true.
     close(iu)
     !if (nlabels > 0) print "(/,1x,a,2(i0,a),/)",trim(filename)//': ',nrows,' lines, ',nlabels,' columns'
  endif
  if (nlabels > 0) then
+    nlabels = min(nlabels,size(imap),size(exact_labels),ncols)
     imap(1:nlabels) = map_labels(exact_labels(1:nlabels),label(1:ncolumns))
  else
-    nlabels = ncols
-    call set_default_labels(exact_labels(1:nlabels))
+    nlabels = min(ncols,size(exact_labels))
     imap = 0
  endif
 
@@ -107,11 +108,11 @@ subroutine map_columns_interactive(imapexact,label,exact_label,nlab_exact)
  imap = imapexact
  label_local = label
  exact_label_local = exact_label
- nlab = nlab_exact
+ nlab = min(nlab_exact,size(imap))
  !maxlabels = size(label)
  if (nlab < 2) return
 
- nmap = nlab
+ nmap = min(nlab,size(imap))
 
  ! prompt for edited map
  printmap => print_map
@@ -140,10 +141,10 @@ subroutine print_mapping(ncols1,imap1,list1,list2)
  print "(/,a)", ' Current mapping:'
 
  do j=1,ncols1
-    if (imap1(j) > 0) then
-       print "(i2,': ',a12,a,i2,a)",j,list1(j),' -> ',imap1(j),') '//trim(list2(imap1(j)))
+    if (imap1(j) > 0 .and. imap1(j) <= size(list2)) then
+       print "(i3,': ',a12,a,i2,a)",j,list1(j),' -> ',imap1(j),') '//trim(list2(imap1(j)))
     else
-       print "(i2,': ',a12,a)",j,list1(j),' -> None'
+       print "(i3,': ',a12,a)",j,list1(j),' -> None'
     endif
  enddo
 

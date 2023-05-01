@@ -192,7 +192,7 @@ elemental function label_synonym(string)
     label_synonym = 'density'
  elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass') then
     label_synonym = 'pmass'
- elseif (labeli(1:1)=='h' .or. labeli(1:6)=='smooth') then
+ elseif (trim(labeli)=='h' .or. labeli(1:6)=='smooth') then
     label_synonym = 'h'
  elseif (trim(labeli)=='u' .or. labeli(1:6)=='utherm' .or. labeli(1:5)=='eint' &
      .or.(index(labeli,'internal energy') /= 0)) then

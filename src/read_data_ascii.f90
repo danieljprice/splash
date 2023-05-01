@@ -82,7 +82,7 @@ contains
 subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes,debugmode
  use mem_allocation, only:alloc
  use asciiutils,     only:get_ncolumns,read_column_labels,isdigit,readline_csv
  use system_utils,   only:ienvironment,renvironment
@@ -160,7 +160,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
     endif
 
     !--search through header for column labels
-    if (ncolstep > 1) call read_column_labels(iunit,nheaderlines,ncolstep,nlabels,label_orig,csv)
+    if (ncolstep > 1) call read_column_labels(iunit,nheaderlines,ncolstep,nlabels,label_orig,csv,debugmode)
     rewind(iunit)
 
     iverbose_was = iverbose
@@ -460,7 +460,7 @@ subroutine set_labels_ascii
          (index(labeli,'density') /= 0 .and. irho==0)) then
        irho = i
     elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass' &
-             .or. index(labeli,'mass') /= 0) then
+             .or. trim(labeli)=='mass') then
        ipmass = i
     elseif (ipmass==0 .and. trim(labeli)=='m') then
        ipmass = i
@@ -474,7 +474,8 @@ subroutine set_labels_ascii
     elseif (labeli(1:2)=='pr' .or. trim(labeli)=='p' .or. &
             (index(labeli,'pressure') /= 0 .and. ipr==0)) then
        ipr = i
-    elseif (icoltype==0 .and. index(labeli,'type') /= 0) then
+    elseif (icoltype==0 .and. trim(labeli)=='particle type' .or. trim(labeli)=='itype' &
+       .or. trim(labeli)=='type' .or. trim(labeli)=='particle_type') then
        icoltype = i
     elseif (ivx==0 .and. ndim==1 .and. trim(labeli)=='v') then
        ivx = i

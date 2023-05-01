@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.8.1   : (01/05/23)
+!             seg faults in auto-magic exact solution mapping fixed; longer line limit in determining
+!             number of columns in ascii/exact solution files
 !     3.8.0   : (26/04/23)
 !             plots multiple renderings with transparent background if more than one timestep per page selected;
 !             auto-magically map exact solution columns onto splash columns;
@@ -558,7 +561,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.0 [28th Apr 2023]'
+ character(len=*), parameter :: version = 'v3.8.1 [1st May 2023]'
 
  !
  ! initialise some basic code variables
