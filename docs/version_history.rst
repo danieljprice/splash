@@ -1,4 +1,10 @@
 
+**3.8.1: (01/05/23)**
+
+- seg faults in auto-magic exact solution mapping fixed
+- longer line limit in determining number of columns in ascii/exact solution files
+- automatically handle log in exact solution labels (e.g. logR, logT)
+
 **3.8.0: (26/04/23)**
 
 - plots multiple renderings with transparent background if more than one timestep per page selected
@@ -653,4 +659,4 @@
 **1.0.0 :**
 
 - first official release
-- version given to many people at IPAM meeting and put on web
+- version given to many people at IPAM meeting and put on web 
