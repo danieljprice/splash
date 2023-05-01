@@ -429,7 +429,9 @@ subroutine submenu_exact(iexact)
     endif
     if (nfiles > 0) then ! only ask if filename was read OK
        ltmp = .not.iApplyTransExactFile
-       call prompt(' are exact solutions already logged?',ltmp)
+       if (.not.any(exact_labels(:)(1:3) == 'log')) then
+          call prompt(' are exact solutions already logged?',ltmp)
+       endif
        iApplyTransExactFile = .not.ltmp
        ltmp = .not.iApplyUnitsExactFile
        call prompt(' are exact solutions in physical units?',ltmp)
@@ -1096,7 +1098,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer,       intent(in) :: noftype(maxparttypes)
  logical,       intent(in) :: iplot_type(maxparttypes)
  logical,       intent(in) :: irescale
- integer :: itrans,imapx,imapy
+ integer :: mytransx,mytransy,imapx,imapy
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
@@ -1206,6 +1208,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
        ! if so, go ahead and read the data and plot the exact solution
        if (imapx > 0 .and. imapy > 0) then
           !--read exact solution from file
+          print "(a)",'> reading '//trim(exact_labels(imapx))//' and '//trim(exact_labels(imapy))//' from '//trim(filename_tmp)
           call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
@@ -1219,11 +1222,12 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
              !--change line style between files
              LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
              !--do not apply log or other transformations if option set for this
-             itrans = itransy
-             if (.not.iApplyTransExactFile) itrans = 0
+             !  or if the label starts with 'log'...
+             mytransy = get_transform(itransy,iApplyTransExactFile,exact_labels(imapy)(1:3))
+             mytransx = get_transform(itransx,iApplyTransExactFile,exact_labels(imapx)(1:3))
 
              !--plot each solution separately and calculate errors
-             call plot_exact_solution(itransx,itrans,iexactpts,npart,xexact,yexact,xplot,yplot,&
+             call plot_exact_solution(mytransx,mytransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
                                       itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
                                       ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
@@ -1573,14 +1577,36 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  if (allocated(yexact)) deallocate(yexact)
  if (allocated(xtemp)) deallocate(xtemp)
 
- return
-
 end subroutine exact_solution
 
- !------------------------------------------------------------------
- ! Wrapper routine to plot the exact solution line on current graph
- ! and calculate errors with respect to the data
- !------------------------------------------------------------------
+integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
+ use transforms, only:islogged
+ use asciiutils, only:lcase
+ integer, intent(in) :: itrans
+ logical, intent(out) :: apply_trans
+ character(len=3), intent(in) :: label_start
+
+ ! by default, the data transformation is also applied to the exact solution
+ mytrans = itrans
+ ! disable this if the flag to switch it off is set
+ if (.not.apply_trans) mytrans = 0
+
+ if (lcase(label_start)=='log') then
+    if (islogged(itrans)) then
+       ! disable exact solution transform if solution is already logged
+       mytrans = 0
+    else
+       ! if exact solution is logged but data isn't, apply inverse transform
+       mytrans = -1
+    endif
+ endif
+
+end function get_transform
+
+!------------------------------------------------------------------
+! Wrapper routine to plot the exact solution line on current graph
+! and calculate errors with respect to the data
+!------------------------------------------------------------------
 subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
                                itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
                                ls,lc,matchtype,err)
@@ -1606,8 +1632,8 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
  if (present(lc)) call plot_sci(lc)
  call plot_set_opacity(ExactAlpha)
 
- if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
- if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
+ if (itransx /= 0) call transform(xexact(1:iexactpts),itransx)
+ if (itransy /= 0) call transform(yexact(1:iexactpts),itransy)
 
  if (present(ls)) call plot_sls(ls)
 
@@ -1628,10 +1654,10 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
 
  if (iCalculateExactErrors .and. plot_err) then
     !--untransform y axis again for error calculation
-    if (itransy > 0) call transform_inverse(yexact(1:iexactpts),itransy)
+    if (itransy /= 0) call transform_inverse(yexact(1:iexactpts),itransy)
     !--untransform particle y axis also
     ypart(1:np) = yplot(1:np)
-    if (itransy > 0) call transform_inverse(ypart(1:np),itransy)
+    if (itransy /= 0) call transform_inverse(ypart(1:np),itransy)
     !--calculate errors
     call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts),xplot(1:np),ypart,&
                             itag,iamtype,noftype,iplot_type,xmin,xmax,residuals, &
@@ -1700,7 +1726,8 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
           !--find nearest point in exact solution table
           !
           do j=1,size(xexact)-1
-             if (xexact(j) <= xi .and. xexact(j+1) > xi) then
+             if ((xexact(j) <= xi .and. xexact(j+1) > xi) .or. &
+                 (xexact(j+1) <= xi .and. xexact(j) > xi)) then
                 if (abs(residual(i)) > tiny(residual)) nerr = nerr + 1
                 !--linear interpolation from tabulated exact solution
                 dy = yexact(j+1) - yexact(j)
@@ -1748,7 +1775,6 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
  endif
  if (nerr > 0) print*,'WARNING: ',nerr,' errors in residual calculation'
 
- return
 end subroutine calculate_errors
 
  !------------------------------------

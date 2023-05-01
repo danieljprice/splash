@@ -51,9 +51,14 @@ function map_labels(list1,list2) result(imap)
  use asciiutils, only:match_lists
  use labels,     only:label_synonym
  character(len=*), intent(in) :: list1(:),list2(:)
- integer :: imap(size(list1))
+ integer :: imap(size(list1)),i
 
  imap = match_lists(label_synonym(list1),label_synonym(list2))
+
+ ! make mapping unique
+ do i=2,size(imap)
+    if (any(imap(1:i-1)==imap(i))) imap(i) = 0
+ enddo
 
 end function map_labels
 

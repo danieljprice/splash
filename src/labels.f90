@@ -187,6 +187,9 @@ elemental function label_synonym(string)
  call string_delete(labeli,'\')
  call string_delete(labeli,'_')
 
+ ! remove log from the front of the label
+ if (labeli(1:3)=='log') labeli = labeli(4:)
+
  if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:3)=='\gr' .or. &
      (index(labeli,'density') /= 0 .and. irho==0)) then
     label_synonym = 'density'
