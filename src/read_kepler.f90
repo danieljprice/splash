@@ -7,88 +7,106 @@
 !-----------------------------------------------------------------
 
 module read_kepler
-  implicit none
+ implicit none
 
-  public :: check_for_composition_file,read_kepler_composition
+ public :: check_for_composition_file,read_kepler_composition
 
-  private
+ private
 
- contains
+contains
 
-  ! This function returns the prefix of the filename
-  function get_prefix(filename) result(prefix)
-   character(len=*), intent(in) :: filename
-   character(len=len(filename)) :: prefix
+! This function returns the prefix of the filename
+function get_prefix(filename) result(prefix)
+ character(len=*), intent(in) :: filename
+ character(len=len(filename)) :: prefix
 
-   integer :: iu
+ integer :: iu
 
-   iu = index(filename,'_')
-   if (iu > 1) then
-      prefix = filename(1:iu-1)
-   else
-      prefix = filename
-   endif
+ iu = index(filename,'_')
+ if (iu > 1) then
+    prefix = filename(1:iu-1)
+ else
+    prefix = filename
+ endif
 
-  end function get_prefix
+end function get_prefix
 
- subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,ncomp,labels)
-  use asciiutils, only:get_ncolumns,get_nrows,read_column_labels
-  character(len=*), intent(in) :: dumpfile
-  integer, intent(in) :: ntotal
-  integer, intent(inout) :: ncolstep
-  character(len=*), intent(inout) :: labels(:)
-  integer, intent(out) :: ncomp,icomp_col_start
+subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,ncomp,labels)
+ use asciiutils, only:get_ncolumns,get_nrows,read_column_labels
+ character(len=*), intent(in) :: dumpfile
+ integer, intent(in) :: ntotal
+ integer, intent(inout) :: ncolstep
+ character(len=*), intent(inout) :: labels(:)
+ integer, intent(out) :: ncomp,icomp_col_start
 
-  integer :: iu,nrows,nheaderlines,nlabels,ncols,ierr
-  character(len=len(dumpfile)) :: prefix
+ integer :: iu,nrows,nheaderlines,nlabels,ierr
+ character(len=len(dumpfile)) :: prefix
+ logical :: iexist
 
-  ncomp = 0
-  icomp_col_start = 0
+ ncomp = 0
+ icomp_col_start = 0
 
-  prefix = get_prefix(dumpfile)
+ prefix = get_prefix(dumpfile)
 
-  ! see if Kepler composition file exists
-  open(newunit=iu,file=trim(prefix)//'.comp',iostat=ierr)
-  if (ierr /= 0) then
-    print "(a)", 'ERROR opening ', trim(prefix)//'.comp'
-  endif
+ inquire(file=trim(prefix)//'.comp',exist=iexist)
+ if (.not.iexist) return
+
+ ! see if Kepler composition file exists
+ open(newunit=iu,file=trim(prefix)//'.comp',iostat=ierr,status='old')
+ if (ierr /= 0) then
+     print "(a)", 'ERROR opening ', trim(prefix)//'.comp'
+ endif
 
  if (ierr == 0) then
     call get_ncolumns(iu,ncomp,nheaderlines)
     call get_nrows(iu,nheaderlines,nrows)
     ! check nrows equals number of particles
     if (nrows /= ntotal) then
-      stop 'number of rows equals the number of particles'
+       print*,'ERROR number of rows should equal the number of particles'
+       return
     endif
 
     if (ncomp > 0) then
        icomp_col_start = ncolstep + 1
        ncolstep = ncolstep + ncomp
-       call read_column_labels(iu,nheaderlines,ncols,nlabels,labels(icomp_col_start:icomp_col_start+ncomp))
+       call read_column_labels(iu,nheaderlines,ncomp,nlabels,&
+            labels(icomp_col_start:icomp_col_start+ncomp-1))
     endif
  endif
  close(iu)
 
- end subroutine check_for_composition_file
+end subroutine check_for_composition_file
 
- subroutine read_kepler_composition(dumpfile,ntotal,dat,icomp_col_start,ncomp)
+subroutine read_kepler_composition(dumpfile,ntotal,dat,icomp_col_start,ncomp)
+ use asciiutils, only:get_ncolumns
  real, intent(inout) :: dat(:,:)
  character(len=*), intent(in) :: dumpfile
  integer, intent(in) :: ncomp,icomp_col_start
  integer, intent(inout) :: ntotal
  character(len=len(dumpfile)) :: prefix
- integer :: iu,ierr,i
+ integer :: iu,ierr,i,ncols,nhdr
 
  prefix = get_prefix(dumpfile)
 
  open(newunit=iu,file=trim(prefix)//'.comp',form='formatted',status='old',iostat=ierr)
  if (ierr /= 0) then
-   print "(a)",' ERROR opening '//trim(dumpfile)//'.divv'
- elseif (icomp_col_start+ncomp > size(dat(1,:))) then
-     do i=1,ntotal
-        read(iu,*,iostat=ierr) dat(1:ntotal,icomp_col_start:icomp_col_start+ncomp)
-     enddo
+    print "(a)",' ERROR opening '//trim(prefix)//'.comp'
+ elseif (icomp_col_start+ncomp-1 <= size(dat(1,:))) then
+    ! get number of columns
+    call get_ncolumns(iu,ncols,nhdr)
+    ! skip header lines
+    do i=1,nhdr
+       read(iu,*,iostat=ierr)
+    enddo
+    ! read data from file
+    do i=1,ntotal
+       read(iu,*,iostat=ierr) dat(i,icomp_col_start:icomp_col_start+ncomp-1)
+       if (ierr /= 0) print*,' ERROR reading '//trim(prefix)//'.comp on line ',i+nhdr
+    enddo
+ else
+    print "(a)",' ERROR: wrong number of columns in '//trim(prefix)//'.comp'
  endif
 
- end subroutine read_kepler_composition
+end subroutine read_kepler_composition
+
 end module read_kepler

@@ -349,7 +349,7 @@ READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspm
            read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
            read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
            read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90     read_kepler.f90
+           read_data_vanaverbeke.f90
 
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
@@ -410,7 +410,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 \
+         write_griddata.f90 write_sphdata.f90 read_kepler.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \

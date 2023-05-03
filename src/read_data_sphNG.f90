@@ -1384,7 +1384,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use asciiutils,     only:make_tags_unique
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
- use read_kepler, only: check_for_composition_file,read_kepler_composition
+ use read_kepler,      only:check_for_composition_file,read_kepler_composition
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1751,7 +1751,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              iHeIIIcol = ncolstep + 3
              ncolstep  = ncolstep + 3
           endif
-          call check_for_composition_file(trim(dumpfile),ntotal,ncolstep,icomp_col_start,ncomp,tagarr)
+          call check_for_composition_file(trim(dumpfile),&
+               ntotal,ncolstep,icomp_col_start,ncomp,tagarr)
        endif
     endif
 !
