@@ -1384,6 +1384,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use asciiutils,     only:make_tags_unique
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
+ use read_kepler, only: check_for_composition_file,read_kepler_composition
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1397,7 +1398,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
- integer :: icentre
+ integer :: icentre,icomp_col_start,ncomp
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
@@ -1750,6 +1751,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              iHeIIIcol = ncolstep + 3
              ncolstep  = ncolstep + 3
           endif
+          call check_for_composition_file(trim(dumpfile),ntotal,ncolstep,icomp_col_start,ncomp,tagarr)
        endif
     endif
 !
@@ -2161,6 +2163,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        if (ierr /= 0) print "(a)",' WARNING: ERRORS reading curlv from file'
        close(66)
     endif
+ endif
+
+ if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
+    call read_kepler_composition(trim(dumpfile),ntotal,dat(:,:,j),icomp_col_start,ncomp)
  endif
  !
  !--calculate the temperature from density and internal energy (using physical units)
