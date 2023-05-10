@@ -41,20 +41,30 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
 
  integer :: iu,nrows,nheaderlines,nlabels,ierr
  character(len=len(dumpfile)) :: prefix
+ character(len=len(dumpfile)+5) :: filename
+
  logical :: iexist
 
  ncomp = 0
  icomp_col_start = 0
 
- prefix = get_prefix(dumpfile)
+ ! first see if file_00000.cols exists
+ filename = trim(dumpfile)//'.cols'
+ inquire(file=filename,exist=iexist)
 
- inquire(file=trim(prefix)//'.comp',exist=iexist)
+ ! first see if a global file.comp file exists
+ if (.not.iexist) then
+    prefix = get_prefix(dumpfile)
+    filename = trim(prefix)//'.comp'
+    inquire(file=filename,exist=iexist)
+ endif
+
  if (.not.iexist) return
 
  ! see if Kepler composition file exists
- open(newunit=iu,file=trim(prefix)//'.comp',iostat=ierr,status='old')
+ open(newunit=iu,file=filename,iostat=ierr,status='old')
  if (ierr /= 0) then
-     print "(a)", 'ERROR opening ', trim(prefix)//'.comp'
+    print "(1x,a)", 'ERROR opening '//trim(filename)
  endif
 
  if (ierr == 0) then
@@ -62,7 +72,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
     call get_nrows(iu,nheaderlines,nrows)
     ! check nrows equals number of particles
     if (nrows /= ntotal) then
-       print*,'ERROR number of rows should equal the number of particles'
+       print "(1x,a)",'ERROR: reading '//trim(filename)//' nrows /= number of particles'
        return
     endif
 

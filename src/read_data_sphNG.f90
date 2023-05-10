@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -69,6 +69,7 @@ module sphNGread
  integer :: istartmhd,istartrt,nmhd,idivvcol,idivvxcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
  integer :: nhydroreal4,istart_extra_real4
  integer :: itempcol = 0
+ integer :: ncolstepfirst = 0
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
@@ -1728,6 +1729,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        !  and divv, if a .divv file exists
        if (phantomdump) then
           ncolstep = ncolstep + 1
+          ! make extra columns in the same place every time
+          if (maxcol==0) then
+             ncolstepfirst = ncolstep   !  save number of columns
+          elseif (ncolstep < ncolstepfirst) then
+             ncolstep = ncolstepfirst   !  used saved number of columns
+          endif
           inquire(file=trim(dumpfile)//'.divv',exist=iexist)
           if (iexist) then
              idivvxcol   = ncolstep + 1
