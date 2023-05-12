@@ -914,7 +914,7 @@ end subroutine calc_quantities
 !-----------------------------------------------------------------
 subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  use asciiutils,    only:lcase
- use labels,        only:irad,ike,ipr
+ use labels,        only:irad,ike,ipr,ikappa,label_synonym
  use settings_data, only:debugmode
  character(len=*), intent(in) :: labelcol
  integer, intent(in) :: ncolumns,icolumn
@@ -924,7 +924,7 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  !  (e.g. in the data read) - but DO overwrite if they
  !  are calculated quantities as the locations can change
  !
- select case(lcase(trim(labelcol)))
+ select case(label_synonym(labelcol))
  case('r','radius','rad')
     if (irad <= 0 .or. irad > ncolumns) then
        irad = icolumn
@@ -939,6 +939,11 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
     if (ipr <= 0 .or. ipr > ncolumns) then
        ipr = icolumn
        if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
+    endif
+ case('kappa','opacity')
+    if (ikappa <= 0 .or. ikappa > ncolumns) then
+       ikappa = icolumn
+       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the opacity'
     endif
  end select
 

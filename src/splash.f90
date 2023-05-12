@@ -51,9 +51,10 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.8.2   : (10/05/23)
+!     3.8.2   : (12/05/23)
 !             phantom data read looks for .comp file containing additional composition data;
-!             also looks for .cols file containing any extra columns with one row per particle
+!             also looks for .cols file containing any extra columns with one row per particle;
+!             recognise opacity if extra quantity called "kappa" calculated
 !     3.8.1   : (01/05/23)
 !             seg faults in auto-magic exact solution mapping fixed; longer line limit in determining
 !             number of columns in ascii/exact solution files;
@@ -565,7 +566,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.2 [10th May 2023]'
+ character(len=*), parameter :: version = 'v3.8.2 [12th May 2023]'
 
  !
  ! initialise some basic code variables
