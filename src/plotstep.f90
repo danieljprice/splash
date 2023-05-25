@@ -512,7 +512,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
     required(ih) = .true.
     required(irender_nomulti) = .true.
     required(icontour_nomulti) = .true.
+    if (use3Dopacityrendering) required(ikappa) = .true.
  endif
+
  !!--need to read columns used for range restrictions
  do i=1,ndataplots
     if (rangeset(i)) required(i) = .true.
