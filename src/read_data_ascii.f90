@@ -289,6 +289,8 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        itype = iamtype(i,j)
        noftype(itype) = noftype(itype) + 1
        ntypes = max(itype,ntypes)
+    else
+       iamtype(:,:) = 1
     endif
     if (ierr > 0) then
        nerr = nerr + 1
