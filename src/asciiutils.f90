@@ -422,7 +422,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
 !
- do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns <= 0) &
+ do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns <= 1) &
            .and. ierr==0 .and. nheaderlines <= maxlines)
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
@@ -746,16 +746,17 @@ subroutine string_replace(string,skey,sreplacewith)
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey,sreplacewith
  character(len=len(string)) :: remstring
- integer :: ipos,ioffset,lensub
+ integer :: ipos,imax,lensub,i
 
  ipos = index(trim(string),skey)
  lensub = len(skey)
- do while(ipos > 0)
+ imax   = len(string)
+ i = 0
+ do while (ipos > 0 .and. i <= imax)
+    i = i + 1  !  only allow as many replacements as characters
     remstring = string(ipos+lensub:len_trim(string))
-    ioffset = ipos - 1 + len(sreplacewith)
     string = string(1:ipos-1)//sreplacewith//remstring
-    ipos = index(trim(remstring),skey)
-    if (ipos > 0) ipos = ipos + ioffset
+    ipos = index(trim(string),skey)
  enddo
 
 end subroutine string_replace
