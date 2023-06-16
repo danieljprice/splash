@@ -36,7 +36,7 @@ module readdata
  use readdata_sro,          only:read_data_sro,          set_labels_sro
  use readdata_dragon,       only:read_data_dragon,       set_labels_dragon
  use readdata_seren,        only:read_data_seren,        set_labels_seren
- use readdata_tipsy,        only:read_data_tipsy,        set_labels_tipsy
+ use readdata_tipsy,        only:read_data_tipsy,        set_labels_tipsy, file_format_is_tipsy
  use readdata_mhutch,       only:read_data_mhutch,       set_labels_mhutch
  use readdata_UCLA,         only:read_data_UCLA,         set_labels_UCLA
  use readdata_aly,          only:read_data_aly,          set_labels_aly
@@ -430,9 +430,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
  character(len=*), intent(in)            :: filenames(:)
  character(len=*), intent(in), optional  :: informat ! This is given if --format <string> is supplied
  integer, intent(out)                    :: ierr
- integer    :: i
  character(len=12), dimension(5) :: extensions(5)
- character(len=12) :: extension
 
  call get_extensions(filenames(1), extensions)
 
@@ -487,6 +485,8 @@ subroutine guess_format_from_file_header(filename,ierr)
     call select_data_format('gadget_hdf5',ierr)
  elseif (file_format_is_ndspmhd(filename)) then
     call select_data_format('ndspmhd',ierr)
+ elseif (file_format_is_tipsy(filename)) then
+    call select_data_format('tipsy',ierr)
  endif
 
 end subroutine guess_format_from_file_header

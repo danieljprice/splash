@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2015 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -53,20 +53,21 @@
 !-------------------------------------------------------------------------
 
 module readdata_tipsy
+ use settings_data, only:debugmode
  implicit none
 
- public :: read_data_tipsy, set_labels_tipsy
+ public :: read_data_tipsy, set_labels_tipsy, file_format_is_tipsy
 
  private
+
 contains
 
 subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
- use particle_data, only:dat,time,npartoftype,gamma,maxpart
+ use particle_data,  only:dat,time,npartoftype,gamma,maxpart
  use params
- use settings_data, only:ndim,ndimV,ncolumns
+ use settings_data,  only:ndim,ndimV,ncolumns
  use mem_allocation, only:alloc
- use labels, only:label,ih,ipmass,irho
- implicit none
+ use labels,         only:label,ih,ipmass,irho,ivx
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -74,7 +75,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  integer :: j,ierr
  integer :: nprint,ngas,ndark,nptmass,npart_max,nstep_max
  integer :: ncol,nread,iambinaryfile
- logical :: iexist
+ logical :: iexist,doubleprec
  character(len=len(rootname)) :: dumpfile
  character(len=11) :: fmt
  real :: timei, hfact
@@ -101,21 +102,11 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !--determine whether file is binary or ascii and open it
  !
  inquire(file=dumpfile,form=fmt)
- !print*,'fmt = ',fmt
 
  select case(trim(adjustl(fmt)))
  case('UNFORMATTED')
     iambinaryfile = 1
-#ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER<1010
-    !--this is how stream access is implemented for ifort 9 and lower
-    open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)
-#else
     open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
-#endif
-#else
-    open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
-#endif
  case('FORMATTED')
     iambinaryfile = 0
     open(unit=iunit,file=dumpfile,status='old',form='formatted',iostat=ierr)
@@ -135,7 +126,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !
  if (iambinaryfile==1) then
     print "(a)",' reading binary tipsy format '
-    call read_tipsyheader_binary(iunit,ierr)
+    call read_tipsyheader_binary(iunit,doubleprec,ierr)
  else
     if (iambinaryfile==0) print "(a)",' reading ascii tipsy format '
     call read_tipsyheader_ascii(iunit,ierr,iambinaryfile)
@@ -148,18 +139,10 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
           !--otherwise, close ascii file, and assume file is binary
           close(unit=iunit)
           iambinaryfile = 1
-#ifdef __INTEL_COMPILER
-#if __INTEL_COMPILER<1010
-          !--this is how stream access is implemented for ifort 9 and lower
-          open(unit=iunit,file=dumpfile,status='old',form='unformatted',recordtype='stream',iostat=ierr)
-#else
-          open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
-#endif
-#else
-          open(unit=iunit,file=dumpfile,status='old',form='unformatted',access='stream',iostat=ierr)
-#endif
+          open(unit=iunit,file=dumpfile,status='old',form='unformatted',&
+               access='stream',iostat=ierr)
           print "(a)",' reading binary tipsy format '
-          call read_tipsyheader_binary(iunit,ierr)
+          call read_tipsyheader_binary(iunit,doubleprec,ierr)
        endif
     endif
  endif
@@ -207,7 +190,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !
  !--often tipsy dumps contain only a (fixed) gravitational softening length
  ! for sph particles. In this case we need to create a sensible smoothing length
- ! (and warn people about the evils of using fixed softening lengths for sph particles)
+ ! (and warn about the evils of using fixed softening lengths for sph particles)
  !
  if (ngas >= 0 .and. nread >= irho .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)) <= tiny(dat))) then
     hfact=1.2
@@ -235,7 +218,6 @@ contains
 ! ascii header read
 !----------------------------------------------------
 subroutine read_tipsyheader_ascii(iunit,ierr,iwarn)
- implicit none
  integer, intent(in) :: iunit,iwarn
  integer, intent(out) :: ierr
 
@@ -262,22 +244,20 @@ end subroutine read_tipsyheader_ascii
 !----------------------------------------------------
 ! binary header read
 !----------------------------------------------------
-subroutine read_tipsyheader_binary(iunitb,ierr)
- implicit none
- integer, intent(in) :: iunitb
+subroutine read_tipsyheader_binary(iunitb,doubleprec,ierr)
+ integer, intent(in)  :: iunitb
+ logical, intent(out) :: doubleprec
  integer, intent(out) :: ierr
  real(doub_prec) :: timedb
  integer :: ipad
 
  ierr = 0
  read(iunitb,iostat=ierr,end=55) timedb,nprint,ndim,ngas,ndark,nptmass,ipad
- !print*,'header = ',timedb,nprint,ndim,ngas,ndark,nptmass
+ if (debugmode) print*,'header = ',timedb,nprint,ndim,ngas,ndark,nptmass
  timei = real(timedb)
 
  !--check for wrong endianness
- if (ierr /= 0 .or. timedb < 0. .or. ndim < 0 .or. ndim > 3 &
-     .or. nprint <= 0 .or. ngas < 0 .or. ndark < 0 .or. nptmass < 0 &
-     .or. nprint > 1e10 .or. ngas > 1.e10 .or. ndark > 1.e10 .or. nptmass > 1.e8) then
+ if (ierr /= 0 .or. timedb < 0. .or. bad_header(ndim,nprint,ngas,ndark,nptmass)) then
     print "(a)",' ERROR reading binary file header: wrong endian? '
     ierr = 2
  endif
@@ -288,7 +268,6 @@ subroutine read_tipsyheader_binary(iunitb,ierr)
 55 continue
  print "(a)",' ERROR: end of file in binary header read'
  ierr = -1
- return
 
 end subroutine read_tipsyheader_binary
 
@@ -296,7 +275,6 @@ end subroutine read_tipsyheader_binary
 ! ascii body read
 !----------------------------------------------------
 subroutine read_tipsybody_ascii(iunit,ierr,nread)
- implicit none
  integer, intent(in) :: iunit
  integer, intent(out) :: ierr, nread
  integer :: i,ic,icol,nerr
@@ -361,17 +339,25 @@ end subroutine read_tipsybody_ascii
 ! binary body read
 !----------------------------------------------------
 subroutine read_tipsybody_binary(iunitb,ierr,nread)
- integer, intent(in) :: iunitb
+ use settings_data, only:debugmode
+ integer, intent(in)  :: iunitb
  integer, intent(out) :: ierr,nread
  integer :: i,nerr
- real :: dummy
+ real(kind=4) :: pmass,xyz(3),vxyz(3),rho,temp,h,dummy
 
  !--gas particles
  nerr = 0
+ if (debugmode) print*,'DEBUG: reading ',ngas,' gas particles'
  do i=1,ngas
     !--pmass,x,y,z,vx,vy,vz,rho,temp,h
-    read(iunitb,end=44,iostat=ierr) dat(i,ipmass,j),dat(i,1:ndim,j),dat(i,ndim+2:ncolumns,j),dummy,dummy
-    !print*,' gas mass = ',i,dat(i,ipmass,j), ' xyz = ',dat(i,1:ndim,j)
+    read(iunitb,end=44,iostat=ierr) pmass,xyz(1:ndim),vxyz(1:ndim),&
+                                    rho,temp,h,dummy,dummy
+    dat(i,ipmass,j)         = pmass
+    dat(i,1:ndim,j)         = xyz(1:ndim)
+    dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
+    dat(i,irho,j)           = rho
+    dat(i,irho+1,j)         = temp
+    dat(i,ih,j)             = h
     if (ierr /= 0) nerr = nerr + 1
  enddo
  nread = ncolumns
@@ -382,8 +368,11 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
     nerr = 0
     do i=ngas+1,ngas+ndark
        !--only read as far as velocities, then eps as smoothing length
-       read(iunitb,end=44,iostat=ierr) dat(i,ipmass,j),dat(i,1:ndim,j),dat(i,ndim+2:2*ndim+1,j),dat(i,ih,j),dummy
-       !print*,' DM mass = ',i,dat(i,ipmass,j)
+       read(iunitb,end=44,iostat=ierr) pmass,xyz,vxyz,h,dummy
+       dat(i,ipmass,j)         = pmass
+       dat(i,1:ndim,j)         = xyz(1:ndim)
+       dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
+       dat(i,ih,j)             = h
        if (ierr /= 0) nerr = nerr + 1
     enddo
     if (nerr > 0) print *,'*** WARNING: ERRORS READING DARK MATTER PARTICLES ON ',nerr,' LINES'
@@ -394,8 +383,12 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
     nerr = 0
     do i=ngas+ndark+1,ngas+ndark+nptmass
        !--only read as far as velocities, then eps as smoothing length
-       read(iunitb,end=44,iostat=ierr) dat(i,ipmass,j),dat(i,1:ndim,j),dat(i,ndim+2:2*ndim+1,j),dummy,dummy,dat(i,ih,j),dummy
-       !print*,' star mass = ',i,dat(i,ipmass,j),' xyz = ',dat(i,1:ndim,j),dat(i,ndim+2:2*ndim+1,j),crap,crap,dat(i,ih,j),crap
+       read(iunitb,end=44,iostat=ierr) pmass,xyz(1:ndim),vxyz(1:ndim),&
+                                       dummy,dummy,h,dummy
+       dat(i,ipmass,j)         = pmass
+       dat(i,1:ndim,j)         = xyz(1:ndim)
+       dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
+       dat(i,ih,j)             = h
        if (ierr /= 0) nerr = nerr + 1
     enddo
     if (nerr > 0) print *,'*** WARNING: ERRORS READING STAR PARTICLES ON ',nerr,' LINES'
@@ -411,17 +404,56 @@ end subroutine read_tipsybody_binary
 
 end subroutine read_data_tipsy
 
+!--------------------------------------------------------
+! function to check if values read from
+! the tipsy header are sensible
+!--------------------------------------------------------
+logical function bad_header(ndim,nprint,ngas,ndark,nptmass)
+ integer, intent(in) :: ndim,nprint,ngas,ndark,nptmass
+
+ bad_header = (ndim < 0 .or. ndim > 3 &
+    .or. nprint <= 0 .or. ngas < 0 .or. ndark < 0 .or. nptmass < 0 &
+    .or. nprint > 1e10 .or. ngas > 1.e10 &
+    .or. ndark > 1.e10 .or. nptmass > 1.e8 )
+
+end function bad_header
+
+!-----------------------------------------------------------
+!
+! check if a file is in phantom/sphNG format
+!
+!-----------------------------------------------------------
+logical function file_format_is_tipsy(filename) result(is_tipsy)
+ character(len=*), intent(in) :: filename
+ integer :: iunit,nprint,ndim,ngas,ndark,nptmass,ierr
+ real(kind=8) :: timedb
+
+ is_tipsy = .false.
+ !
+ ! open file and read the first line
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted',access='stream')
+ if (ierr /= 0) return
+ !
+ ! check the first line to determine tipsy format
+ !
+ read(iunit,iostat=ierr) timedb,nprint,ndim,ngas,ndark,nptmass
+ if (.not.(ierr /= 0 .or. timedb < 0. .or. &
+     bad_header(ndim,nprint,ngas,ndark,nptmass))) then
+    is_tipsy = .true.
+ endif
+ close(iunit)    ! close the file
+
+end function file_format_is_tipsy
+
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
-
 subroutine set_labels_tipsy
- use labels, only:label,labelvec,labeltype,iamvec,&
-              ix,ivx,ih,irho,ipmass !,iutherm
+ use labels,        only:label,labelvec,labeltype,iamvec,&
+                         ix,ivx,ih,irho,ipmass !,iutherm
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
- use geometry, only:labelcoord
- !use settings_units, only:units,unitslabel
- implicit none
+ use geometry,      only:labelcoord
  integer :: i
 
  if (ndim <= 0 .or. ndim > 3) then
@@ -467,8 +499,6 @@ subroutine set_labels_tipsy
  UseTypeInRenderings(2) = .false.
  UseTypeInRenderings(3) = .false.
 
-!-----------------------------------------------------------
-
- return
 end subroutine set_labels_tipsy
+
 end module readdata_tipsy
