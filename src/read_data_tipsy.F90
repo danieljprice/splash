@@ -75,7 +75,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  integer :: j,ierr
  integer :: nprint,ngas,ndark,nptmass,npart_max,nstep_max
  integer :: ncol,nread,iambinaryfile
- logical :: iexist,doubleprec
+ logical :: iexist
  character(len=len(rootname)) :: dumpfile
  character(len=11) :: fmt
  real :: timei, hfact
@@ -126,7 +126,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !
  if (iambinaryfile==1) then
     print "(a)",' reading binary tipsy format '
-    call read_tipsyheader_binary(iunit,doubleprec,ierr)
+    call read_tipsyheader_binary(iunit,ierr)
  else
     if (iambinaryfile==0) print "(a)",' reading ascii tipsy format '
     call read_tipsyheader_ascii(iunit,ierr,iambinaryfile)
@@ -142,7 +142,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
           open(unit=iunit,file=dumpfile,status='old',form='unformatted',&
                access='stream',iostat=ierr)
           print "(a)",' reading binary tipsy format '
-          call read_tipsyheader_binary(iunit,doubleprec,ierr)
+          call read_tipsyheader_binary(iunit,ierr)
        endif
     endif
  endif
@@ -244,9 +244,8 @@ end subroutine read_tipsyheader_ascii
 !----------------------------------------------------
 ! binary header read
 !----------------------------------------------------
-subroutine read_tipsyheader_binary(iunitb,doubleprec,ierr)
+subroutine read_tipsyheader_binary(iunitb,ierr)
  integer, intent(in)  :: iunitb
- logical, intent(out) :: doubleprec
  integer, intent(out) :: ierr
  real(doub_prec) :: timedb
  integer :: ipad
@@ -451,7 +450,7 @@ end function file_format_is_tipsy
 !!------------------------------------------------------------
 subroutine set_labels_tipsy
  use labels,        only:label,labelvec,labeltype,iamvec,&
-                         ix,ivx,ih,irho,ipmass !,iutherm
+                         ix,ivx,ih,irho,ipmass,make_vector_label
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry,      only:labelcoord
  integer :: i
@@ -481,13 +480,7 @@ subroutine set_labels_tipsy
  label(ipmass) = 'particle mass'
  label(irho) = 'density'
 
- if (ivx /= 0) then
-    iamvec(ivx:ivx+ndimV-1) = ivx
-    labelvec(ivx:ivx+ndimV-1) = 'v'
-    do i=1,ndimV
-       label(ivx+i-1) = trim(labelvec(ivx))//'\d'//trim(labelcoord(i,1))
-    enddo
- endif
+ call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  !
  !--set labels for each particle type
  !
