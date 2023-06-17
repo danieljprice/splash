@@ -337,7 +337,7 @@ subroutine print_example_quantities(verbose,ncalc)
     else
        write(string(ilen+1:),"(a)") ')'
     endif
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=unitslabel(ix(1)))
  elseif (ncolumns >= 2 .and. .not.prefill) then
     !--if ndim=0 give random example to give at least one
     print "(11x,a)",trim(shortlabel(label(1),unitslabel(1)))//'*'&
@@ -379,7 +379,12 @@ subroutine print_example_quantities(verbose,ncalc)
             'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
             '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
     endif
-    call print_or_prefill(prefill,string,nc)
+    if (index(unitslabel(irho),'g/cm^3') > 0 .and. &
+        index(unitslabel(iutherm),'erg/g') > 0) then
+       call print_or_prefill(prefill,string,nc,ulab=' [erg/cm^3]')
+    else
+       call print_or_prefill(prefill,string,nc)
+    endif
  endif
  !
  !--one-fluid dust stuff
@@ -422,7 +427,7 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-             call print_or_prefill(prefill,string,nc)
+             call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivx))
           enddo
           !--dust velocities
           do i=1,ndimV
@@ -430,7 +435,7 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' + (1 - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //')*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-             call print_or_prefill(prefill,string,nc)
+             call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivx))
           enddo
        else
           ! Still needs to be implemented...
@@ -457,7 +462,7 @@ subroutine print_example_quantities(verbose,ncalc)
           else
              write(string(ilen+1:),"(a)",iostat=ierr) ')'
           endif
-          call print_or_prefill(prefill,string,nc)
+          call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivecstart))
        endif
     enddo
  endif
@@ -505,14 +510,14 @@ subroutine print_example_quantities(verbose,ncalc)
     string = ' '
     write(string,"(a)",iostat=ierr) 'T_{gas} = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
                     //trim(shortlabel(label(icv),unitslabel(icv)))
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=' [K]')
  endif
  !--radiation temperature
  if (ndim > 0 .and. irho > 0 .and. iradenergy > 0) then
     string = ' '
     write(string,"(a)",iostat=ierr) 'T_{rad} = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
                     //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25'
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=' [K]')
  endif
 
  if (present(ncalc)) ncalc = nc
@@ -627,9 +632,6 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
     if (ierr==0) then
        ncalcok = ncalcok + 1
-       if (isverbose) then
-          print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
-       endif
        if (present(incolumn)) incolumn(i) = ncolumns + ncalcok
        !
        !--set the label for the proposed column here
@@ -640,6 +642,13 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
        label(ncolumns+ncalcok) = trim(calclabel(i))
        unitslabel(ncolumns+ncalcok) = trim(calcunitslabel(i))
        if (iRescale) label(ncolumns+ncalcok) = trim(label(ncolumns+ncalcok))//trim(unitslabel(ncolumns+ncalcok))
+       if (isverbose) then
+          if (iRescale) then
+             print "(1x,i2,') ',a50,' [OK]',1x,a)",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i),trim(calcunitslabel(i))
+          else
+             print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+          endif
+       endif
     else
        indexinactive = indexinactive - 1
        if (isverbose) then

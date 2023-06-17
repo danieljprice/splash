@@ -55,7 +55,8 @@ program splash
 !             flip option (f/F in interactive mode) now persists across
 !             timesteps and works in snapshots other than the first;
 !             bugs fixed in Tipsy data read (thanks to Alex Pettit);
-!             auto-recognition of Tipsy binary formats implemented
+!             auto-recognition of Tipsy binary formats implemented;
+!             show units labels in calculated quantities list
 !     3.8.2   : (12/05/23)
 !             phantom data read looks for .comp file containing additional composition data;
 !             also looks for .cols file containing any extra columns with one row per particle;
