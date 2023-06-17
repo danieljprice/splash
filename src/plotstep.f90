@@ -721,8 +721,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use asciiutils,            only:string_delete
  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
                                   plot_sls,plot_line,plot_pt1,plotlib_is_pgplot
- integer, intent(inout) :: ipos, istepsonpage
- integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
+ integer, intent(inout) :: ipos,istepsonpage,irender_nomulti
+ integer, intent(in)    :: istep,icontour_nomulti,ivecplot
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer, dimension(maxparttypes), intent(in) :: npartoftype
  real,    dimension(maxparttypes), intent(in) :: masstype
@@ -1314,10 +1314,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 npixz = nxsec
              endif
 
-             ! set interpolation weights (skips if they are the same)
-             call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
-
              if (.not.interactivereplot .or. irerender) then
+                ! set interpolation weights (skips if they are the same)
+                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                 if (allocated(datpix)) then
                    if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
                       deallocate(datpix)
@@ -1757,9 +1757,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
                       inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                       labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
-                                                  labelzintegration,projlabelformat,iapplyprojformat)
-                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inormalise,&
-                                                 iRescale,labelzintegration,projlabelformat,iapplyprojformat)
+                                      labelzintegration,projlabelformat,iapplyprojformat)
+                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
+                                      iRescale,labelzintegration,projlabelformat,iapplyprojformat)
                    endif
                    !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                    labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -2820,6 +2820,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     endif
  endif
 
+ !--set required columns for subsequent plots (e.g. if rendered quantity
+ !  is changed interactively using the 'f' or 'F' option)
+ !
+ !  Here we simply require ALL columns to be read if f/F is used
+ !  since the assumption is that the user wants to flick through different
+ !  quantities. Otherwise could set required just for new column and
+ !  check dependencies
+ !
+ if (irender /= irender_nomulti .and. irender > 0) then
+    irender_nomulti = irender
+    required(:) = .true.
+    if (ipartialread) ifileopen = 0  ! force the file to be re-read
+ endif
+
  !--free all dynamically allocated memory
  if (.not.interactivereplot) then
     if (allocated(datpix1D)) deallocate(datpix1D)
@@ -3400,6 +3414,7 @@ subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
     endif
     icol_prev = i_col
  endif
+
  if (ichangedweights) then
     use_type_prev = usetype
     call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
