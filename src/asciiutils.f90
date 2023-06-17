@@ -42,7 +42,7 @@ module asciiutils
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: match_column,match_tag_start,match_integer,match_lists
  public :: count_non_blank,find_repeated_tags,count_char
- public :: get_extensions,readline_csv
+ public :: get_extensions,readline_csv,extension
  public :: reorder_filenames_for_comparison
  public :: read_var_from_file
  integer, parameter :: max_line_length = 10000 ! for finding number of columns
@@ -701,6 +701,25 @@ function basename(string)
  basename = trim(string(iposmax+1:))
 
 end function basename
+
+!---------------------------------------------------------------------------
+!
+! function to get file extension
+!
+!---------------------------------------------------------------------------
+function extension(string) result(ext)
+ character(len=*), intent(in) :: string
+ character(len=len(string))   :: ext
+ integer :: idot
+
+ idot = index(string,'.',back=.true.)
+ if (idot > 2 .and. idot+1 <= len(string)) then
+    ext = string(idot:)
+ else
+    ext = ''
+ endif
+
+end function extension
 
 !---------------------------------------------------------------------------
 !

@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.8.3   : (19/06/23)
+!             bugs fixed in Tipsy data read (thanks to Alex Pettit);
+!             Tipsy format now auto-recognised
 !     3.8.2   : (12/05/23)
 !             phantom data read looks for .comp file containing additional composition data;
 !             also looks for .cols file containing any extra columns with one row per particle;
@@ -540,7 +543,7 @@ program splash
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename,match_column,&
-                              reorder_filenames_for_comparison,split
+                              reorder_filenames_for_comparison,split,extension
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -560,13 +563,13 @@ program splash
  use labels,             only:lenlabel,label,unitslabel,shortlabel
  use limits,             only:set_limits
  implicit none
- integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
+ integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  logical :: using_default_options,got_exact
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.2 [12th May 2023]'
+ character(len=*), parameter :: version = 'v3.8.3 [19th June 2023]'
 
  !
  ! initialise some basic code variables
@@ -774,13 +777,15 @@ program splash
  !
  ! select -ev mode automatically if filename ends in .ev, .mdot or .out
  !
- if (nfiles > 0 .and. &
-    (index(rootname(1),'.ev') > 0  .or. &
-     index(rootname(1),'.mdot') > 0  .or. &
-     index(rootname(1),'.out') > 0)) then
-    evsplash = .true.
-    fileprefix = 'evsplash'
-    call set_filenames(trim(fileprefix))
+ if (nfiles > 0) then
+    il = len_trim(rootname(1))
+    if (extension(rootname(1))=='.ev'   .or. &
+        extension(rootname(1))=='.mdot' .or. &
+        extension(rootname(1))=='.out') then
+       evsplash = .true.
+       fileprefix = 'evsplash'
+       call set_filenames(trim(fileprefix))
+    endif
  endif
  !
  ! print header
