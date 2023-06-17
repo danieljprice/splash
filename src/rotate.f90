@@ -195,9 +195,9 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
  real, dimension(2) :: xline,yline
  real :: dx,zfrac
 
- if (xeye < 0.) then
+ if (xeye < -tiny(0.)) then
     call plot_sci(2)
- elseif (xeye > 0.) then
+ elseif (xeye > tiny(0.)) then
     call plot_sci(3)
  endif
  call plot_set_opacity(0.5)
@@ -219,7 +219,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
-          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
+          xpt(:,i) = xpttemp(:) + xorigin(:)
+          xpt(1,i) = xpt(1,i) + xeye*zfrac
        enddo
        !--plot each axis as an arrow
        call plot_arro(xpt(iplotx,1),xpt(iploty,1),xpt(iplotx,2),xpt(iploty,2))
@@ -254,7 +255,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
     do i=1,8
        xpttemp(:) = xpt(:,i) - xorigin(:)
        call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
-       xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
+       xpt(:,i) = xpttemp(:) + xorigin(:)
+       xpt(1,i) = xpt(1,i) + xeye*zfrac
     enddo
     !
     !--now draw lines appropriately through points
@@ -291,7 +293,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
-          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
+          xpt(:,i) = xpttemp(:) + xorigin(:)
+          xpt(1,i) = xpt(1,i) + xeye*zfrac
        enddo
        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
     enddo
@@ -309,7 +312,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
           call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
-          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
+          xpt(:,i) = xpttemp(:) + xorigin(:)
+          xpt(1,i) = xpt(1,i) + xeye*zfrac
        enddo
        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
     enddo
