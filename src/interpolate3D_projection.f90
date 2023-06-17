@@ -158,14 +158,14 @@ end function wfromtable
 
 subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
-     useaccelerate,exact_rendering,iverbose)
+     xeye,useaccelerate,exact_rendering,iverbose)
 
  use kernels, only:radkernel,radkernel2,cnormk3D,wallint,soft_func
  use timing,  only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
- real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen
+ real, intent(in) :: xmin,ymin,pixwidthx,pixwidthy,zobserver,dscreen,xeye
  real, intent(out), dimension(npixx,npixy) :: datsmooth
  logical, intent(in) :: normalise
  real, dimension(npixx,npixy) :: datnorm
@@ -267,7 +267,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,npart,iprintprogress,iprintinterval) &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
-!$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
+!$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate,xeye) &
 !$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm,cnormk3D,exact_rendering) &
 !$omp firstprivate(hmin) & !,dhmin3) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
@@ -379,7 +379,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        !--precalculate an array of dx2 for this particle (optimisation)
        !
        do ipix=ipixmin,ipixmax
-          dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+          dx2i(ipix) = ((xpix(ipix) - xi + xeye)**2)*hi21
        enddo
        do jpix = jpixi,jpixmax
           ypix = yminpix + jpix*pixwidthy
@@ -438,7 +438,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        !--precalculate an array of dx2 for this particle (optimisation)
        !
        do ipix=ipixmin,ipixmax
-          dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
+          dx2i(ipix) = ((xpix(ipix) - xi + xeye)**2)*hi21
        enddo
 
        do jpix = jpixmin,jpixmax

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -50,7 +50,7 @@ module timestep_plotting
  real(doub_prec), dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
  real, private :: xmin,xmax,ymin,ymax,zmin
  real, private :: rendermin,rendermax,vecmax,contmin,contmax
- real, private :: dz,zslicepos,zobservertemp,dzscreentemp,rkappatemp
+ real, private :: dz,zslicepos,zobservertemp,dzscreentemp,xeyetemp,rkappatemp
  real, private :: dxgrid,xmingrid,xmaxgrid
  real, private :: angletempx, angletempy, angletempz
  !--buffer for interactive mode on multiplots
@@ -680,7 +680,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use settings_vecplot,   only:npixvec,iplotpartvec
  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
                                flythru,use3Dperspective,use3Dopacityrendering,&
-                               anglex,angley,anglez,zobserver,&
+                               anglex,angley,anglez,zobserver,xeye,stereo,&
                                dzscreenfromobserver,rkappafac=>taupartdepth,xsecpos_nomulti, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
@@ -1107,11 +1107,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              angletempz = anglez
              dzscreentemp = 0.
              zobservertemp = 0.
+             xeyetemp = 0.
              rkappatemp = 0.
              if (ndim==3) then
                 if (use3Dperspective) then
                    dzscreentemp = dzscreenfromobserver
                    zobservertemp = zobserver
+                   if (stereo) xeyetemp = xeye
                 endif
                 if (use3Dopacityrendering) rkappatemp = rkappafac
              endif
@@ -1631,7 +1633,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
-                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
+                                  pixwidthy,inormalise,zobservertemp,dzscreentemp,&
+                                  xeyetemp,ifastrender,exact_rendering,iverbose)
                             endif
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
@@ -1648,7 +1651,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                      hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
-                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
+                                     pixwidthy,inormalise,zobservertemp,dzscreentemp,-xeyetemp,ifastrender,exact_rendering,iverbose)
                                endif
                                gotcontours = .true.
                             endif
@@ -2074,7 +2077,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              !---------------------------------
              if (irotate .and. irotateaxes > 0 .and. icoordsnew==1) then
                 call rotatedaxes(irotateaxes,iplotx,iploty,angletempx,angletempy,angletempz, &
-                               dzscreentemp,zobservertemp)
+                               dzscreentemp,zobservertemp,xeyetemp)
              endif
              !
              !--redraw axes over what has been plotted
@@ -3981,15 +3984,17 @@ end subroutine rotationandperspective
 !-------------------------------------------------------------------
 ! interface for plotting rotated axes
 !-------------------------------------------------------------------
-subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscreen,zobs)
+subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,&
+                       dzscreen,zobs,xeye)
  use labels,   only:ix
  use rotation, only:rotate_axes3D,rotate_axes2D
- use settings_data, only:ndim,xorigin
- use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,use3Dperspective
+ use settings_data,    only:ndim,xorigin
+ use settings_xsecrot, only:xminrotaxes,xmaxrotaxes,use3Dperspective,stereo
  integer, intent(in) :: irotateaxes,iplotx,iploty
  real, intent(in) :: anglexi,angleyi,anglezi
- real, intent(inout) :: dzscreen,zobs
- real :: angleradx,anglerady,angleradz
+ real, intent(inout) :: dzscreen,zobs,xeye
+ real :: angleradx,anglerady,angleradz,xeyepos(2)
+ integer :: i,n
  !
  !--convert angles to radians
  !
@@ -4002,10 +4007,20 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
        print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'
        zobs = 0.
        dzscreen = 0.
+       xeye = 0.
     endif
-    call rotate_axes3D(irotateaxes,iplotx-ix(1)+1,iploty-ix(1)+1, &
-          xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
-          angleradx,anglerady,angleradz,zobs,dzscreen)
+    if (stereo) then
+       xeyepos = [-xeye,xeye]
+       n = 2
+    else
+       xeyepos  = 0.
+       n = 1
+    endif
+    do i=1,n
+       call rotate_axes3D(irotateaxes,iplotx-ix(1)+1,iploty-ix(1)+1, &
+            xminrotaxes(1:ndim),xmaxrotaxes(1:ndim),xorigin(1:ndim), &
+            angleradx,anglerady,angleradz,zobs,dzscreen,xeyepos(i))
+    enddo
  elseif (ndim==2) then
     call rotate_axes2D(irotateaxes,xminrotaxes(1:ndim), &
                        xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)

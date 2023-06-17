@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -30,9 +30,10 @@ module settings_xsecrot
  !--public variables
  integer, public :: nframes,nseq
  integer, public :: nxsec,irotateaxes
- logical, public :: xsec_nomulti, irotate, flythru, use3Dperspective, use3Dopacityrendering
+ logical, public :: xsec_nomulti,irotate,flythru,use3Dperspective
+ logical, public :: use3Dopacityrendering,stereo
  logical, public :: rendersinks
- real, public    :: anglex, angley, anglez, zobserver, dzscreenfromobserver
+ real, public    :: anglex,angley,anglez,zobserver,dzscreenfromobserver,xeye
  real, public    :: taupartdepth,xsecwidth
  real, public    :: xsecpos_nomulti,xseclineX1,xseclineX2,xseclineY1,xseclineY2
  real, public, dimension(3) :: xorigin,xminrotaxes,xmaxrotaxes
@@ -57,10 +58,10 @@ module settings_xsecrot
  public :: xsecrotopts
  namelist /xsecrotopts/ xsec_nomulti,xsecpos_nomulti,flythru, &
           xseclineX1,xseclineX2,xseclineY1,xseclineY2, &
-          irotate,irotateaxes,anglex, angley, anglez, &
+          irotate,irotateaxes,anglex,angley,anglez, &
           xminrotaxes,xmaxrotaxes,use3Dperspective, &
           use3Dopacityrendering,zobserver,dzscreenfromobserver, &
-          taupartdepth,xsecwidth,rendersinks
+          taupartdepth,xsecwidth,rendersinks,stereo,xeye
 
  public :: animopts
  namelist /animopts/ nseq,nframes,iseqstart,iseqend,iseqtype, &
@@ -88,6 +89,7 @@ subroutine defaults_set_xsecrotate
  xsec_nomulti = .false.    ! take cross section of data / particles
  xsecpos_nomulti = 0.      ! position of cross section
  flythru = .false.         ! take series of cross sections through data
+ stereo  = .false.         ! use stereo rendering
  xseclineX1 = 0.0
  xseclineX2 = 0.0
  xseclineY1 = 0.0
@@ -99,11 +101,12 @@ subroutine defaults_set_xsecrotate
  angley = 0.
  anglez = 0.
  xminrotaxes = 0.
- xmaxrotaxes = 0.
+ xmaxrotaxes = 100.
  use3Dperspective = .false.
  use3Dopacityrendering = .false.
  zobserver = 0.
  dzscreenfromobserver = 0.
+ xeye = 0.
  taupartdepth = -1. ! determine kappa automatically
 
  !--defaults for animation sequences
