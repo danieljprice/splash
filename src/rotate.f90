@@ -59,9 +59,10 @@ end subroutine rotate2D
 !--3D rotation (about x, y and z axes)
 !  This is done in the order z-y-x
 !
-subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
+subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1,frac)
  real, intent(inout) :: xcoords(3)
  real, intent(in) :: anglex, angley, anglez, zobs, dz1
+ real, intent(out), optional :: frac
  real :: x, y, z, r, phi, zfrac
 
  x = xcoords(1)
@@ -110,6 +111,7 @@ subroutine rotate3D(xcoords,anglex,angley,anglez,zobs,dz1)
  xcoords(1) = x*zfrac
  xcoords(2) = y*zfrac
  xcoords(3) = z
+ if (present(frac)) frac = zfrac
 
  return
 end subroutine rotate3D
@@ -191,7 +193,7 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
  real, dimension(3,8) :: xpt
  real, dimension(3) :: xpttemp
  real, dimension(2) :: xline,yline
- real :: dx
+ real :: dx,zfrac
 
  if (xeye < 0.) then
     call plot_sci(2)
@@ -216,8 +218,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        xpt(idim,2) = xmax(idim)
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
-          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
-          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye
+          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
+          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
        enddo
        !--plot each axis as an arrow
        call plot_arro(xpt(iplotx,1),xpt(iploty,1),xpt(iplotx,2),xpt(iploty,2))
@@ -251,8 +253,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
     !
     do i=1,8
        xpttemp(:) = xpt(:,i) - xorigin(:)
-       call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
-       xpt(:,i) = xpttemp(:) + xorigin(:) + xeye
+       call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
+       xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
     enddo
     !
     !--now draw lines appropriately through points
@@ -288,8 +290,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        xpt(2,2) = xmax(2)
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
-          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
-          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye
+          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
+          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
        enddo
        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
     enddo
@@ -306,8 +308,8 @@ subroutine rotate_axes3D(ioption,iplotx,iploty,xmin,xmax,xorigin, &
        xpt(1,2) = xmax(1)
        do i=1,2
           xpttemp(:) = xpt(:,i) - xorigin(:)
-          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1)
-          xpt(:,i) = xpttemp(:) + xorigin(:)! + xeye
+          call rotate3D(xpttemp(:),anglex,angley,anglez,zobs,dz1,zfrac)
+          xpt(:,i) = xpttemp(:) + xorigin(:) + xeye*zfrac
        enddo
        call plot_line(2,xpt(iplotx,1:2),xpt(iploty,1:2))
     enddo
