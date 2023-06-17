@@ -54,6 +54,7 @@
 
 module readdata_tipsy
  use settings_data, only:debugmode
+ use byteswap,      only:bs
  implicit none
 
  public :: read_data_tipsy, set_labels_tipsy, file_format_is_tipsy
@@ -75,7 +76,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  integer :: j,ierr
  integer :: nprint,ngas,ndark,nptmass,npart_max,nstep_max
  integer :: ncol,nread,iambinaryfile
- logical :: iexist
+ logical :: iexist,do_byteswap
  character(len=len(rootname)) :: dumpfile
  character(len=11) :: fmt
  real :: timei, hfact
@@ -125,8 +126,8 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !  try ascii format first, and if unsuccessful try binary
  !
  if (iambinaryfile==1) then
-    print "(a)",' reading binary tipsy format '
-    call read_tipsyheader_binary(iunit,ierr)
+    write(*,"(a)",advance='no') ' reading binary tipsy format:'
+    call read_tipsyheader_binary(iunit,do_byteswap,ierr)
  else
     if (iambinaryfile==0) print "(a)",' reading ascii tipsy format '
     call read_tipsyheader_ascii(iunit,ierr,iambinaryfile)
@@ -141,8 +142,8 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
           iambinaryfile = 1
           open(unit=iunit,file=dumpfile,status='old',form='unformatted',&
                access='stream',iostat=ierr)
-          print "(a)",' reading binary tipsy format '
-          call read_tipsyheader_binary(iunit,ierr)
+           write(*,"(a)",advance='no') ' reading binary tipsy format:'
+          call read_tipsyheader_binary(iunit,do_byteswap,ierr)
        endif
     endif
  endif
@@ -177,7 +178,7 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  call set_labels_tipsy
 
  if (iambinaryfile==1) then
-    call read_tipsybody_binary(iunit,ierr,nread)
+    call read_tipsybody_binary(iunit,do_byteswap,ierr,nread)
  else
     call read_tipsybody_ascii(iunit,ierr,nread)
  endif
@@ -194,8 +195,8 @@ subroutine read_data_tipsy(rootname,indexstart,ipos,nstepsread)
  !
  if (ngas >= 0 .and. nread >= irho .and. all(abs(dat(1:ngas,ih,j)-dat(1,ih,j)) <= tiny(dat))) then
     hfact=1.2
-    print "(a)",'WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
-    print "(a,f5.2,a,i1,a)",'       : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
+    print "(a)",' WARNING: fixed softening lengths detected: simulation may contain artificial fragmentation!'
+    print "(a,f5.2,a,i1,a)",'        : creating SPH smoothing lengths using h = ',hfact,'*(m/rho)**(1/',ndim,')'
     dat(1:ngas,ih,j) = hfact*(dat(1:ngas,ipmass,j)/(dat(1:ngas,irho,j) + tiny(dat)))**(1./ndim)
  endif
 
@@ -244,22 +245,33 @@ end subroutine read_tipsyheader_ascii
 !----------------------------------------------------
 ! binary header read
 !----------------------------------------------------
-subroutine read_tipsyheader_binary(iunitb,ierr)
+subroutine read_tipsyheader_binary(iunitb,do_byteswap,ierr)
  integer, intent(in)  :: iunitb
+ logical, intent(out) :: do_byteswap
  integer, intent(out) :: ierr
  real(doub_prec) :: timedb
  integer :: ipad
 
  ierr = 0
+ do_byteswap = .false.
  read(iunitb,iostat=ierr,end=55) timedb,nprint,ndim,ngas,ndark,nptmass,ipad
  if (debugmode) print*,'header = ',timedb,nprint,ndim,ngas,ndark,nptmass
+
+ !--check for wrong endianness and byte-swap if necessary
+ if (ierr /= 0 .or. timedb < 0. .or. bad_header(ndim,nprint,ngas,ndark,nptmass)) then
+    timedb = bs(timedb); ndim = bs(ndim); nprint = bs(nprint); ngas = bs(ngas)
+    ndark = bs(ndark); nptmass = bs(nptmass)
+    if (ierr /= 0 .or. timedb < 0. .or. &
+        bad_header(ndim,nprint,ngas,ndark,nptmass)) then
+       print "(a)",' ERROR reading binary file header'
+       ierr = 2
+    else
+       do_byteswap = .true.
+       write(*,"(a)",advance='no') ' big endian: '
+    endif
+ endif
  timei = real(timedb)
 
- !--check for wrong endianness
- if (ierr /= 0 .or. timedb < 0. .or. bad_header(ndim,nprint,ngas,ndark,nptmass)) then
-    print "(a)",' ERROR reading binary file header: wrong endian? '
-    ierr = 2
- endif
  if (ndim==0) ndim = 3
 
  return
@@ -337,9 +349,10 @@ end subroutine read_tipsybody_ascii
 !----------------------------------------------------
 ! binary body read
 !----------------------------------------------------
-subroutine read_tipsybody_binary(iunitb,ierr,nread)
+subroutine read_tipsybody_binary(iunitb,do_byteswap,ierr,nread)
  use settings_data, only:debugmode
  integer, intent(in)  :: iunitb
+ logical, intent(in)  :: do_byteswap
  integer, intent(out) :: ierr,nread
  integer :: i,nerr
  real(kind=4) :: pmass,xyz(3),vxyz(3),rho,temp,h,dummy
@@ -351,6 +364,10 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
     !--pmass,x,y,z,vx,vy,vz,rho,temp,h
     read(iunitb,end=44,iostat=ierr) pmass,xyz(1:ndim),vxyz(1:ndim),&
                                     rho,temp,h,dummy,dummy
+    if (do_byteswap) then
+       pmass = bs(pmass); xyz = bs(xyz); vxyz = bs(vxyz); rho = bs(rho)
+       temp  = bs(temp); h = bs(h)
+    endif
     dat(i,ipmass,j)         = pmass
     dat(i,1:ndim,j)         = xyz(1:ndim)
     dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
@@ -368,6 +385,9 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
     do i=ngas+1,ngas+ndark
        !--only read as far as velocities, then eps as smoothing length
        read(iunitb,end=44,iostat=ierr) pmass,xyz,vxyz,h,dummy
+       if (do_byteswap) then
+          pmass = bs(pmass); xyz = bs(xyz); vxyz = bs(vxyz); h = bs(h)
+       endif
        dat(i,ipmass,j)         = pmass
        dat(i,1:ndim,j)         = xyz(1:ndim)
        dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
@@ -384,6 +404,9 @@ subroutine read_tipsybody_binary(iunitb,ierr,nread)
        !--only read as far as velocities, then eps as smoothing length
        read(iunitb,end=44,iostat=ierr) pmass,xyz(1:ndim),vxyz(1:ndim),&
                                        dummy,dummy,h,dummy
+       if (do_byteswap) then
+          pmass = bs(pmass); xyz = bs(xyz); vxyz = bs(vxyz); h = bs(h)
+       endif
        dat(i,ipmass,j)         = pmass
        dat(i,1:ndim,j)         = xyz(1:ndim)
        dat(i,ivx:ivx+ndim-1,j) = vxyz(1:ndim)
@@ -438,8 +461,15 @@ logical function file_format_is_tipsy(filename) result(is_tipsy)
  !
  read(iunit,iostat=ierr) timedb,nprint,ndim,ngas,ndark,nptmass
  if (.not.(ierr /= 0 .or. timedb < 0. .or. &
-     bad_header(ndim,nprint,ngas,ndark,nptmass))) then
+           bad_header(ndim,nprint,ngas,ndark,nptmass))) then
     is_tipsy = .true.
+ elseif (.not. ierr /= 0) then
+    ! try byte-swapping
+    timedb = bs(timedb); ndim = bs(ndim); nprint = bs(nprint); ngas = bs(ngas)
+    ndark = bs(ndark); nptmass = bs(nptmass)
+    if (.not. (timedb < 0. .or. bad_header(ndim,nprint,ngas,ndark,nptmass))) then
+       is_tipsy =  .true.
+    endif
  endif
  close(iunit)    ! close the file
 
