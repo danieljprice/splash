@@ -57,10 +57,10 @@ contains
 subroutine setup_calculated_quantities(ncalc)
  use settings_data, only:ncolumns
  use prompting,     only:prompt
- integer, intent(out) :: ncalc
- integer              :: ncalctot,istart,iend, ipick, ninactive, i
- logical              :: done,first
- character(len=1)     :: charp
+ integer, intent(inout) :: ncalc
+ integer                :: ncalctot,istart,iend,ipick,ninactive, i
+ logical                :: done,first
+ character(len=1)       :: charp
  integer, dimension(maxcalc)   :: incolumn
  ipick = ncolumns + 1
 
@@ -312,6 +312,8 @@ subroutine print_example_quantities(verbose,ncalc)
  if (present(ncalc)) then
     prefill = .true.
     nc = ncalc
+ else
+    nc = 0
  endif
 
  if (verbose) then
@@ -338,25 +340,10 @@ subroutine print_example_quantities(verbose,ncalc)
     call print_or_prefill(prefill,string,nc)
  elseif (ncolumns >= 2 .and. .not.prefill) then
     !--if ndim=0 give random example to give at least one
-    print "(11x,a)",trim(shortlabel(label(1)))//'*'//trim(shortlabel(label(2)))
+    print "(11x,a)",trim(shortlabel(label(1),unitslabel(1)))//'*'&
+                    //trim(shortlabel(label(2),unitslabel(2)))
  endif
 
- !--pressure
- string = ' '
- if (irho > 0 .and. iutherm > 0) then
-    gotpressure = .true.
-    if (idustfrac>0 .and. ndusttypes>1) then
-       write(string,"(a)",iostat=ierr) &
-            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
-            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
-            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
-    else
-       write(string,"(a)",iostat=ierr) &
-            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
-            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
-    endif
-    call print_or_prefill(prefill,string,nc)
- endif
  !
  !--total dust fraction if multiple dust phases
  !
@@ -376,6 +363,23 @@ subroutine print_example_quantities(verbose,ncalc)
  elseif (idustfrac > 0) then
     ndusttypes = 1
     ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
+ endif
+
+ !--pressure (requires total dust fraction)
+ string = ' '
+ if (irho > 0 .and. iutherm > 0) then
+    gotpressure = .true.
+    if (len_trim(ldfracsum) > 0) then
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
+            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    else
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    endif
+    call print_or_prefill(prefill,string,nc)
  endif
  !
  !--one-fluid dust stuff
@@ -560,9 +564,11 @@ subroutine print_or_prefill(prefill,string,nc,comment,ulab)
  integer :: i
 
  if (prefill) then
-    nc = nc + 1
-    call splitstring(string,calclabel(nc),calcstring(nc))
-    if (present(ulab)) calcunitslabel(nc) = trim(ulab)
+    if (len_trim(string) > 0) then ! do not prefill blank strings
+       nc = nc + 1
+       call splitstring(string,calclabel(nc),calcstring(nc))
+       if (present(ulab)) calcunitslabel(nc) = trim(ulab)
+    endif
  else
     ! do not print strings already in the list
     already_used = .false.
@@ -619,7 +625,6 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     !--check that the function parses
     !
     ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
-
     if (ierr==0) then
        ncalcok = ncalcok + 1
        if (isverbose) then
