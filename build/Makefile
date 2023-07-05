@@ -504,8 +504,8 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
-      interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 byteswap.f90 \
+      interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
       libsplash.f90 libutils.f90
