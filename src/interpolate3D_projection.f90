@@ -312,6 +312,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
     !--cycle as soon as we know the particle does not contribute
     xi = x(i)
+    if (use3Dperspective) xi = xi + xeye*zfrac ! x-shift depending on which eye
     xpixmin = xi - radkern
     if (xpixmin > xmax) cycle over_particles
     xpixmax = xi + radkern
@@ -379,7 +380,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        !--precalculate an array of dx2 for this particle (optimisation)
        !
        do ipix=ipixmin,ipixmax
-          dx2i(ipix) = ((xpix(ipix) - xi + xeye)**2)*hi21
+          dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
        enddo
        do jpix = jpixi,jpixmax
           ypix = yminpix + jpix*pixwidthy
@@ -438,7 +439,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        !--precalculate an array of dx2 for this particle (optimisation)
        !
        do ipix=ipixmin,ipixmax
-          dx2i(ipix) = ((xpix(ipix) - xi + xeye)**2)*hi21
+          dx2i(ipix) = ((xpix(ipix) - xi)**2)*hi21
        enddo
 
        do jpix = jpixmin,jpixmax
