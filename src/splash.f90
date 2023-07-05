@@ -54,7 +54,7 @@ program splash
 !     3.8.3   : (05/07/23)
 !             flip option (f/F in interactive mode) now persists across
 !             timesteps and works in snapshots other than the first;
-!             bugs fixed in Tipsy data read (thanks to Alex Pettit);
+!             bugs fixed in Tipsy data read (thanks to Alex Pettitt);
 !             auto-recognition of Tipsy binary formats implemented;
 !             show units labels in calculated quantities list
 !     3.8.2   : (12/05/23)
