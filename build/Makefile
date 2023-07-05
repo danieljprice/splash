@@ -504,7 +504,7 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 byteswap.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 \
       interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
@@ -539,7 +539,7 @@ libexact: checksystem $(OBJLIBEXACTALL)
 #
 # libread: data read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
             utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
