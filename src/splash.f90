@@ -51,7 +51,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.8.3   : (19/06/23)
+!     3.8.3   : (05/07/23)
 !             flip option (f/F in interactive mode) now persists across
 !             timesteps and works in snapshots other than the first;
 !             bugs fixed in Tipsy data read (thanks to Alex Pettit);
@@ -572,7 +572,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.3 [19th June 2023]'
+ character(len=*), parameter :: version = 'v3.8.3 [5th July 2023]'
 
  !
  ! initialise some basic code variables
