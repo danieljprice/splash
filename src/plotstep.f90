@@ -1940,7 +1940,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    endif
 
                    !--call subroutine to actually render the image
-                   if (nstepsperpage > 1) then
+                   if (nstepsperpage > 1 .and. .not.(ipos==ifirststeponpage)) then
                       !--if there is more than one rendering plotted, make the
                       !  background colour transparent
                       call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
