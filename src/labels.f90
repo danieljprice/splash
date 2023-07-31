@@ -183,14 +183,13 @@ elemental function label_synonym(string)
  ! also remove special characters
  call string_delete(labeli,'\d')
  call string_delete(labeli,'\u')
- call string_delete(labeli,'\g')
  call string_delete(labeli,'\')
  call string_delete(labeli,'_')
 
  ! remove log from the front of the label
  if (labeli(1:3)=='log') labeli = labeli(4:)
 
- if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:3)=='\gr' .or. &
+ if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:2)=='gr' .or. &
      (index(labeli,'density') /= 0 .and. irho==0)) then
     label_synonym = 'density'
  elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass') then
