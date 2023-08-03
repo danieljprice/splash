@@ -1306,6 +1306,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
+             npixx = 2*(npixx/2)
+             npixy = 2*(npixy/2)
 
              !!--only need z pixels if working with interpolation to 3D grid
              !  (then number of z pixels is equal to number of cross sections)
