@@ -105,7 +105,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  character(len=20)                  :: string
  integer, dimension(6) :: npartoftypei,Nall
  integer, dimension(:), allocatable :: iamtemp
- integer               :: i,j,k,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
+ integer               :: i,j,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
  integer               :: index1,index2,indexstart,indexend,nmassesdumped,ntypesused
  integer               :: ncolstep,npart_max,nstep_max,ntoti,nacc,ntotall,idot
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart,nhfac
@@ -765,8 +765,14 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                 else
                    if (nvec > 1) then
                       if (nfiles > 1) then
-                         read (iunit,iostat=ierr) &
-                        (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         !read (iunit,iostat=ierr) (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         call allocate_temp(dattemp,nvec,ntoti)
+                         read (iunit,iostat=ierr) ((dattemp(1:nvec,j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         do itype=1,ntypesused
+                            do j=i1all(itype),i2all(itype)
+                               dat(j,icol-nvec+1:icol,i) = real(dattemp(1:nvec,j))
+                            enddo
+                         enddo
                       else
                          !read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
                          call allocate_temp(dattemp,nvec,i2-i1+1)
@@ -1099,7 +1105,7 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
     !print*,blklabel,lenblk,ndumped
     !if (nexpected > 0) then
     !   if (ndumped /= nexpected) then
-    !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
+    !      print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
     !   endif
     !endif
  else
@@ -1117,21 +1123,16 @@ end subroutine read_data_gadget
 !!------------------------------------------------------------
 subroutine allocate_temp(dattemp,isize,jsize)
  use params, only:sing_prec
- real(kind=sing_prec), allocatable, intent(out) :: dattemp(:,:)
+ real(kind=sing_prec), allocatable, intent(inout) :: dattemp(:,:)
  integer, intent(in) :: isize,jsize
 
  if (allocated(dattemp)) then
-    print*,' CHECKING ',isize,jsize,' was ',size(dattemp(:,1)),size(dattemp(1,:))
-
     if (size(dattemp(:,1)) /= isize .or. size(dattemp(1,:)) /= jsize) then
        deallocate(dattemp)
     endif
  endif
  if (.not.allocated(dattemp)) then
-    print*,' ALLOCATING ',isize,jsize
     allocate(dattemp(isize,jsize))
- else
-    print*,' SKIPPING ',isize,jsize,' now ',size(dattemp(:,1)),size(dattemp(1,:))
  endif
 
 end subroutine allocate_temp
