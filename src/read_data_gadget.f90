@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -75,20 +75,16 @@
 ! Partial data read implemented Nov 2006 means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
-module gadgetread
- use params, only:maxplot
- implicit none
- real :: hsoft
- character(len=4), dimension(maxplot) :: blocklabelgas
- logical :: havewarned = .false.
-
-end module gadgetread
-
-
 module readdata_gadget
+ use params, only:maxplot
  implicit none
 
  public :: read_data_gadget, set_labels_gadget, file_format_is_gadget
+
+ real :: hsoft
+ character(len=4), dimension(maxplot) :: blocklabelgas
+ logical :: havewarned = .false.
+ logical :: auto_detected_block_format = .false.
 
  private
 contains
@@ -101,7 +97,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use mem_allocation, only:alloc
  use labels,         only:ih,irho,ipmass,labeltype
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
- use gadgetread,     only:hsoft,blocklabelgas,havewarned
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -124,7 +119,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  real(sing_prec), dimension(:),   allocatable :: dattemp1
  real(sing_prec), dimension(:,:), allocatable :: dattemp
  real :: hfact,hfactmean
- real, parameter :: pi = 3.1415926536
+ real, parameter :: pi = 4.*atan(1.)
 
  nstepsread = 0
  goterrors  = .false.
@@ -161,7 +156,11 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  ndim  = 3
  ndimV = 3
  idumpformat = 0
- idumpformat = ienvironment('GSPLASH_FORMAT')
+ if (auto_detected_block_format) then
+    idumpformat = 2
+ else
+    idumpformat = ienvironment('GSPLASH_FORMAT')
+ endif
  checkids    = lenvironment('GSPLASH_CHECKIDS')
 !
 !--read data from snapshots
@@ -479,8 +478,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        endif
        if (any(required(1:3))) then
           print*,'positions ',index2
-          if (allocated(dattemp)) deallocate(dattemp)
-          allocate(dattemp(3,ntoti))
+          call allocate_temp(dattemp,3,ntoti)
           read(iunit,iostat=ierr) (dattemp(:,j),j=1,index2)
           if (nfiles > 1) then
              !
@@ -523,7 +521,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        endif
        if (any(required(4:6))) then
           print*,'velocities ',index2
-          if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
+          call allocate_temp(dattemp,3,ntoti)
+
+          !if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
 
           read (iunit, iostat=ierr) (dattemp(:,j),j=1,index2)
           if (nfiles > 1) then
@@ -555,7 +555,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              return
           endif
        endif
-       if (allocated(dattemp)) deallocate(dattemp)
        !
        !--skip read of particle ID (only required if we sort the particles
        !  back into their correct order, which is not implemented at present)
@@ -723,6 +722,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                 print*,blocklabel//': ERROR in block length/quantity defined on unknown mix of types n = (',index2,')'
                 i1 = i0(1)+1
                 i2 = i0(1)+index2
+                !--skip in order to avoid seg fault below...
+                read (iunit,iostat=ierr)
+                cycle gas_properties
              endif
           else
              nvec = 1
@@ -766,16 +768,21 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                          read (iunit,iostat=ierr) &
                         (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
                       else
-                         read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
+                         !read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
+                         call allocate_temp(dattemp,nvec,i2-i1+1)
+                         read (iunit,iostat=ierr) (dattemp(1:nvec,j),j=1,i2-i1+1)
+                         do j=i1,i2
+                            dat(j,icol-nvec+1:icol,i) = real(dattemp(1:nvec,j))
+                         enddo
                       endif
                    else
                       if (nfiles > 1) then
                          read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
                       else
-                         if (.not. allocated(dattemp1) .or. size(dattemp1) < i2-i1) then
-                            if (allocated(dattemp1)) deallocate(dattemp1)
-                            allocate(dattemp1(i2-i1+1))
+                         if (allocated(dattemp1)) then
+                            if (size(dattemp1) < i2-i1) deallocate(dattemp1)
                          endif
+                         if (.not.allocated(dattemp1)) allocate(dattemp1(i2-i1+1))
                          read (iunit,iostat=ierr) dattemp1(1:1+i2-i1)
                          dat(i1:i2,icol,i) = real(dattemp1(1:1+i2-i1)) ! convert to real*8 if compiled in double prec
                       endif
@@ -879,10 +886,10 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
 
- if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+ if (nfiles > 1. .and. any(npartoftype(1:6,i) /= Nall(1:6))) then
     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
-    print*,'Npart = ',npartoftype(:,i)
-    print*,'Nall  = ',Nall(:)
+    print*,'Npart = ',npartoftype(1:6,i)
+    print*,'Nall  = ',Nall(1:6)
     goterrors = .true.
  endif
  !
@@ -1105,6 +1112,31 @@ end subroutine read_blockheader
 end subroutine read_data_gadget
 
 !!------------------------------------------------------------
+!! allocate temporary memory, but avoid reallocating
+!! memory if size is the same
+!!------------------------------------------------------------
+subroutine allocate_temp(dattemp,isize,jsize)
+ use params, only:sing_prec
+ real(kind=sing_prec), allocatable, intent(out) :: dattemp(:,:)
+ integer, intent(in) :: isize,jsize
+
+ if (allocated(dattemp)) then
+    print*,' CHECKING ',isize,jsize,' was ',size(dattemp(:,1)),size(dattemp(1,:))
+
+    if (size(dattemp(:,1)) /= isize .or. size(dattemp(1,:)) /= jsize) then
+       deallocate(dattemp)
+    endif
+ endif
+ if (.not.allocated(dattemp)) then
+    print*,' ALLOCATING ',isize,jsize
+    allocate(dattemp(isize,jsize))
+ else
+    print*,' SKIPPING ',isize,jsize,' now ',size(dattemp(:,1)),size(dattemp(1,:))
+ endif
+
+end subroutine allocate_temp
+
+!!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
@@ -1115,7 +1147,6 @@ subroutine set_labels_gadget
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
  use geometry,      only:labelcoord
  use system_utils,  only:envlist,ienvironment
- use gadgetread,    only:hsoft,blocklabelgas
  use asciiutils,    only:lcase
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
@@ -1345,9 +1376,10 @@ end subroutine set_labels_gadget
 logical function file_format_is_gadget(filename) result(is_gadget)
  use params, only:doub_prec
  character(len=*), intent(in) :: filename
- integer :: iunit,ierr
- real(doub_prec) :: time,z
- real(doub_prec) :: massoftypei(6)
+ integer :: iunit,ierr,lenblock
+ real(doub_prec)  :: time,z
+ real(doub_prec)  :: massoftypei(6)
+ character(len=4) :: blocklabel
  integer :: noftype(6),Nall(6),iFlagSfr,iFlagFeedback,iFlagcool,nfiles
 
  is_gadget = .false.
@@ -1374,6 +1406,16 @@ logical function file_format_is_gadget(filename) result(is_gadget)
      .and. time >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
      .and. iFlagFeedback >= 0 .and. all(nall(1:6) >= 0) .and. nfiles >= 0 &
      .and. nfiles <= 1e6) is_gadget = .true.
+
+ if (.not.is_gadget) then
+    rewind(iunit)
+    ! try block labelled gadget format
+    read(iunit,iostat=ierr) blocklabel,lenblock
+    if (ierr == 0 .and. lenblock == 264) then
+       auto_detected_block_format = .true.
+       is_gadget = .true.
+    endif
+ endif
 
  close(iunit)    ! close the file
 
