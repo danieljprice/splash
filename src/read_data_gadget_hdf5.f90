@@ -625,7 +625,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
  if (ih > 0 .and. required(ih) .and. ipmass > 0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned) then
+      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned &
+      .and. .not.compute_h_from_rho_m) then
     nhfac = 100
     if (npartoftype(1,i) > nhfac) then
        hfactmean = 0.

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -320,8 +320,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
  if (ipmass > 0.) then
-    mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0.))
-    print "(9x,a23,1x,es10.4,/)",'total mass on parts:',mtot
+    mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0 .and. weight(1:ninterp) > 0.))
+    print "(9x,a23,1x,es10.4)",'total mass on parts:',mtot
  endif
 
  if (ndim==3) then
@@ -347,6 +347,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              y(i) = xi(2)
              z(i) = xi(3)
           enddo
+       endif
+       if (ipmass > 0.) then
+          mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0. .and. weight(1:ninterp) > 0. &
+               .and. (x >= xmin(1) .and. x <= xmax(1)) .and. &
+                     (y >= xmin(2) .and. y <= xmax(2)) .and. &
+                     (z >= xmin(3) .and. z <= xmax(3))))
+          print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
        endif
 
        call interpolate3D(x,y,z,&
@@ -383,7 +390,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (mtotgrid > 0.) then
     print "(9x,a23,1x,es10.4,/)",'total mass on grid:',mtotgrid
     err = 100.*(mtotgrid - mtot)/mtot
-    if (abs(err) > 1) print "(/,a,1pg7.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
+    if (abs(err) > 1) print "(/,a,1pg8.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
     '% BY INTERPOLATION'
  endif
 
@@ -425,7 +432,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           enddo
        enddo
     endif
-    print "(a,i8,a)",' minimum density enforced on ',nzero,' grid cells'
+    print "(a,i0,a)",' minimum density enforced on ',nzero,' grid cells'
  else
     print*,'minimum density NOT enforced'
  endif
