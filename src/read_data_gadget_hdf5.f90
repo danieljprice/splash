@@ -483,7 +483,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
 
- if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+ if (nfiles > 1. .and. any(npartoftype(1:6,i) /= Nall(1:6))) then
     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
     print*,'Npart = ',npartoftype(:,i)
     print*,'Nall  = ',Nall(:)
