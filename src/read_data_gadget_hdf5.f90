@@ -177,7 +177,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,debug,goterrors
+ logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
@@ -186,6 +186,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
  nstepsread = 0
  goterrors  = .false.
+ compute_h_froM_rho_m = .false.
  if (maxparttypes < 6) then
     print*,' *** ERROR: not enough particle types for GADGET data read ***'
     print*,' *** you need to edit splash parameters and recompile ***'
@@ -348,6 +349,17 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
           call set_labels_gadget_hdf5
        endif
        !
+       !--if h is still not there, try to set h from  density and masses
+       !
+       if (ih==0 .and. irho > 0 .and. ipmass > 0) then
+          ncolumns = ncolumns + 1
+          blocklabelgas(ncolumns) = 'SmoothingLength'
+          ih = ncolumns
+          call set_labels_gadget_hdf5
+          compute_h_from_rho_m = .true.
+       endif
+
+       !
        !--if successfully read header, increment the nstepsread counter
        !
        nstepsread = nstepsread + 1
@@ -470,7 +482,10 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
  enddo over_files
 
- if (arepo .and. ih > 0) then
+ if (compute_h_from_rho_m) then
+    dat(1:npartoftype(1,i),ih,i) = (dat(1:npartoftype(1,i),ipmass,i)/dat(1:npartoftype(1,i),irho,i))**(1./3.)
+    print "(a)",' this is an AREPO snapshot: using (m/rho)**(1/3) as smoothing length'
+ elseif (arepo .and. ih > 0) then
     dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
     print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
  elseif (ih > 0 .and. required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
