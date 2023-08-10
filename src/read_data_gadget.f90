@@ -95,7 +95,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
  use mem_allocation, only:alloc
- use labels,         only:ih,irho,ipmass,labeltype
+ use labels,         only:ih,irho,ipmass,labeltype,iamvec
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
@@ -278,7 +278,8 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     if (idumpformat==2) then
        ncolstep = 1
        do while (ierr==0)
-          call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock,nvec)
+          call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),&
+                                lenblock,nvec,npartoftypei(1))
           read(iunit,iostat=ierr)
           if ((ierr==0 .and. index2 > 0) .and. (index2==ntoti &
             .or. index2==npartoftypei(1) &
@@ -472,7 +473,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        !--read positions of all particles
        !  (note that errors on position read are fatal)
        !
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
        if (iformat==2 .and. blocklabel /= 'POS ')  then
           print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
        endif
@@ -515,7 +516,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        !
        !--same for velocities
        !
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
        if (iformat==2 .and. blocklabel /= 'VEL ')  then
           print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
        endif
@@ -568,7 +569,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
           allocate(iamtemp(ntoti))
        endif
 
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
        if (iformat==2 .and. blocklabel /= 'ID  ') then
           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
        endif
@@ -606,7 +607,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              if (nmassesdumped > 0) then
                 if (allocated(dattemp1)) deallocate(dattemp1)
                 allocate(dattemp1(nmassesdumped))
-                call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec,-1)
                 if (iformat==2 .and. blocklabel /= 'MASS')  then
                    print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
                 endif
@@ -676,10 +677,13 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 
           if (idumpformat==2) then
              if (icol+1 <= ih) then
-                call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,&
+                                      blocklabel,lenblock,nvec,npartoftypei(1))
              else
-                call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,0,index2,&
+                                      blocklabel,lenblock,nvec,npartoftypei(1))
              endif
+             if (nvec > 1) iamvec(icol+1:icol+nvec) = icol + 1
              icol = icol + nvec
              !
              !--work out from the number of entries what mix of particle types
@@ -688,34 +692,34 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              if (index2==ntoti) then
                 i1 = i0(1) + 1
                 i2 = i1 + ntoti - 1
-                print*,blocklabel//' (',index2,': all particles)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': all particles)'
                 ireadtype(:) = .true.
              elseif (index2==npartoftypei(1)) then
                 i1 = i0(1) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': gas particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas particles only)'
                 ireadtype(1) = .true.
              elseif (index2==npartoftypei(2)) then
                 i1 = i0(2) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': dark matter particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': dark matter particles only)'
                 ireadtype(2) = .true.
              elseif (index2==npartoftypei(1)+npartoftypei(2)) then
                 i1 = i0(1) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': gas+dark matter particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas+dark matter particles only)'
                 ireadtype(1:2) = .true.
              elseif (index2==npartoftypei(5)) then
                 i1 = i0(5) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': star particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': star particles only)'
                 ireadtype(5) = .true.
              elseif (index2==npartoftypei(1)+npartoftypei(5)) then
                 i1 = i0(1) + 1
                 i2 = i1 + npartoftypei(1) - 1
                 i3 = i0(5) + 1
                 i4 = i3 + npartoftypei(5) - 1
-                print*,blocklabel//' (',index2,': gas+star particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas+star particles only)'
                 ireadtype(1) = .true.
                 ireadtype(5) = .true.
              else
@@ -1080,12 +1084,13 @@ contains
 !!-----------------------------------------------------------------
 !! small utility to transparently handle block labelled data read
 !!-----------------------------------------------------------------
-subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
+subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec,ngas)
  integer, intent(in) :: idumpfmt,lun,nexpected
  integer, intent(out) :: ndumped
  character(len=4), intent(out) :: blklabel
  integer, intent(out) :: lenblk
  integer, intent(out) :: nvec
+ integer, intent(in)  :: ngas
 
  blklabel = '    '
  if (idumpfmt==2) then
@@ -1095,14 +1100,14 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
        return
     endif
     if (blklabel=='POS ' .OR. blklabel=='VEL ' .OR. blklabel=='ACCE' .OR. blklabel=='BFLD' .OR. &
-         blklabel=='BPOL' .OR. blklabel=='BTOR') then
+         blklabel=='BPOL' .OR. blklabel=='BTOR' .or. (lenblk-8)/12==ngas) then
        ndumped = (lenblk-8)/12
        nvec = 3
     else
        ndumped = (lenblk-8)/4
        nvec = 1
     endif
-    !print*,blklabel,lenblk,ndumped
+    !print*,blklabel,lenblk,ndumped,nexpected
     !if (nexpected > 0) then
     !   if (ndumped /= nexpected) then
     !      print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
@@ -1142,7 +1147,7 @@ end subroutine allocate_temp
 !!------------------------------------------------------------
 
 subroutine set_labels_gadget
- use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
+ use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,&
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
@@ -1151,6 +1156,7 @@ subroutine set_labels_gadget
  use asciiutils,    only:lcase
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
+ character(len=lenlabel) :: tmplabel
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'
@@ -1165,12 +1171,12 @@ subroutine set_labels_gadget
     icol = 0
     do i=1,size(blocklabelgas)
        icol = icol + 1
-       select case(blocklabelgas(i))
-       case('POS ')
+       select case(trim(blocklabelgas(i)))
+       case('POS')
           ix(1) = icol
           ix(2) = icol+1
           ix(3) = icol+2
-       case('VEL ')
+       case('VEL')
           ivx = icol
        case('ACCE')
           iax = icol
@@ -1182,81 +1188,149 @@ subroutine set_labels_gadget
           iBtor = icol
        case('MASS')
           ipmass = icol
-       case('U   ')
+       case('U')
           iutherm = icol
-       case('RHO ')
+       case('RHO')
           irho = icol
-       case('NE  ')
+       case('NE')
           label(icol) = 'N_{e}'
-       case('NH  ')
+       case('NH')
           label(icol) = 'N_{H}'
        case('HSML')
           ih = icol
-       case('NHP ')
+       case('NHP')
           label(icol) = 'N_{H+}'
-       case('NHE ')
+       case('NHE')
           label(icol) = 'N_{He}'
        case('NHEP')
           label(icol) = 'N_{He+}'
        case('elec')
           label(icol) = 'N_{e}'
-       case('HI  ')
+       case('HI')
           label(icol) = 'HI'
-       case('HII ')
+       case('HII')
           label(icol) = 'HII'
-       case('HeI ')
+       case('HeI')
           label(icol) = 'HeI'
        case('HeII')
           label(icol) = 'HeII'
-       case('H2I ')
+       case('H2I')
           label(icol) = 'H_{2}I'
        case('H2II')
           label(icol) = 'H_{2}II'
-       case('HM  ')
+       case('HM')
           label(icol) = 'HM'
-       case('SFR ')
-          label(icol) = 'Star formation rate'
-       case('TEMP')
-          label(icol) = 'temperature'
-       case('POT ')
-          label(icol) = 'potential'
-       case('AGE ')
-          label(icol) = 'Stellar formation time'
-       case('Z   ')
+       case('HD')
+          label(icol) = 'HD'
+       case('DI')
+          label(icol) = 'DI'
+       case('DII')
+          label(icol) = 'DII'
+       case('HeHp')
+          label(icol) = 'He Hp'
+       case('SFR')
+          label(icol) = 'Star Formation Rate'
+       case('AGE')
+          label(icol) = 'Stellar Formation Time'
+       case('DETI')
+          label(icol) = 'Delay Time'
+       case('HSMS')
+          label(icol) = 'Stellar Smoothing Length'
+       case('ACRS')
+          label(icol) = 'Stellar Spreading Length'
+       case('Z')
           label(icol) = 'Metallicity'
+       case('POT')
+          label(icol) = 'Potential'
+       case('IPOT')
+          label(icol) = 'Integrated Potential'
+       case('PHID')
+          label(icol) = 'DPotential Dt'
        case('ENDT')
-          label(icol) = 'd(Entropy)/dt'
+          label(icol) = 'Rate Of Change Of Entropy'
        case('STRD')
-          label(icol) = 'Stress (diagonal)'
+          label(icol) = 'Diagonal Stress Tensor'
        case('STRO')
-          label(icol) = 'Stress (off-diagonal)'
+          label(icol) = 'Off Diagonal Stress Tensor'
        case('STRB')
-          label(icol) = 'Stress (bulk)'
+          label(icol) = 'Bulk Stress Tensor'
        case('SHCO')
-          label(icol) = 'Shear coefficient'
+          label(icol) = 'Shear Coefficient'
        case('TSTP')
-          label(icol) = 'Time step'
+          label(icol) = 'Time Step'
+       case('BFSM')
+          label(icol) = 'Smoothed Magnetic Field'
        case('DBDT')
           label(icol) = 'dB/dt'
+       case('VBLK')
+          label(icol) = 'Bulk Velocity'
+       case('VRMS')
+          label(icol) = 'RMSVelocity'
+       case('VTAN')
+          label(icol) = 'RMSTangential Velocity'
+       case('VRAD')
+          label(icol) = 'RMSRadial Velocity'
+       case('MHIX')
+          label(icol) = 'Main Halo Index'
+       case('TNGB')
+          label(icol) = 'True Number Of Neighbours'
+       case('NGB')
+          label(icol) = 'True Number Of Neighbours'
+       case('DPP')
+          label(icol) = 'Magnetos Reacc Coefficient'
+       case('VDIV')
+          label(icol) = 'Velocity Divergence'
+       case('VROT')
+          label(icol) = 'Velocity Curl'
+       case('VORT')
+          label(icol) = 'Vorticity'
        case('DIVB')
           label(icol) = 'div B'
           idivB = icol
+       case('RDIB')
+          label(icol) = 'h|div B|/|B|'
        case('ABVC')
           label(icol) = 'alpha_{visc}'
+       case('ACVC')
+          label(icol) = 'alpha_{cond}'
        case('AMDC')
           label(icol) = 'alpha_{resist}'
-       case('PHI ')
-          label(icol) = 'div B cleaning function'
+       case('VTRB')
+          label(icol) = 'Turb Velociy'
+       case('LTRB')
+          label(icol) = 'Turb Lengh'
+       case('ADYN')
+          label(icol) = 'Alpha Dynamo'
+       case('EDYN')
+          label(icol) = 'Eta Dynamo'
+       case('PHI')
+          label(icol) = 'DPotential Dt'
+       case('XPHI')
+          label(icol) = 'Cold Gas Fraction (\Phi)'
+       case('GPHI')
+          label(icol) = 'Div B cleaning Function Grad Phi'
+       case('ROTB')
+          label(icol) = 'Rotation B'
+       case('SRTB')
+          label(icol) = 'Smoothed Rotation B'
+       case('EULA')
+          label(icol) = 'Euler Potential A'
+       case('EULB')
+          label(icol) = 'Euler Potential B'
        case('COOR')
           label(icol) = 'Cooling Rate'
        case('CONR')
           label(icol) = 'Conduction Rate'
-       case('BFSM')
-          label(icol) = 'B_{smooth}'
        case('DENN')
-          label(icol) = 'Denn'
+          label(icol) = 'Number density'
+       case('EGYP')
+          label(icol) = 'Energy Reservoir For Feeback'
+       case('EGYC')
+          label(icol) = 'Energy Reservoir For Cold Phase'
        case('CRC0')
           label(icol) = 'Cosmic Ray C0'
+       case('CRQ0')
+          label(icol) = 'Cosmic Ray q0'
        case('CRP0')
           label(icol) = 'Cosmic Ray P0'
        case('CRE0')
@@ -1269,26 +1343,230 @@ subroutine set_labels_gadget
           label(icol) = 'Cosmic Ray Dissipation Time'
        case('BHMA')
           label(icol) = 'Black hole mass'
+       case('ACRB')
+          label(icol) = 'Black hole Accretion Length'
        case('BHMD')
-          label(icol) = 'black hole mass accretion rate'
+          label(icol) = 'Black hole Mdot'
+       case('BHPC')
+          label(icol) = 'Black hole NProgs'
+       case('BHMB')
+          label(icol) = 'Black hole Mass bubbles'
+       case('BHMI')
+          label(icol) = 'Black hole Mass initial'
+       case('BHMR')
+          label(icol) = 'Black hole Mass radio'
+       case('VSIG')
+          label(icol) = 'Maximum Signal Velocity'
        case('MACH')
-          label(icol) = 'Mach number'
+          label(icol) = 'Mach Number'
+       case('SHSP')
+          label(icol) = 'Shock Speed'
+       case('SHRH')
+          label(icol) = 'Shock Upstr Density'
+       case('SHPU')
+          label(icol) = 'Shock Upstr Pressure'
+       case('SHPD')
+          label(icol) = 'Shock Downstr Pressure'
+       case('SHVU')
+          label(icol) = 'Shock Upstr Velocity'
+       case('SHVD')
+          label(icol) = 'Shock Downstr Velocity'
+       case('MALF')
+          label(icol) = 'Alfven Mach Number'
+       case('SHAU')
+          label(icol) = 'Shock Upstr Alfven'
+       case('SHAD')
+          label(icol) = 'Shock Downstr Alfven'
+       case('SHOB')
+          label(icol) = 'Shock Obliquity'
+       case('SHCP')
+          label(icol) = 'Shock Compression Ratio'
+       case('SHNR')
+          label(icol) = 'Shock Normal'
        case('DTEG')
-          label(icol) = 'dt (energy)'
+          label(icol) = 'Dt Energy'
+       case('PSCS')
+          label(icol) = 'Preshock Sound Speed'
        case('PSDE')
-          label(icol) = 'Pre-shock density'
+          label(icol) = 'Preshock Density'
        case('PSEN')
-          label(icol) = 'Pre-shock energy'
+          label(icol) = 'Preshock Energy'
        case('PSXC')
-          label(icol) = 'Pre-shock X'
+          label(icol) = 'Preshock XCR'
        case('DJMP')
-          label(icol) = 'Density jump'
+          label(icol) = 'Density Jump'
        case('EJMP')
-          label(icol) = 'Energy jump'
+          label(icol) = 'Energy Jump'
        case('CRDE')
-          label(icol) = 'Cosmic Ray injection'
-       case('PRES')
-          label(icol) = 'pressure'
+          label(icol) = 'CR_Dt E'
+       case('TIPS')
+          label(icol) = 'Tidal Tensor PS'
+       case('DIPS')
+          label(icol) = 'Distortion Tensor PS'
+       case('CACO')
+          label(icol) = 'Caustic Counter'
+       case('FLDE')
+          label(icol) = 'Flow Determinant'
+       case('STDE')
+          label(icol) = 'Stream Density'
+       case('SOMA')
+          label(icol) = '2lpt mass'
+       case('ANRA')
+          label(icol) = 'Annihilation Radiation'
+       case('LACA')
+          label(icol) = 'Last Caustic'
+       case('SHOR')
+          label(icol) = 'Sheet Orientation'
+       case('INDE')
+          label(icol) = 'Init Density'
+       case('TEMP')
+          label(icol) = 'Temperature'
+       case('XNUC')
+          label(icol) = 'Nuclear mass fractions'
+       case('P')
+          label(icol) = 'Coordinates'
+       case('RADG')
+          label(icol) = 'photon number density'
+       case('RADA')
+          label(icol) = 'rad acceleration'
+       case('ET')
+          label(icol) = 'Delay Time'
+       case('PTSU')
+          label(icol) = 'PSum'
+       case('DMNB')
+          label(icol) = 'Dark matter number of neighbours'
+       case('NTSC')
+          label(icol) = 'Num Total Scatter'
+       case('SHSM')
+          label(icol) = 'SIDM smoothing length'
+       case('SRHO')
+          label(icol) = 'SIDM density'
+       case('SVEL')
+          label(icol) = 'SVel Disp'
+       case('DMHS')
+          label(icol) = 'SIDM smoothing length'
+       case('DMDE')
+          label(icol) = 'SIDM density'
+       case('DMVD')
+          label(icol) = 'DM Velocity Dispersion'
+       case('Zs')
+          label(icol) = 'Mass of Metals'
+       case('CII')
+          label(icol) = 'Contribution by SNII'
+       case('CIa')
+          label(icol) = 'Contribution by SNIa'
+       case('CAGB')
+          label(icol) = 'Contribution by AGB'
+       case('ZAge')
+          label(icol) = 'Metallicity-averaged time'
+       case('ZAlv')
+          label(icol) = 'long-living-Metallicity-averaged time'
+       case('iM')
+          label(icol) = 'SSPInitial Mass'
+       case('CLDX')
+          label(icol) = 'Cloud Fraction'
+       case('HOTT')
+          label(icol) = 'Hot Phase Temperature'
+       case('TRCK')
+          label(icol) = 'Track Contributes'
+       case('ZsMT')
+          label(icol) = 'smoothed metallicity'
+       case('ZSMT')
+          label(icol) = 'smoothed metallicities (all elements)'
+       case('MHOT')
+          label(icol) = 'Hot mass'
+       case('MCLD')
+          label(icol) = 'Cold mass'
+       case('MMOL')
+          label(icol) = 'Molecular mass'
+       case('EHOT')
+          label(icol) = 'Hot energy'
+       case('MSF')
+          label(icol) = 'Star formation mass'
+       case('MFST')
+          label(icol) = 'Multi Phase Steps'
+       case('NMF')
+          label(icol) = 'Num Times In MF'
+       case('EOUT')
+          label(icol) = 'Energy To Other'
+       case('CLCK')
+          label(icol) = 'Multi Phase Clock'
+       case('Egy0')
+          label(icol) = 'Multi Phase Energy Tot0'
+       case('TDYN')
+          label(icol) = 'Cold Phase TDyn'
+       case('EREC')
+          label(icol) = 'Energy From Other'
+       case('GRAD')
+          label(icol) = 'Div B cleaning grad Psi'
+       case('TCOO')
+          label(icol) = 'Cooling Time'
+       case('EKRC')
+          label(icol) = 'Kinetic Energy From Last Snap'
+       case('TSMP')
+          label(icol) = 't_start MP'
+       case('CRpN')
+          label(icol) = 'LMBCRp Normalization'
+       case('CReN')
+          label(icol) = 'LMBCRp Normalization'
+       case('CRpS')
+          label(icol) = 'LMBCRp Slope'
+       case('CReS')
+          label(icol) = 'LMBCRe Slope'
+       case('CRpC')
+          label(icol) = 'LMBCRp Cut'
+       case('CReC')
+          label(icol) = 'LMBCRe Cut'
+       case('CRpP')
+          label(icol) = 'LMBCRp Pressure'
+       case('CReP')
+          label(icol) = 'LMBCRe Pressure'
+       case('RHOO')
+          label(icol) = 'Density Old'
+       case('SYNE')
+          label(icol) = 'LMBCRe Synchrotron'
+       case('AGSH')
+          label(icol) = 'AGS Softening'
+       case('AGSD')
+          label(icol) = 'AGS Density'
+       case('AGSZ')
+          label(icol) = 'AGS Zeta'
+       case('AGSO')
+          label(icol) = 'AGS Omega'
+       case('AGSC')
+          label(icol) = 'AGS Correction'
+       case('AGSN')
+          label(icol) = 'AGS Neighbours'
+       case('MGPH')
+          label(icol) = 'Modified Gravity Phi'
+       case('MGGP')
+          label(icol) = 'Modified Gravity Grad Phi'
+       case('MGAC')
+          label(icol) = 'Modified Gravity Acceleration'
+       case('GRDU')
+          label(icol) = 'Internal Energy Gradient'
+       case('GRDP')
+          label(icol) = 'Pressure Gradient'
+       case('MGVX')
+          label(icol) = 'Gradient of x-velocity for MFM'
+       case('MGVY')
+          label(icol) = 'Gradient of y-velocity for MFM'
+       case('MGVZ')
+          label(icol) = 'Gradient of z-velocity for MFM'
+       case('MGRH')
+          label(icol) = 'Gradient of density for MFM'
+       case('MGU')
+          label(icol) = 'Gradient of specific internal energy for MFM'
+       case('QP')
+          label(icol) = 'Quantum Pressure'
+       case('QDP')
+          label(icol) = 'Quantum Pressure Gradient'
+       case('RHOS')
+          label(icol) = 'Stellar Density Around Stars'
+       case('SMTS')
+          label(icol) = 'Smoothing Length for Stellar Density'
+       case('NEIS')
+          label(icol) = 'Number Of Neighbours for Stellar Density'
        case('ID  ')
           icol = icol - 1
        case default
@@ -1340,6 +1618,17 @@ subroutine set_labels_gadget
  !
  !--set labels for vector quantities
  !
+ i = 1
+ do while (i <= ncolumns)
+    if (iamvec(i) > 0) then
+       tmplabel = label(i)
+       call make_vector_label(tmplabel,i,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+       i = i + ndimV
+    else
+       i = i + 1
+    endif
+ enddo
+
  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
