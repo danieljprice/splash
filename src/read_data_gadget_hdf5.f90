@@ -470,10 +470,10 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
  enddo over_files
 
- if (arepo) then
+ if (arepo .and. ih > 0) then
     dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
     print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
- elseif (required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
+ elseif (ih > 0 .and. required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
     !
     !--for some reason the smoothing length output by GADGET is
     !  twice the usual SPH smoothing length
@@ -482,7 +482,6 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     print "(a)",' converting GADGET h on gas particles to usual SPH definition (x 0.5)'
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
-
  if (nfiles > 1. .and. any(npartoftype(1:6,i) /= Nall(1:6))) then
     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
     print*,'Npart = ',npartoftype(1:6,i)
