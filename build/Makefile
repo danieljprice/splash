@@ -64,6 +64,14 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
+ifndef HDF5ROOT
+ifdef HDF5_ROOT
+   HDF5ROOT=$(HDF5_ROOT)
+endif
+ifdef HDF5_DIR
+   HDF5ROOT=$(HDF5_DIR)
+endif
+endif
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
