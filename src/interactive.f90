@@ -88,7 +88,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
- integer, intent(out) :: iadvance
+ integer, intent(inout) :: iadvance
  integer, dimension(npart), intent(inout) :: icolourpart
  real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
  integer(kind=int1), dimension(:), intent(in) :: iamtype
