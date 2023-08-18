@@ -53,7 +53,9 @@ program splash
 !     Version history/ Changelog:
 !     3.8.4   : (18/08/23)
 !             various bugs fixed in GADGET data reader; auto-recognise GADGET block format;
-!             improved conservation checks in splash to grid (thanks to Avi Chen)
+!             improved conservation checks in splash to grid (thanks to Avi Chen);
+!             better handling of AREPO data; bug fix with timestep not advancing;
+!             no longer ask about particle types in multiplot if only one type present
 !     3.8.3   : (05/07/23)
 !             flip option (f/F in interactive mode) now persists across
 !             timesteps and works in snapshots other than the first;
