@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.8.4   : (18/08/23)
+!             various bugs fixed in GADGET data reader; auto-recognise GADGET block format;
+!             improved conservation checks in splash to grid (thanks to Avi Chen)
 !     3.8.3   : (05/07/23)
 !             flip option (f/F in interactive mode) now persists across
 !             timesteps and works in snapshots other than the first;
@@ -572,7 +575,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.3 [5th July 2023]'
+ character(len=*), parameter :: version = 'v3.8.4 [18th Aug 2023]'
 
  !
  ! initialise some basic code variables

@@ -281,14 +281,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
           call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),&
                                 lenblock,nvec,npartoftypei(1))
           read(iunit,iostat=ierr)
-          if ((ierr==0 .and. index2 > 0) .and. (index2==ntoti &
-            .or. index2==npartoftypei(1) &
-            .or. index2==npartoftypei(2) &
-            .or. index2==npartoftypei(5) &
-            .or. index2==(npartoftypei(1)+npartoftypei(5)) &
-            .or. index2==(npartoftypei(1)+npartoftypei(2)))) then
+          if (ierr==0 .and. index2 > 0) then
              select case(blocklabelgas(ncolstep))
-             case('ID  ')
+             case('ID  ','INFO')
                 ! not a column
              case default
                 ncolstep = ncolstep + nvec
@@ -474,8 +469,13 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        !  (note that errors on position read are fatal)
        !
        call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
-       if (iformat==2 .and. blocklabel /= 'POS ')  then
-          print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
+       if (iformat==2)  then
+          ierr = 0
+          do while(blocklabel /= 'POS ' .and. ierr == 0)
+             print "(a)",' WARNING: skipping unknown block '//blocklabel//' in data read'
+             read(iunit, iostat=ierr)
+             call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
+          enddo
        endif
        if (any(required(1:3))) then
           print*,'positions ',index2
@@ -598,7 +598,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
           endif
        enddo
 
-       if (ipmass==0) then
+       if (nmassesdumped==0) then
           masstype(1:6,i) = real(massoftypei(1:6))
        else
           if (required(ipmass)) then
@@ -787,12 +787,14 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                       endif
                    else
                       if (nfiles > 1) then
-                         read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
+                         call allocate_temp1(dattemp1,ntoti)
+                         read (iunit,iostat=ierr) ((dattemp1(j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         ! convert to real*8 if compiled in single precision
+                         do itype=1,ntypesused
+                            dat(i1all(itype):i2all(itype),icol,i) = real(dattemp1(i1all(itype):i2all(itype)))
+                         enddo
                       else
-                         if (allocated(dattemp1)) then
-                            if (size(dattemp1) < i2-i1) deallocate(dattemp1)
-                         endif
-                         if (.not.allocated(dattemp1)) allocate(dattemp1(i2-i1+1))
+                         call allocate_temp1(dattemp1,i2-i1+1)
                          read (iunit,iostat=ierr) dattemp1(1:1+i2-i1)
                          dat(i1:i2,icol,i) = real(dattemp1(1:1+i2-i1)) ! convert to real*8 if compiled in double prec
                       endif
@@ -1117,15 +1119,14 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec,
     ndumped = nexpected
  endif
 
- return
 end subroutine read_blockheader
 
 end subroutine read_data_gadget
 
-!!------------------------------------------------------------
-!! allocate temporary memory, but avoid reallocating
-!! memory if size is the same
-!!------------------------------------------------------------
+!------------------------------------------------------------
+! allocate temporary memory, but avoid reallocating
+! memory if size is the same
+!------------------------------------------------------------
 subroutine allocate_temp(dattemp,isize,jsize)
  use params, only:sing_prec
  real(kind=sing_prec), allocatable, intent(inout) :: dattemp(:,:)
@@ -1141,6 +1142,26 @@ subroutine allocate_temp(dattemp,isize,jsize)
  endif
 
 end subroutine allocate_temp
+
+!------------------------------------------------------------
+! allocate temporary memory, but avoid reallocating
+! memory if size is the same
+!------------------------------------------------------------
+subroutine allocate_temp1(dattemp1,jsize)
+ use params, only:sing_prec
+ real(kind=sing_prec), allocatable, intent(inout) :: dattemp1(:)
+ integer, intent(in) :: jsize
+
+ if (allocated(dattemp1)) then
+    if (size(dattemp1(:)) /= jsize) then
+       deallocate(dattemp1)
+    endif
+ endif
+ if (.not.allocated(dattemp1)) then
+    allocate(dattemp1(jsize))
+ endif
+
+end subroutine allocate_temp1
 
 !!------------------------------------------------------------
 !! set labels for each column of data
