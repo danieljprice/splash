@@ -1404,7 +1404,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
 
- character(len=len(rootname)+10) :: dumpfile
+ character(len=len(rootname)+10) :: dumpfile,compfile
  character(len=100) :: fileident
 
  integer*8, dimension(maxarrsizes) :: isize
@@ -1759,7 +1759,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              ncolstep  = ncolstep + 3
           endif
           call check_for_composition_file(trim(dumpfile),&
-               npart,ncolstep,icomp_col_start,ncomp,tagarr)
+               npart,ncolstep,icomp_col_start,ncomp,tagarr,compfile)
        endif
     endif
 !
@@ -2174,7 +2174,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  endif
 
  if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
-    call read_kepler_composition(trim(dumpfile),ntotal,dat(:,:,j),icomp_col_start,ncomp)
+    call read_kepler_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp)
  endif
  !
  !--calculate the temperature from density and internal energy (using physical units)
