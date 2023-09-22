@@ -72,7 +72,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
     call get_nrows(iu,nheaderlines,nrows)
     ! check nrows equals number of particles
     if (nrows /= ntotal) then
-       print "(1x,a)",'ERROR: reading '//trim(filename)//' nrows /= number of particles'
+       print "(1x,a,i0,a,i0,a)",'ERROR: reading '//trim(filename)//' nrows (',nrows,') /= nparticles (',ntotal,')'
        return
     endif
 
@@ -81,6 +81,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
        ncolstep = ncolstep + ncomp
        call read_column_labels(iu,nheaderlines,ncomp,nlabels,&
             labels(icomp_col_start:icomp_col_start+ncomp-1))
+       print "(a,i0,a)", '> got ',ncomp,' extra columns from '//trim(filename)
     endif
  endif
  close(iu)

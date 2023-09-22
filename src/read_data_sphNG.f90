@@ -1759,7 +1759,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              ncolstep  = ncolstep + 3
           endif
           call check_for_composition_file(trim(dumpfile),&
-               ntotal,ncolstep,icomp_col_start,ncomp,tagarr)
+               npart,ncolstep,icomp_col_start,ncomp,tagarr)
        endif
     endif
 !

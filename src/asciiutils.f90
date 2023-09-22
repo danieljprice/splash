@@ -399,7 +399,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  integer, intent(out) :: ncolumns,nheaderlines
  integer, intent(in), optional :: maxheaderlines
  logical, intent(in), optional :: csv
- integer :: ierr,ncolprev,ncolsthisline,maxlines,ncolstot
+ integer :: ierr,ncolprev,ncolprev2,ncolsthisline,maxlines,ncolstot
  character(len=max_line_length) :: line
  logical :: nansinfile,infsinfile,is_csv
 
@@ -413,6 +413,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  ierr = 0
  ncolumns = 0
  ncolprev = -100
+ ncolprev2 = -200
  ncolsthisline = 0
  ncolstot = 0
  nansinfile = .false.
@@ -421,9 +422,12 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  if (present(csv)) is_csv = csv
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
+!  if ncolumns==1 then we must find 3 consecutive lines
 !
- do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns <= 1) &
+ do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns < 1 .or. &
+           (ncolumns==1 .and. ncolsthisline /= ncolprev2)) &
            .and. ierr==0 .and. nheaderlines <= maxlines)
+    ncolprev2 = ncolprev
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN') > 0) nansinfile = .true.
@@ -439,6 +443,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
+ if (ncolumns==1) nheaderlines = max(nheaderlines - 1,0)
  if (is_csv) ncolumns = ncolstot
 
  if (ierr  > 0 .or. ncolumns <= 0) then
