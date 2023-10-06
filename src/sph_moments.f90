@@ -33,7 +33,7 @@
 !     
 !---------------------------------------------------------------------------------
 program sph_moments
- use readwrite_fits,  only:read_fits_cube,write_fits_image,get_from_header
+ use readwrite_fits,  only:read_fits_cube,write_fits_image,get_from_header,get_velocity_from_fits_header
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args,ienvlist
  use moments,         only:get_moments
@@ -116,7 +116,7 @@ program sph_moments
 
  ! read original file
  write(stdout,*) '>> reading '//trim(file1)
- call read_fits_cube(file1,cube,naxes,ierr,hdr=fitsheader)
+ call read_fits_cube(file1,cube,naxes,ierr,hdr=fitsheader) !,velocity=zvals)
  if (ierr /= 0) stop 'error reading file'
 
  ! eliminate NaNs
@@ -125,24 +125,21 @@ program sph_moments
  end where
 
  if (naxes(3) <= 1) stop 'this is a 2D image but require 3D fits cube for moment generation'
-
- dv = get_from_header('CDELT3',fitsheader,ierr)
- if (ierr /= 0) dv = 1.
- dv = 1.
- !print*,' got dv = ',dv
- !
- ! set up velocity grid, use dv if can get it from fits file otherwise use dv=1 (still works just wrong units)
- !
  allocate(zvals(naxes(3)))
- do k=1,naxes(3)
-    zvals(k) = (k-0.5)*dv
- enddo
+
+ call get_velocity_from_fits_header(naxes(3),zvals,fitsheader,ierr)
  !
  ! find moments using either all channels or range of channels
  !
  write(stdout,"(1x,a,f5.2)") '>> computing moments using '//trim(kernelname(ikernel))//' kernel with h/dz = ',hfac
- !$ if (omp_get_num_threads()==1) write(stderr,"(/,1x,a)") &
+
+ !
+ ! warn about running in serial
+ !
+ !$omp parallel
+ !$ if (omp_get_num_threads()<=1) write(stderr,"(/,1x,a)") &
  !$    'WARNING: running in serial: type "export OMP_NUM_THREADS=8" to use 8 threads'
+ !$omp end parallel
  
  call get_moments(cube,zvals,hfac,moment_type(1:nm),moment)
  !
@@ -152,6 +149,6 @@ program sph_moments
     call write_fits_image(fileout_m(k),moment(:,:,k),naxes(1:2),ierr)
  enddo
 
- deallocate(cube,moment)
+ deallocate(cube,moment,zvals)
 
 end program sph_moments
