@@ -580,6 +580,21 @@ denoise: checksystem checkfits $(OBJECTSIMLIB)
 	@echo; echo ' Denoise utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
+#
+# splash moments
+#
+SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+          interpolate1D.f90 write_fits.f90 moments.f90 sph_moments.f90
+
+OBJECTSM = $(SOURCESM:.f90=.o)
+
+.PHONY: sphmoments
+sphmoments: checksystem checkfits $(OBJECTSM)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS)
+	@echo; echo ' sphmoments utility successfully compiled! ';
+	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
+
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
 	@echo ""
