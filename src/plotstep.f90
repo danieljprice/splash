@@ -2577,7 +2577,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                    call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
                       weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), &
-                      ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
+                      ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise,iverbose)
                    !!--plot interpolated 1D data to check it
                    !!print*,minval(datpix1D),maxval(datpix1D)
                    !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
