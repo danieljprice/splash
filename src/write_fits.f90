@@ -65,7 +65,7 @@ contains
 subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,nfound!,bitpix
@@ -124,7 +124,7 @@ end subroutine read_fits_image
 !---------------------------------------------------
 subroutine read_fits_header(filename,hdr,ierr)
  character, intent(in)  :: filename
- character(len=:), allocatable, intent(out) :: hdr(:)
+ character(len=80), allocatable, intent(out) :: hdr(:)
  integer, intent(out) :: ierr
  integer :: ireadwrite,iunit,blocksize
 
@@ -149,7 +149,7 @@ end subroutine read_fits_header
 subroutine read_fits_head(iunit,hdr,ierr)
  integer, intent(in)  :: iunit
  integer, intent(out) :: ierr
- character(len=:), allocatable, intent(inout) :: hdr(:)
+ character(len=80), allocatable, intent(inout) :: hdr(:)
  character(len=80) :: record
  integer :: i,nkeys,nspace
 
@@ -160,7 +160,7 @@ subroutine read_fits_head(iunit,hdr,ierr)
  ! allocate memory
  !
  if (allocated(hdr)) deallocate(hdr)
- allocate(character(80) :: hdr(nkeys))
+ allocate(hdr(nkeys))
 
 ! Read each 80-character keyword record, and print it out.
  do i = 1, nkeys
@@ -203,7 +203,7 @@ end subroutine write_fits_head
 subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  integer, intent(in), optional :: hdu ! specify which hdu to read
  integer :: iunit,ireadwrite,npixels,blocksize
@@ -492,7 +492,7 @@ end subroutine write_fits_cube64
 subroutine read_fits_image64(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real64), intent(out), allocatable :: image(:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  real(kind=real32), allocatable :: img32(:,:)
 
@@ -512,7 +512,7 @@ end subroutine read_fits_image64
 subroutine read_fits_cube64(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real64), intent(out), allocatable :: image(:,:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  real(kind=real32), allocatable :: img32(:,:,:)
 

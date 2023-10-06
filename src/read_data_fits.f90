@@ -80,7 +80,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  integer               :: ncolstep,npixels,nsteps_to_read,ihdu
  logical               :: iexist,reallocate
  real(kind=4), dimension(:,:,:), allocatable :: image
- character(len=:), allocatable :: fitsheader(:)
+ character(len=80), allocatable :: fitsheader(:)
  real :: dx,dy,dz,j0,k0,pixelscale
  logical :: centre_image
 
