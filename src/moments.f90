@@ -23,9 +23,16 @@ module moments
  implicit none
 
 contains
-
+!-----------------------------------------------------------------
+!
+!  subroutine to compute moments from a data cube
+!  by interpolating the z dimension onto a finer grid 
+!  with the SPH kernel and then integrating
+!
+!-----------------------------------------------------------------
 subroutine get_moments(cube,zvals,hfac,moment_type,moments)
  use interpolations1D, only:interpolate1D
+ use timing,           only:wall_time,print_time
  real,    intent(in)  :: cube(:,:,:),zvals(:),hfac
  integer, intent(in)  :: moment_type(:)
  real,    intent(out), allocatable :: moments(:,:,:)
@@ -33,42 +40,61 @@ subroutine get_moments(cube,zvals,hfac,moment_type,moments)
  integer, allocatable :: mask(:)
  real :: dz,dz_smooth,zmin
  integer :: i,j,k,m,nx,ny,nz,nm,nz_smooth,iu,jcount,ktmp(1),iprint,jprint
+ real :: t1,t2
 
- ! compute moment
+ ! compute array dimensions
  nx = size(cube,1)
  ny = size(cube,2)
  nz = size(cube,3)
  nm = size(moment_type)
  nz_smooth = 10*nz
+
+ ! allocate memory
  allocate(profile(nz),profile_smooth(nz_smooth),zvals_smooth(nz_smooth),hh(nz),weight(nz),mask(nz))
  allocate(moments(nx,ny,nm))
 
+ ! set up the interpolation grid
  dz = zvals(2)-zvals(1)
  dz_smooth = (dz*nz)/nz_smooth
  zmin = zvals(1) - 0.5*dz
  do k=1,nz_smooth
     zvals_smooth(k) = zmin + (k-0.5)*dz_smooth
  enddo
+
+ ! set smoothing length, weights and mask for interpolate1D routine
  mask = 1
  hh = hfac*dz
  weight = dz/hh
 
+ ! select which pixel to print out for debugging purposes
  jprint = ny/2
  iprint = nx/2 + 10
 
+ ! progress bar and timing
+ call wall_time(t1)
  write(*,"(/,a,45x,a)") ' 0% ',' 100%'
  write(*,"(1x,a)",advance='no') '|'
+
  jcount = 0
  !$omp parallel do default(none) shared(cube,moments,moment_type,ny,nx,zvals,hh,weight,mask) &
  !$omp shared(nz,nz_smooth,nm,zmin,dz_smooth,zvals_smooth,jcount,iu,iprint,jprint) &
  !$omp private(j,i,k,m,ktmp,profile,profile_smooth)
  do j=1,ny
+    !
+    ! print progress bar
+    !
     !$omp atomic
     jcount = jcount + 1
     if (mod(jcount,ny/50)==0) write(*,"('=')",advance='no')
+
     do i=1,nx
+       ! extract line profile in the z direction
        profile = cube(i,j,:)
+
+       ! interpolate to a finer grid
        call interpolate1D(zvals,hh,weight,profile,mask,nz,zmin,profile_smooth,nz_smooth,dz_smooth,normalise=.false.,iverbose=0)
+
+       ! compute desired moments at this pixel location
        do m=1,nm
           select case(moment_type(m))
           case(9) ! peak velocity
@@ -82,6 +108,9 @@ subroutine get_moments(cube,zvals,hfac,moment_type,moments)
              moments(i,j,m) = sum(profile_smooth)
           end select
        enddo
+       !
+       ! print out line profile for a selected pixel for debugging purposes
+       !
        if (j==jprint .and. i==iprint) then
           open(newunit=iu,file='profile.dat',status='replace')
           do k=1,nz
@@ -98,7 +127,12 @@ subroutine get_moments(cube,zvals,hfac,moment_type,moments)
     enddo
  enddo
  !$omp end parallel do
- write(*,"(a,/)") '|'
+
+ ! finish progress bar and timing
+ call wall_time(t2)
+ write(*,"(a)",advance='no') '|'
+ call print_time(t2-t1)
+ write(*,*)
 
 end subroutine get_moments
 
