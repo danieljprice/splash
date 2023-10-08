@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2018 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -37,11 +37,15 @@ module asciiutils
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase,strip
  public :: get_line_containing
- public :: enumerate,isdigit,split
- public :: get_column_labels
+ public :: enumerate,isdigit,get_digits,integer_to_string,split
+ public :: get_column_labels,read_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
- public :: count_non_blank,find_repeated_tags
- public :: get_extensions
+ public :: match_column,match_tag_start,match_integer,match_lists
+ public :: count_non_blank,find_repeated_tags,count_char
+ public :: get_extensions,readline_csv,extension
+ public :: reorder_filenames_for_comparison
+ public :: read_var_from_file
+ integer, parameter :: max_line_length = 10000 ! for finding number of columns
 
  private
 
@@ -67,14 +71,15 @@ contains
 ! returns array of character strings (one per line)
 ! up to a maximum corresponding to the size of the array
 !---------------------------------------------------------------------------
-subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
+subroutine read_asciifile_char(filename,nlinesread,charline,ierror,skip)
  character(len=*), intent(in) :: filename
  integer, intent(out) :: nlinesread
  character(len=*), dimension(:), intent(out) :: charline
  integer, intent(out), optional :: ierror
- integer, parameter :: iunit = 66 ! logical unit number for read operation
- integer :: ierr,i,maxlines
- logical :: iexist
+ logical, intent(in), optional :: skip
+ integer :: ierr,i,j,maxlines,iunit
+ logical :: iexist,do_skip
+ character(len=1) :: temp
 
  nlinesread = 0
  if (present(ierror)) ierror = 0
@@ -86,7 +91,7 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     return
  endif
 
- open(unit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
+ open(newunit=iunit,file=filename,status='old',form='formatted',iostat=ierr)
  !--error opening file (but file does exist)
  if (ierr /= 0) then
     print "(a)",' ERROR opening '//trim(filename)
@@ -94,33 +99,42 @@ subroutine read_asciifile_char(filename,nlinesread,charline,ierror)
     return
  endif
 
+ ! read lines from file, skipping blank lines
  maxlines = size(charline)
- do i=1,maxlines
-    read(iunit,"(a)",err=66,end=99) charline(i)
- enddo
- !--end of array limits
- !  check to see if there is anything more in the file. Report error if there is.
- read(iunit,"(a)",iostat=ierr)
- if (ierr==0) then
-    print "(a,i6)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+ i = 0
+ j = 1
+ ierr = 0
+ do_skip = .false.
+ if (present(skip)) do_skip = skip
+ over_lines: do while(j <= maxlines .and. ierr == 0)
+    i = i + 1
+    read(iunit,"(a)",iostat=ierr) charline(j)
+    ! skip blank and comment lines
+    if (ierr == 0) then
+       if (do_skip) then
+          temp = adjustl(charline(j))
+          if (len_trim(charline(j)) > 0 .and. temp(1:1) /= '#') j = j + 1
+       else
+          j = j + 1
+       endif
+    endif
+ enddo over_lines
+ nlinesread = j-1
+
+ ! emit warnings if errors or reached array limits
+ if (nlinesread >= maxlines) then
+    !--end of array limits
+    !  check to see if there is anything more in the file. Report error if there is.
+    read(iunit,"(a)",iostat=ierr)
+    if (ierr==0) then
+       print "(/,a,i6,/)",' WARNING: array limits reached reading '//trim(filename)//', max = ',maxlines
+    endif
+    nlinesread = min(maxlines,nlinesread-1)
+ elseif (ierr > 0) then
+    print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i
+    if (present(ierror)) ierror = 1
  endif
- nlinesread = maxlines
  close(unit=iunit)
- return
-
- !--error encountered
-66 continue
- print "(a,i6)",' ERROR reading '//trim(filename)//' at line ',i-1
- if (present(ierror)) ierror = 1
- nlinesread = i-1
- close(unit=iunit)
- return
-
- !--reached end of file (the expected behaviour)
-99 continue
- nlinesread = i-1
- close(unit=iunit)
- return
 
 end subroutine read_asciifile_char
 
@@ -380,13 +394,14 @@ end subroutine read_asciifile_real_string
 ! file must already be open and at the start
 ! slightly ad-hoc but its the best way I could think of!
 !---------------------------------------------------------------------------
-subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
+subroutine get_ncolumns(lunit,ncolumns,nheaderlines,csv,maxheaderlines)
  integer, intent(in) :: lunit
  integer, intent(out) :: ncolumns,nheaderlines
  integer, intent(in), optional :: maxheaderlines
- integer :: ierr,ncolprev,ncolsthisline,maxlines
- character(len=5000) :: line
- logical :: nansinfile,infsinfile
+ logical, intent(in), optional :: csv
+ integer :: ierr,ncolprev,ncolprev2,ncolsthisline,maxlines,ncolstot
+ character(len=max_line_length) :: line
+ logical :: nansinfile,infsinfile,is_csv
 
  if (present(maxheaderlines)) then
     maxlines = maxheaderlines
@@ -398,14 +413,21 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  ierr = 0
  ncolumns = 0
  ncolprev = -100
+ ncolprev2 = -200
  ncolsthisline = 0
+ ncolstot = 0
  nansinfile = .false.
  infsinfile = .false.
+ is_csv = .false.
+ if (present(csv)) is_csv = csv
 !
 !--loop until we find two consecutive lines with the same number of columns (but non zero)
+!  if ncolumns==1 then we must find 3 consecutive lines
 !
- do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns <= 0) &
+ do while ((len_trim(line)==0 .or. ncolsthisline /= ncolprev .or. ncolumns < 1 .or. &
+           (ncolumns==1 .and. ncolsthisline /= ncolprev2)) &
            .and. ierr==0 .and. nheaderlines <= maxlines)
+    ncolprev2 = ncolprev
     ncolprev = ncolumns
     read(lunit,"(a)",iostat=ierr) line
     if (index(line,'NaN') > 0) nansinfile = .true.
@@ -413,7 +435,7 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
     if (len_trim(line)==0) then
        ncolsthisline = -1
     else
-       if (ierr==0) ncolsthisline = ncolumnsline(line)
+       if (ierr==0) ncolsthisline = ncolumnsline(line,csv=is_csv,ntot=ncolstot)
        ncolumns = ncolsthisline
     endif
     nheaderlines = nheaderlines + 1
@@ -421,6 +443,9 @@ subroutine get_ncolumns(lunit,ncolumns,nheaderlines,maxheaderlines)
  enddo
  !--subtract 2 from the header line count (the last two lines which were the same)
  nheaderlines = max(nheaderlines - 2,0)
+ if (ncolumns==1) nheaderlines = max(nheaderlines - 1,0)
+ if (is_csv) ncolumns = ncolstot
+
  if (ierr  > 0 .or. ncolumns <= 0) then
     ncolumns = 0
  elseif (ierr  <  0) then
@@ -460,10 +485,24 @@ end subroutine get_nrows
 ! function returning the number of columns of real numbers from a given line
 !
 !---------------------------------------------------------------------------
-integer function ncolumnsline(line)
- character(len=*), intent(in) :: line
+integer function ncolumnsline(line,csv,ntot)
+ character(len=*), intent(in)   :: line
+ logical, intent(in),  optional :: csv
+ integer, intent(out), optional :: ntot
  real :: dummyreal(1000)
  integer :: ierr,i
+ logical :: use_commas
+
+ use_commas= .false.
+ if (present(csv)) use_commas = csv
+ if (use_commas) then
+    if (present(ntot)) then
+       ncolumnsline = ncolumnsline_csv(line,ntot)
+    else
+       ncolumnsline = ncolumnsline_csv(line)
+    endif
+    return
+ endif
 
  dummyreal = -666666.0
 
@@ -483,6 +522,67 @@ integer function ncolumnsline(line)
  enddo
 
 end function ncolumnsline
+
+!---------------------------------------------------------------------------
+!
+! function returning the number of columns of real numbers from a given line
+!
+!---------------------------------------------------------------------------
+integer function ncolumnsline_csv(line,ntot) result(ncols)
+ character(len=*), intent(in) :: line
+ integer, parameter :: lenf = 15
+ character(len=lenf) :: fields(len(line)/lenf)
+ integer, intent(out), optional :: ntot
+ integer :: i,ierr,nfields
+ real :: dum
+
+ ! split line by commas
+ call split(line,',',fields,nfields)
+
+ ! report how many columns contain real numbers
+ ! or blank (non-text) entries
+ ncols = 0
+ do i=1,nfields
+    if (len_trim(fields(i))==0) then
+       ncols = ncols + 1
+    else
+       dum = -666666.
+       read(fields(i),*,iostat=ierr) dum
+       if (ierr==0) then
+          ncols = ncols + 1
+       endif
+    endif
+ enddo
+
+ if (present(ntot)) ntot = nfields
+
+end function ncolumnsline_csv
+
+!---------------------------------------------------------------------------
+!
+! read a line from a csv file and parse for real numbers
+!
+!---------------------------------------------------------------------------
+subroutine readline_csv(line,ncols,datcol)
+ character(len=*), intent(in) :: line
+ integer, intent(in)  :: ncols
+ real,    intent(out) :: datcol(ncols)
+ integer, parameter :: lenf = 15
+ character(len=lenf) :: fields(ncols)
+ !logical, intent(in)  :: mask(ncols)
+ integer :: nfields,i,icol,ierr
+
+ ! split line by commas
+ call split(line,',',fields,nfields)
+
+ ! read only columns that contain real numbers
+ icol = 0
+ do i=1,min(nfields,ncols)
+    icol = icol + 1
+    read(fields(i),*,iostat=ierr) datcol(icol)
+ enddo
+
+end subroutine readline_csv
 
 !----------------------------------------------------------------------
 !
@@ -609,6 +709,25 @@ end function basename
 
 !---------------------------------------------------------------------------
 !
+! function to get file extension
+!
+!---------------------------------------------------------------------------
+function extension(string) result(ext)
+ character(len=*), intent(in) :: string
+ character(len=len(string))   :: ext
+ integer :: idot
+
+ idot = index(string,'.',back=.true.)
+ if (idot > 2 .and. idot+1 <= len(string)) then
+    ext = string(idot:)
+ else
+    ext = ''
+ endif
+
+end function extension
+
+!---------------------------------------------------------------------------
+!
 ! function to safely convert a string to c format (ie. with a terminating
 ! ascii null character)
 !
@@ -651,16 +770,17 @@ subroutine string_replace(string,skey,sreplacewith)
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey,sreplacewith
  character(len=len(string)) :: remstring
- integer :: ipos,ioffset,lensub
+ integer :: ipos,imax,lensub,i
 
  ipos = index(trim(string),skey)
  lensub = len(skey)
- do while(ipos > 0)
+ imax   = len(string)
+ i = 0
+ do while (ipos > 0 .and. i <= imax)
+    i = i + 1  !  only allow as many replacements as characters
     remstring = string(ipos+lensub:len_trim(string))
-    ioffset = ipos - 1 + len(sreplacewith)
     string = string(1:ipos-1)//sreplacewith//remstring
-    ipos = index(trim(remstring),skey)
-    if (ipos > 0) ipos = ipos + ioffset
+    ipos = index(trim(string),skey)
  enddo
 
 end subroutine string_replace
@@ -789,6 +909,57 @@ pure elemental logical function isdigit(string)
 
 end function isdigit
 
+!------------------------------------------------------------------------
+!     get_digits: for an integer i returns number of digits it contains
+!     and a list of these *without* using write statements
+!
+!     i            : integer to split into digits
+!     nmax           : dimensions of digits array
+!     digits(nmax) : array of digits
+!     ndigits      : number of digits in i
+!------------------------------------------------------------------------
+pure subroutine get_digits(i,digits,ndigits)
+ integer, intent(in) :: i
+ integer, intent(out) :: ndigits
+ integer, intent(out), dimension(:) :: digits
+ integer :: j,isubtract,idigit
+
+ ndigits = 0
+
+ isubtract = 0
+
+ do j=size(digits),0,-1
+    if (i >= 10**j) then
+       ndigits = ndigits + 1
+       idigit = (i - isubtract)/10**j
+       digits(ndigits) = idigit
+       isubtract = isubtract + digits(ndigits)*10**j
+    endif
+ enddo
+
+end subroutine get_digits
+
+!---------------------------------------------------------------------------
+!
+! convert a string to an integer WITHOUT using write statement
+! (so this can be used in a write or print statement)
+!
+!---------------------------------------------------------------------------
+pure elemental function integer_to_string(i) result(string)
+ integer, intent(in) :: i
+ character(len=12) :: string
+ integer :: i0,ndigits,j
+ integer :: idigit(12)
+
+ string = ''
+ i0 = iachar('0')
+ call get_digits(i,idigit,ndigits)
+ do j=2,ndigits
+    string(j:j) = achar(i0+idigit(j))
+ enddo
+
+end function integer_to_string
+
 !---------------------------------------------------------------------------
 !
 ! search a file for the line containing a particular string
@@ -842,14 +1013,17 @@ end function enumerate
 pure subroutine split(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: string
  character(len=*), intent(in)  :: delim
- character(len=*), intent(out), dimension(:) :: stringarr
+ character(len=*), intent(out), dimension(:), optional :: stringarr
  integer,          intent(out) :: nsplit
- integer :: i,j,imax,iend
+ integer :: i,j,imax,iend,nmax
 
  i = 1
  nsplit = 0
  imax = len(string)
- do while(nsplit < size(stringarr) .and. i <= imax)
+ nmax = imax
+ if (present(stringarr)) nmax = size(stringarr)
+
+ do while(nsplit < nmax .and. i <= imax)
     ! find next non-blank character
     if (string(i:i)==' ') then
        do while (string(i:i)==' ')
@@ -867,7 +1041,7 @@ pure subroutine split(string,delim,stringarr,nsplit)
     iend = min(i+j-1,imax)
     ! extract the substring
     nsplit = nsplit + 1
-    if (nsplit <= size(stringarr)) then
+    if (nsplit <= nmax .and. present(stringarr)) then
        stringarr(nsplit) = string(i:iend)
     endif
     i = iend + len(delim) + 1
@@ -880,17 +1054,25 @@ end subroutine split
 ! extract a list of labels from the header line of a file
 !
 !---------------------------------------------------------------------------
-subroutine get_column_labels(line,nlabels,labels,method)
+subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
  character(len=*), intent(in)  :: line
  integer,          intent(out) :: nlabels
  character(len=*), dimension(:), intent(out) :: labels
  integer,          intent(out), optional :: method
- integer :: i1,i2,i,nlabelstmp,istyle
+ integer,          intent(in),  optional :: ndesired
+ logical,          intent(in),  optional :: csv
+ integer :: i1,i2,i,nlabelstmp,nlabels_prev,istyle,ntarget
  character(len=1) :: leadingchar
+ character(len=4), parameter :: spaces = '    '
+ logical :: is_csv
 
  nlabels = 0
  i1 = 1
  istyle = 0
+ ntarget = -1
+ is_csv = .false.
+ if (present(csv)) is_csv = csv
+ if (present(ndesired)) ntarget = ndesired
  !
  ! strip leading comment character ('#')
  !
@@ -902,25 +1084,50 @@ subroutine get_column_labels(line,nlabels,labels,method)
  i1 = max(i1,index(line,'=')+1)
  i2 = i1
 
- if (index(nospaces(line),'][') > 0) then
+ if (index(nospaces(line),'][') > 0 .and. .not.is_csv) then
     !
     ! format style 1: # [ mylabel1 ] [ mylabel2 ] [ mylabel3 ]
     !
     istyle = 1
-    call split(line(i1:),']',labels,nlabels)
- elseif (index(line,',') > 1) then
+    i1 = max(index(line,'[')+1,i1)    ! strip leading square bracket
+    ! try with different number of spaces between brackets (if labels not found)
+    over_spaces1: do i=4,0,-1
+       call split(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
+       if (nlabels > 1) exit over_spaces1
+    enddo over_spaces1
+ elseif (index(line,',') > 1 .or. is_csv) then
     !
     ! format style 2: mylabel1,mylabel2,mylabel3
     !
     istyle = 2
     call split(line(i1:),',',labels,nlabelstmp)
-    nlabels = count_sensible_labels(nlabelstmp,labels)
+    if (is_csv) then
+       nlabels = nlabelstmp  ! allow blank/arbitrary labels in csv format
+    else
+       nlabels = count_sensible_labels(nlabelstmp,labels)
+    endif
  else
     !
     ! format style 3: #     mylabel1     mylabel2     mylabel3
     !
     istyle = 3
-    call split(line(i1:),'  ',labels,nlabelstmp)
+    ! try splitting with 4, then 3, then 2 spaces until the number of labels decreases
+    nlabels_prev = 0
+    over_spaces: do i=4,2,-1
+       call split(line(i1:),spaces(1:i),labels,nlabelstmp)
+       ! quit if we already have the target number of labels
+       if (nlabelstmp == ntarget) exit over_spaces
+
+       ! if the number of labels is > 1 but has decreased, quit, unless nlabels
+       ! still exceeds the number of labels we are hoping for (ntarget)
+       if ((nlabelstmp < nlabels_prev .or. nlabelstmp >= max(nlabels_prev,2)  &
+            .and. i < 4 .and. .not. (ntarget > 0 .and. nlabelstmp > ntarget))) then
+          ! take the answer with the previous number of spaces
+          call split(line(i1:),spaces(1:i+1),labels,nlabelstmp)
+          exit over_spaces
+       endif
+       nlabels_prev = nlabelstmp
+    enddo over_spaces
     !
     ! this style is dangerous, so perform sanity checks
     ! on the labels to ensure they are sensible
@@ -944,10 +1151,6 @@ subroutine get_column_labels(line,nlabels,labels,method)
     ! delete brackets
     if (nlabels <= size(labels)) then
        call string_delete(labels(i),',')
-       if (istyle==1) then
-          call string_delete(labels(i),'[')
-          call string_delete(labels(i),']')
-       endif
        if (istyle==1 .or. istyle==2) then
           labels(i) = trim(adjustl(labels(i)))
           ! delete leading numbers
@@ -960,8 +1163,65 @@ subroutine get_column_labels(line,nlabels,labels,method)
        labels(i) = trim(adjustl(labels(i)))
     endif
  enddo
+ ! delete loose trailing square bracket but only if not matching
+ if (istyle==1) then
+    if (index(labels(nlabels),']') > 0) then
+       i1 = count_char(labels(nlabels),'[') ! number of open brackets
+       i2 = count_char(labels(nlabels),']') ! number of closed brackets
+       if (i2 > i1) then ! if brackets do not match
+          ! find last trailing bracket
+          i2 = index(labels(nlabels),']',back=.true.)
+          ! delete it, but only if followed by spaces
+          if (i2==len_trim(labels(nlabels))) then
+             labels(nlabels) = labels(nlabels)(1:i2-1)
+          endif
+       endif
+    endif
+ endif
 
 end subroutine get_column_labels
+
+!---------------------------------------------------------------------------
+!
+! interface to the above routine that also searches for the line
+! containing the column labels in the list of header lines
+!
+!---------------------------------------------------------------------------
+subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
+ integer,          intent(in)  :: iunit,nheaderlines,ncols
+ integer,          intent(out) :: nlabels
+ character(len=*), dimension(:), intent(out) :: labels
+ logical, intent(in), optional :: csv,debug
+ character(len=len(labels(1))), dimension(size(labels)) :: tmplabel
+ character(len=max_line_length) :: line
+ logical :: is_csv,verbose,got_labels
+ integer :: i,imethod,ierr,nwanted
+
+ is_csv = .false.
+ verbose = .false.
+ if (present(csv)) is_csv = csv
+ if (present(debug)) verbose = debug
+ got_labels = .false.
+ nlabels = 0
+ nwanted = min(ncols,size(labels)) ! can either retrieve all labels or completely fill the labels array
+ labels = ''
+ rewind(iunit)
+ do i=1,nheaderlines
+    read(iunit,"(a)",iostat=ierr) line
+    !--try to match column labels from this header line, if not already matched (or dubious match)
+    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
+    !--if we get nlabels > ncolumns, use them, but keep trying for a better match
+    if ((got_labels .and. nlabels == nwanted) .or. &
+        (.not.got_labels .and. nlabels >= nwanted  & ! only allow single-spaced labels if == ncols
+         .and. (.not.(imethod>=4) .or. nlabels==nwanted))) then
+       labels(1:nwanted) = tmplabel(1:nwanted)
+       got_labels = .true.
+    endif
+    if (verbose) print "(5(1x,a,i0))",'DEBUG: line ',i,'nlabels = ',nlabels,&
+                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line) !,' LABELS= '//tmplabel(1:ncols)
+ enddo
+
+end subroutine read_column_labels
 
 !---------------------------------------------------------------------------
 !
@@ -1025,21 +1285,71 @@ integer function match_tag(tags,tag)
 
 end function match_tag
 
+!--------------------------------------------
+! as above but only match first N characters
+! where N=5 by default
+!--------------------------------------------
+integer function match_tag_start(tags,tag,n)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer, intent(in), optional :: n
+ integer :: i,ilen
+ character(len=len(tag)) :: str1,str2
+
+ ilen = 5
+ if (present(n)) ilen = n
+
+ match_tag_start = 0 ! default if not found
+ do i=1,size(tags)
+    str1 = tags(i)(1:ilen)
+    str2 = tag(1:ilen)
+    if (trim(lcase(str2))==trim(lcase(str1))) then
+       match_tag_start = i
+       exit  ! only match first occurrence
+    endif
+ enddo
+
+end function match_tag_start
+
+!------------------------------------------
+! match tag against a list of tags
+! or by giving the column number explicitly
+! returns index of matching tag in the list
+!------------------------------------------
+integer function match_column(tags,tag)
+ character(len=*), intent(in) :: tags(:)
+ character(len=*), intent(in) :: tag
+ integer :: ierr
+
+ ! try to match the string tag first
+ match_column = match_tag(tags,tag)
+ if (match_column == 0) then
+    ! try to read it as an integer from the string
+    read(tag,*,iostat=ierr) match_column
+ endif
+
+end function match_column
+
 !----------------------------------------------
 ! match tag against a list of tags
 ! and extract the value from an array of reals
 !----------------------------------------------
-real function get_value(tag,tags,vals)
+real function get_value(tag,tags,vals,default)
  character(len=*), intent(in) :: tag
  character(len=*), intent(in) :: tags(:)
  real, intent(in) :: vals(:)
+ real, intent(in), optional :: default
  integer :: itag
 
  itag = match_tag(tags,tag)
  if (itag > 0 .and. itag <= size(vals)) then
     get_value = vals(itag)
  else
-    get_value = 0.
+    if (present(default)) then
+       get_value = default
+    else
+       get_value = 0.
+    endif
  endif
 
 end function get_value
@@ -1070,6 +1380,43 @@ subroutine match_taglist(taglist,tags,istartmatch,nmatch)
  enddo
 
 end subroutine match_taglist
+
+!------------------------------------------
+! find first integer that matches in a
+! list of integers
+!------------------------------------------
+integer function match_integer(ivals,i)
+ integer, intent(in) :: ivals(:)
+ integer, intent(in) :: i
+ integer :: k
+
+ match_integer = 0
+ do k=1,size(ivals)
+    if (ivals(k)==i) then
+       match_integer = k
+       exit
+    endif
+ enddo
+
+end function match_integer
+
+!------------------------------------------
+! find labels that match between two lists
+! (match == first N characters are the same)
+! output is a list of indices of labels
+! from list1 that match list2
+!------------------------------------------
+function match_lists(list1,list2) result(imap)
+ character(len=*), intent(in) :: list1(:),list2(:)
+ integer :: imap(size(list1))
+ integer :: j,icol
+
+ do j=1,size(list1)
+    icol = match_tag_start(list2,list1(j))
+    if (icol > 0) imap(j) = icol
+ enddo
+
+end function match_lists
 
 !------------------------------
 ! Append a number to a string
@@ -1130,6 +1477,23 @@ integer function count_non_blank(string)
  enddo
 
 end function count_non_blank
+
+!-----------------------------------------------------------------
+!
+!  utility to count number of times a character appears in a string
+!
+!-----------------------------------------------------------------
+integer function count_char(string,mychar)
+ character(len=*), intent(in) :: string
+ character(len=1), intent(in) :: mychar
+ integer :: i
+
+ count_char = 0
+ do i=1,len(string)
+    if (string(i:i)==mychar) count_char = count_char + 1
+ enddo
+
+end function count_char
 
 !---------------------------------------------------------------------
 !  utility to identify repeated tags in a list, written
@@ -1200,5 +1564,143 @@ subroutine get_extensions(string,extensions)
  enddo
 
 end subroutine get_extensions
+
+!---------------------------------------------------------------------------
+!+
+!  extract the start of the file extension, if the filename does not
+!  end with digits
+!+
+!---------------------------------------------------------------------------
+pure integer function get_idot(string)
+ character(len=*), intent(in) :: string
+ integer :: ilen
+
+ ilen = len_trim(string)
+ get_idot = 0
+ !
+ ! if file ends in at least two numbers then use the numbers at the end
+ ! (two is to avoid problems with .hdf5 etc)
+ !
+ if (ilen >= 2) then
+    if (isdigit(string(ilen:ilen)) .and. isdigit(string(ilen-1:ilen-1))) then
+       get_idot = ilen + 1
+    endif
+ endif
+ !
+ ! otherwise, look for numbers before the file extension (e.g. _0000.dat)
+ !
+ if (get_idot==0) then
+    get_idot = index(string,'.',back=.true.)
+    if (get_idot==0) get_idot = len_trim(string) + 1
+ endif
+
+end function get_idot
+
+!----------------------------------------------------------------
+!+
+!  this function extracts the number at the end of the filename
+!+
+!----------------------------------------------------------------
+integer function numfromfile(filename)
+ character(len=*), intent(in) :: filename
+ character(len=len(filename)) :: string
+ integer :: idot,istartnum,ilen,i,ierr
+!
+!--extract current number from filename
+!
+ string = basename(filename)
+ idot = get_idot(string)
+ istartnum = 0
+ do i=idot-1,1,-1
+    if (istartnum==0) then
+       if (.not.isdigit(string(i:i))) istartnum = i
+    endif
+ enddo
+ if (istartnum /= 0) istartnum = istartnum + 1
+ ilen = idot - istartnum
+
+ if (ilen > 0) then
+    read(string(istartnum:istartnum+ilen-1),*,iostat=ierr) numfromfile
+    if (ierr /= 0) then
+       !print*,'internal error in numfromfilename'
+       numfromfile = -1
+    endif
+ else
+    numfromfile = 0
+ endif
+
+end function numfromfile
+
+!------------------------------------------------------------
+! utility to reorder a list of files
+! NOT YET IMPLEMENTED...
+!------------------------------------------------------------
+subroutine reorder_filenames_for_comparison(nfiles,filenames)
+ integer, intent(in) :: nfiles
+ character(len=*), intent(inout) :: filenames(nfiles)
+ integer :: i,n,nprev,nseq
+
+ nseq = 0
+ nprev = 0
+ do i=1,nfiles
+    n = numfromfile(filenames(i))
+    if (i > 1) then
+       if (n == nprev + 1) then
+          nseq = nseq + 1
+          print*,i,n,nseq,trim(filenames(i))
+       else
+          nseq = 0
+       endif
+       nprev = n
+    endif
+ enddo
+
+end subroutine reorder_filenames_for_comparison
+
+!------------------------------------------------------------
+! utility to read a variable from an ascii file
+! in the form:
+!
+!   var = val   ! comment
+!
+! val is returned as a string, if not found leaves the
+! input value unmodified
+!------------------------------------------------------------
+subroutine read_var_from_file(var,val,filename,ierr)
+ character(len=*), intent(in) :: var
+ character(len=*), intent(inout) :: val
+ character(len=*), intent(in) :: filename
+ integer, intent(out) :: ierr
+ character(len=130) :: line
+ integer :: j,lu,ieq,istart
+ logical :: match
+
+ open(newunit=lu,file=filename,status='old',iostat=ierr)
+ match = .false.
+ do while(ierr==0 .and. .not.match)
+    read(lu,"(a)",iostat=ierr) line
+    if (index(line,var) /= 0) then
+       istart = index(line,var)
+       ieq = index(line(istart:),'=')
+       val = line(istart+ieq+1:)
+       match = .true.
+    endif
+ enddo
+ close(lu)
+
+ if (match) then
+    val = trim(adjustl(val))
+    ! now cull the variable at a space or comma
+    do j=1,len_trim(val)
+       if (any((/' ',',',';',':','=','!'/)==val(j:j))) then
+          val = val(1:j)
+          exit
+       endif
+    enddo
+ !else
+ !print*,trim(var)//' not found in '//trim(filename)
+ endif
+
+end subroutine read_var_from_file
 
 end module asciiutils

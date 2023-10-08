@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -23,8 +23,6 @@
 !-----------------------------------------------------------------
 !     module containing output routines for writing SPH data
 !     as read by SPLASH to output file in various formats
-!
-!     (c) D. Price 22/01/08
 !-----------------------------------------------------------------
 module write_sphdata
  implicit none
@@ -37,21 +35,22 @@ contains
 ! utility to check if a format selection is valid
 !-----------------------------------------------------------------
 logical function issphformat(string)
+ use asciiutils, only:lcase
  character(len=*), intent(in) :: string
  logical :: verbose
 
  issphformat = .false.
  verbose = .true.
- select case(trim(string))
- case('ascii','ASCII')
+ select case(trim(lcase(string)))
+ case('ascii','csv')
     issphformat = .true.
- case('binary','BINARY','binarystream','BINARYSTREAM','stream')
+ case('binary','binarystream','stream')
     issphformat = .true.
- case('rsph','RSPH')
+ case('rsph')
     issphformat = .true.
- case('phantom','PHANTOM')
+ case('phantom')
     issphformat = .true.
- case('gadget','GADGET')
+ case('gadget')
     issphformat = .true.
  case('none')
     verbose = .false.
@@ -60,6 +59,7 @@ logical function issphformat(string)
  if (.not.issphformat .and. verbose) then
     print "(a)",' convert mode ("splash to X dumpfiles"): '
     print "(a,/)",' splash to ascii   : convert SPH data to ascii file dumpfile.ascii'
+    print "(a)",  '        to csv     : convert SPH data to csv file dumpfile.csv'
     print "(a)",  '        to binary  : convert SPH data to simple unformatted binary dumpfile.binary: '
     print "(a)",  '                      write(1) time,np,ncols'
     print "(a)",  '                      do i=1,np'
@@ -90,6 +90,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  use write_data_gadget,  only:write_sphdata_gadget
  use filenames,      only:tagline
  use geomutils,      only:change_coords
+ use asciiutils,     only:lcase
  integer, intent(in)                          :: npart,ntypes,ncolumns
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
@@ -103,10 +104,11 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  integer            :: ierr,i,idim,i1,i2,ncols
  integer, dimension(ncolumns) :: iorder
  character(len=40)  :: fmtstring,fmtstring2,fmtstringlab,outfile
+ character(len=6)   :: ext
  real(kind=doub_prec), dimension(maxplot) :: vals
  real(kind=doub_prec) :: udist,umass,utime,umagfd
  real, dimension(3) :: x0,v0
- logical :: change_coordsys
+ logical :: change_coordsys,use_csv
  !
  !--allow for the possibility of writing columns in a different order
  !
@@ -119,38 +121,58 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     enddo
  endif
 
- select case(trim(outformat))
- case ('ascii','ASCII')
-    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//'.ascii WITH ',ncols,' COLUMNS'
+ select case(trim(lcase(outformat)))
+ case ('ascii','csv')
+    ext = '.ascii'
+    use_csv = (trim(lcase(outformat))=='csv')
+    if (use_csv) ext = '.csv'
+
+    print "(/,5('-'),'>',a,i2,a,1x,'<',5('-'),/)",' WRITING TO FILE '//trim(filename)//trim(ext)//' WITH ',ncols,' COLUMNS'
 
     !--format the header lines to go in the ascii file
     if (kind(1.)==8) then
-       write(fmtstring,"(i10,a)") ncols,'(es23.15,1x)'
-       write(fmtstringlab,"(i10,a)") ncols,'(a23,1x),a'
+       if (use_csv) then
+          write(fmtstring,"(i10,a)") ncols,"(es23.15,',')"
+          write(fmtstringlab,"(i10,a)") ncols,"(a23,','),a"
+       else
+          write(fmtstring,"(i10,a)") ncols,'(es23.15,1x)'
+          write(fmtstringlab,"(i10,a)") ncols,'(a23,1x),a'
+       endif
     else
-       write(fmtstring,"(i10,a)") ncols,'(es15.7,1x)'
-       write(fmtstringlab,"(i10,a)") ncols,'(a15,1x),a'
+       if (use_csv) then
+          write(fmtstring,"(i10,a)") ncols,"(es15.7,',')"
+          write(fmtstringlab,"(i10,a)") ncols,"(a15,','),a"
+       else
+          write(fmtstring,"(i10,a)") ncols,'(es15.7,1x)'
+          write(fmtstringlab,"(i10,a)") ncols,'(a15,1x),a'
+       endif
     endif
-    fmtstring2 = '('//trim(adjustl(fmtstring))//',i1)'
+    fmtstring2 = '('//trim(adjustl(fmtstring))//',i0)'
     fmtstring = '('//trim(adjustl(fmtstring))//')'
-    fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
+    if (use_csv) then
+       fmtstringlab = '('//trim(adjustl(fmtstringlab))//')'
+    else
+       fmtstringlab = '(''#'',1x,'//trim(adjustl(fmtstringlab))//')'
+    endif
 
-    open(unit=iunit,file=trim(filename)//'.ascii',status='replace',form='formatted',iostat=ierr)
+    open(unit=iunit,file=trim(filename)//trim(ext),status='replace',form='formatted',iostat=ierr)
     if (ierr /= 0) then
        print "(a)",' ERROR OPENING FILE FOR WRITING'
        return
     endif
-    write(iunit,"(a)",iostat=ierr) '# '//trim(filename)//'.ascii, created by '//trim(tagline)
-    write(iunit,"('#')",iostat=ierr)
-    write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",iostat=ierr) trim(unitslabel(0))
-    write(iunit,"('#',2(1x,1pe15.7))",iostat=ierr) time,units(0)
-    write(iunit,"('#')",iostat=ierr)
-    write(iunit,"('#',1x,'npart:',30(1x,a12))",iostat=ierr) (trim(labeltype(i)),i=1,ntypes)
-    write(iunit,"('#',7x,30(1x,i12))",iostat=ierr) npartoftype(1:ntypes)
-    write(iunit,"('# units:')",iostat=ierr)
-    write(iunit,"('#'"//fmtstring(2:),iostat=ierr) units(iorder(1:ncols))
-    write(iunit,fmtstringlab,iostat=ierr) unitslabel(iorder(1:ncols))
-    write(iunit,"('#')",iostat=ierr)
+    if (.not.use_csv) then
+       write(iunit,"(a)",iostat=ierr) '# '//trim(filename)//trim(ext)//', created by '//trim(tagline)
+       write(iunit,"('#')",iostat=ierr)
+       write(iunit,"('#',1x,'time:',13x,'time unit (',a,')')",iostat=ierr) trim(unitslabel(0))
+       write(iunit,"('#',2(1x,1pe15.7))",iostat=ierr) time,units(0)
+       write(iunit,"('#')",iostat=ierr)
+       write(iunit,"('#',1x,'npart:',30(1x,a12))",iostat=ierr) (trim(labeltype(i)),i=1,ntypes)
+       write(iunit,"('#',7x,30(1x,i12))",iostat=ierr) npartoftype(1:ntypes)
+       write(iunit,"('# units:')",iostat=ierr)
+       write(iunit,"('#'"//fmtstring(2:),iostat=ierr) units(iorder(1:ncols))
+       write(iunit,fmtstringlab,iostat=ierr) unitslabel(iorder(1:ncols))
+       write(iunit,"('#')",iostat=ierr)
+    endif
     if (ierr /= 0) print "(a)",' ERROR WRITING ASCII HEADER'
     !
     !--write body
@@ -186,7 +208,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     endif
     return
 
- case ('binary','BINARY','binarystream','BINARYSTREAM','stream')
+ case ('binary','binarystream','stream')
 !
 !--This is the most basic binary (ie. unformatted) file format I could think of,
 !  as an alternative to ascii for large files.
@@ -221,7 +243,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     if (ierr /= 0) print "(a)",' ERROR WRITING BINARY FILE'
     return
 
- case ('rsph','RSPH')
+ case ('rsph')
 !
 !--Files for Steinar Borve's RSPH format
 !
@@ -296,7 +318,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     enddo
     close(unit=iunit)
 
- case('phantom','PHANTOM')
+ case('phantom')
     udist = 0.d0
     umagfd = 0.d0
     if (ix(1) > 0) udist = units(ix(1))
@@ -312,7 +334,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
                                masstype,ncolumns,udist,utime,umass,umagfd,&
                                labeltype,label,ix,ih,ivx,iBfirst,&
                                ipmass,iutherm,filename,0.)
- case('gadget','GADGET')
+ case('gadget')
     call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
  case default

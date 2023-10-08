@@ -20,7 +20,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -88,6 +88,10 @@ jobs:
         asset_path: ${{ steps.get_version.outputs.tarfile }}
         asset_name: ${{ steps.get_version.outputs.tarfile }}
         asset_content_type: application/gzip
+
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
 
     - name: Bump Brew
       env:

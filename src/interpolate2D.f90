@@ -27,7 +27,7 @@
 !----------------------------------------------------------------------
 
 module interpolations2D
- use kernels,       only:radkernel2,radkernel,cnormk2D,wfunc,pint,select_kernel
+ use kernels,       only:radkernel2,radkernel,cnormk2D,wfunc,pint,select_kernel,soft_func
  use timing,        only:wall_time,print_time
  use interpolation, only:iroll
  implicit none
@@ -88,7 +88,7 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  integer :: ipixi,jpixi
  real :: hi,hi1,radkern,q2,wab,const
  real :: term,termnorm,dx,dy,dy2,xpix,ypix,hi21
- real :: t_start,t_end,t_used,xmini,ymini,denom
+ real :: t_start,t_end,t_used,xmini,ymini,denom,datnorm_min
  real, dimension(npixx) :: dx2i
 
 ! Maya
@@ -371,16 +371,21 @@ subroutine interpolate2D(x,y,hh,weight,dat,itype,npart, &
  !--normalise dat array
  !
  if (normalise) then
-    where (datnorm > 0.)
-       datsmooth = datsmooth/datnorm
-    end where
+    !where (datnorm > 0.)
+    !   datsmooth = datsmooth/datnorm
+    !end where
+    !
+    ! compute the minimum possible value for datnorm, then multiply
+    ! with a kernel-softened version of 1/x to avoid dividing by zero
+    !
+    datnorm_min = minval(const*weight,mask=(weight > 0.))
+    datsmooth = datsmooth*soft_func(datnorm,datnorm_min)
  endif
 
  call wall_time(t_end)
  t_used = t_end - t_start
  if (t_used > 10.) call print_time(t_used)
 
- return
 end subroutine interpolate2D
 
 !--------------------------------------------------------------------------
@@ -513,8 +518,6 @@ subroutine interpolate2D_vec(x,y,hh,weight,vecx,vecy,itype,npart, &
        vecsmoothy = vecsmoothy/datnorm
     end where
  endif
-
- return
 
 end subroutine interpolate2D_vec
 
@@ -700,8 +703,6 @@ subroutine interpolate2D_xsec(x,y,hh,weight,dat,itype,npart,&
     end where
  endif
 
- return
-
 end subroutine interpolate2D_xsec
 
 !--------------------------------------------------------------------------
@@ -737,7 +738,6 @@ subroutine interpolate_part(x,y,hh,npart,xmin,ymin,datsmooth,npixx,npixy,pixwidt
        call interpolate_part1(x(i),y(i),hh(i),xmin,ymin,datsmooth,npixx,npixy,pixwidth,datval,brightness)
     enddo
  endif
- return
 
 end subroutine interpolate_part
 
@@ -798,7 +798,6 @@ subroutine interpolate_part1(xi,yi,hi,xmin,ymin,datsmooth,npixx,npixy,pixwidth,d
     enddo
  enddo
 
- return
 end subroutine interpolate_part1
 
 !--------------------------------------------------------------------------
@@ -926,6 +925,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
        else
           term = termnorm
        endif
+       if (termnorm <= 0.) cycle over_parts
        !
        !--for each particle work out which pixels it contributes to
        !
@@ -997,8 +997,6 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  call wall_time(t2)
  if (t2-t1 > 1.) call print_time(t2-t1)
 
- return
-
 end subroutine interpolate2D_pixels
 
 !--------------------------------------------------------------------------
@@ -1026,7 +1024,7 @@ subroutine interpolate2D_fromgrid(x,y,hh,dat,gradh,sigma,mask,npart, &
  real,    intent(in) :: xmin,ymin,pixwidthx,pixwidthy
  real,    intent(in), dimension(npixx,npixy) :: datpix
 
- real, dimension(npixx) :: dx2i,qq2,wabi
+ real, dimension(npixx) :: dx2i,qq2
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
  real :: hi,hi1,radkernx,radkerny,q2,wab,const,datpart

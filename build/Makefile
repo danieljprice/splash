@@ -64,6 +64,14 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
+ifndef HDF5ROOT
+ifdef HDF5_ROOT
+   HDF5ROOT=$(HDF5_ROOT)
+endif
+ifdef HDF5_DIR
+   HDF5ROOT=$(HDF5_DIR)
+endif
+endif
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
@@ -365,11 +373,14 @@ READFILES_H5PART= H5PartF.c H5PartAttribF.c H5Part.f90 H5PartAttrib.f90
 
 RUN_CHECKS=
 
+LDFLAGSLIB=
+
 # link with hdf5 libraries
 ifeq ($(HDF5),yes)
   READFILES+=$(READFILES_HDF5)
   CFLAGS+=$(HDF5INCLUDE)
   LDFLAGS+=$(HDF5LIBS)
+  LDFLAGSLIB+=$(HDF5LIBS)
   FPPFLAGS+=-DHDF5
   RUN_CHECKS+=checkhdf5
 endif
@@ -378,6 +389,7 @@ endif
 ifeq ($(FITS),yes)
   READFILES+= $(READFILES_FITS)
   LDFLAGS+=$(FITSLIBS)
+  LDFLAGSLIB+=$(FITSLIBS)
   FPPFLAGS+=-DFITS
   RUN_CHECKS+=checkfits
 endif
@@ -395,9 +407,10 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
+         asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
-         prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
+         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
          plotutils.f90 blackbody.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
@@ -406,7 +419,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 \
+         write_griddata.f90 write_sphdata.f90 read_kepler.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
@@ -417,8 +430,9 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
-         options_limits.f90 options_page.f90 imageutils.f90 lightcurve.f90 $(READFILES) \
-				 read_data.F90 \
+         options_limits.f90 options_page.f90 imageutils.f90 \
+         lightcurve_utils.f90 lightcurve.f90 extinction.f90 \
+         $(READFILES) read_data.F90 \
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
@@ -461,7 +475,6 @@ all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	@echo "   alias tsplash='splash -f tipsy' ";
 	@echo "   alias msplash='splash -f mhutch' "; echo;
 
-
 #---falcON HDF5 read ---
 falcon: falcON
 
@@ -499,13 +512,13 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
-      interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 \
+      interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
-      libsplash.f90 libread.f90
+      libsplash.f90 libutils.f90
 OBJLIB1=${SRCLIB:.f90=.o}
-OBJLIB=${OBJECTS:splash.o=} libread.o
+OBJLIB=${OBJLIB1} libread.o
 
 .PHONY: libsplash
 libsplash: lib
@@ -516,7 +529,8 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 libutils.f90 exact_shock.f90 exact_shock_sr.f90 exact_sedov.f90 \
+SRCLIBEXACT= plotlib_mock.f90 libutils.f90 geometry.f90 exact_shock.f90 \
+	exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
 	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
@@ -531,26 +545,28 @@ libexact: checksystem $(OBJLIBEXACTALL)
 
 
 #
-# libexact: read library
+# libread: data read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
-            geomutils.f90 partutils.f90 calc_quantities.f90 \
-            $(READFILES) read_data.F90 \
+            sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
-OBJLIBREADALL=${OBJLIBREAD:.F90=.o}
+OBJLIBREAD1=${OBJLIBREAD:.F90=.o}
+OBJLIBREADALL=${OBJLIBREAD1:.c=.o}
 
 .PHONY: libread
 libread: checksystem $(OBJLIBREADALL)
-		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so
+		$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBREADALL) -o libread.so $(LDFLAGSLIB)
 
 #
 # splash image manipulation utilities
 #
-SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 interpolation.f90 interpolate2D.f90 \
-              interpolate3D.f90 imageutils.f90 write_fits.f90 denoise.f90
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+              interpolation.f90 interpolate2D.f90 interpolate3D.f90 \
+              imageutils.f90 write_fits.f90 denoise.f90
 
 OBJECTSIMLIB = $(SOURCESIMLIB:.f90=.o)
 
@@ -563,6 +579,21 @@ denoise: checksystem checkfits $(OBJECTSIMLIB)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
 	@echo; echo ' Denoise utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
+#
+# splash moments
+#
+SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+          interpolate1D.f90 write_fits.f90 moments.f90 sph_moments.f90
+
+OBJECTSM = $(SOURCESM:.f90=.o)
+
+.PHONY: sphmoments
+sphmoments: checksystem checkfits $(OBJECTSM)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS)
+	@echo; echo ' sphmoments utility successfully compiled! ';
+	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)

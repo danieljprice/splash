@@ -65,15 +65,16 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
-     xmin,datsmooth,npixx,pixwidth,normalise)
+     xmin,datsmooth,npixx,pixwidth,normalise,iverbose)
 
- use kernels, only:cnormk1D,radkernel,wfunc
+ use kernels, only:cnormk1D,radkernel,wfunc,select_kernel
  integer, intent(in) :: npart,npixx
  real, intent(in), dimension(npart) :: x,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
  real, intent(in) :: xmin,pixwidth
  real, intent(out), dimension(npixx) :: datsmooth
  logical, intent(in) :: normalise
+ integer, intent(in) :: iverbose
  real, dimension(npixx) :: datnorm
 
  integer :: i,ipix,ipixmin,ipixmax
@@ -82,18 +83,23 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
 
  datsmooth = 0.
  term = 0.
- if (normalise) then
-    print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
- else
-    print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+ if (iverbose > 0) then
+    if (normalise) then
+       print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+    else
+       print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+    endif
  endif
  if (pixwidth <= 0.) then
-    print*,'interpolate1D: error: pixel width <= 0'
+    if (iverbose > 0) print*,'interpolate1D: error: pixel width <= 0'
     return
  endif
  if (any(hh(1:npart) <= tiny(hh))) then
-    print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
+    if (iverbose > 0) print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
  endif
+
+ if (.not.associated(wfunc)) call select_kernel(0)
+
  const = cnormk1D  ! normalisation constant
  !
  !--loop over particles
@@ -154,8 +160,6 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
        datsmooth = datsmooth/datnorm
     end where
  endif
-
- return
 
 end subroutine interpolate1D
 

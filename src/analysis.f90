@@ -82,11 +82,13 @@ logical function isanalysis(string,noprint)
     isanalysis = .true.
  case('timeaverage','timeav')
     isanalysis = .true.
- case('ratio')
+ case('ratio','minus','plus')
     isanalysis = .true.
- case('tracks')
+ case('tracks','track')
     isanalysis = .true.
  case('lightcurve')
+    isanalysis = .true.
+ case('extinction')
     isanalysis = .true.
  case('none')
     verbose = .false.
@@ -104,6 +106,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''energy.out'''
     print "(a)",'         calc massaboverho : mass above a series of density thresholds vs time'
     print "(a)",'                             output to file called ''massaboverho.out'''
+    print "(a)",'         calc extinction   : column density to all sink particles vs time'
+    print "(a)",'                             output to file called ''extinction.out'''
 !    print "(a)",'         calc rhomach      : density variance and RMS velocity dispersion vs. time'
 !    print "(a)",'                             output to file called ''rhomach.out'''
     print "(a)",'         calc max          : maximum of each column vs. time'
@@ -121,7 +125,7 @@ logical function isanalysis(string,noprint)
     print "(a)",'         calc rms          : (mass weighted) root mean square of each column vs. time'
     print "(a)",'                             output to file called ''rmsvals.out'''
     print "(a)",'         calc tracks       : track particle data vs time for selected particles,'
-    print "(a)",'           --tracks=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out'
+    print "(a)",'           --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out'
 !    print "(a)",'         calc vrms         : volume weighted root mean square of each column vs. time'
 !    print "(a)",'                             output to file called ''rmsvals-vw.out'''
     print "(/,a)",'  the above options all produce a small ascii file with one row per input file.'
@@ -130,6 +134,8 @@ logical function isanalysis(string,noprint)
     print "(a)",'                             output to file called ''time_average.out'''
     print "(/,a)",'         calc ratio        : ratio of *all* entries in each file compared to first'
     print "(a)",'                             output to file called ''ratio.out'''
+    print "(/,a)",'         calc plus        : add two snapshots together'
+    print "(a)",'                             output to file called ''plus.out'''
  elseif (.not.isanalysis .and. doprint) then
     print "(a)",'Analysis mode:'
     print "(a)",'   splash calc <mode>  : type "splash calc" for details'
@@ -142,18 +148,21 @@ end function isanalysis
 !  open output file/ initialise quantities needed for analysis
 !  over all dump files
 !----------------------------------------------------------------
-subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
- use labels,       only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label
- use asciiutils,   only:read_asciifile,basename
- use filenames,    only:rootname,nfiles,tagline,fileprefix,ifileopen
- use params,       only:maxplot
- use system_utils, only:ienvlist
- integer, intent(in) :: ncolumns,ndim,ndimV
+subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
+ use labels,        only:ix,ivx,ih,iBfirst,iutherm,irho,ipmass,itemp,ikappa,label,&
+                         lenunitslabel,unitslabel,labelzintegration,get_unitlabel_coldens
+ use asciiutils,    only:read_asciifile,basename,integer_to_string
+ use filenames,     only:rootname,nfiles,tagline,fileprefix,ifileopen
+ use params,        only:maxplot
+ use system_utils,  only:ienvlist
+ use settings_data, only:iRescale
+ integer, intent(in) :: ncolumns,ndim,ndimV,nsinks
  character(len=*), intent(in) :: analysistype
  logical, dimension(0:ncolumns), intent(out) :: required
  character(len=maxplot*18) :: headerline   ! len=maxplot x 18 characters
  character(len=64) :: levelsfile
  character(len=maxplot*12) :: fmtstring
+ character(len=lenunitslabel) :: labelt,labelc
  logical :: iexist,standardheader
  integer :: ierr,i,lunit
 !
@@ -168,6 +177,10 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  headerline = ' '
  standardheader = .false.
  nfileout = 1
+ labelt = ''
+ if (iRescale) then
+    labelt = unitslabel(0)
+ endif
 
  select case(trim(analysistype))
  case('energy','energies')
@@ -330,7 +343,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
     endif
- case('ratio')
+ case('ratio','minus','add')
     !
     !--read all columns from dump file
     !
@@ -338,13 +351,13 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
     !
     !--set filename and header line
     !
-    fileout(1) = 'ratio.out'
+    fileout(1) = trim(analysistype)//'.out'
     if (ncolumns > 0 .and. ncolumns /= maxplot) then
        write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']''))')",iostat=ierr) 2*ncolumns
        write(headerline,fmtstring,iostat=ierr) (i,label(i)(1:12),i=1,ncolumns),&
                                                (ncolumns+i,'err'//label(i)(1:9),i=1,ncolumns)
     endif
- case('tracks')
+ case('tracks','track')
     !
     !--read all of dump file
     !
@@ -394,9 +407,30 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
         fileout = 'lightcurve.out'
      endif
      write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
-           1,'time',2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
+           1,'time'//trim(labelt),2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
            5,'L_{bol}',6,'R_{bb}',7,'T_c'
 
+  case('extinction')
+     !
+     !--for extinction of stars need h, mass and density
+     !
+     required(ix(1:ndim)) = .true.
+     required(ih) = .true.
+     required(ipmass) = .true.
+     required(irho) = .true.
+     !
+     !--set filename and header line
+     !
+     if (nfiles==1) then
+        fileout = 'extinction_'//trim(basename(rootname(ifileopen)))//'.out'
+     else
+        fileout = 'extinction.out'
+     endif
+     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
+
+     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) nsinks+1
+     write(headerline,fmtstring) &
+           1,'time'//trim(labelt),(i+1,'sink'//trim(adjustl(integer_to_string(i)))//trim(labelc),i=1,nsinks)
  end select
 
  if (standardheader) then
@@ -405,7 +439,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
 !  (this is to avoid repeated code above)
 !
     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a12,'']'',2x))')",iostat=ierr) ncolumns+1
-    write(headerline,fmtstring) 1,'time',(i+1,label(i)(1:12),i=1,ncolumns)
+    write(headerline,fmtstring) 1,'time'//trim(labelt),(i+1,label(i)(1:12),i=1,ncolumns)
  endif
 
 !
@@ -451,7 +485,6 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV)
  !endif
  nfilesread = 0
 
- return
 end subroutine open_analysis
 
 !----------------------------------------------------------------
@@ -461,16 +494,18 @@ end subroutine open_analysis
 !----------------------------------------------------------------
 subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
                           iamtype,ncolumns,ndim,ndimV,analysistype)
- use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label
+ use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label,&
+                         lenunitslabel,get_unitlabel_coldens,unitslabel,labelzintegration
  use params,        only:int1,doub_prec,maxplot
  use asciiutils,    only:ucase,basename
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
- use settings_data, only:xorigin,icoords,icoordsnew,itracktype,itrackoffset
+ use settings_data, only:xorigin,icoords,icoordsnew,track_string,iRescale
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
+ use extinction,    only:get_extinction
  use filenames,     only:rootname,ifileopen
  use vectorutils,   only:cross_product3D
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
@@ -481,7 +516,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile,nsinks
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
@@ -493,16 +528,22 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
+ character(len=lenunitslabel) :: labelt,labelc
 !
 ! array with one value for each column
 !
  real(kind=doub_prec) :: coltemp(maxplot), vals(maxplot), rmsval(maxplot)
+ real :: coltemps(maxplot)
+
+ labelt = ''
+ labelc = ''
+ if (iRescale) labelt = unitslabel(0)
 
  nfilesread = nfilesread + 1
  if (time_was_read(time)) then
     timei = time
-    print "(/,5('-'),a,', TIME=',es9.2,' FILE #',i5,/)",&
-          '> CALCULATING '//trim(ucase(analysistype)),time,nfilesread
+    print "(/,5('-'),a,', TIME=',es9.2,a,' FILE #',i5,/)",&
+          '> CALCULATING '//trim(ucase(analysistype)),time,trim(labelt),nfilesread
  else
     timei = 0.
     print "(/,5('-'),a,', FILE #',i5,' (TIME NOT READ)'/)",&
@@ -512,11 +553,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
  x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
  v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
+                  ! instead, one can use the --origin flag to make positions and velocities relative to a particle
 
  if (itracks(1) > 0) then
     itrack = itracks(1)  ! override particle id saved to splash.defaults file if --tracks specified
  else
-    itrack = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+    itrack = get_tracked_particle(track_string,npartoftype,iamtype,dat,irho)
  endif
  if (itrack==0) itrack = 1
 
@@ -719,7 +761,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           endif
        enddo
 
-       if (trim(analysistype)=='tracks') then
+       if (trim(analysistype)=='tracks' .or. trim(analysistype)=='track') then
           if (ifile==1) then
              do i=1,ncolumns
                 print "(1x,' particle ',i8,': ',a20,' = ',es18.10)",itrack,label(i),coltemp(i)
@@ -759,7 +801,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     !
     !--write line to output file
     !
-    if (trim(analysistype) /= 'tracks') then
+    if (trim(analysistype) /= 'tracks' .and. trim(analysistype) /= 'track') then
        write(iunit,fmtstring) timei,coltemp(1:ncolumns)
     endif
 
@@ -1106,7 +1148,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     !sum1(:,:) = sum1(:,:) + dat(1:ntot1,1:ncol1)
     !sum2(:,:) = sum2(:,:) + dat(1:ntot1,1:ncol1)**2
 
- case('ratio')
+ case('ratio','minus','add')
     if (.not.allocated(datmean)) then
        allocate(datmean(size(dat(:,1)),size(dat(1,:))),stat=ierr)
        if (ierr /= 0) stop 'error allocating temporary memory in calc'
@@ -1144,11 +1186,18 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        !--store first dump
        datmean(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)
     else
-       where (abs(datmean(1:ntot1,1:ncol1)) > epsilon(0.))
-          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
-       elsewhere
-          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
-       end where
+       select case(trim(analysistype))
+       case('add')
+          datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1) + datmean(1:ntot1,1:ncol1)    ! sum of current data and first step
+       case('minus')
+          datvar(1:ntot1,1:ncol1) = datmean(1:ntot1,1:ncol1) - dat(1:ntot1,1:ncol1)   ! first step minus current data
+       case default ! ratio
+          where (abs(datmean(1:ntot1,1:ncol1)) > epsilon(0.))
+             datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/datmean(1:ntot1,1:ncol1)    ! ratio of current data to first step
+          elsewhere
+             datvar(1:ntot1,1:ncol1) = dat(1:ntot1,1:ncol1)/(datmean(1:ntot1,1:ncol1) + epsilon(0.))
+          end where
+       end select
        valmin = datvar(1,1)
        valmax = datvar(1,1)
        valmean = 0.
@@ -1160,10 +1209,10 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
           enddo
        enddo
        valmean = valmean/real(ntot1*ncol1)
-       print "(/,a,es10.3)",' max  ratio = ',valmax
-       print "(a,es10.3)",' min  ratio = ',valmin
-       print "(a,es10.3,/)",' mean ratio = ',valmean
-       print "(a)",'----> WRITING ratio.out ...'
+       print "(/,a,es10.3)",' max '//trim(analysistype)//' = ',valmax
+       print "(a,es10.3)",' min '//trim(analysistype)//' = ',valmin
+       print "(a,es10.3,/)",' mean '//trim(analysistype)//' = ',valmean
+       print "(a)",'----> WRITING '//trim(analysistype)//'.out ...'
        if (allocated(datmean) .and. allocated(datvar)) then
           write(iunit,"('# ',i4,1x,i4)") ntot1,ncol1
           write(fmtstring,"(a,i6,a)",iostat=ierr) '(',ncol1,'(es14.6,1x,))'
@@ -1173,7 +1222,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        endif
     endif
     return
-  case('lightcurve')
+ case('lightcurve')
      call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
          lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)))
      print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
@@ -1181,6 +1230,15 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
      !--write line to output file
      !
      write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
+
+ case('extinction')
+     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,nsinks,coltemps)
+     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
+     print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemps(i),trim(labelc),i=1,nsinks)
+     !
+     !--write line to output file
+     !
+     write(iunit,"(100(es18.10,5x))") timei,coltemps(1:nsinks)
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'

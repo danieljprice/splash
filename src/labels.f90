@@ -104,6 +104,21 @@ end subroutine reset_columnids
 
 !--------------------------------------------------------------
 !
+!  set default column labels
+!
+!--------------------------------------------------------------
+subroutine set_default_labels(mylabel)
+ character(len=*), intent(out) :: mylabel(:)
+ integer :: i
+
+ do i=1,size(mylabel)
+    write(mylabel(i),"(a,1x,i3)") trim(labeldefault),i
+ enddo
+
+end subroutine set_default_labels
+
+!--------------------------------------------------------------
+!
 !  query function for whether column is a spatial coordinate
 !
 !--------------------------------------------------------------
@@ -117,6 +132,84 @@ logical function is_coord(icol,ndim)
  enddo
 
 end function is_coord
+
+!--------------------------------------------------------------
+!
+!  query function for whether column is a density
+!  mainly used to decide whether or not to use
+!  mass-weighted interpolation
+!
+!--------------------------------------------------------------
+logical function is_density(icol)
+ integer, intent(in) :: icol
+
+ is_density = .false.
+
+ ! if we match known density columns
+ if (icol==irho .or. icol==irhorestframe) is_density = .true.
+
+ ! if label contains rho or dens
+ if (icol > 0 .and. icol < size(label)) then
+    if (index(label(icol),'rho') > 0) is_density = .true.
+    if (index(label(icol),'dens') > 0) is_density = .true.
+ else
+    is_density = .true.  ! icol = 0 should be true
+ endif
+
+end function is_density
+
+!----------------------------------------------------------------
+!
+!  function returning the synonym of a label
+!  so two different labels can be identified as the same
+!  physical quantity,  e.g. "radius" and "r" are both the radius
+!
+!----------------------------------------------------------------
+elemental function label_synonym(string)
+ use asciiutils, only:lcase,string_delete
+ character(len=*), intent(in) :: string
+ character(len=8) :: label_synonym
+ character(len=len(string)) :: labeli
+ integer :: k
+
+ ! remove leading spaces and make lower case
+ labeli = trim(adjustl(lcase(string)))
+
+ ! split at whitespace or [ to avoid unit labels
+ k = max(index(labeli,' '),index(labeli,'['))
+ if (k > 1) then
+    labeli = labeli(1:k-1)
+ endif
+ ! also remove special characters
+ call string_delete(labeli,'\d')
+ call string_delete(labeli,'\u')
+ call string_delete(labeli,'\')
+ call string_delete(labeli,'_')
+
+ ! remove log from the front of the label
+ if (labeli(1:3)=='log') labeli = labeli(4:)
+
+ if (labeli(1:3)=='den' .or. index(labeli,'rho') /= 0 .or. labeli(1:2)=='gr' .or. &
+     (index(labeli,'density') /= 0 .and. irho==0)) then
+    label_synonym = 'density'
+ elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass') then
+    label_synonym = 'pmass'
+ elseif (trim(labeli)=='h' .or. labeli(1:6)=='smooth') then
+    label_synonym = 'h'
+ elseif (trim(labeli)=='u' .or. labeli(1:6)=='utherm' .or. labeli(1:5)=='eint' &
+     .or.(index(labeli,'internal energy') /= 0)) then
+    label_synonym = 'u'
+ elseif (labeli(1:2)=='pr' .or. trim(labeli)=='p' .or. &
+        (index(labeli,'pressure') /= 0 .and. ipr==0)) then
+    label_synonym = 'pressure'
+ elseif (trim(labeli)=='r' .or. labeli(1:3)=='rad') then
+    label_synonym = 'radius'
+ else
+    ! by default the label synonym is the same as the original label
+    label_synonym = labeli
+ endif
+
+end function label_synonym
 
 !--------------------------------------------------------------
 !
@@ -211,11 +304,12 @@ end function shortstring
 ! should be applied to variable names, but not function strings
 !
 !-----------------------------------------------------------------
-elemental function shortlabel(string,unitslab)
- use asciiutils, only:string_delete
+elemental function shortlabel(string,unitslab,lc)
+ use asciiutils, only:string_delete,lcase
  character(len=lenlabel), intent(in)           :: string
  character(len=*),        intent(in), optional :: unitslab
  character(len=lenlabel)                       :: shortlabel
+ logical, intent(in), optional :: lc
 
  if (present(unitslab)) then
     shortlabel = shortstring(string,unitslab)
@@ -239,6 +333,10 @@ elemental function shortlabel(string,unitslab)
  call string_delete(shortlabel,'<')
  call string_delete(shortlabel,'>')
  call string_delete(shortlabel,'\(2268)')
+
+ if (present(lc)) then
+    if (lc) shortlabel = lcase(shortlabel)
+ endif
 
 end function shortlabel
 
@@ -276,7 +374,7 @@ function integrate_label(labelin,iplot,izcol,normalise,iRescale,labelzint,&
           !integrate_label = '\int '//trim(labelin)//' d'// &
           !  trim(label(izcol)(1:index(label(izcol),unitslabel(izcol))-1))//trim(labelzint)
        else
-          integrate_label = '\int '//trim(labelin)//' d'//trim(label(izcol))
+          integrate_label = '\int '//trim(labelin)//' d'//trim(shortlabel(label(izcol),unitslabel(izcol)))
        endif
        if (index(labelin,'\rho_{d,') > 0) then
           integrate_label = labelin(1:index(labelin,unitslabel(iplot))-1)
@@ -407,7 +505,7 @@ function get_label_grain_size(sizecm) result(string)
  character(len=6) :: ulab
 
  if (sizecm >= 1000.) then
-    write(string,"(1pg10.3)") sizecm*0.001
+    write(string,"(1pg10.3)") sizecm*1.e-5
     ulab = 'km'
  elseif (sizecm >= 100.) then
     write(string,"(1pg10.3)") sizecm*0.01
@@ -429,6 +527,8 @@ function get_label_grain_size(sizecm) result(string)
     ulab = 'cm'
  endif
  string = adjustl(string)
+ call string_delete(string,'.000 ')
+ call string_delete(string,'.00 ')
  call string_delete(string,'.0 ')
  call string_delete(string,'. ')
  string = trim(string)//trim(ulab)

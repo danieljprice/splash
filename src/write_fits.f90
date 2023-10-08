@@ -31,7 +31,9 @@ module readwrite_fits
  public :: read_fits_image,write_fits_image,fits_error
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
- public :: get_floats_from_fits_header,get_from_header
+ public :: get_floats_from_fits_header,get_from_header,get_from_header_s
+ public :: append_to_fits_cube
+ public :: get_velocity_from_fits_header
 
  interface write_fits_image
   module procedure write_fits_image,write_fits_image64
@@ -49,6 +51,10 @@ module readwrite_fits
   module procedure read_fits_cube,read_fits_cube64
  end interface read_fits_cube
 
+ interface append_to_fits_cube
+  module procedure append_to_fits_cube
+ end interface append_to_fits_cube
+
  private
 
 contains
@@ -60,7 +66,7 @@ contains
 subroutine read_fits_image(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  integer :: iunit,ireadwrite,npixels,blocksize
  integer :: firstpix,nullval,group,nfound!,bitpix
@@ -119,7 +125,7 @@ end subroutine read_fits_image
 !---------------------------------------------------
 subroutine read_fits_header(filename,hdr,ierr)
  character, intent(in)  :: filename
- character(len=:), allocatable, intent(out) :: hdr(:)
+ character(len=80), allocatable, intent(out) :: hdr(:)
  integer, intent(out) :: ierr
  integer :: ireadwrite,iunit,blocksize
 
@@ -144,7 +150,7 @@ end subroutine read_fits_header
 subroutine read_fits_head(iunit,hdr,ierr)
  integer, intent(in)  :: iunit
  integer, intent(out) :: ierr
- character(len=:), allocatable, intent(inout) :: hdr(:)
+ character(len=80), allocatable, intent(inout) :: hdr(:)
  character(len=80) :: record
  integer :: i,nkeys,nspace
 
@@ -155,7 +161,7 @@ subroutine read_fits_head(iunit,hdr,ierr)
  ! allocate memory
  !
  if (allocated(hdr)) deallocate(hdr)
- allocate(character(80) :: hdr(nkeys))
+ allocate(hdr(nkeys))
 
 ! Read each 80-character keyword record, and print it out.
  do i = 1, nkeys
@@ -179,6 +185,7 @@ subroutine write_fits_head(iunit,hdr,ierr)
  ierr = 0
  morekeys = size(hdr)
  call fthdef(iunit,morekeys,ierr)
+ if (ierr /= 0) return
  do i=1,size(hdr)
     select case(hdr(i)(1:6))
     case('SIMPLE','BITPIX','NAXIS ','NAXIS1','NAXIS2','NAXIS3','NAXIS4','EXTEND')
@@ -194,13 +201,14 @@ end subroutine write_fits_head
 ! subroutine to read spectral cube from FITS file
 ! using cfitsio library
 !---------------------------------------------------
-subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
+subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
+ integer, intent(in), optional :: hdu ! specify which hdu to read
  integer :: iunit,ireadwrite,npixels,blocksize
- integer :: firstpix,nullval,group
+ integer :: firstpix,nullval,group,hdutype
  logical :: anynull
  integer :: ndim
  !
@@ -215,13 +223,24 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr)
     ierr = -1
     return
  endif
+ !
+ ! switch to specified hdu, if argument is given
+ !
+ if (present(hdu)) then
+    print*,' reading hdu ',hdu
+    call ftmahd(iunit,hdu,hdutype,ierr)   ! hdutype==0
+    if (ierr /= 0 .or. hdutype /= 0) then
+       ierr = -2
+       return
+    endif
+ endif
 
  if (present(hdr)) call read_fits_head(iunit,hdr,ierr)
 
  call ftgidm(iunit,ndim,ierr) ! get_img_dim
+ if (ndim>=3) ndim = 3
  call ftgisz(iunit,3,naxes(1:ndim),ierr)
  if (ndim==2) naxes(3) = 1
- if (ndim>=3) ndim = 3
 
  !if (present(hdr)) bitpix = abs(get_from_header('BITPIX',hdr,ierr))
 
@@ -265,6 +284,8 @@ end subroutine read_fits_cube
      fits_error = 'could not allocate memory'
   case(1)
      fits_error = 'no pixels found'
+  case(-2)
+     fits_error = 'could not open specified hdu in fits file'
   case(-1)
      fits_error = 'could not open fits file'
   case default
@@ -328,7 +349,7 @@ end subroutine read_fits_cube
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
 
-  img32 = image  ! copy and allocate
+  img32 = real(image,kind=real32)  ! copy and allocate
   if (present(hdr)) then
      call write_fits_image(filename,img32,naxes,ierr,hdr)
   else
@@ -356,8 +377,13 @@ end subroutine read_fits_cube
 
    !  Create the new empty FITS file.
    blocksize=1
-   print "(a)",' writing '//trim(filename)
    call ftinit(iunit,filename,blocksize,ierr)
+   if (ierr /= 0) then
+      print "(a)",' ERROR: '//trim(filename)//' already exists or is not writeable'
+      return
+   else
+      print "(a)",' writing '//trim(filename)
+   endif
 
    !  Initialize parameters about the FITS image
    simple=.true.
@@ -382,6 +408,64 @@ end subroutine read_fits_cube
 
  end subroutine write_fits_cube
 
+
+!------------------------------------------------
+! Writing new fits file
+!------------------------------------------------
+ subroutine append_to_fits_cube(filename,image,naxes,ierr,hdr)
+   character(len=*), intent(in) :: filename
+   integer, intent(in)  :: naxes(3)
+   real(kind=real32), intent(in) :: image(naxes(1),naxes(2),naxes(3))
+   integer, intent(out) :: ierr
+   character(len=80), intent(in), optional :: hdr(:)
+   integer :: iunit,blocksize,group,firstpixel,bitpix,npixels,ireadwrite
+   logical :: simple,extend
+
+   !  Get an unused Logical Unit Number to use to open the FITS file.
+   ierr = 0
+   call ftgiou(iunit,ierr)
+
+   !  Open the FITS file for read/write
+   blocksize=1
+   ireadwrite=1
+   call ftopen(iunit,filename,ireadwrite,blocksize,ierr)
+   if (ierr /= 0) then
+      print "(a)",' ERROR: '//trim(filename)//' does not exist or is not read/writeable'
+      return
+   else
+      print "(a)",' appending to '//trim(filename)
+   endif
+
+   !--create new hdu in the fits file
+   call ftcrhd(iunit,ierr)
+   if (ierr /= 0) then
+      print "(a)",'ERROR creating new hdu in '//trim(filename)
+      return
+   endif
+
+   !  Initialize parameters about the FITS image
+   simple=.true.
+   ! data size
+   bitpix=-32
+   extend=.true.
+
+   !  Write the required header keywords.
+   call ftphpr(iunit,simple,bitpix,3,naxes,0,1,extend,ierr)
+   !  Write additional header keywords, if present
+   if (present(hdr)) call write_fits_head(iunit,hdr,ierr)
+
+   group=1
+   firstpixel=1
+   npixels = product(naxes)
+   ! write as real*4
+   call ftppre(iunit,group,firstpixel,npixels,image,ierr)
+
+   !  Close the file and free the unit number
+   call ftclos(iunit, ierr)
+   call ftfiou(iunit, ierr)
+
+ end subroutine append_to_fits_cube
+
 !-------------------------------------------------------------
 ! Writing new fits file (convert from double precision input)
 !-------------------------------------------------------------
@@ -393,7 +477,7 @@ subroutine write_fits_cube64(filename,image,naxes,ierr,hdr)
  integer,           intent(out) :: ierr
  real(kind=real32), allocatable :: img32(:,:,:)
 
- img32 = image  ! copy and allocate
+ img32 = real(image,kind=real32)  ! copy and allocate
  if (present(hdr)) then
     call write_fits_cube(filename,img32,naxes,ierr,hdr)
  else
@@ -409,7 +493,7 @@ end subroutine write_fits_cube64
 subroutine read_fits_image64(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real64), intent(out), allocatable :: image(:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(2),ierr
  real(kind=real32), allocatable :: img32(:,:)
 
@@ -429,7 +513,7 @@ end subroutine read_fits_image64
 subroutine read_fits_cube64(filename,image,naxes,ierr,hdr)
  character(len=*), intent(in)   :: filename
  real(kind=real64), intent(out), allocatable :: image(:,:,:)
- character(len=:), intent(inout), allocatable, optional :: hdr(:)
+ character(len=80), intent(inout), allocatable, optional :: hdr(:)
  integer, intent(out) :: naxes(4),ierr
  real(kind=real32), allocatable :: img32(:,:,:)
 
@@ -468,42 +552,62 @@ end subroutine get_floats_from_fits_header
 ! will extract anything readable as a floating
 ! point number
 !------------------------------------------------
-subroutine get_fits_header_entry(record,tag,val,ierr)
+subroutine get_fits_header_entry(record,key,rval,ierr)
  character(len=80), intent(in) :: record
- character(len=*),  intent(out) :: tag
- real, intent(out) :: val
+ character(len=*),  intent(out) :: key
+ real, intent(out) :: rval
  integer, intent(out) :: ierr
+ character(len=80) :: val
  integer :: ieq
 
- tag = ''
- val = 0.
- ierr = -1
- ! split on equals sign
- ieq = index(record,'=')
- if (ieq > 0) then
-    tag = record(1:ieq-1)
-    read(record(ieq+1:),*,iostat=ierr) val
+ call get_fits_header_key_val(record,key,val,ierr)
+ if (ierr == 0) then
+    read(val,*,iostat=ierr) rval
  endif
 
 end subroutine get_fits_header_entry
 
 !------------------------------------------------
+! get tag:val pairs from fits header record
+! returns the string value
+!------------------------------------------------
+subroutine get_fits_header_key_val(record,key,val,ierr)
+ character(len=80), intent(in) :: record
+ character(len=*),  intent(out) :: key
+ character(len=*),  intent(out) :: val
+ integer, intent(out) :: ierr
+ integer :: ieq
+
+ key = ''
+ val = ''
+ ierr = -1
+ ! split on equals sign
+ ieq = index(record,'=')
+ if (ieq > 0) then
+    key = record(1:ieq-1)
+    val = record(ieq+1:)
+    ierr = 0
+ endif
+
+end subroutine get_fits_header_key_val
+
+!------------------------------------------------
 ! search fits header to find a particular variable
 ! e.g. bmaj = get_from_header('BMAJ',hdr,ierr)
 !------------------------------------------------
-function get_from_header(tag,hdr,ierr) result(val)
- character(len=*),  intent(in) :: tag
+function get_from_header(key,hdr,ierr) result(val)
+ character(len=*),  intent(in) :: key
  character(len=80), intent(in) :: hdr(:)
  integer,           intent(out) :: ierr
- character(len=len(tag)) :: mytag
+ character(len=len(key)) :: mykey
  real :: val,myval
  integer :: i
 
  val = 0.
  ierr = -1
  do i=1,size(hdr)
-    call get_fits_header_entry(hdr(i),mytag,myval,ierr)
-    if (trim(adjustl(mytag))==trim(tag) .and. ierr==0) then
+    call get_fits_header_entry(hdr(i),mykey,myval,ierr)
+    if (trim(adjustl(mykey))==trim(key) .and. ierr==0) then
        val = myval
        ierr = 0
        return
@@ -511,5 +615,61 @@ function get_from_header(tag,hdr,ierr) result(val)
  enddo
 
 end function get_from_header
+
+!------------------------------------------------
+! search fits header to find a particular string
+! e.g. bmaj = get_from_header('BMAJ',hdr,ierr)
+!------------------------------------------------
+function get_from_header_s(key,hdr,ierr) result(val)
+ character(len=*),  intent(in) :: key
+ character(len=80), intent(in) :: hdr(:)
+ integer,           intent(out) :: ierr
+ character(len=len(key)) :: mykey
+ character(len=80) :: val,myval
+ integer :: i
+
+ val = ''
+ ierr = -1
+ do i=1,size(hdr)
+    call get_fits_header_key_val(hdr(i),mykey,myval,ierr)
+    if (trim(adjustl(mykey))==trim(key) .and. ierr==0) then
+       val = myval
+       ierr = 0
+       return
+    endif
+ enddo
+
+end function get_from_header_s
+
+!------------------------------------------------
+! get velocity grid from the fits file
+!------------------------------------------------
+subroutine get_velocity_from_fits_header(nv,vel,hdr,ierr)
+ integer, intent(in)  :: nv
+ real,    intent(out) :: vel(nv)
+ character(len=80), intent(in) :: hdr(:)
+ integer, intent(out) :: ierr
+ integer :: k
+ real :: dv,restfreq,crpix,crval
+ character(len=80) :: velocity_type
+
+ dv = get_from_header('CDELT3',hdr,ierr)
+ restfreq = get_from_header('RESTFREQ',hdr,ierr)
+ velocity_type = get_from_header_s('CTYPE3',hdr,ierr)
+ if (trim(velocity_type) == "VELO-LSR") then
+    crpix = get_from_header('CRPIX3',hdr,ierr)
+    crval = get_from_header('CRVAL3',hdr,ierr)
+    do k=1,nv
+       vel(k) = crval + dv * (k - crpix)
+    enddo
+ else
+    write(*,"(4x,a,/)") 'warning: velocity type '//trim(velocity_type)//' not recognised in fits header'
+    dv = 1.
+    do k=1,nv
+       vel(k) = dv * (k - 0.5)
+    enddo
+ endif
+
+end subroutine get_velocity_from_fits_header
 
 end module readwrite_fits

@@ -40,7 +40,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
  use timestep_plotting, only:initialise_plotting,plotstep
  use plotlib,           only:plot_close
  integer, intent(in) :: ipicky,ipickx,irender,icontourplot,ivecplot
- integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev
+ integer :: ipos, istep, ilocindat, iadvance, istepsonpage, istepprev, irender_tmp
  logical :: ipagechange
 
  call initialise_plotting(ipicky,ipickx,irender,icontourplot,ivecplot)
@@ -71,6 +71,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
  !--if the current file has only been partially read,
  !  make sure we read the file again now that we may have different plotting options
  if (ipartialread) ifileopen = 0
+ irender_tmp = irender
 
  over_timesteps: do while (ipos <= iendatstep)
 
@@ -162,9 +163,10 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
     endif
 
 !     print*,'ipos = ',ipos,' istep = ',istep,' iposindat = ',ilocindat
-    call plotstep(ipos,istep,istepsonpage,irender,icontourplot,ivecplot,iamtype(:,ilocindat), &
-                   npartoftype(:,ilocindat),masstype(:,ilocindat),dat(:,:,ilocindat), &
-                   time(ilocindat),gamma(ilocindat),headervals(:,ilocindat),ipagechange,iadvance)
+    call plotstep(ipos,istep,istepsonpage,irender_tmp,icontourplot,ivecplot,&
+                  iamtype(:,ilocindat),npartoftype(:,ilocindat),masstype(:,ilocindat),&
+                  dat(:,:,ilocindat),time(ilocindat),gamma(ilocindat),&
+                  headervals(:,ilocindat),ipagechange,iadvance)
 !
 !--increment timestep -- iadvance can be changed interactively
 !

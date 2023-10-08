@@ -1,4 +1,101 @@
 
+**3.8.1: (01/05/23)**
+
+- seg faults in auto-magic exact solution mapping fixed
+- longer line limit in determining number of columns in ascii/exact solution files
+- automatically handle log in exact solution labels (e.g. logR, logT)
+
+**3.8.0: (26/04/23)**
+
+- plots multiple renderings with transparent background if more than one timestep per page selected
+- auto-magically map exact solution columns onto splash columns
+- added --exact=file1,file2 to switch on plotting of exact solution from file(s)
+- added --track=maxdens and --origin=maxdens to track/recentre on maximum density
+- pressing backspace over legends deletes them
+- use density weighted and normalised rendering by default in projection plots of vector fields
+
+**3.7.2: (21/02/23)**
+
+- bug fix recognising labels like v_{phi} on command line, can now use -r vphi
+
+**3.7.1: (09/02/23)**
+
+- libexact build failure fixed
+
+**3.7.0: (09/02/23)**
+
+- splash calc extinction computes column density to all sink particles in the simulation
+- bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems
+- bug fix with both quantities appearing in black and white when double rendering
+
+**3.6.0: (31/10/22)**
+
+- skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending)
+- splash calc plus and splash calc minus for adding/subtracting snapshots
+- added --origin=6245 flag to centre the origin on particle 6245
+- added --hdu=1 flag to read from a particular hdu in a fits file
+- use wcs coordinates / arcseconds for fits images if present in header
+- option --dense to reset to densest clump in phantom/sphNG data read (thanks to J. Wurster)
+
+**3.5.1: (20/06/22)**
+
+- bug fix with autolog limits
+- build failures in libexact and libread fixed and now tested
+- recognise labels on command line e.g. -r density
+- limits option for centred cube (thanks to J. Wurster)
+
+**3.5.0: (17/06/22)**
+
+- bug fix with blank lines in splash.titles
+- bug fix with large line lengths in csv files
+- allow blank labels in csv headers
+- bug fix with display of column labels from ascii/csv files
+- log colour bar by default when using -r flag if more than 3 orders of magnitude range
+
+**3.4.0: (24/03/22)**
+
+- density weighted interpolation now applied automatically to projection plots of quantities that are not densities
+- added flags --codeunits or --code to enforce code units from command line
+- successfully parse csv files where some of the fields are character strings
+
+**3.3.5: (01/03/22)**
+
+- bug fix with disappearing sinks in phantom MPI dumps
+
+**3.3.4: (21/01/22)**
+
+- improved visual appearance of normalised renderings with free boundaries
+- automatically read planet-wake parameters from phantom file headers
+- added --wake=1,3 flag to plot wake from sink particle 3 around star 1
+- bug fix with disappearing sinks in phantom MPI dumps
+- fixed seg fault in fits reader
+
+**3.3.3: (19/11/21)**
+
+- "splash to csv" exports to comma separated variable (.csv) format
+- automatically apply -ev flag for filenames ending in .ev, .mdot or .out
+- improved label recognition from ascii file headers
+- additional divergent colour schemes (thanks to Sahl Rowther)
+- deal with merged sink particles from phantom (thanks to James Wurster)
+- bug fix with units resetting to 1
+- skip blank and comment lines in splash.filenames
+
+**3.3.2: (20/07/21)**
+
+- bug fix with -dev flag
+- silenced unnecessary dust warnings in sphNG read
+- change-of-limits animation sequence works for vector plots
+- automatic recognition of ndspmhd format
+
+**3.3.1: (19/07/21)**
+
+- f/F in interactive mode flips y axis on 2D plots to next column
+- gradual transparency in double rendering rather than sharp cutoff
+- removed S from main menu as now redundant
+- allow longer paths with -dev flag
+- added --xmin,--xmax,--ymin,--ymax flags for manual margin adjustment
+- bug fix with relativistic corrections in splash calc lightcurve
+
 **3.3.0: (20/05/21)**
 
 - bug fix with surface density plot with physical units on

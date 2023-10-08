@@ -45,7 +45,6 @@ contains
 subroutine get_environment_or_flag(variable,string)
  character(len=*), intent(in)  :: variable
  character(len=*), intent(out) :: string
- character(len=len(variable))  :: vartmp
  integer :: ierr,iloc
 
  ! try as command flag, excluding everything before the last
@@ -220,14 +219,14 @@ subroutine envlist(variable,nlist,list)
     endif
  enddo
 
- return
 end subroutine envlist
 !
 !--return comma separated list of integers
 !
-function ienvlist(variable,nlist)
+function ienvlist(variable,nlist,errval)
  character(len=*), intent(in) :: variable
  integer, intent(in) :: nlist
+ integer, intent(in), optional :: errval
  character(len=30), dimension(nlist) :: list
  integer :: ienvlist(nlist),i,ngot
 
@@ -235,7 +234,11 @@ function ienvlist(variable,nlist)
  call envlist(variable,ngot,list)
 
  do i=1,nlist
-    ienvlist(i) = ienvstring(list(i))
+    if (present(errval)) then
+       ienvlist(i) = ienvstring(list(i),errval=errval)
+    else
+       ienvlist(i) = ienvstring(list(i))
+    endif
  enddo
 
 end function ienvlist

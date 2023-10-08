@@ -36,7 +36,7 @@ module projections3D
  real, private :: ddq2table = maxcoltable/4.
 
  public :: setup_integratedkernel
- public :: interpolate3D_projection
+ public :: interpolate3D_projection,interpolate3D_proj_points
  public :: interpolate3D_proj_vec,interp3D_proj_vec_synctron
  public :: wfromtable
  public :: coltable
@@ -75,7 +75,7 @@ subroutine setup_integratedkernel
     deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
-    if (deltaz /= deltaz) print "(a)",'WARNING: NaN in kernel table setup'
+    if (isnan(deltaz)) print "(a)",'WARNING: NaN in kernel table setup'
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
@@ -160,7 +160,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
      xmin,ymin,datsmooth,npixx,npixy,pixwidthx,pixwidthy,normalise,zobserver,dscreen, &
      useaccelerate,exact_rendering,iverbose)
 
- use kernels, only:radkernel,radkernel2,cnormk3D,wallint
+ use kernels, only:radkernel,radkernel2,cnormk3D,wallint,soft_func
  use timing,  only:wall_time,print_time
  integer, intent(in) :: npart,npixx,npixy
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
@@ -183,12 +183,13 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
  real :: hmin,fac,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact,termnorm_exact
  real, dimension(npixx) :: xpix,dx2i
- real :: t_start,t_end,t_used
+ real :: t_start,t_end,t_used,datnorm_min
  logical :: iprintprogress,use3Dperspective,accelerate
  character(len=32) :: string
 
  datsmooth = 0.
  term = 0.
+ datnorm_min = huge(0.)
  string = 'projecting'
  if (normalise) then
     string = trim(string)//' (normalised)'
@@ -274,7 +275,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
 !$omp private(dx2i,row,q2,ypix,dy,dy2,wab,termnorm_exact,term_exact) &
 !$omp private(i,ipix,jpix,jpixcopy,fac,dfac,pixwidthz,pixint,zi,xpixi,zpix) &
-!$omp private(iprogress,iprintnext) &
+!$omp private(iprogress) &
+!$omp firstprivate(iprintnext) &
 !$omp reduction(+:nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !$omp do schedule (guided, 2)
@@ -292,7 +294,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--set h related quantities
     !
@@ -502,9 +504,15 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !
  if (normalise) then
     !--normalise everywhere (required if not using SPH weighting)
-    where (datnorm > tiny(datnorm))
-       datsmooth = datsmooth/datnorm
-    end where
+    !where (datnorm > tiny(datnorm))
+      ! datsmooth = datsmooth/(datnorm)
+    !end where
+    !
+    ! compute the minimum possible value for datnorm, then multiply
+    ! with a kernel-softened version of 1/x to avoid dividing by zero
+    !
+    datnorm_min = minval(weight*hh,mask=(weight > tiny(0.)))
+    datsmooth = datsmooth*soft_func(datnorm,datnorm_min)
  endif
 !
 !--warn about subgrid interpolation
@@ -596,7 +604,7 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--set kernel related quantities
     !
@@ -682,8 +690,6 @@ subroutine interpolate3D_proj_vec(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     end where
  endif
  if (allocated(datnorm)) deallocate(datnorm)
-
- return
 
 end subroutine interpolate3D_proj_vec
 
@@ -783,7 +789,7 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
     !
     !--skip particles with itype < 0
     !
-    if (itype(i) < 0) cycle over_particles
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
     !
     !--skip particles with utherm < uthermcutoff
     !
@@ -891,5 +897,129 @@ subroutine interp3D_proj_vec_synctron(x,y,z,hh,weight,vecx,vecy,itype,npart,&
 
 end subroutine interp3D_proj_vec_synctron
 
+!--------------------------------------------------------------------------
+!
+!     Same as previous but for column integrated quantities on
+!     a collection  of irregular points
+!
+!     Input: particle coordinates  : x,y   (npart)
+!            smoothing lengths     : hh    (npart)
+!            weight for each particle : weight (npart)
+!            vector data to smooth : dat  (npart)
+!                                    vecy  (npart)
+!
+!     Output: smoothed vector field   : datsmoothx (npixx,npixy)
+!                                     : vecsmoothy (npixx,npixy)
+!
+!     Daniel Price 23/12/04
+!--------------------------------------------------------------------------
+
+subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
+           xpoints,ypoints,zpoints,datsmooth,npoints,normalise,iverbose)
+
+ use kernels, only:radkernel,radkernel2
+ integer, intent(in) :: npart,npoints,iverbose
+ real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
+ integer, intent(in), dimension(npart) :: itype
+ real, intent(in), dimension(npoints) :: xpoints,ypoints,zpoints
+ real, intent(out), dimension(npoints) :: datsmooth
+ logical, intent(in) :: normalise
+ real, dimension(:), allocatable :: datnorm
+
+ integer :: i,j,ierr
+ real :: hi,hi1,hi21,radkern,q2,wab,rab2,const
+ real :: term,termnorm,dx,dy,dz
+
+ datsmooth = 0.
+ term = 0.
+ if (normalise) then
+    if (iverbose >= 0) print "(1x,a)",'projecting (normalised) from particles to points...'
+    allocate(datnorm(npoints),stat=ierr)
+    if (ierr /= 0) then
+       if (iverbose >= -1) print "(a)",'interpolate3D_proj_points: error allocating memory'
+       return
+    endif
+    datnorm = 0.
+ else
+    if (iverbose >= 0) print "(1x,a)",'projecting from particles to points...'
+ endif
+ !
+ !--check column density table has actually been setup
+ !
+ if (.not.have_setup_kernel) call setup_integratedkernel
+ !
+ !--loop over particles
+ !
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
+!$omp shared(xpoints,ypoints,zpoints,datnorm) &
+!$omp shared(npoints,normalise,radkernel,radkernel2) &
+!$omp private(hi,radkern,const) &
+!$omp private(hi1,hi21,term,termnorm) &
+!$omp private(i,j) &
+!$omp private(dz,dy,dx,rab2,q2,wab)
+!$omp do schedule(guided, 2)
+ over_particles: do i=1,npart
+    !
+    !--skip particles with itype < 0
+    !
+    if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_particles
+    !
+    !--set kernel related quantities
+    !
+    hi = hh(i)
+    const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
+    if (hi <= 0.) cycle over_particles
+
+    radkern = radkernel*hi    ! radius of the smoothing kernel
+    hi1 = 1./hi
+    hi21 = hi1*hi1
+
+    term = const*dat(i)
+    termnorm = const
+
+    !
+    !--loop over points, adding the contribution from this particle
+    !
+    over_points: do j = 1,npoints
+       dz = zpoints(j) - z(i)
+       if (dz > 0.) cycle over_points  ! skip if point is behind particle
+       dy = ypoints(j) - y(i)
+       dx = xpoints(j) - x(i)
+
+       rab2 = dx*dx + dy*dy
+       q2 = rab2*hi21
+       !
+       !--SPH kernel - integral through cubic spline
+       !  interpolate from a pre-calculated table
+       !
+       if (q2 < radkernel2) then
+          wab = wfromtable(q2)
+          !
+          !--calculate data value at this pixel using the summation interpolant
+          !
+          !$omp atomic
+          datsmooth(j) = datsmooth(j) + term*wab
+
+          if (normalise) then
+             !$omp atomic
+             datnorm(j) = datnorm(j) + termnorm*wab
+          endif
+       endif
+    enddo over_points
+
+ enddo over_particles
+!$omp enddo
+!$omp end parallel
+
+ if (normalise .and. allocated(datnorm)) then
+    !--normalise everywhere
+    where (datnorm > tiny(datnorm))
+       datsmooth = datsmooth/datnorm
+    end where
+ endif
+ if (allocated(datnorm)) deallocate(datnorm)
+
+end subroutine interpolate3D_proj_points
 
 end module projections3D

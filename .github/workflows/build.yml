@@ -26,10 +26,31 @@ jobs:
       run: gfortran --version
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash
       run: make SYSTEM=gfortran withgiza
+
+    - name: clean
+      run: make clean
+
+    - name: compile libexact
+      run: make SYSTEM=gfortran libexact
+
+    - name: compile libread
+      run: make SYSTEM=gfortran libread
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash in single precision
+      run: make SYSTEM=gfortran DOUBLEPRECISION=no withgiza
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash with debug flags
+      run: make SYSTEM=gfortran DEBUG=yes withgiza

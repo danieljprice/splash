@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -42,6 +42,8 @@ module timestep_plotting
  integer, private :: iplots,ipanel
  integer, private :: iframesave
  integer, private :: npixx,npixy,npixz
+ integer, private :: icol_prev = 0
+ logical, allocatable, private :: use_type_prev(:)
 
  real, dimension(:),     allocatable, private :: datpix1D, xgrid
  real, dimension(:,:),   allocatable, private :: datpix,datpixcont,brightness
@@ -63,7 +65,7 @@ module timestep_plotting
 
  logical, private :: iplotpart,iplotcont,x_sec,isamexaxis,isameyaxis,iamrendering,idoingvecplot
  logical, private :: inewpage,tile_plots,lastplot,lastinpanel
- logical, private :: imulti,irerender,iAllowspaceforcolourbar,ihavesetweights
+ logical, private :: imulti,irerender,iAllowspaceforcolourbar
  logical, private :: interactivereplot,ihavesetcolours,vectordevice,gotcontours
  logical, private :: OneColourBarPerRow,OneColourBarPerColumn
 
@@ -510,7 +512,9 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
     required(ih) = .true.
     required(irender_nomulti) = .true.
     required(icontour_nomulti) = .true.
+    if (use3Dopacityrendering) required(ikappa) = .true.
  endif
+
  !!--need to read columns used for range restrictions
  do i=1,ndataplots
     if (rangeset(i)) required(i) = .true.
@@ -578,7 +582,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
        stop
     endif
     if (ierr /= 0) print "(a)",' ERROR opening plotting device'
-    if (ntries > 10) stop
+    if (ntries > 10) return
     device='' ! reset the device after first time
  enddo
 
@@ -661,7 +665,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use particle_data,      only:maxpart,maxcol,icolourme
  use settings_data,      only:numplot,ndataplots,icoords,icoordsnew,ndim,ndimV,&
                                nfreq,iRescale,iendatstep,ntypes,&
-                               UseTypeInRenderings,itracktype,itrackoffset,&
+                               UseTypeInRenderings,track_string,&
                                required,ipartialread,xorigin,lowmemorymode,&
                                debugmode,iverbose
  use settings_limits,    only:iadapt
@@ -691,7 +695,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   transform_inverse,islogged
  use interactive_routines
  use part_utils,            only:get_tracked_particle,locate_first_two_of_type,&
-                                  get_binary,locate_nth_particle_of_type
+                                  get_binary,locate_nth_particle_of_type,get_itrackpart
  use particleplots,         only:particleplot,plot_errorbarsx,plot_errorbarsy
  use powerspectrums,        only:powerspectrum
  use interpolation,         only:get_n_interp
@@ -717,8 +721,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use asciiutils,            only:string_delete
  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
                                   plot_sls,plot_line,plot_pt1,plotlib_is_pgplot
- integer, intent(inout) :: ipos, istepsonpage
- integer, intent(in)    :: istep,irender_nomulti,icontour_nomulti,ivecplot
+ integer, intent(inout) :: ipos,istepsonpage,irender_nomulti
+ integer, intent(in)    :: istep,icontour_nomulti,ivecplot
  integer(kind=int1), dimension(:), intent(in) :: iamtype
  integer, dimension(maxparttypes), intent(in) :: npartoftype
  real,    dimension(maxparttypes), intent(in) :: masstype
@@ -738,14 +742,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: icolourprev,linestyleprev
  integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
- integer :: iframe,isize,isinktype,isink1,isink2
+ integer :: iframe,isize,isinktype,isink1,isink2,itrackoffset,itracktype
 
  real, parameter :: tol = 1.e-10 ! used to compare real numbers
  real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
  real(doub_prec) :: unit_mass,unit_dens,unit_r,unit_u,unit_dz
  real, dimension(:), allocatable    :: xplot,yplot,zplot
  real, dimension(:), allocatable    :: hh,weight
- real, dimension(:), allocatable    :: renderplot
+ real, dimension(:), allocatable    :: renderplot,contourplot
  real, dimension(:,:), allocatable  :: vecplot
  real, dimension(:), allocatable    :: rkappa
  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
@@ -771,6 +775,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  labelz = ' '
  labelrender = ' '
  labelvecplot = ' '
+ use_type_prev = UseTypeInRenderings(:) ! allocate memory
+ use_type_prev = .false.  ! set to false
 
  !
  !--allocate temporary memory required for plotting
@@ -792,7 +798,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  if (allocated(yplot)) yplot = 0.
  if (allocated(zplot)) zplot = 0.
 
- allocate(hh(maxpart),weight(maxpart),stat=ierr)
+ allocate(hh(maxpart),weight(maxpart),renderplot(maxpart),stat=ierr)
  if (ierr /= 0) stop 'out of memory in plotstep allocating temporary h,weight arrays'
  hh = 0.
  if (debugmode) print*,'DEBUG: in plotstep, allocated local memory successfully'
@@ -844,9 +850,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                         (use3Dopacityrendering .and. rendersinks))
 
  !--work out the identity of a particle being tracked
- if (debugmode) print*,'DEBUG: itracktype = ',itracktype,' itrackoffset = ',itrackoffset
- itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+ if (debugmode) print*,'DEBUG: track_string = ',track_string
+ itrackpart = get_tracked_particle(track_string,npartoftype,iamtype,dat,irho)
  if (itrackpart == 0) then
+    call get_itrackpart(track_string,itracktype,itrackoffset,ierr)
     write(string,"(i12)") itrackoffset
     string = adjustl(string)
     if (itracktype > 0 .and. itracktype <= ntypes) then
@@ -882,16 +889,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     if (UseTypeInRenderings(i) .and. &
         .not.(iplotpartoftype(i).eqv.UseTypeInContours(i))) isameweights = .false.
  enddo
- !
- !--set weight factor for interpolation routines
- !
- ihavesetweights = .false.
- if (iamrendering .or. idoingvecplot) then
-    if (debugmode) print*,'DEBUG: setting interpolation weights...'
-    call set_weights(weight,dat,iamtype,(iplotpartoftype .and. UseTypeInRenderings))
- else
-    if (debugmode) print*,'DEBUG: interpolation weights not set because no rendering...'
- endif
 
  !--set the colour table if it has not been set and particles have been coloured previously
  if (.not.ihavesetcolours) call colour_set(icolours)
@@ -970,10 +967,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              iusetype(:) = iplotpartoftype(:)
           else
              iusetype(:) = iplotpartoftypemulti(:,nyplot)
-          endif
-          if (irender > 0 .or. icontourplot > 0 .or. ivectorplot > 0) then
-             if (debugmode) print*,'DEBUG: resetting interpolation weights for multiplot...'
-             call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
           endif
        else
           if (.not.interactivereplot) irender = irender_nomulti
@@ -1140,6 +1133,22 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (iamvecx > 0) call changeveccoords(iplotx,xplot,ntoti,ndim,itrackpart,dat)
              if (iamvecy > 0) call changeveccoords(iploty,yplot,ntoti,ndim,itrackpart,dat)
           endif
+          !
+          !--change coordinate system in the quantity being rendered
+          !
+          if (irender > 0 .and. rendering) then
+             renderplot(1:ntoti) = dat(1:ntoti,irender)
+             if (icoordsnew /= icoords .and. iamvec(irender) > 0) then
+                call changeveccoords(irender,renderplot,ntoti,ndim,itrackpart,dat)
+             endif
+             if (icontourplot > 0) then
+                if (.not.allocated(contourplot)) allocate(contourplot(size(renderplot))) ! only do this once
+                contourplot(1:ninterp) = dat(1:ninterp,icontourplot)
+                if (icoordsnew /= icoords .and. iamvec(icontourplot) > 0) then
+                   call changeveccoords(icontourplot,contourplot,ntoti,ndim,itrackpart,dat)
+                endif
+             endif
+          endif
 
           !--apply transformations (log, 1/x etc) if appropriate
           !  also change labels and limits appropriately
@@ -1148,8 +1157,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (itransy /= 0) call applytrans(yplot,ymin,ymax,labely,itransy,'y',iploty,iaxis,interactivereplot)
           endif
 
-          !--write username, date on plot
-          !         if (nacross <= 2.and.ndown <= 2) call pgiden
           !
           !--adjust plot limits if adaptive plot limits set
           !  (find minimum/maximum only on particle types actually plotted)
@@ -1230,7 +1237,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !
           if (ndim >= 2 .and. (irotate .or. (ndim==3 .and.use3Dperspective)) &
             .and. icoordsnew==1) then
-             if ((irotate .and. (angletempx > tiny(0.) .or. angletempy > tiny(0.))) &
+             if ((irotate .and. ((angletempx > tiny(0.) .and. abs(angletempx-180.) > tiny(0.)) &
+                            .or. (angletempy > tiny(0.) .and. abs(angletempy-180.) > tiny(0.)))) &
                .or.(ndim==3 .and.use3Dperspective .and. dzscreentemp > tiny(0.))) then
                 if (iaxis >= 0) iaxistemp = -3
              endif
@@ -1298,6 +1306,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
              npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
              npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
+             npixx = 2*(npixx/2)
+             npixy = 2*(npixy/2)
 
              !!--only need z pixels if working with interpolation to 3D grid
              !  (then number of z pixels is equal to number of cross sections)
@@ -1307,6 +1317,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
 
              if (.not.interactivereplot .or. irerender) then
+                ! set interpolation weights (skips if they are the same)
+                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                 if (allocated(datpix)) then
                    if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
                       deallocate(datpix)
@@ -1338,22 +1351,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    !!  allocate memory for rendering array
                    if (.not. x_sec) then
                       call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
-                         hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                         hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                          icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy, &
                          pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                       !--also get contour plot data
                       if (icontourplot > 0 .and. icontourplot <= numplot) then
-                         if (.not.isameweights) & ! set contouring weights as necessary
-                          call set_weights(weight,dat,iamtype,UseTypeInContours)
-
+                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
                          call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
-                            hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                            hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
                             pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                          gotcontours = .true.
-
-                         if (.not.isameweights) & ! reset weights
-                          call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                       endif
                    endif
                 case(3)
@@ -1366,7 +1374,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       !!--interpolate from particles to 3D grid
                       call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                          zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                         dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                         renderplot(1:ninterp),icolourme(1:ninterp), &
                          ninterp,xmin,ymin,zmin,datpix3D,npixx,npixy,npixz,&
                          pixwidth,pixwidth,dz, &
                          inormalise,isperiodicx,isperiodicy,isperiodicz)
@@ -1376,20 +1384,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          if (allocated(datpixcont3D)) deallocate(datpixcont3D)
                          allocate ( datpixcont3D(npixx,npixy,npixz) )
 
-                         if (.not.isameweights) & ! set contouring weights as necessary
-                          call set_weights(weight,dat,iamtype,UseTypeInContours)
+                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
 
                          !!--interpolate from particles to 3D grid
                          call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
                             zplot(1:ninterp),hh(1:ninterp),weight(1:ninterp), &
-                            dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                            contourplot(1:ninterp),icolourme(1:ninterp), &
                             ninterp,xmin,ymin,zmin,datpixcont3D,npixx,npixy,npixz,&
                             pixwidth,pixwidth,dz, &
                             inormalise,isperiodicx,isperiodicy,isperiodicz)
                          gotcontours = .true.
-
-                         if (.not.isameweights) & ! reset weights
-                          call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                       endif
                    endif
                 end select
@@ -1476,47 +1480,45 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 ' : opacity-rendered cross section', xmin,ymin
                             if (ipmass > 0) then
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  if (.not.isameweights) & ! set contouring weights as necessary
-                                   call set_weights(weight,dat,iamtype,UseTypeInContours)
+                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
-                                  dat(1:ninterp,icontourplot), &
+                                  contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
                                   gotcontours = .true.
-
-                                  if (.not.isameweights) & ! reset weights
-                                   call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                                endif
+
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp), &
-                               dat(1:ninterp,irenderplot), &
+                               renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
                             else
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  if (.not.isameweights) & ! set contouring weights as necessary
-                                   call set_weights(weight,dat,iamtype,UseTypeInContours)
+                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
                                   gotcontours = .true.
-
-                                  if (.not.isameweights) & ! reset weights
-                                   call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                                endif
+
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
@@ -1528,43 +1530,42 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             !!--do fast cross-section
                             if (iverbose > 0) print*,trim(label(ix(iplotz))),' = ',zslicepos,  &
                                 ' : fast cross section', xmin,ymin
+
+                            call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                             if (icoordsnew /= icoords) then
                                call interpolate3D_xsec_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp),&
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp),icolourme(1:ninterp),&
                                   ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                             else
                                call interpolate3D_fastxsec( &
                                   xplot(1:ninterp),yplot(1:ninterp), &
                                   zplot(1:ninterp),hh(1:ninterp), &
-                                  weight(1:ninterp),dat(1:ninterp,irenderplot),icolourme(1:ninterp), &
+                                  weight(1:ninterp),renderplot(1:ninterp),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,zslicepos,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,iverbose)
                             endif
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               if (.not.isameweights) & ! set contouring weights as necessary
-                                call set_weights(weight,dat,iamtype,UseTypeInContours)
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_xsec_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp),&
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp),icolourme(1:ninterp),&
                                      ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                                else
                                   call interpolate3D_fastxsec( &
                                      xplot(1:ninterp),yplot(1:ninterp), &
                                      zplot(1:ninterp),hh(1:ninterp), &
-                                     weight(1:ninterp),dat(1:ninterp,icontourplot),icolourme(1:ninterp), &
+                                     weight(1:ninterp),contourplot(1:ninterp),icolourme(1:ninterp), &
                                      ninterp,xmin,ymin,zslicepos,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,iverbose)
                                endif
                                gotcontours = .true.
-
-                               if (.not.isameweights) & ! reset weights
-                                call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                             endif
                          endif
                       else
@@ -1573,89 +1574,85 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             if (ipmass > 0) then
                                !--contour plot first
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  if (.not.isameweights) & ! set contouring weights as necessary
-                                   call set_weights(weight,dat,iamtype,UseTypeInContours)
-
+                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
-                                  dat(1:ninterp,icontourplot), &
+                                  contourplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
                                   gotcontours = .true.
-
-                                  if (.not.isameweights) & ! reset weights
-                                   call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                                endif
+
+                               ! set weights
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),&
-                               weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
                             else
                                !--do contour plot first so brightness corresponds to render plot
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  if (.not.isameweights) & ! set contouring weights as necessary
-                                   call set_weights(weight,dat,iamtype,UseTypeInContours)
+                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   dat(1:ninterp,iz),icolourme(1:ninterp), &
                                   ninterp,xmin,ymin,datpixcont,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                   dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
                                   gotcontours = .true.
 
-                                  if (.not.isameweights) & ! reset weights
-                                   call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                                endif
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
                                call interp3D_proj_opacity( &
                                xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                               pmassav,1,hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                               pmassav,1,hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                dat(1:ninterp,iz),icolourme(1:ninterp), &
                                ninterp,xmin,ymin,datpix,brightness,npixx,npixy,pixwidth,pixwidthy,zobservertemp, &
                                dzscreentemp,rkappa,huge(zslicepos),iverbose,exact_rendering)
                             endif
                          else
+                            ! set interpolation weights (skips if they are the same)
+                            call set_weights(weight,dat,iamtype,&
+                                             (iusetype .and. UseTypeInRenderings),irenderplot)
+
                             !!--do fast projection of z integrated data (e.g. column density)
                             if (icoordsnew /= icoords) then
                                call interpolate3D_proj_geom( &
                                   dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                             else
                                call interpolate3D_projection( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                  hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                                  hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                             endif
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               if (.not.isameweights) & ! set contouring weights as necessary
-                                call set_weights(weight,dat,iamtype,UseTypeInContours)
+                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot)
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_proj_geom( &
                                      dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,icoordsnew,iplotx,iploty,iplotz,ix,xorigin)
                                else
                                   call interpolate3D_projection( &
                                      xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
-                                     hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,icontourplot), &
+                                     hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                                      icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy,pixwidth, &
                                      pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                                endif
                                gotcontours = .true.
-
-                               if (.not.isameweights) & ! reset weights
-                                call set_weights(weight,dat,iamtype,UseTypeInRenderings)
                             endif
                             !!--adjust the units of the z-integrated quantity
                             if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
@@ -1686,9 +1683,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 dxgrid = (xmax-xmin)/REAL(npixx)
                 call set_grid1D(xmin,xmax,dxgrid,npixx)
 
+                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
+
                 call interpolate2D_xsec( &
                    dat(1:ninterp,iplotx),dat(1:ninterp,iploty),&
-                   hh(1:ninterp),weight(1:ninterp),dat(1:ninterp,irenderplot), &
+                   hh(1:ninterp),weight(1:ninterp),renderplot(1:ninterp), &
                    icolourme(1:ninterp),ninterp,xseclineX1,xseclineY1,xseclineX2,xseclineY2, &
                    datpix1D,npixx,inormalise)
                 !
@@ -1760,9 +1759,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
                       inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                       labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
-                                                  labelzintegration,projlabelformat,iapplyprojformat)
-                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inormalise,&
-                                                 iRescale,labelzintegration,projlabelformat,iapplyprojformat)
+                                      labelzintegration,projlabelformat,iapplyprojformat)
+                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
+                                      iRescale,labelzintegration,projlabelformat,iapplyprojformat)
                    endif
                    !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                    labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -1802,8 +1801,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       if (.not.interactivereplot .and. .not.isetrenderlimits) then
                          if (iadapt) then
                             if (iverbose > 1) print*,'adapting render limits'
-                            rendermin = renderminadapt
                             rendermax = rendermaxadapt
+                            rendermin = renderminadapt
+                            if (logged) rendermin = max(rendermin,rendermax/1e6) ! limit to 6 orders of magnitude
                          else
                             !!--or apply transformations to fixed limits
                             rendermin = lim(irenderplot,1)
@@ -1861,12 +1861,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 !   similar but where particle colouring is used instead of interpolation
                 !-------------------------------------------------------------------------
              elseif (irenderpart > 0 .and. iplotpart) then
-                !--allocate memory for particle colouring
-                if (.not.allocated(renderplot)) then
-                   allocate(renderplot(ntoti),stat=ierr)
-                   if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
-                endif
-
                 !--apply transformations to render array and set label
                 renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
                 call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -1897,9 +1891,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 !
                 call colour_particles(renderplot(1:ntoti), &
                    rendermin,rendermax,icolourme(1:ntoti),ntoti)
-
-                !--deallocate memory
-                if (allocated(renderplot)) deallocate(renderplot)
 
              endif
 
@@ -1949,14 +1940,28 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    else
                       icolours_temp = icolours
                    endif
+
                    !--call subroutine to actually render the image
-                   call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                      npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                      icolours_temp,iplotcont,0,ncontours,.false.,ilabelcont,contmin,contmax)
+                   if (nstepsperpage > 1 .and. .not.(ipos==ifirststeponpage)) then
+                      !--if there is more than one rendering plotted, make the
+                      !  background colour transparent
+                      call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
+                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours_temp,iplotcont,0,ncontours,.false.,&
+                         ilabelcont,contmin,contmax,alpha=brightness)
+                   else
+                      !--usual plot, no opacity
+                      call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
+                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         icolours_temp,iplotcont,0,ncontours,.false.,&
+                         ilabelcont,contmin,contmax)
+                   endif
 
                    !--contour/2nd render plot of different quantity on top of 1st rendering
                    if (gotcontours) then
                       if (double_rendering) then
+                         call colour_set(icolours)
                          call set_transparency(npixx,npixy,datpixcont,brightness,contmin,contmax)
 
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
@@ -2030,21 +2035,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              ! vector maps (can be on top of particle plots and renderings)
              !--------------------------------------------------------------
              if (ivecx > 0 .and. ivecy > 0 .and. ivectorplot > 0) then
-                labelvecplot = trim(labelvec(ivectorplot))
-                labelvecunits = ''
-                if (iRescale) then
-                   labelvecunits = trim(unitslabel(ivectorplot))
-                   call string_delete(labelvecunits,(/'[',']'/))
-                endif
-                !!--set label for projection plots (2268 or 2412 for integral sign)
-                if (ndim==3 .and..not. x_sec) then
-                   if (iRescale) then
-                      labelvecplot = '\int '//trim(labelvecplot)//' d'// &
-                      trim(label(iz)(1:index(label(iz),unitslabel(iz))-1))//' [code units]'
-                   else
-                      labelvecplot = '\int '//trim(labelvecplot)//' d'//trim(label(iz))
-                   endif
-                endif
                 pixwidthvec  = (xmax-xmin)/real(npixvec)
                 if (just==1) then
                    pixwidthvecy = pixwidthvec !(xmax-xmin)/real(npixvec)
@@ -2054,9 +2044,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 npixyvec = int(0.999*(ymax-ymin)/pixwidthvecy) + 1
                 pixwidth = (xmax-xmin)/real(npixx) ! used in synchrotron plots
 
-                if (.not.ihavesetweights) then
+                if (ndim==3 .and. .not.x_sec) then
+                   call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings),ivecx)
+                else
                    call set_weights(weight,dat,iamtype,(iusetype.and.UseTypeInRenderings))
                 endif
+
+                !--set label for the vector plot legend
+                labelvecplot = trim(labelvec(ivectorplot))
+                labelvecunits = ''
+                if (iRescale) labelvecunits = trim(unitslabel(ivectorplot))
+                !--set label for projection plots
+                if (ndim==3 .and..not. x_sec) then
+                   labelvecplot = integrate_label(labelvecplot,ivecx,iz,inormalise,&
+                                                  .false.,shortlabel(label(iz),unitslabel(iz)),'',0)
+                   if (.not.inormalise) labelvecunits = get_unitlabel_coldens(iRescale,&
+                                                       labelzintegration,unitslabel(ivectorplot))
+                endif
+                call string_delete(labelvecunits,(/'[',']'/))
 
                 call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,&
                    pixwidthvecy,vecmax,labelvecplot,labelvecunits,got_h)
@@ -2164,12 +2169,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  (at present this is NOT used -can't render if not co-ord plot)
           !
           if (irenderpart > 0 .and. irenderpart <= numplot) then
-             !--allocate memory for particle colouring
-             if (.not.allocated(renderplot)) then
-                allocate(renderplot(ntoti),stat=ierr)
-                if (ierr /= 0) stop 'error allocating temporary array for particle colouring'
-             endif
-
              !--apply transformations to render array and set label
              renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
              call transform(renderplot(1:ntoti),itrans(irenderpart))
@@ -2247,9 +2246,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icolourme(1:ntoti),iamtype,npartoftype(:),iusetype,.false., &
                 zslicemin,zslicemax,' ',xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
           endif
-
-          !--deallocate memory
-          if (allocated(renderplot)) deallocate(renderplot)
 
           !--------------------------------
           ! plot error bars
@@ -2530,9 +2526,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              !--3D: use FFT routines
              !
              if (ndim==3) then
-                if (.not.ihavesetweights) then
-                   call set_weights(weight,dat,iamtype,iusetype)
-                endif
+                call set_weights(weight,dat,iamtype,iusetype)
                 yplot = 0.
                 xmin = max(minval(xplot(1:nfreqspec)),1.0)
                 xmax = maxval(xplot(1:nfreqspec))
@@ -2579,13 +2573,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                    ninterp = ntoti
                    !!--interpolate to 1D grid
-                   if (.not.ihavesetweights) then
-                      call set_weights(weight,dat,iamtype,iusetype)
-                   endif
+                   call set_weights(weight,dat,iamtype,iusetype)
 
                    call interpolate1D(dat(1:ninterp,ipowerspecx),hh(1:ninterp), &
                       weight(1:ninterp),dat(1:ninterp,ipowerspecy),icolourme(1:ninterp), &
-                      ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise)
+                      ninterp,xmingrid,datpix1D,ngrid,dxgrid,inormalise,iverbose)
                    !!--plot interpolated 1D data to check it
                    !!print*,minval(datpix1D),maxval(datpix1D)
                    !call pgswin(xmin,xmax,minval(datpix1D),maxval(datpix1D),0,1)
@@ -2692,8 +2684,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    xmax = 1.
                 endif
                 if (ndim >= 2) then
-                   ymin = lim(ix(3),1)
-                   ymax = lim(ix(3),2)
+                   ymin = lim(ix(2),1)
+                   ymax = lim(ix(2),2)
                 else
                    ymin = 0.
                    ymax = 1.
@@ -2701,8 +2693,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              endif
              if (ndim >= 1) iplotx = ix(1)
              if (ndim >= 2) then
-                iploty = ix(3)
-                labely = label(ix(3))
+                iploty = ix(2)
+                labely = label(ix(2))
              endif
              pixwidth = (xmax-xmin)/real(npixx)
 
@@ -2830,6 +2822,20 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     endif
  endif
 
+ !--set required columns for subsequent plots (e.g. if rendered quantity
+ !  is changed interactively using the 'f' or 'F' option)
+ !
+ !  Here we simply require ALL columns to be read if f/F is used
+ !  since the assumption is that the user wants to flick through different
+ !  quantities. Otherwise could set required just for new column and
+ !  check dependencies
+ !
+ if (irender /= irender_nomulti .and. irender > 0) then
+    irender_nomulti = irender
+    required(:) = .true.
+    if (ipartialread) ifileopen = 0  ! force the file to be re-read
+ endif
+
  !--free all dynamically allocated memory
  if (.not.interactivereplot) then
     if (allocated(datpix1D)) deallocate(datpix1D)
@@ -2849,6 +2855,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  if (allocated(hh)) deallocate(hh)
  if (allocated(weight)) deallocate(weight)
  if (allocated(rkappa)) deallocate(rkappa)
+ if (allocated(renderplot)) deallocate(renderplot)
+ if (allocated(contourplot)) deallocate(contourplot)
 
  return
 
@@ -2978,7 +2986,7 @@ subroutine page_setup(dummy)
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
  inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if (inewpage .and. .not.dum) then
+ if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting
@@ -3060,7 +3068,7 @@ subroutine page_setup(dummy)
           if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = ' '
        else
-          if (debugmode) print*,'DEBUG: not printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: NOT printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = 'NOPGBOX'
        endif
        call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
@@ -3136,7 +3144,6 @@ subroutine page_setup(dummy)
  endif
  if (debugmode) print*,'DEBUG: finished page setup'
 
- return
 end subroutine page_setup
 
 !------------------------------------------------------
@@ -3181,7 +3188,7 @@ subroutine legends_and_title
            (OneColourBarPerRow.and.icolumn==nacross) .or. &
            (OneColourBarPerColumn .and. irow==ndown))) iPlotColourBar = .false.
 
-    if (iPlotColourBar) then
+    if (iPlotColourBar .and. istepsonpage==1) then
        xlabeloffsettemp = xlabeloffset + 1.0
        if (iaxistemp < 0) xlabeloffsettemp = 0.
        if (iUseBackGroundColourForAxes .and. isfloating(iColourBarStyle)) call plot_sci(0)
@@ -3327,7 +3334,6 @@ subroutine legends_and_title
  call plot_sci(icoloursave)
  call plot_set_opacity(1.0)
 
- return
 end subroutine legends_and_title
 
 !--------------------------------------------
@@ -3374,25 +3380,50 @@ end subroutine settrackinglimits
 ! interface for setting interpolation weights
 ! (to make calls above neater)
 !-------------------------------------------------------------------
-subroutine set_weights(weighti,dati,iamtypei,usetype)
- use settings_render,  only:idensityweightedinterpolation
+subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
+ use settings_render,  only:idensityweightedinterpolation,iauto_densityweighted
  use interpolation,    only:set_interpolation_weights
  use settings_units,   only:unit_interp
  use settings_xsecrot, only:rendersinks,use3Dopacityrendering
- use labels,           only:get_sink_type
+ use labels,           only:get_sink_type,is_density
  real, dimension(:), intent(out) :: weighti
  real, dimension(:,:), intent(in) :: dati
  integer(kind=int1), dimension(:), intent(in) :: iamtypei
  logical, dimension(:), intent(in) :: usetype
- integer :: isinktype
+ integer, intent(in), optional :: icol
+ integer :: isinktype,i_col
+ logical :: idensityweighted,ichangedweights
+
+ i_col = 0
+ if (present(icol)) i_col = icol
+
+ ! do nothing if weights do not need to change
+ if (i_col == icol_prev .and. all(usetype .eqv. use_type_prev)) return
 
  isinktype = get_sink_type(ntypes)
- ihavesetweights = .true.
  inormalise = inormalise_interpolations
- call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
+ idensityweighted = idensityweightedinterpolation
+ ichangedweights = any(usetype .neqv. use_type_prev)
+
+ ! decide whether to use density weighted rendering automatically
+ ! based on the column being rendered. i.e. do NOT use density weighting
+ ! if the column is a density, but do if it is some other quantity
+ if (iauto_densityweighted) then
+    if (.not.is_density(i_col)) then
+       if (.not.(idensityweighted .and. inormalise)) ichangedweights = .true.
+       idensityweighted = .true.
+       inormalise = .true.
+    endif
+    icol_prev = i_col
+ endif
+
+ if (ichangedweights) then
+    use_type_prev = usetype
+    call set_interpolation_weights(weighti,dati,iamtypei,usetype,&
          ninterp,npartoftype,masstype,ntypes,ndataplots,irho,ipmass,ih,ndim,&
-         iRescale,idensityweightedinterpolation,inormalise,units,unit_interp,required,&
+         iRescale,idensityweighted,inormalise,units,unit_interp,required,&
          (use3Dopacityrendering .and. rendersinks),isinktype)
+ endif
 
 end subroutine set_weights
 
@@ -3532,14 +3563,14 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
                        weight(1:ninterp),vecplot(1,1:ninterp),vecplot(2,1:ninterp), &
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy,&
-                       .false.,zobservertemp,dzscreentemp,iverbose)
+                       inormalise,zobservertemp,dzscreentemp,iverbose)
                 else
                    call interpolate3D_proj_vec(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                        weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,numpixx,numpixy,pixwidthvec,pixwidthvecy, &
-                       .false.,zobservertemp,dzscreentemp,iverbose)
+                       inormalise,zobservertemp,dzscreentemp,iverbose)
                 endif
              else
                 ! don't have smoothing length, use averaging
@@ -3827,6 +3858,7 @@ subroutine applytrans(xploti,xmini,xmaxi,labelxi,itransxi,chaxis,iplotxi,iaxis,i
     endif
     if (.not.intreplot) call transform_limits(xmini,xmaxi,itransxi)
  endif
+
 end subroutine applytrans
 
 !-------------------------------------------------------------------
@@ -3946,7 +3978,6 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
 !$omp enddo
 !$omp end parallel
 
- return
 end subroutine rotationandperspective
 
 !-------------------------------------------------------------------
@@ -3982,7 +4013,6 @@ subroutine rotatedaxes(irotateaxes,iplotx,iploty,anglexi,angleyi,anglezi,dzscree
                        xmaxrotaxes(1:ndim),xorigin(1:ndim),angleradz)
  endif
 
- return
 end subroutine rotatedaxes
 
 end module timestep_plotting

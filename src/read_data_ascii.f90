@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -82,24 +82,24 @@ contains
 subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep,iamtype
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iverbose,ntypes,debugmode
  use mem_allocation, only:alloc
- use asciiutils,     only:get_ncolumns,get_column_labels,isdigit
+ use asciiutils,     only:get_ncolumns,read_column_labels,isdigit,readline_csv
  use system_utils,   only:ienvironment,renvironment
  use asciiread,      only:icoltype,label_orig
- use labels,         only:lenlabel,labeltype,print_types,label
+ use labels,         only:labeltype,print_types
+ use, intrinsic :: ieee_arithmetic
  integer, intent(in)          :: indexstart,ipos
  integer, intent(out)         :: nstepsread
  character(len=*), intent(in) :: rootname
  integer :: i,j,ierr,iunit,ncolstep,ncolenv,nerr,iheader_time,iheader_gamma
  integer :: nprint,npart_max,nstep_max,nheaderlines,nheaderenv,itype,nlabels
- integer :: noftype(maxparttypes),iverbose_was,imethod
- logical :: iexist,timeset,gammaset,got_labels
+ integer :: noftype(maxparttypes),iverbose_was
+ logical :: iexist,timeset,gammaset,csv
  real    :: dummyreal
  real, allocatable :: dattemp(:)
  character(len=len(rootname)+4) :: dumpfile
- character(len=2048)  :: line
- character(len=lenlabel), dimension(size(label)) :: tmplabel
+ character(len=4096)  :: line
  character(len=10)  :: str,strc
  integer, parameter :: notset = -66
 
@@ -129,8 +129,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
  j = indexstart
  nstepsread = 0
  icoltype = 0       ! no particle type defined by default
- got_labels = .false.
- label_orig = ''
+ csv = index(dumpfile,'.csv') > 0  ! if filename contains .csv
  !
  !--open the file and read the number of particles
  !
@@ -139,7 +138,7 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
     print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
     return
  else
-    call get_ncolumns(iunit,ncolstep,nheaderlines)
+    call get_ncolumns(iunit,ncolstep,nheaderlines,csv=csv)
     !--override header lines setting
     nheaderenv = ienvironment('ASPLASH_NHEADERLINES',-1)
     if (nheaderenv >= 0) then
@@ -160,22 +159,8 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        return
     endif
 
-    if (ncolstep > 1) then
-       !--search through header for column labels
-       do i=1,nheaderlines
-          read(iunit,"(a)",iostat=ierr) line
-          !--try to match column labels from this header line, if not already matched (or dubious match)
-          call get_column_labels(trim(line),nlabels,tmplabel,method=imethod)
-          !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-          if ((got_labels .and. nlabels == ncolstep) .or. &
-              (.not.got_labels .and. nlabels >= ncolstep  & ! only allow single-spaced labels if == ncols
-               .and. (.not.(imethod>=4).or.nlabels==ncolstep))) then
-             label_orig(1:ncolstep) = tmplabel(1:ncolstep)
-             got_labels = .true.
-             !print*,'DEBUG: line ',i,' nlabels = ',nlabels,' LABELS= '//tmplabel(1:ncolstep)
-          endif
-       enddo
-    endif
+    !--search through header for column labels
+    if (ncolstep > 1) call read_column_labels(iunit,nheaderlines,ncolstep,nlabels,label_orig,csv,debugmode)
     rewind(iunit)
 
     iverbose_was = iverbose
@@ -283,7 +268,15 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        npart_max = 10*npart_max
        call alloc(npart_max,nstep_max,ncolstep+ncalc,mixedtypes=(icoltype > 0))
     endif
-    read(iunit,*,iostat=ierr) dattemp(1:ncolstep)
+    dattemp(1:ncolstep) = ieee_value(1., ieee_quiet_nan)  ! NaN if not read
+    if (csv) then
+       read(iunit,"(a)",iostat=ierr) line
+       call readline_csv(line,ncolstep,dattemp)
+    else
+       read(iunit,*,iostat=ierr) dattemp(1:ncolstep)
+    endif
+    !print*,ncolstep,nheaderlines,'line ',i,' got',dattemp(1:10)
+    !read*
     dat(i,1:ncolstep,j) = dattemp(1:ncolstep)
     if (icoltype > 0 .and. icoltype <= ncolstep .and. ierr==0 .and. (size(iamtype(:,j)) > 1)) then
        !--set particle type from type column
@@ -296,6 +289,8 @@ subroutine read_data_ascii(rootname,indexstart,ipos,nstepsread)
        itype = iamtype(i,j)
        noftype(itype) = noftype(itype) + 1
        ntypes = max(itype,ntypes)
+    else
+       iamtype(:,:) = 1
     endif
     if (ierr > 0) then
        nerr = nerr + 1
@@ -348,7 +343,7 @@ end subroutine read_data_ascii
 !
 !-------------------------------------------------------------------
 subroutine set_labels_ascii
- use asciiutils,      only:lcase,match_taglist,find_repeated_tags
+ use asciiutils,      only:lcase,match_taglist,find_repeated_tags,add_escape_chars
  use labels,          only:label,labeltype,ix,irho,ipmass,ih,iutherm, &
                             ipr,ivx,iBfirst,iamvec,labelvec,lenlabel, &
                             make_vector_label
@@ -432,6 +427,12 @@ subroutine set_labels_ascii
  call match_taglist((/'vx','vy','vz'/),lcase(label(1:ncolumns)),ivx,ndimV)
  call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
  if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+!
+!--make labels safe for plotting
+!
+ do i=1,ncolumns
+    if (len_trim(label_orig(i)) > 0) label(i) = trim(add_escape_chars(label_orig(i)))
+ enddo
 
  got_time = .false.
  do i=1,ncolumns
@@ -461,7 +462,7 @@ subroutine set_labels_ascii
          (index(labeli,'density') /= 0 .and. irho==0)) then
        irho = i
     elseif (labeli(1:5)=='pmass' .or. labeli(1:13)=='particle mass' &
-             .or. index(labeli,'mass') /= 0) then
+             .or. trim(labeli)=='mass') then
        ipmass = i
     elseif (ipmass==0 .and. trim(labeli)=='m') then
        ipmass = i
@@ -475,7 +476,8 @@ subroutine set_labels_ascii
     elseif (labeli(1:2)=='pr' .or. trim(labeli)=='p' .or. &
             (index(labeli,'pressure') /= 0 .and. ipr==0)) then
        ipr = i
-    elseif (icoltype==0 .and. index(labeli,'type') /= 0) then
+    elseif (icoltype==0 .and. trim(labeli)=='particle type' .or. trim(labeli)=='itype' &
+       .or. trim(labeli)=='type' .or. trim(labeli)=='particle_type') then
        icoltype = i
     elseif (ivx==0 .and. ndim==1 .and. trim(labeli)=='v') then
        ivx = i
@@ -535,7 +537,7 @@ subroutine set_labels_ascii
  !
  !--set labels for each particle type
  !
- labeltype(1) = 'gas'
+ labeltype(1) = ''
  UseTypeInRenderings(1) = .true.
 
 end subroutine set_labels_ascii

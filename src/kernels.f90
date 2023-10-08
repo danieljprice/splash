@@ -57,7 +57,7 @@ module kernels
  end interface
 
  public :: select_kernel, select_kernel_by_name
- public :: pint,wallint
+ public :: pint,wallint,soft_func
 
  private
 
@@ -644,5 +644,30 @@ subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi,tanphi)
  I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)*fac*fac + 3.*logs)
 
 end subroutine get_I_terms
+
+!------------------------------------------------------------
+! function to return a soft maximum for 1/x with no bias
+! for x >> eps using the cubic spline kernel softening
+! i.e. something equivalent to 1/sqrt(x**2 + eps**2) but
+! with compact support, i.e. f=1/x when x > 2*eps
+!------------------------------------------------------------
+pure elemental real function soft_func(x,eps) result(f)
+ real, intent(in)  :: x,eps
+ real :: q,q2, q4, q6
+
+ q = x/eps
+ q2 = q*q
+ if (q < 1.) then
+    q4 = q2*q2
+    f = (1./eps)*(q4*q/10. - 3.*q4/10. + 2.*q2/3. - 7./5.)
+ elseif (q < 2.) then
+    q4 = q2*q2
+    f = (1./eps)*(q*(-q4*q + 9.*q4 - 30.*q2*q + 40.*q2 - 48.) + 2.)/(30.*q)
+ else
+    f = -1./x
+ endif
+ f = -f
+
+end function soft_func
 
 end module kernels

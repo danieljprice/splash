@@ -31,6 +31,10 @@
 module exactfromfile
  implicit none
 
+ public :: exact_fromfile
+
+ private
+
 contains
 
 subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,ierr)
@@ -71,6 +75,7 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
        read(lu,*,end=10,err=20) (dum,j=1,ixcolfile-1),xexact(i),(dum,j=ixcolfile+1,iycolfile-1),yexact(i)
     endif
  enddo
+ read(lu,*,end=10,iostat=ierr) ! read one more line to see if we are at the end
  print*,'WARNING: reached array limits in ',trim(filename),': partial solution read'
  ierr = -1
  close(lu)
