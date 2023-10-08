@@ -24,6 +24,9 @@
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     0.8.0   : (09/10/23)
+!             write correct x and y units to output files;
+!             copy and flatten fits header from original cube
 !     0.7.0   : (06/10/23)
 !             basic working version implemented
 !
@@ -33,7 +36,7 @@
 !     
 !---------------------------------------------------------------------------------
 program sph_moments
- use readwrite_fits,  only:read_fits_cube,write_fits_image,get_from_header,get_velocity_from_fits_header
+ use readwrite_fits,  only:read_fits_cube,write_fits_image,get_from_header,flatten_header
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args,ienvlist
  use moments,         only:get_moments
@@ -51,13 +54,13 @@ program sph_moments
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'sph_moments: a SPLASH imaging utility (c) 2023 Daniel Price'
+ tagline = 'sph_moments v0.8.0: a SPLASH imaging utility (c) 2023 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: sph_moments [options] infile.fits [outfile.fits]'
     print "(/,a)",'Options:  --moments=0,1,9   [which moments to take, default=0,1,2,8,9]'
     print "(a)",  '          --kernel=0        [which smoothing kernel to use: 0=cubic spline 2=quartic 3=quintic]'
-    print "(a)",  '          --hfac=5.         [ratio of smoothing length to channel spacing in spectral dimension]'
+    print "(a)",  '          --hfac=3.         [ratio of smoothing length to channel spacing in spectral dimension]'
     print "(a)",  '          --sample=10       [factor by which to oversample line profiles, not very important]'
     stop
  endif
@@ -77,7 +80,7 @@ program sph_moments
  ! get options from the command line
  !
  ns = nint(get_command_option('sample'))
- hfac = get_command_option('hfac',default=5.)
+ hfac = get_command_option('hfac',default=3.)
  ikernel = nint(get_command_option('kernel',default=0.))
  call select_kernel(ikernel)
 
@@ -116,7 +119,7 @@ program sph_moments
 
  ! read original file
  write(stdout,*) '>> reading '//trim(file1)
- call read_fits_cube(file1,cube,naxes,ierr,hdr=fitsheader) !,velocity=zvals)
+ call read_fits_cube(file1,cube,naxes,ierr,hdr=fitsheader,velocity=zvals)
  if (ierr /= 0) stop 'error reading file'
 
  ! eliminate NaNs
@@ -125,28 +128,23 @@ program sph_moments
  end where
 
  if (naxes(3) <= 1) stop 'this is a 2D image but require 3D fits cube for moment generation'
- allocate(zvals(naxes(3)))
-
- call get_velocity_from_fits_header(naxes(3),zvals,fitsheader,ierr)
+ 
  !
  ! find moments using either all channels or range of channels
  !
  write(stdout,"(1x,a,f5.2)") '>> computing moments using '//trim(kernelname(ikernel))//' kernel with h/dz = ',hfac
-
- !
  ! warn about running in serial
- !
  !$omp parallel
  !$ if (omp_get_num_threads()<=1) write(stderr,"(/,1x,a)") &
  !$    'WARNING: running in serial: type "export OMP_NUM_THREADS=8" to use 8 threads'
  !$omp end parallel
- 
  call get_moments(cube,zvals,hfac,moment_type(1:nm),moment)
  !
  ! write results to a fits file
  !
+ call flatten_header(fitsheader)
  do k=1,nm
-    call write_fits_image(fileout_m(k),moment(:,:,k),naxes(1:2),ierr)
+    call write_fits_image(fileout_m(k),moment(:,:,k),naxes(1:2),ierr,hdr=fitsheader)
  enddo
 
  deallocate(cube,moment,zvals)
