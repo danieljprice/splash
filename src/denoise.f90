@@ -31,7 +31,7 @@ program denoise
  real, allocatable :: image(:,:,:),image1(:,:,:),image2(:,:,:)
  real, allocatable :: image_old(:,:,:),image_residuals(:,:,:)
  real, allocatable :: snrmap(:,:)
- character(len=:), allocatable :: fitsheader(:)
+ character(len=80), allocatable :: fitsheader(:)
  real :: beam,fluxold,fluxnew,imax,imagemax,image_max,use3D,bmaj,bmin,cdelt1,rotate
  real :: signal,noise
  logical :: iexist,use_3D,skip,get_residuals
