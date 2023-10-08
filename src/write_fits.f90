@@ -34,6 +34,7 @@ module readwrite_fits
  public :: get_floats_from_fits_header,get_from_header,get_from_header_s
  public :: append_to_fits_cube
  public :: get_velocity_from_fits_header
+ public :: flatten_header
 
  interface write_fits_image
   module procedure write_fits_image,write_fits_image64
@@ -183,16 +184,27 @@ subroutine write_fits_head(iunit,hdr,ierr)
  integer :: i,morekeys
 
  ierr = 0
- morekeys = size(hdr)
+ morekeys = 0
+ ! count non-blank header lines
+ do i=1,size(hdr)
+    if (len_trim(hdr(i)) > 0) then
+       morekeys = morekeys + 1
+    endif
+ enddo
+ ! write header size to fits file
  call fthdef(iunit,morekeys,ierr)
  if (ierr /= 0) return
+
+ ! write header
  do i=1,size(hdr)
-    select case(hdr(i)(1:6))
-    case('SIMPLE','BITPIX','NAXIS ','NAXIS1','NAXIS2','NAXIS3','NAXIS4','EXTEND')
-       ! skip the above keywords
-    case default
-       call ftprec(iunit,hdr(i),ierr)
-    end select
+    if (len_trim(hdr(i)) > 0) then
+       select case(hdr(i)(1:6))
+       case('SIMPLE','BITPIX','NAXIS ','NAXIS1','NAXIS2','NAXIS3','NAXIS4','EXTEND')
+          ! skip the above keywords
+       case default
+          call ftprec(iunit,hdr(i),ierr)
+       end select
+    endif
  enddo
 
 end subroutine write_fits_head
@@ -201,10 +213,11 @@ end subroutine write_fits_head
 ! subroutine to read spectral cube from FITS file
 ! using cfitsio library
 !---------------------------------------------------
-subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu)
+subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu,velocity)
  character(len=*), intent(in)   :: filename
  real(kind=real32), intent(out), allocatable :: image(:,:,:)
  character(len=80), intent(inout), allocatable, optional :: hdr(:)
+ real(kind=real32), intent(out), allocatable, optional :: velocity(:)
  integer, intent(out) :: naxes(4),ierr
  integer, intent(in), optional :: hdu ! specify which hdu to read
  integer :: iunit,ireadwrite,npixels,blocksize
@@ -241,6 +254,11 @@ subroutine read_fits_cube(filename,image,naxes,ierr,hdr,hdu)
  if (ndim>=3) ndim = 3
  call ftgisz(iunit,3,naxes(1:ndim),ierr)
  if (ndim==2) naxes(3) = 1
+
+ if (present(hdr) .and. present(velocity) .and. ndim >= 3) then
+    if (.not.allocated(velocity)) allocate(velocity(naxes(3)))
+    call get_velocity_from_fits_header(naxes(3),velocity,hdr,ierr)
+ endif
 
  !if (present(hdr)) bitpix = abs(get_from_header('BITPIX',hdr,ierr))
 
@@ -510,20 +528,27 @@ end subroutine read_fits_image64
 !-------------------------------------------------------------
 ! read fits cube and convert to double precision
 !-------------------------------------------------------------
-subroutine read_fits_cube64(filename,image,naxes,ierr,hdr)
+subroutine read_fits_cube64(filename,image,naxes,ierr,hdr,velocity)
  character(len=*), intent(in)   :: filename
  real(kind=real64), intent(out), allocatable :: image(:,:,:)
  character(len=80), intent(inout), allocatable, optional :: hdr(:)
+ real(kind=real64), intent(inout), allocatable, optional :: velocity(:)
  integer, intent(out) :: naxes(4),ierr
- real(kind=real32), allocatable :: img32(:,:,:)
+ real(kind=real32), allocatable :: img32(:,:,:),velocity32(:)
 
  if (present(hdr)) then
-    call read_fits_cube(filename,img32,naxes,ierr,hdr)
+    if (present(velocity)) then
+       call read_fits_cube(filename,img32,naxes,ierr,hdr=hdr,velocity=velocity32)
+       velocity = velocity32  ! allocate and copy, converting real type
+    else
+       call read_fits_cube(filename,img32,naxes,ierr,hdr)
+    endif
  else
     call read_fits_cube(filename,img32,naxes,ierr)
  endif
  image = img32  ! allocate and copy, converting real type
  deallocate(img32,stat=ierr)
+ if (allocated(velocity32)) deallocate(velocity32,stat=ierr) 
 
 end subroutine read_fits_cube64
 
@@ -642,12 +667,31 @@ function get_from_header_s(key,hdr,ierr) result(val)
 end function get_from_header_s
 
 !------------------------------------------------
+! delete third dimension in the fits header
+!------------------------------------------------
+subroutine flatten_header(hdr)
+ character(len=80), intent(inout) :: hdr(:)
+ character(len=80) :: mykey,myval
+ integer :: i,ierr
+
+ do i=1,size(hdr)
+    call get_fits_header_key_val(hdr(i),mykey,myval,ierr)
+    ! delete anything in the header that ends in '3'
+    if (mykey(len_trim(mykey):len_trim(mykey))=='3') then
+       !print*,' deleting ',hdr(i)
+       hdr(i) = ''
+    endif
+ enddo
+
+end subroutine flatten_header
+
+!------------------------------------------------
 ! get velocity grid from the fits file
 !------------------------------------------------
 subroutine get_velocity_from_fits_header(nv,vel,hdr,ierr)
  integer, intent(in)  :: nv
- real,    intent(out) :: vel(nv)
- character(len=80), intent(in) :: hdr(:)
+ real(kind=real32), intent(out) :: vel(nv)
+ character(len=80), intent(in)  :: hdr(:)
  integer, intent(out) :: ierr
  integer :: k
  real :: dv,restfreq,crpix,crval
