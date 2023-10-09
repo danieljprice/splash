@@ -164,6 +164,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
 !--now memory has been allocated, set information that splash needs
 !
  call get_floats_from_fits_header(fitsheader,headertags,headervals(:,i))
+
  ipartialread = .false.
  masstype(1,i) = 0.0
  npartoftype(1,i) = npixels

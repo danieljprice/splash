@@ -583,7 +583,6 @@ subroutine get_fits_header_entry(record,key,rval,ierr)
  real, intent(out) :: rval
  integer, intent(out) :: ierr
  character(len=80) :: val
- integer :: ieq
 
  call get_fits_header_key_val(record,key,val,ierr)
  if (ierr == 0) then
@@ -658,7 +657,11 @@ function get_from_header_s(key,hdr,ierr) result(val)
  do i=1,size(hdr)
     call get_fits_header_key_val(hdr(i),mykey,myval,ierr)
     if (trim(adjustl(mykey))==trim(key) .and. ierr==0) then
-       val = myval
+       if (index(myval,"'") > 0) then
+          val = myval(3:len_trim(myval)-1)  ! trim quotation marks
+       else
+          val = myval ! not a string variable, return whole string
+       endif
        ierr = 0
        return
     endif
@@ -677,9 +680,11 @@ subroutine flatten_header(hdr)
  do i=1,size(hdr)
     call get_fits_header_key_val(hdr(i),mykey,myval,ierr)
     ! delete anything in the header that ends in '3'
-    if (mykey(len_trim(mykey):len_trim(mykey))=='3') then
-       !print*,' deleting ',hdr(i)
-       hdr(i) = ''
+    if (len_trim(mykey) > 0) then
+       if (mykey(len_trim(mykey):len_trim(mykey))=='3') then
+          !print*,' deleting ',hdr(i)
+          hdr(i) = ''
+       endif
     endif
  enddo
 
@@ -694,25 +699,37 @@ subroutine get_velocity_from_fits_header(nv,vel,hdr,ierr)
  character(len=80), intent(in)  :: hdr(:)
  integer, intent(out) :: ierr
  integer :: k
- real :: dv,restfreq,crpix,crval
+ real(kind=real32) :: dv,restfreq,crpix,crval,nu
  character(len=80) :: velocity_type
+ real(kind=real32), parameter :: c = 2.997924e5
 
  dv = get_from_header('CDELT3',hdr,ierr)
- restfreq = get_from_header('RESTFREQ',hdr,ierr)
+ restfreq = get_from_header('RESTFRQ',hdr,ierr)
  velocity_type = get_from_header_s('CTYPE3',hdr,ierr)
- if (trim(velocity_type) == "VELO-LSR") then
+ select case (trim(velocity_type))
+ case("VELO-LSR","VRAD")
+    if (dv > 10.) then
+       dv = dv*1e-3 ! assume m/s
+    endif
     crpix = get_from_header('CRPIX3',hdr,ierr)
     crval = get_from_header('CRVAL3',hdr,ierr)
     do k=1,nv
        vel(k) = crval + dv * (k - crpix)
     enddo
- else
+ case("FREQ")
+    crpix = get_from_header('CRPIX3',hdr,ierr)
+    crval = get_from_header('CRVAL3',hdr,ierr)
+    do k=1,nv
+       nu = crval + dv*(k - crpix)
+       vel(k) = -(nu - restfreq)/restfreq * c  ! c is in km/s
+    enddo
+ case default
     write(*,"(4x,a,/)") 'warning: velocity type '//trim(velocity_type)//' not recognised in fits header'
     dv = 1.
     do k=1,nv
        vel(k) = dv * (k - 0.5)
     enddo
- endif
+ end select
 
 end subroutine get_velocity_from_fits_header
 

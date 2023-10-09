@@ -24,6 +24,8 @@
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     0.9.0   : (09/10/23)
+!             velocity array read correctly from fits header
 !     0.8.0   : (09/10/23)
 !             write correct x and y units to output files;
 !             copy and flatten fits header from original cube
@@ -54,7 +56,7 @@ program sph_moments
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'sph_moments v0.8.0: a SPLASH imaging utility (c) 2023 Daniel Price'
+ tagline = 'sph_moments v0.9.0: a SPLASH imaging utility (c) 2023 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: sph_moments [options] infile.fits [outfile.fits]'
@@ -112,7 +114,7 @@ program sph_moments
     fileout_m(k) = fileout_m(k)(1:jext-1)//trim(string)//'.fits'
     inquire(file=fileout_m(k),exist=iexist)
     if (iexist) then
-       write(stderr,*) 'ERROR: '//trim(fileout)//' already exists: please move or rename and try again'
+       write(stderr,*) 'ERROR: '//trim(fileout_m(k))//' already exists: please move or rename and try again'
     endif
  enddo
  if (iexist) stop
