@@ -770,17 +770,20 @@ subroutine string_replace(string,skey,sreplacewith)
  character(len=*), intent(inout) :: string
  character(len=*), intent(in)    :: skey,sreplacewith
  character(len=len(string)) :: remstring
- integer :: ipos,imax,lensub,i
+ integer :: ipos,imax,lensub,i,iposnext
 
  ipos = index(trim(string),skey)
  lensub = len(skey)
  imax   = len(string)
  i = 0
  do while (ipos > 0 .and. i <= imax)
+    iposnext = ipos + len(sreplacewith)
     i = i + 1  !  only allow as many replacements as characters
     remstring = string(ipos+lensub:len_trim(string))
     string = string(1:ipos-1)//sreplacewith//remstring
-    ipos = index(trim(string),skey)
+    ipos = index(trim(string(iposnext:)),skey)
+    if (ipos > 0) ipos = ipos + iposnext
+    !print*,ipos,' string = ',trim(string),'iposnext = ',trim(string(iposnext:))
  enddo
 
 end subroutine string_replace
