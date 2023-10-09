@@ -24,6 +24,8 @@
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     0.9.1   : (09/10/23)
+!             fix homebrew install
 !     0.9.0   : (09/10/23)
 !             velocity array read correctly from fits header
 !     0.8.0   : (09/10/23)
