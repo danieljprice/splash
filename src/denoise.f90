@@ -1,24 +1,57 @@
-!-----------------------------------------------------------------
+!---------------------------------------------------------------------------------
 !
-!  This file is (or was) part of SPLASH, a visualisation tool
-!  for Smoothed Particle Hydrodynamics written by Daniel Price:
+!     denoise - Command-line tool to remove shot noise from astronomical
+!               images and cubes using adaptive kernel smoothing
 !
-!  http://users.monash.edu.au/~dprice/splash
+!     Copyright (C) 2020-2023 Daniel Price
+!     daniel.price@monash.edu
 !
-!  SPLASH comes with ABSOLUTELY NO WARRANTY.
-!  This is free software; and you are welcome to redistribute
-!  it under the terms of the GNU General Public License
-!  (see LICENSE file for details) and the provision that
-!  this notice remains intact. If you modify this file, please
-!  note section 2a) of the GPLv2 states that:
+!     --------------------------------------------------------------------------
 !
-!  a) You must cause the modified files to carry prominent notices
-!     stating that you changed the files and the date of any change.
+!     This program is free software; you can redistribute it and/or modify
+!     it under the terms of the GNU General Public License as published by
+!     the Free Software Foundation; either version 2 of the License, or
+!     (at your option) any later version.
 !
-!  Copyright (C) 2020- Daniel Price. All rights reserved.
-!  Contact: daniel.price@monash.edu
+!     This program is distributed in the hope that it will be useful,
+!     but WITHOUT ANY WARRANTY; without even the implied warranty of
+!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!     GNU General Public License for more details.
 !
-!-----------------------------------------------------------------
+!     You should have received a copy of the GNU General Public License
+!     along with this program; if not, write to the Free Software
+!     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+!
+!     -------------------------------------------------------------------------
+!     Version history/ Changelog:
+!     1.0.0 : (10/10/2023)
+!           now in mature usage; allow up to 1024 characters in file names
+!
+!     0.2.1 : (10/08/2021)
+!           updated splash
+!
+!     0.2.0 : (27/08/2020)
+!           bug fixes with homebrew install;
+!           bug fix with reading beam size for ALMA images/cubes;
+!           brew install uses denoise repo, not splash repo (requires fewer dependencies);
+!           automated update of homebrew package
+!
+!     0.1.0 : (20/08/2020)
+!           first working version of Denoise utility, as used in the Appendix to Ménard et al 2020;
+!           support for both single fits images and spectral cubes;
+!           can process either single channel or whole cube;
+!           reads the beam size from the fits header if available (e.g. in radio images);
+!           transfers header information between input and output fits files;
+!           option for 2D (channel-by-channel) or 3D denoising of spectral cubes;
+!           support for polarisation images (assumed if two fits files given as input),
+!           can either denoise each polarisation separately or denoise the polarised intensity image;
+!           standalone denoise GitHub repository
+!
+!     -------------------------------------------------------------------------
+!
+!     Written by DJP, 2020-2023
+!
+!---------------------------------------------------------------------------------
 program denoise
  use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image,get_from_header
  use imageutils,      only:image_denoise,image_denoise3D,image_rotate
@@ -38,7 +71,7 @@ program denoise
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'denoise: a SPLASH imaging utility (c) 2020-2022 Daniel Price'
+ tagline = 'denoise: a SPLASH imaging utility (c) 2020-2023 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: denoise [options] infile.fits [outfile.fits]'
