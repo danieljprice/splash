@@ -46,7 +46,7 @@ module timestep_plotting
  logical, allocatable, private :: use_type_prev(:)
 
  real, dimension(:),     allocatable, private :: datpix1D, xgrid
- real, dimension(:,:),   allocatable, private :: datpix,datpixcont,brightness
+ real, dimension(:,:),   allocatable, private :: datpix,datpixcont,brightness,datpixtot
  real(doub_prec), dimension(:,:,:), allocatable, private :: datpix3D,datpixcont3D
  real, private :: xmin,xmax,ymin,ymax,zmin
  real, private :: rendermin,rendermax,vecmax,contmin,contmax
@@ -97,7 +97,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                                interactive,ipapersizeunits,usecolumnorder,colourpalette,maxc
  use pagecolours,        only:set_pagecolours,set_linecolours
  use settings_part,      only:linecolourthisstep,linecolour,linestylethisstep, &
-                               linestyle,iexact,iplotpartoftype
+                               linestyle,iexact,iplotpartoftype,ismooth_particle_plots
  use settings_render,    only:icolours,iplotcont_nomulti,iColourBarStyle,icolour_particles
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,flythru,nxsec,irotate, &
                                xseclineX1,xseclineX2,xseclineY1,xseclineY2,xsecwidth, &
@@ -605,7 +605,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
 
  !!--set colour table
  !   do this regardless of whether rendering or not
- if (iamrendering .and. icolours /= 0) then
+ if ((iamrendering .and. icolours /= 0) .or. (ismooth_particle_plots > 0)) then
     call colour_set(icolours)
     ihavesetcolours = .true.
  else
@@ -2233,10 +2233,26 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              else
                 call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
                    datpix,npixx,npixy,.false.,(ismooth_particle_plots==2))
-                datpix = log10(datpix)
+                if (nstepsperpage > 1) then
+                   if (allocated(datpixtot)) then
+                      if (size(datpixtot) /= size(datpix)) deallocate(datpixtot)
+                   endif
+                   if (.not.allocated(datpixtot)) then
+                      allocate(datpixtot(npixx,npixy))
+                      datpixtot = 0.
+                   endif
+                   if (istepsonpage==1) datpixtot = 0.
+                   datpixtot = datpixtot + datpix
+                   datpix = datpixtot
+                endif
+                where (datpix > 0.)
+                   datpix = log10(datpix)
+                elsewhere
+                   datpix = -666.
+                end where
                 call render_pix(datpix,maxval(datpix)-6.,maxval(datpix),'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
-                   .false.,.false.)
+                   .false.,.false.,transparent=(nstepsperpage > 1))
              endif
              if (allocated(datpix)) deallocate(datpix)
              if (allocated(brightness)) deallocate(brightness)
