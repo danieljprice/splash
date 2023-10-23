@@ -51,6 +51,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.8.5   : (23/10/23)
+!             implemented smoothed particle plots with multiple steps per page;
+!             allow for .cols and .comp file in current directory even if the filepath is not the current dir;
+!             sphmoments utility added; added routine to extract velocity dimension from fits files;
+!             bug fix with repeated string replacements giving endless backslashes in labels;
+!             bug fix reading long filenames in denoise
 !     3.8.4   : (18/08/23)
 !             various bugs fixed in GADGET data reader; auto-recognise GADGET block format;
 !             improved conservation checks in splash to grid (thanks to Avi Chen);
@@ -577,7 +583,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.8.4 [18th Aug 2023]'
+ character(len=*), parameter :: version = 'v3.8.5 [23rd Oct 2023]'
 
  !
  ! initialise some basic code variables
