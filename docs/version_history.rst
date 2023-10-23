@@ -1,4 +1,35 @@
 
+**3.8.5: (23/10/23)**
+
+- implemented smoothed particle plots with multiple steps per page
+- allow for .cols and .comp file in current directory even if the filepath is not the current dir
+- sphmoments utility added
+- added routine to extract velocity dimension from fits files
+- bug fix with repeated string replacements giving endless backslashes in labels
+- bug fix reading long filenames in denoise
+
+**3.8.4: (18/08/23)**
+
+- various bugs fixed in GADGET data reader
+- auto-recognise GADGET block format
+- improved conservation checks in splash to grid (thanks to Avi Chen)
+- better handling of AREPO data
+- bug fix with timestep not advancing
+- no longer ask about particle types in multiplot if only one type present
+
+**3.8.3: (05/07/23)**
+
+- flip option (f/F in interactive mode) now persists across timesteps and works in snapshots other than the first
+- bugs fixed in Tipsy data read (thanks to Alex Pettitt)
+- auto-recognition of Tipsy binary formats implemented
+- show units labels in calculated quantities list
+
+**3.8.2: (12/05/23)**
+
+- phantom data read looks for .comp file containing additional composition data
+- also looks for .cols file containing any extra columns with one row per particle
+- recognise opacity if extra quantity called "kappa" calculated
+
 **3.8.1: (01/05/23)**
 
 - seg faults in auto-magic exact solution mapping fixed
