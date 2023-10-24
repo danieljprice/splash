@@ -753,7 +753,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  real, dimension(:,:), allocatable  :: vecplot
  real, dimension(:), allocatable    :: rkappa
  real :: zslicemin,zslicemax,dummy,pmassmin,pmassmax,pmassav(1)
- real :: pixwidth,pixwidthy,pixwidthvec,pixwidthvecy,dxfreq
+ real :: pixwidth,pixwidthy,pixwidthvec,pixwidthvecy,dxfreq,densmax
 
  character(len=lenlabel+lenunitslabel) :: labelx,labely,labelz,labelrender,labelvecplot,labelcont
  character(len=lenunitslabel) :: labeltimeunits,labelvecunits
@@ -2223,16 +2223,19 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              pixwidthy = (ymax - ymin)/npixy
              !print*,'PIXWIDTH  = ',pixwidth,pixwidthy
              if (irender > 0) then
+                ! here we colour the particles by a certain quantity
                 call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
-                   datpix,npixx,npixy,.true.,.true.,renderplot,brightness)
+                   datpix,npixx,npixy,.true.,(ismooth_particle_plots==2),renderplot,brightness)
                 ! scale opacity based on density of points, but only slightly
                 brightness = 1. - exp(-brightness**0.3)
                 call render_pix(datpix,rendermin,rendermax,'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
-                   .false.,.false.,alpha=brightness,transparent=.true.)
+                   .false.,.false.,alpha=brightness,transparent=.false.)
              else
                 call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
                    datpix,npixx,npixy,.false.,(ismooth_particle_plots==2))
+
+                ! for more than one step per page, progressively sum pixel maps
                 if (nstepsperpage > 1) then
                    if (allocated(datpixtot)) then
                       if (size(datpixtot) /= size(datpix)) deallocate(datpixtot)
@@ -2245,12 +2248,16 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    datpixtot = datpixtot + datpix
                    datpix = datpixtot
                 endif
+                ! take log of particle density, but avoid log(0)
                 where (datpix > 0.)
                    datpix = log10(datpix)
                 elsewhere
                    datpix = -666.
                 end where
-                call render_pix(datpix,maxval(datpix)-6.,maxval(datpix),'blah', &
+                densmax = maxval(datpix)
+                if (all(abs(datpix-densmax) < tiny(0.))) densmax = densmax + 6. ! hit lower end of colour bar if all zeros
+                ! plot the resulting pixel map
+                call render_pix(datpix,densmax-6.,densmax,'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
                    .false.,.false.,transparent=(nstepsperpage > 1))
              endif
