@@ -2229,7 +2229,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
                    datpix,npixx,npixy,.true.,(ismooth_particle_plots==2),renderplot,brightness)
                 ! scale opacity based on density of points, but only slightly
-                brightness = 1. - exp(-brightness**0.3)
+                if (ismooth_particle_plots==2) then
+                   brightness = 1. - exp(-brightness**0.3)
+                else
+                   brightness = 1.
+                endif
                 call render_pix(datpix,rendermin,rendermax,'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
                    .false.,.false.,alpha=brightness,transparent=.false.)
