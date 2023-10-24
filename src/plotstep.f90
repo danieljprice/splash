@@ -2169,6 +2169,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  (at present this is NOT used -can't render if not co-ord plot)
           !
           if (irenderpart > 0 .and. irenderpart <= numplot) then
+             iPlotColourBar = (iColourBarStyle > 0)
+
              !--apply transformations to render array and set label
              renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
              call transform(renderplot(1:ntoti),itrans(irenderpart))
