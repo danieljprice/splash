@@ -32,7 +32,8 @@ function get_prefix(filename) result(prefix)
 end function get_prefix
 
 subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,ncomp,labels,filename)
- use asciiutils, only:get_ncolumns,get_nrows,read_column_labels,basename
+ use asciiutils,    only:get_ncolumns,get_nrows,read_column_labels,basename
+ use settings_data, only:debugmode
  character(len=*), intent(in) :: dumpfile
  integer, intent(in) :: ntotal
  integer, intent(inout) :: ncolstep
@@ -51,18 +52,21 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
  ! first see if file_00000.cols exists
  filename = trim(dumpfile)//'.cols'
  inquire(file=filename,exist=iexist)
+ if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
 
  ! first see if a global file.comp file exists
  if (.not.iexist) then
     prefix = get_prefix(dumpfile)
     filename = trim(prefix)//'.comp'
     inquire(file=filename,exist=iexist)
+    if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
  endif
 
  ! look for a file in the current directory, not the same directory as the data
  if (.not.iexist) then
     filename = basename(filename)
     inquire(file=filename,exist=iexist)
+    if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
  endif
 
  !if (debugmode) print*,'DEBUG: looking for '//trim(filename)//' exist = ',iexist
