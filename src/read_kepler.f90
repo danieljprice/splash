@@ -22,7 +22,7 @@ function get_prefix(filename) result(prefix)
 
  integer :: iu
 
- iu = index(filename,'_')
+ iu = index(filename,'_',back=.true.)
  if (iu > 1) then
     prefix = filename(1:iu-1)
  else
