@@ -304,8 +304,6 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
     endif
  endif
 
-
- return
 end subroutine get_data
 
 !----------------------------------------------------------------------
@@ -352,14 +350,15 @@ end subroutine get_labels
 !----------------------------------------------------------------------
 subroutine rescale_data(firsttime,nsteps_read)
  use filenames,      only:unitsfile
- use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default
+ use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default,&
+                          check_for_shifted_column
  use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
  use settings_units, only:units,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
  use params,         only:maxplot
  logical, intent(in) :: firsttime
  integer, intent(in) :: nsteps_read
- integer :: i,ierr
+ integer :: i,j,icol,ierr
 
  !
  ! turn physical units on by default if:
@@ -384,10 +383,14 @@ subroutine rescale_data(firsttime,nsteps_read)
  !
  if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
     if (debugmode) write(*,"(a)") ' rescaling data...'
-    do i=1,min(ncolumns,maxcol)
-       if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
-          dat(:,i,1:nsteps_read) = dat(:,i,1:nsteps_read)*units(i)
-       endif
+    do j=1,nsteps_read
+       do i=1,min(ncolumns,maxcol)
+          icol = i
+          call check_for_shifted_column(icol,iRescale)
+          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
+             dat(:,i,j) = dat(:,i,j)*units(icol)
+          endif
+       enddo
     enddo
     do i=1,nsteps_read
        if (time(i) > -0.5*huge(0.)) time(i) = time(i)*units(0)

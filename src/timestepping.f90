@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -191,11 +191,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
     endif
  endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
  call plot_close
-
- return
 
 end subroutine timestep_loop
 
@@ -280,7 +276,6 @@ recursive subroutine get_nextstep(istep,ilocindat)
     endif
  endif
 
- return
 end subroutine get_nextstep
 
 !-------------------------------------------------------------
@@ -338,14 +333,13 @@ subroutine colour_timestep(istep,iChangeColours,iChangeStyles)
     end select
  endif
 
- return
 end subroutine colour_timestep
 
 !---------------------------------------------------------------------------------------
 ! colours all the particles using the default colour for their type
 !---------------------------------------------------------------------------------------
 subroutine colourparts_default(npartoftype,iamtype)
- use params, only:int1
+ use params,        only:int1
  use settings_data, only:ntypes
  use particle_data, only:icolourme
  use settings_part, only:idefaultcolourtype

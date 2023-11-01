@@ -83,7 +83,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use colours,            only:colour_set
  use colourbar,          only:barisvertical
  use labels,             only:label,ipowerspec,ih,ipmass,irho,ikappa,iamvec,isurfdens, &
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,unitslabel
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,&
+                               unitslabel,set_required_labels
  use limits,             only:lim,rangeset,limits_are_equal
  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -548,7 +549,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  endif
  call get_adjust_data_dependencies(required)
 
-!  endif
+ call set_required_labels(required)
  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:ncolumns+ncalc)
 
  !!--read step titles (don't need to store ntitles for this)
@@ -657,7 +658,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm, &
                                ipdf,icolpixmap,is_coord,labeltype, &
                                labelzintegration,unitslabel,integrate_label, &
-                               get_sink_type,get_unitlabel_coldens,ikappa
+                               get_sink_type,get_unitlabel_coldens,ikappa,&
+                               check_for_shifted_column,labelorig
  use limits,             only:lim,get_particle_subset,lim2,lim2set
  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti, &
                                itrans,icontourmulti,x_secmulti,xsecposmulti,&
@@ -994,6 +996,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  (because this can be achieved by rendering with colour scheme 0)
           icontourplot = 0
        endif
+
+       call check_for_shifted_column(iploty,iRescale)
        !--flag to indicate that we have actually got the contoured quantity,
        !  set to true once interpolation has been done.
        if (.not.interactivereplot .or. irerender) gotcontours = .false.
@@ -2876,6 +2880,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     if (allocated(datpixcont)) deallocate(datpixcont)
     if (allocated(datpixcont3D)) deallocate(datpixcont3D)
  endif
+
+ !if (.not.interactivereplot) then
+    ! restore original labels...
+    label = labelorig
+ !endif
 
  !--free temporary arrays
  if (allocated(xplot)) deallocate(xplot)

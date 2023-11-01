@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -31,7 +31,7 @@ module labels
  implicit none
  integer, parameter :: lenlabel = 80
  integer, parameter :: lenunitslabel = 40  ! length of units label
- character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
+ character(len=lenlabel), dimension(maxplot+2) :: label,labelvec,labelreq,labelorig
  character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
@@ -49,6 +49,7 @@ module labels
  integer :: irhorestframe,idustfrac,ideltav
  integer :: idustfracsum,ideltavsum
  integer :: igrainsize,igraindens,ivrel
+ integer :: nreq
 
  public
 
@@ -534,5 +535,72 @@ function get_label_grain_size(sizecm) result(string)
  string = trim(string)//trim(ulab)
 
 end function get_label_grain_size
+
+!-----------------------------------------------------------------
+!
+!  save the list of labels that are actually used for plotting
+!
+!-----------------------------------------------------------------
+subroutine set_required_labels(required)
+ logical, intent(in) :: required(0:)
+ integer :: icol
+
+ ! save original list of labels
+ labelorig = label
+
+ nreq = 0
+ labelreq = ''
+ do icol=1,size(required)-1
+    nreq = nreq + 1
+    if (required(icol)) then
+       labelreq(icol) = shortlabel(label(icol),unitslabel(icol))
+    endif
+ enddo
+
+ print*,'DEBUG: required labels:'
+ do icol=1,nreq
+    if (len_trim(labelreq(icol)) > 0) print*,trim(labelreq(icol))
+ enddo
+
+end subroutine set_required_labels
+
+!-----------------------------------------------------------------
+!
+!  see if a column has shifted in the actual data
+!
+!-----------------------------------------------------------------
+subroutine check_for_shifted_column(icol,iRescale)
+ use asciiutils, only:match_tag
+ integer, intent(inout) :: icol
+ character(len=lenlabel) :: labelcol
+ logical, intent(in) :: iRescale
+ integer :: inew
+
+ labelcol = shortlabel(label(icol),unitslabel(icol))
+
+ if (trim(labelcol) /= trim(labelreq(icol)) .and. len_trim(labelreq(icol)) > 0) then
+    write(*,"(1x,a,i3,a)",advance='no') 'column ',icol,' has shifted: was '//&
+          trim(labelreq(icol))//' but got '//trim(labelcol)
+    inew = match_tag(shortlabel(label(1:maxplot),unitslabel(1:maxplot)),labelreq(icol))
+    if (inew > 0) then
+       print "(1x,a,i3)",': found '//trim(shortlabel(label(inew),unitslabel(inew)))&
+             //' in col ',inew
+       !
+       ! a bigger problem is that the units have changed... and the data is already rescaled
+       ! here we can at least fix the units label so it is the right one
+       !
+       if (iRescale) then
+          label(inew) = trim(labelreq(icol))//trim(unitslabel(icol))
+          unitslabel(inew) = unitslabel(icol)
+       endif
+       icol = inew
+    endif
+ endif
+
+end subroutine check_for_shifted_column
+
+!subroutine check_for_shifted_columns(icols,shifted)
+
+!end subroutine check_for_shifted_columns
 
 end module labels
