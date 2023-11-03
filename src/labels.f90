@@ -585,19 +585,30 @@ subroutine check_for_shifted_column(icol,iRescale)
     if (inew > 0) then
        print "(1x,a,i3)",': found '//trim(shortlabel(label(inew),unitslabel(inew)))&
              //' in col ',inew
-       !
-       ! a bigger problem is that the units have changed... and the data is already rescaled
-       ! here we can at least fix the units label so it is the right one
-       !
-       if (iRescale) then
-          label(inew) = trim(labelreq(icol))//trim(unitslabel(icol))
-          unitslabel(inew) = unitslabel(icol)
-       endif
        icol = inew
     endif
  endif
 
 end subroutine check_for_shifted_column
+
+function map_shifted_columns() result(imap)
+ integer :: imap(maxplot)
+ integer :: i,icol
+
+ do i=1,size(imap)
+    imap(i) = i
+ enddo
+
+ do i=1,size(imap)
+    icol = i
+    if (len_trim(label(i)) > 0) call check_for_shifted_column(icol,.true.)
+    if (icol /= i) then
+     print*,i,' setting imap=',icol
+       imap(icol) = i
+    endif
+ enddo
+
+end function map_shifted_columns
 
 !subroutine check_for_shifted_columns(icols,shifted)
 

@@ -737,7 +737,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  logical, dimension(maxparttypes) :: iusetype
 
  integer :: ntoti,iz,iseqpos,itrackpart
- integer :: i,j,k,icolumn,irow
+ integer :: i,j,k,icolumn,irow,ix_map,iy_map,irender_map,icontour_map
  integer :: nyplot,nframesloop
  integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
@@ -997,7 +997,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           icontourplot = 0
        endif
 
-       call check_for_shifted_column(iploty,iRescale)
        !--flag to indicate that we have actually got the contoured quantity,
        !  set to true once interpolation has been done.
        if (.not.interactivereplot .or. irerender) gotcontours = .false.
@@ -1075,7 +1074,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
                 exit over_plots
              endif
-             yplot(1:ntoti) = dat(1:ntoti,iploty)
+             iy_map = iploty
+             call check_for_shifted_column(iy_map,iRescale)
+             yplot(1:ntoti) = dat(1:ntoti,iy_map)
              iamvecy = iamvec(iploty)
           else
              iamvecy = 0

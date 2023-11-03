@@ -351,7 +351,7 @@ end subroutine get_labels
 subroutine rescale_data(firsttime,nsteps_read)
  use filenames,      only:unitsfile
  use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default,&
-                          check_for_shifted_column
+                          check_for_shifted_column,map_shifted_columns,labelorig,labelreq
  use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
  use settings_units, only:units,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
@@ -359,6 +359,7 @@ subroutine rescale_data(firsttime,nsteps_read)
  logical, intent(in) :: firsttime
  integer, intent(in) :: nsteps_read
  integer :: i,j,icol,ierr
+ integer :: imap(maxplot)
 
  !
  ! turn physical units on by default if:
@@ -378,16 +379,24 @@ subroutine rescale_data(firsttime,nsteps_read)
  !
  if (firsttime) call read_unitsfile(trim(unitsfile),ncolumns,ierr,iverbose)
 
+ if (firsttime) then
+    labelorig = ''
+    labelreq = ''
+ endif
+
  !
  !--apply physical units to data
  !
  if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
     if (debugmode) write(*,"(a)") ' rescaling data...'
+    imap = map_shifted_columns()
+    print*,' imap = ',imap(1:12)
     do j=1,nsteps_read
        do i=1,min(ncolumns,maxcol)
-          icol = i
-          call check_for_shifted_column(icol,iRescale)
-          if (abs(units(i)-1.0) > tiny(units) .and. abs(units(i)) > tiny(units)) then
+          icol = imap(i)
+          !print*,i,' imap=',icol
+          if (icol /= i) print*,' shift data WAS ',i,units(i),unitslabel(i),' USING ',icol,units(icol),unitslabel(icol)
+          if (abs(units(icol)-1.0) > tiny(units) .and. abs(units(icol)) > tiny(units)) then
              dat(:,i,j) = dat(:,i,j)*units(icol)
           endif
        enddo
