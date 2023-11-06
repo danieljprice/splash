@@ -77,7 +77,7 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
  integer, intent(in) :: iverbose
  real, dimension(npixx) :: datnorm
 
- integer :: i,ipix,ipixmin,ipixmax
+ integer :: i,ipix,ipixmin,ipixmax,i1,i2
  real :: hi,hi1,radkern,q2,wab,const
  real :: term,termnorm,dx,xpix
 
@@ -90,8 +90,8 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
        print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
     endif
  endif
- if (pixwidth <= 0.) then
-    if (iverbose > 0) print*,'interpolate1D: error: pixel width <= 0'
+ if (abs(pixwidth) <= tiny(0.)) then
+    if (iverbose >= 0) print*,'interpolate1D: error: pixel width = 0'
     return
  endif
  if (any(hh(1:npart) <= tiny(hh))) then
@@ -128,8 +128,14 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
     !
     !--for each particle work out which pixels it contributes to
     !
-    ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-    ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+    i1 = int((x(i) - radkern - xmin)/pixwidth)
+    i2 = int((x(i) + radkern - xmin)/pixwidth) + 1
+    ipixmin = i1
+    ipixmax = i2
+    if (i1 > i2) then
+       ipixmax = i1
+       ipixmin = i2
+    endif
 
     if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
     if (ipixmax > npixx) ipixmax = npixx ! to pixels in the image

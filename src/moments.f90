@@ -63,8 +63,8 @@ subroutine get_moments(cube,zvals,hfac,moment_type,moments)
 
  ! set smoothing length, weights and mask for interpolate1D routine
  mask = 1
- hh = hfac*dz
- weight = dz/hh
+ hh = hfac*abs(dz)
+ weight = abs(dz)/hh
 
  ! select which pixel to print out for debugging purposes
  jprint = ny/2
