@@ -1296,7 +1296,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              !!--determine number of pixels in rendered image (npix = pixels in x direction)
              if (npix > 0) then
                 npixx = npix
-                call page_setup(dummy=.true.) ! do this here in case limits are auto-adjusted
+                call page_setup(dummy_run=.true.) ! do this here in case limits are auto-adjusted
                 pixwidth  = (xmax-xmin)/real(npix)
                 if (just==1) then
                    pixwidthy = pixwidth
@@ -1305,7 +1305,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 endif
              else
                 !!--automatically reset the pixel number to match the device
-                call page_setup(dummy=.true.) !--npixx and npixy are determined here
+                call page_setup(dummy_run=.true.) !--npixx and npixy are determined here
                 pixwidth = (xmax-xmin)/real(npixx)
                 if (just==1) then
                    pixwidthy = pixwidth
@@ -2907,7 +2907,7 @@ contains
 ! this is called just before a plot is
 ! actually plotted
 !----------------------------------------------
-subroutine page_setup(dummy)
+subroutine page_setup(dummy_run)
  use colourbar,     only:get_colourbarmargins
  use pagesetup,     only:setpage2
  use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
@@ -2920,13 +2920,13 @@ subroutine page_setup(dummy)
  real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
  real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
  logical :: ipanelchange,dum,iprint_axes,lastrow
- logical, intent(in), optional :: dummy
+ logical, intent(in), optional :: dummy_run
  character(len=7) :: string
  !--------------------------------------------
  ! whether or not this is a dummy call or not
  !--------------------------------------------
- if (present(dummy)) then
-    dum = dummy
+ if (present(dummy_run)) then
+    dum = dummy_run
     if (debugmode) print*,'DEBUG: entering page setup (dummy)'
  else
     dum = .false.

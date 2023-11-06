@@ -34,7 +34,7 @@ module asciiutils
  implicit none
  public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename,numfromfile
  public :: cstring,fstring,add_escape_chars
- public :: string_replace, string_delete, nheaderlines, string_sub
+ public :: string_replace,string_delete,get_nheaderlines,string_sub
  public :: ucase,lcase,strip
  public :: get_line_containing
  public :: enumerate,isdigit,get_digits,integer_to_string,split
@@ -596,7 +596,7 @@ end subroutine readline_csv
 !
 ! File must be open and at the desired starting position
 !----------------------------------------------------------------------
-integer function nheaderlines(lunit)
+integer function get_nheaderlines(lunit) result(nheaderlines)
  integer, intent(in) :: lunit
  real    :: dum
  integer :: ierr
@@ -610,7 +610,7 @@ integer function nheaderlines(lunit)
  enddo
  nheaderlines = nheaderlines - 1
 
-end function nheaderlines
+end function get_nheaderlines
 
 !---------------------------------------------------------------------------
 !
