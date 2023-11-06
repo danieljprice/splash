@@ -610,6 +610,36 @@ function map_shifted_columns() result(imap)
 
 end function map_shifted_columns
 
+!-----------------------------------------------------------------
+!
+!  set labels for columns which have been tagged as vectors
+!  using the iamvec label
+!
+!-----------------------------------------------------------------
+subroutine set_vector_labels(ncolumns,ndimV,iamveci,labelveci,labeli,labelcoordi)
+ integer,                 intent(in)    :: ncolumns,ndimV
+ integer,                 intent(inout) :: iamveci(:)
+ character(len=*),        intent(in)    :: labelcoordi(:)
+ character(len=lenlabel), intent(inout) :: labelveci(:),labeli(:)
+ character(len=lenlabel) :: tmplabel
+ integer :: i
+ !
+ !--set labels for vector quantities
+ !
+ i = 1
+ do while (i <= ncolumns)
+    if (iamvec(i) > 0) then
+       tmplabel = labeli(i)
+       call make_vector_label(tmplabel,i,ndimV,iamveci,labelveci,labeli,labelcoordi)
+       i = i + ndimV
+    else
+       i = i + 1
+    endif
+ enddo
+
+end subroutine set_vector_labels
+
+
 !subroutine check_for_shifted_columns(icols,shifted)
 
 !end subroutine check_for_shifted_columns

@@ -53,6 +53,7 @@ module readdata
  use readdata_spyros,       only:read_data_spyros,       set_labels_spyros
  use readdata_urban,        only:read_data_urban,        set_labels_urban
  use readdata_starsmasher,  only:read_data_starsmasher,  set_labels_starsmasher
+ use readdata_vtk,          only:read_data_vtk,          set_labels_vtk
 
  ! Make hdf5 fortran/c modules available if compiled with hdf5
 #ifdef HDF5
@@ -282,6 +283,10 @@ subroutine select_data_format(string_in,ierr)
    read_data=> read_data_starsmasher
    set_labels=>set_labels_starsmasher
 
+ case('vtk')
+   read_data=> read_data_vtk
+   set_labels=>set_labels_vtk
+
  ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
 #ifdef HDF5
  case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
@@ -448,6 +453,8 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
     call select_data_format('fits',ierr)
+ elseif (any((index(extensions, '.vtk') > 0))) then
+    call select_data_format('vtk',ierr)
  elseif (any((index(extensions, '.pb') > 0))) then
     call select_data_format('phantom', ierr)
  elseif (any((index(extensions, '.pbob') > 0))) then

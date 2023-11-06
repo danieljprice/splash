@@ -357,7 +357,7 @@ READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspm
            read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
            read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
            read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90
+           read_data_vanaverbeke.f90     read_data_vtk.f90
 
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
