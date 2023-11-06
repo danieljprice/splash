@@ -650,15 +650,19 @@ function get_from_header_s(key,hdr,ierr) result(val)
  integer,           intent(out) :: ierr
  character(len=len(key)) :: mykey
  character(len=80) :: val,myval
- integer :: i
+ integer :: i,i1,i2,islash
 
  val = ''
  ierr = -1
  do i=1,size(hdr)
     call get_fits_header_key_val(hdr(i),mykey,myval,ierr)
     if (trim(adjustl(mykey))==trim(key) .and. ierr==0) then
-       if (index(myval,"'") > 0) then
-          val = myval(3:len_trim(myval)-1)  ! trim quotation marks
+       i1 = index(myval,"'")
+       islash = index(myval,"/")
+       if (islash == 0) islash = len_trim(myval)
+       i2 = index(myval(1:islash),"'",back=.true.)
+       if (i1 > 0) then
+          val = myval(i1+1:i2-1)  ! trim quotation marks
        else
           val = myval ! not a string variable, return whole string
        endif
@@ -699,9 +703,9 @@ subroutine get_velocity_from_fits_header(nv,vel,hdr,ierr)
  character(len=80), intent(in)  :: hdr(:)
  integer, intent(out) :: ierr
  integer :: k
- real(kind=real32) :: dv,restfreq,crpix,crval,nu
+ real :: dv,restfreq,crpix,crval,nu
  character(len=80) :: velocity_type
- real(kind=real32), parameter :: c = 2.997924e5
+ real, parameter :: c = 2.997924e5
 
  dv = get_from_header('CDELT3',hdr,ierr)
  restfreq = get_from_header('RESTFRQ',hdr,ierr)
@@ -714,20 +718,20 @@ subroutine get_velocity_from_fits_header(nv,vel,hdr,ierr)
     crpix = get_from_header('CRPIX3',hdr,ierr)
     crval = get_from_header('CRVAL3',hdr,ierr)
     do k=1,nv
-       vel(k) = crval + dv * (k - crpix)
+       vel(k) = real(crval + dv * (k - crpix),kind=real32)
     enddo
  case("FREQ")
     crpix = get_from_header('CRPIX3',hdr,ierr)
     crval = get_from_header('CRVAL3',hdr,ierr)
     do k=1,nv
        nu = crval + dv*(k - crpix)
-       vel(k) = -(nu - restfreq)/restfreq * c  ! c is in km/s
+       vel(k) = real(-(nu - restfreq)/restfreq * c,kind=real32)  ! c is in km/s
     enddo
  case default
     write(*,"(4x,a,/)") 'warning: velocity type '//trim(velocity_type)//' not recognised in fits header'
     dv = 1.
     do k=1,nv
-       vel(k) = dv * (k - 0.5)
+       vel(k) = real(dv * (k - 0.5),kind=real32)
     enddo
  end select
 

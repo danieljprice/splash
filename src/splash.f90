@@ -55,7 +55,12 @@ program splash
 !             follow-the-label column choice, where if a label is selected for plotting
 !             from the first file, it will automagically shift to find the matching label
 !             in subsequent files, even if the column containing the quantity has changed;
-!             implemented vtk reader capable of reading snapshots from Shamrock code
+!             implemented vtk reader capable of reading snapshots from Shamrock code;
+!             apply transparency to smoothed particle plot only if adaptive smoothing used;
+!             plot colour bar by default when particle colouring by quantity is used;
+!             can read velocity array from fits header for position-position-velocity cubes;
+!             bug fix with first page being white with smoothed particle plots on black background;
+!             bug fix finding .comp file if underscore in the directory name
 !     3.8.5   : (23/10/23)
 !             implemented smoothed particle plots with multiple steps per page;
 !             allow for .cols and .comp file in current directory even if the filepath is not the current dir;
