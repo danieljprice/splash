@@ -52,6 +52,9 @@ program splash
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
 !     3.9.0   : (06/11/23)
+!             follow-the-label column choice, where if a label is selected for plotting
+!             from the first file, it will automagically shift to find the matching label
+!             in subsequent files, even if the column containing the quantity has changed;
 !             implemented vtk reader capable of reading snapshots from Shamrock code
 !     3.8.5   : (23/10/23)
 !             implemented smoothed particle plots with multiple steps per page;

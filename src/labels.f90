@@ -557,10 +557,10 @@ subroutine set_required_labels(required)
     endif
  enddo
 
- print*,'DEBUG: required labels:'
- do icol=1,nreq
-    if (len_trim(labelreq(icol)) > 0) print*,trim(labelreq(icol))
- enddo
+ !print*,'DEBUG: required labels:'
+ !do icol=1,nreq
+ !   if (len_trim(labelreq(icol)) > 0) print*,trim(labelreq(icol))
+ !enddo
 
 end subroutine set_required_labels
 
@@ -569,28 +569,39 @@ end subroutine set_required_labels
 !  see if a column has shifted in the actual data
 !
 !-----------------------------------------------------------------
-subroutine check_for_shifted_column(icol,iRescale)
+integer function check_for_shifted_column(icol,labelnew) result(inew)
  use asciiutils, only:match_tag
- integer, intent(inout) :: icol
+ integer, intent(in) :: icol
+ character(len=*), intent(out), optional :: labelnew
  character(len=lenlabel) :: labelcol
- logical, intent(in) :: iRescale
- integer :: inew
 
+ inew = icol
  labelcol = shortlabel(label(icol),unitslabel(icol))
 
  if (trim(labelcol) /= trim(labelreq(icol)) .and. len_trim(labelreq(icol)) > 0) then
-    write(*,"(1x,a,i3,a)",advance='no') 'column ',icol,' has shifted: was '//&
+    if (.not.present(labelnew)) write(*,"(1x,a,i3,a)",advance='no') 'column ',icol,' has shifted: was '//&
           trim(labelreq(icol))//' but got '//trim(labelcol)
     inew = match_tag(shortlabel(label(1:maxplot),unitslabel(1:maxplot)),labelreq(icol))
     if (inew > 0) then
-       print "(1x,a,i3)",': found '//trim(shortlabel(label(inew),unitslabel(inew)))&
-             //' in col ',inew
-       icol = inew
+       if (present(labelnew)) then
+          labelnew = trim(shortlabel(label(inew),unitslabel(inew)))//trim(unitslabel(icol))
+       else
+          print "(1x,a,i3)",': found '//trim(shortlabel(label(inew),unitslabel(inew)))//' in col ',inew
+       endif
+    else
+       inew = icol
     endif
  endif
 
-end subroutine check_for_shifted_column
+end function check_for_shifted_column
 
+!-----------------------------------------------------------------
+!
+!  compute the backwards map from inew -> icol based on where
+!  a column has been shifted to. This enables lookup of original
+!  units etc which can be used to scale the data
+!
+!-----------------------------------------------------------------
 function map_shifted_columns() result(imap)
  integer :: imap(maxplot)
  integer :: i,icol
@@ -601,9 +612,9 @@ function map_shifted_columns() result(imap)
 
  do i=1,size(imap)
     icol = i
-    if (len_trim(label(i)) > 0) call check_for_shifted_column(icol,.true.)
+    if (len_trim(label(i)) > 0) icol = check_for_shifted_column(i)
     if (icol /= i) then
-     print*,i,' setting imap=',icol
+       !print*,i,' setting imap=',icol
        imap(icol) = i
     endif
  enddo
@@ -638,10 +649,5 @@ subroutine set_vector_labels(ncolumns,ndimV,iamveci,labelveci,labeli,labelcoordi
  enddo
 
 end subroutine set_vector_labels
-
-
-!subroutine check_for_shifted_columns(icols,shifted)
-
-!end subroutine check_for_shifted_columns
 
 end module labels

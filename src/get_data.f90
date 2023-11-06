@@ -390,12 +390,11 @@ subroutine rescale_data(firsttime,nsteps_read)
  if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
     if (debugmode) write(*,"(a)") ' rescaling data...'
     imap = map_shifted_columns()
-    print*,' imap = ',imap(1:12)
     do j=1,nsteps_read
        do i=1,min(ncolumns,maxcol)
           icol = imap(i)
           !print*,i,' imap=',icol
-          if (icol /= i) print*,' shift data WAS ',i,units(i),unitslabel(i),' USING ',icol,units(icol),unitslabel(icol)
+          !if (icol /= i) print*,' shift data WAS ',i,units(i),unitslabel(i),' USING ',icol,units(icol),unitslabel(icol)
           if (abs(units(icol)-1.0) > tiny(units) .and. abs(units(icol)) > tiny(units)) then
              dat(:,i,j) = dat(:,i,j)*units(icol)
           endif
