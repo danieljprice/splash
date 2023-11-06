@@ -39,12 +39,12 @@ module readdata_vtk
 contains
 
 subroutine read_data_vtk(rootname,istepstart,ipos,nstepsread)
- use particle_data,    only:dat,npartoftype,masstype,maxcol,maxpart
+ use particle_data,    only:dat,npartoftype,masstype,maxcol,maxpart,headervals
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
- use labels,           only:ih,irho,ipmass
+ use labels,           only:ih,irho,ipmass,headertags
  use system_utils,     only:get_command_option
- use asciiutils,       only:get_value
+ use asciiutils,       only:get_value,numfromfile
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -110,6 +110,13 @@ subroutine read_data_vtk(rootname,istepstart,ipos,nstepsread)
  ipartialread = .false.
  call read_vtk_legacy_binary(trim(datfile),npart,ncolstep,ierr,dat(:,:,i))
  call set_labels_vtk
+
+ ! set header variables from useful information from the file
+ headertags(1) = 'npart'
+ headervals(1,i) = real(npart)
+ headertags(2) = 'nfile'
+ headervals(2,i) = real(numfromfile(datfile))
+
 !
 !--set particle mass and number of particles of type 1
 !
@@ -150,6 +157,7 @@ subroutine read_vtk_header(filename,ndim,ndimV,ncolstep,npart,is_binary,ierr)
  ndim = 3
  ndimV = 3
  ncolstep = 0
+ tagarr(:) = ''
  
  open(newunit=iu,file=filename,status='old',action='read',form='formatted',iostat=ierr)
  if (ierr /= 0) then

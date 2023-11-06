@@ -3264,7 +3264,7 @@ subroutine legends_and_title
  !--plot time on plot
  if (iPlotLegend .and. nyplot==1 &
         .and. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn) &
-        .and. timei > -0.5*huge(timei)) then  ! but not if time has not been read from dump
+        .and. (timei > -0.5*huge(timei) .or. index(legendtext,'%') > 0)) then  ! but not if time has not been read from dump
 
     !--change to background colour index for legend text if overlaid
     if (iUseBackGroundColourForAxes .and. vposlegend > 0.) then
