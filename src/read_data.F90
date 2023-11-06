@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2020 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -355,23 +355,24 @@ subroutine print_available_formats(string)
  if (string == 'short') then
     print "(/,a,/)",'Example data formats (type --formats for full list):'
  else
-    print "(/,a,/)",'Supported data formats:'
+    print "(/,a,/)",'Supported data formats (auto = automatically identified from file contents):'
  endif
  print "(a)"  ,' -ascii,-csv          : ascii text/csv format (default)'
- print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes'
- print "(a)"  ,' -ndspmhd             : ndspmhd code'
+ print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes (auto)'
+ print "(a)"  ,' -vtk                 : vtk legacy binary format (auto)'
+ print "(a)"  ,' -ndspmhd             : ndspmhd code (auto)'
  print "(a)"  ,' -gandalf,-seren      : Gandalf/Seren code'
 #ifdef HDF5
- print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code'
+ print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code (auto)'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
  print "(a)"  ,' -flash  -flash_hdf5  : FLASH code'
  print "(a)"  ,' -cactus -cactus_hdf5 : Cactus code'
  print "(a,/)",' -amuse  -amuse_hdf5  : AMUSE Framework'
 #else
- print "(a)"  ,' -gadget              : Gadget code'
+ print "(a)"  ,' -gadget              : Gadget code (auto)'
 #endif
 #ifdef FITS
- print "(a)"  ,' -fits                : FITS format'
+ print "(a)"  ,' -fits                : FITS format (auto)'
 #endif
 #ifdef PBOB_DIR
  print "(a)"  ,' -pbob                : PBOB format'
@@ -381,7 +382,7 @@ subroutine print_available_formats(string)
 #endif
 
  if (string /= 'short') then
-    print "(a)",' -tipsy -gasoline     : Gasoline code'
+    print "(a)",' -tipsy -gasoline     : Gasoline code (auto)'
     print "(a)",' -vine                : VINE SPH code'
     print "(a)",' -rsph                : Regularised SPH'
     print "(a)",' -starsmasher         : Star Smasher code'
