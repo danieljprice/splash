@@ -1380,9 +1380,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,&
-                          iutherm,itemp,ikappa,irhorestframe
+                          iutherm,itemp,ikappa,irhorestframe,labelreq,nreq
  use calcquantities, only:calc_quantities
- use asciiutils,     only:make_tags_unique
+ use asciiutils,     only:make_tags_unique,match_tag
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
  use read_kepler,      only:check_for_composition_file,read_kepler_composition
@@ -2044,6 +2044,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
              icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idustarr,ncolstep)
              if (tagged) tagarr(icolumn) = tagtmp
+             ! force data read if label matches one of the required columns
+             if (.not.required(icolumn)) then
+                if (match_tag(labelreq(1:nreq),tagtmp) > 0) then
+                   print "(1x,a,i2)",'-> found '//trim(tagtmp)//' in column ',icolumn
+                   required(icolumn) = .true.
+                endif
+             endif
+
              if (debug)  print*,' reading real to col:',icolumn,' tag = ',trim(tagtmp), ' required = ',required(icolumn)
              if (required(icolumn)) then
                 if (doubleprec) then

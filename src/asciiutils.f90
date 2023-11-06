@@ -32,7 +32,7 @@
 !---------------------------------------------------------------------------
 module asciiutils
  implicit none
- public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename
+ public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename,numfromfile
  public :: cstring,fstring,add_escape_chars
  public :: string_replace, string_delete, nheaderlines, string_sub
  public :: ucase,lcase,strip

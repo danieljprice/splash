@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -31,7 +31,7 @@ module labels
  implicit none
  integer, parameter :: lenlabel = 80
  integer, parameter :: lenunitslabel = 40  ! length of units label
- character(len=lenlabel), dimension(maxplot+2) :: label,labelvec
+ character(len=lenlabel), dimension(maxplot+2) :: label,labelvec,labelreq,labelorig
  character(len=ltag), dimension(maxhdr)     :: headertags
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
@@ -49,6 +49,7 @@ module labels
  integer :: irhorestframe,idustfrac,ideltav
  integer :: idustfracsum,ideltavsum
  integer :: igrainsize,igraindens,ivrel
+ integer :: nreq
 
  public
 
@@ -534,5 +535,119 @@ function get_label_grain_size(sizecm) result(string)
  string = trim(string)//trim(ulab)
 
 end function get_label_grain_size
+
+!-----------------------------------------------------------------
+!
+!  save the list of labels that are actually used for plotting
+!
+!-----------------------------------------------------------------
+subroutine set_required_labels(required)
+ logical, intent(in) :: required(0:)
+ integer :: icol
+
+ ! save original list of labels
+ labelorig = label
+
+ nreq = 0
+ labelreq = ''
+ do icol=1,size(required)-1
+    nreq = nreq + 1
+    if (required(icol)) then
+       labelreq(icol) = shortlabel(label(icol),unitslabel(icol))
+    endif
+ enddo
+
+ !print*,'DEBUG: required labels:'
+ !do icol=1,nreq
+ !   if (len_trim(labelreq(icol)) > 0) print*,trim(labelreq(icol))
+ !enddo
+
+end subroutine set_required_labels
+
+!-----------------------------------------------------------------
+!
+!  see if a column has shifted in the actual data
+!
+!-----------------------------------------------------------------
+integer function check_for_shifted_column(icol,labelnew) result(inew)
+ use asciiutils, only:match_tag
+ integer, intent(in) :: icol
+ character(len=*), intent(out), optional :: labelnew
+ character(len=lenlabel) :: labelcol
+
+ inew = icol
+ labelcol = shortlabel(label(icol),unitslabel(icol))
+
+ if (trim(labelcol) /= trim(labelreq(icol)) .and. len_trim(labelreq(icol)) > 0) then
+    if (.not.present(labelnew)) write(*,"(1x,a,i3,a)",advance='no') 'column ',icol,' has shifted: was '//&
+          trim(labelreq(icol))//' but got '//trim(labelcol)
+    inew = match_tag(shortlabel(label(1:maxplot),unitslabel(1:maxplot)),labelreq(icol))
+    if (inew > 0) then
+       if (present(labelnew)) then
+          labelnew = trim(shortlabel(label(inew),unitslabel(inew)))//trim(unitslabel(icol))
+       else
+          print "(1x,a,i3)",': found '//trim(shortlabel(label(inew),unitslabel(inew)))//' in col ',inew
+       endif
+    else
+       inew = icol
+    endif
+ endif
+
+end function check_for_shifted_column
+
+!-----------------------------------------------------------------
+!
+!  compute the backwards map from inew -> icol based on where
+!  a column has been shifted to. This enables lookup of original
+!  units etc which can be used to scale the data
+!
+!-----------------------------------------------------------------
+function map_shifted_columns() result(imap)
+ integer :: imap(maxplot)
+ integer :: i,icol
+
+ do i=1,size(imap)
+    imap(i) = i
+ enddo
+
+ do i=1,size(imap)
+    icol = i
+    if (len_trim(label(i)) > 0) icol = check_for_shifted_column(i)
+    if (icol /= i) then
+       !print*,i,' setting imap=',icol
+       imap(icol) = i
+    endif
+ enddo
+
+end function map_shifted_columns
+
+!-----------------------------------------------------------------
+!
+!  set labels for columns which have been tagged as vectors
+!  using the iamvec label
+!
+!-----------------------------------------------------------------
+subroutine set_vector_labels(ncolumns,ndimV,iamveci,labelveci,labeli,labelcoordi)
+ integer,                 intent(in)    :: ncolumns,ndimV
+ integer,                 intent(inout) :: iamveci(:)
+ character(len=*),        intent(in)    :: labelcoordi(:)
+ character(len=lenlabel), intent(inout) :: labelveci(:),labeli(:)
+ character(len=lenlabel) :: tmplabel
+ integer :: i
+ !
+ !--set labels for vector quantities
+ !
+ i = 1
+ do while (i <= ncolumns)
+    if (iamvec(i) > 0) then
+       tmplabel = labeli(i)
+       call make_vector_label(tmplabel,i,ndimV,iamveci,labelveci,labeli,labelcoordi)
+       i = i + ndimV
+    else
+       i = i + 1
+    endif
+ enddo
+
+end subroutine set_vector_labels
 
 end module labels

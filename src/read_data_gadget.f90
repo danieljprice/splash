@@ -1168,7 +1168,7 @@ end subroutine allocate_temp1
 !!------------------------------------------------------------
 
 subroutine set_labels_gadget
- use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,&
+ use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,set_vector_labels, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
@@ -1636,19 +1636,8 @@ subroutine set_labels_gadget
  if (iutherm > 0) label(iutherm)    = 'u'
  if (ipmass > 0)  label(ipmass)     = 'particle mass'
  if (ih > 0)      label(ih)         = 'h'
- !
- !--set labels for vector quantities
- !
- i = 1
- do while (i <= ncolumns)
-    if (iamvec(i) > 0) then
-       tmplabel = label(i)
-       call make_vector_label(tmplabel,i,ndimV,iamvec,labelvec,label,labelcoord(:,1))
-       i = i + ndimV
-    else
-       i = i + 1
-    endif
- enddo
+
+ call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))

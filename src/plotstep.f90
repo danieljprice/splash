@@ -83,7 +83,8 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use colours,            only:colour_set
  use colourbar,          only:barisvertical
  use labels,             only:label,ipowerspec,ih,ipmass,irho,ikappa,iamvec,isurfdens, &
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,unitslabel
+                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,&
+                               unitslabel,set_required_labels
  use limits,             only:lim,rangeset,limits_are_equal
  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
                                nyplotmulti,x_secmulti,ivecplotmulti
@@ -548,7 +549,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  endif
  call get_adjust_data_dependencies(required)
 
-!  endif
+ call set_required_labels(required)
  if (debugmode) print*,'DEBUG: required(1:ncolumns) = ',required(1:ncolumns+ncalc)
 
  !!--read step titles (don't need to store ntitles for this)
@@ -657,7 +658,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                ipowerspec,isurfdens,itoomre,ispsound,iutherm, &
                                ipdf,icolpixmap,is_coord,labeltype, &
                                labelzintegration,unitslabel,integrate_label, &
-                               get_sink_type,get_unitlabel_coldens,ikappa
+                               get_sink_type,get_unitlabel_coldens,ikappa,&
+                               check_for_shifted_column,labelorig
  use limits,             only:lim,get_particle_subset,lim2,lim2set
  use multiplot,          only:multiplotx,multiploty,irendermulti,ivecplotmulti, &
                                itrans,icontourmulti,x_secmulti,xsecposmulti,&
@@ -735,7 +737,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  logical, dimension(maxparttypes) :: iusetype
 
  integer :: ntoti,iz,iseqpos,itrackpart
- integer :: i,j,k,icolumn,irow
+ integer :: i,j,k,icolumn,irow,ix_map,iy_map,iz_map,irender_map,icontour_map
  integer :: nyplot,nframesloop
  integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
@@ -777,7 +779,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  labelvecplot = ' '
  use_type_prev = UseTypeInRenderings(:) ! allocate memory
  use_type_prev = .false.  ! set to false
-
  !
  !--allocate temporary memory required for plotting
  !
@@ -994,6 +995,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  (because this can be achieved by rendering with colour scheme 0)
           icontourplot = 0
        endif
+
        !--flag to indicate that we have actually got the contoured quantity,
        !  set to true once interpolation has been done.
        if (.not.interactivereplot .or. irerender) gotcontours = .false.
@@ -1060,7 +1062,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 print*,'ERROR: Internal error with out-of-bounds x column = ',iplotx
                 exit over_plots
              endif
-             xplot(1:ntoti) = dat(1:ntoti,iplotx)
+             ix_map = check_for_shifted_column(iplotx,labelx)
+             xplot(1:ntoti) = dat(1:ntoti,ix_map)
              iamvecx = iamvec(iplotx)
           else
              iamvecx = 0
@@ -1071,13 +1074,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
                 exit over_plots
              endif
-             yplot(1:ntoti) = dat(1:ntoti,iploty)
+             iy_map = check_for_shifted_column(iploty,labely)
+             yplot(1:ntoti) = dat(1:ntoti,iy_map)
              iamvecy = iamvec(iploty)
           else
              iamvecy = 0
           endif
           if (initz) then
-             zplot(1:ntoti) = dat(1:ntoti,iplotz)
+             iz_map = check_for_shifted_column(iplotz,labelz)
+             zplot(1:ntoti) = dat(1:ntoti,iz_map)
           else
              zplot = 0.
           endif
@@ -1137,13 +1142,17 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !--change coordinate system in the quantity being rendered
           !
           if (irender > 0 .and. rendering) then
-             renderplot(1:ntoti) = dat(1:ntoti,irender)
+             labelrender = label(irender)
+             irender_map = check_for_shifted_column(irender,labelrender)
+             renderplot(1:ntoti) = dat(1:ntoti,irender_map)
              if (icoordsnew /= icoords .and. iamvec(irender) > 0) then
                 call changeveccoords(irender,renderplot,ntoti,ndim,itrackpart,dat)
              endif
              if (icontourplot > 0) then
+                labelrender = label(icontourplot)
                 if (.not.allocated(contourplot)) allocate(contourplot(size(renderplot))) ! only do this once
-                contourplot(1:ninterp) = dat(1:ninterp,icontourplot)
+                icontour_map = check_for_shifted_column(icontourplot,labelcont)
+                contourplot(1:ninterp) = dat(1:ninterp,icontour_map)
                 if (icoordsnew /= icoords .and. iamvec(icontourplot) > 0) then
                    call changeveccoords(icontourplot,contourplot,ntoti,ndim,itrackpart,dat)
                 endif
@@ -1751,10 +1760,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       endif
                    endif
 
-                   !!--set label for rendered quantity
-                   labelrender = label(irenderplot)
-                   if (gotcontours) labelcont = label(icontourplot)
-
                    !!--set label for column density (projection) plots
                    if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
                       inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
@@ -2172,9 +2177,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              iPlotColourBar = (iColourBarStyle > 0)
 
              !--apply transformations to render array and set label
-             renderplot(1:ntoti) = dat(1:ntoti,irenderpart)
-             call transform(renderplot(1:ntoti),itrans(irenderpart))
              labelrender = label(irenderpart)
+             irender_map = check_for_shifted_column(irenderpart,labelrender)
+             renderplot(1:ntoti) = dat(1:ntoti,irender_map)
+             call transform(renderplot(1:ntoti),itrans(irenderpart))
              labelrender = transform_label(labelrender,itrans(irenderpart))
 
              !--limits for rendered quantity
@@ -2877,6 +2883,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     if (allocated(datpixcont3D)) deallocate(datpixcont3D)
  endif
 
+ !if (.not.interactivereplot) then
+    ! restore original labels...
+    label = labelorig
+ !endif
+
  !--free temporary arrays
  if (allocated(xplot)) deallocate(xplot)
  if (allocated(yplot)) deallocate(yplot)
@@ -3254,7 +3265,7 @@ subroutine legends_and_title
  !--plot time on plot
  if (iPlotLegend .and. nyplot==1 &
         .and. ipanelselect(iPlotLegendOnlyOnPanel,ipanel,irow,icolumn) &
-        .and. timei > -0.5*huge(timei)) then  ! but not if time has not been read from dump
+        .and. (timei > -0.5*huge(timei) .or. index(legendtext,'%') > 0)) then  ! but not if time has not been read from dump
 
     !--change to background colour index for legend text if overlaid
     if (iUseBackGroundColourForAxes .and. vposlegend > 0.) then
