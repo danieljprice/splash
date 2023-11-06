@@ -24,7 +24,7 @@
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     0.9.2   : (09/10/23)
+!     0.9.7   : (06/11/23)
 !             fix velocity array read if comments in the fits header
 !     0.9.1   : (09/10/23)
 !             fix homebrew install
@@ -49,7 +49,7 @@ program sph_moments
  use kernels,         only:select_kernel,kernelname
  !$ use omp_lib, only:omp_get_num_threads
  implicit none
- character(len=240) :: file1,fileout,fileout_m(5),tagline
+ character(len=256) :: file1,fileout,fileout_m(5),tagline
  integer :: ierr,jext,nfiles,naxes(4),k,iarglist(2),nm,ns,ikernel
  real, allocatable :: cube(:,:,:),moment(:,:,:),zvals(:)
  character(len=80), allocatable :: fitsheader(:)
@@ -60,7 +60,7 @@ program sph_moments
 
  nfiles = count_matching_args('.fits',iarglist)
 
- tagline = 'sph_moments v0.9.0: a SPLASH imaging utility (c) 2023 Daniel Price'
+ tagline = 'sph_moments v0.9.7: a SPLASH imaging utility (c) 2023 Daniel Price'
  if (nfiles < 1) then
     print "(a)",trim(tagline)
     print "(/,a)",'Usage: sph_moments [options] infile.fits [outfile.fits]'
