@@ -28,7 +28,7 @@ module system_utils
  use asciiutils, only:lcase
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
- public :: envlist,ienvlist,lenvlist,get_command_option,count_matching_args
+ public :: envlist,ienvlist,lenvlist,renvlist,get_command_option,count_matching_args
  public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
 
  private
@@ -170,6 +170,30 @@ integer function ienvstring(string,errval)
  endif
 
 end function ienvstring
+!
+ !--utility routine to extract real value from string
+ !
+real function renvstring(string,errval)
+ character(len=*), intent(in)  :: string
+ real, intent(in), optional :: errval
+ character(len=5) :: fmtstring
+ integer :: ierr
+
+ if (len_trim(string) > 0) then
+    read(string,*,iostat=ierr) renvstring
+ else
+    ierr = 1
+ endif
+
+ if (ierr /= 0) then
+    if (present(errval)) then
+       renvstring = errval
+    else
+       renvstring = 0.
+    endif
+ endif
+
+end function renvstring
  !
  !--this routine returns an arbitrary number of
  !  comma separated strings
@@ -260,6 +284,29 @@ function lenvlist(variable,nlist)
  enddo
 
 end function lenvlist
+!
+!--return comma separated list of reals
+!
+function renvlist(variable,nlist,errval)
+ character(len=*), intent(in) :: variable
+ integer, intent(in) :: nlist
+ real, intent(in), optional :: errval
+ character(len=30), dimension(nlist) :: list
+ real :: renvlist(nlist)
+ integer :: i,ngot
+
+ ngot = nlist
+ call envlist(variable,ngot,list)
+
+ do i=1,nlist
+    if (present(errval)) then
+       renvlist(i) = renvstring(list(i),errval=errval)
+    else
+       renvlist(i) = renvstring(list(i))
+    endif
+ enddo
+
+end function renvlist
 
 !
 !--find logical-valued option from command line arguments
