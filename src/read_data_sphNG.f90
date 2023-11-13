@@ -1191,6 +1191,7 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
        itype = itypemap_phantom(iphase(k))
        pmassi = massoftype(itype)
        hi = dat(k,ih)
+       if (ipmass > 0) pmassi = dat(k,ipmass)
        if (hi > 0.) then
           if (required(irho)) dat(k,irho) = pmassi*(hfact/hi)**3
        elseif (hi < 0.) then
@@ -1210,13 +1211,15 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
 else
    if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
    if (debug) print*,'debug: phantom: setting rho for all types'
+   pmassi = massoftype(1)
    !--assume all particles are gas particles
    do k=i1,i2
       hi = dat(k,ih)
+      if (ipmass > 0) pmassi = dat(k,ipmass)
       if (hi > 0.) then
-         rhoi = massoftype(1)*(hfact/hi)**3
+         rhoi = pmassi*(hfact/hi)**3
       elseif (hi < 0.) then
-         rhoi = massoftype(1)*(hfact/abs(hi))**3
+         rhoi = pmassi*(hfact/abs(hi))**3
          npartoftype(1) = npartoftype(1) - 1
          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
          iphase(k) = -1
@@ -1410,9 +1413,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer*8, dimension(maxarrsizes) :: isize
  integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
  integer*1, dimension(:), allocatable :: iphase
- integer, dimension(:), allocatable :: listpm
+ integer, dimension(:), allocatable :: listpm,level
  real(doub_prec), dimension(:), allocatable :: dattemp
- real*4, dimension(:), allocatable :: dattempsingle
+ real*4, dimension(:), allocatable :: dattempsingle,massfac
  real(doub_prec) :: r8,unit_dens,unit_ergg
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
@@ -1890,8 +1893,22 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        endif
        !print*,'skipping ',nskip
        do i=1,nskip
-          if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
-          read(iunit,end=33,iostat=ierr)
+          if (tagged) read(iunit,end=33,iostat=ierr) tagtmp! skip tags
+          !
+          ! read the Adaptive Particle Refinement level array
+          ! in order to correctly set particle masses, if present
+          !
+          select case(tagtmp)
+          case('apr')
+             allocate(level(isize(iarr)),massfac(isize(iarr)))
+             read(iunit,end=33,iostat=ierr) level
+             ! m = m/2**(level-1)
+             massfac(1:isize(iarr)) = 1./2**(level(1:isize(iarr))-1)
+             if (iblock==1) print "(a,i2)",' :: '//trim(tagtmp)//' max level = ',maxval(level)
+             deallocate(level)
+          case default
+             read(iunit,end=33,iostat=ierr)
+          end select
        enddo
 !
 !--real arrays
@@ -2074,6 +2091,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 if (required(ipmass) .and. ipmass > 0) then
                    if (phantomdump) then
                       dat(i1:i2,ipmass,j) = masstype(itypemap_phantom(iphase(i1:i2)),j)
+                      if (allocated(massfac)) then
+                         dat(i1:i2,ipmass,j) = dat(i1:i2,ipmass,j)*massfac(1:isize(iarr))
+                         deallocate(massfac)
+                      endif
                    else
                       where (iphase(i1:i2)==0) dat(i1:i2,icolumn,j) = masstype(1,j)
                    endif
