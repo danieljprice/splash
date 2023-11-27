@@ -697,7 +697,7 @@ end function allowrendering
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params,        only:maxplot
- use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
+ use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,iutherm,ipdf,label,icolpixmap
  use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
  use system_utils,  only:lenvironment
@@ -719,7 +719,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
        nextra = nextra + 1
        isurfdens = ncolumns + ncalc + nextra
        label(isurfdens) = 'Surface density'
-       if (iutherm > 0 .and. iutherm <= ncolumns) then
+       if (iutherm > 0 .and. iutherm <= ncolumns .or. ispsound > 0 .and. ispsound <= ncolumns) then
           nextra = nextra + 1
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'
