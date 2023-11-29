@@ -1325,9 +1325,9 @@ end subroutine check_iphase_matches_npartoftype
 !------------------------------------------------------------
 ! allocate and reallocate the iphase array as needed
 !------------------------------------------------------------
-subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary)
+subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
  integer*1, allocatable, intent(inout) :: iphase(:)
- integer, intent(in) :: nmax
+ integer, intent(in) :: nmax,nlocbinary
  logical, intent(in) :: phantomdump,gotbinary
  integer*1, allocatable :: iphase_old(:)
  integer :: ncopy
@@ -1345,8 +1345,8 @@ subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary)
  endif
 
  if (gotbinary) then
-    iphase(nmax-1) = -3
-    iphase(nmax)   = -3
+    iphase(nlocbinary) = -3
+    iphase(nlocbinary+1) = -3
  endif
 
  if (allocated(iphase_old)) then
@@ -1400,7 +1400,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: nskip,ntotal,npart,n1,ngas,nreals
  integer :: iblock,nblocks,ntotblock,ncolcopy
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
- integer :: imaxcolumnread,nhydroarraysinfile,nremoved,nhdr,nkilled
+ integer :: imaxcolumnread,nhydroarraysinfile,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
  integer :: icentre,icomp_col_start,ncomp
  integer, dimension(maxparttypes) :: npartoftypei
@@ -1814,7 +1814,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !
 !--allocate memory for iphase array now that gotbinary is known
 !
-    if (need_to_allocate_iphase) call allocate_iphase(iphase,max(npart_max+2,maxpart),phantomdump,gotbinary)
+    if (need_to_allocate_iphase) call allocate_iphase(iphase,max(npart_max+2,maxpart),phantomdump,gotbinary,npart_max+1)
 !
 !--Arrays
 !
