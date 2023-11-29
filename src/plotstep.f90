@@ -721,6 +721,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use geomutils,             only:changecoords,changeveccoords
  use legends,               only:ipanelselect
  use asciiutils,            only:string_delete
+ use system_utils,          only:get_command_flag
  use plotlib,               only:plot_sci,plot_page,plot_sch,plot_qci,plot_qls,&
                                   plot_sls,plot_line,plot_pt1,plotlib_is_pgplot
  integer, intent(inout) :: ipos,istepsonpage,irender_nomulti
@@ -1829,6 +1830,10 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                contmax = lim(icontourplot,2)
                                call transform_limits(contmin,contmax,itrans(icontourplot))
                             endif
+                         endif
+                         if (iadapt .and. get_command_flag('movie')) then
+                            call save_limits(irenderplot,rendermin,rendermax)
+                            iadapt = .false.
                          endif
                       endif
                    endif

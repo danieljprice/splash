@@ -24,7 +24,8 @@ module interactive_routines
  use colourbar, only:barisvertical,incolourbar,incolourbarlabel,adjustcolourbar
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
- private :: mvlegend,mvtitle,save_limits,save_rotation
+ public :: set_movie_mode,save_limits
+ private :: mvlegend,mvtitle,save_rotation
  private :: get_vptxy
  real, private :: xcursor = 0.5
  real, private :: ycursor = 0.5
@@ -1257,7 +1258,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           call unset_movie_mode()
           in_movie_mode = .false.
        else
-          call set_movie_mode()
+          call set_movie_mode(.true.)
           in_movie_mode = .true.
        endif
        iadvance = 0
@@ -3127,7 +3128,7 @@ end subroutine change_colourmap
 !
 !--set movie mode
 !
-subroutine set_movie_mode()
+subroutine set_movie_mode(live)
  use settings_page,   only:iaxis,papersizex,aspectratio,ipapersize,ipapersizeunits,iPageColours
  use settings_limits, only:adjustlimitstodevice
  use settings_render, only:iColourBarStyle
@@ -3136,6 +3137,7 @@ subroutine set_movie_mode()
  use colourbar,       only:set_floating_bar_style
  use system_utils,    only:get_copyright
  use shapes,          only:add_text
+ logical, intent(in) :: live
 
  iaxis = -2
  iPageColours = 2
@@ -3144,10 +3146,10 @@ subroutine set_movie_mode()
     ipapersizeunits = 0
     papersizex      = 1280.
     aspectratio     = 0.5625
-    call plot_pap(papersizex,aspectratio,ipapersizeunits)
+    if (live) call plot_pap(papersizex,aspectratio,ipapersizeunits)
     iColourBarStyle = 8
     call set_floating_bar_style(iColourBarStyle,4)
-    call set_pagecolours(iPageColours)
+    if (live) call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
  call add_text(0.025,0.05,get_copyright())
