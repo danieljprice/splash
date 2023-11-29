@@ -43,7 +43,7 @@ module asciiutils
  public :: match_column,match_tag_start,match_integer,match_lists
  public :: count_non_blank,find_repeated_tags,count_char
  public :: get_extensions,readline_csv,extension
- public :: reorder_filenames_for_comparison
+ public :: sort_filenames_for_comparison
  public :: read_var_from_file
  integer, parameter :: max_line_length = 10000 ! for finding number of columns
 
@@ -1635,30 +1635,39 @@ integer function numfromfile(filename)
 end function numfromfile
 
 !------------------------------------------------------------
-! utility to reorder a list of files
-! NOT YET IMPLEMENTED...
+! utility to reorder a list of files. We use an insertion
+! sort algorithm which preserves relative order of filenames
+! so a list of files like:
+!
+!  disc_00000 disc_00001 disc_00002 disc1_00000 disc1_00002
+!
+! will be reordered as:
+!
+!  disc_00000 disc1_00000 disc_00001 disc1_00001 disc_00002
+!
 !------------------------------------------------------------
-subroutine reorder_filenames_for_comparison(nfiles,filenames)
+subroutine sort_filenames_for_comparison(nfiles,filenames)
  integer, intent(in) :: nfiles
  character(len=*), intent(inout) :: filenames(nfiles)
- integer :: i,n,nprev,nseq
+ character(len=100) :: key
+ integer :: i,j,num
 
- nseq = 0
- nprev = 0
- do i=1,nfiles
-    n = numfromfile(filenames(i))
-    if (i > 1) then
-       if (n == nprev + 1) then
-          nseq = nseq + 1
-          print*,i,n,nseq,trim(filenames(i))
-       else
-          nseq = 0
-       endif
-       nprev = n
-    endif
+ do i = 2, nfiles
+    key = filenames(i)
+    num = numfromfile(key)
+    j = i - 1
+
+    ! move elements of the filenames array with number
+    ! greater than the key to one position ahead 
+    ! of their current position
+    do while(j >= 1 .and. numfromfile(filenames(j)) > num)
+       filenames(j+1) = filenames(j)
+       j = j - 1
+    enddo
+    filenames(j+1) = key
  enddo
 
-end subroutine reorder_filenames_for_comparison
+end subroutine sort_filenames_for_comparison
 
 !------------------------------------------------------------
 ! utility to read a variable from an ascii file
