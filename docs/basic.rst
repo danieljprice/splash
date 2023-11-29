@@ -382,8 +382,8 @@ this way can be directly incorporated into LaTeX using standard packages.
 
 .. _sec:movies:
 
-Producing a sequence of plots for a movie
------------------------------------------
+Producing a movie of your simulation
+-------------------------------------
 To make a movie of your simulation, first specify all of the files you
 want to use on the command line:
 
@@ -398,8 +398,13 @@ and use an interactive device to adjust options until it looks right.
    or the backspace key in interactive mode to manually delete annotation
 
 If in interactive mode type ``s`` to save the current settings, then plot the
-same thing again but to a non-interactive device. For example, to
-generate a sequence of png files ::
+same thing again but to a non-interactive device. 
+
+In the latest version of splash you can generate an mp4 directly ::
+
+    Graphics device/type (? to see list, default /xw): splash.mp4
+
+In older splash versions, or for more control, first generate a sequence of png files ::
 
     Graphics device/type (? to see list, default /xw): /png
 
@@ -411,8 +416,16 @@ to generate ``myfile_0000.png``, ``myfile_0001.png``,
 
 
 .. hint::
-   Avoid prompts altogether using the :ref:`sec:commandline`. For example,
-   to produce the above sequence of files from the command line, use ::
+   Avoid prompts altogether using the :ref:`sec:commandline`. For example, to make
+   a movie as per the prompts above, simply type::
+
+     splash -r 5 --movie dump_*
+
+   which is a shortcut for::
+
+     splash -r 5 -dev splash.mp4 dump_*
+
+   To produce a sequence of images from the command line, use ::
 
      splash -r 5 -dev /png
 

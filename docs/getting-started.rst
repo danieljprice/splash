@@ -265,48 +265,24 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 ::
 
    Command line options:
-
+    
     -f format         : input file format to be read (default is ascii, --formats for full list)
-    -p fileprefix     : change prefix to ALL settings files read/written by splash
-    -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
+    -p fileprefix     : change prefix to ALL settings files read/written by splash 
+    -e, -ev           : use default options best suited for line plotting (.ev files)
     -360              : set default options suited to 360 video
     -b, --buffer      : buffer all data files into memory
     -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
-
-   To select data formats, use the shortcuts below, or use the -f or --format command line options
-   Multiple data formats are not support in a single instance.
-   Supported data formats:
-     -ascii,-csv          : ascii text/csv format (default)
-     -phantom -sphng      : Phantom and sphNG codes
-     -ndspmhd             : ndspmhd code
-     -gandalf,-seren      : Gandalf/Seren code
-     -gadget -gadget_hdf5 : Gadget code
-     -falcon -falcon_hdf5 : FalcON code
-     -flash  -flash_hdf5  : FLASH code
-     -cactus -cactus_hdf5 : Cactus code
-     -amuse  -amuse_hdf5  : AMUSE Framework
-     -fits                : FITS format
-
-   The following formats support HDF5:
-    -flash            : FLASH code
-    -gadget           : Gadget code
-    -cactus           : Cactus SPH code
-    -falcon           : FalcON code
-    -amuse            : AMUSE Framework
-
-   add a suffix "_hdf5" to the above command line options if your data files do not end with .h5.
-
+    
    Command line plotting mode:
-
-    -x column         : specify x plot on command line (ie. do not prompt for x)
-    -y column         : specify y plot on command line (ie. do not prompt for y)
-    -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)
-                        (will take columns 1 and 2 as x and y if -x and/or -y not specified)
-    -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
-    -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
-    -dev device       : specify plotting device on command line (ie. do not prompt)
+    
+    -x column         : x axis
+    -y column         : y axis
+    -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)
+    -vec[tor] column  : vector quantity to plot with arrows
+    -c[ontour] column : contoured quantity
     -multi            : multiplot
-
+    -dev device       : specify plotting device on command line (e.g. -dev /xw)
+    --movie           : shortcut for -dev /mp4 to make a movie from plot sequence
     --xsec=1.0        : specify location of cross section slice
     --kappa=1.0       : specify opacity, and turn on opacity rendering
     --anglex=30       : rotate around x axis (similarly --angley, --anglez)
@@ -317,6 +293,25 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     --track=666       : track particle number 666
     --track=maxdens   : track particle at maximum density
     --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
+    --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)
+    
+   Example data formats (type --formats for full list):
+    
+    -ascii,-csv          : ascii text/csv format (default)
+    -phantom -sphng      : Phantom and sphNG codes (auto)
+    -vtk                 : vtk legacy binary format (auto)
+    -ndspmhd             : ndspmhd code (auto)
+    -gandalf,-seren      : Gandalf/Seren code
+    -gadget -gadget_hdf5 : Gadget code (auto)
+    -falcon -falcon_hdf5 : FalcON code
+    -flash  -flash_hdf5  : FLASH code
+    -cactus -cactus_hdf5 : Cactus code
+    -amuse  -amuse_hdf5  : AMUSE Framework
+    -fits                : FITS format (auto)
+    
+    HDF5 files will be automatically recognised if they end with .h5, however you
+    must specify a supported data format.
+    add a suffix "_hdf5" to above format if your data files do not end with .h5.
 
     convert mode ("splash to X dumpfiles"):
     splash to ascii   : convert SPH data to ascii file dumpfile.ascii
