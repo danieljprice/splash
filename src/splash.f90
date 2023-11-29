@@ -51,7 +51,7 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.10.0  : (29/11/23)
+!     3.10.0  : (30/11/23)
 !             --sort flag to sort filenames for comparison plots;
 !             --movie flag to automatically make movie from sequence of files
 !     3.9.0   : (06/11/23)
@@ -596,7 +596,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.10.0 [29th Nov 2023]'
+ character(len=*), parameter :: version = 'v3.10.0 [30th Nov 2023]'
 
  !
  ! initialise some basic code variables
