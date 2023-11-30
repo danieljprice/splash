@@ -53,7 +53,8 @@ program splash
 !     Version history/ Changelog:
 !     3.10.0  : (30/11/23)
 !             --sort flag to sort filenames for comparison plots;
-!             --movie flag to automatically make movie from sequence of files
+!             --movie flag to automatically make movie from sequence of files;
+!             giza backend now supports direct output of mp4 movies
 !     3.9.0   : (06/11/23)
 !             follow-the-label column choice, where if a label is selected for plotting
 !             from the first file, it will automagically shift to find the matching label
