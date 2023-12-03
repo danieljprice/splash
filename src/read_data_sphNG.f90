@@ -2650,19 +2650,26 @@ subroutine set_labels_sphNG
           label(i) = '\eta_{real}'
        case('EtaArtificial')
           label(i) = '\eta_{art}'
-       case('Erad')
+       case('Erad','xi')
           iradenergy = i
-          label(i) = 'radiation energy'
+          label(i) = '\xi'
           unitslabel(i) = ' [erg/g]'
           units(i) = (udist/utime)**2
        case('opacity')
           label(i) = 'opacity'
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
-       case('EddingtonFactor')
+       case('kappa')
+          unitslabel(i) = ' [cm^2/g]'
+          units(i) = udist**2/umass
+       case('radP')
+          label(i) = 'radiation pressure'
+          unitslabel(i) = ' [g / (cm s^2)]'
+          units(i) = umass/(udist*utime**2)
+       case('EddingtonFactor','edd')
           label(i) = 'Eddington Factor'
-       case('Cv')
-          label(i) = 'u/T'
+       case('Cv','cv')
+          label(i) = 'C_v'
           icv = i
           units(i) = (udist/utime)**2
           unitslabel(i) = ' [erg/(g K)]'
