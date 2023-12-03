@@ -2233,6 +2233,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (.not.allocated(brightness)) allocate(brightness(npixx,npixy))
              pixwidth = (xmax - xmin)/npixx
              pixwidthy = (ymax - ymin)/npixy
+             where (hh(1:ntoti) < 0.) icolourme(1:ntoti) = -1000 ! hide particles with negative h
              !print*,'PIXWIDTH  = ',pixwidth,pixwidthy
              if (irender > 0) then
                 ! here we colour the particles by a certain quantity
