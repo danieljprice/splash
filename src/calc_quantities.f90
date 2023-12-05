@@ -556,6 +556,37 @@ end subroutine append_grain_size_label
 
 !-----------------------------------------------------------------
 !
+!  utility (private) to get mass of a particular grain species
+!  from the header tags
+!
+!-----------------------------------------------------------------
+real function get_mass_of_species(string,idust,tags,vals,ierr)
+ use labels, only:count_non_blank
+ character(len=*), intent(inout) :: string
+ integer, intent(in)  :: idust
+ character(len=*), intent(in) :: tags(:)
+ real,    intent(in) :: vals(:)
+ integer, intent(out) :: ierr
+ integer :: ntags,nd,i
+
+ get_mass_of_species = 0.
+ ntags = count_non_blank(tags)
+ nd = 0
+ ierr = 1
+ do i=1,ntags
+    if (index(tags(i),'mdust_in') > 0) then
+       nd = nd + 1
+       if (nd==idust) then
+          ierr = 0
+          get_mass_of_species = vals(i)
+       endif
+    endif
+ enddo
+
+end function get_mass_of_species
+
+!-----------------------------------------------------------------
+!
 !  utility (private) to either print the example quantity or
 !  add it to a prefilled list of calculated quantities
 !
@@ -599,7 +630,7 @@ end subroutine print_or_prefill
 subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
- use labels,         only:label,unitslabel,shortstring
+ use labels,         only:label,unitslabel,shortstring,irhodust_start,irhodust_end
  integer, intent(out) :: ncalcok,ncalctot
  integer, dimension(maxcalc), intent(out), optional :: incolumn
  logical, intent(in), optional :: verbose
@@ -649,6 +680,11 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
              print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
           endif
        endif
+       !
+       !--recognise the dust density in the list of calculated quantities
+       !
+       if (trim(calcstring(i))=='density*dustfrac1') irhodust_start = ncolumns+ncalcok
+       if (calcstring(i)(1:16)=='density*dustfrac')    irhodust_end = ncolumns+ncalcok ! overwrite until last density*dustfrac
     else
        indexinactive = indexinactive - 1
        if (isverbose) then
@@ -940,28 +976,34 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  !
  select case(label_synonym(labelcol))
  case('r','radius','rad')
-    if (irad <= 0 .or. irad > ncolumns) then
-       irad = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
-    endif
+    call assign_column(irad,icolumn,ncolumns,debugmode,'radius')
  case('kinetic energy','ke','1/2 v^2','v^2/2')
-    if (ike <= 0 .or. irad > ncolumns) then
-       ike = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
-    endif
+    call assign_column(ike,icolumn,ncolumns,debugmode,'kinetic energy')
  case('pressure','pr','p')
-    if (ipr <= 0 .or. ipr > ncolumns) then
-       ipr = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
-    endif
+    call assign_column(ipr,icolumn,ncolumns,debugmode,'pressure')
  case('kappa','opacity')
-    if (ikappa <= 0 .or. ikappa > ncolumns) then
-       ikappa = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the opacity'
-    endif
+    call assign_column(ikappa,icolumn,ncolumns,debugmode,'opacity')
  end select
 
 end subroutine identify_calculated_quantity
+
+!-----------------------------------------------------------------
+!
+!  helper routine for above
+!
+!-----------------------------------------------------------------
+subroutine assign_column(i,icolumn,ncolumns,debugmode,string)
+ integer, intent(inout) :: i
+ integer, intent(in)    :: icolumn,ncolumns
+ logical, intent(in)    :: debugmode
+ character(len=*), intent(in) :: string
+
+ if (i <= 0 .or. i > ncolumns) then
+    i = icolumn
+    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the '//trim(string)
+ endif
+
+end subroutine assign_column
 
 !-----------------------------------------------------------------
 !

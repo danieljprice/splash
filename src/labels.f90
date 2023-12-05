@@ -36,7 +36,7 @@ module labels
  character(len=20), dimension(maxparttypes) :: labeltype
  character(len=6), parameter :: labeldefault = 'column'
  character(len=lenunitslabel), dimension(0:maxplot), public :: unitslabel,unitslabel_default
- character(len=lenunitslabel), public :: labelzintegration,labelzintegration_default
+ character(len=lenunitslabel) :: labelzintegration,labelzintegration_default
  integer, dimension(3)       :: ix
  integer, dimension(maxplot) :: iamvec
  integer :: ivx,irho,iutherm,ipr,ih,irad,iBfirst,iBpol,iBtor,iax
@@ -49,6 +49,7 @@ module labels
  integer :: irhorestframe,idustfrac,ideltav
  integer :: idustfracsum,ideltavsum
  integer :: igrainsize,igraindens,ivrel
+ integer :: irhodust_start,irhodust_end
  integer :: nreq
 
  public
@@ -99,6 +100,8 @@ subroutine reset_columnids
  ideltav = 0
  ideltavsum = 0
  ipmomx = 0
+ irhodust_start = 0
+ irhodust_end = 0
  headertags = ''
 
 end subroutine reset_columnids

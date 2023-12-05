@@ -2821,6 +2821,44 @@ end subroutine mvtitle
 !--saves current plot limits
 !
 subroutine save_limits(iplot,xmin,xmax,setlim2)
+ use labels, only:irhodust_start,irhodust_end
+ integer, intent(in) :: iplot
+ real,    intent(in) :: xmin,xmax
+ logical, intent(in), optional :: setlim2
+ real :: xmintemp,xmaxtemp
+ integer :: i
+
+ if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+    !
+    !--if we save the limits for one dust density, apply to whole grid
+    ! 
+    do i=irhodust_start,irhodust_end
+       xmintemp = xmin
+       xmaxtemp = xmax
+       if (present(setlim2)) then
+          call save_limits_i(i,xmintemp,xmaxtemp,setlim2)
+       else
+          call save_limits_i(i,xmintemp,xmaxtemp)
+       endif
+    enddo
+    print*,'> applying saved limits to all dust species <'
+ else
+    !
+    !--otherwise just pass options through to save_limits_i
+    !
+    if (present(setlim2)) then
+       call save_limits_i(iplot,xmin,xmax,setlim2)
+    else
+       call save_limits_i(iplot,xmin,xmax)
+    endif
+ endif
+
+end subroutine save_limits
+
+!
+!--save plot limits for one column
+!
+subroutine save_limits_i(iplot,xmin,xmax,setlim2)
  use limits,          only:lim,lim2
  use labels,          only:is_coord
  use multiplot,       only:itrans
@@ -2866,7 +2904,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  endif
 
  return
-end subroutine save_limits
+end subroutine save_limits_i
 
 !
 !--implements parameter range restriction
@@ -2975,9 +3013,10 @@ end subroutine save_itrackpart_recalcradius
 !  note this only changes a pure log transform: will not change combinations
 !
 subroutine change_itrans(iplot,xmin,xmax)
- use multiplot, only:itrans
+ use multiplot,     only:itrans
  use settings_data, only:numplot
- use transforms, only:transform_limits,transform_limits_inverse
+ use transforms,    only:transform_limits,transform_limits_inverse
+ use labels,        only:irhodust_start,irhodust_end
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax
 
@@ -2992,6 +3031,10 @@ subroutine change_itrans(iplot,xmin,xmax)
        call transform_limits(xmin,xmax,itrans(iplot))
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
+ endif
+ if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+    print*,'>> applying transform to all dust densities <<'
+    itrans(irhodust_start:irhodust_end) = itrans(iplot)
  endif
 
 end subroutine change_itrans
