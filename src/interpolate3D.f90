@@ -108,9 +108,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
     print "(1x,a)",'interpolate3D: error: pixel width <= 0'
     return
  endif
- if (any(hh(1:npart) <= tiny(hh))) then
-    print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
- endif
+ !if (any(hh(1:npart) <= tiny(hh))) then
+!    print*,'interpolate3D: WARNING: ignoring some or all particles with h < 0'
+ !endif
 
  call wall_time(t_start)
 

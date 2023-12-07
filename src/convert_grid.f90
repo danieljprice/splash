@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2021 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -64,7 +64,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer, intent(in), dimension(:)            :: npartoftype
  integer(kind=int1), intent(in), dimension(:) :: itype
  real, intent(in)                             :: time
- real, intent(in), dimension(:,:)             :: dat
+ real, intent(inout), dimension(:,:)             :: dat
  real, intent(in), dimension(:)               :: masstype
  character(len=*), intent(in)                 :: filename,outformat
  logical, intent(in)                          :: interpolateall
@@ -76,13 +76,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  character(len=40)  :: fmtstring
  character(len=64)  :: fmtstring1
 
- real(doub_prec), dimension(:,:,:), allocatable   :: datgrid
+ real(doub_prec), dimension(:,:,:), allocatable   :: datgrid,rhogrid_tmp
  real, dimension(:,:),   allocatable   :: datgrid2D
  real(doub_prec), dimension(:,:,:,:), allocatable :: datgridvec
  real, dimension(:,:,:),   allocatable :: datgridvec2D
  real, dimension(:), allocatable       :: weight,x,y,z
+ logical, dimension(:), allocatable    :: mask
  real, dimension(3)    :: xmin,xmax
- real, dimension(3)    :: partmin,partmax,partmean
+ real, dimension(3)    :: partmin,partmax,partmean,part_integral
  real, dimension(3)    :: datmin,datmax,datmean
  real(doub_prec)       :: dtime
  real(doub_prec), dimension(3) :: xmind,xmaxd
@@ -90,7 +91,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  integer(kind=int8), dimension(3) :: npixels8
  integer, dimension(12) :: icoltogrid
  integer :: ncolstogrid,igeom
- real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin,gridmin,gridmax,gridmean
+ real    :: hmin,pixwidth,pixwidthx(3),rhominset,rhomin
+ real    :: gridmin,gridmax,gridmean,grid_integral
  real    :: mtot,mtotgrid,err,t2,t1,xi(3),ax,ay,az
  real, parameter :: pi=4.0*atan(1.0)
  logical :: lowmem,do_output
@@ -167,7 +169,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  ninterp = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
  allocate(weight(ninterp),stat=ierr)
- allocate(x(ninterp),y(ninterp),z(ninterp),stat=ierr)
+ allocate(x(ninterp),y(ninterp),z(ninterp),mask(ninterp),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     return
@@ -184,6 +186,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  icolourme(:) = 1
  call get_particle_subset(icolourme,dat,ncolumns)
+ mask = (icolourme > 0 .and. weight > 0.)
 
  !
  !--work out how many pixels to use
@@ -196,7 +199,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     if (npixx <= 0) then
        print "(/,a)",' WARNING: number of pixels = 0, using automatic pixel numbers'
        hmin = 0.
-       call minmaxmean_part(dat(:,ih:ih),weight,ninterp,partmin,partmax,partmean,nonzero=.true.)
+       call minmaxmean_part(dat(:,ih:ih),mask,ninterp,partmin,partmax,partmean,nonzero=.true.)
        hmin = partmin(1)
        if (hmin > 0. .and. igeom==igeom_cartesian) then
           print*,'based on the minimum smoothing length of hmin = ',hmin
@@ -315,13 +318,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  print "(/,a,i1,a)",' interpolating density to ',ndim,'D grid...'
  if (debugmode) print*,'DEBUG: density in column ',irho,' vals = ',dat(1:10,irho)
 
- call minmaxmean_part(dat(1:ninterp,irho:irho),weight,ninterp,partmin,partmax,partmean)
+ call minmaxmean_part(dat(1:ninterp,irho:irho),mask,ninterp,partmin,partmax,partmean)
  print fmtstring1,trim(label(irho))
  print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
  if (ipmass > 0.) then
-    mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0.))
-    print "(9x,a23,1x,es10.4,/)",'total mass on parts:',mtot
+    mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0 .and. weight(1:ninterp) > 0.))
+    print "(9x,a23,1x,es10.4)",'total mass on parts:',mtot
  endif
 
  if (ndim==3) then
@@ -348,6 +351,13 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              z(i) = xi(3)
           enddo
        endif
+       mask = (mask .and. (x >= xmin(1) .and. x <= xmax(1)) .and. &
+                          (y >= xmin(2) .and. y <= xmax(2)) .and. &
+                          (z >= xmin(3) .and. z <= xmax(3)))
+       if (ipmass > 0.) then
+          mtot = sum(dat(1:ninterp,ipmass),mask=mask)
+          print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
+       endif
 
        call interpolate3D(x,y,z,&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
@@ -357,6 +367,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        mtotgrid = sum(datgrid)*product(pixwidthx)
     endif
     if (present(rhogrid)) rhogrid = datgrid
+    rhogrid_tmp = datgrid
     call wall_time(t2)
     if (t2 - t1 > 1.) call print_time(t2-t1)
     !
@@ -383,7 +394,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  if (mtotgrid > 0.) then
     print "(9x,a23,1x,es10.4,/)",'total mass on grid:',mtotgrid
     err = 100.*(mtotgrid - mtot)/mtot
-    if (abs(err) > 1) print "(/,a,1pg7.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
+    if (abs(err) > 1) print "(/,a,1pg8.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
     '% BY INTERPOLATION'
  endif
 
@@ -425,7 +436,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           enddo
        enddo
     endif
-    print "(a,i8,a)",' minimum density enforced on ',nzero,' grid cells'
+    print "(a,i0,a)",' minimum density enforced on ',nzero,' grid cells'
  else
     print*,'minimum density NOT enforced'
  endif
@@ -446,6 +457,14 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                     tagline=tagline,origin=origin)
  endif
  !
+ !--use density weighted interpolation for remaining quantities
+ !
+ idensityweightedinterpolation = .true.
+ call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
+     ninterp,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
+     idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.,isinktype)
+
+ !
  !--interpolate remaining quantities to the 3D grid
  !
  if (interpolateall .or. ncolstogrid > 0) then
@@ -461,7 +480,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
           print "(/,a)",' interpolating '//trim(label(i))
           print fmtstring1,trim(label(i))
-          call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
+          call minmaxmean_part(dat(1:ninterp,i:i),mask,ninterp,partmin,partmax,partmean)
           print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
 
           if (iszero(partmin,partmax,1)) then
@@ -549,8 +568,15 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              do i=iloc,iloc+ndimV-1
                 print "(/,a)",' interpolating '//trim(label(i))
                 print fmtstring1,trim(label(i))
-                call minmaxmean_part(dat(1:ninterp,i:i),weight,ninterp,partmin,partmax,partmean)
-                print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
+                if (ipmass > 0) then
+                   call minmaxmean_part(dat(1:ninterp,i:i),mask,ninterp,partmin,partmax,&
+                        partmean,mass=dat(1:ninterp,ipmass),part_integral=part_integral)
+                   print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
+                   print "(9x,a23,1x,es10.2,/)",' sum(m*'//trim(label(i))//'):',part_integral(1)
+                else
+                   call minmaxmean_part(dat(1:ninterp,i:i),mask,ninterp,partmin,partmax,partmean)
+                   print fmtstring,' on parts:',partmin(1),partmax(1),partmean(1)
+                endif
 
                 if (iszero(partmin,partmax,1)) then
                    datgrid = 0.
@@ -578,8 +604,12 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
                 !--write gridded data to file
                 !
                 if (ndim==3) then
-                   call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.)
+                   call minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,.false.,&
+                                        rho=rhogrid_tmp,grid_integral=grid_integral)
                    print fmtstring,' on grid :',gridmin,gridmax,gridmean
+                   grid_integral = grid_integral*product(pixwidthx)
+                   print "(9x,a23,1x,es10.2,/)",' int(rho*'//trim(label(i))//')dV:',grid_integral
+
                    call write_grid(iunit,filename,outformat,ndim,1,npixels,trim(label(i)),&
                         labelcoordsys(igeom),xlab,dtime,pixwidthx,xmin,xmax,ierr,&
                         dat=datgrid,tagline=tagline,origin=origin)
@@ -594,7 +624,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
           else
 
              print fmtstring1,trim(labelvec(iloc))
-             call minmaxmean_part(dat(1:ninterp,iloc:iloc+ndimV-1),weight,ninterp,partmin,partmax,partmean)
+             call minmaxmean_part(dat(1:ninterp,iloc:iloc+ndimV-1),mask,ninterp,partmin,partmax,partmean)
              do i=1,ndimV
                 print fmtstring,' on parts:',partmin(i),partmax(i),partmean(i)
              enddo
@@ -750,20 +780,24 @@ end subroutine
 !-----------------------------------------------
 ! calculate max and min and mean values on grid
 !-----------------------------------------------
-subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
+subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero,rho,grid_integral)
  real(doub_prec), dimension(:,:,:), intent(in) :: datgrid
  integer, dimension(3), intent(in)  :: npixels
  real, intent(out)                  :: gridmin,gridmax,gridmean
  logical, intent(in)                :: nonzero
- real    :: dati
+ real(doub_prec), dimension(:,:,:), intent(in), optional :: rho
+ real, intent(out), optional        :: grid_integral
+
+ real    :: dati,gridint
  integer :: i,j,k
 
  gridmax = -huge(gridmax)
  gridmin = huge(gridmin)
  gridmean = 0.
- !$omp parallel do schedule(static) &
+ gridint = 0.
+ !$omp parallel do schedule(static) default(shared) &
  !$omp reduction(min:gridmin) &
- !$omp reduction(max:gridmax) reduction(+:gridmean) &
+ !$omp reduction(max:gridmax) reduction(+:gridmean,gridint) &
  !$omp private(k,j,i,dati)
  do k=1,npixels(3)
     do j=1,npixels(2)
@@ -776,11 +810,15 @@ subroutine minmaxmean_grid(datgrid,npixels,gridmin,gridmax,gridmean,nonzero)
              gridmin  = min(gridmin,dati)
           endif
           gridmean = gridmean + dati
+          if (present(grid_integral) .and. present(rho)) then
+             gridint = gridint + dati*rho(i,j,k)
+          endif
        enddo
     enddo
  enddo
  if (gridmin >= huge(gridmin)) gridmin = 0.
  gridmean = gridmean/product(npixels(1:3))
+ if (present(grid_integral)) grid_integral = gridint
 
 end subroutine minmaxmean_grid
 
@@ -893,12 +931,14 @@ end subroutine minmaxmean_gridvec2D
 !----------------------------------------------------
 ! calculate max and min and mean values on particles
 !----------------------------------------------------
-subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
+subroutine minmaxmean_part(dat,mask,npart,partmin,partmax,partmean,nonzero,mass,part_integral)
  real, dimension(:,:), intent(in)   :: dat
- real, dimension(:), intent(in)     :: weight
+ logical, dimension(:), intent(in)  :: mask
  integer, intent(in)                :: npart
  real, dimension(3), intent(out)    :: partmin,partmax,partmean
  logical, intent(in), optional      :: nonzero
+ real, dimension(:), intent(in),  optional :: mass
+ real, dimension(3), intent(out), optional :: part_integral
  real    :: partval
  integer :: np,jlen,i,j
  logical :: usenonzero
@@ -911,6 +951,7 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  partmean(:) = 0.
  np          = 0
  jlen        = min(size(dat(1,:)),3)
+ if (present(part_integral)) part_integral(:) = 0.
 
  !--could do this in parallel but reduction on arrays
  !  does not seem to work in ifort
@@ -922,7 +963,7 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
  !!$omp private(i,j,partval)
  do i=1,npart
     !--only count particles used in the rendering
-    if (weight(i) > tiny(0.)) then
+    if (mask(i)) then
        np = np + 1
        do j=1,jlen
           partval = dat(i,j)
@@ -933,6 +974,9 @@ subroutine minmaxmean_part(dat,weight,npart,partmin,partmax,partmean,nonzero)
           endif
           partmax(j) = max(partmax(j),partval)
           partmean(j) = partmean(j) + partval
+          if (present(mass) .and. present(part_integral)) then
+             part_integral(j) = part_integral(j) + mass(i)*partval
+          endif
        enddo
     endif
  enddo

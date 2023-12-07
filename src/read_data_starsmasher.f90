@@ -30,17 +30,10 @@ subroutine read_data_starsmasher(rootname,istepstart,ipos,nstepsread)
   integer, intent(out) :: nstepsread
   character(len=*), intent(in) :: rootname
   character(len=len(rootname)+10) :: datfile
-  integer, dimension(maxparttypes) :: npartoftypei,Nall
-  integer, dimension(:), allocatable :: iamtemp
-  integer :: i,j,itype,icol,ierr
-  integer :: index1,index2,indexstart,indexend,Nmassesdumped
+  integer :: i,j,ierr
   integer :: ncolstep,npart_max,nstep_max,ntoti
-  integer :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles
   logical :: iexist,reallocate
-  real(doub_prec) :: timetemp,ztemp, dummy
-  real(doub_prec), dimension(6) :: massoftypei
-  real, dimension(:), allocatable :: dattemp1
-  real :: hsoft
+  real(doub_prec) :: timetemp,dummy
   integer :: ntot, nnopt, nout, nit, nav, ngr, nrelax
   real(doub_prec) :: hmin, hmax, sep0, tf, dtout, alpha, beta, eta2, trelax, dt, omega2
   real(doub_prec) :: dx, dy, dz, dm, dh, drho, dvx, dvy, dvz, dudot
@@ -272,11 +265,10 @@ subroutine set_labels_starsmasher
   use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,&
                           irho,ipr,iutherm,make_vector_label
   use params
-  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
+  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
   use geometry,      only:labelcoord
   use system_utils,  only:renvironment
   integer :: i
-  real :: hsoft
 
   if (ndim.le.0 .or. ndim.gt.3) then
      print*,'*** ERROR: ndim = ',ndim,' in set_labels ***'

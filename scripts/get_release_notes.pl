@@ -5,8 +5,27 @@
 my $start = 0;
 my $out = "";
 my $do_all = 0;
-if ( @ARGV[0] =~ m/all/ ) { $do_all = 1 };
-open(FILE,'src/splash.f90');
+my $file='src/splash.f90'; # default filename if no arguments given
+# handle command line arguments
+if ($#ARGV==0) {
+  # can give ./get_release_notes all [with default file name]
+  # or ./get_release_notes src/splash.f90 [to specify file name]
+  if ( @ARGV[0] =~ m/all/ ) {
+    $do_all = 1;
+  } else {
+    $file = @ARGV[0];
+  };
+} elsif ($#ARGV==1) {
+  # or ./get_release_notes src/splash.f90 all [to specify file name AND all option]
+  $file = @ARGV[0];
+  if ( @ARGV[1] =~ m/all/ ) {
+    $do_all = 1;
+  };
+} elsif ($#ARGV > 1) {
+   die "Usage: $0 src/file.f90 [all] \n";
+}
+my @eqns = [];
+open(FILE,$file);
 while (<FILE>) {
   my $line = $_;
   if ( m/(\d+\.\d+\.\d+\s*:\s*\(\d+\/\d+\/\d+\))\s+(.*)$/ or m/(\d+\.\d+\.\d+\s*:)\s+$/) {

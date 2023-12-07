@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -44,11 +44,12 @@ subroutine convert_all(outformat,igotfilenames,useall)
  use asciiutils,    only:ucase
  use limits,        only:read_limits
  use system_utils,  only:ienvlist
+ use labels,        only:get_sink_type
  character(len=*), intent(in) :: outformat
  logical, intent(inout)       :: igotfilenames
  logical, intent(in)          :: useall
  logical :: doanalysis,converttogrid
- integer :: ifile,idump,ntotal,ierr,iloc
+ integer :: ifile,idump,ntotal,ierr,iloc,isinktype,nsinks
  integer, dimension(maxplot)  :: listofcolumns
  character(len=len(rootname)+4) :: filename
  character(len=10) :: string
@@ -95,7 +96,12 @@ subroutine convert_all(outformat,igotfilenames,useall)
        !  the first filename and ndimV, labels etc.
        !
        if (doanalysis) then
-          call open_analysis(outformat,required,ncolumns+ncalc,ndim,ndimV)
+          nsinks = 0
+          if (nstepsinfile(ifile) > 0) then
+             isinktype = get_sink_type(ntypes)
+             if (isinktype > 0) nsinks = npartoftype(isinktype,1)
+          endif
+          call open_analysis(outformat,required,ncolumns+ncalc,ndim,ndimV,nsinks)
        endif
     else
        call get_data(ifile,.true.)

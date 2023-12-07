@@ -153,6 +153,12 @@ subroutine transform(array,itrans,errval)
     enddo
 
     array = arraytemp
+
+ elseif (itrans < 0) then
+    !
+    ! perform the inverse transform if itrans is negative
+    !
+    call transform_inverse(array,abs(itrans),errvali)
  endif
 
 end subroutine transform
@@ -176,7 +182,6 @@ subroutine transforma(aa,itrans,errval)
  endif
  aa = array(1)
 
- return
 end subroutine transforma
 
 !------------------------------------------------------------------------
@@ -197,7 +202,6 @@ function transformarray(array,itrans,errval)
     call transform(transformarray,itrans)
  endif
 
- return
 end function transformarray
 
 !------------------------------------------------------------------------
@@ -266,6 +270,13 @@ subroutine transform_inverse(array,itrans,errval)
     enddo
 
     array = arraytemp
+
+ elseif (itrans < 0) then
+    !
+    ! perform the forward transform if itrans is negative
+    !
+    call transform(array,abs(itrans),errvali)
+
  endif
 
 end subroutine transform_inverse
@@ -290,7 +301,6 @@ subroutine transforma_inverse(aa,itrans,errval)
  endif
  aa = array(1)
 
- return
 end subroutine transforma_inverse
 
 !------------------------------------------------------------------------
@@ -368,6 +378,12 @@ subroutine transform2(array,itrans,errval)
     enddo
 
     array = arraytemp
+
+ !elseif (itrans < 0) then
+    !
+    ! perform the inverse transform if itrans is negative
+    !
+    !call transform2_inverse(array,abs(itrans),errval)
 
  endif
 
@@ -474,6 +490,12 @@ subroutine transform_limits(xmin,xmax,itrans)
     xmin = min(xmintemp,xmaxtemp)
     xmax = max(xmintemp,xmaxtemp)
 
+ elseif (itrans < 0) then
+    !
+    ! perform the inverse transform if itrans is negative
+    !
+    call transform_limits_inverse(xmin,xmax,itrans)
+
  endif
 
 end subroutine transform_limits
@@ -554,6 +576,12 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
 
     xmin = min(xmintemp,xmaxtemp)
     xmax = max(xmintemp,xmaxtemp)
+
+ elseif (itrans < 0) then
+    !
+    ! perform the forward transform if itrans is negative
+    !
+    call transform_limits(xmin,xmax,itrans)
 
  endif
 

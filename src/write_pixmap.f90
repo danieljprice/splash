@@ -271,7 +271,7 @@ end subroutine write_pixmap_ppm
 !  read in pixels from file
 !-----------------------------------------------------------------
 subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
- use asciiutils, only:nheaderlines
+ use asciiutils, only:get_nheaderlines
  real, intent(out), dimension(:,:), allocatable :: datpix
  integer, intent(out)            :: npixx,npixy,ierr
  character(len=*), intent(in)    :: dumpfile
@@ -301,7 +301,7 @@ subroutine readpixmap(datpix,npixx,npixy,dumpfile,label,istep,xsec,ierr)
     else
        npixx = 0
        npixy = 0
-       nheader = nheaderlines(iunit)
+       nheader = get_nheaderlines(iunit)
        rewind(iunit)
        do i=1,nheader-1
           read(iunit,*,iostat=ierr)

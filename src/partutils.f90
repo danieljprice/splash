@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -29,10 +29,12 @@ module part_utils
  use params, only:int1
  implicit none
 
- public :: igettype,get_tracked_particle
+ public :: igettype,get_tracked_particle,get_itrackpart
  public :: locate_nth_particle_of_type
  public :: locate_first_two_of_type
+ public :: locate_particle_from_string
  public :: get_binary,got_particles_of_type
+ public :: get_positions_of_type,is_trackstring
  private
 
 contains
@@ -64,22 +66,55 @@ end function igettype
 ! routine to find which particle is being tracked, when it is
 ! given in the form of type:offset
 !-------------------------------------------------------------------
-integer function get_tracked_particle(itype,ioffset,noftype,iamtype)
- integer, intent(in) :: itype,ioffset
+integer function get_tracked_particle(string,noftype,iamtype,dat,irho)
+ character(len=*), intent(in) :: string
  integer, dimension(:), intent(in) :: noftype
  integer(kind=int1), dimension(:), intent(in) :: iamtype
- integer :: ntot
+ integer, intent(in) :: irho
+ real, dimension(:,:), intent(in) :: dat
+ integer :: ntot,itype,ioffset,ierr
 
- if (itype <= 0 .or. itype > size(noftype)) then
+ call get_itrackpart(string,itype,ioffset,ierr)
+ if ((itype <= 0 .or. itype > size(noftype)) .and. ioffset > 0) then
     !--type not set, itrackpart = itrackoffset
     get_tracked_particle = ioffset
- else
+ elseif (ierr == 0 .and. ioffset > 0) then
     !--want to select nth particle of a particular type
     call locate_nth_particle_of_type(ioffset,get_tracked_particle, &
          itype,iamtype,noftype,ntot)
+ elseif (ierr == 0) then
+    ntot = sum(noftype)
+    get_tracked_particle = locate_particle_from_string(string,ntot,dat,irho)
+ else
+    get_tracked_particle = 0
  endif
 
 end function get_tracked_particle
+
+!-------------------------------------------------------------------
+! routine to find which particle is being tracked, when it is
+! given in the form of type:offset
+!-------------------------------------------------------------------
+subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
+ character(len=*), intent(in)  :: string
+ integer,          intent(out) :: itracktype,itrackpart,ierr
+ integer :: ic
+
+ ic = index(string,':')
+ if (ic > 0) then
+    read(string(1:ic-1),*,iostat=ierr) itracktype
+    read(string(ic+1:),*,iostat=ierr) itrackpart
+    if (itrackpart==0) itracktype = 0
+ else
+    itracktype = 0
+    read(string,*,iostat=ierr) itrackpart
+    if (itrackpart < 0 .or. ierr /= 0) itrackpart = 0
+    ! return ierr = 0 if the string is not a particle id but is still valid
+    ! e.g. string='maxdens'
+    if (ierr /= 0 .and. is_trackstring(string)) ierr = 0
+ endif
+
+end subroutine get_itrackpart
 
 !-------------------------------------------------------------------
 ! routine to locate first two particles of a given type in the data
@@ -136,6 +171,43 @@ pure subroutine locate_nth_particle_of_type(n,ipos,itype,iamtype,noftype,ntot)
  endif
 
 end subroutine locate_nth_particle_of_type
+
+!-------------------------------------------------------------
+! locate the particle corresponding to various strings
+!  e.g. maxdens = particle of maximum density
+!-------------------------------------------------------------
+pure integer function locate_particle_from_string(string,ntot,dat,irho) result(ipos)
+ character(len=*), intent(in)  :: string
+ integer,          intent(in)  :: ntot
+ real,             intent(in)  :: dat(:,:)
+ integer,          intent(in)  :: irho
+ integer :: ipos_tmp(1),ntoti
+
+ ipos = 0
+ ipos_tmp = 0
+ ntoti = min(ntot,size(dat(:,1))) ! prevent bounds overflow
+ select case(string(1:7))
+ case('maxdens')
+    if (irho > 0 .and. irho <= size(dat(1,:))) ipos_tmp = maxloc(dat(1:ntoti,irho))
+    ipos = ipos_tmp(1)
+ end select
+
+end function locate_particle_from_string
+
+!-------------------------------------------------------------
+! validate strings for function above
+!-------------------------------------------------------------
+logical function is_trackstring(string)
+ character(len=*), intent(in) :: string
+
+ select case(string(1:7))
+ case('maxdens')
+    is_trackstring = .true.
+ case default
+    is_trackstring = .false.
+ end select
+
+end function is_trackstring
 
 !-------------------------------------------------------------
 ! check if any particles of type 'mytype' exist
@@ -230,5 +302,56 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipm
  endif
 
 end subroutine get_binary
+
+!----------------------------------------------------------
+! routine to extract positions of sink particles
+! INPUT:
+!   dat(npart,ncolumns) : particle data
+!   ix(3) : columns containing positions
+!   itype : type of each particle
+!   ntypes : number of particle types
+!   npartoftype : number of particles of each type
+! OUTPUT:
+!   nsinks : number of sink particles
+!   xpts : x positions of sink particles
+!   ypts : y positions of sink particles
+!   zpts : z positions of sink particles
+!   ierr : error code, ierr=0 means no error was encountered
+!----------------------------------------------------------
+subroutine get_positions_of_type(dat,npartoftype,itype,iget_type,ix,n,xpts,ypts,zpts,ierr)
+ integer, intent(in) :: npartoftype(:),ix(3),iget_type
+ integer(kind=int1), intent(in) :: itype(:)
+ real, intent(in)     :: dat(:,:)
+ integer, intent(out) :: n,ierr
+ real, intent(out), allocatable :: xpts(:),ypts(:),zpts(:)
+ integer :: i,j
+ integer, allocatable :: ilist(:)
+
+ ierr = 0
+ n = 0
+ if (iget_type > 0) n = npartoftype(iget_type)
+
+ allocate(xpts(n),ypts(n),zpts(n),ilist(n),stat=ierr)
+ if (ierr /= 0) then
+    print*,' ERROR allocating memory for sink particle positions, aborting...'
+    return
+ endif
+ j = 0
+ do i=1,sum(npartoftype)
+    if (itype(i)==iget_type) then
+       j = j + 1
+       ilist(j) = i
+    endif
+ enddo
+ if (j /= n) print*,' WARNING: found ',j,' particles but expecting ',n
+ if (j < n) n = j
+
+ xpts = dat(ilist(1:n),ix(1))
+ ypts = dat(ilist(1:n),ix(2))
+ zpts = dat(ilist(1:n),ix(3))
+
+ deallocate(ilist)
+
+end subroutine get_positions_of_type
 
 end module part_utils

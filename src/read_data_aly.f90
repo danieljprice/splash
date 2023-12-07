@@ -45,21 +45,15 @@
 ! most of these values are stored in global arrays
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
-!--local module to store header information so we can later set the labels
-module alydataread
- use params
- use labels, only:lenlabel
+module readdata_aly
+ use params, only:maxplot
  implicit none
  character(len=16), dimension(maxplot) :: compName
-
-end module alydataread
-
-module readdata_aly
- implicit none
  
  public :: read_data_aly, set_labels_aly
  
- private 
+ private
+
 contains
 
 subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
@@ -70,7 +64,6 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
                           buffer_data,iverbose,debugmode,ntypes
  use mem_allocation, only:alloc
  use labels,         only:ipr,ivx,ih,irho,labeltype
- use alydataread,    only:compName
  integer,          intent(in)  :: indexstart,ipos
  integer,          intent(out) :: nstepsread
  character(len=*), intent(in)  :: rootname
@@ -79,14 +72,13 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
  integer :: npart_max,nstep_max
 
  integer, dimension(:), allocatable :: itype
- character(len=20) :: geomfile
  character(len=7)  :: keyword
  character(len=70) :: title
  character(len=1)  :: dumchar
  character(len=16) :: unitsys
  integer :: istep,jtype,np,ione,kk,idum,nblock
  real(kind=sing_prec) :: version,timesingle,dum
- real(kind=doub_prec) :: versiond,timedbl,dumd
+ real(kind=doub_prec) :: versiond,timedbl
  real :: timein,dx,dy
  logical :: singleprecision
 
@@ -130,11 +122,11 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
     rewind(iunit)
     read(iunit,iostat=ierr,end=80) keyword
     read(iunit,iostat=ierr,end=80) versiond
-    version = versiond
+    version = real(versiond,kind=kind(version))
     read(iunit,iostat=ierr,end=80) title
     read(iunit,iostat=ierr,end=80) istep
     read(iunit,iostat=ierr,end=80) timedbl
-    timein = timedbl
+    timein = real(timedbl)
     read(iunit,iostat=ierr,end=80) np
     read(iunit,iostat=ierr,end=80) ione
     singleprecision = .false.
@@ -189,7 +181,7 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
     case default ! unknown
        jtype = 4
     end select
-    iamtype(j,i) = jtype
+    iamtype(j,i) = int(jtype,kind=kind(iamtype))
     npartoftype(jtype,i) = npartoftype(jtype,i) + 1
  enddo
  deallocate(itype)
@@ -308,6 +300,6 @@ subroutine set_labels_aly
 
 !-----------------------------------------------------------
 
- return
 end subroutine set_labels_aly
+
 end module readdata_aly

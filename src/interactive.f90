@@ -24,7 +24,8 @@ module interactive_routines
  use colourbar, only:barisvertical,incolourbar,incolourbarlabel,adjustcolourbar
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
- private :: mvlegend,mvtitle,save_limits,save_rotation
+ public :: set_movie_mode,save_limits
+ private :: mvlegend,mvtitle,save_rotation
  private :: get_vptxy
  real, private :: xcursor = 0.5
  real, private :: ycursor = 0.5
@@ -84,10 +85,11 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
+ use legends,          only:in_legend
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
- integer, intent(out) :: iadvance
+ integer, intent(inout) :: iadvance
  integer, dimension(npart), intent(inout) :: icolourpart
  real, dimension(npart), intent(in) :: xcoords,ycoords,zcoords,hi
  integer(kind=int1), dimension(:), intent(in) :: iamtype
@@ -103,7 +105,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  logical, intent(in) :: use3Dopacity, double_rendering
  real,    parameter :: pi=4.*atan(1.)
  integer, parameter :: maxpts = 64
- integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,itype,npts
+ integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,ilegend,itype,npts
  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew,itypesink
  integer, dimension(1000) :: icircpart
  real :: xpt,ypt
@@ -1256,7 +1258,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           call unset_movie_mode()
           in_movie_mode = .false.
        else
-          call set_movie_mode()
+          call set_movie_mode(.true.)
           in_movie_mode = .true.
        endif
        iadvance = 0
@@ -1305,14 +1307,24 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           iColourBarStyle = 0
           iadvance = 0
           interactivereplot = .true.
+          irerender = .true.
           iexit = .true.
        elseif (xpt < xmin .or. xpt > xmax .or. ypt < ymin .or. ypt > ymax) then
           call deleteaxes()
           iadvance = 0
           interactivereplot = .true.
+          irerender = .true.
           iexit = .true.
        else
-          print*,' nothing to delete at x,y =',xpt,',',ypt
+          ilegend = in_legend(xpt,ypt)
+          if (legend_is_plotted(ilegend)) then
+             call delete_legend(ilegend)
+             iadvance = 0
+             interactivereplot = .true.
+             iexit = .true.
+          else
+             print*,' nothing to delete at x,y =',xpt,',',ypt
+          endif
        endif
        !
        !--timestepping
@@ -1621,6 +1633,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  use multiplot, only:itrans
  use shapes,    only:add_shape_interactive,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
+ use legends,   only:in_legend
  integer, intent(inout) :: iadvance
  integer, intent(inout) :: istep,iframe,lastpanel,iColourBarStyle
  integer, intent(in) :: ifirststeponpage,ilaststep,nacross,ndim,ifirstframeonpage,nframes
@@ -1631,7 +1644,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  real, intent(in), dimension(ndim) :: xorigin
  logical, intent(in)  :: use_double_rendering
  logical, intent(out) :: interactivereplot
- integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape
+ integer :: ierr,ipanel,ipanel2,istepin,istepnew,i,istepjump,istepsonpage,ishape,ilegend
  integer :: istepjumpnew,ivecx,ivecy
  real :: xpt,ypt,xpt2,ypt2,xpti,ypti,renderpt,xptmin,xptmax,yptmin,yptmax
  real :: xlength,ylength,renderlength,contlength,zoomfac,scalefac
@@ -2246,7 +2259,15 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
           interactivereplot = .true.
           iexit = .true.
        else
-          print*,' nothing to delete at x,y =',xpt,',',ypt
+          ilegend = in_legend(xpt,ypt)
+          if (legend_is_plotted(ilegend)) then
+             call delete_legend(ilegend)
+             iadvance = 0
+             interactivereplot = .true.
+             iexit = .true.
+          else
+             print*,' nothing to delete at x,y =',xpti,',',ypti
+          endif
        endif
 
        !
@@ -2673,6 +2694,55 @@ subroutine deleteaxes()
  endif
 
 end subroutine deleteaxes
+
+!
+!--delete specific legends
+!
+subroutine delete_legend(id)
+ use legends,          only:ilegend,ilegend_vec,ilegend_markers,ilegend_scale
+ use settings_page,    only:iPlotLegend,iPlotStepLegend,iPlotScale
+ use settings_vecplot, only:iVecplotLegend
+ integer, intent(in) :: id
+
+ select case(id)
+ case(ilegend_scale)
+    if (iPlotScale) print*,'> deleting scale bar'
+    iPlotScale = .false.
+ case(ilegend_markers)
+    if (iPlotStepLegend) print*,'> deleting marker legend'
+    iPlotStepLegend = .false.
+ case(ilegend_vec)
+    if (iVecplotLegend) print*,'> deleting vector legend'
+    iVecplotLegend = .false.
+ case(ilegend)
+    if (iPlotLegend) print*,'> deleting legend'
+    iPlotLegend = .false.
+ end select
+
+end subroutine delete_legend
+
+!
+!--check if legend is actually being plotted
+!
+logical function legend_is_plotted(id)
+ use legends,          only:ilegend,ilegend_vec,ilegend_markers,ilegend_scale
+ use settings_page,    only:iPlotLegend,iPlotStepLegend,iPlotScale
+ use settings_vecplot, only:iVecplotLegend
+ integer, intent(in) :: id
+
+ legend_is_plotted = .false.
+ select case(id)
+ case(ilegend_scale)
+    legend_is_plotted = iPlotScale
+ case(ilegend_markers)
+    legend_is_plotted = iPlotStepLegend
+ case(ilegend_vec)
+    legend_is_plotted = iVecplotLegend
+ case(ilegend)
+    legend_is_plotted = iPlotLegend
+ end select
+
+end function legend_is_plotted
 !
 !--move the legend to the current position
 !
@@ -2701,7 +2771,6 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  endif
  print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
 
- return
 end subroutine mvlegend
 !
 !--move the vector legend to the current position
@@ -2719,7 +2788,6 @@ subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  vposlegendvec = (ymax - yi)/ych
  print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
 
- return
 end subroutine mvlegendvec
 !
 !--move the title to the current position
@@ -2753,6 +2821,44 @@ end subroutine mvtitle
 !--saves current plot limits
 !
 subroutine save_limits(iplot,xmin,xmax,setlim2)
+ use labels, only:irhodust_start,irhodust_end
+ integer, intent(in) :: iplot
+ real,    intent(in) :: xmin,xmax
+ logical, intent(in), optional :: setlim2
+ real :: xmintemp,xmaxtemp
+ integer :: i
+
+ if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+    !
+    !--if we save the limits for one dust density, apply to whole grid
+    ! 
+    do i=irhodust_start,irhodust_end
+       xmintemp = xmin
+       xmaxtemp = xmax
+       if (present(setlim2)) then
+          call save_limits_i(i,xmintemp,xmaxtemp,setlim2)
+       else
+          call save_limits_i(i,xmintemp,xmaxtemp)
+       endif
+    enddo
+    print*,'> applying saved limits to all dust species <'
+ else
+    !
+    !--otherwise just pass options through to save_limits_i
+    !
+    if (present(setlim2)) then
+       call save_limits_i(iplot,xmin,xmax,setlim2)
+    else
+       call save_limits_i(iplot,xmin,xmax)
+    endif
+ endif
+
+end subroutine save_limits
+
+!
+!--save plot limits for one column
+!
+subroutine save_limits_i(iplot,xmin,xmax,setlim2)
  use limits,          only:lim,lim2
  use labels,          only:is_coord
  use multiplot,       only:itrans
@@ -2798,7 +2904,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  endif
 
  return
-end subroutine save_limits
+end subroutine save_limits_i
 
 !
 !--implements parameter range restriction
@@ -2874,21 +2980,22 @@ subroutine save_limits_track(iplot,xmin,xmax,xi)
     xmaxoffset_track(iplot) = abs(xmax - xi)
  endif
 
- return
 end subroutine save_limits_track
 !
 !--recalculates radius
 !
 subroutine save_itrackpart_recalcradius(itrackpart)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
- use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities, &
-                          itracktype,itrackoffset
+ use settings_data,  only:ncalc,DataIsBuffered,iCalcQuantities,track_string
  use calcquantities, only:calc_quantities,calc_quantities_use_x0
+ use part_utils,     only:is_trackstring
  integer, intent(in) :: itrackpart
 
- itracktype   = 0  ! cannot interactively track by type
- itrackoffset = itrackpart
-
+ if (is_trackstring(track_string)) then
+    return  ! do not overwrite strings like "maxdens"
+ else
+    write(track_string,"(i12)") itrackpart
+ endif
  if (iCalcQuantities .and. itrackpart > 0) then
     if (ncalc > 0 .and. calc_quantities_use_x0()) then
        print "(a)",' Recalculating radius relative to tracked particle'
@@ -2900,16 +3007,16 @@ subroutine save_itrackpart_recalcradius(itrackpart)
     endif
  endif
 
- return
 end subroutine save_itrackpart_recalcradius
 !
 !--toggles log/unlog
 !  note this only changes a pure log transform: will not change combinations
 !
 subroutine change_itrans(iplot,xmin,xmax)
- use multiplot, only:itrans
+ use multiplot,     only:itrans
  use settings_data, only:numplot
- use transforms, only:transform_limits,transform_limits_inverse
+ use transforms,    only:transform_limits,transform_limits_inverse
+ use labels,        only:irhodust_start,irhodust_end
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax
 
@@ -2924,6 +3031,10 @@ subroutine change_itrans(iplot,xmin,xmax)
        call transform_limits(xmin,xmax,itrans(iplot))
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
+ endif
+ if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+    print*,'>> applying transform to all dust densities <<'
+    itrans(irhodust_start:irhodust_end) = itrans(iplot)
  endif
 
 end subroutine change_itrans
@@ -3060,7 +3171,7 @@ end subroutine change_colourmap
 !
 !--set movie mode
 !
-subroutine set_movie_mode()
+subroutine set_movie_mode(live)
  use settings_page,   only:iaxis,papersizex,aspectratio,ipapersize,ipapersizeunits,iPageColours
  use settings_limits, only:adjustlimitstodevice
  use settings_render, only:iColourBarStyle
@@ -3069,6 +3180,7 @@ subroutine set_movie_mode()
  use colourbar,       only:set_floating_bar_style
  use system_utils,    only:get_copyright
  use shapes,          only:add_text
+ logical, intent(in) :: live
 
  iaxis = -2
  iPageColours = 2
@@ -3077,10 +3189,10 @@ subroutine set_movie_mode()
     ipapersizeunits = 0
     papersizex      = 1280.
     aspectratio     = 0.5625
-    call plot_pap(papersizex,aspectratio,ipapersizeunits)
+    if (live) call plot_pap(papersizex,aspectratio,ipapersizeunits)
     iColourBarStyle = 8
     call set_floating_bar_style(iColourBarStyle,4)
-    call set_pagecolours(iPageColours)
+    if (live) call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
  call add_text(0.025,0.05,get_copyright())

@@ -129,8 +129,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
     print "(1x,a)",'interpolate3D_proj_geom: error: pixel width <= 0'
     return
  endif
- if (any(hh(1:npart) <= 0.)) then
-    print*,'interpolate3D_proj_geom: warning: ignoring some or all particles with h <= 0'
+ if (any(hh(1:npart) < 0.)) then
+    print*,'interpolate3D_proj_geom: warning: ignoring some or all particles with h < 0'
  endif
 
  !
@@ -185,7 +185,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(iprintprogress,iprintinterval) &
 !$omp private(hi,horigi,radkern) &
 !$omp private(hi1,hi21,term,termnorm) &
-!$omp private(iprogress,iprintnext) &
+!$omp private(iprogress) &
+!$omp firstprivate(iprintnext) &
 !$omp private(q2,dx,dx2,dy,dy2,dz,wab,xcoord,xpix) &
 !$omp private(i,ipix,jpix,ip,jp,ipixmin,ipixmax,jpixmin,jpixmax,ierr)
 !$omp do schedule (guided, 2)
@@ -365,7 +366,7 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
     print*,'interpolate3D_xsec: error: npart = 0'
     return
  endif
- if (any(hh(1:npart) <= tiny(hh))) then
+ if (any(hh(1:npart) < 0.)) then
     print*,'interpolate3D_xsec_geom: WARNING: ignoring some or all particles with h < 0'
  endif
  const = cnormk3D
@@ -485,8 +486,6 @@ subroutine interpolate3D_xsec_geom(x,y,z,hh,weight,dat,itype,npart,&
     end where
  endif
  !datsmooth = datsmooth*rescalefac
-
- return
 
 end subroutine interpolate3D_xsec_geom
 

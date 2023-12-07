@@ -441,7 +441,8 @@ subroutine options_multiplot
  use labels,          only:is_coord,labeltype
  use params,          only:maxparttypes
  use settings_data,   only:ntypes
- integer :: ifac,ierr,itype,nvalues
+ use particle_data,   only:npartoftype
+ integer :: ifac,ierr,itype,nvalues,nt
  logical :: isamex, isamey, icoordplot, anycoordplot, imultisamepanel
  integer, dimension(maxparttypes)   :: itypelist
 
@@ -460,6 +461,12 @@ subroutine options_multiplot
     call prompt('Enter x axis for all plots',multiplotx(1),1,numplot)
     multiplotx(2:nyplotmulti) = multiplotx(1)
  endif
+
+ ! only count particle types with non-zero numbers of particles
+ nt = 0
+ do i=1,ntypes
+    if (any(npartoftype(i,:) > 0)) nt = nt + 1
+ enddo
 
  anycoordplot = .false.
  do i=1,nyplotmulti
@@ -559,7 +566,7 @@ subroutine options_multiplot
     !  if more than one SPH particle type is present
     !
     itypelist = 0
-    if (ntypes >= 2) then
+    if (nt >= 2) then
        call prompt('use all active particle types?',iusealltypesmulti(i))
 
        if (iusealltypesmulti(i)) then
@@ -585,7 +592,9 @@ subroutine options_multiplot
           !--prompt for list of types to use
           !
           do itype=1,ntypes
-             print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
+             if (any(npartoftype(itype,:) > 0)) then
+                print "(i2,':',1x,a)",itype,'use '//trim(labeltype(itype))//' particles'
+             endif
           enddo
 
           call prompt('Enter type or list of types to use',itypelist,nvalues,1,ntypes)
@@ -688,7 +697,7 @@ end function allowrendering
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params,        only:maxplot
- use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,iutherm,ipdf,label,icolpixmap
+ use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,iutherm,ipdf,label,icolpixmap
  use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
  use system_utils,  only:lenvironment
@@ -710,7 +719,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
        nextra = nextra + 1
        isurfdens = ncolumns + ncalc + nextra
        label(isurfdens) = 'Surface density'
-       if (iutherm > 0 .and. iutherm <= ncolumns) then
+       if (iutherm > 0 .and. iutherm <= ncolumns .or. ispsound > 0 .and. ispsound <= ncolumns) then
           nextra = nextra + 1
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'

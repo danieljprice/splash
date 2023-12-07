@@ -66,8 +66,7 @@ subroutine defaults_set_data
  ivegotdata = .false.
  ntypes = 1
  xorigin = 0.
- itracktype = 0 ! particle tracking limits (none)
- itrackoffset = 0
+ track_string = '0' ! particle tracking limits (none)
  ipartialread = .false.  ! strictly unnecessary as set in get_data
  iverbose = 1
  UseFakeDustParticles = .false.

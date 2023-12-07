@@ -397,7 +397,7 @@ subroutine choose_unit_from_list(unit,unitlabel,n,unit_labels,unit_vals,unit_cod
                                unit_vals,unit_labels,unitlabel)
     call prompt('enter label amendment ',unitlabel)
  else
-    unit = unit_code/unit_vals(iselect)
+    unit = real(unit_code/unit_vals(iselect))
     unitlabel = unit_labels(iselect)
     print "(a,1pg11.4)", ' => '//trim(tag)//' unit is now '//trim(unitlabel)//&
                          ', i.e. '//trim(tag)//' = '//trim(tag)//'_code * ',unit

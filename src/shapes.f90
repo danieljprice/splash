@@ -293,10 +293,10 @@ subroutine add_shape(istart,iend,nshape)
           shape(ishape)%ylen = shape(ishape)%xlen
           poslabel = ' centre'
        case(ishape_rectangle) ! rectangle
-          call prompt('enter x position of left edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xpos,0.)
-          call prompt('enter x position of right edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen,0.)
-          call prompt('enter y position of bottom edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ypos,0.)
-          call prompt('enter y position of top edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen,0.)
+          call prompt('enter x position of left edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xpos)
+          call prompt('enter x position of right edge (in '//trim(labelunits(iunits))//')',shape(ishape)%xlen)
+          call prompt('enter y position of bottom edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ypos)
+          call prompt('enter y position of top edge (in '//trim(labelunits(iunits))//')',shape(ishape)%ylen)
           poslabel = ''
        case(ishape_arrow) ! arrow
           call prompt('enter starting x position (in '//trim(labelunits(iunits))//') ',shape(ishape)%xpos)

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2012 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -62,7 +62,7 @@
 !  that perform the actual calls to the HDF5 libs
 !
 !-------------------------------------------------------------------------
-module gadgethdf5read
+module readdata_gadget_hdf5
  use params, only:maxplot,doub_prec
  use labels, only:lenlabel
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
@@ -72,7 +72,10 @@ module gadgethdf5read
  integer, dimension(maxplot) :: blocksize
  logical :: havewarned = .false.
  integer, parameter :: maxtypes = 6
+ logical :: useids = .false.
  logical :: arepo = .false.
+
+ public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
 
  interface
   subroutine read_gadget_hdf5_header(filename,maxtypes,npartoftypei,massoftypei,&
@@ -148,23 +151,11 @@ function reformatlabel(label)
 
 end function reformatlabel
 
-end module gadgethdf5read
-
 !-------------------------------------------------------------------------
 !
 !  The routine that reads the data into splash's internal arrays
 !
 !-------------------------------------------------------------------------
-
-
-module readdata_gadget_hdf5
- implicit none
-
- public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
-
- private
-contains
-
 subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
  use params,         only:doub_prec,maxparttypes,maxplot
@@ -174,8 +165,6 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  use labels,         only:ih,irho,ipmass
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  use asciiutils,     only:cstring
- use gadgethdf5read, only:hsoft,blocklabelgas,havewarned,read_gadget_hdf5_header, &
-                           read_gadget_hdf5_data,maxtypes,arepo
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -188,15 +177,16 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,debug,goterrors
+ logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
- real, parameter :: pi = 3.1415926536
+ real, parameter :: pi = 4.*atan(1.)
  integer, dimension(maxplot) :: isrequired
 
  nstepsread = 0
  goterrors  = .false.
+ compute_h_froM_rho_m = .false.
  if (maxparttypes < 6) then
     print*,' *** ERROR: not enough particle types for GADGET data read ***'
     print*,' *** you need to edit splash parameters and recompile ***'
@@ -212,7 +202,12 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !
 !--check if first data file exists
 !
- print "(1x,a)",'reading GADGET HDF5 format'
+ useids = lenvironment('GSPLASH_USEIDS') .or. lenvironment('GSPLASH_CHECKIDS')
+ if (useids) then
+    print "(1x,a)",'reading GADGET HDF5 format: sorted by particle id (--useids)'
+ else
+    print "(1x,a)",'reading GADGET HDF5 format: use --useids to sort by particle id'
+ endif
  inquire(file=datfile,exist=iexist)
  if (.not.iexist) then
     !
@@ -354,6 +349,17 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
           call set_labels_gadget_hdf5
        endif
        !
+       !--if h is still not there, try to set h from  density and masses
+       !
+       if (ih==0 .and. irho > 0 .and. ipmass > 0) then
+          ncolumns = ncolumns + 1
+          blocklabelgas(ncolumns) = 'SmoothingLength'
+          ih = ncolumns
+          call set_labels_gadget_hdf5
+          compute_h_from_rho_m = .true.
+       endif
+
+       !
        !--if successfully read header, increment the nstepsread counter
        !
        nstepsread = nstepsread + 1
@@ -476,10 +482,13 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
  enddo over_files
 
- if (arepo) then
+ if (compute_h_from_rho_m) then
+    dat(1:npartoftype(1,i),ih,i) = (dat(1:npartoftype(1,i),ipmass,i)/dat(1:npartoftype(1,i),irho,i))**(1./3.)
+    print "(a)",' this is an AREPO snapshot: using (m/rho)**(1/3) as smoothing length'
+ elseif (arepo .and. ih > 0) then
     dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
     print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
- elseif (required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
+ elseif (ih > 0 .and. required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
     !
     !--for some reason the smoothing length output by GADGET is
     !  twice the usual SPH smoothing length
@@ -488,11 +497,10 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     print "(a)",' converting GADGET h on gas particles to usual SPH definition (x 0.5)'
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
-
- if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+ if (nfiles > 1. .and. any(npartoftype(1:6,i) /= Nall(1:6))) then
     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
-    print*,'Npart = ',npartoftype(:,i)
-    print*,'Nall  = ',Nall(:)
+    print*,'Npart = ',npartoftype(1:6,i)
+    print*,'Nall  = ',Nall(1:6)
     goterrors = .true.
  endif
  !
@@ -617,7 +625,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !  (only works with equal mass particles because otherwise we need the number density estimate)
 !
  if (ih > 0 .and. required(ih) .and. ipmass > 0 .and. required(ipmass) &
-      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned) then
+      .and. abs(massoftypei(1)) < tiny(0.) .and. ndim==3 .and. .not.havewarned &
+      .and. .not.compute_h_from_rho_m) then
     nhfac = 100
     if (npartoftype(1,i) > nhfac) then
        hfactmean = 0.
@@ -696,7 +705,6 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
  integer(kind=c_int), dimension(npartoftypei), intent(in) :: id
  integer(kind=c_int) :: i,icolput
  integer :: nmax,nerr,idi
- logical :: useids
 
  icolput = icol
  if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))//', offset ',i0
@@ -706,8 +714,7 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
  endif
  nmax = size(dat(:,1,1))
 
- useids = .not.lenvironment('GSPLASH_FIXID')
- !useids = lenvironment('GSPLASH_USE_IDS') .or. lenvironment('GSPLASH_CHECKIDS')
+ !useids = .not.lenvironment('GSPLASH_FIXID')
  if (all(id <= 0) .or. size(iamtype(:,1)) <= 1) useids = .false.
  if (debugmode) print*,'DEBUG: using particle IDs = ',useids,' max = ',nmax
 
@@ -715,14 +722,14 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
     nerr = 0
     !print*,' id range is ',minval(id),' to ',maxval(id),' type ',itype+1,' column = ',trim(label(icolput))
     do i=1,npartoftypei
-       if (id(i) < 1 .or. id(i) > nmax) then
-          idi = id(i)
+       idi = id(i)
+       if (idi <= 0 .or. idi > nmax) then
           !
           !--correct for particle IDs > 1e9 (used to represent recycled particles?)
           !
           if (idi > 1000000000) then
              idi = idi - 1000000000
-             if (idi <= nmax .or. idi <= 0) then
+             if (idi <= nmax .and. idi > 0) then
                 dat(idi,icolput,1) = real(temparr(i))
                 iamtype(idi,1) = itype + 1
              else
@@ -734,8 +741,8 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
              if (debugmode .and. nerr <= 10) print*,i,' id = ',idi,idi-1000000000
           endif
        else
-          dat(id(i),icolput,1) = real(temparr(i))
-          iamtype(id(i),1) = itype + 1
+          dat(idi,icolput,1) = real(temparr(i))
+          iamtype(idi,1) = itype + 1
        endif
     enddo
     if (nerr > 0) print*,'ERROR: got particle ids outside array dimensions ',nerr,' times'
@@ -772,7 +779,6 @@ subroutine set_labels_gadget_hdf5
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings,debugmode
  use geometry,       only:labelcoord
  use system_utils,   only:envlist,ienvironment
- use gadgethdf5read, only:hsoft,blocklabelgas,blocksize,reformatlabel,arepo
  use asciiutils,     only:lcase
  integer :: i,icol,irank
 
@@ -862,7 +868,6 @@ end subroutine set_labels_gadget_hdf5
 
 subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int, c_char
- use gadgethdf5read, only:blocklabelgas,blocksize,fstring
  integer(kind=c_int), intent(in) :: icol,irank
  character(kind=c_char), dimension(256), intent(in) :: name
 
@@ -871,4 +876,5 @@ subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  !print*,icol+1,' name = ',trim(blocklabelgas(icol+1)),' x ',irank
 
 end subroutine set_blocklabel_gadget
+
 end module readdata_gadget_hdf5

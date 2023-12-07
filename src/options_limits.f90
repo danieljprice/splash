@@ -54,19 +54,20 @@ end subroutine defaults_set_limits
 subroutine submenu_limits(ichoose)
  use filenames,      only:nsteps,nstepsinfile,ifileopen
  use settings_data,  only:ndataplots,numplot,ndim,iCalcQuantities, &
-                          DataIsBuffered,itracktype,itrackoffset,ntypes
+                          DataIsBuffered,track_string,ntypes
  use calcquantities, only:calc_quantities
  use multiplot,      only:itrans
  use prompting,      only:prompt,print_logical
  use limits,         only:lim,range,rangeset,anyrangeset,print_rangeinfo
  use labels,         only:label,ix,irad,is_coord,labeltype
  use transforms,     only:ntrans,transform_label
+ use part_utils,     only:is_trackstring,get_itrackpart
  integer, intent(in) :: ichoose
  integer             :: iaction,ipick,i,index,ierr
- integer             :: itracktypeprev,itrackoffsetprev
+ integer             :: itrackoffset,itracktype
  character(len=120)  :: transprompt,fmtstring
  character(len=12)   :: string,string2
- character(len=20)   :: pstring,pstring2
+ character(len=len(track_string)) :: track_string_prev
 
 ! zoom = 1.0
 
@@ -81,14 +82,6 @@ subroutine submenu_limits(ichoose)
  else
     string2 = 'FIXED'
  endif
- write(pstring,"(i12)") itrackoffset
- pstring = adjustl(pstring)
- if (itracktype > 0) then
-    write(pstring2,"(i12)") itracktype
-    pstring=trim(adjustl(pstring2))//':'//trim(pstring)
- else
-    pstring=trim(pstring)
- endif
 
  print "(a)",'------------------ limits options ---------------------'
 10 format( &
@@ -99,7 +92,7 @@ subroutine submenu_limits(ichoose)
         ' 4) subset data by parameter range             ( ',a,')',/, &
         ' 5) apply log/other transformations to columns ')
  if (iaction <= 0 .or. iaction > 5) then
-    print 10,trim(string),trim(string2),trim(pstring),print_logical(anyrangeset())
+    print 10,trim(string),trim(string2),trim(track_string),print_logical(anyrangeset())
     call prompt('enter option ',iaction,0,5)
  endif
 !
@@ -165,20 +158,20 @@ subroutine submenu_limits(ichoose)
 !+ particle for all timesteps, with offsets as input by the user.
 !+ This effectively gives the `Lagrangian' perspective.
 
-    itrackoffsetprev = itrackoffset
-    itracktypeprev   = itracktype
-    print "(a,/,a,/)",'To track particle 4923, enter 4923', &
-                      'To track the 43rd particle of type 3, enter 3:43'
+    track_string_prev = track_string
+    print "(3(a,/))",'To track particle 4923, enter 4923', &
+                    'To track the 43rd particle of type 3, enter 3:43',&
+                    'To track the maximum density, enter maxdens'
 
-    call prompt('Enter particle to track: ',pstring,noblank=.true.)
-    call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
+    call prompt('Enter particle to track: ',track_string,noblank=.true.)
+    call get_itrackpart(track_string,itracktype,itrackoffset,ierr)
     do while (ierr /= 0 .or. itracktype < 0 .or. itracktype > ntypes .or. itrackoffset < 0)
        if (itracktype < 0 .or. itracktype > ntypes) print "(a)",'invalid particle type'
        if (itrackoffset < 0)                         print "(a)",'invalid particle index'
        if (ierr /= 0)                                 print "(a)",'syntax error in string'
-       pstring = '0'
-       call prompt('Enter particle to track: ',pstring,noblank=.true.)
-       call get_itrackpart(pstring,itracktype,itrackoffset,ierr)
+       track_string = '0'
+       call prompt('Enter particle to track: ',track_string,noblank=.true.)
+       call get_itrackpart(track_string,itracktype,itrackoffset,ierr)
     enddo
     if (itracktype > 0) then
        write(string,"(i12)") itrackoffset
@@ -188,7 +181,10 @@ subroutine submenu_limits(ichoose)
        write(string,"(i12)") itrackoffset
        string = adjustl(string)
        print "(a)",'=> tracking particle '//trim(string)
+    elseif (is_trackstring(track_string)) then
+       print "(a)",'=> tracking particle at '//trim(track_string)
     else
+       track_string = '0'
        print "(a)",'=> particle tracking limits OFF'
     endif
 
@@ -199,7 +195,7 @@ subroutine submenu_limits(ichoose)
           call prompt('Enter offset for '//trim(label(ix(i)))//'max :', &
                       xmaxoffset_track(i))
        enddo
-       if ((itrackoffset /= itrackoffsetprev .or. itracktype /= itracktypeprev) &
+       if ((trim(track_string) /= trim(track_string_prev)) &
            .and. iCalcQuantities .and. irad > 0 .and. irad <= numplot) then
           !--radius calculation is relative to tracked particle
           print "(a)",' recalculating radius relative to tracked particle '
@@ -265,22 +261,5 @@ subroutine submenu_limits(ichoose)
  end select
 
 end subroutine submenu_limits
-
-subroutine get_itrackpart(string,itracktype,itrackpart,ierr)
- character(len=*), intent(in)  :: string
- integer,          intent(out) :: itracktype,itrackpart,ierr
- integer :: ic
-
- ic = index(string,':')
- if (ic > 0) then
-    read(string(1:ic-1),*,iostat=ierr) itracktype
-    read(string(ic+1:),*,iostat=ierr) itrackpart
-    if (itrackpart==0) itracktype = 0
- else
-    itracktype = 0
-    read(string,*,iostat=ierr) itrackpart
- endif
-
-end subroutine get_itrackpart
 
 end module settings_limits

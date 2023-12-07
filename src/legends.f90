@@ -33,6 +33,21 @@ module legends
 
  public :: legend, legend_vec, legend_markers, legend_scale
  public :: prompt_panelselect, ipanelselect
+ public :: in_legend
+
+ ! store bounding box of each legend in global variables
+ type box
+  real :: x1,x2,y1,y2
+ end type box
+
+ integer, parameter :: nlegend_types = 4
+ integer, parameter, public :: &
+      ilegend         = 1, &
+      ilegend_vec     = 2, &
+      ilegend_markers = 3, &
+      ilegend_scale   = 4
+
+ type(box) :: bbox(nlegend_types)
 
  private
 
@@ -91,31 +106,63 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
     label = trim(label)//trim(unitslabel)
  endif
 
- if (usebox) call plot_box_around_text(trim(label),hpos,vpos,fjust)
+ if (usebox) call plot_box_around_text('T',trim(label),hpos,vpos,fjust)
  call plot_annotate('T',-vpos,hpos,fjust,trim(label))
 
- return
+ ! save bounding box of legend for later queries
+ call save_bbox('T',trim(label),hpos,vpos,fjust,ilegend)
+
 end subroutine legend
 
 !-----------------------------------------------------------------
 !  utility routine for plotting translucent box in legends
 !-----------------------------------------------------------------
-subroutine plot_box_around_text(string,hpos,vpos,fjust)
- use plotlib, only:plot_qwin,plot_qcs,plot_qtxt,plot_qci,plot_sci,plot_sfs, &
-              plot_set_opacity, plot_rect
+subroutine plot_box_around_text(pos,string,hpos,vpos,fjust)
+ use plotlib, only:plot_qci,plot_sci,plot_sfs,plot_set_opacity,plot_rect
+ character(len=1), intent(in) :: pos
  character(len=*), intent(in) :: string
  real, intent(in) :: hpos,vpos,fjust
- real :: xmin,xmax,ymin,ymax,xpos,ypos
- real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
- real, dimension(4) :: xbox,ybox
+ real :: x1,x2,y1,y2,ych
  integer :: ic
+
+ call get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+!
+!--draw box around the string
+!
+ call plot_qci(ic) ! query colour index
+ call plot_sci(0)  ! background colour
+ call plot_sfs(1)  ! solid fill style
+ call plot_set_opacity(0.5)
+ call plot_rect(x1,x2,y1,y2,0.2*ych) ! draw a (rounded) rectangle
+ call plot_set_opacity(1.0)
+ call plot_sci(ic) ! restore colour index
+
+end subroutine plot_box_around_text
+
+!-----------------------------------------------------------------
+!  helper routine to find the bounding box of a text string
+!-----------------------------------------------------------------
+subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+ use plotlib, only:plot_qwin,plot_qcs,plot_qtxt
+ character(len=1), intent(in) :: pos
+ character(len=*), intent(in) :: string
+ real, intent(in)  :: hpos,vpos,fjust
+ real, intent(out) :: x1,x2,y1,y2,ych
+ real :: xmin,xmax,ymin,ymax,xpos,ypos
+ real :: xbuf,ybuf,dx,dy,xch
+ real :: xbox(4),ybox(4)
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
  call plot_qwin(xmin,xmax,ymin,ymax)
  xpos = xmin + hpos*(xmax-xmin)
  call plot_qcs(4,xch,ych)
- ypos = ymax - (vpos + 1.)*ych
+ select case(pos)
+ case('B') ! from bottom
+    ypos = ymin + (vpos + 1.)*ych
+ case default ! 'T' = from top
+    ypos = ymax - (vpos + 1.)*ych
+ end select
 !
 !--enquire bounding box of string
 !
@@ -129,18 +176,26 @@ subroutine plot_box_around_text(string,hpos,vpos,fjust)
  x2 = x1 + dx + 2.*xbuf
  y1 = ypos
  y2 = y1 + dy + ybuf
-!
-!--draw box around the string
-!
- call plot_qci(ic) ! query colour index
- call plot_sci(0)  ! background colour
- call plot_sfs(1)  ! solid fill style
- call plot_set_opacity(0.5)
- call plot_rect(x1,x2,y1,y2,0.2*ych) ! draw a (rounded) rectangle
- call plot_set_opacity(1.0)
- call plot_sci(ic) ! restore colour index
 
-end subroutine plot_box_around_text
+end subroutine get_box_around_text
+
+!-----------------------------------------------------------------
+!  save the bounding box of a text string into the relevant
+!  global variable
+!-----------------------------------------------------------------
+subroutine save_bbox(pos,string,hpos,vpos,fjust,id)
+ character(len=1), intent(in) :: pos
+ character(len=*), intent(in) :: string
+ real, intent(in) :: hpos,vpos,fjust
+ integer, intent(in) :: id
+ real :: ych
+
+ if (id > 0 .and. id <= nlegend_types) then
+    call get_box_around_text(pos,string,hpos,vpos,fjust,&
+         bbox(id)%x1,bbox(id)%x2,bbox(id)%y1,bbox(id)%y2,ych)
+ endif
+
+end subroutine save_bbox
 
 !-----------------------------------------------------------------
 !     plots vector plot legend
@@ -222,7 +277,11 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  call plot_sci(0)
  call plot_sfs(1)
  call plot_set_opacity(0.66)
- call plot_rect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox,0.33*ych)
+ x1 = xpos - dxbuffer
+ x2 = xpos + dxbox
+ y1 = ypos - dybuffer
+ y2 = ypos + dybox
+ call plot_rect(x1,x2,y1,y2,0.33*ych)
  call plot_set_opacity(1.0)
 ! change to foreground colour index
  call plot_sci(1)
@@ -230,6 +289,13 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 ! call pgsfs(2)
 ! call pgrect(xpos-dxbuffer,xpos+dxbox,ypos-dybuffer,ypos + dybox)
 ! call pgsfs(1)
+!
+!--save bounding box
+!
+ bbox(ilegend_vec)%x1 = x1
+ bbox(ilegend_vec)%x2 = x2
+ bbox(ilegend_vec)%y1 = y1
+ bbox(ilegend_vec)%y2 = y2
 !
 !--write label
 !
@@ -269,7 +335,6 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !--restore colour index
  call plot_sci(icolindex)
 
- return
 end subroutine legend_vec
 
 !-------------------------------------------------------------------------
@@ -344,6 +409,11 @@ subroutine legend_markers(icall,icolour,imarkerstyle,ilinestyle, &
     call plot_text(xline(3) + 0.75*xch,yline(1)-0.25*ych,trim(text))
  endif
 
+ ! save (approximate) bounding box of legend for later queries
+ call save_bbox('T',trim(text),hposlegend,vpos,0.,ilegend_markers)
+ ! count the number of lines to give the extent in the y direction
+ bbox(ilegend_markers)%y2 = bbox(ilegend_markers)%y2 + icall*ych
+
  call plot_sci(icolourprev)    ! reset colour index
  call plot_set_opacity(1.0)
  call plot_stbg(-1) ! reset text background to transparent
@@ -383,6 +453,9 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
 
     !--write text at the position specified
     call plot_annotate('B',-vpos,hpos,0.5,trim(text))
+
+    ! save (approximate) bounding box of legend for later queries
+    call save_bbox('B',trim(text),hpos,-vpos,0.5,ilegend_scale)
  endif
 
 end subroutine legend_scale
@@ -419,5 +492,24 @@ logical function ipanelselect(iselect,ipanel,irow,icolumn)
               .or.(iselect==0))
 
 end function ipanelselect
+
+!-------------------------------------------------------------------
+!  Function to determine whether the mouse is positioned over
+!  one of the legends
+!-------------------------------------------------------------------
+integer function in_legend(xpt,ypt)
+ real, intent(in) :: xpt,ypt
+ integer :: id
+
+ in_legend = 0
+ do id=1,nlegend_types
+    if (xpt >= bbox(id)%x1 .and. xpt <= bbox(id)%x2 .and. &
+        ypt >= bbox(id)%y1 .and. ypt <= bbox(id)%y2) then
+       in_legend = id
+       exit ! exit loop
+    endif
+ enddo
+
+end function in_legend
 
 end module legends
