@@ -103,6 +103,8 @@ module exact
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
+ !--cooling shock
+ real    :: cooling_length
  !--gamma, for manual setting
  real :: gamma_exact
  logical :: use_gamma_exact
@@ -123,7 +125,7 @@ module exact
        mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
+       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams,cooling_length
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -221,6 +223,8 @@ subroutine defaults_set_exact
  is_wind       = .true.
  const1 = 8.
  const2 = 1.
+!   cooling shock
+ cooling_length = 0.1
 
 !   gamma, if not read from file
  gamma_exact = 5./3.
@@ -531,7 +535,7 @@ subroutine submenu_exact(iexact)
        pr_R = pr_L
        v_R = -v_L
     endif
-    call prompt('enter cooling rate Lambda',lambda)
+    call prompt('enter cooling length',cooling_length)
     !call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
  case(10)
     print 20
@@ -1428,7 +1432,15 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
        endif
     endif
  case(9)
-    call exact_coolingshock(1,time,gamma,xshock,rho_L,v_L,pr_L,lambda,xexact,yexact,ierr)
+    if (iploty==ipr) then
+       call exact_coolingshock(3,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+    elseif (iploty==iutherm) then
+       call exact_coolingshock(2,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+    elseif (iploty==ivx .and. ndimV > 0) then
+       call exact_coolingshock(1,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+    elseif (iploty==irho) then
+       call exact_coolingshock(0,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+    endif
 
     if (.false.) then
     !--h = (1/rho)^(1/ndim)

@@ -42,8 +42,8 @@
 !-----------------------------------------------------------------------
 module shock
  implicit none
- public :: exact_shock
- private :: get_pstar, get_pstar_isothermal, f_and_df
+ public :: exact_shock, get_pstar
+ private :: get_pstar_isothermal, f_and_df
 
 contains
 
