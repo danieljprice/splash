@@ -815,24 +815,14 @@ program splash
  !
  ! select -ev mode automatically if filename ends in .ev, .mdot or .out
  !
-<<<<<<< HEAD
- if (nfiles > 0 .and. &
-    (index(rootname(1),'.ev') > 0  .or. &
-     index(rootname(1),'.mdot') > 0)) then
-    evsplash = .true.
-    fileprefix = 'evsplash'
-    call set_filenames(trim(fileprefix))
-=======
  if (nfiles > 0) then
     il = len_trim(rootname(1))
     if (extension(rootname(1))=='.ev'   .or. &
-        extension(rootname(1))=='.mdot' .or. &
-        extension(rootname(1))=='.out') then
+        extension(rootname(1))=='.mdot') then
        evsplash = .true.
        fileprefix = 'evsplash'
        call set_filenames(trim(fileprefix))
     endif
->>>>>>> master
  endif
  !
  ! print header

@@ -1411,7 +1411,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              interactivereplot = .true.
              iexit = .true.
           else
-             call print_messave(xpt,ypt,'nothing to delete here')
+             call print_message(xpt,ypt,'nothing to delete here')
           endif
        endif
        !

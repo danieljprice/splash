@@ -118,15 +118,30 @@ end subroutine legend
 !-----------------------------------------------------------------
 !  utility routine for plotting translucent box in legends
 !-----------------------------------------------------------------
-subroutine plot_box_around_text(pos,string,hpos,vpos,fjust,alpha)
- use plotlib, only:plot_qci,plot_sci,plot_sfs,plot_set_opacity,plot_rect
+subroutine plot_box_around_text(pos,string,hpos,vpos,fjust)
  character(len=1), intent(in) :: pos
  character(len=*), intent(in) :: string
- real, intent(in) :: hpos,vpos,fjust,alpha
- real :: x1,x2,y1,y2,ych
+ real, intent(in) :: hpos,vpos,fjust
+ real :: xpos,ypos
+
+ call get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ call plot_box_around_text_xy(xpos,ypos,fjust,0.5,string)
+
+end subroutine plot_box_around_text
+
+!-----------------------------------------------------------------
+!  utility routine for plotting translucent box behind text
+!-----------------------------------------------------------------
+subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
+ use plotlib, only:plot_qci,plot_sci,plot_sfs, &
+                   plot_set_opacity,plot_rect
+ real, intent(in) :: xpos,ypos,fjust,alpha
+ character(len=*), intent(in) :: string
+ real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
+ real, dimension(4) :: xbox,ybox
  integer :: ic
 
- call get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+ call get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
 !
 !--draw box around the string
 !
@@ -138,20 +153,19 @@ subroutine plot_box_around_text(pos,string,hpos,vpos,fjust,alpha)
  call plot_set_opacity(1.0)
  call plot_sci(ic) ! restore colour index
 
-end subroutine plot_box_around_text
+end subroutine plot_box_around_text_xy
 
-!-----------------------------------------------------------------
-!  helper routine to find the bounding box of a text string
-!-----------------------------------------------------------------
-subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
- use plotlib, only:plot_qwin,plot_qcs,plot_qtxt
+!--------------------------------------------------------------------------
+!  convert hpos, vpos to x,y coordinate location in viewport
+!  where hpos is fraction of viewport, vpos is distance in character
+!  heights from top (pos='T') or bottom (pos='B') of viewport
+!--------------------------------------------------------------------------
+subroutine get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ use plotlib, only:plot_qwin,plot_qcs
  character(len=1), intent(in) :: pos
- character(len=*), intent(in) :: string
- real, intent(in)  :: hpos,vpos,fjust
- real, intent(out) :: x1,x2,y1,y2,ych
- real :: xmin,xmax,ymin,ymax,xpos,ypos
- real :: xbuf,ybuf,dx,dy,xch
- real :: xbox(4),ybox(4),xbox_tmp(4),ybox_tmp(4)
+ real, intent(in)  :: hpos,vpos
+ real, intent(out) :: xpos,ypos
+ real :: xmin,xmax,ymin,ymax,xch,ych
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -164,7 +178,36 @@ subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
  case default ! 'T' = from top
     ypos = ymax - (vpos + 1.)*ych
  end select
- integer :: ic
+
+end subroutine get_xy_from_hpos_vpos
+
+!-----------------------------------------------------------------
+!  find the bounding box of a text string 
+!  text is placed at hpos,vpos with justification fjust
+!-----------------------------------------------------------------
+subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+ character(len=1), intent(in) :: pos
+ character(len=*), intent(in) :: string
+ real, intent(in) :: hpos,vpos,fjust
+ real, intent(out) :: x1,x2,y1,y2,ych
+ real :: xpos,ypos
+
+ call get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ call get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+
+end subroutine get_box_around_text
+
+!-----------------------------------------------------------------
+!  find the bounding box of a text string in x,y coordinates
+!  text is placed at xpos, ypos with justification fjust
+!-----------------------------------------------------------------
+subroutine get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+ use plotlib, only:plot_qcs,plot_qtxt
+ real, intent(in)  :: xpos,ypos,fjust
+ real, intent(out) :: x1,x2,y1,y2,ych
+ character(len=*), intent(in) :: string
+ real :: xbox(4),ybox(4),xbox_tmp(4),ybox_tmp(4)
+ real :: xbuf,ybuf,dx,dy,xch
 
  call plot_qcs(4,xch,ych) ! get character height
 !
@@ -184,7 +227,7 @@ subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
  y1 = ypos - ybuf
  y2 = y1 + dy + ybuf
 
-end subroutine get_box_around_text
+end subroutine get_box_around_text_xy
 
 !-----------------------------------------------------------------
 !  save the bounding box of a text string into the relevant
