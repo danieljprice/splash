@@ -1,4 +1,73 @@
 
+**3.8.5: (23/10/23)**
+
+- implemented smoothed particle plots with multiple steps per page
+- allow for .cols and .comp file in current directory even if the filepath is not the current dir
+- sphmoments utility added
+- added routine to extract velocity dimension from fits files
+- bug fix with repeated string replacements giving endless backslashes in labels
+- bug fix reading long filenames in denoise
+
+**3.8.4: (18/08/23)**
+
+- various bugs fixed in GADGET data reader
+- auto-recognise GADGET block format
+- improved conservation checks in splash to grid (thanks to Avi Chen)
+- better handling of AREPO data
+- bug fix with timestep not advancing
+- no longer ask about particle types in multiplot if only one type present
+
+**3.8.3: (05/07/23)**
+
+- flip option (f/F in interactive mode) now persists across timesteps and works in snapshots other than the first
+- bugs fixed in Tipsy data read (thanks to Alex Pettitt)
+- auto-recognition of Tipsy binary formats implemented
+- show units labels in calculated quantities list
+
+**3.8.2: (12/05/23)**
+
+- phantom data read looks for .comp file containing additional composition data
+- also looks for .cols file containing any extra columns with one row per particle
+- recognise opacity if extra quantity called "kappa" calculated
+
+**3.8.1: (01/05/23)**
+
+- seg faults in auto-magic exact solution mapping fixed
+- longer line limit in determining number of columns in ascii/exact solution files
+- automatically handle log in exact solution labels (e.g. logR, logT)
+
+**3.8.0: (26/04/23)**
+
+- plots multiple renderings with transparent background if more than one timestep per page selected
+- auto-magically map exact solution columns onto splash columns
+- added --exact=file1,file2 to switch on plotting of exact solution from file(s)
+- added --track=maxdens and --origin=maxdens to track/recentre on maximum density
+- pressing backspace over legends deletes them
+- use density weighted and normalised rendering by default in projection plots of vector fields
+
+**3.7.2: (21/02/23)**
+
+- bug fix recognising labels like v_{phi} on command line, can now use -r vphi
+
+**3.7.1: (09/02/23)**
+
+- libexact build failure fixed
+
+**3.7.0: (09/02/23)**
+
+- splash calc extinction computes column density to all sink particles in the simulation
+- bug fix with rendering vector components (e.g. vr) in non-cartesian coordinate systems
+- bug fix with both quantities appearing in black and white when double rendering
+
+**3.6.0: (31/10/22)**
+
+- skip particles with zero weight in interpolation, large speedup in some cases (thanks to T. Bending)
+- splash calc plus and splash calc minus for adding/subtracting snapshots
+- added --origin=6245 flag to centre the origin on particle 6245
+- added --hdu=1 flag to read from a particular hdu in a fits file
+- use wcs coordinates / arcseconds for fits images if present in header
+- option --dense to reset to densest clump in phantom/sphNG data read (thanks to J. Wurster)
+
 **3.5.1: (20/06/22)**
 
 - bug fix with autolog limits

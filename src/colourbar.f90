@@ -56,6 +56,7 @@ module colourbar
  real, public :: ColourBarDisp = 5.0
  real, public :: ColourBarWidth = 2. ! width in character heights
  logical, public :: iplotcolourbarlabel = .true.
+ logical, public :: ilogcolourbaraxis = .false.
 
  public :: plotcolourbar,incolourbar,incolourbarlabel,barisvertical
  public :: get_colourbarmargins,isfloating,adjustcolourbar,iscustombar
@@ -88,6 +89,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
  real, dimension(6), parameter :: trans = (/-0.5,1.0,0.0,-0.5,0.0,1.0/)
  real, dimension(1,maxpixwedg) :: sampley
  real, dimension(maxpixwedg,1) :: samplex
+ character(len=1) :: logc
  integer :: i,npixwedg
  real :: disp,width,xch,ych,dx
  real :: xmin,xmax,ymin,ymax,vptxmin,vptxmax,vptymin,vptymax
@@ -267,6 +269,11 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        sampley(:,i) = datmin + (i-1)*dx
     enddo
     !
+    !--use log ticks
+    !
+    logc = ''
+    if (ilogcolourbaraxis) logc = 'L'
+    !
     !--draw colour bar, by cleverly setting window size
     !
     call plot_swin(0.0,1.0,0.0,real(npixwedg))
@@ -287,7 +294,7 @@ subroutine plotcolourbar(istyle,icolours,datmin,datmax,label,log, &
        call plot_box('BC',0.0,0,'CMSTV',0.0,0)
        if (istyle==5 .or. istyle==7) call plot_box(' ',0.0,0,'B',0.0,0)
     else
-       call plot_box('BC',0.0,0,'BCMSTV',0.0,0)
+       call plot_box('BC',0.0,0,'BCMSTV'//logc,0.0,0)
     endif
     !
     !--write the units label: the position is relative to the edge of

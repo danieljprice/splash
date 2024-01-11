@@ -100,7 +100,7 @@ end subroutine defaults_set_render_360
 subroutine submenu_render(ichoose)
  use colourbar, only:maxcolourbarstyles,labelcolourbarstyles,barisvertical,&
                       isfloating,iscustombar,labelfloatingstyles,&
-                      set_floating_bar_style,maxfloatingstyles
+                      set_floating_bar_style,maxfloatingstyles,ilogcolourbaraxis
  use colours,   only:schemename,ncolourschemes,ncoltable,rgbtable,icustom
  use prompting, only:prompt,print_logical
  use params,    only:maxplot
@@ -248,6 +248,7 @@ subroutine submenu_render(ichoose)
           call prompt('enter displacement of text from edge (character heights) ', &
                          ColourBarDisp)
        endif
+       call prompt('use log axis on colour bar?',ilogcolourbaraxis)
        if (iscustombar(iColourBarStyle)) then
           call prompt('enter width of colour bar in character heights',ColourBarWidth,0.,20.)
           if (barisvertical(iColourBarstyle)) then

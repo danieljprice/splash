@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -56,6 +56,57 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.10.1  : (4/12/23)
+!             bug fix with accreted particles appearing in smoothed particle plots;
+!             automated Trad/Tgas in extra quantities from phantom dumps with radiation
+!     3.10.0  : (30/11/23)
+!             --sort flag to sort filenames for comparison plots;
+!             --movie flag to automatically make movie from sequence of files;
+!             giza backend now supports direct output of mp4 movies
+!     3.9.0   : (06/11/23)
+!             follow-the-label column choice, where if a label is selected for plotting
+!             from the first file, it will automagically shift to find the matching label
+!             in subsequent files, even if the column containing the quantity has changed;
+!             implemented vtk reader capable of reading snapshots from Shamrock code;
+!             apply transparency to smoothed particle plot only if adaptive smoothing used;
+!             plot colour bar by default when particle colouring by quantity is used;
+!             can read velocity array from fits header for position-position-velocity cubes;
+!             bug fix with first page being white with smoothed particle plots on black background;
+!             bug fix finding .comp file if underscore in the directory name
+!     3.8.5   : (23/10/23)
+!             implemented smoothed particle plots with multiple steps per page;
+!             allow for .cols and .comp file in current directory even if the filepath is not the current dir;
+!             sphmoments utility added; added routine to extract velocity dimension from fits files;
+!             bug fix with repeated string replacements giving endless backslashes in labels;
+!             bug fix reading long filenames in denoise
+!     3.8.4   : (18/08/23)
+!             various bugs fixed in GADGET data reader; auto-recognise GADGET block format;
+!             improved conservation checks in splash to grid (thanks to Avi Chen);
+!             better handling of AREPO data; bug fix with timestep not advancing;
+!             no longer ask about particle types in multiplot if only one type present
+!     3.8.3   : (05/07/23)
+!             flip option (f/F in interactive mode) now persists across
+!             timesteps and works in snapshots other than the first;
+!             bugs fixed in Tipsy data read (thanks to Alex Pettitt);
+!             auto-recognition of Tipsy binary formats implemented;
+!             show units labels in calculated quantities list
+!     3.8.2   : (12/05/23)
+!             phantom data read looks for .comp file containing additional composition data;
+!             also looks for .cols file containing any extra columns with one row per particle;
+!             recognise opacity if extra quantity called "kappa" calculated
+!     3.8.1   : (01/05/23)
+!             seg faults in auto-magic exact solution mapping fixed; longer line limit in determining
+!             number of columns in ascii/exact solution files;
+!             automatically handle log in exact solution labels (e.g. logR, logT)
+!     3.8.0   : (26/04/23)
+!             plots multiple renderings with transparent background if more than one timestep per page selected;
+!             auto-magically map exact solution columns onto splash columns;
+!             added --exact=file1,file2 to switch on plotting of exact solution from file(s);
+!             added --track=maxdens and --origin=maxdens to track/recentre on maximum density;
+!             pressing backspace over legends deletes them;
+!             use density weighted and normalised rendering by default in projection plots of vector fields
+!     3.7.2   : (21/02/23)
+!             bug fix recognising labels like v_{phi} on command line, can now use -r vphi
 !     3.7.1   : (09/02/23)
 !             libexact build failure fixed
 !     3.7.0   : (09/02/23)
@@ -516,18 +567,19 @@ program splash
  use geomutils, only:set_coordlabels
  use defaults,  only:defaults_set,defaults_read,defaults_set_360
  use initialise,only:defaults_set_initial
- use limits,    only:read_limits,lim
+ use limits,    only:read_limits,lim,set_limits
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
  use mainmenu,  only:menu,allowrendering,set_extracols
  use mem_allocation,     only:deallocate_all
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              itrackoffset,itracktype,iRescale,enforce_code_units,UseTypeinRenderings
+                              track_string,iRescale,enforce_code_units,UseTypeinRenderings
  use system_commands,    only:get_number_arguments,get_argument
- use system_utils,       only:lenvironment,renvironment, &
+ use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
- use asciiutils,         only:read_asciifile,basename,match_column,reorder_filenames_for_comparison
+ use asciiutils,         only:read_asciifile,basename,match_column,&
+                              sort_filenames_for_comparison,split,extension
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -539,22 +591,21 @@ program splash
  use settings_render,    only:icolours,rgbfile,npix
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
                               irotate,anglex,angley,anglez
- use settings_limits,    only:get_itrackpart
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
- use exact,              only:ispiral
+ use exact,              only:ispiral,nfiles_exact=>nfiles,filename_exact
  use multiplot,          only:itrans
- use labels,             only:lenlabel,label,unitslabel,shortstring
- use limits,             only:set_limits
+ use labels,             only:lenlabel,label,unitslabel,shortlabel,irho
+ use interactive_routines, only:set_movie_mode
  implicit none
- integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot
+ integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
- logical :: using_default_options
- character(len=120) :: string
+ logical :: using_default_options,got_exact
+ character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [9th Feb 2023]'
+ character(len=*), parameter :: version = 'v4.0.0 [11th Jan 2024]'
 
  !
  ! initialise some basic code variables
@@ -588,6 +639,7 @@ program splash
  useall = .false.
  nomenu = .false.
  got_format = .false.
+ got_exact = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -638,6 +690,8 @@ program splash
        case('dev','device')
           i = i + 1
           call get_argument(i,device)
+       case('movie','-movie')
+          device = '/mp4'
        case('l')
           i = i + 1
           call get_argument(i,limitsfile)
@@ -679,6 +733,15 @@ program splash
           ipickx = 2
           ipicky = 3
           nomenu = .true.
+       case('exact')
+          i = i + 1
+          call get_argument(i,string)
+          if (len_trim(string) > 0) then
+             exactfile = string
+             got_exact = .true.
+          else
+             stop 'error in -exact flag'
+          endif
        case('lowmem','lm')
           lowmemorymode = .true.
        case('nolowmem','nlm')
@@ -752,12 +815,24 @@ program splash
  !
  ! select -ev mode automatically if filename ends in .ev, .mdot or .out
  !
+<<<<<<< HEAD
  if (nfiles > 0 .and. &
     (index(rootname(1),'.ev') > 0  .or. &
      index(rootname(1),'.mdot') > 0)) then
     evsplash = .true.
     fileprefix = 'evsplash'
     call set_filenames(trim(fileprefix))
+=======
+ if (nfiles > 0) then
+    il = len_trim(rootname(1))
+    if (extension(rootname(1))=='.ev'   .or. &
+        extension(rootname(1))=='.mdot' .or. &
+        extension(rootname(1))=='.out') then
+       evsplash = .true.
+       fileprefix = 'evsplash'
+       call set_filenames(trim(fileprefix))
+    endif
+>>>>>>> master
  endif
  !
  ! print header
@@ -825,12 +900,22 @@ program splash
     npix = get_command_option('npix',default=real(npix))
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
-    call get_environment_or_flag('SPLASH_TRACK',string)
-    call get_itrackpart(string,itracktype,itrackoffset,ierr)
+    call get_environment_or_flag('SPLASH_TRACK',track_string)
  endif
  if (get_command_flag('wake')) then
     iexact = 17
     ispiral = 1
+ endif
+ if (.not.got_exact .and. get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
+    iexact = 2
+    call envlist('exact',nfiles_exact,filename_exact)
+    if (len_trim(filename_exact(1))==0) then
+       print "(a)",'error command line argument --exact=file requires filename'
+       stop
+    endif
+ elseif (got_exact) then
+    iexact = 2 ! override setting in defaults file
+    call split(exactfile,',',filename_exact,nfiles_exact)
  endif
  if (get_command_flag('codeunits') .or. get_command_flag('code')) then
     iRescale = .false.
@@ -876,8 +961,8 @@ program splash
     call guess_format(nfiles,rootname,ierr)
  endif
 
- if (ihavereadfilenames .and. get_command_flag('interleave')) then
-    call reorder_filenames_for_comparison(nfiles,rootname)
+ if (ihavereadfilenames .and. get_command_flag('sort')) then
+    call sort_filenames_for_comparison(nfiles,rootname)
  endif
 
  if (ikernel==0) then
@@ -920,11 +1005,11 @@ program splash
     !  translate from string to column id
     !
     if (nomenu) then
-       ipickx = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringx)
-       ipicky = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringy)
-       irender = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringr)
-       icontour = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringc)
-       ivecplot = match_column(shortstring(label(1:numplot),unitslabel(1:numplot)),stringv)
+       ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
+       ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
+       irender = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringr)
+       icontour = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringc)
+       ivecplot = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringv)
     endif
     !
     ! for some data reads we can automatically plot a particular column
@@ -959,7 +1044,14 @@ program splash
     ! read plot limits from file (overrides get_data limits settings)
     !
     if (ivegotdata) call read_limits(trim(limitsfile),ierr)
-
+    !
+    ! if device is mp4 auto-render column density in Hollywood mode if nothing is set
+    !
+    if (device == '/mp4' .and. irender == 0) then
+       irender = irho
+       nomenu = .true.
+       if (using_default_options) call set_movie_mode(.false.)
+    endif
     !
     ! use log colour bar by default if more than 3 orders of magnitude range
     ! (and no limits file and using default options)
@@ -1107,13 +1199,18 @@ subroutine print_usage(quit)
  print "(a)",' -c[ontour] column : contoured quantity'
  print "(a)",' -multi            : multiplot'
  print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
+ print "(a)",' --movie           : shortcut for -dev /mp4 to make a movie from plot sequence'
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
- print "(a)",' --codeunits       : enforce code units (also --code)'
+ print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
- print "(a)",' --track=666       : track particle number 666'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
+ print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
+ print "(a)",' --track=666       : track particle number 666'
+ print "(a)",' --track=maxdens   : track particle at maximum density'
+ print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
+ print "(a)",' --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

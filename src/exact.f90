@@ -30,11 +30,14 @@
 ! it is called under different circumstances to the other solutions).
 !
 module exact
+ use params, only:maxplot
  implicit none
  !
  !--maximum number of solutions in any one plot
  !
  integer, parameter :: maxexact=32
+ integer, parameter :: maxlabels = maxplot
+ character(len=30)  :: exact_labels(maxlabels)
  !
  !--options used to plot the exact solution line
  !
@@ -68,12 +71,13 @@ module exact
  real, dimension(2) :: Msphere,rsoft
  !--from file
  integer :: iexactplotx(maxexact), iexactploty(maxexact)
+ logical :: iauto_map_columns
  !--shock tube
  real :: rho_L, rho_R, pr_L, pr_R, v_L, v_R
  !--rho vs h
  real :: hfact
  !--read from file
- integer :: ixcolfile(maxexact),iycolfile(maxexact),nfiles
+ integer :: imapexact(maxlabels),nfiles
  character(len=120) :: filename_exact(maxexact)
  !--equilibrium torus
  real :: Mstar,Rtorus,distortion
@@ -116,7 +120,7 @@ module exact
        rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
-       mprim,msec,ixcolfile,iycolfile,xshock,totmass,machs,macha,&
+       mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
        const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
@@ -166,8 +170,8 @@ subroutine defaults_set_exact
 !   read from file
  nfiles = 1
  filename_exact = ' '
- ixcolfile = 1
- iycolfile = 2
+ imapexact = 0
+ iauto_map_columns = .true.
  iexactplotx = 0
  iexactploty = 0
 !   density profile parameters
@@ -243,22 +247,25 @@ subroutine defaults_set_exact
  ExactLegendText = ''
  ExactAlpha = 1.0
 
- return
 end subroutine defaults_set_exact
 
  !----------------------------------------------------------------------
  ! sets which exact solution to calculate + parameters for this
  !----------------------------------------------------------------------
 subroutine submenu_exact(iexact)
- use settings_data, only:ndim
- use prompting,     only:prompt
+ use settings_data, only:ndim,ncolumns,ncalc
+ use prompting,     only:prompt,print_logical
  use filenames,     only:rootname,ifileopen,fileprefix
  use exactfunction, only:check_function
  use mhdshock,      only:nmhdshocksolns,mhdprob
  use planetdisc,    only:maxspirals,labelspiral
- use asciiutils,    only:get_ncolumns,get_nrows,string_replace,add_escape_chars,read_asciifile
+ use asciiutils,    only:get_ncolumns,get_nrows,string_replace,match_tag_start,&
+                         add_escape_chars,read_asciifile,read_column_labels
+ use labels,        only:label
+ use map_columns,   only:map_columns_in_file,map_columns_interactive,print_mapping
  integer, intent(inout) :: iexact
- integer :: ierr,itry,i,ncols,nheaderlines,nadjust,nrows,nfilestmp
+ integer :: ierr,itry,i,ncols,nadjust,nrows,nlab_exact
+ integer, allocatable :: imapauto(:)
  logical :: ians,iexist,ltmp,prompt_for_gamma,apply_to_all
  character(len=len(filename_exact)) :: filename_tmp
  character(len=4) :: str
@@ -296,6 +303,7 @@ subroutine submenu_exact(iexact)
     call prompt('enter number of functions to plot ',nfunc,1,maxexact)
     print "(/,a,6(/,11x,a))",' Examples: sin(2*pi*x - 0.1*t)','sqrt(0.5*x)','x^2', &
              'exp(-2*x**2 + 0.1*t)','log10(x/2)','exp(y),y=sin(pi*x)','cos(z/y),z=acos(y),y=x^2'
+    ierr = 0
     overfunc: do i=1,nfunc
        ierr = 1
        itry = 0
@@ -331,9 +339,7 @@ subroutine submenu_exact(iexact)
     !
     ! try to read filenames from .exactfiles if it exists
     !
-    filename_tmp = trim(fileprefix)//'.exactfiles'
-    call read_asciifile(trim(filename_tmp),nfilestmp,filename_exact,ierr)
-    if (nfilestmp > 0) nfiles = nfilestmp
+    call read_exactparams(iexact,trim(rootname(1)),ierr)
     !
     ! then prompt user
     !
@@ -358,25 +364,24 @@ subroutine submenu_exact(iexact)
           !--check the first file for errors
           inquire(file=filename_tmp,exist=iexist)
           if (iexist) then
-             open(unit=33,file=filename_tmp,status='old',iostat=ierr)
+             allocate(imapauto(size(imapexact)))
+             imapauto = 0
+             call map_columns_in_file(filename_tmp,ncols,nrows,imapauto,&
+                                      label(1:ncolumns+ncalc),exact_labels,nlab_exact,ierr)
              if (ierr==0) then
-                call get_ncolumns(33,ncols,nheaderlines)
-                call get_nrows(33,nheaderlines,nrows)
-                if (nrows < 100000) then
-                   print "(a,i5,a)",' got ',nrows,' lines in file'
-                else
-                   print "(a,i10,a)",' got ',nrows,' lines in file'
-                endif
+                ! if more than two columns mapped successfully, prompt to keep this automatic
+                if (all(imapexact==0)) imapexact = imapauto
+                ! manual assignment of column mappings
+                call map_columns_interactive(imapexact,label(1:ncolumns+ncalc),&
+                                             exact_labels,nlab_exact)
+                ! disable automated mapping if edits were made
+                if (any(imapexact(1:nlab_exact) /= imapauto(1:nlab_exact))) iauto_map_columns = .false.
+                print "(a)",' automated mapping is '//print_logical(iauto_map_columns)
+
                 if (nrows > maxexactpts) maxexactpts = nrows
-                if (ncols > 2) then
-                   if (i==1 .or. .not.apply_to_all) then
-                      print "(a,i2,a)",' File '//trim(filename_tmp)//' contains ',ncols,' columns of data'
-                      call prompt('Enter column containing y data ',iycolfile(i),1,ncols)
-                      call prompt('Enter column containing x data ',ixcolfile(i),1,ncols)
-                   endif
-                elseif (ncols==2) then
-                   print "(a,i2,a)",' OK: got ',ncols,' columns from '//trim(filename_tmp)
-                else
+                if (count(imapexact > 0) < 2) print "(/,a,/)",' WARNING: not enough columns mapped to plot anything'
+                ! re-prompt if there are less than two useable columns in the file
+                if (ncols < 2) then
                    iexist = .false.
                    call prompt('Error: file contains < 2 readable columns: try again?',ians)
                    if (.not.ians) then
@@ -384,7 +389,6 @@ subroutine submenu_exact(iexact)
                       exit over_files
                    endif
                 endif
-                close(33)
              else
                 iexist = .false.
                 call prompt('Error opening '//trim(filename_tmp)//': try again?',ians)
@@ -393,6 +397,7 @@ subroutine submenu_exact(iexact)
                    exit over_files
                 endif
              endif
+             if (allocated(imapauto)) deallocate(imapauto)
           else
              ians = .true.
              call prompt('file does not exist: try again? ',ians)
@@ -402,19 +407,13 @@ subroutine submenu_exact(iexact)
              endif
           endif
        enddo
-       if (i==1 .or. .not.apply_to_all) then
-          call prompt('enter y axis of exact solution ',iexactploty(i),1)
-          call prompt('enter x axis of exact solution ',iexactplotx(i),1)
-       endif
-       if (i==1) then
-          call prompt('Apply above settings to all files?',apply_to_all)
-          if (apply_to_all) then
-             iycolfile(:) = iycolfile(i)
-             ixcolfile(:) = ixcolfile(i)
-             iexactploty(:) = iexactploty(i)
-             iexactplotx(:) = iexactplotx(i)
-          endif
-       endif
+       !if (i==1) then
+      !    call prompt('Apply above settings to all files?',apply_to_all)
+      !    if (apply_to_all) then
+      !       iexactploty(:) = iexactploty(i)
+      !       iexactplotx(:) = iexactplotx(i)
+      !    endif
+       !endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
        !call prompt('enter text to display in legend (blank=do not show)',ExactLegendText(i))
@@ -430,7 +429,9 @@ subroutine submenu_exact(iexact)
     endif
     if (nfiles > 0) then ! only ask if filename was read OK
        ltmp = .not.iApplyTransExactFile
-       call prompt(' are exact solutions already logged?',ltmp)
+       if (.not.any(exact_labels(:)(1:3) == 'log')) then
+          call prompt(' are exact solutions already logged?',ltmp)
+       endif
        iApplyTransExactFile = .not.ltmp
        ltmp = .not.iApplyUnitsExactFile
        call prompt(' are exact solutions in physical units?',ltmp)
@@ -699,7 +700,6 @@ subroutine options_exact(iexact)
 
  call prompt('Enter selection ',iPlotExactOnlyOnPanel,-2)
 
- return
 end subroutine options_exact
 
  !-----------------------------------------------------------------------
@@ -713,7 +713,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  use prompting,      only:prompt
  use exactfunction,  only:check_function
  use filenames,      only:fileprefix,ifileopen
- use asciiutils,     only:read_asciifile,get_line_containing
+ use asciiutils,     only:read_asciifile,get_line_containing,read_var_from_file
  integer,          intent(in)  :: iexact
  character(len=*), intent(in)  :: rootname
  integer,          intent(out) :: ierr
@@ -768,8 +768,15 @@ subroutine read_exactparams(iexact,rootname,ierr)
  case(2)
     filename = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename),nfiles_got,filename_exact,ierr)
-    if (ierr==-1) then
-       if (iverbose > 0) print "(a)",' no file '//trim(filename)
+    if (ierr==-1 .and. nfiles <= 0) then ! look in .setup file only if no filenames set
+       if (iverbose > 1) print "(a)",' no file '//trim(filename)
+       !
+       ! if no .exactfiles, see if the phantom .setup file exists
+       ! and have a look for "outputfilename"
+       !
+       filename = trim(rootname(1:idash-1))//'.setup'
+       call read_var_from_file('outputfilename',filename_exact(1),filename,ierr)
+       if (ierr == 0) nfiles = 1
        return
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
@@ -1052,10 +1059,11 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             itag,iamtype,noftype,iplot_type, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
  use params,          only:int1,maxparttypes
+ use settings_data,   only:ncolumns,ncalc
  use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
-                              irhorestframe,is_coord,ideltav,idustfrac
+                              irhorestframe,is_coord,ideltav,idustfrac,label
  use filenames,       only:ifileopen,rootname
- use asciiutils,      only:string_replace
+ use asciiutils,      only:string_replace,match_integer
  use prompting,       only:prompt
  use exactfromfile,   only:exact_fromfile
  use mhdshock,        only:exact_mhdshock
@@ -1078,6 +1086,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use planetdisc,      only:exact_planetdisc
  use bondi,           only:exact_bondi
  use transforms,      only:transform,transform_inverse
+ use map_columns,     only:map_columns_in_file
  use plotlib,         only:plot_qci,plot_qls,plot_sci,plot_sls,plot_line,plotlib_maxlinestyle,plot_set_opacity
  integer, intent(in) :: iexact,iplotx,iploty,itransx,itransy,igeom
  integer, intent(in) :: ndim,ndimV,npart,imarker,iaxisy
@@ -1089,10 +1098,11 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer,       intent(in) :: noftype(maxparttypes)
  logical,       intent(in) :: iplot_type(maxparttypes)
  logical,       intent(in) :: irescale
- integer :: itrans
+ integer :: mytransx,mytransy,imapx,imapy
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
+ integer :: ncols,nrows,nlab_exact
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
  real :: dx,timei,gammai
  character(len=len(filename_exact)) :: filename_tmp
@@ -1177,19 +1187,29 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
           call exact_function(funcstring(i),xexact,yexact,timei,ierr)
           !--plot each solution separately and calculate errors
           call plot_exact_solution(itransx,itransy,iexactpts,npart,xexact,yexact,xplot,yplot, &
-                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
-                                      ls=LineStyle,lc=iExactLineColour(i))
+                                   itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                   ls=LineStyle,lc=iExactLineColour(i))
           ierr = 1 ! indicate that we have already plotted the solution
        endif
     enddo
  case(2) ! exact solution read from file
     do i=1,nfiles
-       if (iplotx==iexactplotx(i) .and. iploty==iexactploty(i)) then
-          !--substitute %f for filename
-          filename_tmp = filename_exact(i)
-          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+       !--substitute %f for filename
+       filename_tmp = filename_exact(i)
+       call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+       !--auto-magically map columns onto splash columns (if not mapped manually)
+       if (iauto_map_columns) then
+          call map_columns_in_file(filename_tmp,ncols,nrows,imapexact,&
+               label(1:ncolumns+ncalc),exact_labels,nlab_exact,ierr)
+       endif
+       ! see if there are columns in the exact file that match those of the current plot
+       imapx = match_integer(imapexact,iplotx)
+       imapy = match_integer(imapexact,iploty)
+       ! if so, go ahead and read the data and plot the exact solution
+       if (imapx > 0 .and. imapy > 0) then
           !--read exact solution from file
-          call exact_fromfile(filename_tmp,xexact,yexact,ixcolfile(i),iycolfile(i),iexactpts,ierr)
+          print "(a)",'> reading '//trim(exact_labels(imapx))//' and '//trim(exact_labels(imapy))//' from '//trim(filename_tmp)
+          call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
              if (iApplyTransExactFile) then
@@ -1202,15 +1222,19 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
              !--change line style between files
              LineStyle = mod(iExactLineStyle(i),plotlib_maxlinestyle)
              !--do not apply log or other transformations if option set for this
-             itrans = itransy
-             if (.not.iApplyTransExactFile) itrans = 0
+             !  or if the label starts with 'log'...
+             mytransy = get_transform(itransy,iApplyTransExactFile,exact_labels(imapy)(1:3))
+             mytransx = get_transform(itransx,iApplyTransExactFile,exact_labels(imapx)(1:3))
 
              !--plot each solution separately and calculate errors
-             call plot_exact_solution(itransx,itrans,iexactpts,npart,xexact,yexact,xplot,yplot,&
-                                         itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
-                                         ls=LineStyle,lc=iExactLineColour(i))
+             call plot_exact_solution(mytransx,mytransy,iexactpts,npart,xexact,yexact,xplot,yplot,&
+                                      itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
+                                      ls=LineStyle,lc=iExactLineColour(i))
              ierr = 1 ! indicate that we have already plotted the solution
           endif
+       else
+          ! if nothing matched, make sure we do not plot anything
+          ierr = 2
        endif
     enddo
  case(3)! shock tube
@@ -1553,14 +1577,36 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  if (allocated(yexact)) deallocate(yexact)
  if (allocated(xtemp)) deallocate(xtemp)
 
- return
-
 end subroutine exact_solution
 
- !------------------------------------------------------------------
- ! Wrapper routine to plot the exact solution line on current graph
- ! and calculate errors with respect to the data
- !------------------------------------------------------------------
+integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
+ use transforms, only:islogged
+ use asciiutils, only:lcase
+ integer, intent(in) :: itrans
+ logical, intent(in) :: apply_trans
+ character(len=3), intent(in) :: label_start
+
+ ! by default, the data transformation is also applied to the exact solution
+ mytrans = itrans
+ ! disable this if the flag to switch it off is set
+ if (.not.apply_trans) mytrans = 0
+
+ if (lcase(label_start)=='log') then
+    if (islogged(itrans)) then
+       ! disable exact solution transform if solution is already logged
+       mytrans = 0
+    else
+       ! if exact solution is logged but data isn't, apply inverse transform
+       mytrans = -1
+    endif
+ endif
+
+end function get_transform
+
+!------------------------------------------------------------------
+! Wrapper routine to plot the exact solution line on current graph
+! and calculate errors with respect to the data
+!------------------------------------------------------------------
 subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,yplot,&
                                itag,iamtype,noftype,iplot_type,xmin,xmax,imarker,iaxisy,&
                                ls,lc,matchtype,err)
@@ -1586,8 +1632,8 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
  if (present(lc)) call plot_sci(lc)
  call plot_set_opacity(ExactAlpha)
 
- if (itransx > 0) call transform(xexact(1:iexactpts),itransx)
- if (itransy > 0) call transform(yexact(1:iexactpts),itransy)
+ if (itransx /= 0) call transform(xexact(1:iexactpts),itransx)
+ if (itransy /= 0) call transform(yexact(1:iexactpts),itransy)
 
  if (present(ls)) call plot_sls(ls)
 
@@ -1608,10 +1654,10 @@ subroutine plot_exact_solution(itransx,itransy,iexactpts,np,xexact,yexact,xplot,
 
  if (iCalculateExactErrors .and. plot_err) then
     !--untransform y axis again for error calculation
-    if (itransy > 0) call transform_inverse(yexact(1:iexactpts),itransy)
+    if (itransy /= 0) call transform_inverse(yexact(1:iexactpts),itransy)
     !--untransform particle y axis also
     ypart(1:np) = yplot(1:np)
-    if (itransy > 0) call transform_inverse(ypart(1:np),itransy)
+    if (itransy /= 0) call transform_inverse(ypart(1:np),itransy)
     !--calculate errors
     call calculate_errors(xexact(1:iexactpts),yexact(1:iexactpts),xplot(1:np),ypart,&
                             itag,iamtype,noftype,iplot_type,xmin,xmax,residuals, &
@@ -1680,7 +1726,8 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
           !--find nearest point in exact solution table
           !
           do j=1,size(xexact)-1
-             if (xexact(j) <= xi .and. xexact(j+1) > xi) then
+             if ((xexact(j) <= xi .and. xexact(j+1) > xi) .or. &
+                 (xexact(j+1) <= xi .and. xexact(j) > xi)) then
                 if (abs(residual(i)) > tiny(residual)) nerr = nerr + 1
                 !--linear interpolation from tabulated exact solution
                 dy = yexact(j+1) - yexact(j)
@@ -1728,7 +1775,6 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
  endif
  if (nerr > 0) print*,'WARNING: ',nerr,' errors in residual calculation'
 
- return
 end subroutine calculate_errors
 
  !------------------------------------

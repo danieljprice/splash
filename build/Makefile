@@ -64,6 +64,14 @@ endif
 # If you need the HDF5 libraries, edit the lines below
 # possibly adding a -L/libpath/ and a -I/includepath/
 #
+ifndef HDF5ROOT
+ifdef HDF5_ROOT
+   HDF5ROOT=$(HDF5_ROOT)
+endif
+ifdef HDF5_DIR
+   HDF5ROOT=$(HDF5_DIR)
+endif
+endif
 HDF5LIBS    = -L$(HDF5ROOT)/lib -lhdf5
 HDF5INCLUDE = -I$(HDF5ROOT)/include
 H5PART_LIBS    = -L$(H5PART_DIR)/lib -lH5Part
@@ -349,7 +357,7 @@ READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspm
            read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
            read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
            read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90
+           read_data_vanaverbeke.f90     read_data_vtk.f90
 
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
@@ -399,9 +407,10 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
+         asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
-         prompting.f90 promptlist.f90 geometry.f90 kernels.f90 \
+         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
          plotutils.f90 blackbody.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
@@ -410,7 +419,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 asciiutils.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 \
+         write_griddata.f90 write_sphdata.f90 read_kepler.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
@@ -467,7 +476,6 @@ all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	@echo "   alias tsplash='splash -f tipsy' ";
 	@echo "   alias msplash='splash -f mhutch' "; echo;
 
-
 #---falcON HDF5 read ---
 falcon: falcON
 
@@ -505,8 +513,8 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 interpolation.f90 \
-      interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 \
+      interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
       libsplash.f90 libutils.f90
@@ -540,10 +548,10 @@ libexact: checksystem $(OBJLIBEXACTALL)
 #
 # libread: data read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 $(READFILES) read_data.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
@@ -572,6 +580,21 @@ denoise: checksystem checkfits $(OBJECTSIMLIB)
 	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
 	@echo; echo ' Denoise utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
+#
+# splash moments
+#
+SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+          interpolate1D.f90 write_fits.f90 moments.f90 sph_moments.f90
+
+OBJECTSM = $(SOURCESM:.f90=.o)
+
+.PHONY: sphmoments
+sphmoments: checksystem checkfits $(OBJECTSM)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS)
+	@echo; echo ' sphmoments utility successfully compiled! ';
+	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
+
 
 checksystem:
    ifeq ($(KNOWN_SYSTEM), yes)
@@ -709,10 +732,11 @@ checkpbob:
 install: destdircheck installcheck
 	@cd $(BINDIR); for x in *splash*; do if [ -e $$x ]; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi; done;
 	@cd $(BINDIR); x=denoise; if test -e $$x; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi;
+	@cd $(BINDIR); x=sphmoments; if test -e $$x; then echo "copying $$x -> $(DESTDIR)$(PREFIX)/bin/$$x"; cp $$x $(DESTDIR)$(PREFIX)/bin/; fi;
 	@echo; echo 'installation complete';
 
 installcheck:
-	@if [ -e $(BINDIR)/splash ] || [ -e $(BINDIR)/denoise ]; then echo; \
+	@if [ -e $(BINDIR)/splash ] || [ -e $(BINDIR)/denoise ] || [ -e $(BINDIR)/sphmoments ]; then echo; \
         echo 'compiled binaries install to $(DESTDIR)$(PREFIX)/bin'; \
         echo '(use "sudo make install" if Permission denied)'; \
         echo; else echo;\

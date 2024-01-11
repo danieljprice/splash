@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -75,20 +75,16 @@
 ! Partial data read implemented Nov 2006 means that columns with
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
-module gadgetread
- use params, only:maxplot
- implicit none
- real :: hsoft
- character(len=4), dimension(maxplot) :: blocklabelgas
- logical :: havewarned = .false.
-
-end module gadgetread
-
-
 module readdata_gadget
+ use params, only:maxplot
  implicit none
 
  public :: read_data_gadget, set_labels_gadget, file_format_is_gadget
+
+ real :: hsoft
+ character(len=4), dimension(maxplot) :: blocklabelgas
+ logical :: havewarned = .false.
+ logical :: auto_detected_block_format = .false.
 
  private
 contains
@@ -99,9 +95,8 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
  use mem_allocation, only:alloc
- use labels,         only:ih,irho,ipmass,labeltype
+ use labels,         only:ih,irho,ipmass,labeltype,iamvec
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
- use gadgetread,     only:hsoft,blocklabelgas,havewarned
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
  character(len=*), intent(in)       :: rootname
@@ -110,7 +105,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  character(len=20)                  :: string
  integer, dimension(6) :: npartoftypei,Nall
  integer, dimension(:), allocatable :: iamtemp
- integer               :: i,j,k,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
+ integer               :: i,j,n,itype,icol,ierr,ierrh,ierrrho,nhset,nvec,ifile
  integer               :: index1,index2,indexstart,indexend,nmassesdumped,ntypesused
  integer               :: ncolstep,npart_max,nstep_max,ntoti,nacc,ntotall,idot
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart,nhfac
@@ -124,7 +119,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  real(sing_prec), dimension(:),   allocatable :: dattemp1
  real(sing_prec), dimension(:,:), allocatable :: dattemp
  real :: hfact,hfactmean
- real, parameter :: pi = 3.1415926536
+ real, parameter :: pi = 4.*atan(1.)
 
  nstepsread = 0
  goterrors  = .false.
@@ -161,7 +156,11 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  ndim  = 3
  ndimV = 3
  idumpformat = 0
- idumpformat = ienvironment('GSPLASH_FORMAT')
+ if (auto_detected_block_format) then
+    idumpformat = 2
+ else
+    idumpformat = ienvironment('GSPLASH_FORMAT')
+ endif
  checkids    = lenvironment('GSPLASH_CHECKIDS')
 !
 !--read data from snapshots
@@ -279,16 +278,12 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     if (idumpformat==2) then
        ncolstep = 1
        do while (ierr==0)
-          call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),lenblock,nvec)
+          call read_blockheader(idumpformat,iunit,0,index2,blocklabelgas(ncolstep),&
+                                lenblock,nvec,npartoftypei(1))
           read(iunit,iostat=ierr)
-          if ((ierr==0 .and. index2 > 0) .and. (index2==ntoti &
-            .or. index2==npartoftypei(1) &
-            .or. index2==npartoftypei(2) &
-            .or. index2==npartoftypei(5) &
-            .or. index2==(npartoftypei(1)+npartoftypei(5)) &
-            .or. index2==(npartoftypei(1)+npartoftypei(2)))) then
+          if (ierr==0 .and. index2 > 0) then
              select case(blocklabelgas(ncolstep))
-             case('ID  ')
+             case('ID  ','INFO')
                 ! not a column
              case default
                 ncolstep = ncolstep + nvec
@@ -473,14 +468,18 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        !--read positions of all particles
        !  (note that errors on position read are fatal)
        !
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
-       if (iformat==2 .and. blocklabel /= 'POS ')  then
-          print "(a)",' WARNING: expecting positions, got '//blocklabel//' in data read'
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
+       if (iformat==2)  then
+          ierr = 0
+          do while(blocklabel /= 'POS ' .and. ierr == 0)
+             print "(a)",' WARNING: skipping unknown block '//blocklabel//' in data read'
+             read(iunit, iostat=ierr)
+             call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
+          enddo
        endif
        if (any(required(1:3))) then
           print*,'positions ',index2
-          if (allocated(dattemp)) deallocate(dattemp)
-          allocate(dattemp(3,ntoti))
+          call allocate_temp(dattemp,3,ntoti)
           read(iunit,iostat=ierr) (dattemp(:,j),j=1,index2)
           if (nfiles > 1) then
              !
@@ -517,13 +516,15 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
        !
        !--same for velocities
        !
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
        if (iformat==2 .and. blocklabel /= 'VEL ')  then
           print "(a)",' WARNING: expecting velocity, got '//blocklabel//' in data read'
        endif
        if (any(required(4:6))) then
           print*,'velocities ',index2
-          if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
+          call allocate_temp(dattemp,3,ntoti)
+
+          !if (.not.allocated(dattemp)) allocate(dattemp(3,ntoti))
 
           read (iunit, iostat=ierr) (dattemp(:,j),j=1,index2)
           if (nfiles > 1) then
@@ -555,7 +556,6 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              return
           endif
        endif
-       if (allocated(dattemp)) deallocate(dattemp)
        !
        !--skip read of particle ID (only required if we sort the particles
        !  back into their correct order, which is not implemented at present)
@@ -569,7 +569,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
           allocate(iamtemp(ntoti))
        endif
 
-       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec)
+       call read_blockheader(idumpformat,iunit,ntoti,index2,blocklabel,lenblock,nvec,ntoti)
        if (iformat==2 .and. blocklabel /= 'ID  ') then
           print "(a)",' WARNING: expecting particle ID, got '//blocklabel//' in data read'
        endif
@@ -598,7 +598,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
           endif
        enddo
 
-       if (ipmass==0) then
+       if (nmassesdumped==0) then
           masstype(1:6,i) = real(massoftypei(1:6))
        else
           if (required(ipmass)) then
@@ -607,7 +607,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              if (nmassesdumped > 0) then
                 if (allocated(dattemp1)) deallocate(dattemp1)
                 allocate(dattemp1(nmassesdumped))
-                call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,nmassesdumped,index2,blocklabel,lenblock,nvec,-1)
                 if (iformat==2 .and. blocklabel /= 'MASS')  then
                    print "(a)",' WARNING: expecting particle masses, got '//blocklabel//' in data read'
                 endif
@@ -677,10 +677,13 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 
           if (idumpformat==2) then
              if (icol+1 <= ih) then
-                call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,npartoftypei(1),index2,&
+                                      blocklabel,lenblock,nvec,npartoftypei(1))
              else
-                call read_blockheader(idumpformat,iunit,0,index2,blocklabel,lenblock,nvec)
+                call read_blockheader(idumpformat,iunit,0,index2,&
+                                      blocklabel,lenblock,nvec,npartoftypei(1))
              endif
+             if (nvec > 1) iamvec(icol+1:icol+nvec) = icol + 1
              icol = icol + nvec
              !
              !--work out from the number of entries what mix of particle types
@@ -689,40 +692,43 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
              if (index2==ntoti) then
                 i1 = i0(1) + 1
                 i2 = i1 + ntoti - 1
-                print*,blocklabel//' (',index2,': all particles)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': all particles)'
                 ireadtype(:) = .true.
              elseif (index2==npartoftypei(1)) then
                 i1 = i0(1) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': gas particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas particles only)'
                 ireadtype(1) = .true.
              elseif (index2==npartoftypei(2)) then
                 i1 = i0(2) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': dark matter particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': dark matter particles only)'
                 ireadtype(2) = .true.
              elseif (index2==npartoftypei(1)+npartoftypei(2)) then
                 i1 = i0(1) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': gas+dark matter particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas+dark matter particles only)'
                 ireadtype(1:2) = .true.
              elseif (index2==npartoftypei(5)) then
                 i1 = i0(5) + 1
                 i2 = i1 + index2 - 1
-                print*,blocklabel//' (',index2,': star particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': star particles only)'
                 ireadtype(5) = .true.
              elseif (index2==npartoftypei(1)+npartoftypei(5)) then
                 i1 = i0(1) + 1
                 i2 = i1 + npartoftypei(1) - 1
                 i3 = i0(5) + 1
                 i4 = i3 + npartoftypei(5) - 1
-                print*,blocklabel//' (',index2,': gas+star particles only)'
+                print "(1x,a,i0,' x ',i0,a)",blocklabel//' (',nvec,index2,': gas+star particles only)'
                 ireadtype(1) = .true.
                 ireadtype(5) = .true.
              else
                 print*,blocklabel//': ERROR in block length/quantity defined on unknown mix of types n = (',index2,')'
                 i1 = i0(1)+1
                 i2 = i0(1)+index2
+                !--skip in order to avoid seg fault below...
+                read (iunit,iostat=ierr)
+                cycle gas_properties
              endif
           else
              nvec = 1
@@ -763,19 +769,32 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                 else
                    if (nvec > 1) then
                       if (nfiles > 1) then
-                         read (iunit,iostat=ierr) &
-                        (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         !read (iunit,iostat=ierr) (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         call allocate_temp(dattemp,nvec,ntoti)
+                         read (iunit,iostat=ierr) ((dattemp(1:nvec,j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         do itype=1,ntypesused
+                            do j=i1all(itype),i2all(itype)
+                               dat(j,icol-nvec+1:icol,i) = real(dattemp(1:nvec,j))
+                            enddo
+                         enddo
                       else
-                         read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
+                         !read (iunit,iostat=ierr) ((dat(k,j,i),j=icol-nvec+1,icol),k=i1,i2)
+                         call allocate_temp(dattemp,nvec,i2-i1+1)
+                         read (iunit,iostat=ierr) (dattemp(1:nvec,j),j=1,i2-i1+1)
+                         do j=i1,i2
+                            dat(j,icol-nvec+1:icol,i) = real(dattemp(1:nvec,j))
+                         enddo
                       endif
                    else
                       if (nfiles > 1) then
-                         read (iunit,iostat=ierr) (dat(i1all(itype):i2all(itype),icol,i),itype=1,ntypesused)
+                         call allocate_temp1(dattemp1,ntoti)
+                         read (iunit,iostat=ierr) ((dattemp1(j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
+                         ! convert to real*8 if compiled in single precision
+                         do itype=1,ntypesused
+                            dat(i1all(itype):i2all(itype),icol,i) = real(dattemp1(i1all(itype):i2all(itype)))
+                         enddo
                       else
-                         if (.not. allocated(dattemp1) .or. size(dattemp1) < i2-i1) then
-                            if (allocated(dattemp1)) deallocate(dattemp1)
-                            allocate(dattemp1(i2-i1+1))
-                         endif
+                         call allocate_temp1(dattemp1,i2-i1+1)
                          read (iunit,iostat=ierr) dattemp1(1:1+i2-i1)
                          dat(i1:i2,icol,i) = real(dattemp1(1:1+i2-i1)) ! convert to real*8 if compiled in double prec
                       endif
@@ -879,10 +898,10 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     dat(1:npartoftype(1,i),ih,i) = 0.5*dat(1:npartoftype(1,i),ih,i)
  endif
 
- if (nfiles > 1. .and. any(npartoftype(:,i) /= Nall(:))) then
+ if (nfiles > 1. .and. any(npartoftype(1:6,i) /= Nall(1:6))) then
     print*,'ERROR: sum of Npart across multiple files  /=  Nall in data read '
-    print*,'Npart = ',npartoftype(:,i)
-    print*,'Nall  = ',Nall(:)
+    print*,'Npart = ',npartoftype(1:6,i)
+    print*,'Nall  = ',Nall(1:6)
     goterrors = .true.
  endif
  !
@@ -1067,12 +1086,13 @@ contains
 !!-----------------------------------------------------------------
 !! small utility to transparently handle block labelled data read
 !!-----------------------------------------------------------------
-subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
+subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec,ngas)
  integer, intent(in) :: idumpfmt,lun,nexpected
  integer, intent(out) :: ndumped
  character(len=4), intent(out) :: blklabel
  integer, intent(out) :: lenblk
  integer, intent(out) :: nvec
+ integer, intent(in)  :: ngas
 
  blklabel = '    '
  if (idumpfmt==2) then
@@ -1082,43 +1102,82 @@ subroutine read_blockheader(idumpfmt,lun,nexpected,ndumped,blklabel,lenblk,nvec)
        return
     endif
     if (blklabel=='POS ' .OR. blklabel=='VEL ' .OR. blklabel=='ACCE' .OR. blklabel=='BFLD' .OR. &
-         blklabel=='BPOL' .OR. blklabel=='BTOR') then
+         blklabel=='BPOL' .OR. blklabel=='BTOR' .or. (lenblk-8)/12==ngas) then
        ndumped = (lenblk-8)/12
        nvec = 3
     else
        ndumped = (lenblk-8)/4
        nvec = 1
     endif
-    !print*,blklabel,lenblk,ndumped
+    !print*,blklabel,lenblk,ndumped,nexpected
     !if (nexpected > 0) then
     !   if (ndumped /= nexpected) then
-    !      !print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
+    !      print*,'warning: number of '//blklabel//' dumped (',ndumped,') /= expected (',nexpected,')'
     !   endif
     !endif
  else
     ndumped = nexpected
  endif
 
- return
 end subroutine read_blockheader
 
 end subroutine read_data_gadget
+
+!------------------------------------------------------------
+! allocate temporary memory, but avoid reallocating
+! memory if size is the same
+!------------------------------------------------------------
+subroutine allocate_temp(dattemp,isize,jsize)
+ use params, only:sing_prec
+ real(kind=sing_prec), allocatable, intent(inout) :: dattemp(:,:)
+ integer, intent(in) :: isize,jsize
+
+ if (allocated(dattemp)) then
+    if (size(dattemp(:,1)) /= isize .or. size(dattemp(1,:)) /= jsize) then
+       deallocate(dattemp)
+    endif
+ endif
+ if (.not.allocated(dattemp)) then
+    allocate(dattemp(isize,jsize))
+ endif
+
+end subroutine allocate_temp
+
+!------------------------------------------------------------
+! allocate temporary memory, but avoid reallocating
+! memory if size is the same
+!------------------------------------------------------------
+subroutine allocate_temp1(dattemp1,jsize)
+ use params, only:sing_prec
+ real(kind=sing_prec), allocatable, intent(inout) :: dattemp1(:)
+ integer, intent(in) :: jsize
+
+ if (allocated(dattemp1)) then
+    if (size(dattemp1(:)) /= jsize) then
+       deallocate(dattemp1)
+    endif
+ endif
+ if (.not.allocated(dattemp1)) then
+    allocate(dattemp1(jsize))
+ endif
+
+end subroutine allocate_temp1
 
 !!------------------------------------------------------------
 !! set labels for each column of data
 !!------------------------------------------------------------
 
 subroutine set_labels_gadget
- use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass, &
+ use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,set_vector_labels, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
  use geometry,      only:labelcoord
  use system_utils,  only:envlist,ienvironment
- use gadgetread,    only:hsoft,blocklabelgas
  use asciiutils,    only:lcase
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
+ character(len=lenlabel) :: tmplabel
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'
@@ -1133,12 +1192,12 @@ subroutine set_labels_gadget
     icol = 0
     do i=1,size(blocklabelgas)
        icol = icol + 1
-       select case(blocklabelgas(i))
-       case('POS ')
+       select case(trim(blocklabelgas(i)))
+       case('POS')
           ix(1) = icol
           ix(2) = icol+1
           ix(3) = icol+2
-       case('VEL ')
+       case('VEL')
           ivx = icol
        case('ACCE')
           iax = icol
@@ -1150,81 +1209,149 @@ subroutine set_labels_gadget
           iBtor = icol
        case('MASS')
           ipmass = icol
-       case('U   ')
+       case('U')
           iutherm = icol
-       case('RHO ')
+       case('RHO')
           irho = icol
-       case('NE  ')
+       case('NE')
           label(icol) = 'N_{e}'
-       case('NH  ')
+       case('NH')
           label(icol) = 'N_{H}'
        case('HSML')
           ih = icol
-       case('NHP ')
+       case('NHP')
           label(icol) = 'N_{H+}'
-       case('NHE ')
+       case('NHE')
           label(icol) = 'N_{He}'
        case('NHEP')
           label(icol) = 'N_{He+}'
        case('elec')
           label(icol) = 'N_{e}'
-       case('HI  ')
+       case('HI')
           label(icol) = 'HI'
-       case('HII ')
+       case('HII')
           label(icol) = 'HII'
-       case('HeI ')
+       case('HeI')
           label(icol) = 'HeI'
        case('HeII')
           label(icol) = 'HeII'
-       case('H2I ')
+       case('H2I')
           label(icol) = 'H_{2}I'
        case('H2II')
           label(icol) = 'H_{2}II'
-       case('HM  ')
+       case('HM')
           label(icol) = 'HM'
-       case('SFR ')
-          label(icol) = 'Star formation rate'
-       case('TEMP')
-          label(icol) = 'temperature'
-       case('POT ')
-          label(icol) = 'potential'
-       case('AGE ')
-          label(icol) = 'Stellar formation time'
-       case('Z   ')
+       case('HD')
+          label(icol) = 'HD'
+       case('DI')
+          label(icol) = 'DI'
+       case('DII')
+          label(icol) = 'DII'
+       case('HeHp')
+          label(icol) = 'He Hp'
+       case('SFR')
+          label(icol) = 'Star Formation Rate'
+       case('AGE')
+          label(icol) = 'Stellar Formation Time'
+       case('DETI')
+          label(icol) = 'Delay Time'
+       case('HSMS')
+          label(icol) = 'Stellar Smoothing Length'
+       case('ACRS')
+          label(icol) = 'Stellar Spreading Length'
+       case('Z')
           label(icol) = 'Metallicity'
+       case('POT')
+          label(icol) = 'Potential'
+       case('IPOT')
+          label(icol) = 'Integrated Potential'
+       case('PHID')
+          label(icol) = 'DPotential Dt'
        case('ENDT')
-          label(icol) = 'd(Entropy)/dt'
+          label(icol) = 'Rate Of Change Of Entropy'
        case('STRD')
-          label(icol) = 'Stress (diagonal)'
+          label(icol) = 'Diagonal Stress Tensor'
        case('STRO')
-          label(icol) = 'Stress (off-diagonal)'
+          label(icol) = 'Off Diagonal Stress Tensor'
        case('STRB')
-          label(icol) = 'Stress (bulk)'
+          label(icol) = 'Bulk Stress Tensor'
        case('SHCO')
-          label(icol) = 'Shear coefficient'
+          label(icol) = 'Shear Coefficient'
        case('TSTP')
-          label(icol) = 'Time step'
+          label(icol) = 'Time Step'
+       case('BFSM')
+          label(icol) = 'Smoothed Magnetic Field'
        case('DBDT')
           label(icol) = 'dB/dt'
+       case('VBLK')
+          label(icol) = 'Bulk Velocity'
+       case('VRMS')
+          label(icol) = 'RMSVelocity'
+       case('VTAN')
+          label(icol) = 'RMSTangential Velocity'
+       case('VRAD')
+          label(icol) = 'RMSRadial Velocity'
+       case('MHIX')
+          label(icol) = 'Main Halo Index'
+       case('TNGB')
+          label(icol) = 'True Number Of Neighbours'
+       case('NGB')
+          label(icol) = 'True Number Of Neighbours'
+       case('DPP')
+          label(icol) = 'Magnetos Reacc Coefficient'
+       case('VDIV')
+          label(icol) = 'Velocity Divergence'
+       case('VROT')
+          label(icol) = 'Velocity Curl'
+       case('VORT')
+          label(icol) = 'Vorticity'
        case('DIVB')
           label(icol) = 'div B'
           idivB = icol
+       case('RDIB')
+          label(icol) = 'h|div B|/|B|'
        case('ABVC')
           label(icol) = 'alpha_{visc}'
+       case('ACVC')
+          label(icol) = 'alpha_{cond}'
        case('AMDC')
           label(icol) = 'alpha_{resist}'
-       case('PHI ')
-          label(icol) = 'div B cleaning function'
+       case('VTRB')
+          label(icol) = 'Turb Velociy'
+       case('LTRB')
+          label(icol) = 'Turb Lengh'
+       case('ADYN')
+          label(icol) = 'Alpha Dynamo'
+       case('EDYN')
+          label(icol) = 'Eta Dynamo'
+       case('PHI')
+          label(icol) = 'DPotential Dt'
+       case('XPHI')
+          label(icol) = 'Cold Gas Fraction (\Phi)'
+       case('GPHI')
+          label(icol) = 'Div B cleaning Function Grad Phi'
+       case('ROTB')
+          label(icol) = 'Rotation B'
+       case('SRTB')
+          label(icol) = 'Smoothed Rotation B'
+       case('EULA')
+          label(icol) = 'Euler Potential A'
+       case('EULB')
+          label(icol) = 'Euler Potential B'
        case('COOR')
           label(icol) = 'Cooling Rate'
        case('CONR')
           label(icol) = 'Conduction Rate'
-       case('BFSM')
-          label(icol) = 'B_{smooth}'
        case('DENN')
-          label(icol) = 'Denn'
+          label(icol) = 'Number density'
+       case('EGYP')
+          label(icol) = 'Energy Reservoir For Feeback'
+       case('EGYC')
+          label(icol) = 'Energy Reservoir For Cold Phase'
        case('CRC0')
           label(icol) = 'Cosmic Ray C0'
+       case('CRQ0')
+          label(icol) = 'Cosmic Ray q0'
        case('CRP0')
           label(icol) = 'Cosmic Ray P0'
        case('CRE0')
@@ -1237,26 +1364,230 @@ subroutine set_labels_gadget
           label(icol) = 'Cosmic Ray Dissipation Time'
        case('BHMA')
           label(icol) = 'Black hole mass'
+       case('ACRB')
+          label(icol) = 'Black hole Accretion Length'
        case('BHMD')
-          label(icol) = 'black hole mass accretion rate'
+          label(icol) = 'Black hole Mdot'
+       case('BHPC')
+          label(icol) = 'Black hole NProgs'
+       case('BHMB')
+          label(icol) = 'Black hole Mass bubbles'
+       case('BHMI')
+          label(icol) = 'Black hole Mass initial'
+       case('BHMR')
+          label(icol) = 'Black hole Mass radio'
+       case('VSIG')
+          label(icol) = 'Maximum Signal Velocity'
        case('MACH')
-          label(icol) = 'Mach number'
+          label(icol) = 'Mach Number'
+       case('SHSP')
+          label(icol) = 'Shock Speed'
+       case('SHRH')
+          label(icol) = 'Shock Upstr Density'
+       case('SHPU')
+          label(icol) = 'Shock Upstr Pressure'
+       case('SHPD')
+          label(icol) = 'Shock Downstr Pressure'
+       case('SHVU')
+          label(icol) = 'Shock Upstr Velocity'
+       case('SHVD')
+          label(icol) = 'Shock Downstr Velocity'
+       case('MALF')
+          label(icol) = 'Alfven Mach Number'
+       case('SHAU')
+          label(icol) = 'Shock Upstr Alfven'
+       case('SHAD')
+          label(icol) = 'Shock Downstr Alfven'
+       case('SHOB')
+          label(icol) = 'Shock Obliquity'
+       case('SHCP')
+          label(icol) = 'Shock Compression Ratio'
+       case('SHNR')
+          label(icol) = 'Shock Normal'
        case('DTEG')
-          label(icol) = 'dt (energy)'
+          label(icol) = 'Dt Energy'
+       case('PSCS')
+          label(icol) = 'Preshock Sound Speed'
        case('PSDE')
-          label(icol) = 'Pre-shock density'
+          label(icol) = 'Preshock Density'
        case('PSEN')
-          label(icol) = 'Pre-shock energy'
+          label(icol) = 'Preshock Energy'
        case('PSXC')
-          label(icol) = 'Pre-shock X'
+          label(icol) = 'Preshock XCR'
        case('DJMP')
-          label(icol) = 'Density jump'
+          label(icol) = 'Density Jump'
        case('EJMP')
-          label(icol) = 'Energy jump'
+          label(icol) = 'Energy Jump'
        case('CRDE')
-          label(icol) = 'Cosmic Ray injection'
-       case('PRES')
-          label(icol) = 'pressure'
+          label(icol) = 'CR_Dt E'
+       case('TIPS')
+          label(icol) = 'Tidal Tensor PS'
+       case('DIPS')
+          label(icol) = 'Distortion Tensor PS'
+       case('CACO')
+          label(icol) = 'Caustic Counter'
+       case('FLDE')
+          label(icol) = 'Flow Determinant'
+       case('STDE')
+          label(icol) = 'Stream Density'
+       case('SOMA')
+          label(icol) = '2lpt mass'
+       case('ANRA')
+          label(icol) = 'Annihilation Radiation'
+       case('LACA')
+          label(icol) = 'Last Caustic'
+       case('SHOR')
+          label(icol) = 'Sheet Orientation'
+       case('INDE')
+          label(icol) = 'Init Density'
+       case('TEMP')
+          label(icol) = 'Temperature'
+       case('XNUC')
+          label(icol) = 'Nuclear mass fractions'
+       case('P')
+          label(icol) = 'Coordinates'
+       case('RADG')
+          label(icol) = 'photon number density'
+       case('RADA')
+          label(icol) = 'rad acceleration'
+       case('ET')
+          label(icol) = 'Delay Time'
+       case('PTSU')
+          label(icol) = 'PSum'
+       case('DMNB')
+          label(icol) = 'Dark matter number of neighbours'
+       case('NTSC')
+          label(icol) = 'Num Total Scatter'
+       case('SHSM')
+          label(icol) = 'SIDM smoothing length'
+       case('SRHO')
+          label(icol) = 'SIDM density'
+       case('SVEL')
+          label(icol) = 'SVel Disp'
+       case('DMHS')
+          label(icol) = 'SIDM smoothing length'
+       case('DMDE')
+          label(icol) = 'SIDM density'
+       case('DMVD')
+          label(icol) = 'DM Velocity Dispersion'
+       case('Zs')
+          label(icol) = 'Mass of Metals'
+       case('CII')
+          label(icol) = 'Contribution by SNII'
+       case('CIa')
+          label(icol) = 'Contribution by SNIa'
+       case('CAGB')
+          label(icol) = 'Contribution by AGB'
+       case('ZAge')
+          label(icol) = 'Metallicity-averaged time'
+       case('ZAlv')
+          label(icol) = 'long-living-Metallicity-averaged time'
+       case('iM')
+          label(icol) = 'SSPInitial Mass'
+       case('CLDX')
+          label(icol) = 'Cloud Fraction'
+       case('HOTT')
+          label(icol) = 'Hot Phase Temperature'
+       case('TRCK')
+          label(icol) = 'Track Contributes'
+       case('ZsMT')
+          label(icol) = 'smoothed metallicity'
+       case('ZSMT')
+          label(icol) = 'smoothed metallicities (all elements)'
+       case('MHOT')
+          label(icol) = 'Hot mass'
+       case('MCLD')
+          label(icol) = 'Cold mass'
+       case('MMOL')
+          label(icol) = 'Molecular mass'
+       case('EHOT')
+          label(icol) = 'Hot energy'
+       case('MSF')
+          label(icol) = 'Star formation mass'
+       case('MFST')
+          label(icol) = 'Multi Phase Steps'
+       case('NMF')
+          label(icol) = 'Num Times In MF'
+       case('EOUT')
+          label(icol) = 'Energy To Other'
+       case('CLCK')
+          label(icol) = 'Multi Phase Clock'
+       case('Egy0')
+          label(icol) = 'Multi Phase Energy Tot0'
+       case('TDYN')
+          label(icol) = 'Cold Phase TDyn'
+       case('EREC')
+          label(icol) = 'Energy From Other'
+       case('GRAD')
+          label(icol) = 'Div B cleaning grad Psi'
+       case('TCOO')
+          label(icol) = 'Cooling Time'
+       case('EKRC')
+          label(icol) = 'Kinetic Energy From Last Snap'
+       case('TSMP')
+          label(icol) = 't_start MP'
+       case('CRpN')
+          label(icol) = 'LMBCRp Normalization'
+       case('CReN')
+          label(icol) = 'LMBCRp Normalization'
+       case('CRpS')
+          label(icol) = 'LMBCRp Slope'
+       case('CReS')
+          label(icol) = 'LMBCRe Slope'
+       case('CRpC')
+          label(icol) = 'LMBCRp Cut'
+       case('CReC')
+          label(icol) = 'LMBCRe Cut'
+       case('CRpP')
+          label(icol) = 'LMBCRp Pressure'
+       case('CReP')
+          label(icol) = 'LMBCRe Pressure'
+       case('RHOO')
+          label(icol) = 'Density Old'
+       case('SYNE')
+          label(icol) = 'LMBCRe Synchrotron'
+       case('AGSH')
+          label(icol) = 'AGS Softening'
+       case('AGSD')
+          label(icol) = 'AGS Density'
+       case('AGSZ')
+          label(icol) = 'AGS Zeta'
+       case('AGSO')
+          label(icol) = 'AGS Omega'
+       case('AGSC')
+          label(icol) = 'AGS Correction'
+       case('AGSN')
+          label(icol) = 'AGS Neighbours'
+       case('MGPH')
+          label(icol) = 'Modified Gravity Phi'
+       case('MGGP')
+          label(icol) = 'Modified Gravity Grad Phi'
+       case('MGAC')
+          label(icol) = 'Modified Gravity Acceleration'
+       case('GRDU')
+          label(icol) = 'Internal Energy Gradient'
+       case('GRDP')
+          label(icol) = 'Pressure Gradient'
+       case('MGVX')
+          label(icol) = 'Gradient of x-velocity for MFM'
+       case('MGVY')
+          label(icol) = 'Gradient of y-velocity for MFM'
+       case('MGVZ')
+          label(icol) = 'Gradient of z-velocity for MFM'
+       case('MGRH')
+          label(icol) = 'Gradient of density for MFM'
+       case('MGU')
+          label(icol) = 'Gradient of specific internal energy for MFM'
+       case('QP')
+          label(icol) = 'Quantum Pressure'
+       case('QDP')
+          label(icol) = 'Quantum Pressure Gradient'
+       case('RHOS')
+          label(icol) = 'Stellar Density Around Stars'
+       case('SMTS')
+          label(icol) = 'Smoothing Length for Stellar Density'
+       case('NEIS')
+          label(icol) = 'Number Of Neighbours for Stellar Density'
        case('ID  ')
           icol = icol - 1
        case default
@@ -1305,9 +1636,9 @@ subroutine set_labels_gadget
  if (iutherm > 0) label(iutherm)    = 'u'
  if (ipmass > 0)  label(ipmass)     = 'particle mass'
  if (ih > 0)      label(ih)         = 'h'
- !
- !--set labels for vector quantities
- !
+
+ call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+
  call make_vector_label('v',ivx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('a',iax,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
@@ -1345,9 +1676,10 @@ end subroutine set_labels_gadget
 logical function file_format_is_gadget(filename) result(is_gadget)
  use params, only:doub_prec
  character(len=*), intent(in) :: filename
- integer :: iunit,ierr
- real(doub_prec) :: time,z
- real(doub_prec) :: massoftypei(6)
+ integer :: iunit,ierr,lenblock
+ real(doub_prec)  :: time,z
+ real(doub_prec)  :: massoftypei(6)
+ character(len=4) :: blocklabel
  integer :: noftype(6),Nall(6),iFlagSfr,iFlagFeedback,iFlagcool,nfiles
 
  is_gadget = .false.
@@ -1374,6 +1706,16 @@ logical function file_format_is_gadget(filename) result(is_gadget)
      .and. time >= 0. .and. iFlagSfr >= 0 .and. iFlagCool >= 0 &
      .and. iFlagFeedback >= 0 .and. all(nall(1:6) >= 0) .and. nfiles >= 0 &
      .and. nfiles <= 1e6) is_gadget = .true.
+
+ if (.not.is_gadget) then
+    rewind(iunit)
+    ! try block labelled gadget format
+    read(iunit,iostat=ierr) blocklabel,lenblock
+    if (ierr == 0 .and. lenblock == 264) then
+       auto_detected_block_format = .true.
+       is_gadget = .true.
+    endif
+ endif
 
  close(iunit)    ! close the file
 

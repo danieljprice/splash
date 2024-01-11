@@ -67,7 +67,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
  use mem_allocation,   only:alloc
  use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,&
-                            get_floats_from_fits_header
+                            get_floats_from_fits_header,get_velocity_from_fits_header
  use imageutils,       only:image_denoise
  use labels,           only:headertags
  use system_utils,     only:get_command_option
@@ -80,7 +80,8 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  integer               :: ncolstep,npixels,nsteps_to_read,ihdu
  logical               :: iexist,reallocate
  real(kind=4), dimension(:,:,:), allocatable :: image
- character(len=:), allocatable :: fitsheader(:)
+ real(kind=4), dimension(:), allocatable :: vels
+ character(len=80), allocatable :: fitsheader(:)
  real :: dx,dy,dz,j0,k0,pixelscale
  logical :: centre_image
 
@@ -143,6 +144,10 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
     print "(a)",' ERROR: got npixels = 0 from fits header (extension not supported?)'
     return
  endif
+ if (ndim==3) then
+    allocate(vels(naxes(3)))
+    call get_velocity_from_fits_header(naxes(3),vels,fitsheader,ierr)
+ endif
  ncolstep = ndim + 3 ! x, y, h, I, m
  if (iverbose >= 1) then
     if (ndim==3) then
@@ -164,6 +169,7 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
 !--now memory has been allocated, set information that splash needs
 !
  call get_floats_from_fits_header(fitsheader,headertags,headervals(:,i))
+
  ipartialread = .false.
  masstype(1,i) = 0.0
  npartoftype(1,i) = npixels

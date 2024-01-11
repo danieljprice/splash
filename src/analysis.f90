@@ -501,7 +501,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  use system_utils,  only:renvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
- use settings_data, only:xorigin,icoords,icoordsnew,itracktype,itrackoffset,iRescale
+ use settings_data, only:xorigin,icoords,icoordsnew,track_string,iRescale
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
@@ -558,7 +558,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  if (itracks(1) > 0) then
     itrack = itracks(1)  ! override particle id saved to splash.defaults file if --tracks specified
  else
-    itrack = get_tracked_particle(itracktype,itrackoffset,npartoftype,iamtype)
+    itrack = get_tracked_particle(track_string,npartoftype,iamtype,dat,irho)
  endif
  if (itrack==0) itrack = 1
 

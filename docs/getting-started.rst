@@ -157,10 +157,10 @@ from formatted (ascii) output.
 
 A standard ``make`` will create a binary which supports the file formats listed in
 :ref:`tab:defaultreads`, plus a bunch of others (type ``splash --formats`` to see what formats your build supports).
-All data formats in the splash repository that do not have additional dependencies (e.g. ``HDF5``) will be
-supported in the splash binary as of version ``3.0.0``.
+All data formats are supported in the splash binary by default unless there 
+are external library dependencies (e.g. ``HDF5``) .
 
-In many cases, the format of the file can be successfully guessed from the file header, so you can simply type::
+The format of the file can in many cases be successfully guessed from the file extension or header, so you can simply type::
 
 	splash disc_00000
 
@@ -169,20 +169,12 @@ the following will read a phantom dumpfile::
 
 	splash --format phantom disc_00000
 
-This will automatically recognise a Phantom binary dumpfile. For backwards compatibility with
-previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent::
+For backwards compatibility with previous version of ``splash``, one can add aliases into their `.bashrc`, or equivalent::
 
    alias asplash='splash ' # Alias for ascii splash
    alias ssplash='splash -f phantom '
    alias gsplash='splash -f gadget '
-   alias vsplash='splash -f vine '
-   alias nsplash='splash -f ndspmhd '
-   alias rsplash='splash -f srosph '
-   alias dsplash='splash -f dragon '
-   alias srsplash='splash -f seren '
    alias tsplash='splash -f tipsy '
-   alias tsplash='splash -f tipsy '
-   alias msplash='splash -f mhutch '
 
 If splash is compiled with ``HDF5=yes``, the formats listed in :ref:`tab:hdf5reads` will also be available in the ``splash`` binary.
 Other supported formats are listed in :ref:`tab:otherreads`, but these require additional libraries.
@@ -193,7 +185,7 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash`` command           | Format Read                | ``read_data`` File            |  Comments                                                                                                                                                                                                                                         |
    +==============================+============================+===============================+===================================================================================================================================================================================================================================================+
-   | ``splash -ascii <file>``     | ascii                      | ``read_data_ascii.f90``        | Generic data read for n-column ascii formats. Automatically  determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files).|
+   | ``splash -ascii <file>``     | ascii, csv                 | ``read_data_ascii.f90``       | Generic data read for n-column ascii formats. Automatically determines number of columns and skips header lines. Can recognise SPH particle data based on the column labels. Use ``splash -e`` to plot non-SPH data (e.g.  energy vs time files)  |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -dragon <file>``    | dragon                     | ``read_data_dragon``          | See environment variable  options.                                                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -207,11 +199,13 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et  al.)                                                                                                                                                                                                       |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined  automatically). Option ``-tipsy`` also  works.                                                                                                                                               |
+   | ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined automatically). Option ``-tipsy`` also  works.                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable  options.                                                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    |``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The `StarSmasher <http://jalombar.github.io/starsmasher/>`_ code (Gaburov et al. 2018)                                                                                                                                                            |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash file.vtk``          | vtk legacy binary          | ``read_data_vtk.f90``         | VTK legacy binary format, e.g. from Shamrock code                                                                                                                                                                                                 |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Below is a list of the supported data formats that require ``HDF5``.
@@ -252,7 +246,7 @@ Below is a list of other formats supported, but have additional library requirem
    +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -h5part <file>`` | H5Part Files | ``read_data_h5part.f90`` | Requires the H5Part and HDF5 libraries. Compile ``splash`` with ``H5PART_DIR=/path/to/h5part/``.                                                                           |
    +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -fits <file>``   | FITS files   | ``read_data_fits.f90``   | Requires FITS libraries. Try to compile ``splash`` with ``FITS=yes``. If this does not work, point to the location of your fits libraries with ``FITS_DIR=/path/to/fits``. |
+   | ``splash file.fits``      | FITS files   | ``read_data_fits.f90``   | Requires FITS libraries. Try to compile ``splash`` with ``FITS=yes``. If this does not work, point to the location of your fits libraries with ``FITS_DIR=/path/to/fits``. |
    +---------------------------+--------------+--------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
@@ -271,43 +265,53 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 ::
 
    Command line options:
-
-    -p fileprefix     : change prefix to ALL settings files read/written by splash
-    -d defaultsfile   : change name of defaults file read/written by splash
-    -l limitsfile     : change name of limits file read/written by splash
-    -e, -ev           : use default options best suited to ascii evolution files (ie. energy vs time)
-    -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]
+    
+    -f format         : input file format to be read (default is ascii, --formats for full list)
+    -p fileprefix     : change prefix to ALL settings files read/written by splash 
+    -e, -ev           : use default options best suited for line plotting (.ev files)
+    -360              : set default options suited to 360 video
+    -b, --buffer      : buffer all data files into memory
     -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
-    -f                : input file format to be read (ascii is default)
-
-   To select data formats, use the shortcuts below, or use the -f or --format command line options
-   Multiple data formats are not support in a single instance.
-   Supported data formats:
-    -ascii            : ascii file format (default)
-    -phantom -sphng   : Phantom and sphNG codes
-    -ndspmhd          : ndsphmd code
-    -gadget           : Gadget code
-    -seren            : Seren code
-   ..plus many others. Type --formats for a full list
-
-   The following formats support HDF5:
-    -flash            : FLASH code
-    -gadget           : Gadget code
-    -cactus           : Cactus SPH code
-    -falcon           : FalcON code
-    -amuse            : AMUSE Framework
-
-   add a suffix "_hdf5" to the above command line options if your data files do not end with .h5.
-
+    
    Command line plotting mode:
-
-    -x column         : specify x plot on command line (ie. do not prompt for x)
-    -y column         : specify y plot on command line (ie. do not prompt for y)
-    -r[ender] column  : specify rendered quantity on command line (ie. no render prompt)
-                        (will take columns 1 and 2 as x and y if -x and/or -y not specified)
-    -vec[tor] column  : specify vector plot quantity on command line (ie. no vector prompt)
-    -c[ontour] column : specify contoured quantity on command line (ie. no contour prompt)
-    -dev device       : specify plotting device on command line (ie. do not prompt)
+    
+    -x column         : x axis
+    -y column         : y axis
+    -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)
+    -vec[tor] column  : vector quantity to plot with arrows
+    -c[ontour] column : contoured quantity
+    -multi            : multiplot
+    -dev device       : specify plotting device on command line (e.g. -dev /xw)
+    --movie           : shortcut for -dev /mp4 to make a movie from plot sequence
+    --xsec=1.0        : specify location of cross section slice
+    --kappa=1.0       : specify opacity, and turn on opacity rendering
+    --anglex=30       : rotate around x axis (similarly --angley, --anglez)
+    --code            : enforce code units (also --codeunits)
+    --sink=1          : centre on sink particle number 1
+    --origin=666      : set coordinate system origin to particle number 666
+    --origin=maxdens  : set coordinate system origin to particle at maximum density
+    --track=666       : track particle number 666
+    --track=maxdens   : track particle at maximum density
+    --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
+    --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)
+    
+   Example data formats (type --formats for full list):
+    
+    -ascii,-csv          : ascii text/csv format (default)
+    -phantom -sphng      : Phantom and sphNG codes (auto)
+    -vtk                 : vtk legacy binary format (auto)
+    -ndspmhd             : ndspmhd code (auto)
+    -gandalf,-seren      : Gandalf/Seren code
+    -gadget -gadget_hdf5 : Gadget code (auto)
+    -falcon -falcon_hdf5 : FalcON code
+    -flash  -flash_hdf5  : FLASH code
+    -cactus -cactus_hdf5 : Cactus code
+    -amuse  -amuse_hdf5  : AMUSE Framework
+    -fits                : FITS format (auto)
+    
+    HDF5 files will be automatically recognised if they end with .h5, however you
+    must specify a supported data format.
+    add a suffix "_hdf5" to above format if your data files do not end with .h5.
 
     convert mode ("splash to X dumpfiles"):
     splash to ascii   : convert SPH data to ascii file dumpfile.ascii
@@ -353,6 +357,8 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
                                 output to file called 'meanvals.out'
             calc rms          : (mass weighted) root mean square of each column vs. time
                                 output to file called 'rmsvals.out'
+            calc tracks       : track particle data vs time for selected particles,
+               --track=1,2,3    output to tracks-1.out,tracks-2.out,tracks-3.out
 
      the above options all produce a small ascii file with one row per input file.
      the following option produces a file equivalent in size to one input file (in ascii format):
@@ -362,6 +368,9 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 
             calc ratio        : ratio of *all* entries in each file compared to first
                                 output to file called 'ratio.out'
+
+            calc plus         : add two snapshots together
+                                output to file called 'plus.out'
 
 Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
@@ -398,11 +407,22 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---origin=666        | SPLASH_ORIGIN         | recentre the coordinate origin and velocities   |
 |                      |                       | to the selected particle (e.g. particle 666)    |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---origin=maxdens    | SPLASH_ORIGIN         | reset origin to particle at maximum density     |
++----------------------+-----------------------+-------------------------------------------------+
+| --dontcentrevel='y'  | SPLASH_DONTCENTREVEL  | used along with SPLASH_CENTRE_ON_SINK or        |
+|                      |                       | SPLASH_ORIGIN. If true, then the velocities     |
+|                      |                       | will not be made relative to the sink or        |
+|                      |                       | particle.                                       |
++----------------------+-----------------------+-------------------------------------------------+
 | ---track=4789        | SPLASH_TRACK          | set limits of all quantities relative to those  |
 |                      |                       | of the selected particle (e.g. particle 4789)   |
 +----------------------+-----------------------+-------------------------------------------------+
+| ---track=maxdens     | SPLASH_TRACK          | track the particle at maximum density           |
++----------------------+-----------------------+-------------------------------------------------+
 | ---vzero=1.0,1.0,1.0 | SPLASH_VZERO          | subtract reference velocity from all particles  |
 |                      |                       | (velocity should be specified in code units)    |
++----------------------+-----------------------+-------------------------------------------------+
+| ---exact=file1,file2 |                       | plot exact solution from files file1 and file2  |
 +----------------------+-----------------------+-------------------------------------------------+
 | ---beam=2.0          | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
 |                      |                       | smoothing length, specified in code units,      |
@@ -478,7 +498,7 @@ GADGET data read
 For the GADGET read (``splash -f gadget`` or just ``splash``) the options are:
 
 +-----------------------------------+-----------------------------------+
-| ``--format=2``                    | if set = 2, reads the block       |
+| ``--format=2``                    | if set = 2, force read of block   |
 |                                   | labelled GADGET format instead of |
 |                                   | the default (non block labelled)  |
 |                                   | format.                           |
@@ -561,9 +581,8 @@ For the VINE read (``splash -vine``) the options are:
 |                                   | length).                          |
 +-----------------------------------+-----------------------------------+
 | ``--mhd``                         | if set, reads VINE                |
-|                                   | dumps containing MHD arrays (note |
-|                                   | that setting VINE_MHD also        |
-|                                   | works).                           |
+|                                   | dumps containing MHD arrays       |
+|                                   | (or set VINE_MHD=yes)             |
 +-----------------------------------+-----------------------------------+
 
 Phantom/sphNG data read
@@ -574,6 +593,9 @@ For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 +-------------------+-------------------------------------------------------+
 | ``--cm``          | resets the positions such that the centre of          |
 |                   | mass is exactly at the origin.                        |
++-------------------+-------------------------------------------------------+
+| ``--dense``       | resets the positions such that the centre of          |
+|                   | mass of the densest clump is exactly at the origin.   |
 +-------------------+-------------------------------------------------------+
 | ``--omega=3.142`` | if non-zero, subtracts solid body rotation with omega |
 |                   | as specified to give velocities in co-rotating frame  |

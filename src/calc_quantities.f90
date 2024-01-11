@@ -57,10 +57,10 @@ contains
 subroutine setup_calculated_quantities(ncalc)
  use settings_data, only:ncolumns
  use prompting,     only:prompt
- integer, intent(out) :: ncalc
- integer              :: ncalctot,istart,iend, ipick, ninactive, i
- logical              :: done,first
- character(len=1)     :: charp
+ integer, intent(inout) :: ncalc
+ integer                :: ncalctot,istart,iend,ipick,ninactive, i
+ logical                :: done,first
+ character(len=1)       :: charp
  integer, dimension(maxcalc)   :: incolumn
  ipick = ncolumns + 1
 
@@ -312,6 +312,8 @@ subroutine print_example_quantities(verbose,ncalc)
  if (present(ncalc)) then
     prefill = .true.
     nc = ncalc
+ else
+    nc = 0
  endif
 
  if (verbose) then
@@ -335,28 +337,13 @@ subroutine print_example_quantities(verbose,ncalc)
     else
        write(string(ilen+1:),"(a)") ')'
     endif
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=unitslabel(ix(1)))
  elseif (ncolumns >= 2 .and. .not.prefill) then
     !--if ndim=0 give random example to give at least one
-    print "(11x,a)",trim(shortlabel(label(1)))//'*'//trim(shortlabel(label(2)))
+    print "(11x,a)",trim(shortlabel(label(1),unitslabel(1)))//'*'&
+                    //trim(shortlabel(label(2),unitslabel(2)))
  endif
 
- !--pressure
- string = ' '
- if (irho > 0 .and. iutherm > 0) then
-    gotpressure = .true.
-    if (idustfrac>0 .and. ndusttypes>1) then
-       write(string,"(a)",iostat=ierr) &
-            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
-            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
-            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
-    else
-       write(string,"(a)",iostat=ierr) &
-            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
-            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
-    endif
-    call print_or_prefill(prefill,string,nc)
- endif
  !
  !--total dust fraction if multiple dust phases
  !
@@ -376,6 +363,28 @@ subroutine print_example_quantities(verbose,ncalc)
  elseif (idustfrac > 0) then
     ndusttypes = 1
     ldfracsum = shortlabel(label(idustfrac),unitslabel(idustfrac))
+ endif
+
+ !--pressure (requires total dust fraction)
+ string = ' '
+ if (irho > 0 .and. iutherm > 0) then
+    gotpressure = .true.
+    if (len_trim(ldfracsum) > 0) then
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*(1 - '//trim(ldfracsum)//')*' &
+            //trim(shortlabel(label(irho),unitslabel(irho)))//  &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    else
+       write(string,"(a)",iostat=ierr) &
+            'pressure = (gamma-1)*'//trim(shortlabel(label(irho),unitslabel(irho)))// &
+            '*'//trim(shortlabel(label(iutherm),unitslabel(iutherm)))
+    endif
+    if (index(unitslabel(irho),'g/cm^3') > 0 .and. &
+        index(unitslabel(iutherm),'erg/g') > 0) then
+       call print_or_prefill(prefill,string,nc,ulab=' [erg/cm^3]')
+    else
+       call print_or_prefill(prefill,string,nc)
+    endif
  endif
  !
  !--one-fluid dust stuff
@@ -418,7 +427,7 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //'*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-             call print_or_prefill(prefill,string,nc)
+             call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivx))
           enddo
           !--dust velocities
           do i=1,ndimV
@@ -426,7 +435,7 @@ subroutine print_example_quantities(verbose,ncalc)
                              //trim(shortlabel(label(ivx + i-1),unitslabel(ivx + i-1))) &
                              //' + (1 - '//trim(shortlabel(label(idustfrac),unitslabel(idustfrac))) &
                              //')*'//trim(shortlabel(label(ideltav + i-1),unitslabel(ideltav + i-1)))
-             call print_or_prefill(prefill,string,nc)
+             call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivx))
           enddo
        else
           ! Still needs to be implemented...
@@ -453,7 +462,7 @@ subroutine print_example_quantities(verbose,ncalc)
           else
              write(string(ilen+1:),"(a)",iostat=ierr) ')'
           endif
-          call print_or_prefill(prefill,string,nc)
+          call print_or_prefill(prefill,string,nc,ulab=unitslabel(ivecstart))
        endif
     enddo
  endif
@@ -501,14 +510,14 @@ subroutine print_example_quantities(verbose,ncalc)
     string = ' '
     write(string,"(a)",iostat=ierr) 'T_{gas} = '//trim(shortlabel(label(iutherm),unitslabel(iutherm)))//'/' &
                     //trim(shortlabel(label(icv),unitslabel(icv)))
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=' [K]')
  endif
  !--radiation temperature
  if (ndim > 0 .and. irho > 0 .and. iradenergy > 0) then
     string = ' '
     write(string,"(a)",iostat=ierr) 'T_{rad} = ('//trim(shortlabel(label(irho),unitslabel(irho)))//'*' &
                     //trim(shortlabel(label(iradenergy),unitslabel(iradenergy)))//'/7.5646e-15)**0.25'
-    call print_or_prefill(prefill,string,nc)
+    call print_or_prefill(prefill,string,nc,ulab=' [K]')
  endif
 
  if (present(ncalc)) ncalc = nc
@@ -547,6 +556,37 @@ end subroutine append_grain_size_label
 
 !-----------------------------------------------------------------
 !
+!  utility (private) to get mass of a particular grain species
+!  from the header tags
+!
+!-----------------------------------------------------------------
+real function get_mass_of_species(string,idust,tags,vals,ierr)
+ use labels, only:count_non_blank
+ character(len=*), intent(inout) :: string
+ integer, intent(in)  :: idust
+ character(len=*), intent(in) :: tags(:)
+ real,    intent(in) :: vals(:)
+ integer, intent(out) :: ierr
+ integer :: ntags,nd,i
+
+ get_mass_of_species = 0.
+ ntags = count_non_blank(tags)
+ nd = 0
+ ierr = 1
+ do i=1,ntags
+    if (index(tags(i),'mdust_in') > 0) then
+       nd = nd + 1
+       if (nd==idust) then
+          ierr = 0
+          get_mass_of_species = vals(i)
+       endif
+    endif
+ enddo
+
+end function get_mass_of_species
+
+!-----------------------------------------------------------------
+!
 !  utility (private) to either print the example quantity or
 !  add it to a prefilled list of calculated quantities
 !
@@ -560,9 +600,11 @@ subroutine print_or_prefill(prefill,string,nc,comment,ulab)
  integer :: i
 
  if (prefill) then
-    nc = nc + 1
-    call splitstring(string,calclabel(nc),calcstring(nc))
-    if (present(ulab)) calcunitslabel(nc) = trim(ulab)
+    if (len_trim(string) > 0) then ! do not prefill blank strings
+       nc = nc + 1
+       call splitstring(string,calclabel(nc),calcstring(nc))
+       if (present(ulab)) calcunitslabel(nc) = trim(ulab)
+    endif
  else
     ! do not print strings already in the list
     already_used = .false.
@@ -588,7 +630,7 @@ end subroutine print_or_prefill
 subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
  use settings_data,  only:ncolumns,iRescale
  use fparser,        only:checkf
- use labels,         only:label,unitslabel,shortstring
+ use labels,         only:label,unitslabel,shortstring,irhodust_start,irhodust_end
  integer, intent(out) :: ncalcok,ncalctot
  integer, dimension(maxcalc), intent(out), optional :: incolumn
  logical, intent(in), optional :: verbose
@@ -619,12 +661,8 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     !--check that the function parses
     !
     ierr = checkf(shortstring(calcstring(i)),vars(1:nvars),Verbose=.false.)
-
     if (ierr==0) then
        ncalcok = ncalcok + 1
-       if (isverbose) then
-          print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
-       endif
        if (present(incolumn)) incolumn(i) = ncolumns + ncalcok
        !
        !--set the label for the proposed column here
@@ -635,6 +673,18 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
        label(ncolumns+ncalcok) = trim(calclabel(i))
        unitslabel(ncolumns+ncalcok) = trim(calcunitslabel(i))
        if (iRescale) label(ncolumns+ncalcok) = trim(label(ncolumns+ncalcok))//trim(unitslabel(ncolumns+ncalcok))
+       if (isverbose) then
+          if (iRescale) then
+             print "(1x,i2,') ',a50,' [OK]',1x,a)",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i),trim(calcunitslabel(i))
+          else
+             print "(1x,i2,') ',a50,' [OK]')",ncolumns+ncalcok,trim(calclabel(i))//' = '//calcstring(i)
+          endif
+       endif
+       !
+       !--recognise the dust density in the list of calculated quantities
+       !
+       if (trim(calcstring(i))=='density*dustfrac1') irhodust_start = ncolumns+ncalcok
+       if (calcstring(i)(1:16)=='density*dustfrac')    irhodust_end = ncolumns+ncalcok ! overwrite until last density*dustfrac
     else
        indexinactive = indexinactive - 1
        if (isverbose) then
@@ -706,11 +756,11 @@ end subroutine get_calc_data_dependencies
 !
 !-----------------------------------------------------------------
 subroutine calc_quantities(ifromstep,itostep,dontcalculate)
- use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,shortstring, &
+ use labels,         only:label,unitslabel,labelvec,iamvec,ix,ivx,irho,shortstring, &
                            count_non_blank,headertags
  use particle_data,  only:dat,npartoftype,gamma,time,headervals,maxpart,maxstep,maxcol,iamtype
  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
-                           icoords,icoordsnew,ipartialread,itracktype,itrackoffset
+                           icoords,icoordsnew,ipartialread,track_string
  use mem_allocation, only:alloc
  use settings_units, only:units
  use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
@@ -805,7 +855,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
        !--set origin position
        !
        v0(:) = 0.
-       itrackpart = get_tracked_particle(itracktype,itrackoffset,npartoftype(:,i),iamtype(:,i))
+       itrackpart = get_tracked_particle(track_string,npartoftype(:,i),iamtype(:,i),dat(:,:,i),irho)
        if (itrackpart > 0 .and. itrackpart <= ntoti) then
           x0(:) = 0.
           if (ix(1) > 0 .and. ix(1) <= ncolumns) then
@@ -914,7 +964,7 @@ end subroutine calc_quantities
 !-----------------------------------------------------------------
 subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  use asciiutils,    only:lcase
- use labels,        only:irad,ike,ipr
+ use labels,        only:irad,ike,ipr,ikappa,label_synonym
  use settings_data, only:debugmode
  character(len=*), intent(in) :: labelcol
  integer, intent(in) :: ncolumns,icolumn
@@ -924,25 +974,36 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  !  (e.g. in the data read) - but DO overwrite if they
  !  are calculated quantities as the locations can change
  !
- select case(lcase(trim(labelcol)))
+ select case(label_synonym(labelcol))
  case('r','radius','rad')
-    if (irad <= 0 .or. irad > ncolumns) then
-       irad = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the radius'
-    endif
+    call assign_column(irad,icolumn,ncolumns,debugmode,'radius')
  case('kinetic energy','ke','1/2 v^2','v^2/2')
-    if (ike <= 0 .or. irad > ncolumns) then
-       ike = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the kinetic energy'
-    endif
+    call assign_column(ike,icolumn,ncolumns,debugmode,'kinetic energy')
  case('pressure','pr','p')
-    if (ipr <= 0 .or. ipr > ncolumns) then
-       ipr = icolumn
-       if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the pressure'
-    endif
+    call assign_column(ipr,icolumn,ncolumns,debugmode,'pressure')
+ case('kappa','opacity')
+    call assign_column(ikappa,icolumn,ncolumns,debugmode,'opacity')
  end select
 
 end subroutine identify_calculated_quantity
+
+!-----------------------------------------------------------------
+!
+!  helper routine for above
+!
+!-----------------------------------------------------------------
+subroutine assign_column(i,icolumn,ncolumns,debugmode,string)
+ integer, intent(inout) :: i
+ integer, intent(in)    :: icolumn,ncolumns
+ logical, intent(in)    :: debugmode
+ character(len=*), intent(in) :: string
+
+ if (i <= 0 .or. i > ncolumns) then
+    i = icolumn
+    if (debugmode) print "(1x,a,i2,a)",'identifying column ',icolumn,' as the '//trim(string)
+ endif
+
+end subroutine assign_column
 
 !-----------------------------------------------------------------
 !

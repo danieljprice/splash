@@ -65,35 +65,41 @@ contains
 !--------------------------------------------------------------------------
 
 subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
-     xmin,datsmooth,npixx,pixwidth,normalise)
+     xmin,datsmooth,npixx,pixwidth,normalise,iverbose)
 
- use kernels, only:cnormk1D,radkernel,wfunc
+ use kernels, only:cnormk1D,radkernel,wfunc,select_kernel
  integer, intent(in) :: npart,npixx
  real, intent(in), dimension(npart) :: x,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
  real, intent(in) :: xmin,pixwidth
  real, intent(out), dimension(npixx) :: datsmooth
  logical, intent(in) :: normalise
+ integer, intent(in) :: iverbose
  real, dimension(npixx) :: datnorm
 
- integer :: i,ipix,ipixmin,ipixmax
+ integer :: i,ipix,ipixmin,ipixmax,i1,i2
  real :: hi,hi1,radkern,q2,wab,const
  real :: term,termnorm,dx,xpix
 
  datsmooth = 0.
  term = 0.
- if (normalise) then
-    print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
- else
-    print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+ if (iverbose > 0) then
+    if (normalise) then
+       print*,'interpolating (normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+    else
+       print*,'interpolating (non-normalised) from particles to 1D grid: npix,xmin,max=',npixx,xmin,xmin+npixx*pixwidth
+    endif
  endif
- if (pixwidth <= 0.) then
-    print*,'interpolate1D: error: pixel width <= 0'
+ if (abs(pixwidth) <= tiny(0.)) then
+    if (iverbose >= 0) print*,'interpolate1D: error: pixel width = 0'
     return
  endif
  if (any(hh(1:npart) <= tiny(hh))) then
-    print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
+    if (iverbose > 0) print*,'interpolate1D: warning: ignoring some or all particles with h < 0'
  endif
+
+ if (.not.associated(wfunc)) call select_kernel(0)
+
  const = cnormk1D  ! normalisation constant
  !
  !--loop over particles
@@ -122,8 +128,14 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
     !
     !--for each particle work out which pixels it contributes to
     !
-    ipixmin = int((x(i) - radkern - xmin)/pixwidth)
-    ipixmax = int((x(i) + radkern - xmin)/pixwidth) + 1
+    i1 = int((x(i) - radkern - xmin)/pixwidth)
+    i2 = int((x(i) + radkern - xmin)/pixwidth) + 1
+    ipixmin = i1
+    ipixmax = i2
+    if (i1 > i2) then
+       ipixmax = i1
+       ipixmin = i2
+    endif
 
     if (ipixmin < 1) ipixmin = 1 ! make sure they only contribute
     if (ipixmax > npixx) ipixmax = npixx ! to pixels in the image
@@ -154,8 +166,6 @@ subroutine interpolate1D(x,hh,weight,dat,itype,npart,  &
        datsmooth = datsmooth/datnorm
     end where
  endif
-
- return
 
 end subroutine interpolate1D
 
