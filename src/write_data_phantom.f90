@@ -57,7 +57,7 @@ end function tag
 !--------------------------------------------------------------------
 subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, &
                                   masstype,ncolumns,udist,umass,utime,umagfd,labeltype,&
-                                  label_dat,ix,ih,ivx,iBfirst,ipmass,iutherm,filename,hsoft_sink)
+                                  label_dat,ix,ih,ivx,iBfirst,ipmass,irho,iutherm,filename,hsoft_sink)
 
  integer, intent(in)          :: ndim,ntotal,ntypes,ncolumns
  integer, intent(in)          :: npartoftype(:)
@@ -69,7 +69,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  real, intent(in)             :: masstype(:)
  real(doub_prec), intent(in)  :: udist,umass,utime,umagfd
  character(len=*), intent(in) :: labeltype(ntypes),label_dat(ncolumns)
- integer,          intent(in) :: ix(3),ivx,ih,iBfirst,ipmass,iutherm
+ integer,          intent(in) :: ix(3),ivx,ih,iBfirst,ipmass,irho,iutherm
  character(len=*), intent(in) :: filename
  real,             intent(in) :: hsoft_sink
 
@@ -88,13 +88,16 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  integer, parameter :: int1o=690706 !,int2o=780806
  integer, parameter :: idimhead = 22
  integer(kind=int8) :: nparttot,npartoftypetot(ntypes),number8
- integer            :: nums(8)
+ integer            :: nums(8),idot
  integer            :: narraylengths,nblocks,nblockarrays,ntypesi
  integer            :: i,j,ierr,i1,index1,number,nptmass,iversion,np,maxrhead
  real               :: rheader(idimhead)
  character(len=lentag) :: rheader_tags(idimhead)
  real               :: r1,hfact,macc,spinx,spiny,spinz
+ character(len=2), parameter :: vlabel(3) = (/'vx','vy','vz'/)
+ character(len=2), parameter :: Blabel(3) = (/'Bx','By','Bz'/)
  logical            :: mhd
+ logical, allocatable :: mask(:)
 !
 ! sink particle locations in dat array
 !
@@ -102,7 +105,10 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 !
 !--define output file name
 !
- outfile=trim(filename)//'.tmp'
+ idot = index(filename,'.')-1
+ if (idot <= 0) idot = len_trim(filename)
+ outfile=filename(1:idot)//'.tmp'
+
  narraylengths = 2
  nblocks = 1          ! not parallel dump
  hfact   = 1.2        ! must be specified in phantom dumps
@@ -110,6 +116,8 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 !
 !--check if we have enough data to write a PHANTOM dump
 !
+ allocate(mask(ncolumns))
+ mask = .false.
  if (ndim < 3) then
     print "(a)",' ERROR: ndim < 3 but must be 3 for PHANTOM data -- cannot write PHANTOM dump, skipping...'
     return
@@ -130,7 +138,16 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  if (iBfirst > 0) then
     mhd = .true.
     narraylengths = 4
+    mask(iBfirst:iBfirst+ndim-1) = .true.
  endif
+ ! do not write known quantities twice
+ mask(ix) = .true.
+ mask(ivx:ivx+ndim-1) = .true.
+ mask(ih) = .true.
+ if (iutherm > 0) mask(iutherm) = .true.
+ if (ipmass > 0) mask(ipmass) = .true.
+ if (irho > 0) mask(irho) = .true.
+
 !
 !--figure out whether we have sink particles
 !
@@ -238,6 +255,9 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  else
     nums(i_real) = 6
  endif
+ ! write any array not already counted
+ nums(i_real) = nums(i_real) + count(.not.mask)
+
  nums(i_real4) = 1
  write (idump, err=100) number8, (nums(i), i=1,8)
 !
@@ -245,7 +265,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 !
  number8 = nptmass
  nums(:) = 0
- nums(i_real) = 13
+ if (nptmass > 0) nums(i_real) = 13
  write (idump, err=100) number8, (nums(i), i=1,8)
 !
 !--array length 3 header
@@ -284,7 +304,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
  enddo
 
  do j = 1, 3
-    write (idump, err=100) tag(label_dat(ivx+j-1))
+    write (idump, err=100) tag(vlabel(j))
     write (idump, err=100) (dat(i,ivx+j-1), i=1, np)
  enddo
 
@@ -293,9 +313,17 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
     write (idump, err=100) (dat(i,iutherm), i=1, np)
  endif
 
+ do j=1,ncolumns
+    if (.not.mask(j)) then
+       print*,label_dat(j)
+       write (idump, err=100) tag(label_dat(j))
+       write (idump, err=100) (dat(i,j), i=1, np)
+    endif
+ enddo
+
 !--real*4
 !   dump smoothing length as a real*4 to save space
- write (idump, err=100) tag(label_dat(ih))
+ write (idump, err=100) tag('h')
  write (idump, err=100) (real(dat(i,ih),kind=sing_prec), i=1, np)
 !
 !--sink particle arrays
@@ -307,7 +335,7 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
     enddo
     write (idump, err=100) tag(label_dat(ipmass))
     write (idump, err=100) (dat(ilocsink(i),ipmass),i=1,nptmass)
-    write (idump, err=100) tag(label_dat(ih))
+    write (idump, err=100) tag('h')
     write (idump, err=100) (dat(ilocsink(i),ih),i=1,nptmass)
 
     ! extra sink information
@@ -335,7 +363,8 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 
  if (mhd) then
     do j=1,3
-       write(idump,err=100) (real(dat(i,iBfirst+j-1),kind=sing_prec),i=1, np)
+       write (idump,err=100) tag(Blabel(j))
+       write (idump,err=100) (real(dat(i,iBfirst+j-1),kind=sing_prec),i=1, np)
     enddo
  endif
 
