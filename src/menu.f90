@@ -185,6 +185,7 @@ subroutine menu
 !
 !--if no data
 !
+       sep = "(55('-'))"
        maxdigits = 1
        print "(/a)",' No data: You may choose from the options below '
     endif
