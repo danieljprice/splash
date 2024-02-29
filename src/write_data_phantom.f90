@@ -52,6 +52,23 @@ end function tag
 
 !--------------------------------------------------------------------
 !+
+!  write header tag for tagged format
+!+
+!--------------------------------------------------------------------
+function convert_tag_to_phantom(string) result(mytag)
+ character(len=lentag) :: mytag
+ character(len=*), intent(in) :: string
+
+ mytag = adjustl(string)
+ select case(trim(mytag))
+ case('Potential')
+    mytag = 'poten'
+ end select
+
+end function convert_tag_to_phantom
+
+!--------------------------------------------------------------------
+!+
 !  write output data file that is readable by phantom
 !+
 !--------------------------------------------------------------------
@@ -315,8 +332,8 @@ subroutine write_sphdata_phantom(time,gamma,dat,ndim,ntotal,ntypes,npartoftype, 
 
  do j=1,ncolumns
     if (.not.mask(j)) then
-       print*,label_dat(j)
-       write (idump, err=100) tag(label_dat(j))
+       print*,tag(label_dat(j)),'->',convert_tag_to_phantom(label_dat(j))
+       write (idump, err=100) convert_tag_to_phantom(label_dat(j))
        write (idump, err=100) (dat(i,j), i=1, np)
     endif
  enddo
