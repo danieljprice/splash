@@ -1,4 +1,32 @@
 
+**3.10.2: (01/03/24)**
+
+- reads phantom dumps with adaptive particle refinement
+- improved splash to phantom conversion
+- better documentation of splash calc lightcurve (thanks to Chunliang Mu)
+- saving dust density limits now applies to all dust species
+
+**3.10.1: (4/12/23)**
+
+- bug fix with accreted particles appearing in smoothed particle plots
+- automated Trad/Tgas in extra quantities from phantom dumps with radiation
+
+**3.10.0: (30/11/23)**
+
+- --sort flag to sort filenames for comparison plots
+- --movie flag to automatically make movie from sequence of files
+- giza backend now supports direct output of mp4 movies
+
+**3.9.0: (06/11/23)**
+
+- follow-the-label column choice, where if a label is selected for plotting from the first file, it will automagically shift to find the matching label in subsequent files, even if the column containing the quantity has changed
+- implemented vtk reader capable of reading snapshots from Shamrock code
+- apply transparency to smoothed particle plot only if adaptive smoothing used
+- plot colour bar by default when particle colouring by quantity is used
+- can read velocity array from fits header for position-position-velocity cubes
+- bug fix with first page being white with smoothed particle plots on black background
+- bug fix finding .comp file if underscore in the directory name
+
 **3.8.5: (23/10/23)**
 
 - implemented smoothed particle plots with multiple steps per page

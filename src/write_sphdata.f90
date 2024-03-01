@@ -333,7 +333,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
     call write_sphdata_phantom(time,gamma,dat,ndim,npart,ntypes,npartoftype,&
                                masstype,ncolumns,udist,utime,umass,umagfd,&
                                labeltype,label,ix,ih,ivx,iBfirst,&
-                               ipmass,iutherm,filename,0.)
+                               ipmass,irho,iutherm,filename,0.)
  case('gadget')
     call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
