@@ -610,11 +610,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
-<<<<<<< HEAD
- character(len=*), parameter :: version = 'v4.0.0 [11th Jan 2024]'
-=======
- character(len=*), parameter :: version = 'v3.10.2 [1st Mar 2024]'
->>>>>>> master
+ character(len=*), parameter :: version = 'v4.0.0 [4th Mar 2024]'
 
  !
  ! initialise some basic code variables
