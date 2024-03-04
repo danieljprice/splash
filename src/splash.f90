@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.10.3  : (04/03/24)
+!             bug fix reading type information from phantom dumps introduced in 3.10.2
 !     3.10.2  : (01/03/24)
 !             reads phantom dumps with adaptive particle refinement;
 !             improved splash to phantom conversion;
@@ -605,7 +607,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.10.2 [1st Mar 2024]'
+ character(len=*), parameter :: version = 'v3.10.3 [4th Mar 2024]'
 
  !
  ! initialise some basic code variables

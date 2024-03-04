@@ -1907,6 +1907,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        !print*,'skipping ',nskip
        do i=1,nskip
           if (tagged .and. .not.got_tag) read(iunit,end=33,iostat=ierr) tagtmp ! read tag, unless already read
+          got_tag = .false. ! must reset this flag otherwise get corrupted read
           !
           ! read the Adaptive Particle Refinement level array
           ! in order to correctly set particle masses, if present
