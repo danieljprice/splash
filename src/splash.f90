@@ -56,6 +56,8 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.10.3  : (04/03/24)
+!             bug fix reading type information from phantom dumps introduced in 3.10.2
 !     3.10.2  : (01/03/24)
 !             reads phantom dumps with adaptive particle refinement;
 !             improved splash to phantom conversion;
