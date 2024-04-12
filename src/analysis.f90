@@ -42,6 +42,17 @@ module analysis
  real, dimension(:,:), allocatable :: datmean,datvar
  integer, private :: itracks(maxtrack)
 
+ !
+ ! definitions needed for tdiffuse output
+ !
+ integer, parameter :: ndirs = 6
+ character(len=2) :: dir_label(ndirs) = (/'-x','+x','-y','+y','-z','+z'/)
+
+ ! angles required for direction:   -x  +x  -y  +y  -z  +z
+ real, parameter :: anglex_vals(ndirs) = (/0.,    0., -90., 90., 180., 0./)
+ real, parameter :: angley_vals(ndirs) = (/-90., 90.,   0.,  0.,   0., 0./)
+ real, parameter :: anglez_vals(ndirs) = (/0.,    0.,   0.,  0.,   0., 0./)
+
 contains
 
 !-----------------------------------------------------------------
@@ -89,6 +100,8 @@ logical function isanalysis(string,noprint)
  case('lightcurve')
     isanalysis = .true.
  case('extinction')
+    isanalysis = .true.
+ case('tdiffuse')
     isanalysis = .true.
  case('none')
     verbose = .false.
@@ -431,6 +444,27 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
      write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) nsinks+1
      write(headerline,fmtstring) &
            1,'time'//trim(labelt),(i+1,'sink'//trim(adjustl(integer_to_string(i)))//trim(labelc),i=1,nsinks)
+  case('tdiffuse')
+     !
+     !--similar to extinction, but could be any column
+     !
+     !required(ix(1:ndim)) = .true.
+     !required(ih) = .true.
+     !required(ipmass) = .true.
+     !required(irho) = .true.
+     required(:) = .true.
+     !
+     !--set filename and header line
+     !
+     if (nfiles==1) then
+        fileout = 'tdiffuse_'//trim(basename(rootname(ifileopen)))//'.out'
+     else
+        fileout = 'tdiffuse.out'
+     endif
+
+     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) ndirs+1
+     write(headerline,fmtstring) &
+           1,'time'//trim(labelt),(i+1,dir_label(i),i=1,ndirs)
  end select
 
  if (standardheader) then
@@ -494,18 +528,19 @@ end subroutine open_analysis
 !----------------------------------------------------------------
 subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
                           iamtype,ncolumns,ndim,ndimV,analysistype)
- use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label,&
+ use labels,        only:ix,ivx,iBfirst,iutherm,irho,ipmass,labeltype,label,get_sink_type,&
                          lenunitslabel,get_unitlabel_coldens,unitslabel,labelzintegration
  use params,        only:int1,doub_prec,maxplot
  use asciiutils,    only:ucase,basename
- use system_utils,  only:renvironment
+ use system_utils,  only:renvironment,ienvironment
  use settings_part, only:iplotpartoftype
  use particle_data, only:time_was_read
+ use part_utils,    only:get_positions_of_type
  use settings_data, only:xorigin,icoords,icoordsnew,track_string,iRescale
  use geomutils,     only:change_coords
  use part_utils,    only:get_tracked_particle
  use lightcurve,    only:get_lightcurve
- use extinction,    only:get_extinction
+ use extinction,    only:get_extinction,get_extinction_los
  use filenames,     only:rootname,ifileopen
  use vectorutils,   only:cross_product3D
  integer, intent(in)               :: ntot,ntypes,ncolumns,ndim,ndimV
@@ -516,7 +551,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real, intent(in), dimension(:,:)  :: dat
  character(len=*), intent(in)      :: analysistype
  real(kind=doub_prec), dimension(maxlevels) :: massaboverho
- integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile,nsinks
+ integer              :: itype,i,j,ierr,ntot1,ncol1,nused,itrack,ifile,npts,isinktype,icol
  real(kind=doub_prec) :: ekin,emag,etherm,epot,etot,totmom,pmassi,totang
  real(kind=doub_prec) :: totvol,voli,rhoi,rmsvmw,v2i
  real(kind=doub_prec) :: rhomeanmw,rhomeanvw,rhovarmw,rhovarvw,bval,bvalmw
@@ -528,6 +563,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
+ real, allocatable    :: xpts(:),ypts(:),zpts(:)
  character(len=lenunitslabel) :: labelt,labelc
 !
 ! array with one value for each column
@@ -1232,13 +1268,42 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
      write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
 
  case('extinction')
-     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,nsinks,coltemps)
-     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
-     print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemps(i),trim(labelc),i=1,nsinks)
+    !
+    !--get list of sink particle positions
+    !
+    isinktype = get_sink_type(ntypes)
+    call get_positions_of_type(dat,npartoftype,iamtype,isinktype,ix,npts,xpts,ypts,zpts,ierr)
+    if (ierr /= 0 .or. npts <= 0) then
+       print*,' ERROR obtaining sink particle positions, aborting...'
+       return
+    endif
+    
+    call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
+                        npts,xpts,ypts,zpts,coltemps,irho)
+
+    labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
+    print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemps(i),trim(labelc),i=1,npts)
      !
      !--write line to output file
      !
-     write(iunit,"(100(es18.10,5x))") timei,coltemps(1:nsinks)
+    write(iunit,"(100(es18.10,5x))") timei,coltemps(1:npts)
+
+ case('tdiffuse')
+
+    icol = ienvironment('SPLASH_ANALYSIS_COL')
+    if (icol <= 0 .or. icol > ncolumns) then
+       icol = irho
+    endif
+
+    call get_extinction_los(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
+                            ndirs,anglex_vals,angley_vals,anglez_vals,coltemps,icol)
+
+    labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(icol))
+    print "(100(/,1x,a20,' = ',es12.4,a))",('Sigma in '//trim(dir_label(i)),coltemps(i),trim(labelc),i=1,ndirs)
+     !
+     !--write line to output file
+     !
+    write(iunit,"(100(es18.10,5x))") timei,coltemps(1:ndirs)
 
  case default
     print "(a)",' ERROR: unknown analysis type in write_analysis routine'
