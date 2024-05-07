@@ -401,69 +401,69 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
     nfileout = 1
     standardheader = .true.
 
-  case('lightcurve')
-     !
-     !--for lightcurve need to h, mass and utherm
-     !
-     required(ix(1:ndim)) = .true.
-     required(ih) = .true.
-     required(iutherm) = .true.
-     required(ipmass) = .true.
-     required(itemp) = .true.
-     required(ikappa) = .true.
-     !
-     !--set filename and header line
-     !
-     if (nfiles==1) then
-        fileout = 'lightcurve_'//trim(basename(rootname(ifileopen)))//'.out'
-     else
-        fileout = 'lightcurve.out'
-     endif
-     write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
+ case('lightcurve')
+    !
+    !--for lightcurve need to h, mass and utherm
+    !
+    required(ix(1:ndim)) = .true.
+    required(ih) = .true.
+    required(iutherm) = .true.
+    required(ipmass) = .true.
+    required(itemp) = .true.
+    required(ikappa) = .true.
+    !
+    !--set filename and header line
+    !
+    if (nfiles==1) then
+       fileout = 'lightcurve_'//trim(basename(rootname(ifileopen)))//'.out'
+    else
+       fileout = 'lightcurve.out'
+    endif
+    write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
            1,'time'//trim(labelt),2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
            5,'L_{bol}',6,'R_{bb}',7,'T_c'
 
-  case('extinction')
-     !
-     !--for extinction of stars need h, mass and density
-     !
-     required(ix(1:ndim)) = .true.
-     required(ih) = .true.
-     required(ipmass) = .true.
-     required(irho) = .true.
-     !
-     !--set filename and header line
-     !
-     if (nfiles==1) then
-        fileout = 'extinction_'//trim(basename(rootname(ifileopen)))//'.out'
-     else
-        fileout = 'extinction.out'
-     endif
-     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
+ case('extinction')
+    !
+    !--for extinction of stars need h, mass and density
+    !
+    required(ix(1:ndim)) = .true.
+    required(ih) = .true.
+    required(ipmass) = .true.
+    required(irho) = .true.
+    !
+    !--set filename and header line
+    !
+    if (nfiles==1) then
+       fileout = 'extinction_'//trim(basename(rootname(ifileopen)))//'.out'
+    else
+       fileout = 'extinction.out'
+    endif
+    labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
 
-     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) nsinks+1
-     write(headerline,fmtstring) &
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) nsinks+1
+    write(headerline,fmtstring) &
            1,'time'//trim(labelt),(i+1,'sink'//trim(adjustl(integer_to_string(i)))//trim(labelc),i=1,nsinks)
-  case('tdiffuse')
-     !
-     !--similar to extinction, but could be any column
-     !
-     !required(ix(1:ndim)) = .true.
-     !required(ih) = .true.
-     !required(ipmass) = .true.
-     !required(irho) = .true.
-     required(:) = .true.
-     !
-     !--set filename and header line
-     !
-     if (nfiles==1) then
-        fileout = 'tdiffuse_'//trim(basename(rootname(ifileopen)))//'.out'
-     else
-        fileout = 'tdiffuse.out'
-     endif
+ case('tdiffuse')
+    !
+    !--similar to extinction, but could be any column
+    !
+    !required(ix(1:ndim)) = .true.
+    !required(ih) = .true.
+    !required(ipmass) = .true.
+    !required(irho) = .true.
+    required(:) = .true.
+    !
+    !--set filename and header line
+    !
+    if (nfiles==1) then
+       fileout = 'tdiffuse_'//trim(basename(rootname(ifileopen)))//'.out'
+    else
+       fileout = 'tdiffuse.out'
+    endif
 
-     write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) ndirs+1
-     write(headerline,fmtstring) &
+    write(fmtstring,"('(''#'',1x,',i3,'(''['',i2.2,1x,a15,'']'',2x))')",iostat=ierr) ndirs+1
+    write(headerline,fmtstring) &
            1,'time'//trim(labelt),(i+1,dir_label(i),i=1,ndirs)
  end select
 
@@ -514,8 +514,8 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
     endif
  enddo
  !if (nfileout == 0) then
-    !print "(a)",' ERROR: no output from analysis, missing options?'
-    !stop
+ !print "(a)",' ERROR: no output from analysis, missing options?'
+ !stop
  !endif
  nfilesread = 0
 
@@ -589,7 +589,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  change_coordsys = (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0))
  x0 = xorigin(:)  ! note that it is not currently possible to do splash to ascii
  v0 = 0.          ! with coords set relative to a tracked particle, so just use xorigin
-                  ! instead, one can use the --origin flag to make positions and velocities relative to a particle
+ ! instead, one can use the --origin flag to make positions and velocities relative to a particle
 
  if (itracks(1) > 0) then
     itrack = itracks(1)  ! override particle id saved to splash.defaults file if --tracks specified
@@ -1259,13 +1259,13 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     endif
     return
  case('lightcurve')
-     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
-         lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)))
-     print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
-     !
-     !--write line to output file
-     !
-     write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
+    call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
+         lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)),ierr)
+    print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
+    !
+    !--write line to output file
+    !
+    if (ierr == 0) write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
 
  case('extinction')
     !
@@ -1277,15 +1277,15 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
        print*,' ERROR obtaining sink particle positions, aborting...'
        return
     endif
-    
+
     call get_extinction(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
                         npts,xpts,ypts,zpts,coltemps,irho)
 
     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(irho))
     print "(100(/,1x,a20,i0,' = ',es9.2,a))",('Sigma to sink ',i,coltemps(i),trim(labelc),i=1,npts)
-     !
-     !--write line to output file
-     !
+    !
+    !--write line to output file
+    !
     write(iunit,"(100(es18.10,5x))") timei,coltemps(1:npts)
 
  case('tdiffuse')
@@ -1300,9 +1300,9 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
 
     labelc = get_unitlabel_coldens(iRescale,labelzintegration,unitslabel(icol))
     print "(100(/,1x,a20,' = ',es12.4,a))",('Sigma in '//trim(dir_label(i)),coltemps(i),trim(labelc),i=1,ndirs)
-     !
-     !--write line to output file
-     !
+    !
+    !--write line to output file
+    !
     write(iunit,"(100(es18.10,5x))") timei,coltemps(1:ndirs)
 
  case default
