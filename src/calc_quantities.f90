@@ -974,7 +974,6 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  !  (e.g. in the data read) - but DO overwrite if they
  !  are calculated quantities as the locations can change
  !
- print "(a)",' identifying calculated quantity ',trim(labelcol),trim(label_synonym(labelcol))
  select case(label_synonym(labelcol))
  case('r','radius','rad')
     call assign_column(irad,icolumn,ncolumns,debugmode,'radius')
