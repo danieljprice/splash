@@ -505,6 +505,7 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
  integer               :: i,ierr1,ierr2,ierrs(4)
  integer               :: nints,ninttypes,nreal4s,nreal8s
  integer               :: n2,nreassign,naccrete,nkill
+ integer, allocatable  :: npartoftype_tmp(:)
 
  ! initialise empty tag array
  tags(:) = ''
@@ -537,12 +538,15 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
        if (phantomdump) then
           call extract('ntypes',ntypes,intarr,tags,nints,ierr)
           if (ierr /= 0) return
+
+          allocate(npartoftype_tmp(ntypes))
+          call extract('npartoftype',npartoftype_tmp(1:ntypes),intarr,tags,nints,ierr)
           if (ntypes > maxparttypes) then
-             if (iverbose > 0) &
+             if (iverbose > 0 .and. any(npartoftype_tmp(maxparttypes+1:) > 0)) &
                 print "(a,i2)",' WARNING: number of particle types exceeds array limits: ignoring types > ',maxparttypes
              ntypes = maxparttypes
           endif
-          call extract('npartoftype',npartoftypei(1:ntypes),intarr,tags,nints,ierr)
+          npartoftypei(1:ntypes) = npartoftype_tmp(1:ntypes)
           if (ierr /= 0) return
        endif
        if (phantomdump .and. nints < 7) ntypes = nints - 1
@@ -712,6 +716,7 @@ subroutine read_header(iunit,iverbose,debug,doubleprec,&
     print "(a)",' WARNING: could not read magnetic units from dump file'
  endif
  if (debug) print*,' number of array sizes = ',narrsizes
+ if (allocated(npartoftype_tmp)) deallocate(npartoftype_tmp)
 
 end subroutine read_header
 
@@ -1412,8 +1417,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
  integer*8, dimension(maxarrsizes) :: isize
  integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
- integer*1, dimension(:), allocatable :: iphase
- integer, dimension(:), allocatable :: listpm,level
+ integer*1, dimension(:), allocatable :: iphase,level
+ integer, dimension(:), allocatable :: listpm
  real(doub_prec), dimension(:), allocatable :: dattemp
  real*4, dimension(:), allocatable :: dattempsingle,massfac
  real(doub_prec) :: r8,unit_dens,unit_ergg
@@ -1423,7 +1428,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real :: hfact,omega
  real(doub_prec) :: Xfrac,Yfrac
  real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
- logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_ionfrac,need_to_allocate_iphase
+ logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_ionfrac,need_to_allocate_iphase,got_tag
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1847,6 +1852,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           endif
        endif
 !--read iphase from array block 1
+       got_tag = .false.
        if (iarr==1) then
           !--skip default int
           nskip = nint(iarr)
@@ -1864,11 +1870,18 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              !--skip remaining integer arrays
              nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
           else
-             gotiphase = .true.
-             if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
-             read(iunit,end=33,iostat=ierr) iphase(i1:i2)
-             !--skip remaining integer arrays
-             nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
+             if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
+             select case(tagtmp)
+             case('iphase','itype')
+                gotiphase = .true.
+                read(iunit,end=33,iostat=ierr) iphase(i1:i2)
+                !--skip remaining integer arrays
+                nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
+             case default
+                got_tag = .true. ! needed because we already read the tag
+                !--skip all integer arrays
+                nskip = nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
+             end select
           endif
        elseif (smalldump .and. iarr==2 .and. isize(iarr) > 0 .and. .not.phantomdump) then
 !--read listpm from array block 2 for small dumps (needed here to extract sink masses)
@@ -1893,13 +1906,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        endif
        !print*,'skipping ',nskip
        do i=1,nskip
-          if (tagged) read(iunit,end=33,iostat=ierr) tagtmp! skip tags
+          if (tagged .and. .not.got_tag) read(iunit,end=33,iostat=ierr) tagtmp ! read tag, unless already read
+          got_tag = .false. ! must reset this flag otherwise get corrupted read
           !
           ! read the Adaptive Particle Refinement level array
           ! in order to correctly set particle masses, if present
           !
           select case(tagtmp)
-          case('apr')
+          case('apr_level')
              allocate(level(isize(iarr)),massfac(isize(iarr)))
              read(iunit,end=33,iostat=ierr) level
              ! m = m/2**(level-1)

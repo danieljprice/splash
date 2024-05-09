@@ -172,7 +172,7 @@ end function is_density
 elemental function label_synonym(string)
  use asciiutils, only:lcase,string_delete
  character(len=*), intent(in) :: string
- character(len=8) :: label_synonym
+ character(len=max(len(string),8)) :: label_synonym
  character(len=len(string)) :: labeli
  integer :: k
 

@@ -46,7 +46,7 @@ contains
 ! Used to generate synthetic lightcurves
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
-                          lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
+                          lum,rphoto,temp,lum_bb,r_bb,Tc,specfile,ierr)
  use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx
  use limits,                only:lim,get_particle_subset
  use lightcurve_utils,      only:get_temp_from_u
@@ -73,8 +73,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
+ integer, intent(out) :: ierr
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,k,nfreq
+ integer :: n,isinktype,npixx,npixy,j,i,k,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
@@ -89,12 +90,18 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  lum = 0.
  rphoto = 0.
  temp = 0.
+ ierr = 0
  if (ndim /= 3) then
     print "(a)",' ERROR: lightcurve only works with 3 dimensional data'
+    ierr = 1
     return
  endif
- if (.not. (ih > 0 .and. ipmass > 0 .and. irho > 0 .and. itemp > 0)) then
-    print "(a)",' ERROR: could not locate h,mass,rho or temperature in data'
+ if (.not.(ih > 0 .and. ipmass > 0 .and. irho > 0 .and. itemp > 0)) then
+    if (ih <= 0)     print "(a)",' ERROR: could not locate smoothing length in data'
+    if (ipmass <= 0) print "(a)",' ERROR: could not locate particle mass in data'
+    if (irho <= 0)   print "(a)",' ERROR: could not locate density in data'
+    if (itemp <= 0)  print "(a)",' ERROR: could not locate temperature in data'
+    ierr = 2
     return
  endif
  !
@@ -113,6 +120,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
+    ierr = 3
     return
  endif
  x(1:n) = dat(1:n,ix(1))

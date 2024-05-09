@@ -964,7 +964,7 @@ end subroutine calc_quantities
 !-----------------------------------------------------------------
 subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  use asciiutils,    only:lcase
- use labels,        only:irad,ike,ipr,ikappa,label_synonym
+ use labels,        only:irad,ike,ipr,ikappa,itemp,label_synonym
  use settings_data, only:debugmode
  character(len=*), intent(in) :: labelcol
  integer, intent(in) :: ncolumns,icolumn
@@ -983,6 +983,8 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
     call assign_column(ipr,icolumn,ncolumns,debugmode,'pressure')
  case('kappa','opacity')
     call assign_column(ikappa,icolumn,ncolumns,debugmode,'opacity')
+ case('temperature','temp')
+    call assign_column(itemp,icolumn,ncolumns,debugmode,'temperature')
  end select
 
 end subroutine identify_calculated_quantity

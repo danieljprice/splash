@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2023 Daniel Price
+!     Copyright (C) 2005-2024 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,6 +51,13 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.10.3  : (04/03/24)
+!             bug fix reading type information from phantom dumps introduced in 3.10.2
+!     3.10.2  : (01/03/24)
+!             reads phantom dumps with adaptive particle refinement;
+!             improved splash to phantom conversion;
+!             better documentation of splash calc lightcurve (thanks to Chunliang Mu);
+!             saving dust density limits now applies to all dust species;
 !     3.10.1  : (4/12/23)
 !             bug fix with accreted particles appearing in smoothed particle plots;
 !             automated Trad/Tgas in extra quantities from phantom dumps with radiation
@@ -600,7 +607,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.10.1 [4th Dec 2023]'
+ character(len=*), parameter :: version = 'v3.10.3 [4th Mar 2024]'
 
  !
  ! initialise some basic code variables
@@ -1144,7 +1151,7 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2023 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2024 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
