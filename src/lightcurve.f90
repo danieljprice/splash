@@ -66,6 +66,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
  use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag
+ use readwrite_fits,        only:write_fits_cube,write_fits_image
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -272,6 +273,12 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (get_command_flag('writepix')) then
     call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
          minval(img),maxval(img),'intensity','lum.pix',0.)
+ endif
+
+ if (get_command_flag('writefits')) then
+    write(*,*) 'Writing image into FITS cube ...'
+    call write_fits_cube('img_'//trim(specfile)//'.fits',img_nu(:,:,:),(/nfreq,npixx,npixy/),ierr)
+    if (ierr /= 0) write(*,*) 'Error writing to FITS cube !!!'
  endif
 
 end subroutine get_lightcurve
