@@ -47,9 +47,9 @@ contains
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                           lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
- use labels,                only:ix,ih,irho,irhorestframe,ipmass,itemp,ikappa,ivx,ipmomx,ients
+ use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx
  use limits,                only:lim,get_particle_subset
- use lightcurve_utils,      only:get_temp_from_u,get_opacity_freq
+ use lightcurve_utils,      only:get_temp_from_u
  use interpolate3D_opacity, only:interp3D_proj_opacity
  use particle_data,         only:icolourme
  use interpolation,         only:get_n_interp,set_interpolation_weights
@@ -66,7 +66,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
  use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag
- use readwrite_fits,        only:write_fits_cube,write_fits_image
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -74,18 +73,17 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(in)  :: dat(:,:)
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,idenscol,npixx,npixy,ierr,j,i,k,nfreq
+ integer :: n,isinktype,npixx,npixy,ierr,j,i,k,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
- real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,opacity_freq
+ real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c
  real, dimension(:,:,:), allocatable :: img_nu
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor
  real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev
- logical :: relativistic,iradio
+ logical :: relativistic
  character(len=20) :: tmpfile
- real :: Xfrac, Yfrac 
 
  lum = 0.
  rphoto = 0.
@@ -98,8 +96,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     print "(a)",' ERROR: could not locate h,mass,rho or temperature in data'
     return
  endif
-
- write(*,*) 'Using mysplash ...'
  !
  !--allow for reduction in opacity by factor of v/c for photon trapping
  !
@@ -108,12 +104,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
 
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)
-
- !
- !--if calc radio part
- !
- iradio = get_command_flag('radio')
- if (iradio) print "(a)",' synchrotron emission ON'
  !
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
@@ -190,22 +180,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  ! frequency-dependent version
  nfreq = 128
  freqmin = 1e8
- if (iradio) then
-    nfreq = 256
-    freqmin = 1e5
- endif
  freqmax = 1e22
  freq = logspace(nfreq,freqmin,freqmax)  ! frequency grid in Hz
-
- ! freq depend opacity
- if (allocated(opacity_freq)) deallocate(opacity_freq)
- allocate(opacity_freq(nfreq,n))
- idenscol = irho
- if (irhorestframe > 0) idenscol = irhorestframe ! use primitive density for relativistic code
- Xfrac = 0.69843
- Yfrac = 0.28731
- call get_opacity_freq(n,dat(:,idenscol),dat(:,itemp),Xfrac,Yfrac,nfreq,freq,opacity_freq)
-
  if (allocated(flux_nu)) deallocate(flux_nu)
  allocate(flux_nu(nfreq,n))
  doppler_factor = 1.
@@ -220,7 +196,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
     opacity(i) = opacity(i)*opacity_factor
-    opacity_freq(:,i) = opacity_freq(:,i)*opacity_factor
     flux_nu(:,i) = B_nu(dat(i,itemp),freq*doppler_factor)
  enddo
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
@@ -236,7 +211,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,rkappav=opacity_freq,datv=flux_nu,datvpix=img_nu)
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu)
 
  lum = 4.*sum(img)*dx*dy
  print*,'grey luminosity = ',lum,' erg/s'
@@ -297,12 +272,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (get_command_flag('writepix')) then
     call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
          minval(img),maxval(img),'intensity','lum.pix',0.)
- endif
-
- if (get_command_flag('writefits')) then
-    write(*,*) 'Writing image into FITS cube ...'
-    call write_fits_cube('img_'//trim(specfile)//'.fits',img_nu(:,:,:),(/nfreq,npixx,npixy/),ierr)
-    if (ierr /= 0) write(*,*) 'Error writing to FITS cube !!!'
  endif
 
 end subroutine get_lightcurve
