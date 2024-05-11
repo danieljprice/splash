@@ -78,16 +78,17 @@ module readdata_gadget_hdf5
  public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
 
  interface
-  subroutine read_gadget_hdf5_header(filename,maxtypes,npartoftypei,massoftypei,&
-                                      timeh,zh,iFlagSfr,iFlagFeedback,Nall,iFlagCool, &
+  subroutine read_gadget_hdf5_header(filename,maxtypes,maxhdr,npartoftypei,massoftypei,&
+                                      timeh,zh,headervals,iFlagSfr,iFlagFeedback,Nall,iFlagCool, &
                                       igotids,ndim,ndimV,nfiles,ncol,ierr) bind(c)
    import
    character(kind=c_char), dimension(*), intent(in) :: filename
-   integer(kind=c_int), intent(in), value :: maxtypes
+   integer(kind=c_int), intent(in), value :: maxtypes,maxhdr
    integer(kind=c_int), intent(out) :: iFlagSfr,iFlagFeedback,iFlagCool,igotids
    integer(kind=c_int), dimension(6), intent(out) :: npartoftypei,Nall
    real(kind=c_double), dimension(6), intent(out) :: massoftypei
    real(kind=c_double), intent(out) :: timeh,zh
+   real(kind=c_double), dimension(maxhdr), intent(out) :: headervals
    integer(kind=c_int), intent(out) :: ndim,ndimV,nfiles,ncol,ierr
   end subroutine read_gadget_hdf5_header
 
@@ -157,8 +158,8 @@ end function reformatlabel
 !
 !-------------------------------------------------------------------------
 subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
- use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
- use params,         only:doub_prec,maxparttypes,maxplot
+ use particle_data,  only:dat,npartoftype,masstype,time,gamma,headervals,maxpart,maxcol,maxstep
+ use params,         only:doub_prec,maxparttypes,maxplot,maxhdr
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread, &
                            ntypes,debugmode,iverbose
  use mem_allocation, only:alloc
@@ -178,7 +179,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
  logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m
- real(doub_prec)                    :: timetemp,ztemp
+ real(doub_prec)                    :: timetemp,ztemp,headervalstmp(maxhdr)
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
  real, parameter :: pi = 4.*atan(1.)
@@ -257,9 +258,10 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     Nall(:) = 0.
     massoftypei(:) = 0.
     if (debug) print*,'DEBUG: reading header...'
-    call read_gadget_hdf5_header(cstring(datfile),maxtypes, &
-       npartoftypei,massoftypei,timetemp,ztemp,iFlagSfr,iFlagFeedback,Nall,&
-       iFlagCool,igotids,ndim,ndimV,nfiles,ncolstep,ierr)
+    call read_gadget_hdf5_header(cstring(datfile),maxtypes,maxhdr, &
+       npartoftypei,massoftypei,timetemp,ztemp,headervalstmp,&
+       iFlagSfr,iFlagFeedback,Nall,iFlagCool,igotids,ndim,ndimV,&
+       nfiles,ncolstep,ierr)
     if (ierr /= 0) then
        print "(a)", '*** ERROR READING HEADER ***'
        return
@@ -424,6 +426,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
     if (ifile==1) then
        !--use this line for code time
        time(i) = real(timetemp)
+       headervals(:,i) = real(headervalstmp(:))
     else
        if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read '
        if (sum(Nall) /= ntotall) then
@@ -876,5 +879,15 @@ subroutine set_blocklabel_gadget(icol,irank,name) bind(c)
  !print*,icol+1,' name = ',trim(blocklabelgas(icol+1)),' x ',irank
 
 end subroutine set_blocklabel_gadget
+
+subroutine set_header_label_gadget(i,name) bind(c)
+ use, intrinsic :: iso_c_binding, only:c_int, c_char
+ use labels, only:headertags
+ integer(kind=c_int), intent(in) :: i
+ character(kind=c_char), dimension(256), intent(in) :: name
+
+ headertags(i+1) = fstring(name)
+
+end subroutine set_header_label_gadget
 
 end module readdata_gadget_hdf5

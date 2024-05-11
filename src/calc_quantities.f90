@@ -167,7 +167,7 @@ subroutine add_calculated_quantities(istart,iend,ncalc,printhelp,incolumn,verbos
     print "(/,10(a))",' Valid variables: column labels',(', '''//trim(extravars(j))//'''',j=1,nextravars),&
                 ' and header variables:'
     nhdr = count_non_blank(headertags)
-    if (nhdr > 0) print "(43(2x,6(a),/))",headertags(1:nhdr)
+    if (nhdr > 0) print "(43(2x,4(a32,1x),/))",headertags(1:nhdr)
  endif
  call print_example_quantities(verbose)
 
