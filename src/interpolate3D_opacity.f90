@@ -199,6 +199,10 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  nok = 0
  hminall = huge(hminall)
  hmin = 0.5*max(pixwidthx,pixwidthy)
+ if (iverbose >= 0) then
+    write(*,"(/,a,45x,a)") ' 0% ',' 100%'
+    write(*,"(1x,a)",advance='no') '|'
+ endif
 
 !!$omp parallel default(none) &
 !!$omp shared(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
@@ -221,6 +225,13 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     !--skip particles with itype < 0
     !
     if (itype(i) < 0) cycle over_particles
+
+    !
+    !--progress bar
+    !
+    if (iverbose >= 0 .and. mod(ipart,npart/50)==0) then
+       write(*,"('=')",advance='no')
+    endif
 
     !
     !--skip particles with weight < 0
