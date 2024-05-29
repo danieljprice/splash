@@ -409,7 +409,7 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
@@ -549,7 +549,7 @@ libexact: checksystem $(OBJLIBEXACTALL)
 #
 # libread: data read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
             utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
