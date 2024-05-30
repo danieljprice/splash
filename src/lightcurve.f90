@@ -205,6 +205,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
     opacity(i) = opacity(i)*opacity_factor
+    !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
     flux_nu(:,i) = B_nu(dat(i,itemp),freq*doppler_factor)
  enddo
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max

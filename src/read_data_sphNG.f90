@@ -1212,31 +1212,31 @@ subroutine get_rho_from_h(i1,i2,ih,ipmass,irho,required,npartoftype,massoftype,h
           if (required(irho)) dat(k,irho) = 0.
           iphase(k) = -2
        endif
-   enddo
-else
-   if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
-   if (debug) print*,'debug: phantom: setting rho for all types'
-   pmassi = massoftype(1)
-   !--assume all particles are gas particles
-   do k=i1,i2
-      hi = dat(k,ih)
-      if (ipmass > 0) pmassi = dat(k,ipmass)
-      if (hi > 0.) then
-         rhoi = pmassi*(hfact/hi)**3
-      elseif (hi < 0.) then
-         rhoi = pmassi*(hfact/abs(hi))**3
-         npartoftype(1) = npartoftype(1) - 1
-         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
-         iphase(k) = -1
-      else ! if h = 0.
-         rhoi = 0.
-         npartoftype(1) = npartoftype(1) - 1
-         npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
-         iphase(k) = -2
-      endif
-      if (required(irho)) dat(k,irho) = rhoi
-   enddo
-endif
+    enddo
+ else
+    if (.not.required(ih)) print*,'ERROR: need to read h, but required=F'
+    if (debug) print*,'debug: phantom: setting rho for all types'
+    pmassi = massoftype(1)
+    !--assume all particles are gas particles
+    do k=i1,i2
+       hi = dat(k,ih)
+       if (ipmass > 0) pmassi = dat(k,ipmass)
+       if (hi > 0.) then
+          rhoi = pmassi*(hfact/hi)**3
+       elseif (hi < 0.) then
+          rhoi = pmassi*(hfact/abs(hi))**3
+          npartoftype(1) = npartoftype(1) - 1
+          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+          iphase(k) = -1
+       else ! if h = 0.
+          rhoi = 0.
+          npartoftype(1) = npartoftype(1) - 1
+          npartoftype(itypemap_unknown_phantom) = npartoftype(itypemap_unknown_phantom) + 1
+          iphase(k) = -2
+       endif
+       if (required(irho)) dat(k,irho) = rhoi
+    enddo
+ endif
 
 end subroutine get_rho_from_h
 
@@ -1284,17 +1284,17 @@ integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
 
  select case(k)
  case(1:3)
-     iloc = ix(k)
+    iloc = ix(k)
  case(4)
-     iloc = ipmass
+    iloc = ipmass
  case(5)
-     iloc = ih
+    iloc = ih
  case default
-     if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
-        iloc = ivx + k-ilocvx ! put velocity into correct arrays
-     else
-        iloc = 0
-     endif
+    if (k >= ilocvx .and. k < ilocvx+3 .and. ivx > 0) then
+       iloc = ivx + k-ilocvx ! put velocity into correct arrays
+    else
+       iloc = 0
+    endif
  end select
  if (iloc > ncolmax) iloc = 0  ! error occurred
 
@@ -1428,7 +1428,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real :: hfact,omega
  real(doub_prec) :: Xfrac,Yfrac
  real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
- logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_ionfrac,need_to_allocate_iphase,got_tag
+ logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_kappa_tot
+ logical :: get_ionfrac,need_to_allocate_iphase,got_tag
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1482,7 +1483,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  nstepsread = 0
  doubleprec = .true.
  get_temperature = lenvironment("SPLASH_GET_TEMP")
- get_kappa = lenvironment("SPLASH_GET_KAPPA")
+ get_kappa_tot = lenvironment("SPLASH_GET_KAPPATOT")
+ get_kappa = lenvironment("SPLASH_GET_KAPPA") .or. get_kappa_tot
  get_ionfrac = lenvironment("SPLASH_GET_ION")
  if ((get_temperature .or. get_kappa) .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
@@ -1504,10 +1506,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        print "(1x,a,f5.3)",'ERROR: Input Yfrac is not between 0 and 1, using default value of ',Yfrac
     endif
     if ( Xfrac + Yfrac > 1.) then
-      print "(1x,a,f5.3,a,f5.3,a,f5.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
+       print "(1x,a,f5.3,a,f5.3,a,f5.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
          Xfrac_default,' and Yfrac = ',Yfrac_default
-      Xfrac = Xfrac_default
-      Yfrac = Yfrac_default
+       Xfrac = Xfrac_default
+       Yfrac = Yfrac_default
     endif
  endif
  ilastrequired = 0
@@ -1752,7 +1754,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              ncolstep   = ncolstep + 4
           endif
           if (get_temperature) then
-            !add a column for the temperature
+             !add a column for the temperature
              ncolstep = ncolstep+1
              itempcol = ncolstep
           endif
@@ -2234,8 +2236,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
  endif
  if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0) then
-    print*,'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac)
+    write(*,"(1x,a,3(f5.2,1x))",advance='no') 'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
+    if (get_kappa_tot) then
+       write(*,*) ' (opacity uses electron scattering, free-free and H-)'
+    else
+       write(*,*) ' (electron scattering opacity only)'
+    endif
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,&
+                                         dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac,get_kappa_tot)
  endif
  if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
      .and. any(required(iHIIcol:iHeIIIcol))) then

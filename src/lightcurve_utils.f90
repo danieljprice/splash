@@ -84,28 +84,28 @@ end function get_temp_from_u
 !    kappa - cm^2/g
 !---------------------------------------------------------
 
-real elemental function get_opacity(rho,T,X,Y) result(kappa)
+real elemental function get_opacity(rho,T,X,Y,use_all) result(kappa)
+ use physcon, only:sigma_e
  real(doub_prec), intent(in) :: rho,T,X,Y
  real(doub_prec) :: kappa_ff,kappa_es,kappa_H,kappa_mol,kappa_abs
- !real(doub_prec) :: Z
+ real(doub_prec) :: Z
  real(doub_prec) :: xfrac,ne,xh0,xh1,xhe0,xhe1,xhe2
- real(doub_prec), parameter :: sigma_e = 6.652e-25 ! Thomson cross section
+ logical, intent(in) :: use_all
 
  call ionisation_fraction_Honly(rho,T,xfrac,ne)
  !call ionisation_fraction(rho,T,X,Y,xh0,xh1,xhe0,xhe1,xhe2,ne)
 
- !Z = max(1. - X - Y,0.)  ! metallicity
+ Z = max(1. - X - Y,0.)  ! metallicity
 
  ! free-free emission (Kramer's law)
-! kappa_ff = 0.64e23*rho*T**(-3.5)
+ kappa_ff = 0.64e23*rho*T**(-3.5)
  !kappa_ff = 4.e25*(1. + X)*(Z + 0.001)*rho*T**(-3.5)
 
  ! opacity due to negative Hydrogen
- !kappa_H = 1.1e-25*sqrt(Z)*sqrt(rho)*T**7.7
- !kappa_H = 1.1e-25*sqrt(Z)*sqrt(rho)*T**7.7
+ kappa_H = 1.1e-25*sqrt(Z)*sqrt(rho)*T**7.7
 
  ! opacity due to molecules
- !kappa_mol = 0.1*Z
+ kappa_mol = 0.1*Z
 
  ! electron scattering
 ! if (T > 7000.) then
@@ -115,11 +115,12 @@ real elemental function get_opacity(rho,T,X,Y) result(kappa)
  !endif
  kappa_es = sigma_e*ne/rho !*0.5*(1. + X) ! 0.2*(1 + X) if fully ionised
 
- ! total opacity, valid between T = 1.5 x 10^3 and 10^9 K
- !kappa = kappa_mol + 1./(1./kappa_H + 1./(kappa_es + kappa_ff))
-
- !kappa = 1./(1./kappa_H + 1./(kappa_es + kappa_ff))
- kappa = kappa_es
+ if (use_all) then
+    ! total opacity, valid between T = 1.5 x 10^3 and 10^9 K
+    kappa = kappa_mol + 1./(1./kappa_H + 1./(kappa_es + kappa_ff))
+ else
+    kappa = kappa_es
+ endif
 
  ! absorption opacity
  !kappa_abs = kappa_ff + kappa_H !+ kappa_ff
