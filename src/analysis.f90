@@ -421,7 +421,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
     endif
     write(headerline,"('#',8(1x,'[',i2.2,1x,a11,']',2x))") &
            1,'time'//trim(labelt),2,'Luminosity',3,'R_{eff}',4,'T_{eff}',&
-           5,'L_{bol}',6,'R_{bb}',7,'T_c'
+           5,'L_{bol}',6,'R_{bb}',7,'T_c',8,'bad pix %'
 
  case('extinction')
     !
@@ -559,7 +559,7 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
  real(kind=doub_prec) :: lmin(maxplot),lmax(maxplot),lmean(maxplot),rmsvali
  real(kind=doub_prec), dimension(3) :: xmom,angmom,angmomi,ri,vi
  real                 :: delta,dn,valmin,valmax,valmean,timei
- real                 :: lum,rphoto,tphoto,l_bb,r_bb,t_bb
+ real                 :: lum,rphoto,tphoto,l_bb,r_bb,t_bb,badfrac
  character(len=20)    :: fmtstring
  logical              :: change_coordsys
  real                 :: x0(3),v0(3)
@@ -1260,12 +1260,12 @@ subroutine write_analysis(time,dat,ntot,ntypes,npartoftype,massoftype,&
     return
  case('lightcurve')
     call get_lightcurve(ncolumns,dat,npartoftype,massoftype,iamtype,ndim,ntypes,&
-         lum,rphoto,tphoto,l_bb,r_bb,t_bb,basename(rootname(ifileopen)),ierr)
+         lum,rphoto,tphoto,l_bb,r_bb,t_bb,badfrac,basename(rootname(ifileopen)),ierr)
     print "(4(/,1x,a20,' = ',es9.2))",'Luminosity',lum,'photospheric radius ',rphoto,'photospheric temperature',tphoto
     !
     !--write line to output file
     !
-    if (ierr == 0) write(iunit,"(7(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb
+    if (ierr == 0) write(iunit,"(8(es18.10,1x))") timei,lum,rphoto,tphoto,l_bb,r_bb,t_bb,badfrac
 
  case('extinction')
     !
