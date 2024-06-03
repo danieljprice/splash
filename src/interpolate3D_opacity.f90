@@ -78,7 +78,7 @@ contains
 
 subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,npart, &
      xmin,ymin,datsmooth,tausmooth,npixx,npixy,pixwidthx,pixwidthy,zobserver,dscreenfromobserver, &
-     rkappa,zcut,iverbose,exact_rendering,datv,datvpix)
+     rkappa,zcut,iverbose,exact_rendering,datv,datvpix,badpix)
 
  real, parameter :: pi=4.*atan(1.)
  integer, intent(in) :: npart,npixx,npixy,npmass,iverbose
@@ -91,6 +91,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  ! optional arguments for vector opacity rendering
  real, dimension(:,:),   intent(in),  optional :: datv
  real, dimension(:,:,:), intent(out), optional :: datvpix
+ ! optional argument for checking unresolved pixels in the photosphere
+ real, dimension(npixx,npixy), intent(out), optional :: badpix
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder
@@ -116,6 +118,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  term = 0.
  tausmooth = 0.
  if (present(datvpix)) datvpix = 0.
+ if (present(badpix)) badpix = 0.
  if (pixwidthx <= 0. .or. pixwidthy <= 0) then
     if (iverbose >= -1) print "(1x,a)",'ERROR: pixel width <= 0'
     return
@@ -144,6 +147,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  !--whether to raytrace backwards from observer, or forwards to observer
  !
  backwards = .false.
+ if (present(badpix)) backwards = .true.
 
  !
  !--setup kernel table if not already set
@@ -370,13 +374,23 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                 wab = pixint*dfac
 
                 tau = wab*term
-                fopacity = 1. - exp(-tau)
+                tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
                 !
                 !--render, obscuring previously drawn pixels by relevant amount
                 !  also calculate total optical depth for each pixel
                 !
-                datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
-                tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                if (backwards) then
+                   fopacity = exp(-tausmooth(ipix,jpix))*tau
+                   datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
+                   if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                   if (present(badpix)) then
+                      if (tausmooth(ipix,jpix) < 1. .and. tau >= 0.33) badpix(ipix,jpix) = 1
+                   endif
+                else
+                   fopacity = 1. - exp(-tau)
+                   datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
+                   if (present(datv)) datvpix(:,ipix,jpix) = (1.-fopacity)*datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                endif
              else
                 !
                 !--SPH kernel - integral through cubic spline
@@ -395,6 +409,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                       fopacity = exp(-tausmooth(ipix,jpix))*tau
                       datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
                       if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
+                      if (present(badpix)) then
+                         if (tausmooth(ipix,jpix) < 1. .and. tau >= 0.33) badpix(ipix,jpix) = 1
+                      endif
                    else
                       fopacity = 1. - exp(-tau)
                       datsmooth(ipix,jpix) = (1.-fopacity)*datsmooth(ipix,jpix) + fopacity*dati
