@@ -99,7 +99,7 @@ module exact
  real :: HonR,rplanet,q_index,phase
  real :: spiral_params(7,maxexact)
  integer :: ispiral,narms
- logical :: iread_wakeparams
+ logical :: iread_wakeparams,iclockwise
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
@@ -123,7 +123,7 @@ module exact
        mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
        use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
+       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams,iclockwise
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -215,6 +215,7 @@ subroutine defaults_set_exact
  spiral_params = 0.
  spiral_params(2,:) = 360.
  iread_wakeparams = .true.
+ iclockwise = .false.
 !   Bondi
  relativistic  = .true.
  geodesic_flow = .false.
@@ -408,11 +409,11 @@ subroutine submenu_exact(iexact)
           endif
        enddo
        !if (i==1) then
-      !    call prompt('Apply above settings to all files?',apply_to_all)
-      !    if (apply_to_all) then
-      !       iexactploty(:) = iexactploty(i)
-      !       iexactplotx(:) = iexactplotx(i)
-      !    endif
+       !    call prompt('Apply above settings to all files?',apply_to_all)
+       !    if (apply_to_all) then
+       !       iexactploty(:) = iexactploty(i)
+       !       iexactplotx(:) = iexactplotx(i)
+       !    endif
        !endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
@@ -597,6 +598,7 @@ subroutine submenu_exact(iexact)
           call prompt('enter planet orbital radius ',rplanet,0.)
           call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
           call prompt('enter orbital phase in degrees ',phase)
+          call prompt('clockwise rotation?',iclockwise)
        endif
     end select
  case(18)
@@ -1544,8 +1546,8 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     endif
  case(17) ! planet-disc interaction
     if (ndim >= 2 .and. iplotx==ix(1) .and. iploty==ix(2)) then
-       call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,q_index,phase,narms,&
-                                spiral_params,xexact,yexact,ierr)
+       call exact_planetdisc(igeom,ispiral,iclockwise,timei,HonR,rplanet,q_index,phase,narms,&
+                             spiral_params,xexact,yexact,ierr)
     endif
  case(18)
     if (iplotx==irad .or. (igeom==3 .and. iplotx==ix(1))) then
