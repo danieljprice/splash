@@ -32,7 +32,8 @@ subroutine set_options_dataread()
  use filenames,      only:rootname,nsteps,ifileopen
  use labels,         only:labeltype,irho,ih,get_sink_type
  use asciiutils,     only:ucase
- use settings_render, only:icolour_particles
+ use settings_render,  only:icolour_particles
+ use settings_xsecrot, only:xsec_nomulti
  integer :: itype,nplot,ierr
  !
  !--check for errors in data read / print warnings
@@ -67,6 +68,14 @@ subroutine set_options_dataread()
           iplotpartoftype(itype) = .true.
           PlotOnRenderings(itype) = .true.
        endif
+    endif
+ endif
+
+ !--for fits cubes, turn on cross section by default if 3D
+ if (ndim >= 3 .and. .not.idefaults_file_read .and. ifileopen > 0) then  ! only on first data read
+    if (index(rootname(ifileopen),'.fits') > 0) then
+       print "(a)",' turning cross section ON for fits cube'
+       xsec_nomulti = .true.
     endif
  endif
  !
