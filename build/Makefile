@@ -193,6 +193,22 @@ ifeq ($(SYSTEM),ifort)
    CFLAGS=-Wall -O3 -fPIC
 endif
 
+ifeq ($(SYSTEM),ifx)
+#  this is for the intel fortran compiler (version 10)
+   FC= ifx
+   FFLAGS= -O3 -nbs
+   OMPFLAGS= -qopenmp
+   DBLFLAGS= -r8
+   DEBUGFLAG= -C -g
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+# or use setenv F_UFMTENDIAN=big or little at runtime
+   KNOWN_SYSTEM=yes
+   CC=icc
+   CFLAGS=-Wall -O3 -fPIC
+endif
+
 ifeq ($(SYSTEM),pgf90)
 #  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
    FC= pgf90
@@ -639,6 +655,7 @@ checksystem:
 
 compilers:
 	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
+	@if type -p ifx > /dev/null; then echo "make SYSTEM=ifx"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
 	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;
