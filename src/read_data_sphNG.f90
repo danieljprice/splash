@@ -2563,7 +2563,7 @@ subroutine set_labels_sphNG
  use labels, only:label,unitslabel=>unitslabel_default,&
               labelzintegration=>labelzintegration_default,labeltype,labelvec,iamvec, &
               ix,ipmass,irho,ih,iutherm,ipr,ivx,iBfirst,idivB,iJfirst,icv,iradenergy,&
-              idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens, &
+              idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens,iradFx, &
               ivrel,make_vector_label,get_label_grain_size,itemp,ikappa,ipmomx,irhorestframe
  use params
  use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
@@ -2684,6 +2684,8 @@ subroutine set_labels_sphNG
        case('kappa')
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
+       case('radFx')
+          iradFx = i
        case('radP')
           label(i) = 'radiation pressure'
           unitslabel(i) = ' [g / (cm s^2)]'
@@ -2778,6 +2780,7 @@ subroutine set_labels_sphNG
  call make_vector_label('B',iBfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('J',iJfirst,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  call make_vector_label('p',ipmomx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+ call make_vector_label('grad E',iradFx,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  !
  !--ensure labels are unique by appending numbers where necessary
  !
@@ -2804,6 +2807,10 @@ subroutine set_labels_sphNG
  if (ivx > 0) then
     units(ivx:ivx+ndimV-1) = unitvel
     unitslabel(ivx:ivx+ndimV-1) = unitlabelv
+ endif
+ if (iradFx > 0) then
+    units(iradFx:iradFx+ndimV-1) = umass/(udist*utime)**2
+    unitslabel(iradFx:iradFx+ndimV-1) = ' [erg/cm^4]'
  endif
  if (ipmomx > 0) then
     units(ipmomx:ipmomx+ndimV-1) = unitvel
