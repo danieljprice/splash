@@ -43,7 +43,7 @@ module labels
  integer :: ipmass,ike,ispsound,itemp,ikappa
  integer :: idivb,iJfirst,irhostar,ipmomx
  integer :: iacplane,ipowerspec
- integer :: icv,iradenergy
+ integer :: icv,iradenergy,iradFx
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
@@ -87,6 +87,7 @@ subroutine reset_columnids
  ivrel = 0      ! relative velocity
  itemp = 0      ! temperature
  ikappa = 0     ! opacity
+ iradFx = 0
  iacplane = 0
  ike = 0
  idivB = 0
