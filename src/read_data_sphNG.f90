@@ -2238,7 +2238,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0) then
     write(*,"(1x,a,3(f5.2,1x))",advance='no') 'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
     if (get_kappa_tot) then
-       write(*,*) ' (opacity uses electron scattering, free-free and H-)'
+       write(*,*) ' (opacity uses electron scattering, Kramers and H-)'
     else
        write(*,*) ' (electron scattering opacity only)'
     endif

@@ -97,11 +97,8 @@ real elemental function get_opacity(rho,T,X,Y,use_all) result(kappa)
 
  Z = max(1. - X - Y,0.)  ! metallicity
 
- ! free-free emission (Kramer's law)
- !kappa_ff = 0.64e23*rho*T**(-3.5)
- !kappa_ff = 4.e25*(1. + X)*(Z + 0.001)*rho*T**(-3.5)
-
  ! opacity due to Kramer's law (free-free and bound-free transitions)
+ !kappa_K = 4e25*Z*(1.+X)*rho*T**(-3.5)      ! Metzger & Pejcha (2017)
  kappa_K = 1.2e26*Z*(1.+X)*rho*T**(-3.5)   ! from Matsumoto & Metzger (2022)
 
  ! opacity due to negative Hydrogen
@@ -115,7 +112,8 @@ real elemental function get_opacity(rho,T,X,Y,use_all) result(kappa)
 
  if (use_all) then
     ! total opacity, valid between T = 1.5 x 10^3 and 10^9 K
-    kappa = kappa_mol + 1./(1./kappa_H + 1./(kappa_es + kappa_K))
+    !kappa = kappa_mol + 1./(1./kappa_H + 1./(kappa_es + kappa_K))  ! Metzger & Pejcha (2017)
+    kappa = kappa_mol + kappa_es + 1./(1./kappa_H + 1./kappa_K)   ! MM22
  else
     kappa = kappa_es
  endif
