@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2013 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -25,7 +25,7 @@ module interpolate3D_opacity
  use kernels,       only:radkernel,radkernel2,cnormk3D,wallint
  use sort,          only:indexx
  use interpolation, only:weight_sink
- use timing,        only:print_time
+ use timing,        only:print_time,wall_time
  implicit none
 
 contains
@@ -173,10 +173,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  if (iverbose >= 0) print "(1x,a,g9.2,a)",'ray tracing '//trim(str)//&
     ': surface depth ~ ',rkappatemp/maxval(rkappa),' smoothing lengths'
 !
-!--get starting CPU time
+!--get starting time
 !
- call cpu_time(t_start)
-
+ call wall_time(t_start)
 !
 !--first sort the particles in z so that we do the opacity in the correct order
 !
@@ -208,17 +207,20 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     write(*,"(1x,a)",advance='no') '|'
  endif
 
-!!$omp parallel default(none) &
-!!$omp shared(hh,z,x,y,zorig,pmass,dat,itype,datsmooth,npmass,npart) &
-!!$omp shared(xmin,ymin,xminpix,yminpix,xpix,pixwidth) &
-!!$omp shared(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
-!!$omp shared(zcut,zcutoff,iorder,rkappa,tausmooth) &
-!!$omp private(hi,zfrac,xi,yi,radkern) &
-!!$omp private(hi1,hi21,term,termi) &
-!!$omp private(ipixmin,ipixmax,jpixmin,jpixmax) &
-!!$omp private(dx2i,q2,ypix,dy,dy2,wab) &
-!!$omp private(ipart,i,ipix,jpix,tau,fopacity) &
-!!$omp reduction(+:nused)
+!$omp parallel default(none) &
+!$omp shared(hh,z,x,y,zorig,pmass,dat,datv,weight,itype,datsmooth,npmass,npart) &
+!$omp shared(xmin,xmax,ymin,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy,hmin) &
+!$omp shared(exact_rendering,backwards,iverbose,radkernel,radkernel2) &
+!$omp shared(badpix,datvpix) &
+!$omp shared(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
+!$omp shared(zcut,zcutoff,iorder,rkappa,tausmooth) &
+!$omp private(hi,zfrac,xi,yi,zi,radkern,rendersink) &
+!$omp private(hi1,hi21,hsmooth,term,dati,datvi,pixwidthz) &
+!$omp private(ipixmin,ipixmax,jpixmin,jpixmax,xpixmin,xpixmax,ypixmin,ypixmax) &
+!$omp private(dx2i,q2,xpixi,ypix,zpix,dy,dy2,wab,dfac,pixint) &
+!$omp private(ipart,i,ipix,jpix,tau,fopacity) &
+!$omp reduction(+:nused,nsink,nsubgrid,nok) &
+!$omp reduction(min:hminall)
 !!$omp do ordered schedule(dynamic)
  over_particles: do ipart=1,npart
     !
@@ -233,9 +235,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     !
     !--progress bar
     !
+    !$omp single
     if (iverbose >= 0 .and. mod(ipart,npart/50)==0) then
        write(*,"('=')",advance='no')
     endif
+    !$omp end single
 
     !
     !--skip particles with weight < 0
@@ -254,7 +258,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
     particle_within_zcut: if (zorig(i) < zcut .and. z(i) < zcutoff) then
 
        !  count particles within slice
+       !$omp single
        nused = nused + 1
+       !$omp end single
        !
        !--adjust h according to 3D perspective
        !  need to be careful -- the kernel quantities
@@ -277,7 +283,9 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        !
        if (rendersink) then
           dati = dat(i) !pmass(i)/(hh(i)**3)  ! define "density" of a sink
+          !$omp single
           nsink = nsink + 1
+          !$omp end single
        else
           dati = dat(i)
        endif
@@ -313,11 +321,15 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        !--take resolution length as max of h and 1/2 pixel width
        if (.not.exact_rendering .and. hi < hmin) then
           hminall = min(hi,hminall)
+          !$omp single
           nsubgrid = nsubgrid + 1
+          !$omp end single
           hsmooth = hmin
        else
           hsmooth = hi
+          !$omp single
           nok = nok + 1
+          !$omp end single
        endif
 
        !
@@ -349,6 +361,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        !
        !--loop over pixels, adding the contribution from this particle
        !
+       !$omp do schedule(dynamic)
        do jpix = jpixmin,jpixmax
           ypix = yminpix + jpix*pixwidthy
           dy = ypix - yi
@@ -421,14 +434,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
              endif
           enddo
        enddo
+       !$omp end do
 
     endif particle_within_zcut
 
  enddo over_particles
-!!$omp end do
-!!$omp end parallel
+ !$omp end parallel
 !
-!--get ending CPU time
+!--get ending wall time
 !
  if (iverbose >= 0) print "('|',/)"   ! end the progress bar
  if (nsink > 99) then
@@ -436,7 +449,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  elseif (nsink > 0) then
     if (iverbose >= 0) print "(1x,a,i2,a)",'rendered ',nsink,' sink particles'
  endif
- call cpu_time(t_end)
+ call wall_time(t_end)
  t_used = t_end - t_start
  if (t_used > 10. .and. iverbose >= 0) call print_time(t_used)
  if (zcut < huge(zcut) .and. iverbose >= 0) print*,'slice contains ',nused,' of ',npart,' particles'
