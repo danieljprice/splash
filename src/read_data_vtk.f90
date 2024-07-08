@@ -151,14 +151,14 @@ subroutine read_vtk_header(filename,ndim,ndimV,ncolstep,npart,is_binary,ierr)
  character(len=6)     :: fileformat
  character(len=30)    :: dataset,datatype
  integer :: iu
- 
+
  ierr = 0
  npart = 0
  ndim = 3
  ndimV = 3
  ncolstep = 0
  tagarr(:) = ''
- 
+
  open(newunit=iu,file=filename,status='old',action='read',form='formatted',iostat=ierr)
  if (ierr /= 0) then
     print*,' ERROR opening '//trim(filename)
@@ -229,7 +229,7 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat)
  character(len=1)   :: newline
  real(kind=4), allocatable :: xyz(:,:),rval(:,:)
  real(kind=8), allocatable :: r8val(:,:)
- integer :: iu,nline,n,i,nvec,nfields,npts
+ integer :: iu,nline,n,i,nvec,nfields,npts,ispace
 
  ! open the file with stream access and use get_next_line to parse the ascii lines
  open(newunit=iu,file=filename,status='old',action='read',form='unformatted',iostat=ierr,access='stream')
@@ -248,9 +248,6 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat)
        read(iu,iostat=ierr) xyz,newline
        if (present(dat)) then
           dat(1:npart,1:3) = bs(transpose(xyz)) ! byteswap from big endian -> little
-          !print*,' x vals = ',dat(1:4,1)
-          !print*,' y vals = ',dat(1:4,2)
-          !print*,' z vals = ',dat(1:4,3)
        endif
        deallocate(xyz,rval)
        ncolstep = ncolstep + 3
@@ -259,9 +256,14 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat)
        read(line(1:n),*,iostat=ierr) tmp,tmp,nfields
        !print*,' number of fields = ',nfields
        do i=1,nfields
+          ! get the next line
           call get_next_line(iu,line,n,nline,ierr)
           if (ierr /= 0 .or. n < 1) exit
-          read(line(1:n),*,iostat=ierr) tagarr(ncolstep+1),nvec,npts,datatype
+          ! extract the tag and number of vectors and points
+          ispace = index(line,' ')                ! position of first space
+          tagarr(ncolstep+1) = line(1:ispace-1)  ! tag is everything up to first space
+          read(line(ispace:n),*,iostat=ierr) nvec,npts,datatype
+          !print*,'LINE:',line(1:n)!
           !print*,'GOT: ',tagarr(ncolstep+1),': nvec=',nvec,'npts=',npts,trim(datatype)
           select case(trim(datatype))
           case('float')
