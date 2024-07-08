@@ -1936,6 +1936,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
                 nskip = nreal(iarr)
              else
+                nskip = nint(iarr)
+                do i=1,nskip
+                   if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
+                   read(iunit,end=33,iostat=ierr)
+                enddo
                 if (debug) print*,'DEBUG: denoting ',npart,'->',npart+isize(iarr),' as sink particles'
                 iphase(npart+1:npart+isize(iarr)) = -3
                 ilocvx = nreal(iarr)-2 ! velocity is always last 3 numbers for phantom sinks
