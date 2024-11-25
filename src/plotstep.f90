@@ -2889,8 +2889,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  endif
 
  !if (.not.interactivereplot) then
-    ! restore original labels...
-    label = labelorig
+ ! restore original labels...
+ label = labelorig
  !endif
 
  !--free temporary arrays
@@ -3318,15 +3318,15 @@ subroutine legends_and_title
     ! add exact solution line to the legend
     !
     if (lastinpanel .and. plot_exact) then
-        nexact = get_nexact(iexact)
-        kk = 0
-        do k=1,nexact
-           if (len_trim(ExactLegendText(k)) > 0) then
-              kk = kk + 1
-              call legend_markers(istepsonpage+k,iExactLineColour(k),imarktype(1),iExactLineStyle(k), &
+       nexact = get_nexact(iexact)
+       kk = 0
+       do k=1,nexact
+          if (len_trim(ExactLegendText(k)) > 0) then
+             kk = kk + 1
+             call legend_markers(istepsonpage+k,iExactLineColour(k),imarktype(1),iExactLineStyle(k), &
                    .false.,.true.,ExactLegendText(k),hposlegend,vposlegend,1.0)
-           endif
-        enddo
+          endif
+       enddo
     endif
  endif
 

@@ -617,7 +617,7 @@ function map_shifted_columns() result(imap)
  do i=1,size(imap)
     icol = i
     if (len_trim(label(i)) > 0) icol = check_for_shifted_column(i)
-    if (icol /= i) then
+    if (icol /= i .and. icol > 0) then
        !print*,i,' setting imap=',icol
        imap(icol) = i
     endif
