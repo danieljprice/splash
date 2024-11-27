@@ -2684,6 +2684,7 @@ subroutine set_labels_sphNG
        case('kappa')
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
+          ikappa = i
        case('radFx')
           iradFx = i
        case('radP')
