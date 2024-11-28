@@ -1303,18 +1303,23 @@ end function map_sink_property_to_column
 !------------------------------------------------------------
 ! sanity check of the particle type accounting
 !------------------------------------------------------------
-subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei)
+subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei,phantomdump)
  use labels, only:labeltype
  use params, only:int1
  integer, intent(in) :: i1,i2
  integer(kind=int1), intent(in) :: iphase(i1:i2)
  integer, intent(inout) :: npartoftypei(:)
+ logical, intent(in)    :: phantomdump
  integer :: npartoftype_new(size(npartoftypei))
  integer :: k,itype
 
  npartoftype_new(:) = 0
  do k=i1,i2
-    itype = itypemap_phantom(iphase(k))
+    if (phantomdump) then
+       itype = itypemap_phantom(iphase(k))
+    else
+       itype = itypemap_sphNG(iphase(k))
+    endif
     npartoftype_new(itype) = npartoftype_new(itype) + 1
  enddo
  do k=1,size(npartoftypei)
@@ -2301,7 +2306,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !
 !--sanity check the iphase array
 !
-    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j))
+    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j),phantomdump)
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -2948,7 +2953,6 @@ subroutine set_labels_sphNG
     UseTypeInRenderings(6) = .true.  ! only applies if turned on
  endif
 
- return
 end subroutine set_labels_sphNG
 
 !-----------------------------------------------------------
@@ -2957,6 +2961,7 @@ end subroutine set_labels_sphNG
 !
 !-----------------------------------------------------------
 logical function file_format_is_sphNG(filename) result(is_sphNG)
+ use byteswap, only:bs
  character(len=*), intent(in) :: filename
  integer :: iunit,intg1,ierr
 
@@ -2971,6 +2976,10 @@ logical function file_format_is_sphNG(filename) result(is_sphNG)
  !
  read(iunit,iostat=ierr) intg1
  if (intg1==690706 .or. intg1==060769) is_sphNG = .true.
+ !
+ ! check for sphNG but in the other endian
+ !
+ if (bs(intg1)==690706 .or. bs(intg1)==060769) is_sphNG = .true.
  close(iunit)    ! close the file
 
 end function file_format_is_sphNG
