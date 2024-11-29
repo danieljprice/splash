@@ -1399,6 +1399,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
  use read_kepler,      only:check_for_composition_file,read_kepler_composition
+ use byteswap,         only:bs
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1541,9 +1542,17 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     doubleprec = .true.
     read(iunit,iostat=ierr) intg1,r8,int2,iversion,int3
     if (intg1 /= 690706 .and. intg1 /= 060769) then
-       print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
-       close(iunit)
-       return
+       if (bs(intg1)==690706 .or. bs(intg1)==060769) then
+          print "(a)",'*** ERROR: file is wrong endian, try:'
+          print "(/,4x,a,/,/,6x,a,/)",'export GFORTRAN_CONVERT_UNIT=big_endian','or, with ifort:'
+          print "(4x,a)",'export F_UFMTENDIAN=big'
+          close(iunit)
+          return
+       else
+          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
+          close(iunit)
+          return
+       endif
     endif
     if (int2 /= 780806 .and. int2 /= 060878) then
        if (iverbose >= 2) print "(a)",' single precision dump'
