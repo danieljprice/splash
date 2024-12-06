@@ -112,11 +112,12 @@ module plotlib
       giza_draw_pixels, &
       giza_colour_index_min,&
       giza_colour_index_max,&
+      giza_extend_none,&
       giza_extend_pad,&
       giza_extend_repeat, &
       giza_extend_reflect, &
-      giza_extend_none
- implicit none
+      giza_filter_default
+      implicit none
  logical, parameter :: plotlib_is_pgplot = .false.
  logical, parameter :: plotlib_supports_alpha = .true.
  integer, parameter :: plotlib_maxlinestyle = 6
@@ -182,50 +183,62 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  endif
 end subroutine plot_init
 
-subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+subroutine plot_gray(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend, filter)
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
  real               :: affine(6)
- integer, intent(in), optional :: iextend
+ integer, intent(in), optional :: iextend,filter
+ integer :: ifilter
 
  call convert_tr_to_affine(tr,affine)
 
+ ifilter = giza_filter_default
+ if (present(filter)) ifilter = filter
+
  if (present(iextend)) then
-    call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
+    call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,ifilter,affine)
  else
-    call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,affine)
+    call giza_render_gray(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,ifilter,affine)
  endif
 
 end subroutine plot_gray
 
-subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+subroutine plot_imag(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend, filter)
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: A(IDIM,JDIM), A1, A2, TR(6)
  real               :: affine(6)
- integer, intent(in), optional :: iextend
+ integer, intent(in), optional :: iextend,filter
+ integer :: ifilter
 
  call convert_tr_to_affine(tr,affine)
 
+ ifilter = giza_filter_default
+ if (present(filter)) ifilter = filter
+
  if (present(iextend)) then
-    call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
+    call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,ifilter,affine)
  else
-    call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,affine)
+    call giza_render(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,ifilter,affine)
  endif
 
 end subroutine plot_imag
 
-subroutine plot_imag_alpha(dat, alpha, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend)
+subroutine plot_imag_alpha(dat, alpha, idim, jdim, i1, i2, j1, j2, a1, a2, tr, iextend, filter)
  integer,intent(in) :: IDIM, JDIM, I1, I2, J1, J2
  real,intent(in)    :: dat(IDIM,JDIM), alpha(IDIM,JDIM), A1, A2, TR(6)
  real               :: affine(6)
- integer, intent(in), optional :: iextend
+ integer, intent(in), optional :: iextend,filter
+ integer :: ifilter
 
  call convert_tr_to_affine(tr,affine)
 
+ ifilter = giza_filter_default
+ if (present(filter)) ifilter = filter
+
  if (present(iextend)) then
-    call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,affine)
+    call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,iextend,ifilter,affine)
  else
-    call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,0,affine)
+    call giza_render(idim,jdim,dat,alpha,i1-1,i2-1,j1-1,j2-1,a1,a2,0,ifilter,affine)
  endif
 
 end subroutine plot_imag_alpha
@@ -236,7 +249,7 @@ subroutine plot_imag_transparent(a, idim, jdim, i1, i2, j1, j2, a1, a2, tr)
  real               :: affine(6)
 
  call convert_tr_to_affine(tr,affine)
- call giza_render_transparent(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,affine)
+ call giza_render_transparent(idim,jdim,a,i1-1,i2-1,j1-1,j2-1,a1,a2,0,0,affine)
 
 end subroutine plot_imag_transparent
 
@@ -438,12 +451,13 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
 end subroutine plot_vect
 
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
- use giza, only:giza_draw_pixels
+ use giza, only:giza_draw_pixels,giza_filter_default
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2
  integer,intent(in) :: ia(idim,jdim)
  real,intent(in)    :: x1,x2,y1,y2
 
- call giza_draw_pixels(IDIM, JDIM, IA, I1-1, I2-1, J1-1, J2-1, X1, X2, Y1, Y2, 0)
+ call giza_draw_pixels(IDIM, JDIM, IA, I1-1, I2-1, J1-1, J2-1, &
+                       X1, X2, Y1, Y2, 0, giza_filter_default)
 
 end subroutine plot_pixl
 
