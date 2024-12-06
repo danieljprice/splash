@@ -1,4 +1,30 @@
 
+**3.11.1: (06/12/24)**
+
+- bug fix with type recognition in sphNG data read, better wrong endian error message (thanks to Matthew Bate)
+- recognise sphNG format correctly even if the dump is big endian
+- use kappa in opacity rendering if present in the dump file (thanks to Mike Lau)
+
+**3.11.0: (25/11/24)**
+
+- opacity rendering done in parallel
+- compute bad pixel fraction in splash calc lightcurve
+- option to write fits cube in splash calc lightcurve (thanks to Fitz Hu)
+- --kappatot option computes opacities using formula from Matsumoto & Metzger (2022)
+- read grad(E) as a vector in phantom snapshots (thanks to Mike Lau)
+- add SYSTEM=ifx for new intel compiler (thanks to Lionel Siess)
+- splash calc tdiffuse option for photon diffusion time along each axis
+- improved label recognition and read all header quantities in GIZMO HDF5 data read
+- plot cross-sections by default if plotting fits data cube
+- bug fix reading phantom snapshots with APR
+- better docs on making movies (thanks to Alison Young)
+- bug fix in vtk data read
+- bug fix in follow-the-label column recognition in non-cartesian coordinates (thanks to Lionel Siess)
+
+**3.10.3: (04/03/24)**
+
+- bug fix reading type information from phantom dumps introduced in 3.10.2
+
 **3.10.2: (01/03/24)**
 
 - reads phantom dumps with adaptive particle refinement

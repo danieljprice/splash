@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.1  : (06/12/24)
+!             bug fix with type recognition in sphNG data read, better wrong endian error
+!             message (thanks to Matthew Bate); recognise sphNG format correctly even
+!             if the dump is big endian; use kappa in opacity rendering if
+!             present in the dump file (thanks to Mike Lau)
 !     3.11.0  : (25/11/24)
 !             opacity rendering done in parallel;
 !             compute bad pixel fraction in splash calc lightcurve;
@@ -621,7 +626,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.0 [25th Nov 2024]'
+ character(len=*), parameter :: version = 'v3.11.1 [6th Dec 2024]'
 
  !
  ! initialise some basic code variables
