@@ -1749,6 +1749,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           required(ih) = .true.
        endif
 
+       !--always read mass and h if density is needed, as rho is constructed from m and h
+       if (required(irho)) then
+          required(ipmass) = .true.
+          required(ih) = .true.
+       endif
+
        !--for phantom dumps, also make a column for density
        !  and divv, if a .divv file exists
        if (phantomdump) then
