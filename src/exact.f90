@@ -1235,7 +1235,6 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
              if (iApplyTransExactFile) then
                 !--change into physical units if appropriate
                 if (iRescale .and. iApplyUnitsExactFile) then
-                   print*,' HERE SCALING XEXACT BY ',unitsx
                    xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
                    yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
                 endif

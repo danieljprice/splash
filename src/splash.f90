@@ -54,7 +54,8 @@ program splash
 !     3.11.2  : (09/12/24)
 !             bug fix reading density from phantom small dumps if not rendering;
 !             automated plotting of star profiles from phantom relax.profile file if present;
-!             better automated unit guessing when comparing to exact solution from file
+!             better automated unit guessing when comparing to exact solution from file;
+!             plotting library api updated to giza v1.5
 !     3.11.1  : (06/12/24)
 !             bug fix with type recognition in sphNG data read, better wrong endian error
 !             message (thanks to Matthew Bate); recognise sphNG format correctly even
