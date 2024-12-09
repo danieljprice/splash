@@ -29,12 +29,13 @@ subroutine set_options_dataread()
  use settings_part,  only:iplotpartoftype,PlotonRenderings
  use particle_data,  only:npartoftype
  use settings_data,  only:ndim,ncolumns,ntypes,iexact,iverbose,UseTypeInRenderings,idefaults_file_read
- use filenames,      only:rootname,nsteps,ifileopen
+ use filenames,      only:rootname,nsteps,ifileopen,fileprefix
  use labels,         only:labeltype,irho,ih,get_sink_type
  use asciiutils,     only:ucase
  use settings_render,  only:icolour_particles
  use settings_xsecrot, only:xsec_nomulti
- integer :: itype,nplot,ierr
+ integer :: itype,nplot,ierr,idash
+ logical :: iexist
  !
  !--check for errors in data read / print warnings
  !
@@ -85,6 +86,27 @@ subroutine set_options_dataread()
     if (ifileopen > 0) then
        call read_exactparams(iexact,rootname(ifileopen),ierr)
     endif
+ elseif (.not.idefaults_file_read .and. ifileopen > 0) then
+    !
+    ! set the exact solution option ON by default if
+    ! certain files are present
+    !
+    idash = index(rootname(ifileopen),'_',back=.true.)
+    if (idash==0) idash = len_trim(rootname(ifileopen))+1
+
+    inquire(file=trim(rootname(ifileopen))//'.func',exist=iexist)
+    if (iexist) iexact = 1
+
+    inquire(file=trim(fileprefix)//'.exactfiles',exist=iexist)
+    if (iexist) iexact = 2
+
+    inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.profile',exist=iexist)
+    if (iexist) iexact = 2
+
+    inquire(file=trim(rootname(ifileopen))//'.spirals',exist=iexist)
+    if (iexist) iexact = 17
+
+    call read_exactparams(iexact,rootname(ifileopen),ierr)
  endif
 
 end subroutine set_options_dataread
