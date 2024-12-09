@@ -355,7 +355,7 @@ subroutine rescale_data(firsttime,nsteps_read)
  use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default,&
                           map_shifted_columns,labelorig,labelreq
  use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
- use settings_units, only:units,units_default,unitzintegration,unitzintegration_default,read_unitsfile
+ use settings_units, only:units,units_calc,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
  use params,         only:maxplot
  logical, intent(in) :: firsttime
@@ -391,6 +391,7 @@ subroutine rescale_data(firsttime,nsteps_read)
  !
  if (iRescale .and. any(abs(units(0:ncolumns)-1.0) > tiny(units))) then
     if (debugmode) write(*,"(a)") ' rescaling data...'
+    units_calc = units
     imap = map_shifted_columns()
     do j=1,nsteps_read
        do i=1,min(ncolumns,maxcol)

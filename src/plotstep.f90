@@ -688,7 +688,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
  use settings_powerspec, only:nfreqspec,freqmin,freqmax,ipowerspecx,ipowerspecy,&
                                idisordered,npdfbins
- use settings_units,     only:units,unitzintegration
+ use settings_units,     only:units,units_calc,unitzintegration
 !
 !--subroutines called from this routine
 !
@@ -2116,7 +2116,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                    pmassmin,pmassmax,ntoti,imarktype(1), &
-                   units(iplotx),units(iploty),irescale,iaxisy)
+                   units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
              endif
 
              !--the following line sets the number of steps on page to nstepsonpage
@@ -2221,7 +2221,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                 pmassmin,pmassmax,ntoti,imarktype(1), &
-                units(iplotx),units(iploty),irescale,iaxisy)
+                units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
           endif
           !--------------------------------
           ! now plot particles
@@ -2320,7 +2320,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                 pmassmin,pmassmax,ntoti,imarktype(1), &
-                units(iplotx),units(iploty),irescale,iaxisy)
+                units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
           endif
           !
           !--enter interactive mode
@@ -2522,7 +2522,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                    pmassmin,pmassmax,ntoti,imarktype(1), &
-                   units(iplotx),units(iploty),irescale,iaxisy)
+                   units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
              endif
 
              if (lastplot) istepsonpage = nstepsperpage

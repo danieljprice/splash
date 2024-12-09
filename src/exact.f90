@@ -770,7 +770,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  case(2)
     filename = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename),nfiles_got,filename_exact,ierr)
-    if (ierr==-1 .and. nfiles <= 0) then ! look in .setup file only if no filenames set
+    if (ierr==-1 .and. nfiles_got <= 0 .and. len_trim(filename_exact(1))==0) then ! look in .setup file only if no filenames set
        if (iverbose > 1) print "(a)",' no file '//trim(filename)
        !
        ! if no .exactfiles, see if the phantom .setup file exists
@@ -778,7 +778,20 @@ subroutine read_exactparams(iexact,rootname,ierr)
        !
        filename = trim(rootname(1:idash-1))//'.setup'
        call read_var_from_file('outputfilename',filename_exact(1),filename,ierr)
-       if (ierr == 0) nfiles = 1
+       if (ierr == 0) then
+          nfiles = 1
+       else
+          !
+          ! failing this, have a look for a .profile file
+          !
+          filename = trim(rootname(1:idash-1))//'.profile'
+          inquire(file=filename,exist=iexist)
+          if (iexist) then
+             filename_exact(1) = filename
+             nfiles = 1
+             ierr = 0
+          endif
+       endif
        return
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
@@ -1212,11 +1225,17 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
           !--read exact solution from file
           print "(a)",'> reading '//trim(exact_labels(imapx))//' and '//trim(exact_labels(imapy))//' from '//trim(filename_tmp)
           call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
+          ! if everything has been done automatically, try to guess whether
+          ! the solution is in code units or physical units
+          if (iRescale .and. iauto_map_columns) then
+             iApplyUnitsExactFile = guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
+          endif
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
              if (iApplyTransExactFile) then
                 !--change into physical units if appropriate
                 if (iRescale .and. iApplyUnitsExactFile) then
+                   print*,' HERE SCALING XEXACT BY ',unitsx
                    xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
                    yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
                 endif
@@ -1581,6 +1600,9 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
 
 end subroutine exact_solution
 
+!------------------------------------------------------------------
+! try to figure out how to correctly transform the exact solution
+!------------------------------------------------------------------
 integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
  use transforms, only:islogged
  use asciiutils, only:lcase
@@ -1604,6 +1626,40 @@ integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
  endif
 
 end function get_transform
+
+!------------------------------------------------------------------
+! try to figure out how to correctly transform the exact solution
+!------------------------------------------------------------------
+logical function guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
+ real, intent(in) :: xplot(:),yplot(:),xexact(:),yexact(:)
+ real, intent(in) :: unitsx,unitsy
+
+ real :: range_xplot, range_yplot
+ real :: range_xexact_no_units, range_yexact_no_units
+ real :: range_xexact_with_units, range_yexact_with_units
+
+ ! Calculate ranges for xplot and yplot
+ range_xplot = maxval(xplot) - minval(xplot)
+ range_yplot = maxval(yplot) - minval(yplot)
+
+ ! Calculate ranges for xexact and yexact without applying units
+ range_xexact_no_units = maxval(xexact) - minval(xexact)
+ range_yexact_no_units = maxval(yexact) - minval(yexact)
+
+ ! Calculate ranges for xexact and yexact with applying units
+ range_xexact_with_units = maxval(xexact * unitsx) - minval(xexact * unitsx)
+ range_yexact_with_units = maxval(yexact * unitsy) - minval(yexact * unitsy)
+
+ ! Determine if applying units results in a closer range to xplot and yplot
+ ! that is at least an order of magnitude closer in one of the axes
+ if (abs(range_xexact_with_units - range_xplot) < 10.*abs(range_xexact_no_units - range_xplot) .or. &
+     abs(range_yexact_with_units - range_yplot) < 10.*abs(range_yexact_no_units - range_yplot)) then
+    guess_whether_to_apply_units_to_exact = .true.
+ else
+    guess_whether_to_apply_units_to_exact = .false.
+ endif
+
+end function guess_whether_to_apply_units_to_exact
 
 !------------------------------------------------------------------
 ! Wrapper routine to plot the exact solution line on current graph
