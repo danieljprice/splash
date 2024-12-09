@@ -30,6 +30,7 @@ module calcquantities
  implicit none
  public :: calc_quantities,setup_calculated_quantities
  public :: calc_quantities_use_x0,get_calc_data_dependencies
+ public :: print_example_quantities
 
  integer, parameter, private :: maxcalc = 35
  character(len=lenlabel),      dimension(maxcalc) :: calcstring = ' '
