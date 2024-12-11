@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -1150,7 +1150,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call changeveccoords(irender,renderplot,ntoti,ndim,itrackpart,dat)
              endif
              if (icontourplot > 0) then
-                labelrender = label(icontourplot)
+                labelcont = label(icontourplot)
                 if (.not.allocated(contourplot)) allocate(contourplot(size(renderplot))) ! only do this once
                 icontour_map = check_for_shifted_column(icontourplot,labelcont)
                 contourplot(1:ninterp) = dat(1:ninterp,icontour_map)
@@ -1645,6 +1645,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                             endif
+                            !!--adjust the units of the z-integrated quantity
+                            if (iRescale .and. units(ih) > 0. .and. .not.inormalise .and. coord_is_length(iplotz,icoordsnew)) then
+                               datpix = datpix*(unitzintegration/units(ih))
+                            endif
+
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
                                call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot)
@@ -1663,12 +1668,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                                endif
                                gotcontours = .true.
-                            endif
-                            !!--adjust the units of the z-integrated quantity
-                            if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
-                              .and. coord_is_length(iplotz,icoordsnew)) then
-                               datpix = datpix*(unitzintegration/units(ih))
-                               if (gotcontours) then
+                               !!--adjust the units of the z-integrated quantity
+                               if (iRescale .and. units(ih) > 0. .and. .not.inormalise .and. coord_is_length(iplotz,icoordsnew)) then
                                   datpixcont = datpixcont*(unitzintegration/units(ih))
                                endif
                             endif
@@ -1763,11 +1764,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                    !!--set label for column density (projection) plots
                    if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
+                      ! must call set weights here to determine if inormalise is true or false
+                      call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings),irenderplot,dummy_run=.true.)
                       inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                       labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
                                       labelzintegration,projlabelformat,iapplyprojformat)
-                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
+                      if (gotcontours) then
+                         ! must call set weights here to determine if inormalise is true or false
+                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot,dummy_run=.true.)
+                         inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
+                         labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
                                       iRescale,labelzintegration,projlabelformat,iapplyprojformat)
+                      endif
                    endif
                    !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                    labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -3425,17 +3433,18 @@ end subroutine settrackinglimits
 ! interface for setting interpolation weights
 ! (to make calls above neater)
 !-------------------------------------------------------------------
-subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
+subroutine set_weights(weighti,dati,iamtypei,usetype,icol,dummy_run)
  use settings_render,  only:idensityweightedinterpolation,iauto_densityweighted
  use interpolation,    only:set_interpolation_weights
  use settings_units,   only:unit_interp
  use settings_xsecrot, only:rendersinks,use3Dopacityrendering
  use labels,           only:get_sink_type,is_density
- real, dimension(:), intent(out) :: weighti
- real, dimension(:,:), intent(in) :: dati
+ real, dimension(:), intent(inout) :: weighti
+ real, dimension(:,:), intent(in)  :: dati
  integer(kind=int1), dimension(:), intent(in) :: iamtypei
  logical, dimension(:), intent(in) :: usetype
  integer, intent(in), optional :: icol
+ logical, intent(in), optional :: dummy_run
  integer :: isinktype,i_col
  logical :: idensityweighted,ichangedweights
 
@@ -3460,6 +3469,10 @@ subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
        inormalise = .true.
     endif
     icol_prev = i_col
+ endif
+
+ if (present(dummy_run)) then
+    if (dummy_run) return
  endif
 
  if (ichangedweights) then
