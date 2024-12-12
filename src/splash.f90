@@ -55,6 +55,8 @@ program splash
 !             bug fix reading density from phantom small dumps if not rendering;
 !             automated plotting of star profiles from phantom relax.profile file if present;
 !             better automated unit guessing when comparing to exact solution from file;
+!             fix hardwiring of decimal labels on y axis;
+!             bug fix with labels + limits in double rendering when using auto choice of density weighted rendering;
 !             plotting library api updated to giza v1.5
 !     3.11.1  : (06/12/24)
 !             bug fix with type recognition in sphNG data read, better wrong endian error
