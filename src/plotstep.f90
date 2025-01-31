@@ -713,7 +713,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use pagesetup,             only:redraw_axes
  use disc,                  only:disccalc,discplot
  use exactfromfile,         only:exact_fromfile
- use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec,iPlotExactUnder
+ use exact,                 only:iexact_rochelobe,use_sink_data,iPlotExactUnder,exact_set_rocheparam
  use write_pixmap,          only:iwritepixmap,writepixmap,readpixmap
  use pdfs,                  only:pdf_calc,pdf_write
  use plotutils,             only:plotline
@@ -1669,7 +1669,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                endif
                                gotcontours = .true.
                                !!--adjust the units of the z-integrated quantity
-                               if (iRescale .and. units(ih) > 0. .and. .not.inormalise .and. coord_is_length(iplotz,icoordsnew)) then
+                               if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
+                                  .and. coord_is_length(iplotz,icoordsnew)) then
                                   datpixcont = datpixcont*(unitzintegration/units(ih))
                                endif
                             endif
@@ -2112,12 +2113,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 if (iexact==iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
                    isinktype = get_sink_type(ntypes)
                    call locate_first_two_of_type(isink1,isink2,isinktype,iamtype,npartoftype,ntoti)
-                   mprim = dat(isink1,ipmass)
-                   msec  = dat(isink2,ipmass)
-                   xprim(1) = xplot(isink1)
-                   xprim(2) = yplot(isink1)
-                   xsec(1) = xplot(isink2)
-                   xsec(2) = yplot(isink2)
+                   call exact_set_rocheparam(dat(isink1,ipmass),dat(isink2,ipmass),&
+                        xplot(isink1),yplot(isink1),xplot(isink2),yplot(isink2))
                 endif
                 call exact_solution(iexact,iplotx,iploty, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &

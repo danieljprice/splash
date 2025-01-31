@@ -128,6 +128,7 @@ module exact
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
  public :: exactopts,exactparams
+ public :: exact_set_rocheparam
 
 contains
  !----------------------------------------------------------------------
@@ -1041,6 +1042,21 @@ subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
  endif
 
 end subroutine get_planetdisc_parameters_from_data
+
+!-----------------------------------------------------------------------
+! subroutine to set parameters needed for Roche lobe plotting
+!-----------------------------------------------------------------------
+subroutine exact_set_rocheparam(m1,m2,x1,y1,x2,y2)
+ real, intent(in) :: m1,m2,x1,y1,x2,y2
+
+ mprim = m1
+ msec  = m2
+ xprim(1) = x1
+ xprim(2) = y1
+ xsec(1) = x2
+ xsec(2) = y2
+
+end subroutine exact_set_rocheparam
 
 !-----------------------------------------------------------------------
 ! this subroutine drives the exact solution plotting using the
