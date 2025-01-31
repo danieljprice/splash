@@ -1366,7 +1366,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                       !--also get contour plot data
                       if (icontourplot > 0 .and. icontourplot <= numplot) then
-                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                         call set_weights(weight,dat,iamtype,UseTypeInContours)
                          call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
@@ -1394,7 +1394,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          if (allocated(datpixcont3D)) deallocate(datpixcont3D)
                          allocate ( datpixcont3D(npixx,npixy,npixz) )
 
-                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                         call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                          !!--interpolate from particles to 3D grid
                          call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
@@ -1490,7 +1490,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 ' : opacity-rendered cross section', xmin,ymin
                             if (ipmass > 0) then
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1513,7 +1513,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
                             else
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1559,7 +1559,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             endif
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                               call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_xsec_geom( &
@@ -1584,7 +1584,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             if (ipmass > 0) then
                                !--contour plot first
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
@@ -1607,7 +1607,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             else
                                !--do contour plot first so brightness corresponds to render plot
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1652,7 +1652,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot)
+                               call set_weights(weight,dat,iamtype,UseTypeInContours,icontourplot)
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_proj_geom( &
@@ -1772,7 +1772,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                       labelzintegration,projlabelformat,iapplyprojformat)
                       if (gotcontours) then
                          ! must call set weights here to determine if inormalise is true or false
-                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot,dummy_run=.true.)
+                         call set_weights(weight,dat,iamtype,UseTypeInContours,icontourplot,dummy_run=.true.)
                          inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                          labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
                                       iRescale,labelzintegration,projlabelformat,iapplyprojformat)
