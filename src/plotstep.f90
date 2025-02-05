@@ -3036,7 +3036,7 @@ subroutine page_setup(dummy_run)
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
  inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1)) .and. .not.dum) then
+ if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting
@@ -3059,7 +3059,7 @@ subroutine page_setup(dummy_run)
     if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
     call fix_equal_limits(rendermin,rendermax)
  endif
- if (debugmode) print*,'DEBUG: calling setpage...',nstepsperpage
+ if (debugmode) print*,'DEBUG: calling setpage with ',nstepsperpage,' steps per page'
  if (debugmode) print*,'DEBUG: xmin,xmax,ymin,ymax=',xmin,xmax,ymin,ymax
 
  if (nstepsperpage > 0 .or. inewpage) then
@@ -3115,10 +3115,10 @@ subroutine page_setup(dummy_run)
                         ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
 
        if (iprint_axes) then
-          if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: axes=YES ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = ' '
        else
-          if (debugmode) print*,'DEBUG: NOT printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: axes=NO ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = 'NOPGBOX'
        endif
        call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &
