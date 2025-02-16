@@ -30,6 +30,7 @@ module calcquantities
  implicit none
  public :: calc_quantities,setup_calculated_quantities
  public :: calc_quantities_use_x0,get_calc_data_dependencies
+ public :: print_example_quantities
 
  integer, parameter, private :: maxcalc = 35
  character(len=lenlabel),      dimension(maxcalc) :: calcstring = ' '
@@ -762,7 +763,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
  use settings_data,  only:ncolumns,ncalc,iRescale,xorigin,debugmode,ndim,required,iverbose, &
                            icoords,icoordsnew,ipartialread,track_string
  use mem_allocation, only:alloc
- use settings_units, only:units
+ use settings_units, only:units,units_calc
  use fparser,        only:checkf,parsef,evalf,EvalerrMsg,EvalErrType,rn,initf,endf
  use params,         only:maxplot
  use timing,         only:wall_time,print_time
@@ -776,7 +777,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
 !  real, parameter :: mhonkb = 1.6733e-24/1.38e-16
 !  real, parameter :: radconst = 7.5646e-15
 !  real, parameter :: lightspeed = 3.e10   ! in cm/s (cgs)
- real(kind=rn), dimension(maxplot+nextravars+maxhdr)          :: vals
+ real(kind=rn), dimension(maxplot+nextravars+maxhdr)          :: vals,unitvals
  character(len=lenvars), dimension(maxplot+nextravars+maxhdr) :: vars
  real, dimension(3) :: x0,v0
  real :: t1,t2
@@ -889,9 +890,17 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
              vals(ncolumns+icalc+2) = x0(1)
              vals(ncolumns+icalc+3) = x0(2)
              vals(ncolumns+icalc+4) = x0(3)
+             if (iRescale) then
+                unitvals(ncolumns+icalc)   = units(0)
+                unitvals(ncolumns+icalc+1) = 1.
+                unitvals(ncolumns+icalc+2) = units(ix(1))
+                unitvals(ncolumns+icalc+3) = units(ix(2))
+                unitvals(ncolumns+icalc+4) = units(ix(3))
+             endif
              nhdr = count_non_blank(headertags)
              do j=1,nhdr
                 vals(ncolumns+icalc+4+j) = headervals(j,i)
+                if (iRescale) unitvals(ncolumns+icalc+4+j) = 1.
              enddo
              if (icoordsnew /= icoords .and. ndim > 0 .and. all(ix(1:ndim) > 0)) then
                 !
@@ -906,13 +915,33 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                    !--evaluate function with transformed values
                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                 enddo
+                ! evaluate units of the new function
+                if (iRescale) then
+                   unitvals(1:ncolumns+icalc-1) = units(1:ncolumns+icalc-1)
+                   call change_coords(unitvals(1:ncolumns+icalc-1),ncolumns+icalc-1,&
+                                      ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
+                   ! DP: see comment below
+                   units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                endif
              else
                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns)
                 do j=1,ntoti
                    vals(1:ncolumns+icalc-1) = dat(j,1:ncolumns+icalc-1,i)
                    dat(j,ncolumns+icalc,i) = real(evalf(icalc,vals(1:ncolumns+icalc+nextravars+nhdr-1)))
                 enddo
-                !!$omp end parallel do
+                if (iRescale) then
+                   unitvals(1:ncolumns+icalc-1) = units(1:ncolumns+icalc-1)
+                   !
+                   ! DP: ideally we would fix the line below to compute the exact solution unit scaling directly
+                   ! for an arbitrary function string, but we have to take out the additions and
+                   ! subtractions, so would have to parse a reduced function, not the original function
+                   !
+                   ! For now, this is done manually by recognising the dimensionality of certain computed quantities
+                   ! in identify_calculated_quantities
+                   !
+                   units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                endif
+               !!$omp end parallel do
              endif
              if (EvalErrType /= 0) then
                 print "(a)",' ERRORS evaluating '//trim(calcstring(icalc))//': ' &
@@ -948,6 +977,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
  elseif (iRescale) then
     do i=ncolumns+1,ncolumns+ncalc
        if (index(label(i),trim(unitslabel(i)))==0) label(i) = trim(label(i))//trim(unitslabel(i))
+       if (debugmode) print*,'DEBUG: column ',i,trim(label(i)),' units_calc = ',units_calc(i)
     enddo
  endif
 
@@ -964,8 +994,9 @@ end subroutine calc_quantities
 !-----------------------------------------------------------------
 subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  use asciiutils,    only:lcase
- use labels,        only:irad,ike,ipr,ikappa,itemp,label_synonym
- use settings_data, only:debugmode
+ use labels,        only:irad,ike,ipr,ikappa,itemp,label_synonym,ix,ivx
+ use settings_data, only:debugmode,iRescale
+ use settings_units,only:units_calc,units
  character(len=*), intent(in) :: labelcol
  integer, intent(in) :: ncolumns,icolumn
  !
@@ -977,8 +1008,10 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  select case(label_synonym(labelcol))
  case('r','radius','rad')
     call assign_column(irad,icolumn,ncolumns,debugmode,'radius')
+    if (iRescale .and. ix(1) > 0) units_calc(icolumn) = units(ix(1))
  case('kinetic energy','ke','1/2 v^2','v^2/2')
     call assign_column(ike,icolumn,ncolumns,debugmode,'kinetic energy')
+    if (iRescale .and. ivx > 0) units_calc(icolumn) = units(ivx)**2
  case('pressure','pr','p')
     call assign_column(ipr,icolumn,ncolumns,debugmode,'pressure')
  case('kappa','opacity')

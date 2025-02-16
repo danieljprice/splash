@@ -30,7 +30,17 @@
 ! THIS ONE IS FOR FORTRAN 2003 COMPILERS
 !
 module system_commands
+ use iso_c_binding, only:c_int,c_char
  implicit none
+
+ interface
+  function setenv(name, value, overwrite) bind(c,name='setenv')
+   import :: c_int,c_char
+   integer(c_int) :: setenv
+   character(kind=c_char), intent(in) :: name(*), value(*)
+   integer(c_int), value :: overwrite
+  end function
+ end interface
 
 contains
 

@@ -1198,7 +1198,7 @@ subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
  character(len=len(labels(1))), dimension(size(labels)) :: tmplabel
  character(len=max_line_length) :: line
  logical :: is_csv,verbose,got_labels
- integer :: i,imethod,ierr,nwanted
+ integer :: i,imethod,ierr,nwanted,nlabelstmp
 
  is_csv = .false.
  verbose = .false.
@@ -1212,16 +1212,17 @@ subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
  do i=1,nheaderlines
     read(iunit,"(a)",iostat=ierr) line
     !--try to match column labels from this header line, if not already matched (or dubious match)
-    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
+    call get_column_labels(trim(line),nlabelstmp,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
     !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-    if ((got_labels .and. nlabels == nwanted) .or. &
-        (.not.got_labels .and. nlabels >= nwanted  & ! only allow single-spaced labels if == ncols
-         .and. (.not.(imethod>=4) .or. nlabels==nwanted))) then
+    if ((got_labels .and. nlabelstmp == nwanted) .or. &
+        (.not.got_labels .and. nlabelstmp >= nwanted  & ! only allow single-spaced labels if == ncols
+         .and. (.not.(imethod>=4) .or. nlabelstmp==nwanted))) then
        labels(1:nwanted) = tmplabel(1:nwanted)
        got_labels = .true.
+       nlabels = nlabelstmp
     endif
-    if (verbose) print "(5(1x,a,i0))",'DEBUG: line ',i,'nlabels = ',nlabels,&
-                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line) !,' LABELS= '//tmplabel(1:ncols)
+    if (verbose) print "(5(1x,a,i0),1x,a,l1)",'DEBUG: line ',i,'nlabels = ',nlabels,&
+                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line),'got_labels=',got_labels !,' LABELS= '//tmplabel(1:ncols)
  enddo
 
 end subroutine read_column_labels

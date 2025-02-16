@@ -1303,18 +1303,23 @@ end function map_sink_property_to_column
 !------------------------------------------------------------
 ! sanity check of the particle type accounting
 !------------------------------------------------------------
-subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei)
+subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei,phantomdump)
  use labels, only:labeltype
  use params, only:int1
  integer, intent(in) :: i1,i2
  integer(kind=int1), intent(in) :: iphase(i1:i2)
  integer, intent(inout) :: npartoftypei(:)
+ logical, intent(in)    :: phantomdump
  integer :: npartoftype_new(size(npartoftypei))
  integer :: k,itype
 
  npartoftype_new(:) = 0
  do k=i1,i2
-    itype = itypemap_phantom(iphase(k))
+    if (phantomdump) then
+       itype = itypemap_phantom(iphase(k))
+    else
+       itype = itypemap_sphNG(iphase(k))
+    endif
     npartoftype_new(itype) = npartoftype_new(itype) + 1
  enddo
  do k=1,size(npartoftypei)
@@ -1394,6 +1399,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
  use read_kepler,      only:check_for_composition_file,read_kepler_composition
+ use byteswap,         only:bs
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1541,9 +1547,17 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     doubleprec = .true.
     read(iunit,iostat=ierr) intg1,r8,int2,iversion,int3
     if (intg1 /= 690706 .and. intg1 /= 060769) then
-       print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
-       close(iunit)
-       return
+       if (bs(intg1)==690706 .or. bs(intg1)==060769) then
+          print "(a)",'*** ERROR: file is wrong endian, try:'
+          print "(/,4x,a,/,/,6x,a,/)",'export GFORTRAN_CONVERT_UNIT=big_endian','or, with ifort:'
+          print "(4x,a)",'export F_UFMTENDIAN=big'
+          close(iunit)
+          return
+       else
+          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
+          close(iunit)
+          return
+       endif
     endif
     if (int2 /= 780806 .and. int2 /= 060878) then
        if (iverbose >= 2) print "(a)",' single precision dump'
@@ -1737,6 +1751,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        if (ndustarrays > 0 .and. any(required(nhydroarrays+1:nhydroarrays+ndustarrays))) then
           if (debug) print*,' dustfrac in columns ',nhydroarrays+1,nhydroarrays+ndustarrays,' required = ',required(nhydroarrays+1)
           required(irho) = .true.
+          required(ih) = .true.
+       endif
+
+       !--always read mass and h if density is needed, as rho is constructed from m and h
+       if (required(irho)) then
+          required(ipmass) = .true.
           required(ih) = .true.
        endif
 
@@ -2327,7 +2347,7 @@ endif
 !
 !--sanity check the iphase array
 !
-    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j))
+    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j),phantomdump)
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -2711,6 +2731,7 @@ subroutine set_labels_sphNG
        case('kappa')
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
+          ikappa = i
        case('radFx')
           iradFx = i
        case('radP')
@@ -2982,7 +3003,6 @@ subroutine set_labels_sphNG
     UseTypeInRenderings(6) = .true.  ! only applies if turned on
  endif
 
- return
 end subroutine set_labels_sphNG
 
 !-----------------------------------------------------------
@@ -2991,6 +3011,7 @@ end subroutine set_labels_sphNG
 !
 !-----------------------------------------------------------
 logical function file_format_is_sphNG(filename) result(is_sphNG)
+ use byteswap, only:bs
  character(len=*), intent(in) :: filename
  integer :: iunit,intg1,ierr
 
@@ -3005,6 +3026,10 @@ logical function file_format_is_sphNG(filename) result(is_sphNG)
  !
  read(iunit,iostat=ierr) intg1
  if (intg1==690706 .or. intg1==060769) is_sphNG = .true.
+ !
+ ! check for sphNG but in the other endian
+ !
+ if (bs(intg1)==690706 .or. bs(intg1)==060769) is_sphNG = .true.
  close(iunit)    ! close the file
 
 end function file_format_is_sphNG

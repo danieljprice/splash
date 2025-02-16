@@ -1319,7 +1319,7 @@ subroutine set_labels_gadget
        case('VTRB')
           label(icol) = 'Turb Velociy'
        case('LTRB')
-          label(icol) = 'Turb Lengh'
+          label(icol) = 'Turb Length'
        case('ADYN')
           label(icol) = 'Alpha Dynamo'
        case('EDYN')
@@ -1345,7 +1345,7 @@ subroutine set_labels_gadget
        case('DENN')
           label(icol) = 'Number density'
        case('EGYP')
-          label(icol) = 'Energy Reservoir For Feeback'
+          label(icol) = 'Energy Reservoir For Feedback'
        case('EGYC')
           label(icol) = 'Energy Reservoir For Cold Phase'
        case('CRC0')

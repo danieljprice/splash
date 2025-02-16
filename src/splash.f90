@@ -51,7 +51,19 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.11.0  : (07/07/24)
+!     3.11.2  : (09/12/24)
+!             bug fix reading density from phantom small dumps if not rendering;
+!             automated plotting of star profiles from phantom relax.profile file if present;
+!             better automated unit guessing when comparing to exact solution from file;
+!             fix hardwiring of decimal labels on y axis;
+!             bug fix with labels + limits in double rendering when using auto choice of density weighted rendering;
+!             plotting library api updated to giza v1.5
+!     3.11.1  : (06/12/24)
+!             bug fix with type recognition in sphNG data read, better wrong endian error
+!             message (thanks to Matthew Bate); recognise sphNG format correctly even
+!             if the dump is big endian; use kappa in opacity rendering if
+!             present in the dump file (thanks to Mike Lau)
+!     3.11.0  : (25/11/24)
 !             opacity rendering done in parallel;
 !             compute bad pixel fraction in splash calc lightcurve;
 !             option to write fits cube in splash calc lightcurve (thanks to Fitz Hu);
@@ -62,7 +74,9 @@ program splash
 !             improved label recognition and read all header quantities in GIZMO HDF5 data read;
 !             plot cross-sections by default if plotting fits data cube;
 !             bug fix reading phantom snapshots with APR;
-!             better docs on making movies (thanks to Alison Young)
+!             better docs on making movies (thanks to Alison Young);
+!             bug fix in vtk data read;
+!             bug fix in follow-the-label column recognition in non-cartesian coordinates (thanks to Lionel Siess)
 !     3.10.3  : (04/03/24)
 !             bug fix reading type information from phantom dumps introduced in 3.10.2
 !     3.10.2  : (01/03/24)
@@ -619,7 +633,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.0 [7th Jul 2024]'
+ character(len=*), parameter :: version = 'v3.11.2 [9th Dec 2024]'
 
  !
  ! initialise some basic code variables

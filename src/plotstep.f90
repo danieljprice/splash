@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -688,7 +688,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                nseq,nframes,getsequencepos,insidesequence,rendersinks
  use settings_powerspec, only:nfreqspec,freqmin,freqmax,ipowerspecx,ipowerspecy,&
                                idisordered,npdfbins
- use settings_units,     only:units,unitzintegration
+ use settings_units,     only:units,units_calc,unitzintegration
 !
 !--subroutines called from this routine
 !
@@ -713,7 +713,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use pagesetup,             only:redraw_axes
  use disc,                  only:disccalc,discplot
  use exactfromfile,         only:exact_fromfile
- use exact,                 only:iexact_rochelobe,use_sink_data,mprim,msec,xprim,xsec,iPlotExactUnder
+ use exact,                 only:iexact_rochelobe,use_sink_data,iPlotExactUnder,exact_set_rocheparam
  use write_pixmap,          only:iwritepixmap,writepixmap,readpixmap
  use pdfs,                  only:pdf_calc,pdf_write
  use plotutils,             only:plotline
@@ -1150,7 +1150,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call changeveccoords(irender,renderplot,ntoti,ndim,itrackpart,dat)
              endif
              if (icontourplot > 0) then
-                labelrender = label(icontourplot)
+                labelcont = label(icontourplot)
                 if (.not.allocated(contourplot)) allocate(contourplot(size(renderplot))) ! only do this once
                 icontour_map = check_for_shifted_column(icontourplot,labelcont)
                 contourplot(1:ninterp) = dat(1:ninterp,icontour_map)
@@ -1366,7 +1366,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          pixwidth,pixwidthy,inormalise,exact_rendering,isperiodicx,isperiodicy,iverbose)
                       !--also get contour plot data
                       if (icontourplot > 0 .and. icontourplot <= numplot) then
-                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                         call set_weights(weight,dat,iamtype,UseTypeInContours)
                          call interpolate2D(xplot(1:ninterp),yplot(1:ninterp), &
                             hh(1:ninterp),weight(1:ninterp),contourplot(1:ninterp), &
                             icolourme(1:ninterp),ninterp,xmin,ymin,datpixcont,npixx,npixy, &
@@ -1394,7 +1394,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          if (allocated(datpixcont3D)) deallocate(datpixcont3D)
                          allocate ( datpixcont3D(npixx,npixy,npixz) )
 
-                         call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                         call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                          !!--interpolate from particles to 3D grid
                          call interpolate3D(xplot(1:ninterp),yplot(1:ninterp), &
@@ -1490,7 +1490,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                 ' : opacity-rendered cross section', xmin,ymin
                             if (ipmass > 0) then
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1513,7 +1513,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                dzscreentemp,rkappa,zslicepos,iverbose,exact_rendering)
                             else
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1559,7 +1559,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             endif
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                               call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_xsec_geom( &
@@ -1584,7 +1584,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             if (ipmass > 0) then
                                !--contour plot first
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
                                   dat(1:ninterp,ipmass),ninterp,hh(1:ninterp),weight(1:ninterp),&
@@ -1607,7 +1607,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                             else
                                !--do contour plot first so brightness corresponds to render plot
                                if (icontourplot > 0 .and. icontourplot <= numplot) then
-                                  call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours))
+                                  call set_weights(weight,dat,iamtype,UseTypeInContours)
 
                                   call interp3D_proj_opacity( &
                                   xplot(1:ninterp),yplot(1:ninterp),zplot(1:ninterp), &
@@ -1645,9 +1645,14 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                   icolourme(1:ninterp),ninterp,xmin,ymin,datpix,npixx,npixy,pixwidth, &
                                   pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                             endif
+                            !!--adjust the units of the z-integrated quantity
+                            if (iRescale .and. units(ih) > 0. .and. .not.inormalise .and. coord_is_length(iplotz,icoordsnew)) then
+                               datpix = datpix*(unitzintegration/units(ih))
+                            endif
+
                             !!--same but for contour plot
                             if (icontourplot > 0 .and. icontourplot <= numplot) then
-                               call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInContours),icontourplot)
+                               call set_weights(weight,dat,iamtype,UseTypeInContours,icontourplot)
 
                                if (icoordsnew /= icoords) then
                                   call interpolate3D_proj_geom( &
@@ -1663,12 +1668,9 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                      pixwidthy,inormalise,zobservertemp,dzscreentemp,ifastrender,exact_rendering,iverbose)
                                endif
                                gotcontours = .true.
-                            endif
-                            !!--adjust the units of the z-integrated quantity
-                            if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
-                              .and. coord_is_length(iplotz,icoordsnew)) then
-                               datpix = datpix*(unitzintegration/units(ih))
-                               if (gotcontours) then
+                               !!--adjust the units of the z-integrated quantity
+                               if (iRescale .and. units(ih) > 0. .and. .not.inormalise &
+                                  .and. coord_is_length(iplotz,icoordsnew)) then
                                   datpixcont = datpixcont*(unitzintegration/units(ih))
                                endif
                             endif
@@ -1763,11 +1765,18 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                    !!--set label for column density (projection) plots
                    if (ndim==3 .and..not. x_sec .and..not.use3Dopacityrendering) then
+                      ! must call set weights here to determine if inormalise is true or false
+                      call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings),irenderplot,dummy_run=.true.)
                       inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
                       labelrender = integrate_label(labelrender,irender,iz,inorm_label,iRescale,&
                                       labelzintegration,projlabelformat,iapplyprojformat)
-                      if (gotcontours) labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
+                      if (gotcontours) then
+                         ! must call set weights here to determine if inormalise is true or false
+                         call set_weights(weight,dat,iamtype,UseTypeInContours,icontourplot,dummy_run=.true.)
+                         inorm_label = (inormalise .or. .not.coord_is_length(iz,icoordsnew))
+                         labelcont = integrate_label(labelcont,icontourplot,iz,inorm_label,&
                                       iRescale,labelzintegration,projlabelformat,iapplyprojformat)
+                      endif
                    endif
                    !!--apply transformations to the label(s) for the rendered and contoured quantit(y,ies)
                    labelrender = transform_label(labelrender,itrans(irenderplot))
@@ -2104,19 +2113,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 if (iexact==iexact_rochelobe .and. use_sink_data .and. ipmass > 0 .and. ndim >= 2) then
                    isinktype = get_sink_type(ntypes)
                    call locate_first_two_of_type(isink1,isink2,isinktype,iamtype,npartoftype,ntoti)
-                   mprim = dat(isink1,ipmass)
-                   msec  = dat(isink2,ipmass)
-                   xprim(1) = xplot(isink1)
-                   xprim(2) = yplot(isink1)
-                   xsec(1) = xplot(isink2)
-                   xsec(2) = yplot(isink2)
+                   call exact_set_rocheparam(dat(isink1,ipmass),dat(isink2,ipmass),&
+                        xplot(isink1),yplot(isink1),xplot(isink2),yplot(isink2))
                 endif
                 call exact_solution(iexact,iplotx,iploty, &
                    itrans(iplotx),itrans(iploty),icoordsnew, &
                    ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                    pmassmin,pmassmax,ntoti,imarktype(1), &
-                   units(iplotx),units(iploty),irescale,iaxisy)
+                   units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
              endif
 
              !--the following line sets the number of steps on page to nstepsonpage
@@ -2221,7 +2226,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                 pmassmin,pmassmax,ntoti,imarktype(1), &
-                units(iplotx),units(iploty),irescale,iaxisy)
+                units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
           endif
           !--------------------------------
           ! now plot particles
@@ -2320,7 +2325,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                 xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                 pmassmin,pmassmax,ntoti,imarktype(1), &
-                units(iplotx),units(iploty),irescale,iaxisy)
+                units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
           endif
           !
           !--enter interactive mode
@@ -2522,7 +2527,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    icoordsnew,ndim,ndimV,timei,xmin,xmax,gammai, &
                    xplot(1:ntoti),yplot(1:ntoti),icolourme(1:ntoti),iamtype,npartoftype,iusetype, &
                    pmassmin,pmassmax,ntoti,imarktype(1), &
-                   units(iplotx),units(iploty),irescale,iaxisy)
+                   units_calc(iplotx),units_calc(iploty),irescale,iaxisy)
              endif
 
              if (lastplot) istepsonpage = nstepsperpage
@@ -2889,8 +2894,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  endif
 
  !if (.not.interactivereplot) then
-    ! restore original labels...
-    label = labelorig
+ ! restore original labels...
+ label = labelorig
  !endif
 
  !--free temporary arrays
@@ -3318,15 +3323,15 @@ subroutine legends_and_title
     ! add exact solution line to the legend
     !
     if (lastinpanel .and. plot_exact) then
-        nexact = get_nexact(iexact)
-        kk = 0
-        do k=1,nexact
-           if (len_trim(ExactLegendText(k)) > 0) then
-              kk = kk + 1
-              call legend_markers(istepsonpage+k,iExactLineColour(k),imarktype(1),iExactLineStyle(k), &
+       nexact = get_nexact(iexact)
+       kk = 0
+       do k=1,nexact
+          if (len_trim(ExactLegendText(k)) > 0) then
+             kk = kk + 1
+             call legend_markers(istepsonpage+k,iExactLineColour(k),imarktype(1),iExactLineStyle(k), &
                    .false.,.true.,ExactLegendText(k),hposlegend,vposlegend,1.0)
-           endif
-        enddo
+          endif
+       enddo
     endif
  endif
 
@@ -3425,17 +3430,18 @@ end subroutine settrackinglimits
 ! interface for setting interpolation weights
 ! (to make calls above neater)
 !-------------------------------------------------------------------
-subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
+subroutine set_weights(weighti,dati,iamtypei,usetype,icol,dummy_run)
  use settings_render,  only:idensityweightedinterpolation,iauto_densityweighted
  use interpolation,    only:set_interpolation_weights
  use settings_units,   only:unit_interp
  use settings_xsecrot, only:rendersinks,use3Dopacityrendering
  use labels,           only:get_sink_type,is_density
- real, dimension(:), intent(out) :: weighti
- real, dimension(:,:), intent(in) :: dati
+ real, dimension(:), intent(inout) :: weighti
+ real, dimension(:,:), intent(in)  :: dati
  integer(kind=int1), dimension(:), intent(in) :: iamtypei
  logical, dimension(:), intent(in) :: usetype
  integer, intent(in), optional :: icol
+ logical, intent(in), optional :: dummy_run
  integer :: isinktype,i_col
  logical :: idensityweighted,ichangedweights
 
@@ -3460,6 +3466,10 @@ subroutine set_weights(weighti,dati,iamtypei,usetype,icol)
        inormalise = .true.
     endif
     icol_prev = i_col
+ endif
+
+ if (present(dummy_run)) then
+    if (dummy_run) return
  endif
 
  if (ichangedweights) then
