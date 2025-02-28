@@ -146,7 +146,7 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
 
     istepsonpage = istepsonpage + 1
 !     if ((nstepsperpage > 1 .and. istepsonpage > 1 .and. istepsonpage <= nstepsperpage).or.nstepsperpage==0) then
-    if ((nstepsperpage > 1 .and. istepsonpage <= nstepsperpage).or.nstepsperpage==0) then
+    if ((nstepsperpage /= 1 .and. istepsonpage <= nstepsperpage)) then
        ipagechange = .false.
     else
        istepsonpage = 1

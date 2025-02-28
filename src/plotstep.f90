@@ -1960,7 +1960,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    endif
 
                    !--call subroutine to actually render the image
-                   if (nstepsperpage > 1 .and. .not.(ipos==ifirststeponpage)) then
+                   if (nstepsperpage /= 1 .and. .not.(ipos==ifirststeponpage)) then
                       !--if there is more than one rendering plotted, make the
                       !  background colour transparent
                       call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
@@ -2258,7 +2258,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    datpix,npixx,npixy,.false.,(ismooth_particle_plots==2))
 
                 ! for more than one step per page, progressively sum pixel maps
-                if (nstepsperpage > 1) then
+                if (nstepsperpage /= 1) then
                    if (allocated(datpixtot)) then
                       if (size(datpixtot) /= size(datpix)) deallocate(datpixtot)
                    endif
@@ -2281,7 +2281,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 ! plot the resulting pixel map
                 call render_pix(datpix,densmax-6.,densmax,'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
-                   .false.,.false.,transparent=(nstepsperpage > 1))
+                   .false.,.false.,transparent=(nstepsperpage /= 1))
              endif
              if (allocated(datpix)) deallocate(datpix)
              if (allocated(brightness)) deallocate(brightness)
@@ -2499,7 +2499,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              call plot_qci(icolourprev)    ! query line style and colour
              call plot_qls(linestyleprev)
              ! set appropriate colour and style if multiple steps per page
-             if (nstepsperpage > 1) then
+             if (nstepsperpage /= 1) then
                 call plot_sci(linecolourthisstep)
                 call plot_sls(linestylethisstep)
              endif
@@ -2677,7 +2677,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
              call plot_qci(icolourprev)    ! query line style and colour
              call plot_qls(linestyleprev)
-             if (nstepsperpage > 1) then
+             if (nstepsperpage /= 1) then
                 call plot_sci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
                 call plot_sls(linestylethisstep)
              endif
@@ -2951,7 +2951,7 @@ subroutine page_setup(dummy_run)
 
  iplots = iplots + 1
  ipanelchange = .true.
- if (nstepsperpage==0 .and. iplots > 1) ipanelchange = .false. ! this is an option to never change panels
+ !if (nstepsperpage==0 .and. iplots > 1) ipanelchange = .false. ! this is an option to never change panels
  if (iplots > 1 .and. nyplots==1 .and. nacross*ndown > 1.and..not.ipagechange) ipanelchange = .false.
  if (ipanelchange) ipanel = ipanel + 1
  if (ipanel > nacross*ndown) ipanel = 1
@@ -2967,7 +2967,7 @@ subroutine page_setup(dummy_run)
     ipanelpos = ipanel
  endif
  !--if we are in interactive mode, use the currently buffered plot limits
- if (interactivereplot .and. (nacross*ndown > 1 .or. (nstepsperpage > 1 .and. nsteps > 1))) then
+ if (interactivereplot .and. (nacross*ndown > 1 .or. (nstepsperpage /= 1 .and. nsteps > 1))) then
     xmin = xminmulti(iplotx)
     xmax = xmaxmulti(iplotx)
     ymin = xminmulti(iploty)
@@ -3036,7 +3036,7 @@ subroutine page_setup(dummy_run)
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
  inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
+ if ((inewpage .or. (nstepsperpage /= 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting

@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.3  : (XX/XX/25)
+!             bug fix with multiplot and multiple steps per page not printing axes correctly;
 !     3.11.2  : (09/12/24)
 !             bug fix reading density from phantom small dumps if not rendering;
 !             automated plotting of star profiles from phantom relax.profile file if present;
@@ -633,7 +635,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.2 [9th Dec 2024]'
+ character(len=*), parameter :: version = 'v3.11.3 [5th Feb 2025]'
 
  !
  ! initialise some basic code variables
