@@ -3035,8 +3035,9 @@ subroutine page_setup(dummy_run)
  if (iPlotTitles .and. nstepsperpage==1 .and. vpostitle > 0.) TitleOffset = vpostitle
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
- inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if ((inewpage .or. (nstepsperpage /= 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
+ inewpage = (ipanel==1 .and. ipanelchange .and. ipagechange) .or. &
+            (nstepsperpage==0 .and. istepsonpage==1 .and. ipanel==1 .and. nyplot==1)
+ if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting
@@ -3112,8 +3113,7 @@ subroutine page_setup(dummy_run)
 
        !--if we are not changing page, do not reprint the axes
        iprint_axes = ipagechange .or. inewpage .or. &
-                        ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
-
+                     ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
        if (iprint_axes) then
           if (debugmode) print*,'DEBUG: axes=YES ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = ' '
