@@ -743,7 +743,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
  integer :: icolourprev,linestyleprev
- integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
+ integer :: ierr,ipt,nplots,nyplotstart,nyplotend,iaxisy,iaxistemp,icol
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
  integer :: iframe,isize,isinktype,isink1,isink2,itrackoffset,itracktype
 
@@ -945,8 +945,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     else
        nyplotstart = 1
     endif
+    ! if multiple steps per page + multiplot and the panels do not match the page
+    ! try to handle this nicely (currently by just ending the multiplot early)
+    if (nstepsperpage > 1 .and. (nyplots-nyplotstart+1) > nacross*ndown) then
+       nyplotend = nyplotstart + nacross*ndown - 1
+    else
+       nyplotend = nyplots
+    endif
 
-    over_plots: do nyplot=nyplotstart,nyplots
+    over_plots: do nyplot=nyplotstart,nyplotend
 
        if (nyplot > 1 .or. iframe > 1) print 34
        !--make sure character height is set correctly
@@ -2985,7 +2992,7 @@ subroutine page_setup(dummy_run)
  lastrow  = (usecolumnorder .and. npanels_remaining < nacross .and. nacross > 1)
 
  lastplot = ((ipos==iendatstep .or. istep==nsteps) &
-                .and. nyplot==nyplots .and. k==nxsec)
+                .and. nyplot==nyplotend .and. k==nxsec)
 
  lastinpanel = (istepsonpage==nstepsperpage .or. lastplot)
  plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))

@@ -146,14 +146,14 @@ subroutine timestep_loop(ipicky,ipickx,irender,icontourplot,ivecplot)
 
     istepsonpage = istepsonpage + 1
 !     if ((nstepsperpage > 1 .and. istepsonpage > 1 .and. istepsonpage <= nstepsperpage).or.nstepsperpage==0) then
-    if ((nstepsperpage /= 1 .and. istepsonpage <= nstepsperpage)) then
+    if ((nstepsperpage > 1 .and. istepsonpage <= nstepsperpage) .or. nstepsperpage==0) then
        ipagechange = .false.
     else
        istepsonpage = 1
        ipagechange = .true.
     endif
     !--colour the timestep if appropriate
-    if ((nstepsperpage==0 .or. nstepsperpage > 1) .and. (iColourEachStep .or. iChangeStyles)) then
+    if ((nstepsperpage /= 1) .and. (iColourEachStep .or. iChangeStyles)) then
        call colour_timestep(istepsonpage,iColourEachStep,iChangeStyles)
     else
        !--otherwise set default colours for each particle type
