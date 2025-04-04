@@ -22,11 +22,11 @@ static int debug = 0;
  */
 
 int read_gadgethdf5_dataset(hid_t group_id, char *datasetname, int itype, int maxtypes, int npartoftype[maxtypes],
-                            int i0[maxtypes], int ncol, int isrequired[ncol], int *id, int *j);
+                            int i0[maxtypes], int ncol, int isrequired[ncol], int *id, int *j, int *iblock);
 void set_blocklabel_gadget(int *icol, int *irank, char *name);
 void set_header_label_gadget(int *icol, char *name);
 void read_gadgethdf5_data_fromc(int *icol, int *npartoftypei, double temparr[*npartoftypei],
-                                int id[*npartoftypei], int *itype, int *i0);
+                                int id[*npartoftypei], int *itype, int *i0, char *name, int *iblock);
 void get_vel_info(hid_t group_id, char *name, int *ndimV);
 void get_mass_info(hid_t group_id, char *name, int *rank);
 
@@ -389,7 +389,6 @@ void read_gadget_hdf5_header(char *filename,
 void read_gadget_hdf5_data(char *filename,
                            int maxtypes,
                            int npartoftype[maxtypes],
-                           double massoftype[maxtypes],
                            int ncol,
                            int isrequired[ncol],
                            int i0[maxtypes],
@@ -448,8 +447,9 @@ void read_gadget_hdf5_data(char *filename,
 
                 /* read particle ID */
                 int k = 0;
+                int m = 0;
                 id = malloc(npartoftype[itype] * sizeof(int));
-                *ierr = read_gadgethdf5_dataset(group_id, "ParticleIDs", itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &k);
+                *ierr = read_gadgethdf5_dataset(group_id, "ParticleIDs", itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &k, &m);
                 /* set all IDs to zero if not read */
                 if (*ierr != 0)
                     printf("DEBUG: error from ID read = %i, rank = %i \n", *ierr, k);
@@ -462,10 +462,11 @@ void read_gadget_hdf5_data(char *filename,
                 };
 
                 int j = 0;
+                int iblock = 0;
                 /* read datasets common to all particle types first */
-                *ierr = read_gadgethdf5_dataset(group_id, "Coordinates", itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j);
-                *ierr = read_gadgethdf5_dataset(group_id, namevels, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j);
-                *ierr = read_gadgethdf5_dataset(group_id, namemass, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j);
+                *ierr = read_gadgethdf5_dataset(group_id, "Coordinates", itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j, &iblock);
+                *ierr = read_gadgethdf5_dataset(group_id, namevels, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j, &iblock);
+                *ierr = read_gadgethdf5_dataset(group_id, namemass, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j, &iblock);
 
                 /* read remaining datasets in the order they appear in the file */
                 for (i = 0; i < (int)ndatasets; i++)
@@ -477,7 +478,7 @@ void read_gadget_hdf5_data(char *filename,
                         strcmp(datasetname, namevels) &&
                         strcmp(datasetname, namemass) && (iobjtype == H5G_DATASET))
                     {
-                        *ierr = read_gadgethdf5_dataset(group_id, datasetname, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j);
+                        *ierr = read_gadgethdf5_dataset(group_id, datasetname, itype, maxtypes, npartoftype, i0, ncol, isrequired, id, &j, &iblock);
                     }
                 }
 
@@ -504,7 +505,8 @@ int read_gadgethdf5_dataset(hid_t group_id,
                             int ncol,
                             int isrequired[ncol],
                             int *id,
-                            int *j)
+                            int *j,
+                            int *iblock)
 {
     hid_t dataset_id, dataspace_id, memspace_id;
     herr_t status;
@@ -540,6 +542,7 @@ int read_gadgethdf5_dataset(hid_t group_id,
             printf("DEBUG: skipping %s : not required\n", datasetname);
         H5Dclose(dataset_id);
         *j = *j + rank;
+        if (rank > 0) *iblock += 1;
         return 0;
     }
 
@@ -551,6 +554,8 @@ int read_gadgethdf5_dataset(hid_t group_id,
     memspace_id = H5Screate_simple(1, nparttmp, NULL);
     double *temp = 0;
     temp = malloc(npartoftype[itype] * sizeof(double));
+
+    if (rank > 0) *iblock = *iblock + 1;
 
     if (rank == 1)
     {
@@ -567,7 +572,7 @@ int read_gadgethdf5_dataset(hid_t group_id,
             H5Dread(dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id, H5P_DEFAULT, temp);
 
             /* call Fortran back, sending values in temp array to fill into the main splash dat array */
-            read_gadgethdf5_data_fromc(j, &npartoftype[itype], temp, id, &itype, &i0[itype]);
+            read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,id,&itype,&i0[itype],datasetname,iblock);
         }
     }
     else
@@ -599,7 +604,7 @@ int read_gadgethdf5_dataset(hid_t group_id,
                 H5Dread(dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id, H5P_DEFAULT, temp);
 
                 /* call Fortran back, sending values in temp array to fill into the main splash dat array */
-                read_gadgethdf5_data_fromc(j, &npartoftype[itype], temp, id, &itype, &i0[itype]);
+                read_gadgethdf5_data_fromc(j,&npartoftype[itype],temp,id,&itype,&i0[itype],datasetname,iblock);
             }
             else
             {
