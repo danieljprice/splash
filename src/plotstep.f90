@@ -1066,7 +1066,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
           if (initx) then
              !--check for errors
-             if (iplotx > size(dat(1,:)) .or. iplotx < 1) then
+             if (iplotx > size(dat,2) .or. iplotx < 1) then
                 print*,'ERROR: Internal error with out-of-bounds x column = ',iplotx
                 exit over_plots
              endif
@@ -1078,7 +1078,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           endif
           if (inity) then
              !--check for errors
-             if (iploty > size(dat(1,:)) .or. iploty < 1) then
+             if (iploty > size(dat,2) .or. iploty < 1) then
                 print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
                 exit over_plots
              endif
@@ -1266,7 +1266,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (ivectorplot > 0) then
                 ichangesize = .false.
                 if (allocated(vecplot)) then
-                   if (size(vecplot(1,:)) < ninterp) ichangesize = .true.
+                   if (size(vecplot,2) < ninterp) ichangesize = .true.
                 endif
                 if (.not.allocated(vecplot) .or. ichangesize) then
                    if (allocated(vecplot)) deallocate(vecplot)
@@ -1338,7 +1338,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
 
                 if (allocated(datpix)) then
-                   if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
+                   if (npixx /= size(datpix,1) .or. npixy /= size(datpix,2)) then
                       deallocate(datpix)
                       allocate (datpix(npixx,npixy))
                       if (ndim==3 .and. use3Dopacityrendering) then
@@ -1448,7 +1448,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                 if (.not.interactivereplot) then
                    if (allocated(datpix)) then
-                      if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
+                      if (npixx /= size(datpix,1) .or. npixy /= size(datpix,2)) then
                          deallocate(datpix)
                          if (debugmode) print*,'reallocating datpix...'
                          allocate ( datpix(npixx,npixy) )
@@ -1459,7 +1459,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    endif
                    if (icontourplot > ndim) then
                       if (allocated(datpixcont)) then
-                         if (npixx /= size(datpixcont(:,1)) .or. npixy /= size(datpixcont(1,:))) then
+                         if (npixx /= size(datpixcont,1) .or. npixy /= size(datpixcont,2)) then
                             deallocate(datpixcont)
                             if (debugmode) print*,'reallocating datpixcont...'
                             allocate ( datpixcont(npixx,npixy) )
