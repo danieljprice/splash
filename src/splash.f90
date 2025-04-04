@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2024 Daniel Price
+!     Copyright (C) 2005-2025 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,15 +51,17 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.11.3  : (XX/XX/25)
-!             bug fix with multiplot and multiple steps per page not printing axes correctly;
-!     3.11.2  : (09/12/24)
-!             bug fix reading density from phantom small dumps if not rendering;
+!     3.11.2  : (04/04/25)
 !             automated plotting of star profiles from phantom relax.profile file if present;
 !             better automated unit guessing when comparing to exact solution from file;
-!             fix hardwiring of decimal labels on y axis;
+!             can plot two shock tube exact solutions with different gammas on top of each other;
+!             improved behaviour with nstepsperpage = 0;
 !             bug fix with labels + limits in double rendering when using auto choice of density weighted rendering;
-!             plotting library api updated to giza v1.5
+!             plotting library api updated to giza v1.5; fix hardwiring of decimal labels on y axis;
+!             bug fix with multiplot and multiple steps per page not printing axes correctly;
+!             bug fix reading sink particle data in GADGET HDF5 format;
+!             bug fix with vector labelling in GADGET HDF5 read
+!             bug fix reading density from phantom small dumps if not rendering;
 !     3.11.1  : (06/12/24)
 !             bug fix with type recognition in sphNG data read, better wrong endian error
 !             message (thanks to Matthew Bate); recognise sphNG format correctly even
@@ -635,7 +637,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.3 [5th Feb 2025]'
+ character(len=*), parameter :: version = 'v3.11.2 [4th April 2025]'
 
  !
  ! initialise some basic code variables
@@ -1179,15 +1181,13 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2024 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2025 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
    '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
-   ' http://users.monash.edu.au/~dprice/splash ',/, &
-   ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
-   ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
-   ' use SPLASH in print and don''t forget to send pics for the gallery',/)
+   '           https://splash-viz.readthedocs.io',/,/, &
+   ' Please cite Price (2007), PASA 24, 159 if you use SPLASH in print',/)
 
 end subroutine print_header
 
