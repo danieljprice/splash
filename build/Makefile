@@ -22,6 +22,12 @@ VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../utils
 SHELL=/bin/bash
 
 #
+# use SYSTEM=gfortran if no SYSTEM variable is set
+#
+ifndef SYSTEM
+SYSTEM=gfortran
+endif
+#
 # some default settings for unix systems
 #
 FC=
