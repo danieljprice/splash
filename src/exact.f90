@@ -636,10 +636,12 @@ subroutine submenu_exact(iexact)
     if (use_gamma_exact) then
        call prompt('enter gamma',gamma_exact)
     endif
- endif
- call prompt('plot 2nd solution with different gamma?',use_gamma2_exact)
- if (use_gamma2_exact) then
-   call prompt('enter gamma for the second solution',gamma2_exact)
+    if (iexact==3 .or. iexact==13) then
+       call prompt('plot 2nd solution with different gamma?',use_gamma2_exact)
+       if (use_gamma2_exact) then
+         call prompt('enter gamma for the second solution',gamma2_exact)
+       endif
+    endif
  endif
 
 end subroutine submenu_exact
