@@ -1,0 +1,41 @@
+.. _sec:360:
+
+Making 360 videos for YouTube
+------------------------------
+
+Thanks to input from Chris Russell, splash has the ability to output images and videos
+that can be played as '360' videos in YouTube, where the user can move around in 3D.
+
+Quickstart on 360 videos
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can create a 360 video in splash as follows::
+
+    splash disc_0* -360 --movie
+
+Or with more control by first making an interactive plot and editing settings::
+
+    splash disc_0* -360
+
+For example, you can delete the colour bar by hovering over it and pressing backspace.
+Once happy, press 's' from the window followed by 's' from the text menu to save settings.
+Then save as an mpeg video by answering "movie.mp4" at the device prompt.
+
+You might also get pleasing results by moving the viewer using the --origin flag, e.g.::
+
+    splash disc_0* -360 --movie --origin=100,100,100
+
+Finally upload your mp4 to YouTube and tick the box indicating that it is a 360 video.
+
+Longer explanation on 360 videos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The basic functionality of the -360 flag is to change the coordinate system to spherical
+coordinates centred on the origin, and then render column density in a theta-phi view, i.e.
+showing the column density along radial lines of sight projected to the origin. SPLASH
+also sets the aspect ratio correctly as required for the YouTube 360 format.
+
+Yes we know 360 degrees is not the right term for an all sky view
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pedantically, it should be "4 pi steradians", especially if you ask the astronomers. 
+Hence, to keep the astronomers happy, "-fourpi" or "-4pi" is also accepted
+as a flag instead of "-360"
