@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.3  : (12/04/25)
+!             bug fix with automatic choice of columns with -360, also render density automatically in 360 mode;
+!             --origin=1,1,1 can be used to set the origin to a fixed coordinate
 !     3.11.2  : (04/04/25)
 !             automated plotting of star profiles from phantom relax.profile file if present;
 !             better automated unit guessing when comparing to exact solution from file;
@@ -760,10 +763,11 @@ program splash
           fileprefix = 'evsplash'
           call set_filenames(trim(fileprefix))
           got_format = .true.
-       case('360','4pi','fourpi')
+       case('360','-360','4pi','fourpi')
           use_360 = .true.
           ipickx = 2
           ipicky = 3
+          if (len_trim(stringr)==0) stringr = 'density'
           nomenu = .true.
        case('exact')
           i = i + 1
@@ -1028,8 +1032,8 @@ program splash
     !  translate from string to column id
     !
     if (nomenu) then
-       ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
-       ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
+       if (ipickx==0) ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
+       if (ipicky==0) ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
        irender = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringr)
        icontour = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringc)
        ivecplot = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringv)
@@ -1123,11 +1127,11 @@ program splash
              stop
           endif
        else
-          if (irender > 0 .and. ndim >= 2) then
+          if (irender > 0 .and. ndim >= 2 .and. .not. (ipicky > 0 .or. ipickx > 0)) then
              ipicky = 2
              ipickx = 1
              if (.not.allowrendering(ipicky,ipickx)) then
-                print "(a)",' ERROR: cannot render'
+                print "(a,i2,i2)",' ERROR: cannot render',ipicky,ipickx
                 stop
              endif
              if (icontour > numplot .or. icontour < 0) then
@@ -1226,6 +1230,7 @@ subroutine print_usage(quit)
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --origin=1,0,0    : centre on specified x,y,z coordinates'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
  print "(a)",' --track=666       : track particle number 666'
