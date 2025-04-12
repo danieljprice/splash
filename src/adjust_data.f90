@@ -60,7 +60,7 @@ end subroutine get_adjust_data_dependencies
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist,&
-                           ienvstring,get_environment_or_flag,get_command_flag
+                           ienvstring,get_environment_or_flag,get_command_flag,renvlist
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
  use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,&
                            UseFastRender,icoords,track_string
@@ -183,14 +183,21 @@ subroutine adjust_data_codeunits
        if (centreonsink)  then
           print "(/,a,/)",' ERROR: cannot use --sink and --origin at the same time'
        else
-          do j=1,nstepsinfile(ifileopen)
+          over_steps: do j=1,nstepsinfile(ifileopen)
              !
              !--handle strings like --origin=maxdens to locate the particle for the origin
              !
              ntot = sum(npartoftype(:,j))
-             if (len_trim(string) > 0 .and. iorigin==0) then
+             if (index(string,',') > 0) then
+                 x0 = renvlist(string,ndim,errval=-666.)
+                 if (all(abs(x0+666.) > tiny(0.))) then
+                    print*,':: CENTREING ON x=',x0(1:ndim),' from --origin='//trim(string)//' flag'
+                    call shift_positions(dat(:,:,j),ntot,ndim,x0)
+                 endif
+                 exit over_steps
+             elseif (len_trim(string) > 0 .and. iorigin==0) then
                 iorigin = locate_particle_from_string(string,ntot,dat(:,:,j),irho)
-                if (iorigin <= 0) exit ! quit loop over steps
+                if (iorigin <= 0) exit over_steps
              endif
              if (j==1 .or. ienvstring(string) == 0) then
                 print "(a,i0,a)",' :: CENTREING ON PARTICLE ',iorigin,' from --origin='//trim(string)//' flag'
@@ -200,7 +207,7 @@ subroutine adjust_data_codeunits
              !--now centre on the chosen particle
              !
              call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='')
-          enddo
+          enddo over_steps
        endif
     endif
 
