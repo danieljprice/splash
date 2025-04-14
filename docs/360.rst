@@ -4,7 +4,17 @@ Making 360 videos for YouTube
 ------------------------------
 
 Thanks to input from Chris Russell, splash has the ability to output images and videos
-that can be played as '360' videos in YouTube, where the user can move around in 3D.
+that can be played as '360' videos in YouTube, where the user can move around in 3D. 
+Try moving around in the video below (made with splash!). Here the viewer is at the
+Galactic Centre while the simulation models the surrounding stars and their winds.
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/Q6a9WyN_fbM" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    <br/>
+
 
 Quickstart on 360 videos
 ~~~~~~~~~~~~~~~~~~~~~~~~~
