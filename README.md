@@ -67,4 +67,4 @@ License
 -------
 See [LICENCE](LICENCE) file for usage and distribution conditions
 
-Copyright (c) 2004-2023 Daniel Price and contributors
+Copyright (c) 2004-2025 Daniel Price and contributors
