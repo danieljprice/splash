@@ -2449,8 +2449,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     call locate_nth_particle_of_type(1,isink1,get_sink_type(ntypes),iamtype(:,j),npartoftype(:,j),ntotal)
     if (rad_corotate > tiny(rad_corotate) .and. isink1 > 0) then
        m1 = dat(isink1,4,j)
-       omega = sqrt(m1 / rad_corotate**3)
-       print "(a,g8.2,a)",' :: COROTATING FRAME at R = ',rad_corotate,' around sink particle #1'
+       omega = -sqrt(m1 / rad_corotate**3)
+       print "(a,g8.2,a,g8.2)",' :: COROTATING FRAME at R = ',rad_corotate,' around sink particle #1, M=',m1
     else
        omega = renvironment('SSPLASH_OMEGAT')
     endif
