@@ -51,9 +51,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.11.3  : (12/04/25)
+!     3.11.3  : (23/04/25)
 !             bug fix with automatic choice of columns with -360, also render density automatically in 360 mode;
-!             --origin=1,1,1 can be used to set the origin to a fixed coordinate
+!             --origin=1,1,1 can be used to set the origin to a fixed coordinate;
+!             --omegar=x flag can be used to specify radius from sink particle of Keplerian corotating frame velocity;
+!             bug fix with accidental log of all columns in interactive mode with only one dust species;
+!             SYSTEM=gfortran is now the default if no SYSTEM is specified when compiling
 !     3.11.2  : (04/04/25)
 !             automated plotting of star profiles from phantom relax.profile file if present;
 !             better automated unit guessing when comparing to exact solution from file;
@@ -640,7 +643,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.3 [14th April 2025]'
+ character(len=*), parameter :: version = 'v3.11.3 [23rd April 2025]'
 
  !
  ! initialise some basic code variables
