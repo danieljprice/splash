@@ -66,7 +66,7 @@ program splash
 !             plotting library api updated to giza v1.5; fix hardwiring of decimal labels on y axis;
 !             bug fix with multiplot and multiple steps per page not printing axes correctly;
 !             bug fix reading sink particle data in GADGET HDF5 format;
-!             bug fix with vector labelling in GADGET HDF5 read
+!             bug fix with vector labelling in GADGET HDF5 read;
 !             bug fix reading density from phantom small dumps if not rendering;
 !     3.11.1  : (06/12/24)
 !             bug fix with type recognition in sphNG data read, better wrong endian error
