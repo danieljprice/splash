@@ -470,18 +470,21 @@ subroutine plot_particle(imarktype,x,y,h)
  case(32:35)
     imarker = imarktype - 31
     size = hfacmarkers*h
-    if (imarker <= 2) then
+    ! also plot point in centre in case circle is too small
+    ! but only if marker type is solid fill
+    if (imarker /= 2) call plot_pt1(x,y,1)
+    if (imarker <= 2) then   ! solid circle
        call plot_sfs(imarker)
        call plot_circ(x,y,size)
        call plot_sfs(1)
-    elseif (imarker==3) then
+    elseif (imarker==3) then ! open circle
        call plot_sfs(1)
        call plot_circ(x,y,size)
        call plot_sfs(2)
        call plot_sci(0)
        call plot_circ(x,y,size)
        call plot_sfs(1)
-    elseif (imarker==4) then
+    elseif (imarker==4) then ! outlined solid circle
        call plot_sfs(1)
        call plot_circ(x,y,size)
        call plot_sfs(2)
