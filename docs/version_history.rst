@@ -1,4 +1,52 @@
 
+**3.11.3: (23/04/25)**
+
+- bug fix with automatic choice of columns with -360, also render density automatically in 360 mode
+- --origin=1,1,1 can be used to set the origin to a fixed coordinate
+- --omegar=x flag can be used to specify radius from sink particle of Keplerian corotating frame velocity
+- bug fix with accidental log of all columns in interactive mode with only one dust species
+- SYSTEM=gfortran is now the default if no SYSTEM is specified when compiling
+
+**3.11.2: (04/04/25)**
+
+- automated plotting of star profiles from phantom relax.profile file if present
+- better automated unit guessing when comparing to exact solution from file
+- can plot two shock tube exact solutions with different gammas on top of each other
+- improved behaviour with nstepsperpage = 0
+- bug fix with labels + limits in double rendering when using auto choice of density weighted rendering
+- plotting library api updated to giza v1.5
+- fix hardwiring of decimal labels on y axis
+- bug fix with multiplot and multiple steps per page not printing axes correctly
+- bug fix reading sink particle data in GADGET HDF5 format
+- bug fix with vector labelling in GADGET HDF5 read
+- bug fix reading density from phantom small dumps if not rendering
+
+**3.11.1: (06/12/24)**
+
+- bug fix with type recognition in sphNG data read, better wrong endian error message (thanks to Matthew Bate)
+- recognise sphNG format correctly even if the dump is big endian
+- use kappa in opacity rendering if present in the dump file (thanks to Mike Lau)
+
+**3.11.0: (25/11/24)**
+
+- opacity rendering done in parallel
+- compute bad pixel fraction in splash calc lightcurve
+- option to write fits cube in splash calc lightcurve (thanks to Fitz Hu)
+- --kappatot option computes opacities using formula from Matsumoto & Metzger (2022)
+- read grad(E) as a vector in phantom snapshots (thanks to Mike Lau)
+- add SYSTEM=ifx for new intel compiler (thanks to Lionel Siess)
+- splash calc tdiffuse option for photon diffusion time along each axis
+- improved label recognition and read all header quantities in GIZMO HDF5 data read
+- plot cross-sections by default if plotting fits data cube
+- bug fix reading phantom snapshots with APR
+- better docs on making movies (thanks to Alison Young)
+- bug fix in vtk data read
+- bug fix in follow-the-label column recognition in non-cartesian coordinates (thanks to Lionel Siess)
+
+**3.10.3: (04/03/24)**
+
+- bug fix reading type information from phantom dumps introduced in 3.10.2
+
 **3.10.2: (01/03/24)**
 
 - reads phantom dumps with adaptive particle refinement

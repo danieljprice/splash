@@ -92,13 +92,12 @@ module readdata_gadget_hdf5
    integer(kind=c_int), intent(out) :: ndim,ndimV,nfiles,ncol,ierr
   end subroutine read_gadget_hdf5_header
 
-  subroutine read_gadget_hdf5_data(filename,maxtypes,npartoftypei,massoftypei,&
+  subroutine read_gadget_hdf5_data(filename,maxtypes,npartoftypei,&
                                     ncol,isrequired,i0,ierr) bind(c)
    import
    character(kind=c_char), dimension(*), intent(in)  :: filename
    integer(kind=c_int), intent(in), value :: maxtypes
    integer(kind=c_int), dimension(6), intent(in) :: npartoftypei
-   real(kind=c_double), dimension(6), intent(in) :: massoftypei
    integer(kind=c_int), intent(in), value  :: ncol
    integer(kind=c_int), intent(out) :: ierr
    integer(kind=c_int), dimension(ncol), intent(in)  :: isrequired
@@ -442,7 +441,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
        isrequired(:) = 0
        where (required(1:ncolumns)) isrequired(1:ncolumns) = 1
 
-       call read_gadget_hdf5_data(cstring(datfile),maxtypes,npartoftypei,massoftypei,ncolumns,isrequired,i0,ierr)
+       call read_gadget_hdf5_data(cstring(datfile),maxtypes,npartoftypei,ncolumns,isrequired,i0,ierr)
 
     endif got_particles
 !
@@ -491,7 +490,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  elseif (arepo .and. ih > 0) then
     dat(1:npartoftype(1,i),ih,i) = dat(1:npartoftype(1,i),ih,i)**(1./3.)
     print "(a)",' this is an AREPO snapshot, using Volume**(1./3.) as smoothing length'
- elseif (ih > 0 .and. required(ih) .and. size(dat(1,:,:)) >= ih .and. npartoftype(1,i) > 0) then
+ elseif (ih > 0 .and. required(ih) .and. size(dat,2) >= ih .and. npartoftype(1,i) > 0) then
     !
     !--for some reason the smoothing length output by GADGET is
     !  twice the usual SPH smoothing length
@@ -697,29 +696,51 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 
 end subroutine read_data_gadget_hdf5
 
-subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bind(c)
+subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0,name,iblock) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
  use particle_data,  only:dat,iamtype
  use settings_data,  only:debugmode
  use labels,         only:label
  use system_utils,   only:lenvironment
- integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0
- real(kind=c_double), dimension(npartoftypei), intent(in) :: temparr
+ integer(kind=c_int), intent(in) :: icol,npartoftypei,itype,i0,iblock
+ real(kind=c_double), dimension(npartoftypei), intent(inout) :: temparr
  integer(kind=c_int), dimension(npartoftypei), intent(in) :: id
+ character(kind=c_char), dimension(256), intent(in) :: name
  integer(kind=c_int) :: i,icolput
- integer :: nmax,nerr,idi
+ integer :: ncolmax,nmax,nerr,idi
+ character(len=256) :: datasetname
+ logical :: matched
+
+ datasetname = fstring(name)
 
  icolput = icol
- if (debugmode) print "(a,i2,a,i2,a,i8)",'DEBUG: reading column ',icol,' type ',itype,' -> '//trim(label(icolput))//', offset ',i0
- if (icolput > size(dat(1,:,1)) .or. icolput==0) then
+ nmax    = size(dat,1)
+ ncolmax = size(dat,2)
+ if (icolput > ncolmax .or. icolput==0) then
     print "(a,i2,a)",' ERROR: column = ',icolput,' out of range in receive_data_fromc'
     return
  endif
- nmax = size(dat(:,1,1))
+ matched = .true.
+ if (trim(blocklabelgas(iblock)) /= trim(datasetname)) then
+    matched = .false.
+    do i=1,ncolmax
+       if (trim(reformatlabel(datasetname))==trim(label(i))) then
+          if (debugmode) print "(a,i0)",'DEBUG: matched '//trim(datasetname)//' to column ',i
+          icolput = i
+          matched = .true.
+       endif
+    enddo
+    if (.not.matched) then
+       temparr = 0.
+       if (debugmode) print "(a,i0)",'DEBUG: Warning: skipping unmatched dataset '//&
+                                     trim(datasetname)//' for particle type ',itype
+    endif
+ endif
 
  !useids = .not.lenvironment('GSPLASH_FIXID')
- if (all(id <= 0) .or. size(iamtype(:,1)) <= 1) useids = .false.
- if (debugmode) print*,'DEBUG: using particle IDs = ',useids,' max = ',nmax
+ if (all(id <= 0) .or. size(iamtype,1) <= 1) useids = .false.
+ if (debugmode .and. matched) print "(a,i2,a,i2,a,i8,a,l1)",'DEBUG: reading column ',icol,&
+     ' type ',itype,' -> '//trim(label(icolput))//', offset ',i0,' use IDs=',useids
 
  if (useids) then
     nerr = 0
@@ -734,7 +755,7 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
              idi = idi - 1000000000
              if (idi <= nmax .and. idi > 0) then
                 dat(idi,icolput,1) = real(temparr(i))
-                iamtype(idi,1) = itype + 1
+                iamtype(idi,1) = int(itype + 1,kind=kind(iamtype))
              else
                 nerr = nerr + 1
                 if (debugmode .and. nerr <= 10) print*,i,'fixed id = ',idi
@@ -745,7 +766,7 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
           endif
        else
           dat(idi,icolput,1) = real(temparr(i))
-          iamtype(idi,1) = itype + 1
+          iamtype(idi,1) = int(itype + 1,kind=kind(iamtype))
        endif
     enddo
     if (nerr > 0) print*,'ERROR: got particle ids outside array dimensions ',nerr,' times'
@@ -762,9 +783,9 @@ subroutine read_gadgethdf5_data_fromc(icol,npartoftypei,temparr,id,itype,i0) bin
     do i=1,nmax
        dat(i0+i,icolput,1) = real(temparr(i))
     enddo
-    if (size(iamtype(:,1)) > 1) then
+    if (size(iamtype,1) > 1) then
        do i=1,nmax
-          iamtype(i0+i,1) = itype + 1
+          iamtype(i0+i,1) = int(itype + 1,kind=kind(iamtype))
        enddo
     endif
  endif

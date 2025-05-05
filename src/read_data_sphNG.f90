@@ -1303,18 +1303,23 @@ end function map_sink_property_to_column
 !------------------------------------------------------------
 ! sanity check of the particle type accounting
 !------------------------------------------------------------
-subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei)
+subroutine check_iphase_matches_npartoftype(i1,i2,iphase,npartoftypei,phantomdump)
  use labels, only:labeltype
  use params, only:int1
  integer, intent(in) :: i1,i2
  integer(kind=int1), intent(in) :: iphase(i1:i2)
  integer, intent(inout) :: npartoftypei(:)
+ logical, intent(in)    :: phantomdump
  integer :: npartoftype_new(size(npartoftypei))
  integer :: k,itype
 
  npartoftype_new(:) = 0
  do k=i1,i2
-    itype = itypemap_phantom(iphase(k))
+    if (phantomdump) then
+       itype = itypemap_phantom(iphase(k))
+    else
+       itype = itypemap_sphNG(iphase(k))
+    endif
     npartoftype_new(itype) = npartoftype_new(itype) + 1
  enddo
  do k=1,size(npartoftypei)
@@ -1388,12 +1393,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,&
-                          iutherm,itemp,ikappa,irhorestframe,labelreq,nreq
+                          iutherm,itemp,ikappa,irhorestframe,labelreq,nreq,get_sink_type
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique,match_tag
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
  use read_kepler,      only:check_for_composition_file,read_kepler_composition
+ use byteswap,         only:bs
+ use part_utils,       only:locate_nth_particle_of_type
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
@@ -1407,7 +1414,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
- integer :: icentre,icomp_col_start,ncomp
+ integer :: icentre,icomp_col_start,ncomp,isink1
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
@@ -1427,7 +1434,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, dimension(maxinblock) :: dummyreal
  real :: hfact,omega
  real(doub_prec) :: Xfrac,Yfrac
- real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei
+ real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei,m1,rad_corotate
  logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_kappa_tot
  logical :: get_ionfrac,need_to_allocate_iphase,got_tag
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
@@ -1536,9 +1543,17 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     doubleprec = .true.
     read(iunit,iostat=ierr) intg1,r8,int2,iversion,int3
     if (intg1 /= 690706 .and. intg1 /= 060769) then
-       print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
-       close(iunit)
-       return
+       if (bs(intg1)==690706 .or. bs(intg1)==060769) then
+          print "(a)",'*** ERROR: file is wrong endian, try:'
+          print "(/,4x,a,/,/,6x,a,/)",'export GFORTRAN_CONVERT_UNIT=big_endian','or, with ifort:'
+          print "(4x,a)",'export F_UFMTENDIAN=big'
+          close(iunit)
+          return
+       else
+          print "(a)",'*** ERROR READING HEADER: corrupt file/zero size/wrong endian?'
+          close(iunit)
+          return
+       endif
     endif
     if (int2 /= 780806 .and. int2 /= 060878) then
        if (iverbose >= 2) print "(a)",' single precision dump'
@@ -1732,6 +1747,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        if (ndustarrays > 0 .and. any(required(nhydroarrays+1:nhydroarrays+ndustarrays))) then
           if (debug) print*,' dustfrac in columns ',nhydroarrays+1,nhydroarrays+ndustarrays,' required = ',required(nhydroarrays+1)
           required(irho) = .true.
+          required(ih) = .true.
+       endif
+
+       !--always read mass and h if density is needed, as rho is constructed from m and h
+       if (required(irho)) then
+          required(ipmass) = .true.
           required(ih) = .true.
        endif
 
@@ -2261,38 +2282,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     enddo
  endif
 
- !
- !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set,
- !  or reset centre to densest clump if environment variable "SSPLASH_RESET_DENSE" is set
- !  the latter will override the former
- ! (updated from n1 to npart since order is not preserved when dumping data; JHW)
- icentre = 0
- if (lenvironment('SSPLASH_RESET_CM'))    icentre = 1
- if (lenvironment('SSPLASH_RESET_DENSE')) icentre = 2
- if (allocated(dat) .and. npart > 0 .and. npart <= size(dat(:,1,1)) .and. icentre > 0 .and. allocated(iphase)) then
-    call reset_centre_of_mass(dat(1:npart,1:3,j),dat(1:npart,4,j),dat(1:npart,5,j),iphase(1:npart),npart,icentre)
- endif
- !
- !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
- !
- if (allocated(dat) .and. n1 > 0 .and. all(required(1:2))) then
-    omega = renvironment('SSPLASH_OMEGAT')
-    if (abs(omega) > tiny(omega) .and. ndim >= 2) then
-       call reset_corotating_positions(n1,dat(1:n1,1:2,j),omega,time(j))
-    endif
-
-    if (.not. smalldump) then
-       if (abs(omega) < tiny(omega)) omega = renvironment('SSPLASH_OMEGA')
-       if (abs(omega) > tiny(omega) .and. ivx > 0) then
-          if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
-             print*,' ERROR subtracting corotating frame with partial data read'
-          else
-             call reset_corotating_velocities(n1,dat(1:n1,1:2,j),dat(1:n1,ivx:ivx+1,j),omega)
-          endif
-       endif
-    endif
- endif
-
  !--set flag to indicate that only part of this file has been read
  if (.not.all(required(1:ncolstep))) ipartialread = .true.
 
@@ -2306,7 +2295,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !
 !--sanity check the iphase array
 !
-    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j))
+    if (gotiphase) call check_iphase_matches_npartoftype(1,npart,iphase,npartoftype(:,j),phantomdump)
 !
 !--translate iphase into particle types (mixed type storage)
 !
@@ -2426,12 +2415,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
  endif iphasealloc
 
- if (allocated(dattemp)) deallocate(dattemp)
- if (allocated(dattempsingle)) deallocate(dattempsingle)
- if (allocated(dattemp2)) deallocate(dattemp2)
- if (allocated(iphase)) deallocate(iphase)
- if (allocated(listpm)) deallocate(listpm)
-
  call set_labels_sphNG
  if (.not.phantomdump) then
     if (ngas /= npart - nptmassi - ndust - nstar - nunknown) &
@@ -2451,9 +2434,57 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     npartoftype(itypemap_unknown_phantom,j) = npartoftype(itypemap_unknown_phantom,j) + nunknown
  endif
 
+
+ !
+ !--reset centre of mass to zero if environment variable "SSPLASH_RESET_CM" is set,
+ !  or reset centre to densest clump if environment variable "SSPLASH_RESET_DENSE" is set
+ !  the latter will override the former
+ ! (updated from n1 to npart since order is not preserved when dumping data; JHW)
+ icentre = 0
+ if (lenvironment('SSPLASH_RESET_CM'))    icentre = 1
+ if (lenvironment('SSPLASH_RESET_DENSE')) icentre = 2
+ if (allocated(dat) .and. npart > 0 .and. npart <= size(dat(:,1,1)) .and. icentre > 0 .and. allocated(iphase)) then
+    call reset_centre_of_mass(dat(1:npart,1:3,j),dat(1:npart,4,j),dat(1:npart,5,j),iphase(1:npart),npart,icentre)
+ endif
+ !
+ !--reset corotating frame velocities if environment variable "SSPLASH_OMEGA" is set
+ !
+ if (allocated(dat) .and. n1 > 0 .and. all(required(1:2))) then
+    rad_corotate = renvironment('SSPLASH_OMEGAR')
+    call locate_nth_particle_of_type(1,isink1,get_sink_type(ntypes),iamtype(:,j),npartoftype(:,j),ntotal)
+    if (rad_corotate > tiny(rad_corotate) .and. isink1 > 0) then
+       m1 = dat(isink1,4,j)
+       omega = -sqrt(m1 / rad_corotate**3)
+       print "(a,g8.2,a,g8.2)",' :: COROTATING FRAME at R = ',rad_corotate,' around sink particle #1, M=',m1
+    else
+       omega = renvironment('SSPLASH_OMEGAT')
+    endif
+    if (abs(omega) > tiny(omega) .and. ndim >= 2) then
+       call reset_corotating_positions(n1,dat(1:n1,1:2,j),omega,time(j))
+    endif
+
+    if (.not. smalldump) then
+       if (abs(omega) < tiny(omega)) omega = renvironment('SSPLASH_OMEGA')
+       if (abs(omega) > tiny(omega) .and. ivx > 0) then
+          if (.not.all(required(1:2)) .or. .not.all(required(ivx:ivx+1))) then
+             print*,' ERROR subtracting corotating frame with partial data read'
+          else
+             call reset_corotating_velocities(n1,dat(1:n1,1:2,j),dat(1:n1,ivx:ivx+1,j),omega)
+          endif
+       endif
+    endif
+ endif
+
  if (iverbose > 0) call print_types(npartoftype(:,j),labeltype)
 
  close(15)
+
+ if (allocated(dattemp)) deallocate(dattemp)
+ if (allocated(dattempsingle)) deallocate(dattempsingle)
+ if (allocated(dattemp2)) deallocate(dattemp2)
+ if (allocated(iphase)) deallocate(iphase)
+ if (allocated(listpm)) deallocate(listpm)
+
  if (debug) print*,' finished data read, npart = ',npart, ntotal, npartoftype(1:ntypes,j)
 
  return
@@ -2689,6 +2720,7 @@ subroutine set_labels_sphNG
        case('kappa')
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
+          ikappa = i
        case('radFx')
           iradFx = i
        case('radP')
@@ -2952,7 +2984,6 @@ subroutine set_labels_sphNG
     UseTypeInRenderings(6) = .true.  ! only applies if turned on
  endif
 
- return
 end subroutine set_labels_sphNG
 
 !-----------------------------------------------------------
@@ -2961,6 +2992,7 @@ end subroutine set_labels_sphNG
 !
 !-----------------------------------------------------------
 logical function file_format_is_sphNG(filename) result(is_sphNG)
+ use byteswap, only:bs
  character(len=*), intent(in) :: filename
  integer :: iunit,intg1,ierr
 
@@ -2975,6 +3007,10 @@ logical function file_format_is_sphNG(filename) result(is_sphNG)
  !
  read(iunit,iostat=ierr) intg1
  if (intg1==690706 .or. intg1==060769) is_sphNG = .true.
+ !
+ ! check for sphNG but in the other endian
+ !
+ if (bs(intg1)==690706 .or. bs(intg1)==060769) is_sphNG = .true.
  close(iunit)    ! close the file
 
 end function file_format_is_sphNG
