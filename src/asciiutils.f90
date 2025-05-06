@@ -1214,7 +1214,7 @@ subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
     !--try to match column labels from this header line, if not already matched (or dubious match)
     call get_column_labels(trim(line),nlabelstmp,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
     !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-    if ((got_labels .and. nlabelstmp == nwanted) .or. &
+    if ((got_labels .and. nlabelstmp == nwanted) .or. (.not.got_labels .and. imethod==2) .or. &
         (.not.got_labels .and. nlabelstmp >= nwanted  & ! only allow single-spaced labels if == ncols
          .and. (.not.(imethod>=4) .or. nlabelstmp==nwanted))) then
        labels(1:nwanted) = tmplabel(1:nwanted)

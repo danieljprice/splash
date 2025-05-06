@@ -1398,7 +1398,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use asciiutils,     only:make_tags_unique,match_tag
  use sphNGread
  use lightcurve_utils, only:get_temp_from_u,ionisation_fraction,get_opacity
- use read_kepler,      only:check_for_composition_file,read_kepler_composition
+ use readcomposition,  only:check_for_composition_file,read_composition
  use byteswap,         only:bs
  use part_utils,       only:locate_nth_particle_of_type
  integer, intent(in)  :: indexstart,iposn
@@ -2240,7 +2240,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  endif
 
  if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
-    call read_kepler_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp)
+    call read_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp)
  endif
  !
  !--calculate the temperature from density and internal energy (using physical units)
