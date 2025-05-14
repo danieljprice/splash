@@ -917,7 +917,7 @@ end subroutine interp3D_proj_vec_synctron
 subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
            xpoints,ypoints,zpoints,datsmooth,npoints,normalise,iverbose)
 
- use kernels, only:radkernel,radkernel2
+ use kernels, only:radkernel2
  integer, intent(in) :: npart,npoints,iverbose
  real, intent(in), dimension(npart) :: x,y,z,hh,weight,dat
  integer, intent(in), dimension(npart) :: itype
@@ -927,7 +927,7 @@ subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
  real, dimension(:), allocatable :: datnorm
 
  integer :: i,j,ierr
- real :: hi,hi1,hi21,radkern,q2,wab,rab2,const
+ real :: hi,hi1,hi21,q2,wab,rab2
  real :: term,termnorm,dx,dy,dz
 
  datsmooth = 0.
@@ -953,9 +953,8 @@ subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,weight,dat,itype,datsmooth,npart) &
 !$omp shared(xpoints,ypoints,zpoints,datnorm) &
-!$omp shared(npoints,normalise,radkernel,radkernel2) &
-!$omp private(hi,radkern,const) &
-!$omp private(hi1,hi21,term,termnorm) &
+!$omp shared(npoints,normalise,radkernel2) &
+!$omp private(hi,hi1,hi21,term,termnorm) &
 !$omp private(i,j) &
 !$omp private(dz,dy,dx,rab2,q2,wab)
 !$omp do schedule(guided, 2)
@@ -968,15 +967,13 @@ subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
     !--set kernel related quantities
     !
     hi = hh(i)
-    const = weight(i)*hi ! h gives the z length scale (NB: no perspective)
     if (hi <= 0.) cycle over_particles
 
-    radkern = radkernel*hi    ! radius of the smoothing kernel
     hi1 = 1./hi
     hi21 = hi1*hi1
 
-    term = const*dat(i)
-    termnorm = const
+    termnorm = weight(i)*hi
+    term = termnorm*dat(i)
 
     !
     !--loop over points, adding the contribution from this particle

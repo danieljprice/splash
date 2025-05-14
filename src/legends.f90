@@ -37,7 +37,7 @@ module legends
 
  ! store bounding box of each legend in global variables
  type box
-  real :: x1,x2,y1,y2
+    real :: x1,x2,y1,y2
  end type box
 
  integer, parameter :: nlegend_types = 4
@@ -92,9 +92,9 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
  !  parse string for functions of time and formatting
  !  i.e. %t.5
  !
- vars = (/'t'/)
+ vars(1) = 't'
  vals(1) = real(t,kind=rn)
- if (nvar > 0) then
+ if (nvar > 1) then
     vars(2:1+nvar) = tags(1:nvar)
     vals(2:1+nvar) = allvars(1:nvar)
  endif

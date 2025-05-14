@@ -27,7 +27,8 @@ module byteswap
  public :: bs
 
  interface bs
-  module procedure reverse_bytes_r4,reverse_bytes_r8,reverse_bytes_int
+  module procedure reverse_bytes_r4,reverse_bytes_r8,&
+                   reverse_bytes_int,reverse_bytes_int8
  end interface bs
 
  private
@@ -70,7 +71,7 @@ end function reverse_bytes_r8
 !--------------------------------------------------------
 integer(kind=4) elemental function reverse_bytes_int(x) result(y)
  integer(kind=4), intent(in) :: x
- character(len=1)         :: src_arr(4), dst_arr(4)
+ character(len=1)            :: src_arr(4), dst_arr(4)
 
  ! put whatever the variable was into an 8 x 1 character string
  src_arr = transfer(x,src_arr)
@@ -80,5 +81,21 @@ integer(kind=4) elemental function reverse_bytes_int(x) result(y)
  y = transfer(dst_arr,y)
 
 end function reverse_bytes_int
+
+!--------------------------------------------------------
+! function to swap byte order (int 4)
+!--------------------------------------------------------
+integer(kind=8) elemental function reverse_bytes_int8(x) result(y)
+ integer(kind=8), intent(in) :: x
+ character(len=1)            :: src_arr(8), dst_arr(8)
+
+ ! put whatever the variable was into an 8 x 1 character string
+ src_arr = transfer(x,src_arr)
+ ! swap the bytes around into the desired order
+ dst_arr = src_arr(little_endian_order8)
+ ! copy the 8 x 1 character string back to represent the original type
+ y = transfer(dst_arr,y)
+
+end function reverse_bytes_int8
 
 end module byteswap

@@ -64,7 +64,7 @@ contains
 
 subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  use particle_data,    only:dat,npartoftype,masstype,maxcol,maxpart,headervals
- use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose
+ use settings_data,    only:ndim,ndimV,ncolumns,ncalc,ipartialread,iverbose,debugmode
  use mem_allocation,   only:alloc
  use readwrite_fits,   only:read_fits_cube,fits_error,write_fits_image,&
                             get_floats_from_fits_header,get_velocity_from_fits_header
@@ -183,14 +183,16 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
  centre_image = .true.
  j0 = 0.5*naxes(1)
  k0 = 0.5*naxes(2)
- n = 0
  dx = 1.*pixelscale
  dy = 1.*pixelscale
  dz = 1.*pixelscale
+ if (debugmode) print*,'DEBUG: mapping...'
+ !$omp parallel do private(j,k,l,n) &
+ !$omp shared(dat,naxes,centre_image,dx,dy,dz,j0,k0,image,i,pixelscale,ndim)
  do l=1,naxes(3)
     do k=1,naxes(2)
        do j=1,naxes(1)
-          n = n + 1
+          n = (l-1)*naxes(1)*naxes(2) + (k-1)*naxes(1) + j
           if (centre_image) then
              dat(n,1,i) = (j - j0)*dx
              dat(n,2,i) = (k - k0)*dy
@@ -205,19 +207,8 @@ subroutine read_data_fits(rootname,istepstart,ipos,nstepsread)
        enddo
     enddo
  enddo
-!
-! set smoothing length
-!
- !allocate(old_image(naxes(1),naxes(2)))
- !old_image = image
- !call image_denoise(naxes,image,dat(1:npixels,3,i))
-
-
-!
-! write smoothed fits image
-!
- !image = image - old_image
- !call write_fits_image('splash-output.fits',image,naxes,ierr)
+ !$omp end parallel do
+ if (debugmode) print*,'DEBUG: done'
 !
 ! clean up
 !
@@ -255,7 +246,7 @@ subroutine set_labels_fits
  if (ipmass > 0)  label(ipmass)     = 'flux'
  if (ih > 0)      label(ih)         = 'sigma'
 
- if (ndim==2) iautorender = irho ! automatically select this column for first plot
+ if (ndim >= 2) iautorender = irho ! automatically select this column for first plot
 
  ! set labels for each particle type
  ntypes = 1

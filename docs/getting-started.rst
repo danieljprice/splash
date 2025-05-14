@@ -42,7 +42,16 @@ Compiling from source
 
 Basic instructions
 ~~~~~~~~~~~~~~~~~~
-If you have admin (super user) permissions::
+If you have admin (super user) permissions
+
+Ubuntu/Windows Subsystem for Linux::
+
+   sudo apt-get install libcairo2-dev
+   git clone https://github.com/danieljprice/giza.git; cd giza; ./configure; make; sudo make install; cd ..
+   git clone https://github.com/danieljprice/splash.git
+   cd splash; make SYSTEM=gfortran; sudo make install
+
+Mac::
 
    git clone https://github.com/danieljprice/giza.git; cd giza; ./configure; make; sudo make install; cd ..
    git clone https://github.com/danieljprice/splash.git

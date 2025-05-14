@@ -39,10 +39,11 @@ module planetdisc
 
 contains
 
-subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,rplot,yplot,ierr)
+subroutine exact_planetdisc(iplot,ispiral,use_clockwise,time,HonR,rplanet,q,phi0,narms,params,rplot,yplot,ierr)
  use plotlib,  only:plot_line
  use geometry, only:set_planet_wake,planet_wake_t
  integer, intent(in)  :: iplot,ispiral,narms
+ logical, intent(in)  :: use_clockwise
  integer, intent(out) :: ierr
  real,    intent(in)  :: time, HonR, rplanet, q, phi0, params(:,:)
  real, dimension(:),           intent(inout) :: rplot
@@ -52,7 +53,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
  logical :: use_ogilvie,use_nonlin
  real :: r,rr,phase,dr,phi,rmin,rmax,phimin,phimax,dphi,coeff(maxcoeff)
  real, parameter :: pi = 4.*atan(1.)
- real :: p,t0,dt
+ real :: p,t0,dt,dir
 
  p = 0.5
  t0 = 0.
@@ -63,6 +64,12 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
  !if (time > 0.) phase = phase + (time - (2.*pi*norbits))
  use_ogilvie = .false.
  use_nonlin = .false.
+ if (use_clockwise) then
+    dir = -1.
+ else
+    dir = 1.
+ endif
+
  select case(ispiral)
  case(2)
     print "(a,i2)",' Spiral arm fitting formula r = sum(a_i*phi^i,i=1,4) narms =',narms
@@ -178,7 +185,7 @@ subroutine exact_planetdisc(iplot,ispiral,time,HonR,rplanet,q,phi0,narms,params,
                    if (dt > 0.) phi = phi + sign(1.,r-rplanet)*HonR*sqrt(dt)
                 endif
              endif
-             rplot(i) = r*cos(phi)
+             rplot(i) = dir*r*cos(phi)
              yplot(i) = r*sin(phi)
           end select
           !print*,'r, phi = ',r,phi,' : x, y = ',rplot(i),yplot(i)

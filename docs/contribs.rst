@@ -31,7 +31,8 @@ Acknowledgements
 
 Josh Calcino contributed significantly to development of the unified 
 splash binary used in version 3. James Wetter led original development
-of the giza backend used in version 2 onwards.
+of the giza backend used in version 2 onwards. The exact rendering
+algorithm was contributed by Maya Petkova, based on [Petkova18]_.
 Several of the routines were developed from ideas used by Matthew Bate
 and splash has been refined by many useful discussions with Matthew. The
 polytrope exact solution is from a routine by Joe Monaghan. I am
@@ -72,13 +73,16 @@ helped to improve splash including, but not limited to:
  Thomas Grief,
  Doron Grossman,
  Jean-Fran\c{c}ois Gonzalez,
+ Kieran Hirsh,
  Johnny Hitti,
+ Fitz (Fangyi) Hu,
  Mark Hutchison,
  Vid Ir\v{s}i\v{c},
  John Jones,
  Sky King,
  Laura Kreidberg,
  Guillaume Laibe,
+ Mike Lau,
  Ben Lewis,
  David Liptai,
  Giuseppe Lodato,
@@ -91,13 +95,19 @@ helped to improve splash including, but not limited to:
  Andrew McLeod,
  Nick Moeckel,
  Shazrene Mohamed,
+ Chunliang Mu,
  Rebecca Nealon,
  Chris Nixon,
  Alex Pettitt,
+ Maya Petkova,
+ Vasu Prasad,
  Cody Raskin,
  John Regan,
  Sahl Rowther,
  Dave Rundle,
+ Chris Russell,
+ Megha Sharma,
+ Joanna Shepherd,
  Alison Sills,
  Kevin Sooley,
  Phil Sutton,
@@ -108,8 +118,10 @@ helped to improve splash including, but not limited to:
  Sigfried Vanaverbeke,
  Enrique Vazquez-Semadeni
  Antonio Vazquez,
+ Arnaud Vericel,
  Tim Waters,
  James Wurster,
+ Alison Young,
  Matt Young.
 
 And to everyone who has cited the splash paper!

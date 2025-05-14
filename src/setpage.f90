@@ -352,9 +352,9 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
        !--label "normal" y axis
        !
        if (axis==3) then
-          yopts = '1N'//trim(yopts)
+          yopts = 'N'//trim(yopts)
        else
-          yopts = '1VN'//trim(yopts)
+          yopts = 'VN'//trim(yopts)
           call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
        endif
     elseif (axis >= 0) then
@@ -392,9 +392,9 @@ subroutine setpage2(iplotin,nx,ny,xmin,xmax,ymin,ymax,labelx,labely,title,just,a
     !--always label y axis
     !
     if (axis==3) then
-       yopts = '1N'//trim(yopts)
+       yopts = 'N'//trim(yopts)
     else
-       yopts = '1VN'//trim(yopts)
+       yopts = 'VN'//trim(yopts)
        call plot_annotate('L',ylabeloffset,0.5,0.5,labely)
     endif
     !

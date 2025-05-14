@@ -6,6 +6,8 @@ References
 
 .. [MP04] `Monaghan & Price (2004), MNRAS 350, 1449 <https://ui.adsabs.harvard.edu/abs/2004MNRAS.350.1449M/abstract>`_
 
+.. [Petkova18] `Petkova, Laibe & Bonnell (2018), J. Comp. Phys. 353, 300 <http://adsabs.harvard.edu/abs/2018JCoPh.353..300P>`_
+
 .. [Price07] `Price (2007), PASA 24, 159 <https://ui.adsabs.harvard.edu/abs/2007PASA...24..159P/abstract>`_
 
 .. [Price12] `Price (2012), J. Comp. Phys. 231, 759 <https://ui.adsabs.harvard.edu/abs/2012JCoPh.231..759P/abstract>`_

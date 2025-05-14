@@ -22,7 +22,7 @@
 module extinction
  implicit none
 
- public :: get_extinction
+ public :: get_extinction, get_extinction_los
 
  private
 
@@ -31,12 +31,12 @@ contains
 ! routine to compute line-of-sight extinction to a
 ! collection of points (e.g. positions of sink particles)
 !---------------------------------------------------------
-subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,nsinks,coldens)
- use labels,           only:ix,ih,irho,ipmass,get_sink_type
+subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
+                          npts,xpts,ypts,zpts,coldens,icol)
+ use labels,           only:ix,ih,irho,ipmass
  use limits,           only:get_particle_subset
  use projections3D,    only:interpolate3D_proj_points
  use particle_data,    only:icolourme
- use part_utils,       only:get_positions_of_type
  use interpolation,    only:get_n_interp,set_interpolation_weights
  use settings_data,    only:iRescale,iverbose,required,UseTypeInRenderings
  use settings_part,    only:iplotpartoftype
@@ -51,10 +51,11 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  integer(kind=int1), intent(in) :: itype(:)
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
- integer, intent(out) :: nsinks
+ integer, intent(in)  :: npts,icol
+ real,    intent(inout) :: xpts(npts),ypts(npts),zpts(npts)
  real,    intent(out) :: coldens(:)
- integer :: n,isinktype,ierr
- real, dimension(:), allocatable :: weight,x,y,z,xpts,ypts,zpts
+ integer :: n,ierr,mycol
+ real, dimension(:), allocatable :: weight,x,y,z
 
  !
  !--sanity checks
@@ -67,6 +68,12 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
     print "(a)",' ERROR: could not locate h,mass or rho in data'
     return
  endif
+ if (icol < 0 .or. icol > ncolumns) then
+    print "(a)",' ERROR: invalid column number for extinction'
+    return
+ endif
+ mycol = icol
+ if (mycol==0) mycol = irho
  !
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
@@ -95,24 +102,17 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
  !
  icolourme(:) = 1
  call get_particle_subset(icolourme,dat,ncolumns)
- !
- !--get list of sink particle positions
- !
- isinktype = get_sink_type(ntypes)
- call get_positions_of_type(dat,npartoftype,itype,isinktype,ix,nsinks,xpts,ypts,zpts,ierr)
- if (ierr /= 0 .or. nsinks <= 0) then
-    print*,' ERROR obtaining sink particle positions, aborting...'
-    return
- endif
+
  !
  !--rotate positions if necessary
  !
- call rotate_particles(nsinks,xpts,ypts,zpts,anglex,angley,anglez)
+ call rotate_particles(npts,xpts,ypts,zpts,anglex,angley,anglez)
  !
- ! interpolate column density to sink particle locations
+ ! interpolate column density (or other column-integrated quantity) 
+ ! to desired point locations
  !
- call interpolate3D_proj_points(x,y,z,dat(1:n,ih),weight,dat(1:n,irho),icolourme,n,&
-                                xpts,ypts,zpts,coldens,nsinks,inormalise,iverbose)
+ call interpolate3D_proj_points(x,y,z,dat(1:n,ih),weight,dat(1:n,mycol),icolourme,n,&
+                                xpts,ypts,zpts,coldens,npts,inormalise,iverbose)
  !
  ! adjust units of z-integrated quantity
  !
@@ -120,8 +120,42 @@ subroutine get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,ns
     coldens = coldens*(unitzintegration/units(ih))
  endif
 
- deallocate(xpts,ypts,zpts,x,y,z,weight)
+ deallocate(x,y,z,weight)
 
 end subroutine get_extinction
+
+!--------------------------------------------------------------
+! routine to compute line-of-sight extinction from a
+! given point (currently the origin) along a set of directions
+!--------------------------------------------------------------
+subroutine get_extinction_los(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
+                        ndirs,anglex_vals,angley_vals,anglez_vals,coldens,icol)
+ use settings_xsecrot, only:anglex,angley,anglez
+ use params,           only:int1
+ integer, intent(in)  :: ncolumns,ntypes,ndim
+ integer, intent(in)  :: npartoftype(:)
+ integer(kind=int1), intent(in) :: itype(:)
+ real,    intent(in)  :: masstype(:)
+ real,    intent(in)  :: dat(:,:)
+ integer, intent(in)  :: ndirs,icol
+ real,    intent(in)  :: anglex_vals(ndirs),angley_vals(ndirs),anglez_vals(ndirs)
+ real,    intent(out) :: coldens(ndirs)
+ integer, parameter :: npts = 1
+ integer :: i
+ real :: xpts(npts),ypts(npts),zpts(npts),coldensi(1)
+
+ ! set the position from which to compute extinction as the origin
+ xpts = 0.; ypts = 0.; zpts = 0.
+
+ do i=1,ndirs
+    anglex = anglex_vals(i)
+    angley = angley_vals(i)
+    anglez = anglez_vals(i)
+    call get_extinction(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
+                        npts,xpts,ypts,zpts,coldensi,icol)
+    coldens(i) = coldensi(1)
+ enddo
+
+ end subroutine get_extinction_los
 
 end module extinction

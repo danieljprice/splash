@@ -28,7 +28,7 @@ module settings_units
  use labels, only:unitslabel,unitslabel_default,lenlabel,&
                   labelzintegration,labelzintegration_default
  implicit none
- real, dimension(0:maxplot), public :: units,units_default,units_old
+ real, dimension(0:maxplot), public :: units,units_default,units_old,units_calc
  real, public :: unitzintegration,unitzintegration_default
  real(doub_prec), public :: unit_interp
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
@@ -263,7 +263,7 @@ subroutine set_units(ncolumns,numplot,UnitsHaveChanged)
           call choose_unit_from_list(units(icol),unitslabel(icol),&
                                      nv,unit_labels_vel,unit_vel,udist/utime,'velocity')
        elseif (ipmass==icol .and. umass > 0.) then
-          ! give hints for velocity units, if both udist and utime read from data file
+          ! give hints for mass units, if umass read from data file
           call choose_unit_from_list(units(icol),unitslabel(icol),&
                                      nm,unit_labels_mass,unit_mass,umass,'mass')
        elseif (icol > 0) then

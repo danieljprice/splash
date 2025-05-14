@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2019 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -3032,8 +3032,10 @@ subroutine change_itrans(iplot,xmin,xmax)
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
- if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+ if (iplot > 0 .and. irhodust_start > 0 .and. iplot >= irhodust_start &
+     .and. iplot <= irhodust_end .and. irhodust_start /= irhodust_end) then
     print*,'>> applying transform to all dust densities <<'
+    irhodust_end = min(irhodust_end,size(itrans))
     itrans(irhodust_start:irhodust_end) = itrans(iplot)
  endif
 

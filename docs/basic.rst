@@ -89,23 +89,23 @@ in :numref:`fig:rhoh`.
 .. table:: Commonly used graphics devices available in giza
    :name: tab:devices
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/xw``,        | X-Window        | ``/png``        | Portable        |
-   | ``/xwin``       | (interactive)   |                 | Network         |
-   |                 |                 |                 | Graphics        |
-   |                 |                 |                 | (bitmap)        |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/eps``        | Encapsulated    | ``/svg``        | Scalable Vector |
-   |                 | postscript (one |                 | Graphics        |
-   |                 | file per page)  |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/pdf``        | PDF             | ``/null``       | null device (no |
-   |                 |                 |                 | output)         |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/ps``         | Postscript (all |                 |                 |
-   |                 | pages in one    |                 |                 |
-   |                 | file)           |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/xw``,        | X-Window        | ``/png``        | Portable          |
+   | ``/xwin``       | (interactive)   |                 | Network           |
+   |                 |                 |                 | Graphics          |
+   |                 |                 |                 | (bitmap)          |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/eps``        | Encapsulated    | ``/svg``        | Scalable Vector   |
+   |                 | postscript (one |                 | Graphics          |
+   |                 | file per page)  |                 |                   |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/pdf``        | PDF             | ``/null``       | null device (no   |
+   |                 |                 |                 | output)           |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/ps``         | Postscript (all | ``/mp4``        | mpeg4 animation   |
+   |                 | pages in one    |                 | (requires ffmpeg) |
+   |                 | file)           |                 |                   |
+   +-----------------+-----------------+-----------------+-------------------+
 
 .. _sec:interactive:
 
@@ -445,6 +445,15 @@ A simple script which executes the above command is included in the source file 
 ::
 
    ~/splash/scripts/movie.sh
+
+Alternatively, it is possible to create an animation from a list of image files::
+
+ ffmpeg -f concat -r 25 -i list.txt -vb 50M -bt 100M -vcodec mpeg4 -vf setpts=4.*PTS movie.mp4
+
+Where list.txt contains the image files you want to use like this::
+
+  file 'path/to/file1.png'
+  file 'path/to/file2.png' etc
 
 See :ref:`sec:moviemaking` for more.
 

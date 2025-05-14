@@ -38,12 +38,12 @@ module exactfromfile
 contains
 
 subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,ierr)
- use asciiutils, only:get_ncolumns
+ use asciiutils, only:get_ncolumns,get_nrows
  character(len=*), intent(in) :: filename
- real, intent(out), dimension(:) :: xexact, yexact
+ real, intent(inout), dimension(:), allocatable :: xexact, yexact
  integer, intent(in)  :: ixcolfile,iycolfile
  integer, intent(out) :: iexactpts, ierr
- integer :: i,j,ncolumns,nheaderlines
+ integer :: i,j,ncolumns,nheaderlines,nrows
  integer, parameter :: lu = 33
  character(len=10) :: str
  real :: dum
@@ -58,6 +58,13 @@ subroutine exact_fromfile(filename,xexact,yexact,ixcolfile,iycolfile,iexactpts,i
 
  !--query number of header lines
  call get_ncolumns(lu,ncolumns,nheaderlines)
+ call get_nrows(lu,nheaderlines,nrows)
+ rewind(lu)
+ if (nrows > size(xexact) .or. nrows > size(yexact)) then
+    if (allocated(xexact)) deallocate(xexact)
+    if (allocated(yexact)) deallocate(yexact)
+    allocate(xexact(nrows),yexact(nrows))
+ endif
 
  !--skip header lines
  do i=1,nheaderlines

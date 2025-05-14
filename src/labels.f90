@@ -43,7 +43,7 @@ module labels
  integer :: ipmass,ike,ispsound,itemp,ikappa
  integer :: idivb,iJfirst,irhostar,ipmomx
  integer :: iacplane,ipowerspec
- integer :: icv,iradenergy
+ integer :: icv,iradenergy,iradFx
  integer :: isurfdens,itoomre
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
@@ -87,6 +87,7 @@ subroutine reset_columnids
  ivrel = 0      ! relative velocity
  itemp = 0      ! temperature
  ikappa = 0     ! opacity
+ iradFx = 0
  iacplane = 0
  ike = 0
  idivB = 0
@@ -172,7 +173,7 @@ end function is_density
 elemental function label_synonym(string)
  use asciiutils, only:lcase,string_delete
  character(len=*), intent(in) :: string
- character(len=8) :: label_synonym
+ character(len=max(len(string),8)) :: label_synonym
  character(len=len(string)) :: labeli
  integer :: k
 
@@ -486,12 +487,14 @@ subroutine make_vector_label(lvec,ivec,nvec,iamveci,labelveci,labeli,labelx)
  character(len=*), intent(inout) :: labelveci(:),labeli(:)
  character(len=*), intent(in)    :: labelx(3)
  integer :: i
+ character(len=len(lvec)) :: tmplvec
 
+ tmplvec = lvec
  if (ivec > 0 .and. ivec+nvec <= size(labeli)) then
     iamveci(ivec:ivec+nvec-1)   = ivec
-    labelveci(ivec:ivec+nvec-1) = lvec
+    labelveci(ivec:ivec+nvec-1) = tmplvec
     do i=1,nvec
-       labeli(ivec+i-1) = trim(lvec)//'_'//labelx(i)
+       labeli(ivec+i-1) = trim(tmplvec)//'_'//labelx(i)
     enddo
  endif
 
@@ -616,7 +619,7 @@ function map_shifted_columns() result(imap)
  do i=1,size(imap)
     icol = i
     if (len_trim(label(i)) > 0) icol = check_for_shifted_column(i)
-    if (icol /= i) then
+    if (icol /= i .and. icol > 0) then
        !print*,i,' setting imap=',icol
        imap(icol) = i
     endif

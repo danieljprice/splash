@@ -406,7 +406,7 @@ subroutine assert_range(x,min,max)
  if (present(max)) xmax = max
  if (x < xmin) x = xmin
  if (x > xmax) x = xmax
- if (x /= x) x = 0.
+ if (isnan(x)) x = 0.
 
 end subroutine assert_range
 
