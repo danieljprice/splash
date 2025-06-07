@@ -445,7 +445,7 @@ end subroutine get_user
 !--get copyright string involving logged in user and current year
 !
 function get_copyright() result(string)
- character(len=30) :: string
+ character(len=40) :: string
  character(len=8) :: year
 
  call get_user(string)
