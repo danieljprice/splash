@@ -574,7 +574,7 @@ libexact: checksystem $(OBJLIBEXACTALL)
 SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_composition.f90 $(READFILES) read_data.F90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
