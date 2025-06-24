@@ -270,6 +270,9 @@ subroutine adjust_data_codeunits
     dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
  endif
 
+ if (ndim >= 1 .and. (lenvironment('SPLASH_GETH') .or. lenvironment('SPLASH_GET_H'))) then
+    call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
+ endif
 
 end subroutine adjust_data_codeunits
 
@@ -515,5 +518,39 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  endif
 
 end subroutine fake_twofluids
+
+subroutine get_h_on_all_particles(dat,npartoftype,nsteps,ndim,ncol)
+ use labels,        only:ih,irho,ix,label,ipmass
+ use get_h,         only:compute_h_and_density
+ integer, intent(in) :: npartoftype(:,:),nsteps,ndim,ncol
+ real, dimension(:,:,:), intent(inout) :: dat
+ real, allocatable :: x(:,:),h(:),rho(:)
+ integer :: i,j,ntot
+ !
+ !--compute h for the dataset if not already present
+ !
+ if (ih == 0 .and. ncol > 1) then
+   ih = ncol - 1
+   label(ih) = 'h'
+ endif
+ if (irho == 0 .and. ncol > 2 .and. ipmass > 0) then
+   irho = ncol - 2
+   label(irho) = 'rho'
+ endif
+ if (ih < 0) return
+ do j=1,nsteps
+    ntot = sum(npartoftype(:,j))
+    allocate(x(ndim,ntot),h(ntot),rho(ntot))
+    do i=ix(1),ix(ndim)
+       x(i,1:ntot) = dat(1:ntot,i,j)
+    enddo
+    h = 0.
+    rho = 0.
+    call compute_h_and_density(ndim,ntot,1.0,x,h,rho)
+    dat(1:ntot,ih,j) = h
+    if (irho==ncol-2 .and. ipmass > 0) dat(1:ntot,irho,j) = rho(1:ntot)*dat(1:ntot,ipmass,j)
+ enddo
+
+end subroutine get_h_on_all_particles
 
 end module adjustdata
