@@ -1,4 +1,13 @@
 
+**3.11.4: (25/06/25)**
+
+- can print time as date and time with offset e.g. 2025-06-25 12:35 in legend
+- plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard)
+- issue reading .comp files fixed
+- fixed issue reading column labels if fewer labels than columns
+- experimental --get_h flag to override smoothing lengths
+- fix bug with truncated name in copyright string (thanks to George Blaylock-Squibbs)
+
 **3.11.3: (23/04/25)**
 
 - bug fix with automatic choice of columns with -360, also render density automatically in 360 mode
