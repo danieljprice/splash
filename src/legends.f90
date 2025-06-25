@@ -102,7 +102,7 @@ subroutine legend(legendtext,t,nvar,allvars,tags,unitslabel,hpos,vpos,fjust,useb
 
  if (index(label,'%ut') > 0) then
     call string_replace(label,'%ut',trim(unitslabel))
- else
+ elseif (index(legendtext,'%') == 0) then
     label = trim(label)//trim(unitslabel)
  endif
 
