@@ -2751,6 +2751,22 @@ subroutine set_labels_sphNG
           igrainsize = i
        case('graindens')
           igraindens = i
+       case('grainmass')
+          label(i) = 'grain mass'
+          units(i) = umass
+          unitslabel(i) = ' [g]'
+       case('csound')
+          label(i) = 'sound speed'
+          units(i) = udist/utime
+          unitslabel(i) = ' [cm/s]'
+       case('rhogas')
+          label(i) = '\rho_g'
+          units(i) = umass/udist**3
+          unitslabel(i) = ' [g/cm^3]'
+       case('dv')
+          label(i) = 'dv'
+          units(i) = udist/utime
+          unitslabel(i) = ' [cm/s]'
        case('temperature')
           itemp = i
        case('vrel')
@@ -2803,8 +2819,8 @@ subroutine set_labels_sphNG
     enddo
     ! Make N deltav labels with vector subscripts
     do i = ideltavsum+ndimV,ideltav,ndimV
-       write(deltav_string,'(I10)') (i-ideltavsum)/ndimV
-       write(deltav_string,'(A)') 'deltav'//trim(adjustl(deltav_string))
+       write(deltav_string,'(i10)') (i-ideltavsum)/ndimV
+       write(deltav_string,'(a)') 'deltav'//trim(adjustl(deltav_string))
        do j=1,ndimV
           label(i+j-1) = trim(deltav_string)//'_'//labelcoord(j,1)
        enddo
