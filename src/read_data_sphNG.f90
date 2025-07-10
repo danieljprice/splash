@@ -2260,6 +2260,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           read(iu_extra,iostat=ierr) dat(1:ntotal,iextracols+i-1,j)
           if (ierr /= 0) print "(a)",' WARNING: ERRORS reading extra columns from file'
           close(iu_extra)
+          if (trim(labelextra(i))=='kappa') ikappa = iextracols+i-1
        endif
     enddo
 endif
