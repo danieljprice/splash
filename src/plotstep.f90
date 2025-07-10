@@ -743,7 +743,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
  integer :: icolourprev,linestyleprev
- integer :: ierr,ipt,nplots,nyplotstart,iaxisy,iaxistemp,icol
+ integer :: ierr,ipt,nplots,nyplotstart,nyplotend,iaxisy,iaxistemp,icol
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
  integer :: iframe,isize,isinktype,isink1,isink2,itrackoffset,itracktype
 
@@ -945,8 +945,15 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
     else
        nyplotstart = 1
     endif
+    ! if multiple steps per page + multiplot and the panels do not match the page
+    ! try to handle this nicely (currently by just ending the multiplot early)
+    if (nstepsperpage > 1 .and. (nyplots-nyplotstart+1) > nacross*ndown) then
+       nyplotend = nyplotstart + nacross*ndown - 1
+    else
+       nyplotend = nyplots
+    endif
 
-    over_plots: do nyplot=nyplotstart,nyplots
+    over_plots: do nyplot=nyplotstart,nyplotend
 
        if (nyplot > 1 .or. iframe > 1) print 34
        !--make sure character height is set correctly
@@ -1059,7 +1066,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           if (debugmode) print*,'DEBUG: initialising data plots...',initx,inity,iplotx,iploty,ntoti,size(xplot)
           if (initx) then
              !--check for errors
-             if (iplotx > size(dat(1,:)) .or. iplotx < 1) then
+             if (iplotx > size(dat,2) .or. iplotx < 1) then
                 print*,'ERROR: Internal error with out-of-bounds x column = ',iplotx
                 exit over_plots
              endif
@@ -1071,7 +1078,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           endif
           if (inity) then
              !--check for errors
-             if (iploty > size(dat(1,:)) .or. iploty < 1) then
+             if (iploty > size(dat,2) .or. iploty < 1) then
                 print*,'ERROR: Internal error with out-of-bounds y column = ',iploty
                 exit over_plots
              endif
@@ -1259,7 +1266,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (ivectorplot > 0) then
                 ichangesize = .false.
                 if (allocated(vecplot)) then
-                   if (size(vecplot(1,:)) < ninterp) ichangesize = .true.
+                   if (size(vecplot,2) < ninterp) ichangesize = .true.
                 endif
                 if (.not.allocated(vecplot) .or. ichangesize) then
                    if (allocated(vecplot)) deallocate(vecplot)
@@ -1331,7 +1338,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call set_weights(weight,dat,iamtype,(iusetype .and. UseTypeInRenderings))
 
                 if (allocated(datpix)) then
-                   if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
+                   if (npixx /= size(datpix,1) .or. npixy /= size(datpix,2)) then
                       deallocate(datpix)
                       allocate (datpix(npixx,npixy))
                       if (ndim==3 .and. use3Dopacityrendering) then
@@ -1441,7 +1448,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
                 if (.not.interactivereplot) then
                    if (allocated(datpix)) then
-                      if (npixx /= size(datpix(:,1)) .or. npixy /= size(datpix(1,:))) then
+                      if (npixx /= size(datpix,1) .or. npixy /= size(datpix,2)) then
                          deallocate(datpix)
                          if (debugmode) print*,'reallocating datpix...'
                          allocate ( datpix(npixx,npixy) )
@@ -1452,7 +1459,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    endif
                    if (icontourplot > ndim) then
                       if (allocated(datpixcont)) then
-                         if (npixx /= size(datpixcont(:,1)) .or. npixy /= size(datpixcont(1,:))) then
+                         if (npixx /= size(datpixcont,1) .or. npixy /= size(datpixcont,2)) then
                             deallocate(datpixcont)
                             if (debugmode) print*,'reallocating datpixcont...'
                             allocate ( datpixcont(npixx,npixy) )
@@ -1960,7 +1967,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    endif
 
                    !--call subroutine to actually render the image
-                   if (nstepsperpage > 1 .and. .not.(ipos==ifirststeponpage)) then
+                   if (nstepsperpage /= 1 .and. .not.(ipos==ifirststeponpage)) then
                       !--if there is more than one rendering plotted, make the
                       !  background colour transparent
                       call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
@@ -2258,7 +2265,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    datpix,npixx,npixy,.false.,(ismooth_particle_plots==2))
 
                 ! for more than one step per page, progressively sum pixel maps
-                if (nstepsperpage > 1) then
+                if (nstepsperpage /= 1) then
                    if (allocated(datpixtot)) then
                       if (size(datpixtot) /= size(datpix)) deallocate(datpixtot)
                    endif
@@ -2281,7 +2288,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 ! plot the resulting pixel map
                 call render_pix(datpix,densmax-6.,densmax,'blah', &
                    npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
-                   .false.,.false.,transparent=(nstepsperpage > 1))
+                   .false.,.false.,transparent=(nstepsperpage /= 1))
              endif
              if (allocated(datpix)) deallocate(datpix)
              if (allocated(brightness)) deallocate(brightness)
@@ -2499,7 +2506,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              call plot_qci(icolourprev)    ! query line style and colour
              call plot_qls(linestyleprev)
              ! set appropriate colour and style if multiple steps per page
-             if (nstepsperpage > 1) then
+             if (nstepsperpage /= 1) then
                 call plot_sci(linecolourthisstep)
                 call plot_sls(linestylethisstep)
              endif
@@ -2677,7 +2684,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
              call plot_qci(icolourprev)    ! query line style and colour
              call plot_qls(linestyleprev)
-             if (nstepsperpage > 1) then
+             if (nstepsperpage /= 1) then
                 call plot_sci(linecolourthisstep) ! set appropriate colour and style if multiple steps per page
                 call plot_sls(linestylethisstep)
              endif
@@ -2951,7 +2958,7 @@ subroutine page_setup(dummy_run)
 
  iplots = iplots + 1
  ipanelchange = .true.
- if (nstepsperpage==0 .and. iplots > 1) ipanelchange = .false. ! this is an option to never change panels
+ !if (nstepsperpage==0 .and. iplots > 1) ipanelchange = .false. ! this is an option to never change panels
  if (iplots > 1 .and. nyplots==1 .and. nacross*ndown > 1.and..not.ipagechange) ipanelchange = .false.
  if (ipanelchange) ipanel = ipanel + 1
  if (ipanel > nacross*ndown) ipanel = 1
@@ -2967,7 +2974,7 @@ subroutine page_setup(dummy_run)
     ipanelpos = ipanel
  endif
  !--if we are in interactive mode, use the currently buffered plot limits
- if (interactivereplot .and. (nacross*ndown > 1 .or. (nstepsperpage > 1 .and. nsteps > 1))) then
+ if (interactivereplot .and. (nacross*ndown > 1 .or. (nstepsperpage /= 1 .and. nsteps > 1))) then
     xmin = xminmulti(iplotx)
     xmax = xmaxmulti(iplotx)
     ymin = xminmulti(iploty)
@@ -2985,7 +2992,7 @@ subroutine page_setup(dummy_run)
  lastrow  = (usecolumnorder .and. npanels_remaining < nacross .and. nacross > 1)
 
  lastplot = ((ipos==iendatstep .or. istep==nsteps) &
-                .and. nyplot==nyplots .and. k==nxsec)
+                .and. nyplot==nyplotend .and. k==nxsec)
 
  lastinpanel = (istepsonpage==nstepsperpage .or. lastplot)
  plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
@@ -3035,8 +3042,9 @@ subroutine page_setup(dummy_run)
  if (iPlotTitles .and. nstepsperpage==1 .and. vpostitle > 0.) TitleOffset = vpostitle
  if (iPlotLegend .and. nstepsperpage==1 .and. vposlegend < 0.) TitleOffset = max(Titleoffset,-vposlegend)
 
- inewpage = ipanel==1 .and. ipanelchange .and. ipagechange
- if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1)) .and. .not.dum) then
+ inewpage = (ipanel==1 .and. ipanelchange .and. ipagechange) .or. &
+            (nstepsperpage==0 .and. istepsonpage==1 .and. ipanel==1 .and. nyplot==1)
+ if ((inewpage .or. (nstepsperpage > 1 .and. istepsonpage==1 .and. ipanel==1)) .and. .not.dum) then
     call plot_page
     !--store ipos and nyplot positions for first on page
     !  as starting point for interactive replotting
@@ -3059,7 +3067,7 @@ subroutine page_setup(dummy_run)
     if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
     call fix_equal_limits(rendermin,rendermax)
  endif
- if (debugmode) print*,'DEBUG: calling setpage...',nstepsperpage
+ if (debugmode) print*,'DEBUG: calling setpage with ',nstepsperpage,' steps per page'
  if (debugmode) print*,'DEBUG: xmin,xmax,ymin,ymax=',xmin,xmax,ymin,ymax
 
  if (nstepsperpage > 0 .or. inewpage) then
@@ -3112,13 +3120,12 @@ subroutine page_setup(dummy_run)
 
        !--if we are not changing page, do not reprint the axes
        iprint_axes = ipagechange .or. inewpage .or. &
-                        ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
-
+                     ((iplots <= nacross*ndown) .and. (nyplot <= nacross*ndown .and. istepsonpage==1))
        if (iprint_axes) then
-          if (debugmode) print*,'DEBUG: printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: axes=YES ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = ' '
        else
-          if (debugmode) print*,'DEBUG: NOT printing axes ',ipagechange,inewpage,iplots,nyplot,istepsonpage
+          if (debugmode) print*,'DEBUG: axes=NO ',ipagechange,inewpage,iplots,nyplot,istepsonpage
           string = 'NOPGBOX'
        endif
        call setpage2(ipanelpos,nacross,ndown,xmin,xmax,ymin,ymax, &

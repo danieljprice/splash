@@ -22,6 +22,12 @@ VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../utils
 SHELL=/bin/bash
 
 #
+# use SYSTEM=gfortran if no SYSTEM variable is set
+#
+ifndef SYSTEM
+SYSTEM=gfortran
+endif
+#
 # some default settings for unix systems
 #
 FC=
@@ -437,7 +443,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 read_kepler.f90 \
+         write_griddata.f90 write_sphdata.f90 read_composition.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
@@ -450,7 +456,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 \
          lightcurve_utils.f90 $(READFILES) lightcurve.f90 extinction.f90 \
-         read_data.F90 \
+         read_data.F90 get_h.f90\
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
@@ -568,7 +574,7 @@ libexact: checksystem $(OBJLIBEXACTALL)
 SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_composition.f90 $(READFILES) read_data.F90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}

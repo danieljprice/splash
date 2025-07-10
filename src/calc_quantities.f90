@@ -696,6 +696,8 @@ subroutine check_calculated_quantities(ncalcok,ncalctot,incolumn,verbose)
     ncalctot = i
     i = i + 1
  enddo
+ ! handle the case of only one dust species, where only irhodust_end has been set
+ if (irhodust_end > 0 .and. irhodust_start == 0) irhodust_start = irhodust_end
  if (ncalcok==0 .and. isverbose) print "(a)",' (none)'
 
 end subroutine check_calculated_quantities

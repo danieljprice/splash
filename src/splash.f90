@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2024 Daniel Price
+!     Copyright (C) 2005-2025 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,13 +51,29 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.11.2  : (09/12/24)
-!             bug fix reading density from phantom small dumps if not rendering;
+!     3.11.4  : (25/06/25)
+!             can print time as date and time with offset e.g. 2025-06-25 12:35 in legend;
+!             plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard);
+!             issue reading .comp files fixed; fixed issue reading column labels if fewer labels than columns;
+!             experimental --get_h flag to override smoothing lengths;
+!             fix bug with truncated name in copyright string (thanks to George Blaylock-Squibbs)
+!     3.11.3  : (23/04/25)
+!             bug fix with automatic choice of columns with -360, also render density automatically in 360 mode;
+!             --origin=1,1,1 can be used to set the origin to a fixed coordinate;
+!             --omegar=x flag can be used to specify radius from sink particle of Keplerian corotating frame velocity;
+!             bug fix with accidental log of all columns in interactive mode with only one dust species;
+!             SYSTEM=gfortran is now the default if no SYSTEM is specified when compiling
+!     3.11.2  : (04/04/25)
 !             automated plotting of star profiles from phantom relax.profile file if present;
 !             better automated unit guessing when comparing to exact solution from file;
-!             fix hardwiring of decimal labels on y axis;
+!             can plot two shock tube exact solutions with different gammas on top of each other;
+!             improved behaviour with nstepsperpage = 0;
 !             bug fix with labels + limits in double rendering when using auto choice of density weighted rendering;
-!             plotting library api updated to giza v1.5
+!             plotting library api updated to giza v1.5; fix hardwiring of decimal labels on y axis;
+!             bug fix with multiplot and multiple steps per page not printing axes correctly;
+!             bug fix reading sink particle data in GADGET HDF5 format;
+!             bug fix with vector labelling in GADGET HDF5 read;
+!             bug fix reading density from phantom small dumps if not rendering;
 !     3.11.1  : (06/12/24)
 !             bug fix with type recognition in sphNG data read, better wrong endian error
 !             message (thanks to Matthew Bate); recognise sphNG format correctly even
@@ -633,7 +649,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.2 [9th Dec 2024]'
+ character(len=*), parameter :: version = 'v3.11.4 [25th June 2025]'
 
  !
  ! initialise some basic code variables
@@ -756,10 +772,11 @@ program splash
           fileprefix = 'evsplash'
           call set_filenames(trim(fileprefix))
           got_format = .true.
-       case('360','4pi','fourpi')
+       case('360','-360','4pi','fourpi')
           use_360 = .true.
           ipickx = 2
           ipicky = 3
+          if (len_trim(stringr)==0) stringr = 'density'
           nomenu = .true.
        case('exact')
           i = i + 1
@@ -1024,8 +1041,8 @@ program splash
     !  translate from string to column id
     !
     if (nomenu) then
-       ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
-       ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
+       if (ipickx==0) ipickx = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringx)
+       if (ipicky==0) ipicky = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringy)
        irender = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringr)
        icontour = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringc)
        ivecplot = match_column(shortlabel(label(1:numplot),unitslabel(1:numplot),lc=.true.),stringv)
@@ -1119,11 +1136,11 @@ program splash
              stop
           endif
        else
-          if (irender > 0 .and. ndim >= 2) then
+          if (irender > 0 .and. ndim >= 2 .and. .not. (ipicky > 0 .or. ipickx > 0)) then
              ipicky = 2
              ipickx = 1
              if (.not.allowrendering(ipicky,ipickx)) then
-                print "(a)",' ERROR: cannot render'
+                print "(a,i2,i2)",' ERROR: cannot render',ipicky,ipickx
                 stop
              endif
              if (icontour > numplot .or. icontour < 0) then
@@ -1177,15 +1194,13 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2024 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2025 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
    '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
-   ' http://users.monash.edu.au/~dprice/splash ',/, &
-   ' daniel.price@monash.edu or splash-users@googlegroups.com',/, &
-   ' Please cite Price (2007), PASA, 24, 159-173 (arXiv:0709.0832) if you ',/, &
-   ' use SPLASH in print and don''t forget to send pics for the gallery',/)
+   '           https://splash-viz.readthedocs.io',/,/, &
+   ' Please cite Price (2007), PASA 24, 159 if you use SPLASH in print',/)
 
 end subroutine print_header
 
@@ -1224,6 +1239,7 @@ subroutine print_usage(quit)
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --origin=1,0,0    : centre on specified x,y,z coordinates'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
  print "(a)",' --track=666       : track particle number 666'

@@ -104,8 +104,8 @@ module exact
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
  !--gamma, for manual setting
- real :: gamma_exact
- logical :: use_gamma_exact
+ real :: gamma_exact,gamma2_exact
+ logical :: use_gamma_exact,use_gamma2_exact
  !
  !--sort these into a namelist for input/output
  !
@@ -121,7 +121,8 @@ module exact
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
-       use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
+       use_sink_data,xprim,xsec,nfiles,&
+       gamma_exact,gamma2_exact,use_gamma_exact,use_gamma2_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
        const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams,iclockwise
 
@@ -226,7 +227,9 @@ subroutine defaults_set_exact
 
 !   gamma, if not read from file
  gamma_exact = 5./3.
+ gamma2_exact = 1.
  use_gamma_exact = .false.
+ use_gamma2_exact = .false.
 
 !   arbitrary function
  nfunc = 1
@@ -633,9 +636,14 @@ subroutine submenu_exact(iexact)
     if (use_gamma_exact) then
        call prompt('enter gamma',gamma_exact)
     endif
+    if (iexact==3 .or. iexact==13) then
+       call prompt('plot 2nd solution with different gamma?',use_gamma2_exact)
+       if (use_gamma2_exact) then
+         call prompt('enter gamma for the second solution',gamma2_exact)
+       endif
+    endif
  endif
 
- return
 end subroutine submenu_exact
 
 !---------------------------------------------------
@@ -1133,7 +1141,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
- integer :: ncols,nrows,nlab_exact
+ integer :: ncols,nrows,nlab_exact,nsh
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
  real :: dx,timei,gammai
  character(len=len(filename_exact)) :: filename_tmp
@@ -1275,10 +1283,12 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(3)! shock tube
     if (iplotx==ix(1) .and. igeom <= 1) then
-       do i=1,1  ! make 2 to plot both adiabatic and isothermal solutions
+       nsh = 1
+       if (use_gamma2_exact) nsh = 2
+       do i=1,nsh ! make 2 to plot both adiabatic and isothermal solutions
           if (i==2) then
              call plot_sls(4)
-             gammai = 1.0
+             gammai = gamma2_exact
           endif
           if (iploty==irho) then
              call exact_shock(1,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &

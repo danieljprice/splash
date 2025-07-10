@@ -1,4 +1,35 @@
 
+**3.11.4: (25/06/25)**
+
+- can print time as date and time with offset e.g. 2025-06-25 12:35 in legend
+- plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard)
+- issue reading .comp files fixed
+- fixed issue reading column labels if fewer labels than columns
+- experimental --get_h flag to override smoothing lengths
+- fix bug with truncated name in copyright string (thanks to George Blaylock-Squibbs)
+
+**3.11.3: (23/04/25)**
+
+- bug fix with automatic choice of columns with -360, also render density automatically in 360 mode
+- --origin=1,1,1 can be used to set the origin to a fixed coordinate
+- --omegar=x flag can be used to specify radius from sink particle of Keplerian corotating frame velocity
+- bug fix with accidental log of all columns in interactive mode with only one dust species
+- SYSTEM=gfortran is now the default if no SYSTEM is specified when compiling
+
+**3.11.2: (04/04/25)**
+
+- automated plotting of star profiles from phantom relax.profile file if present
+- better automated unit guessing when comparing to exact solution from file
+- can plot two shock tube exact solutions with different gammas on top of each other
+- improved behaviour with nstepsperpage = 0
+- bug fix with labels + limits in double rendering when using auto choice of density weighted rendering
+- plotting library api updated to giza v1.5
+- fix hardwiring of decimal labels on y axis
+- bug fix with multiplot and multiple steps per page not printing axes correctly
+- bug fix reading sink particle data in GADGET HDF5 format
+- bug fix with vector labelling in GADGET HDF5 read
+- bug fix reading density from phantom small dumps if not rendering
+
 **3.11.1: (06/12/24)**
 
 - bug fix with type recognition in sphNG data read, better wrong endian error message (thanks to Matthew Bate)

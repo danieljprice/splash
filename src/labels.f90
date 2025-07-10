@@ -487,12 +487,14 @@ subroutine make_vector_label(lvec,ivec,nvec,iamveci,labelveci,labeli,labelx)
  character(len=*), intent(inout) :: labelveci(:),labeli(:)
  character(len=*), intent(in)    :: labelx(3)
  integer :: i
+ character(len=len(lvec)) :: tmplvec
 
+ tmplvec = lvec
  if (ivec > 0 .and. ivec+nvec <= size(labeli)) then
     iamveci(ivec:ivec+nvec-1)   = ivec
-    labelveci(ivec:ivec+nvec-1) = lvec
+    labelveci(ivec:ivec+nvec-1) = tmplvec
     do i=1,nvec
-       labeli(ivec+i-1) = trim(lvec)//'_'//labelx(i)
+       labeli(ivec+i-1) = trim(tmplvec)//'_'//labelx(i)
     enddo
  endif
 

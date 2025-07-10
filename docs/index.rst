@@ -17,8 +17,9 @@ Visualisation of smoothed particle hydrodynamics data using splash
    basic
    settings
    advanced
-   other
+   360
    lightcurve
+   other
    faq
    contribs
    refs

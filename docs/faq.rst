@@ -7,14 +7,16 @@ Here is a collection of the most common problems with using SPLASH. You may also
 How do I make a movie from splash output?
 -----------------------------------------
 
-At the graphics device prompt, choose /png. This will produce a series of files::
+First, make sure ffmpeg is installed using your package manager (e.g. ``brew install ffmpeg`` or ``sudo apt install ffmpeg``)
 
-  splash_0000.png
-  splash_0001.png
-  splash_0002.png
-  ...
+Since v3.10.0 splash now has a direct-to-mp4 backend. Hence to make a movie just give a filename like ``movie.mp4``
+or select ``/mp4`` at the device prompt which will produce a file called ``splash.mp4``
 
-There are then many procedures for getting from these files to an animation. See :ref:`sec:movies`
+You can also try a completely hands-free approach from the command line using the ``--movie`` flag::
+
+   splash --movie disc_0*
+
+That's it!
 
 Using ffmpeg to make a movie from png files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,7 +43,7 @@ The main options to play with are the bitrate (``-bt 100M``) that controls the q
 The industry-standard compression codec is the ``H.264`` MPEG codec which gives a nice small movie that is still good quality. The best way to reduce the movie size further is to restrict the data rate.
 
 .. important::
-   The .mp4 files produced by ffmpeg as above currently not play directly in the Slack app. To ensure this you need to mandate that the pixel format is 
+   The .mp4 files produced by ffmpeg as above will not play directly in the Slack app. To ensure this you need to mandate that the pixel format is 
    "yuv420p", by adding the flag ``-pix_fmt yuv420p``. You must also ensure that the page dimensions are given in even (not odd) numbers of pixels.
 
 Can I make animated gifs?

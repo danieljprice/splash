@@ -89,23 +89,23 @@ in :numref:`fig:rhoh`.
 .. table:: Commonly used graphics devices available in giza
    :name: tab:devices
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/xw``,        | X-Window        | ``/png``        | Portable        |
-   | ``/xwin``       | (interactive)   |                 | Network         |
-   |                 |                 |                 | Graphics        |
-   |                 |                 |                 | (bitmap)        |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/eps``        | Encapsulated    | ``/svg``        | Scalable Vector |
-   |                 | postscript (one |                 | Graphics        |
-   |                 | file per page)  |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/pdf``        | PDF             | ``/null``       | null device (no |
-   |                 |                 |                 | output)         |
-   +-----------------+-----------------+-----------------+-----------------+
-   | ``/ps``         | Postscript (all |                 |                 |
-   |                 | pages in one    |                 |                 |
-   |                 | file)           |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/xw``,        | X-Window        | ``/png``        | Portable          |
+   | ``/xwin``       | (interactive)   |                 | Network           |
+   |                 |                 |                 | Graphics          |
+   |                 |                 |                 | (bitmap)          |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/eps``        | Encapsulated    | ``/svg``        | Scalable Vector   |
+   |                 | postscript (one |                 | Graphics          |
+   |                 | file per page)  |                 |                   |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/pdf``        | PDF             | ``/null``       | null device (no   |
+   |                 |                 |                 | output)           |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/ps``         | Postscript (all | ``/mp4``        | mpeg4 animation   |
+   |                 | pages in one    |                 | (requires ffmpeg) |
+   |                 | file)           |                 |                   |
+   +-----------------+-----------------+-----------------+-------------------+
 
 .. _sec:interactive:
 

@@ -1,15 +1,33 @@
 !-----------------------------------------------------------------
 !
+!  This file is (or was) part of SPLASH, a visualisation tool
+!  for Smoothed Particle Hydrodynamics written by Daniel Price:
+!
+!  http://users.monash.edu.au/~dprice/splash
+!
+!  SPLASH comes with ABSOLUTELY NO WARRANTY.
+!  This is free software; and you are welcome to redistribute
+!  it under the terms of the GNU General Public License
+!  (see LICENSE file for details) and the provision that
+!  this notice remains intact. If you modify this file, please
+!  note section 2a) of the GPLv2 states that:
+!
+!  a) You must cause the modified files to carry prominent notices
+!     stating that you changed the files and the date of any change.
+!
+!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
+!  Contact: daniel.price@monash.edu
+!
+!-----------------------------------------------------------------!-----------------------------------------------------------------
+!
 ! This file is for reading the composition file for each particle
-! that was read from KEPLER models.
 ! it also performs a check to see if composition file exists or not
 !
 !-----------------------------------------------------------------
-
-module read_kepler
+module readcomposition
  implicit none
 
- public :: check_for_composition_file,read_kepler_composition
+ public :: check_for_composition_file,read_composition
 
  private
 
@@ -54,7 +72,14 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
  inquire(file=filename,exist=iexist)
  if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
 
- ! first see if a global file.comp file exists
+  ! then see if a local file_00000.comp file exists
+ if (.not.iexist) then
+    filename = trim(dumpfile)//'.comp'
+    inquire(file=filename,exist=iexist)
+    if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
+ endif
+
+ ! or see if a global file.comp file exists
  if (.not.iexist) then
     prefix = get_prefix(dumpfile)
     filename = trim(prefix)//'.comp'
@@ -98,7 +123,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
 
 end subroutine check_for_composition_file
 
-subroutine read_kepler_composition(filename,ntotal,dat,icomp_col_start,ncomp)
+subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp)
  use asciiutils, only:get_ncolumns
  real, intent(inout) :: dat(:,:)
  character(len=*), intent(in) :: filename
@@ -125,6 +150,6 @@ subroutine read_kepler_composition(filename,ntotal,dat,icomp_col_start,ncomp)
     print "(a)",' ERROR: wrong number of columns in '//trim(filename)//'.comp'
  endif
 
-end subroutine read_kepler_composition
+end subroutine read_composition
 
-end module read_kepler
+end module readcomposition
