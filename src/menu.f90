@@ -57,7 +57,7 @@ subroutine menu
  integer            :: iamvecprev, ivecplottemp,ichoose
  integer            :: maxdigits
  character(len=5)   :: ioption
- character(len=100) :: vecprompt,string
+ character(len=120) :: vecprompt,string
  character(len=20)  :: rprompt
  character(len=2)   :: fmtstrlen
  character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
@@ -106,10 +106,10 @@ subroutine menu
        if (iamvec(icol) /= 0 .and. iamvec(icol) /= iamvecprev) then
           iamvecprev = iamvec(icol)
           if (iamvec(icol) >= 10) then
-             write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
-                 iamvec(icol),trim(labelvec(icol))
+             write(vecprompt(indexi:),"(',',1x,i2,'=',a)",iostat=ierr) &
+                   iamvec(icol),trim(labelvec(icol))
           else
-             write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &
+             write(vecprompt(indexi:),"(',',1x,i1,'=',a)",iostat=ierr) &
                  iamvec(icol),trim(labelvec(icol))
           endif
           indexi = len_trim(vecprompt) + 1

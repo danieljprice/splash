@@ -189,11 +189,13 @@ void read_gadget_hdf5_header(char *filename,
         {
             // Read attribute and automatically convert to double
             status = H5Aread(attrib_id, H5T_NATIVE_DOUBLE, &headervals[i]);
-            set_header_label_gadget(&i, name);
 
             if (status == HDF5_error)
             {
                 printf(" ERROR reading attribute %s \n", name);
+            } else {
+                int icol = i;
+                set_header_label_gadget(&icol, name);
             }
         }
         else
