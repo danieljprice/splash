@@ -1,4 +1,3 @@
-
 Getting started
 ===============
 
@@ -202,9 +201,9 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -ndspmhd <file>``   | ndspmhd                    | ``read_data_ndspmhd.f90``     | Format for the ndspmhd SPH/SPMHD code (publicly available from  my  website).                                                                                                                                                                     |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate’s SPH code. Option ``-sphng`` also  works.                                                                                                                                                                                  |
+   | ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate's SPH code. Option ``-sphng`` also  works.                                                                                                                                                                                  |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog’s  code                                                                                                                                                                                                                           |
+   | ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog's  code                                                                                                                                                                                                                           |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et  al.)                                                                                                                                                                                                       |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -214,7 +213,7 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    |``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The `StarSmasher <http://jalombar.github.io/starsmasher/>`_ code (Gaburov et al. 2018)                                                                                                                                                            |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash file.vtk``          | vtk legacy binary          | ``read_data_vtk.f90``         | VTK legacy binary format, e.g. from Shamrock code                                                                                                                                                                                                 |
+   | ``splash file.vtk``          | vtk legacy binary          | ``read_data_vtk.f90``         | VTK legacy binary format (UNSTRUCTURED_GRID and STRUCTURED_GRID), e.g. from Shamrock code                                                                                                                                                                                                 |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Below is a list of the supported data formats that require ``HDF5``.
@@ -233,7 +232,7 @@ Below is a list of the supported data formats that require ``HDF5``.
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash -flash_hdf5 <file>``  | FLASH tracer particles | ``read_dataflash_hdf5.f90``   | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-   | ``splash -falcon_hdf5 <file>`` | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen’s SPH code format. The option ``-falcon`` will also work.                 |
+   | ``splash -falcon_hdf5 <file>`` | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen's SPH code format. The option ``-falcon`` will also work.                 |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
 
 If the ``HDF5`` read files end with ``.h5``, the suffix ``_hdf5`` from the ``splash`` command can be removed.
@@ -435,10 +434,10 @@ Command line flags (or environment variables) that affect all data reads are:
 +----------------------+-----------------------+-------------------------------------------------+
 | ---beam=2.0          | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
 |                      |                       | smoothing length, specified in code units,      |
-|                      |                       | all the particles. Useful to “dumb-down” the    |
+|                      |                       | all the particles. Useful to "dumb-down" the    |
 |                      |                       | resolution of SPH simulations to match          |
 |                      |                       | observational resolution. If this variable is   |
-|                      |                       | set the “accelerated rendering" option in the   |
+|                      |                       | set the "accelerated rendering" option in the   |
 |                      |                       | :ref:`sec:menu-r` is also turned on, otherwise  |
 |                      |                       | slow rendering can result.                      |
 +----------------------+-----------------------+-------------------------------------------------+
@@ -611,8 +610,8 @@ For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 +-------------------+-------------------------------------------------------+
 | ``--omegat=3.142``| same as --omega but applies to velocities also        |
 +-------------------+-------------------------------------------------------+
-| ``--timeunit=hrs``| sets default time units, either ’s’, ’min’, ’hrs’,    |
-|                   | ’days’, ’yr’ or ’tfreefall’ (used verbatim in legend) |
+| ``--timeunit=hrs``| sets default time units, either 's', 'min', 'hrs',    |
+|                   | 'days', 'yr' or 'tfreefall' (used verbatim in legend) |
 +-------------------+-------------------------------------------------------+
 
 dragon data read
@@ -684,7 +683,7 @@ For the H5PART read (``splash -f h5part``) the options are:
 +-----------------------------------+------------------------------------+
 | ``--typeid=MatID``                | name of the dataset containing     |
 |                                   | the particle type identification   |
-|                                   | (default is “MatID”)               |
+|                                   | (default is "MatID")               |
 +-----------------------------------+------------------------------------+
 
 .. _sec:envvariables:
