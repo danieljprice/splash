@@ -48,6 +48,7 @@ module readdata
  use readdata_jjmmulti,     only:read_data_jjmmulti,     set_labels_jjmmulti
  use readdata_mbate,        only:read_data_mbate,        set_labels_mbate
  use readdata_oilonwater,   only:read_data_oilonwater,   set_labels_oilonwater
+ use readdata_ramses,       only:read_data_ramses,       set_labels_ramses
  use readdata_rsph,         only:read_data_rsph,         set_labels_rsph
  use readdata_vanaverbeke,  only:read_data_vanaverbeke,  set_labels_vanaverbeke
  use readdata_spyros,       only:read_data_spyros,       set_labels_spyros
@@ -255,6 +256,10 @@ subroutine select_data_format(string_in,ierr)
    read_data=>read_data_oilonwater
    set_labels=>set_labels_oilonwater
 
+ case('ramses')
+   read_data=>read_data_ramses
+   set_labels=>set_labels_ramses
+
  case('rsph')
    read_data=>read_data_rsph
    set_labels=>set_labels_rsph
@@ -402,6 +407,7 @@ subroutine print_available_formats(string)
     print "(a)",' -foulkes             : Foulkes ascii format'
     print "(a)",' -vanaverbeke         : Sigfried Vanaverbeke code'
     print "(a)",' -gadget_jsb          : GADGET Jamie Bolton variant'
+    print "(a)",' -ramses              : RAMSES AMR format'
 #ifndef HDF5
     print "(a)",' -gadget_hdf5         : Gadget HDF5     [not compiled]'
     print "(a)",' -falcon -falcon_hdf5 : FalcON code     [not compiled]'
