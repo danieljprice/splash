@@ -1,4 +1,11 @@
 
+**3.11.5: (02/09/25)**
+
+- --sortpad flag to sort files while pausing panels where sequence has finished
+- vtk reader works with structured grid format from Idefix code
+- fix seg fault in gadget-hdf5 read with SWIFT data
+- correctly identify dust growth columns + units from phantom dumps
+
 **3.11.4: (25/06/25)**
 
 - can print time as date and time with offset e.g. 2025-06-25 12:35 in legend
