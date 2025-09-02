@@ -302,7 +302,8 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     --track=maxdens   : track particle at maximum density
     --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
     --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)
-    
+    --sortpad         : sort filenames and pad all sequences to same length
+
    Example data formats (type --formats for full list):
     
     -ascii,-csv          : ascii text/csv format (default)

@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.5  : (02/09/25)
+!             --sortpad flag to sort files while pausing panels where sequence has finished;
+!             vtk reader works with structured grid format from Idefix code;
+!             fix seg fault in gadget-hdf5 read with SWIFT data;
+!             correctly identify dust growth columns + units from phantom dumps
 !     3.11.4  : (25/06/25)
 !             can print time as date and time with offset e.g. 2025-06-25 12:35 in legend;
 !             plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard);
@@ -645,11 +650,11 @@ program splash
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
- logical :: using_default_options,got_exact
+ logical :: using_default_options,got_exact,sort,sort_pad
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.4 [25th June 2025]'
+ character(len=*), parameter :: version = 'v3.11.5 [2nd Sep 2025]'
 
  !
  ! initialise some basic code variables
@@ -997,8 +1002,11 @@ program splash
     call guess_format(nfiles,rootname,ierr)
  endif
 
- if (ihavereadfilenames .and. get_command_flag('sort')) then
-    call sort_filenames_for_comparison(nfiles,rootname)
+ ! options to sort filenames
+ sort     = get_command_flag('sort')
+ sort_pad = get_command_flag('sortpad')
+ if (ihavereadfilenames .and. (sort .or. sort_pad)) then
+    call sort_filenames_for_comparison(nfiles,rootname,pad=sort_pad)
  endif
 
  if (ikernel==0) then
@@ -1246,6 +1254,7 @@ subroutine print_usage(quit)
  print "(a)",' --track=maxdens   : track particle at maximum density'
  print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  print "(a)",' --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)'
+ print "(a)",' --sortpad         : sort filenames and pad all sequences to same length'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
