@@ -1957,13 +1957,22 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 print "(a)",'ERROR: not enough arrays written for sink particles in phantom dump'
                 nskip = nreal(iarr)
              else
+                ! skip integer arrays
                 nskip = nint(iarr)
                 do i=1,nskip
                    if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
                    read(iunit,end=33,iostat=ierr)
                 enddo
+                ! set type of sink particles = -3 initially
                 if (debug) print*,'DEBUG: denoting ',npart,'->',npart+isize(iarr),' as sink particles'
                 iphase(npart+1:npart+isize(iarr)) = -3
+                !
+                ! make sure label assignment is updated for map_sink_property_to_column
+                !
+                call set_labels_sphNG()
+                !
+                ! read real*4 and real*8 arrays
+                !
                 ilocvx = nreal(iarr)-2 ! velocity is always last 3 numbers for phantom sinks
                 if (doubleprec) then
                    !--convert default real to single precision where necessary
@@ -1985,6 +1994,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       if (iloc > 0) then
                          do i=1,isize(iarr)
                             dat(npart+i,iloc,j) = real(dattemp(i))
+                            !if (debug) print*,'sink ',i,' col = '//tagtmp//' data = ',dat(npart+i,iloc,j),npart+i,iloc,j,ilocvx,ivx
                          enddo
                       elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
                          do i=1,isize(iarr)
