@@ -609,7 +609,7 @@ end subroutine get_next_line
 !------------------------------------------------------------
 subroutine set_labels_vtk
  use labels,         only:label,labeltype,ix,ipmass,ih,irho,labelvec,iamvec,&
-                          set_vector_labels,label_synonym
+                          set_vector_labels,label_synonym,ivx
  use settings_data,  only:ndim,ndimV,ntypes,UseTypeInRenderings,ncolumns
  use geometry,       only:labelcoord
  integer :: i
@@ -631,6 +631,7 @@ subroutine set_labels_vtk
     label(i) = trim(tagarr(i))
     if (label_synonym(label(i))=='density') irho = i
     if (label_synonym(label(i))=='h') ih = i
+    if (iamvec(i) > 0 .and.trim(label(i))=='v') ivx = i
  enddo
  call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
