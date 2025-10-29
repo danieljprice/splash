@@ -1198,7 +1198,7 @@ subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
  character(len=len(labels(1))), dimension(size(labels)) :: tmplabel
  character(len=max_line_length) :: line
  logical :: is_csv,verbose,got_labels
- integer :: i,imethod,ierr,nwanted
+ integer :: i,imethod,ierr,nwanted,nlabelstmp
 
  is_csv = .false.
  verbose = .false.
@@ -1212,16 +1212,17 @@ subroutine read_column_labels(iunit,nheaderlines,ncols,nlabels,labels,csv,debug)
  do i=1,nheaderlines
     read(iunit,"(a)",iostat=ierr) line
     !--try to match column labels from this header line, if not already matched (or dubious match)
-    call get_column_labels(trim(line),nlabels,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
+    call get_column_labels(trim(line),nlabelstmp,tmplabel,method=imethod,ndesired=nwanted,csv=csv)
     !--if we get nlabels > ncolumns, use them, but keep trying for a better match
-    if ((got_labels .and. nlabels == nwanted) .or. &
-        (.not.got_labels .and. nlabels >= nwanted  & ! only allow single-spaced labels if == ncols
-         .and. (.not.(imethod>=4) .or. nlabels==nwanted))) then
+    if ((got_labels .and. nlabelstmp == nwanted) .or. (.not.got_labels .and. imethod==2) .or. &
+        (.not.got_labels .and. nlabelstmp >= nwanted  & ! only allow single-spaced labels if == ncols
+         .and. (.not.(imethod>=4) .or. nlabelstmp==nwanted))) then
        labels(1:nwanted) = tmplabel(1:nwanted)
        got_labels = .true.
+       nlabels = nlabelstmp
     endif
-    if (verbose) print "(5(1x,a,i0))",'DEBUG: line ',i,'nlabels = ',nlabels,&
-                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line) !,' LABELS= '//tmplabel(1:ncols)
+    if (verbose) print "(5(1x,a,i0),1x,a,l1)",'DEBUG: line ',i,'nlabels = ',nlabels,&
+                 'want ',ncols,'method=',imethod,'len_trim(line)=',len_trim(line),'got_labels=',got_labels !,' LABELS= '//tmplabel(1:ncols)
  enddo
 
 end subroutine read_column_labels
@@ -1645,10 +1646,14 @@ end function numfromfile
 !
 !  disc_00000 disc1_00000 disc_00001 disc1_00001 disc_00002
 !
+! Enhanced to handle padding: if multiple sequences exist and
+! one runs out of files, it pads with the last available file
+! from that sequence
 !------------------------------------------------------------
-subroutine sort_filenames_for_comparison(nfiles,filenames)
- integer, intent(in) :: nfiles
- character(len=*), intent(inout) :: filenames(nfiles)
+subroutine sort_filenames_for_comparison(nfiles,filenames,pad)
+ integer, intent(inout) :: nfiles
+ character(len=*), intent(inout) :: filenames(:)
+ logical, intent(in), optional :: pad
  character(len=100) :: key
  integer :: i,j,num
 
@@ -1667,7 +1672,69 @@ subroutine sort_filenames_for_comparison(nfiles,filenames)
     filenames(j+1) = key
  enddo
 
+ ! Apply padding for incomplete groups
+ if (present(pad)) then
+    if (pad) call pad_incomplete_groups(nfiles, filenames)
+ endif
+
 end subroutine sort_filenames_for_comparison
+
+!------------------------------------------------------------
+! Subroutine to pad incomplete groups with files from
+! the last complete group
+!------------------------------------------------------------
+subroutine pad_incomplete_groups(nfiles, filenames)
+ integer, intent(inout) :: nfiles
+ character(len=*), intent(inout) :: filenames(:)
+ integer :: i, j, group_size, expected_size, last_complete_start
+ integer :: current_num, last_complete_num
+
+ ! Find expected group size and last complete group
+ expected_size = 1
+ last_complete_start = 1
+ last_complete_num = -1
+ i = 1
+
+ do while (i <= nfiles)
+    current_num = numfromfile(filenames(i))
+    group_size = 1
+    do while (i + group_size <= nfiles .and. numfromfile(filenames(i + group_size)) == current_num)
+       group_size = group_size + 1
+    enddo
+
+    if (group_size >= expected_size) then
+       expected_size = group_size
+       if (group_size > 1) then
+          last_complete_start = i
+          last_complete_num = current_num
+       endif
+    endif
+    i = i + group_size
+ enddo
+
+ ! Pad incomplete groups that come after the last complete group
+ if (expected_size > 1 .and. last_complete_num >= 0) then
+    i = 1
+    do while (i <= nfiles)
+       current_num = numfromfile(filenames(i))
+       if (current_num > last_complete_num .and. i < nfiles .and. &
+           numfromfile(filenames(i+1)) /= current_num) then
+          ! This is an incomplete group - insert padding file after it
+          if (nfiles < size(filenames)) then
+             nfiles = nfiles + 1
+             ! Shift everything after this position
+             do j = nfiles, i + 2, -1
+                filenames(j) = filenames(j-1)
+             enddo
+             ! Insert the padding file
+             filenames(i+1) = filenames(last_complete_start + 1)
+          endif
+       endif
+       i = i + 1
+    enddo
+ endif
+
+end subroutine pad_incomplete_groups
 
 !------------------------------------------------------------
 ! utility to read a variable from an ascii file

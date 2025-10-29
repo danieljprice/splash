@@ -27,12 +27,12 @@ jobs:
     - name: Get version
       id: get_version
       env:
-          vernum: ${{ github.ref }}
-          repo: ${{ github.repository }}
+        vernum: ${{ github.ref }}
+        repo: ${{ github.repository }}
       run: |
-          echo ::set-output name=version::${vernum/refs\/tags\//}
-          echo ::set-output name=repo::`basename ${repo}`
-          echo ::set-output name=tarfile::`basename ${repo}`-${vernum/refs\/tags\//}.tar.gz
+        echo "version=${vernum/refs\/tags\//}" >> $GITHUB_ENV
+        echo "repo=$(basename ${repo})" >> $GITHUB_ENV
+        echo "tarfile=$(basename ${repo})-${vernum/refs\/tags\//}.tar.gz" >> $GITHUB_ENV
 
 #    - name: build tarball mac
 #      if: matrix.os == 'macos-latest'
@@ -45,22 +45,21 @@ jobs:
     - name: build tarball
       if: matrix.os == 'ubuntu-latest'
       env:
-          tarfile: ${{ steps.get_version.outputs.tarfile }}
-          repo: ${{ steps.get_version.outputs.repo }}
+          tarfile: ${{ env.tarfile }}
+          repo: ${{ env.repo }}
       run: |
-          env
-          echo "tarfile is $tarfile, repo is $repo"
-          tar cfz /tmp/$tarfile --exclude ".git*" \
-              --transform "s,.,${repo}," .
+          echo "tarfile=${{ env.tarfile }}, repo=${{ env.repo }}"
+          tar cfz /tmp/${{ env.tarfile }} --exclude ".git*" \
+              --transform "s,.,${{ env.repo }}," .
 
     - name: check tarball and get SHA
       env:
-          tarfile: ${{ steps.get_version.outputs.tarfile }}
+          tarfile: ${{ env.tarfile }}
       id: shasum
       run: |
-          mv /tmp/$tarfile .
-          tar tfz $tarfile
-          echo ::set-output name=sha::"$(shasum -a 256 $tarfile | awk '{printf $1}')"
+          mv /tmp/${{ env.tarfile }} .
+          tar tfz ${{ env.tarfile }}
+          echo "sha=$(shasum -a 256 ${{ env.tarfile }} | awk '{printf $1}')" >> $GITHUB_ENV
 
     - name: Extract Release Notes
       run: |
@@ -72,8 +71,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.get_version.outputs.version }}
-        release_name: ${{ steps.get_version.outputs.version }}
+        tag_name: ${{ env.version }}
+        release_name: ${{ env.version }}
         body_path: release-notes.md
         draft: false
         prerelease: false
@@ -85,8 +84,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.get_version.outputs.tarfile }}
-        asset_name: ${{ steps.get_version.outputs.tarfile }}
+        asset_path: ${{ env.tarfile }}
+        asset_name: ${{ env.tarfile }}
         asset_content_type: application/gzip
 
     - name: Set up Homebrew
@@ -96,15 +95,15 @@ jobs:
     - name: Bump Brew
       env:
         HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.BREW_TOKEN_SPLASH }}
-        version: ${{ steps.get_version.outputs.version }}
+        version: ${{ env.version }}
         brewtap: danieljprice/all
-        formula: ${{ steps.get_version.outputs.repo }} # formula name same as repo name
+        formula: ${{ env.repo }}
       run: |
         git config --global user.email "daniel.price@monash.edu"
         git config --global user.name "Daniel Price"
         brew install pipgrip
         brew tap $brewtap
         brew bump-formula-pr -f --version=${version/v/} --no-browse --no-audit \
-        --sha256=${{ steps.shasum.outputs.sha }} \
-        --url="https://github.com/${{ github.repository }}/releases/download/${{ steps.get_version.outputs.version }}/${{ steps.get_version.outputs.tarfile }}" \
+        --sha256=${{ env.sha }} \
+        --url="https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/${{ env.tarfile }}" \
         $brewtap/$formula

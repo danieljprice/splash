@@ -46,7 +46,7 @@ contains
 ! Used to generate synthetic lightcurves
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
-                          lum,rphoto,temp,lum_bb,r_bb,Tc,specfile)
+                          lum,rphoto,temp,lum_bb,r_bb,Tc,badfrac,specfile,ierr)
  use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx
  use limits,                only:lim,get_particle_subset
  use lightcurve_utils,      only:get_temp_from_u
@@ -66,34 +66,42 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
  use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag
+ use readwrite_fits,        only:write_fits_cube,write_fits_image,write_fits_image
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
  real,    intent(in)  :: masstype(:)
  real,    intent(in)  :: dat(:,:)
- real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc
+ real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc,badfrac
+ integer, intent(out) :: ierr
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,ierr,j,i,k,nfreq
+ integer :: n,isinktype,npixx,npixy,j,i,k,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
- real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c
- real, dimension(:,:,:), allocatable :: img_nu
+ real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,badpix
+ real, dimension(:,:,:), allocatable :: img_nu,img_tmp
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor
- real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev
+ real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev,badarea
  logical :: relativistic
  character(len=20) :: tmpfile
 
  lum = 0.
  rphoto = 0.
  temp = 0.
+ ierr = 0
  if (ndim /= 3) then
     print "(a)",' ERROR: lightcurve only works with 3 dimensional data'
+    ierr = 1
     return
  endif
- if (.not. (ih > 0 .and. ipmass > 0 .and. irho > 0 .and. itemp > 0)) then
-    print "(a)",' ERROR: could not locate h,mass,rho or temperature in data'
+ if (.not.(ih > 0 .and. ipmass > 0 .and. irho > 0 .and. itemp > 0)) then
+    if (ih <= 0)     print "(a)",' ERROR: could not locate smoothing length in data'
+    if (ipmass <= 0) print "(a)",' ERROR: could not locate particle mass in data'
+    if (irho <= 0)   print "(a)",' ERROR: could not locate density in data'
+    if (itemp <= 0)  print "(a)",' ERROR: could not locate temperature in data'
+    ierr = 2
     return
  endif
  !
@@ -112,6 +120,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
+    ierr = 3
     return
  endif
  x(1:n) = dat(1:n,ix(1))
@@ -144,7 +153,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !--allocate memory for image
  !
  if (allocated(img) .or. allocated(taupix)) deallocate(img,taupix)
- allocate(img(npixx,npixy),taupix(npixx,npixy))
+ allocate(img(npixx,npixy),taupix(npixx,npixy),badpix(npixx,npixy))
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
@@ -196,6 +205,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
     opacity(i) = opacity(i)*opacity_factor
+    !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
     flux_nu(:,i) = B_nu(dat(i,itemp),freq*doppler_factor)
  enddo
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
@@ -211,10 +221,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
       dat(1:n,ipmass),n,dat(1:n,ih),weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
-      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu)
-
- lum = 4.*sum(img)*dx*dy
- print*,'grey luminosity = ',lum,' erg/s'
+      dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu,badpix=badpix)
 
  ! integrate flux over all frequencies to give Flux = \int F_\nu d\nu = pi \int B_nu dnu
  do j=1,npixy
@@ -229,7 +236,13 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  print "(/,a,2(es10.3,a))",' L_bol = ',lum,' erg/s = ',lum/Lsun,' L_sun'
 
  area = count(taupix >= 1.)*dx*dy
- print "(a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2'
+ badarea = count(badpix > 0.)*dx*dy
+ badfrac = 0.
+ if (area > 0.) badfrac = badarea/area
+ print "(a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2 (pixels where dtau > 1/3)'
+ print "(a,1pg10.3,a,2pf6.2,a)",' unresolved area = ',badarea/au**2,' au^2 (',badfrac,'%)'
+ if (badarea/area > 0.05) print "(/,1x,a,2pf6.2,a)",'WARNING: ',badfrac,'% of photosphere is UNRESOLVED!'
+
  print "(/,a,1pg10.3,a)",' Tmax  = ',(maxval(img)/steboltz)**0.25,' K'
 
  ! effective temperature: total flux equals that of a blackbody at T=Teff
@@ -241,9 +254,12 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  ! get integrated spectrum from integrating over all pixels in the image
  if (allocated(spectrum)) deallocate(spectrum,bb_spectrum)
  allocate(spectrum(nfreq),bb_spectrum(nfreq))
+ !$omp parallel do default(none) private(i) &
+ !$omp shared(spectrum,img_nu,npixx,npixy,nfreq,dx,dy)
  do i=1,nfreq
     spectrum(i) = sum(img_nu(i,1:npixx,1:npixy))*dx*dy
  enddo
+ !$omp end parallel do
 
  ! get colour temperature by fitting the blackbody peak
  call get_colour_temperature(spectrum,freq,Tc,freq_max,bb_scale)
@@ -272,6 +288,25 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (get_command_flag('writepix')) then
     call write_pixmap_ascii(img,npixx,npixy,xmin(1),xmin(2),dx,&
          minval(img),maxval(img),'intensity','lum.pix',0.)
+ endif
+
+ if (get_command_flag('writefits')) then
+    write(*,"(/,a)") 'Writing total intensity to fits image ...'
+    call write_fits_image('img_'//trim(specfile)//'_mom0.fits',img,(/npixx,npixy/),ierr)
+
+    write(*,"(/,a)") 'Writing image into FITS cube ...'
+    allocate(img_tmp(nfreq,npixx,npixy),stat=ierr)
+    if (ierr == 0) then
+       !$omp parallel do default(none) private(i) &
+       !$omp shared(nfreq,npixx,npixy,img_nu,img_tmp)
+       do i=1,nfreq
+          img_tmp(1:npixx,1:npixy,i) = img_nu(i,1:npixx,1:npixy)
+       enddo
+       !$omp end parallel do
+       call write_fits_cube('img_'//trim(specfile)//'.fits',img_tmp,(/npixx,npixy,nfreq/),ierr)
+    endif
+    if (ierr /= 0) write(*,*) 'Error writing to FITS cube !!!'
+    if (allocated(img_tmp)) deallocate(img_tmp)
  endif
 
 end subroutine get_lightcurve

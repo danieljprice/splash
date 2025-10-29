@@ -28,12 +28,17 @@ subroutine set_options_dataread()
  use exact,          only:read_exactparams
  use settings_part,  only:iplotpartoftype,PlotonRenderings
  use particle_data,  only:npartoftype
- use settings_data,  only:ndim,ncolumns,ntypes,iexact,iverbose,UseTypeInRenderings,idefaults_file_read
- use filenames,      only:rootname,nsteps,ifileopen
+ use settings_data,  only:ndim,ncolumns,ncalc,ntypes,iexact,iverbose,UseTypeInRenderings,&
+                          idefaults_file_read,iCalcQuantities,DataIsBuffered
+ use filenames,      only:rootname,nsteps,nstepsinfile,ifileopen,fileprefix
  use labels,         only:labeltype,irho,ih,get_sink_type
  use asciiutils,     only:ucase
- use settings_render, only:icolour_particles
- integer :: itype,nplot,ierr
+ use settings_render,  only:icolour_particles
+ use settings_xsecrot, only:xsec_nomulti
+ use calcquantities,   only:print_example_quantities,calc_quantities
+ use limits,           only:set_limits
+ integer :: itype,nplot,ierr,idash
+ logical :: iexist
  !
  !--check for errors in data read / print warnings
  !
@@ -69,6 +74,14 @@ subroutine set_options_dataread()
        endif
     endif
  endif
+
+ !--for fits cubes, turn on cross section by default if 3D
+ if (ndim >= 3 .and. .not.idefaults_file_read .and. ifileopen > 0) then  ! only on first data read
+    if (index(rootname(ifileopen),'.fits') > 0) then
+       print "(a)",' turning cross section ON for fits cube'
+       xsec_nomulti = .true.
+    endif
+ endif
  !
  !--read exact solution parameters from files if present
  !
@@ -76,6 +89,40 @@ subroutine set_options_dataread()
     if (ifileopen > 0) then
        call read_exactparams(iexact,rootname(ifileopen),ierr)
     endif
+ elseif (.not.idefaults_file_read .and. ifileopen > 0) then
+    !
+    ! set the exact solution option ON by default if
+    ! certain files are present
+    !
+    idash = index(rootname(ifileopen),'_',back=.true.)
+    if (idash==0) idash = len_trim(rootname(ifileopen))+1
+
+    inquire(file=trim(rootname(ifileopen))//'.func',exist=iexist)
+    if (iexist) iexact = 1
+
+    inquire(file=trim(fileprefix)//'.exactfiles',exist=iexist)
+    if (iexist) iexact = 2
+
+    inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.profile',exist=iexist)
+    if (iexist) then
+       iexact = 2
+       call print_example_quantities(.true.,ncalc)
+       iCalcQuantities = .true.
+       if (DataIsBuffered) then
+          call calc_quantities(1,nsteps)
+          call set_limits(1,nsteps,ncolumns+1,ncolumns+ncalc)
+       else
+          if (ifileopen > 0) then
+             call calc_quantities(1,nstepsinfile(ifileopen))
+             call set_limits(1,nstepsinfile(ifileopen),ncolumns+1,ncolumns+ncalc)
+          endif
+       endif
+    endif
+
+    inquire(file=trim(rootname(ifileopen))//'.spirals',exist=iexist)
+    if (iexist) iexact = 17
+
+    call read_exactparams(iexact,rootname(ifileopen),ierr)
  endif
 
 end subroutine set_options_dataread

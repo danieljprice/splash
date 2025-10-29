@@ -60,7 +60,7 @@ end subroutine get_adjust_data_dependencies
 !----------------------------------------------------
 subroutine adjust_data_codeunits
  use system_utils,    only:renvironment,envlist,ienvironment,lenvironment,ienvlist,&
-                           ienvstring,get_environment_or_flag,get_command_flag
+                           ienvstring,get_environment_or_flag,get_command_flag,renvlist
  use labels,          only:ih,ix,ivx,get_sink_type,ipmass,idustfrac,irho,labeltype,label
  use settings_data,   only:ncolumns,ndimV,ndim,ntypes,iverbose,UseFakeDustParticles,&
                            UseFastRender,icoords,track_string
@@ -183,14 +183,21 @@ subroutine adjust_data_codeunits
        if (centreonsink)  then
           print "(/,a,/)",' ERROR: cannot use --sink and --origin at the same time'
        else
-          do j=1,nstepsinfile(ifileopen)
+          over_steps: do j=1,nstepsinfile(ifileopen)
              !
              !--handle strings like --origin=maxdens to locate the particle for the origin
              !
              ntot = sum(npartoftype(:,j))
-             if (len_trim(string) > 0 .and. iorigin==0) then
+             if (index(string,',') > 0) then
+                 x0 = renvlist(string,ndim,errval=-666.)
+                 if (all(abs(x0+666.) > tiny(0.))) then
+                    print*,':: CENTREING ON x=',x0(1:ndim),' from --origin='//trim(string)//' flag'
+                    call shift_positions(dat(:,:,j),ntot,ndim,x0)
+                 endif
+                 exit over_steps
+             elseif (len_trim(string) > 0 .and. iorigin==0) then
                 iorigin = locate_particle_from_string(string,ntot,dat(:,:,j),irho)
-                if (iorigin <= 0) exit ! quit loop over steps
+                if (iorigin <= 0) exit over_steps
              endif
              if (j==1 .or. ienvstring(string) == 0) then
                 print "(a,i0,a)",' :: CENTREING ON PARTICLE ',iorigin,' from --origin='//trim(string)//' flag'
@@ -200,7 +207,7 @@ subroutine adjust_data_codeunits
              !--now centre on the chosen particle
              !
              call centre_on_particle(iorigin,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='')
-          enddo
+          enddo over_steps
        endif
     endif
 
@@ -263,6 +270,9 @@ subroutine adjust_data_codeunits
     dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
  endif
 
+ if (ndim >= 1 .and. (lenvironment('SPLASH_GETH') .or. lenvironment('SPLASH_GET_H'))) then
+    call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
+ endif
 
 end subroutine adjust_data_codeunits
 
@@ -508,5 +518,39 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  endif
 
 end subroutine fake_twofluids
+
+subroutine get_h_on_all_particles(dat,npartoftype,nsteps,ndim,ncol)
+ use labels,        only:ih,irho,ix,label,ipmass
+ use get_h,         only:compute_h_and_density
+ integer, intent(in) :: npartoftype(:,:),nsteps,ndim,ncol
+ real, dimension(:,:,:), intent(inout) :: dat
+ real, allocatable :: x(:,:),h(:),rho(:)
+ integer :: i,j,ntot
+ !
+ !--compute h for the dataset if not already present
+ !
+ if (ih == 0 .and. ncol > 1) then
+   ih = ncol - 1
+   label(ih) = 'h'
+ endif
+ if (irho == 0 .and. ncol > 2 .and. ipmass > 0) then
+   irho = ncol - 2
+   label(irho) = 'rho'
+ endif
+ if (ih < 0) return
+ do j=1,nsteps
+    ntot = sum(npartoftype(:,j))
+    allocate(x(ndim,ntot),h(ntot),rho(ntot))
+    do i=ix(1),ix(ndim)
+       x(i,1:ntot) = dat(1:ntot,i,j)
+    enddo
+    h = 0.
+    rho = 0.
+    call compute_h_and_density(ndim,ntot,1.0,x,h,rho)
+    dat(1:ntot,ih,j) = h
+    if (irho==ncol-2 .and. ipmass > 0) dat(1:ntot,irho,j) = rho(1:ntot)*dat(1:ntot,ipmass,j)
+ enddo
+
+end subroutine get_h_on_all_particles
 
 end module adjustdata

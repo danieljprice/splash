@@ -221,7 +221,7 @@ file is required specifying the density thresholds (a default version is
 written if the appropriate file is not already present).
 
 Using splash to calculate line-of-sight extinction to sink particles
-------------------------------------------------------------------
+---------------------------------------------------------------------
 
 For observations one is often interested in how much obscuring material
 is present in front of stars in a model. In splash stars are usually represented
@@ -284,29 +284,7 @@ For other command line options, see :ref:`sec:commandline`.
 Reading/processing data into images without having to answer prompts
 --------------------------------------------------------------------
 
-Previously, the only way to run splash non-interactively was to write a
-small shell script which runs splash and answers the prompts
-appropriately. For example:
-
-::
-
-   #!/usr/bin/tcsh
-   cd plot
-   splash myrun* << ENDINPUT
-   2
-   1
-   8
-   0
-   /png
-   q
-   ENDINPUT
-
-which would plot the data in columns 2 and 1 and render the data in
-column 8 with output to file ``mypostscript.ps``.
-
-However, in more recent versions splash can be invoked with plot options
-on the command line. Thus to achieve the same as in the example given
-above we would simply use
+splash can be invoked with plot options on the command line. For example, use
 
 ::
 

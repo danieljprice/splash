@@ -36,34 +36,12 @@ module params
  integer, parameter :: int8 = selected_int_kind(10)
  integer, parameter :: maxplot=512   ! maximum number of plots (for multiplot arrays)
  integer, parameter :: maxparttypes = 24  ! max # of different particle types
- integer, parameter :: ltag = 16     ! length of header tags
+ integer, parameter :: ltag = 32     ! length of header tags
  integer, parameter :: maxhdr = 256  ! maximum number of header variables stored
 
  public
 
 end module params
-
-module physcon
- use params, only:doub_prec
- implicit none
- real, parameter :: pi = 4.*atan(1.)
- real(doub_prec), parameter :: solarrcgs = 6.955d10  ! cm
- real(doub_prec), parameter :: solarmcgs = 1.989d33  ! g
- real(doub_prec), parameter :: steboltz = 5.67e-5    ! erg cm^-2 K^-4 s-1
- real(doub_prec), parameter :: radconst = 7.5646d-15 ! Radiation constant erg cm^-3 K^-4
- real(doub_prec), parameter :: kboltz = 1.38066d-16
- real(doub_prec), parameter :: mh = 1.67262158d-24   ! g
- real(doub_prec), parameter :: au = 1.496d13         ! cm
- real(doub_prec), parameter :: c = 2.997924d10       ! Speed of light cm/s
- real(doub_prec), parameter :: hplanck =   6.6260755d-27  ! Planck's Constant erg/s
- real(doub_prec), parameter :: kb_on_mh = kboltz/mh
- real(doub_prec), parameter :: Lsun = 3.839d33       ! Solar luminosity, erg/s
- real(doub_prec), parameter :: cm_to_nm = 1.d7
- real(doub_prec), parameter :: keV_to_erg = 1.6022d-9 ! k_eV to erg
- real(doub_prec), parameter :: keV_to_Hz  = keV_to_erg/hplanck ! k_eV to erg
-
- public
-end module physcon
 !
 !--particle data
 !
@@ -105,7 +83,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=*), parameter :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2024 Daniel Price and contributors'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2025 Daniel Price and contributors'
 
  public
 

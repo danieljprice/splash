@@ -99,13 +99,13 @@ module exact
  real :: HonR,rplanet,q_index,phase
  real :: spiral_params(7,maxexact)
  integer :: ispiral,narms
- logical :: iread_wakeparams
+ logical :: iread_wakeparams,iclockwise
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
  !--gamma, for manual setting
- real :: gamma_exact
- logical :: use_gamma_exact
+ real :: gamma_exact,gamma2_exact
+ logical :: use_gamma_exact,use_gamma2_exact
  !
  !--sort these into a namelist for input/output
  !
@@ -121,13 +121,15 @@ module exact
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
-       use_sink_data,xprim,xsec,nfiles,gamma_exact,use_gamma_exact,&
+       use_sink_data,xprim,xsec,nfiles,&
+       gamma_exact,gamma2_exact,use_gamma_exact,use_gamma2_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams
+       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams,iclockwise
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
  public :: exactopts,exactparams
+ public :: exact_set_rocheparam
 
 contains
  !----------------------------------------------------------------------
@@ -215,6 +217,7 @@ subroutine defaults_set_exact
  spiral_params = 0.
  spiral_params(2,:) = 360.
  iread_wakeparams = .true.
+ iclockwise = .false.
 !   Bondi
  relativistic  = .true.
  geodesic_flow = .false.
@@ -224,7 +227,9 @@ subroutine defaults_set_exact
 
 !   gamma, if not read from file
  gamma_exact = 5./3.
+ gamma2_exact = 1.
  use_gamma_exact = .false.
+ use_gamma2_exact = .false.
 
 !   arbitrary function
  nfunc = 1
@@ -408,11 +413,11 @@ subroutine submenu_exact(iexact)
           endif
        enddo
        !if (i==1) then
-      !    call prompt('Apply above settings to all files?',apply_to_all)
-      !    if (apply_to_all) then
-      !       iexactploty(:) = iexactploty(i)
-      !       iexactplotx(:) = iexactplotx(i)
-      !    endif
+       !    call prompt('Apply above settings to all files?',apply_to_all)
+       !    if (apply_to_all) then
+       !       iexactploty(:) = iexactploty(i)
+       !       iexactplotx(:) = iexactplotx(i)
+       !    endif
        !endif
 
        if (len_trim(ExactLegendText(i))==0) ExactLegendText(i) = add_escape_chars(filename_exact(i))
@@ -597,6 +602,7 @@ subroutine submenu_exact(iexact)
           call prompt('enter planet orbital radius ',rplanet,0.)
           call prompt('enter power-law index of sound speed cs ~ R^-q',q_index)
           call prompt('enter orbital phase in degrees ',phase)
+          call prompt('clockwise rotation?',iclockwise)
        endif
     end select
  case(18)
@@ -630,9 +636,14 @@ subroutine submenu_exact(iexact)
     if (use_gamma_exact) then
        call prompt('enter gamma',gamma_exact)
     endif
+    if (iexact==3 .or. iexact==13) then
+       call prompt('plot 2nd solution with different gamma?',use_gamma2_exact)
+       if (use_gamma2_exact) then
+         call prompt('enter gamma for the second solution',gamma2_exact)
+       endif
+    endif
  endif
 
- return
 end subroutine submenu_exact
 
 !---------------------------------------------------
@@ -768,7 +779,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  case(2)
     filename = trim(fileprefix)//'.exactfiles'
     call read_asciifile(trim(filename),nfiles_got,filename_exact,ierr)
-    if (ierr==-1 .and. nfiles <= 0) then ! look in .setup file only if no filenames set
+    if (ierr==-1 .and. nfiles_got <= 0 .and. len_trim(filename_exact(1))==0) then ! look in .setup file only if no filenames set
        if (iverbose > 1) print "(a)",' no file '//trim(filename)
        !
        ! if no .exactfiles, see if the phantom .setup file exists
@@ -776,7 +787,20 @@ subroutine read_exactparams(iexact,rootname,ierr)
        !
        filename = trim(rootname(1:idash-1))//'.setup'
        call read_var_from_file('outputfilename',filename_exact(1),filename,ierr)
-       if (ierr == 0) nfiles = 1
+       if (ierr == 0) then
+          nfiles = 1
+       else
+          !
+          ! failing this, have a look for a .profile file
+          !
+          filename = trim(rootname(1:idash-1))//'.profile'
+          inquire(file=filename,exist=iexist)
+          if (iexist) then
+             filename_exact(1) = filename
+             nfiles = 1
+             ierr = 0
+          endif
+       endif
        return
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
@@ -1028,6 +1052,21 @@ subroutine get_planetdisc_parameters_from_data(rp,HR,q,angle,ierr)
 end subroutine get_planetdisc_parameters_from_data
 
 !-----------------------------------------------------------------------
+! subroutine to set parameters needed for Roche lobe plotting
+!-----------------------------------------------------------------------
+subroutine exact_set_rocheparam(m1,m2,x1,y1,x2,y2)
+ real, intent(in) :: m1,m2,x1,y1,x2,y2
+
+ mprim = m1
+ msec  = m2
+ xprim(1) = x1
+ xprim(2) = y1
+ xsec(1) = x2
+ xsec(2) = y2
+
+end subroutine exact_set_rocheparam
+
+!-----------------------------------------------------------------------
 ! this subroutine drives the exact solution plotting using the
 ! parameters which have been set
 !
@@ -1102,7 +1141,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
- integer :: ncols,nrows,nlab_exact
+ integer :: ncols,nrows,nlab_exact,nsh
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
  real :: dx,timei,gammai
  character(len=len(filename_exact)) :: filename_tmp
@@ -1210,6 +1249,11 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
           !--read exact solution from file
           print "(a)",'> reading '//trim(exact_labels(imapx))//' and '//trim(exact_labels(imapy))//' from '//trim(filename_tmp)
           call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
+          ! if everything has been done automatically, try to guess whether
+          ! the solution is in code units or physical units
+          if (iRescale .and. iauto_map_columns) then
+             iApplyUnitsExactFile = guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
+          endif
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
              if (iApplyTransExactFile) then
@@ -1239,10 +1283,12 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(3)! shock tube
     if (iplotx==ix(1) .and. igeom <= 1) then
-       do i=1,1  ! make 2 to plot both adiabatic and isothermal solutions
+       nsh = 1
+       if (use_gamma2_exact) nsh = 2
+       do i=1,nsh ! make 2 to plot both adiabatic and isothermal solutions
           if (i==2) then
              call plot_sls(4)
-             gammai = 1.0
+             gammai = gamma2_exact
           endif
           if (iploty==irho) then
              call exact_shock(1,timei,gammai,xshock,rho_L,rho_R,pr_L,pr_R,v_L,v_R, &
@@ -1544,8 +1590,8 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     endif
  case(17) ! planet-disc interaction
     if (ndim >= 2 .and. iplotx==ix(1) .and. iploty==ix(2)) then
-       call exact_planetdisc(igeom,ispiral,timei,HonR,rplanet,q_index,phase,narms,&
-                                spiral_params,xexact,yexact,ierr)
+       call exact_planetdisc(igeom,ispiral,iclockwise,timei,HonR,rplanet,q_index,phase,narms,&
+                             spiral_params,xexact,yexact,ierr)
     endif
  case(18)
     if (iplotx==irad .or. (igeom==3 .and. iplotx==ix(1))) then
@@ -1579,6 +1625,9 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
 
 end subroutine exact_solution
 
+!------------------------------------------------------------------
+! try to figure out how to correctly transform the exact solution
+!------------------------------------------------------------------
 integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
  use transforms, only:islogged
  use asciiutils, only:lcase
@@ -1602,6 +1651,40 @@ integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
  endif
 
 end function get_transform
+
+!------------------------------------------------------------------
+! try to figure out how to correctly transform the exact solution
+!------------------------------------------------------------------
+logical function guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
+ real, intent(in) :: xplot(:),yplot(:),xexact(:),yexact(:)
+ real, intent(in) :: unitsx,unitsy
+
+ real :: range_xplot, range_yplot
+ real :: range_xexact_no_units, range_yexact_no_units
+ real :: range_xexact_with_units, range_yexact_with_units
+
+ ! Calculate ranges for xplot and yplot
+ range_xplot = maxval(xplot) - minval(xplot)
+ range_yplot = maxval(yplot) - minval(yplot)
+
+ ! Calculate ranges for xexact and yexact without applying units
+ range_xexact_no_units = maxval(xexact) - minval(xexact)
+ range_yexact_no_units = maxval(yexact) - minval(yexact)
+
+ ! Calculate ranges for xexact and yexact with applying units
+ range_xexact_with_units = maxval(xexact * unitsx) - minval(xexact * unitsx)
+ range_yexact_with_units = maxval(yexact * unitsy) - minval(yexact * unitsy)
+
+ ! Determine if applying units results in a closer range to xplot and yplot
+ ! that is at least an order of magnitude closer in one of the axes
+ if (abs(range_xexact_with_units - range_xplot) < 10.*abs(range_xexact_no_units - range_xplot) .or. &
+     abs(range_yexact_with_units - range_yplot) < 10.*abs(range_yexact_no_units - range_yplot)) then
+    guess_whether_to_apply_units_to_exact = .true.
+ else
+    guess_whether_to_apply_units_to_exact = .false.
+ endif
+
+end function guess_whether_to_apply_units_to_exact
 
 !------------------------------------------------------------------
 ! Wrapper routine to plot the exact solution line on current graph

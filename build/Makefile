@@ -22,6 +22,12 @@ VPATH=$(SRCDIR) $(SRCDIR)/H5Part ../utils
 SHELL=/bin/bash
 
 #
+# use SYSTEM=gfortran if no SYSTEM variable is set
+#
+ifndef SYSTEM
+SYSTEM=gfortran
+endif
+#
 # some default settings for unix systems
 #
 FC=
@@ -180,6 +186,22 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
+   FFLAGS= -O3 -nbs
+   OMPFLAGS= -qopenmp
+   DBLFLAGS= -r8
+   DEBUGFLAG= -C -g
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -convert big_endian
+   ENDIANFLAGLITTLE= -convert little_endian
+# or use setenv F_UFMTENDIAN=big or little at runtime
+   KNOWN_SYSTEM=yes
+   CC=icc
+   CFLAGS=-Wall -O3 -fPIC
+endif
+
+ifeq ($(SYSTEM),ifx)
+#  this is for the intel fortran compiler (version 10)
+   FC= ifx
    FFLAGS= -O3 -nbs
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
@@ -392,6 +414,8 @@ ifeq ($(FITS),yes)
   LDFLAGSLIB+=$(FITSLIBS)
   FPPFLAGS+=-DFITS
   RUN_CHECKS+=checkfits
+else
+  READFILES+=no_fits.f90
 endif
 
 ifdef PBOB_DIR
@@ -407,7 +431,7 @@ ifdef H5PART_DIR
 endif
 
 
-SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
+SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
          prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
@@ -419,7 +443,7 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 read_kepler.f90 \
+         write_griddata.f90 write_sphdata.f90 read_composition.f90 \
          $(SYSTEMFILE) system_utils.f90 \
          cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
          exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
@@ -432,8 +456,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 utils_vectors.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
          options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 \
-         lightcurve_utils.f90 lightcurve.f90 extinction.f90 \
-         $(READFILES) read_data.F90 \
+         lightcurve_utils.f90 $(READFILES) lightcurve.f90 extinction.f90 \
+         read_data.F90 get_h.f90\
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
@@ -548,10 +572,10 @@ libexact: checksystem $(OBJLIBEXACTALL)
 #
 # libread: data read library
 #
-SRCLIBREAD= globaldata.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_composition.f90 $(READFILES) read_data.F90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
@@ -638,6 +662,7 @@ checksystem:
 
 compilers:
 	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
+	@if type -p ifx > /dev/null; then echo "make SYSTEM=ifx"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
 	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;

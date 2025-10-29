@@ -2998,8 +2998,10 @@ subroutine change_itrans(iplot,xmin,xmax)
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
- if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
+ if (iplot > 0 .and. irhodust_start > 0 .and. iplot >= irhodust_start &
+     .and. iplot <= irhodust_end .and. irhodust_start /= irhodust_end) then
     print*,'>> applying transform to all dust densities <<'
+    irhodust_end = min(irhodust_end,size(itrans))
     itrans(irhodust_start:irhodust_end) = itrans(iplot)
  endif
 

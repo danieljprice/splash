@@ -25,11 +25,12 @@
 ! depend on system commands (in the system_commands module)
 !
 module system_utils
- use asciiutils, only:lcase
+ use asciiutils, only:lcase,cstring
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,renvlist,get_command_option,count_matching_args
  public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
+ public :: set_environment_variable
 
  private
 
@@ -58,6 +59,21 @@ subroutine get_environment_or_flag(variable,string)
  !print*,' GOT ',trim(variable),' = ',trim(string)
 
 end subroutine get_environment_or_flag
+
+!
+!--this routine sets an environment variable by calling
+!  the intrinsic C routine setenv
+!
+subroutine set_environment_variable(variable,string,stat)
+ use system_commands, only:setenv
+ character(len=*), intent(in) :: variable,string
+ integer, optional, intent(out) :: stat
+ integer :: ierr
+
+ ierr = setenv(cstring(variable),cstring(string),1)
+ if (present(stat)) stat = ierr
+
+end subroutine set_environment_variable
 
  !
  !--this routine returns an integer variable
@@ -429,7 +445,7 @@ end subroutine get_user
 !--get copyright string involving logged in user and current year
 !
 function get_copyright() result(string)
- character(len=30) :: string
+ character(len=40) :: string
  character(len=8) :: year
 
  call get_user(string)

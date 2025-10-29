@@ -599,14 +599,16 @@ subroutine submenu_legend(ichoose)
     call prompt('Plot time legend? ',iPlotLegend)
     print "(a)",'Time legend is '//print_logical(iPlotLegend)
     if (iPlotLegend) then
-       print "(7(/,a),/)", &
+       print "(9(/,a),/)", &
        ' Example format strings: ', &
-       '  t =              : this is the default format "t = 0.1 years"', &
-       '  t = %t.5         : with time to 5 significant figures', &
-       '  Time: %t dog-%ut : gives "Time: 0.1 dog-years"', &
-       '  %(t + 2013)      : prints time offset by 2013', &
-       '  %(t + 2013).5    : as above, to 5 sig. figs.', &
-       '  %(t*100)         : multiplied by 100'
+       '  t =                          : this is the default format "t = 0.1 years"', &
+       '  t = %t.5                     : with time to 5 significant figures', &
+       '  Time: %t dog-%ut             : gives "Time: 0.1 dog-years"', &
+       '  %(t + 2013)                  : prints time offset by 2013', &
+       '  %(t + 2013).5                : as above, to 5 sig. figs.', &
+       '  %(t*100)                     : multiplied by 100', &
+       '  %(t + 2013-04-10):dt         : prints time as date offset by 2013-04-10', &
+       '  %(t + 2013-04-10 12:00):dt   : prints time as date and time offset by 2013-04-10 12:00'
        nhdr = count_non_blank(headertags)
        print "(a)",' You can print any header variables using %(var):'
        print "(43(2x,6(a),/))",headertags(1:nhdr)
