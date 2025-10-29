@@ -223,6 +223,7 @@ subroutine number_to_string(r,ndec,string)
 
  if (abs(r) < tiny(r)) then
     string = '0'
+    nc = 1
  else
     rtmp = abs(r)
     mm = nint(r/10.**(int(log10(rtmp)-ndec)))
@@ -231,6 +232,115 @@ subroutine number_to_string(r,ndec,string)
  endif
 
 end subroutine number_to_string
+
+!---------------------------------------------------------------------------
+!
+! write the real number r (time in seconds) to a datetime string
+! format can be 'datetime' or 'dt'
+!
+! converts seconds since epoch to datetime format
+! base_date is optional and can be in format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM' or 'YYYY/MM/DD HH:MM'
+! If base_date has no time component, the output will be rounded to days
+! original_format preserves the separators and format from the input
+!
+!---------------------------------------------------------------------------
+subroutine get_datetime_string(r,string,original_format)
+ real,    intent(in) :: r
+ character(len=*), intent(out) :: string
+ character(len=*), intent(in), optional :: original_format
+ integer :: year, month, day, hour, minute, second
+ character(len=1)  :: date_separator
+ integer :: seconds_since_epoch, total_seconds
+ logical :: is_datetime_format
+
+ ! convert real to integer seconds
+ seconds_since_epoch = nint(r)
+
+ ! determine separators and format from original format if provided
+ date_separator = '-'
+ is_datetime_format = .true.
+ if (present(original_format)) then
+    call determine_separator(original_format, date_separator)
+    is_datetime_format = index(original_format, ':') > 0 ! if has time component HH:MM
+ endif
+
+ ! convert seconds since Unix epoch to date components
+ year = 1970; month = 1; day = 1
+ total_seconds = seconds_since_epoch
+ day = day + total_seconds / 86400
+ total_seconds = mod(total_seconds, 86400)
+
+ ! handle negative remaining seconds
+ if (total_seconds < 0) then
+    total_seconds = total_seconds + 86400
+    day = day - 1
+ endif
+
+ ! convert remaining seconds to time components
+ hour = total_seconds / 3600
+ minute = (total_seconds - hour * 3600) / 60
+ second = total_seconds - hour * 3600 - minute * 60
+
+ ! normalize the date by working backwards from the epoch
+ do while (day > days_in_year(year))
+    day = day - days_in_year(year)
+    year = year + 1
+ enddo
+
+ do while (day > days_in_month(month, year))
+    day = day - days_in_month(month, year)
+    month = month + 1
+    if (month > 12) then
+       month = 1
+       year = year + 1
+    endif
+ enddo
+
+ ! format the date string
+ write(string,"(i4,a1,i2.2,a1,i2.2)") year, date_separator, month, date_separator, day
+
+ ! add time if datetime format is requested
+ if (is_datetime_format) then
+    write(string,"(a,1x,i2.2,':',i2.2)") trim(string), hour, minute
+ endif
+
+end subroutine get_datetime_string
+
+!---------------------------------------------------------------------------
+!
+! Create a parseable formula by replacing datetime strings with time
+! since a reference epoch in seconds
+! For example: "t + 2013-04-10 12:00" becomes "t + 1365595200"
+!
+!---------------------------------------------------------------------------
+subroutine create_parseable_formula(original_formula, parseable_formula)
+ use asciiutils, only:string_replace
+ character(len=*), intent(in) :: original_formula
+ character(len=*), intent(out) :: parseable_formula
+ integer :: i, len_formula
+ integer :: year, month, day, hour, minute, second
+ integer :: seconds_since_epoch
+ character(len=32) :: temp_str
+ character(len=32) :: datetime_str
+
+ parseable_formula = original_formula
+ len_formula = len_trim(parseable_formula)
+
+ i = 1
+ do while (i <= len_formula)
+    if (parse_datetime_pattern(original_formula,i,year,month,day,hour,minute,second,datetime_str)) then
+       ! convert to seconds since Unix epoch (1970-01-01)
+       seconds_since_epoch = datetime_to_seconds(year, month, day, hour, minute, second)
+
+       ! replace the datetime string with the value in seconds since 1970
+       write(temp_str, '(i0)') seconds_since_epoch
+       call string_replace(parseable_formula, trim(datetime_str), trim(temp_str))
+       len_formula = len_trim(parseable_formula)
+    endif
+    i = i + 1
+ enddo
+
+end subroutine create_parseable_formula
 
 !---------------------------------------------------------------------------
 !
