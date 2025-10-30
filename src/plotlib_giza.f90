@@ -103,6 +103,7 @@ module plotlib
       giza_set_colour_table,   &
       giza_stop_prompting,     &
       giza_start_prompting,    &
+      giza_set_font,           &
       plot_left_click=>giza_left_click_f,     &
       plot_right_click=>giza_right_click_f,   &
       plot_middle_click=>giza_middle_click_f, &
@@ -182,6 +183,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  else
     ierr = 0
  endif
+ call giza_set_font('Helvetica')
 
  if (ierr==0) then
     call giza_stop_prompting
