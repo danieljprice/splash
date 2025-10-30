@@ -40,25 +40,25 @@ contains
 !  - colour (icolouropt>1)
 !  contouring plots nc contours between datmin and datmax.
 !------------------------------------------------------------------------
-subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
-                  ilabelcont,contmin,contmax,blank,transparent,alpha)
+subroutine render_pix(datpix,datmin,datmax,label, &
+                      xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
+                      ilabelcont,contmin,contmax,blank,transparent,alpha)
  use plotutils,       only:formatreal
  use plotlib,         only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
                            plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent,&
                            plot_imag_alpha
  use contours_module, only:read_contours,contours_list,contourtitles
- integer, intent(in) :: npixx,npixy,ncontours,icolouropt
+ integer, intent(in) :: ncontours,icolouropt
  real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
- real, dimension(npixx,npixy), intent(in) :: datpix
+ real, dimension(:,:), intent(in) :: datpix
  logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
  real, intent(in), optional :: contmin,contmax,blank
  logical, intent(in), optional :: transparent
- real, dimension(npixx,npixy), intent(in), optional :: alpha
+ real, dimension(:,:), intent(in), optional :: alpha
 
- integer :: i,ierr,nc
+ integer :: i,ierr,nc,npixx,npixy
  real :: trans(6),levels(ncontours),dcont,charheight,cmin,cmax
  character(len=12) :: string
  logical :: iuse_transparent,ifixed_contours
@@ -75,7 +75,8 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  iuse_transparent = .false.
  if (present(transparent)) iuse_transparent = transparent
 
- !print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
+ npixx = size(datpix,1)
+ npixy = size(datpix,2)
 
  if (abs(icolouropt)==1) then        ! greyscale
 

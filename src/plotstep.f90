@@ -1321,10 +1321,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    pixwidthy = (ymax-ymin)/real(npixy)
                 endif
              endif
-             npixx = max(int((1. - epsilon(0.))*(xmax-xmin)/pixwidth) + 1,1)
-             npixy = max(int((1. - epsilon(0.))*(ymax-ymin)/pixwidthy) + 1,1)
-             npixx = 2*(npixx/2)
-             npixy = 2*(npixy/2)
 
              !!--only need z pixels if working with interpolation to 3D grid
              !  (then number of z pixels is equal to number of cross sections)
@@ -1972,13 +1968,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       !  background colour transparent
                       call set_transparency(npixx,npixy,datpix,brightness,rendermin,rendermax)
                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
-                         icolours_temp,iplotcont,0,ncontours,.false.,&
-                         ilabelcont,contmin,contmax,alpha=brightness)
+                           xmin,ymin,pixwidth,pixwidthy,    &
+                           icolours_temp,iplotcont,0,ncontours,.false.,&
+                          ilabelcont,contmin,contmax,alpha=brightness)
                    else
                       !--usual plot, no opacity
                       call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                         npixx,npixy,xmin,ymin,pixwidth,pixwidthy,    &
+                         xmin,ymin,pixwidth,pixwidthy,    &
                          icolours_temp,iplotcont,0,ncontours,.false.,&
                          ilabelcont,contmin,contmax)
                    endif
@@ -1990,11 +1986,11 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                          call set_transparency(npixx,npixy,datpixcont,brightness,contmin,contmax)
 
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
+                            xmin,ymin,pixwidth,pixwidthy,icolours,.false.,&
                             0,ncontours,.false.,ilabelcont,alpha=brightness)
                       else
                          call render_pix(datpixcont,contmin,contmax,trim(labelcont), &
-                            npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,&
+                            xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,&
                             .false.,ilabelcont)
                       endif
                    endif
@@ -2258,7 +2254,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                    brightness = 1.
                 endif
                 call render_pix(datpix,rendermin,rendermax,'blah', &
-                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
+                   xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
                    .false.,.false.,alpha=brightness,transparent=.false.)
              else
                 call interpolate2D_pixels(xplot,yplot,icolourme,ntoti,xmin,ymin,xmax,ymax,&
@@ -2287,7 +2283,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 if (all(abs(datpix-densmax) < tiny(0.))) densmax = densmax + 6. ! hit lower end of colour bar if all zeros
                 ! plot the resulting pixel map
                 call render_pix(datpix,densmax-6.,densmax,'blah', &
-                   npixx,npixy,xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
+                   xmin,ymin,pixwidth,pixwidthy,3,.false.,0,ncontours,&
                    .false.,.false.,transparent=(nstepsperpage /= 1))
              endif
              if (allocated(datpix)) deallocate(datpix)
@@ -2780,7 +2776,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              if (ierr==0 .and. allocated(datpix)) then
                 !!--call subroutine to actually render the image
                 call render_pix(datpix,rendermin,rendermax,trim(labelrender), &
-                npixx,npixy,xmin,ymin,pixwidth,pixwidth,    &
+                xmin,ymin,pixwidth,pixwidth,    &
                 icolours,iplotcont,0,0,.false.,.false.)
              endif
              !
@@ -3083,6 +3079,8 @@ subroutine page_setup(dummy_run)
 
           npixx = max(nint(xmaxpix-xminpix),1)
           npixy = max(nint(ymaxpix-yminpix),1)
+          npixx = 2*(npixx/2)
+          npixy = 2*(npixy/2)
           if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
           if (debugmode) print*,'DEBUG: dxpix = ',xmaxpix-xminpix,' dypix = ',ymaxpix-yminpix
           if (debugmode) print*,'DEBUG: nx,ny = ',npixx,npixy
@@ -3738,13 +3736,13 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
              call render_pix(datpixvec(1:numpixx,1:numpixy), &
                             minval(datpixvec(1:numpixx,1:numpixy)), &
                             datmax, &
-                            'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
+                            'crap',xmin,ymin,pixwidthvec,pixwidthvecy,    &
                             0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
           else
              call render_pix(datpixvec(1:numpixx,1:numpixy), &
                             minval(datpixvec(1:numpixx,1:numpixy)), &
                             maxval(datpixvec(1:numpixx,1:numpixy)), &
-                            'crap',numpixx,numpixy,xmin,ymin,pixwidthvec,pixwidthvecy,    &
+                            'crap',xmin,ymin,pixwidthvec,pixwidthvecy,    &
                             0,.true.,0,ncontours,.false.,ilabelcont)
           endif
        endif
@@ -3788,7 +3786,7 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
           !--plot contours of synchrotron intensity
           call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
               maxval(datpixvec(1:npixx,1:npixy)),'crap', &
-              npixx,npixy,xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
+              xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
        endif
 
     endif
