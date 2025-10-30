@@ -1,4 +1,11 @@
 
+**3.11.6: (30/10/25)**
+
+- bug fix causing seg fault in interactive mode if pixel number changes between window refreshes
+- bug fix with transparency in multistep multiple panels (thanks to Yann Bernard)
+- bug fix reading velocity of sink particles from Phantom when extra arrays present after density in file
+- recognise velocity array in shamrock data
+
 **3.11.5: (02/09/25)**
 
 - --sortpad flag to sort files while pausing panels where sequence has finished

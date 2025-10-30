@@ -56,6 +56,11 @@ program splash
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.11.6  : (30/10/25)
+!             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
+!             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
+!             bug fix reading velocity of sink particles from Phantom when extra arrays present after density in file;
+!             recognise velocity array in shamrock data
 !     3.11.5  : (02/09/25)
 !             --sortpad flag to sort files while pausing panels where sequence has finished;
 !             vtk reader works with structured grid format from Idefix code;
@@ -659,7 +664,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [29th Oct 2025]'
+ character(len=*), parameter :: version = 'v4.0.0 [30th Oct 2025]'
 
  !
  ! initialise some basic code variables
