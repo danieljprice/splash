@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.6  : (30/10/25)
+!             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
+!             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
+!             bug fix reading velocity of sink particles from Phantom when extra arrays present after density in file;
+!             recognise velocity array in shamrock data
 !     3.11.5  : (02/09/25)
 !             --sortpad flag to sort files while pausing panels where sequence has finished;
 !             vtk reader works with structured grid format from Idefix code;
@@ -654,7 +659,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.5 [2nd Sep 2025]'
+ character(len=*), parameter :: version = 'v3.11.6 [30th Oct 2025]'
 
  !
  ! initialise some basic code variables
