@@ -313,7 +313,7 @@ subroutine transform2(array,itrans,errval)
  integer, intent(in) :: itrans
  real, dimension(:,:), intent(inout) :: array
  real, intent(in), optional :: errval
- real, dimension(size(array(:,1)),size(array(1,:))) :: arraytemp
+ real, dimension(size(array,1),size(array,2)) :: arraytemp
  real :: errvali
  character(len=20) :: string
  integer :: i
