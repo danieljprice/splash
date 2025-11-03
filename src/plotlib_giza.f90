@@ -151,6 +151,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  integer, intent(in), optional :: paperunits
  real                          :: width,height
  integer                       :: units, id
+ character(len=12) :: string
 
  if (present(papersizex)) then
     width = papersizex
@@ -183,7 +184,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  else
     ierr = 0
  endif
- call giza_set_font('Helvetica')
+ call get_environment_variable('GIZA_FONT',string)
+ if (len_trim(string) <= 0) call giza_set_font('Helvetica')
 
  if (ierr==0) then
     call giza_stop_prompting
