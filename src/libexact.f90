@@ -245,19 +245,20 @@ subroutine cshock_c(iplot,npart,time,gamma,machs,macha,xmin,xmax,&
 
 end subroutine cshock_c
 
-subroutine planetdisc_c(iplot,npart,ispiral,iclockwise,time,HonR,rplanet,q,narms,&
+subroutine planetdisc_c(iplot,npart,ispiral,iclockwise,inonlin,time,HonR,rplanet,q,narms,&
                         params,rplot,yplot,ierr) bind(c, name='_planetdisc')
- integer(c_int), intent(in)    :: iplot,ispiral,narms,npart,iclockwise
+ integer(c_int), intent(in)    :: iplot,ispiral,narms,npart,iclockwise,inonlin
  integer(c_int), intent(out)   :: ierr
  real(c_real),  intent(in)    :: time, HonR, rplanet, q, params(7,10)
  real(c_real),  intent(inout) :: rplot(npart)
  real(c_real),  intent(out)   :: yplot(npart)
- logical :: use_clockwise
+ logical :: use_clockwise,use_nonlin
 
- use_clockwise = .false.
- if (iclockwise > 0) use_clockwise = .true.
+ use_clockwise = (iclockwise > 0)
+ use_nonlin    = (inonlin > 0) 
 
- call exact_planetdisc(iplot,ispiral,use_clockwise,time,HonR,rplanet,q,0.,narms,&
+ call exact_planetdisc(iplot,ispiral,use_clockwise,use_nonlin,&
+                       time,HonR,rplanet,q,0.,narms,&
                        params,rplot,yplot,ierr)
  ierr = 0
 end subroutine planetdisc_c
