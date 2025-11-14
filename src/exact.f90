@@ -99,7 +99,7 @@ module exact
  real :: HonR,rplanet,q_index,phase
  real :: spiral_params(7,maxexact)
  integer :: ispiral,narms
- logical :: iread_wakeparams,iclockwise
+ logical :: iread_wakeparams,iclockwise,inonlin
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
@@ -124,7 +124,8 @@ module exact
        use_sink_data,xprim,xsec,nfiles,&
        gamma_exact,gamma2_exact,use_gamma_exact,use_gamma2_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
-       const1,const2,ispiral,narms,spiral_params,phase,iread_wakeparams,iclockwise
+       const1,const2,ispiral,narms,spiral_params,phase,&
+       iread_wakeparams,iclockwise,inonlin
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -218,6 +219,7 @@ subroutine defaults_set_exact
  spiral_params(2,:) = 360.
  iread_wakeparams = .true.
  iclockwise = .false.
+ inonlin = .false.
 !   Bondi
  relativistic  = .true.
  geodesic_flow = .false.
@@ -604,6 +606,7 @@ subroutine submenu_exact(iexact)
           call prompt('enter orbital phase in degrees ',phase)
           call prompt('clockwise rotation?',iclockwise)
        endif
+       call prompt('apply non-linear corrections from Rafikov?',inonlin)
     end select
  case(18)
     prompt_for_gamma = .true.
@@ -799,6 +802,22 @@ subroutine read_exactparams(iexact,rootname,ierr)
              filename_exact(1) = filename
              nfiles = 1
              ierr = 0
+          else
+             !
+             ! failing this, look for a trajectory file
+             !
+             nfiles = 0
+             do i=1,2
+                write(filename,"(a,i1)") trim(rootname(1:idash-1))//'.trajectory',i
+                inquire(file=filename,exist=iexist)
+                if (iexist) then
+                   nfiles = nfiles + 1
+                   filename_exact(nfiles) = filename
+                   iExactLineStyle = 1
+                   ExactAlpha = 0.5
+                   ierr = 0
+                endif
+             enddo
           endif
        endif
        return
@@ -1590,7 +1609,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     endif
  case(17) ! planet-disc interaction
     if (ndim >= 2 .and. iplotx==ix(1) .and. iploty==ix(2)) then
-       call exact_planetdisc(igeom,ispiral,iclockwise,timei,HonR,rplanet,q_index,phase,narms,&
+       call exact_planetdisc(igeom,ispiral,iclockwise,inonlin,timei,HonR,rplanet,q_index,phase,narms,&
                              spiral_params,xexact,yexact,ierr)
     endif
  case(18)

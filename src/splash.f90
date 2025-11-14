@@ -51,6 +51,9 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     3.11.7  : (XX/11/25)
+!             option for nonlinear corrections to Rafikov planet wake exact solution;
+!             automated plotting of .trajectory files from phantom orbit reconstructor^TM
 !     3.11.6  : (30/10/25)
 !             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
 !             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
@@ -659,7 +662,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.6 [30th Oct 2025]'
+ character(len=*), parameter :: version = 'v3.11.7 [14th Nov 2025]'
 
  !
  ! initialise some basic code variables

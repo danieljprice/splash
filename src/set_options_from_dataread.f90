@@ -97,12 +97,14 @@ subroutine set_options_dataread()
     idash = index(rootname(ifileopen),'_',back=.true.)
     if (idash==0) idash = len_trim(rootname(ifileopen))+1
 
+    ! functions if splash.func found
     inquire(file=trim(rootname(ifileopen))//'.func',exist=iexist)
     if (iexist) iexact = 1
 
     inquire(file=trim(fileprefix)//'.exactfiles',exist=iexist)
     if (iexist) iexact = 2
 
+    ! exact from file if stellar profile ascii file found
     inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.profile',exist=iexist)
     if (iexist) then
        iexact = 2
@@ -119,10 +121,17 @@ subroutine set_options_dataread()
        endif
     endif
 
+    ! spiral arms exact solution if .spirals file present
     inquire(file=trim(rootname(ifileopen))//'.spirals',exist=iexist)
     if (iexist) iexact = 17
 
+    ! flyby trajectory if .trajectory file found
+    inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.trajectory1',exist=iexist)
+    if (iexist .and. iexact==0) iexact = 2
+
     call read_exactparams(iexact,rootname(ifileopen),ierr)
+
+
  endif
 
 end subroutine set_options_dataread
