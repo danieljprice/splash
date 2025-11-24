@@ -900,18 +900,17 @@ end subroutine interp3D_proj_vec_synctron
 !--------------------------------------------------------------------------
 !
 !     Same as previous but for column integrated quantities on
-!     a collection  of irregular points
+!     a collection of irregular points
 !
-!     Input: particle coordinates  : x,y   (npart)
+!     Input: particle coordinates  : x,y,z   (npart)
 !            smoothing lengths     : hh    (npart)
 !            weight for each particle : weight (npart)
 !            vector data to smooth : dat  (npart)
 !                                    vecy  (npart)
 !
-!     Output: smoothed vector field   : datsmoothx (npixx,npixy)
-!                                     : vecsmoothy (npixx,npixy)
+!     Output: smoothed vector field   : datsmooth (npoints)
 !
-!     Daniel Price 23/12/04
+!     Daniel Price 2023
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&
