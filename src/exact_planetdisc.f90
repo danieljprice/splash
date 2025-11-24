@@ -39,18 +39,19 @@ module planetdisc
 
 contains
 
-subroutine exact_planetdisc(iplot,ispiral,use_clockwise,time,HonR,rplanet,q,phi0,narms,params,rplot,yplot,ierr)
+subroutine exact_planetdisc(iplot,ispiral,use_clockwise,use_nonlin,time,HonR,rplanet,q,phi0,&
+                            narms,params,rplot,yplot,ierr)
  use plotlib,  only:plot_line
  use geometry, only:set_planet_wake,planet_wake_t
  integer, intent(in)  :: iplot,ispiral,narms
- logical, intent(in)  :: use_clockwise
+ logical, intent(in)  :: use_clockwise,use_nonlin
  integer, intent(out) :: ierr
  real,    intent(in)  :: time, HonR, rplanet, q, phi0, params(:,:)
  real, dimension(:),           intent(inout) :: rplot
  real, dimension(size(rplot)), intent(out)   :: yplot
  integer :: npts,iend,istart
  integer :: i,j,norbits,iarm
- logical :: use_ogilvie,use_nonlin
+ logical :: use_ogilvie
  real :: r,rr,phase,dr,phi,rmin,rmax,phimin,phimax,dphi,coeff(maxcoeff)
  real, parameter :: pi = 4.*atan(1.)
  real :: p,t0,dt,dir
@@ -63,7 +64,6 @@ subroutine exact_planetdisc(iplot,ispiral,use_clockwise,time,HonR,rplanet,q,phi0
  phase = phi0*pi/180. ! convert to radians
  !if (time > 0.) phase = phase + (time - (2.*pi*norbits))
  use_ogilvie = .false.
- use_nonlin = .false.
  if (use_clockwise) then
     dir = -1.
  else
