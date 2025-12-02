@@ -1052,7 +1052,7 @@ subroutine parse_int64_array(array_text,values,ierr)
  character(len=*), intent(in) :: array_text
  integer(kind=int64), allocatable, intent(out) :: values(:)
  integer, intent(out) :: ierr
- integer :: n, i, ios, value_kind
+ integer :: n,i,value_kind
  character(len=:), allocatable :: elem
 
  ierr = 0
@@ -1065,28 +1065,28 @@ subroutine parse_int64_array(array_text,values,ierr)
  allocate(values(n))
  do i = 1, n
     call json_array_get_element(array_text,i-1,elem,value_kind,ierr)
-    if (ierr /= json_success) then
+    if (ierr == json_success) then
+       read(elem,*,iostat=ierr) values(i)
+    else
        ierr = 1
-       values = 0_int64
-       if (allocated(elem)) deallocate(elem)
-       return
-    endif
-    read(elem,*,iostat=ios) values(i)
-    if (ios /= 0) then
-      ierr = 1
-      values = 0_int64
-      if (allocated(elem)) deallocate(elem)
-      return
     endif
     if (allocated(elem)) deallocate(elem)
+    if (ierr /= 0) then
+       values = 0_int64
+       return
+    endif
  enddo
+
 end subroutine parse_int64_array
 
+!-----------------------------------------------------------------
+! parse an array of integers from a JSON text
+!-----------------------------------------------------------------
 subroutine parse_int_array(array_text,values,ierr)
  character(len=*), intent(in) :: array_text
  integer, allocatable, intent(out) :: values(:)
  integer, intent(out) :: ierr
- integer :: n, i, ios, value_kind
+ integer :: n,i,value_kind
  character(len=:), allocatable :: elem
 
  ierr = 0
@@ -1099,20 +1099,16 @@ subroutine parse_int_array(array_text,values,ierr)
  allocate(values(n))
  do i = 1, n
     call json_array_get_element(array_text,i-1,elem,value_kind,ierr)
-    if (ierr /= json_success) then
+    if (ierr == json_success) then
+       read(elem,*,iostat=ierr) values(i)
+    else
        ierr = 1
-       values = 0
-       if (allocated(elem)) deallocate(elem)
-       return
-    endif
-    read(elem,*,iostat=ios) values(i)
-    if (ios /= 0) then
-       ierr = 1
-       values = 0
-       if (allocated(elem)) deallocate(elem)
-       return
     endif
     if (allocated(elem)) deallocate(elem)
+    if (ierr /= 0) then
+       values = 0
+       return
+    endif
  enddo
 
 end subroutine parse_int_array

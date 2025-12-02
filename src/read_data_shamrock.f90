@@ -174,11 +174,11 @@ subroutine read_data_shamrock(rootname,istepstart,ipos,nstepsread)
  npartoftype(1,istepstart) = npart
 
  ! compute the density from the mass and the smoothing length
- print*,' particle mass =',particle_mass
- print*,' kernel hfact  =',kernel_hfact
- do i=1,npart
-    dat(i,irho,istepstart) = particle_mass*(kernel_hfact/abs(dat(i,ih,istepstart)))**3
- enddo
+ if (ih > 0 .and. irho > 0) then
+    do i=1,npart
+       dat(i,irho,istepstart) = particle_mass*(kernel_hfact/abs(dat(i,ih,istepstart)))**3
+    enddo
+ endif
  nstepsread = 1
 
  if (allocated(field_counts)) deallocate(field_counts)
@@ -450,6 +450,7 @@ subroutine read_shamrock_header(user_header,sched_header,file_header,fields,offs
     if (allocated(tmp)) deallocate(tmp)
     if (allocated(elem_text)) deallocate(elem_text)
  enddo
+ if (allocated(tmp)) deallocate(tmp)
  if (allocated(elem_text)) deallocate(elem_text)
  if (allocated(layout_text)) deallocate(layout_text)
  if (ierr /= 0) then
@@ -524,9 +525,9 @@ subroutine get_header_pairs(user_header,headertags,headervals,nheader)
     ! try to the value as a real, if this fails, skip it
     read(val_string,*,iostat=ierr) headervals(nheader)
     if (ierr == 0) then
+       nheader = nheader + 1
        headertags(nheader) = trim(key_string)
        if (debugmode) print*,trim(key_string)//':',headervals(nheader)
-       nheader = nheader + 1
     endif
     string = string(icolon+1:) ! move to the next colon
     icolon = index(string,':')
