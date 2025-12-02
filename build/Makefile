@@ -371,15 +371,16 @@ endif
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
-READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspmhd.f90 \
-           read_data_gadget.f90          read_data_VINE.f90      read_data_sro.f90 \
-           read_data_dragon.f90          read_data_seren.f90     read_data_tipsy.f90 \
-           read_data_mhutch.f90          read_data_UCLA.f90      read_data_aly.f90 \
-           read_data_bauswein.f90        read_data_egaburov.f90  read_data_starsmasher.f90 \
-           read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
-           read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
-           read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90     read_data_vtk.f90
+READFILES= utils_json.f90 \
+           read_data_ascii.f90           read_data_sphNG.f90        read_data_ndspmhd.f90 \
+           read_data_gadget.f90          read_data_VINE.f90         read_data_sro.f90 \
+           read_data_dragon.f90          read_data_seren.f90        read_data_tipsy.f90 \
+           read_data_mhutch.f90          read_data_UCLA.f90         read_data_aly.f90 \
+           read_data_bauswein.f90        read_data_egaburov.f90     read_data_starsmasher.f90 \
+           read_data_gadget_jsb.f90      read_data_foulkes.f90      read_data_jjm.f90 \
+           read_data_jjm_multiphase.f90  read_data_mbate.f90        read_data_oilonwater.f90 \
+           read_data_rsph.f90            read_data_urban.f90        read_data_shamrock.f90 \
+           read_data_spyros.f90          read_data_vanaverbeke.f90  read_data_vtk.f90
 
 READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
