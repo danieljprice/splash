@@ -2924,8 +2924,9 @@ subroutine page_setup(dummy_run)
  use colourbar,     only:get_colourbarmargins
  use pagesetup,     only:setpage2
  use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
-                       vposlegend,iPlotLegend,usecolumnorder,interactive,&
-                       xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
+                         vposlegend,iPlotLegend,usecolumnorder,interactive,&
+                         xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin,&
+                         ipapersizeunits,papersizex
  use settings_limits, only:adjustlimitstodevice
  use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity,plot_qcur
  use limits,        only:fix_equal_limits
@@ -3079,8 +3080,10 @@ subroutine page_setup(dummy_run)
 
           npixx = max(nint(xmaxpix-xminpix),1)
           npixy = max(nint(ymaxpix-yminpix),1)
-          npixx = 2*(npixx/2)
-          npixy = 2*(npixy/2)
+          if (.not. (ipapersizeunits == 0 .and. mod(nint(papersizex),2) /= 0)) then
+             npixx = 2*(npixx/2)
+             npixy = 2*(npixy/2)
+          endif
           if (debugmode) print*,'DEBUG: dx = ',xmax-xmin,' dy = ',ymax-ymin
           if (debugmode) print*,'DEBUG: dxpix = ',xmaxpix-xminpix,' dypix = ',ymaxpix-yminpix
           if (debugmode) print*,'DEBUG: nx,ny = ',npixx,npixy
