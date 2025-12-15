@@ -70,7 +70,7 @@ subroutine adjust_data_codeunits
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,&
                            locate_particle_from_string,get_binary,got_particles_of_type
  real :: hmin,dphi,domega,period
- real, dimension(3) :: x0,v0
+ real, dimension(3) :: x0,v0,xsink
  integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2),iorigin
  logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles
@@ -153,15 +153,19 @@ subroutine adjust_data_codeunits
              print "(a,i10,a)",' ERROR: --sink = ',isink,' but not enough sink particles'
           else
              if (iverbose >= 1) print*
-             if (isink < 10) then
-                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
-             else
-                print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
-             endif
+             ! feature to centre on a sink particle but shift the origin to a different point
+             x0 = renvlist('SPLASH_SHIFT',ndim,errval=-666.)
+
+             print "(a,i0,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
-                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='sink')
+                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='sink',xi=xsink)
+                if (all(abs(x0+666.) > tiny(0.))) then
+                   print "(a,3(1x,es10.3),a)",' :: SHIFTING TO x=',x0(1:ndim),' from --shift flag'
+                   call shift_positions(dat(:,:,j),ntot,ndim,x0)
+                   print "(a,3(1x,es10.3))",' :: distance of sink from original origin = ',xsink(1:ndim)+x0(1:ndim)
+               endif
              enddo
           endif
        else
@@ -319,14 +323,15 @@ end subroutine rotate_particles
 ! routine to centre particle positions and velocities
 ! on a particle location
 !------------------------------------------------------
-subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label)
+subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label,xi)
  use labels, only:ix,ivx
  integer, intent(in) :: ipart,np,ndim,ndimV,ncol,iverbose
  logical, intent(in) :: dontCentreVelocity
  real, dimension(:,:), intent(inout) :: dat
+ character(len=*), intent(in) :: label
+ real, dimension(ndim), intent(out), optional :: xi
  real, dimension(ndim)  :: x0
  real, dimension(ndimV) :: v0
- character(len=*), intent(in) :: label
 
  !--sanity check inputs
  if (ipart <= 0) then
@@ -348,6 +353,9 @@ subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iv
     v0 = 0.
  endif
  call shift_particles(dat(:,:),np,ndim,ndimV,ncol,x0,v0)
+
+ ! optionally return the position we shifted things to
+ if (present(xi)) xi = x0
 
 end subroutine centre_on_particle
 
