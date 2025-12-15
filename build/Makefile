@@ -266,6 +266,7 @@ endif
 # these are the flags used for linking
 #
 LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS)
+PIELDFLAGS= -pie
 
 #
 # this is an option to change the endian-ness at compile time
@@ -482,7 +483,7 @@ OBJECTS= $(OBJECTS3:.cc=.o)
 #
 
 all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS) $(PIELDFLAGS)
 	@echo; echo ' SPLASH v3 successfully compiled! ';
 	@echo; echo '   "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin';
 	@echo; echo ' If you do not have admin privileges, add the following to your .bashrc or equialent:';
@@ -506,7 +507,7 @@ falcon: falcON
 falcON: falcON_hdf5
 
 falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
+	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(PIELDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
 
 read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
@@ -515,7 +516,7 @@ read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
 
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
+	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(PIELDFLAGS) $(HDF5LIBS) -lsiloh5
 
 read_data_silo_utils.o: read_data_silo_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
@@ -527,7 +528,7 @@ SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
 OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF) $(PIELDFLAGS)
 
 #
 #
@@ -601,7 +602,7 @@ splash-image: denoise
 splash-denoise: denoise
 
 denoise: checksystem checkfits $(OBJECTSIMLIB)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS) $(PIELDFLAGS)
 	@echo; echo ' Denoise utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
@@ -615,7 +616,7 @@ OBJECTSM = $(SOURCESM:.f90=.o)
 
 .PHONY: sphmoments
 sphmoments: checksystem checkfits $(OBJECTSM)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS) $(PIELDFLAGS)
 	@echo; echo ' sphmoments utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
@@ -833,17 +834,17 @@ targz:
 test: test1 test2 test3 test_slicer test_prompt test-parse
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test2: transform.o $(TESTDIR)//test_transform.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
 test3: fieldlines.o $(TESTDIR)//test_fieldlines.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines $(TESTDIR)/test_fieldlines.o fieldlines.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_fieldlines $(TESTDIR)/test_fieldlines.o fieldlines.o
 test_slicer: interpolate3D_projection.o interpolate3D_xsec.o test_slicer3D.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D $(TESTDIR)/test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_slicer3D $(TESTDIR)/test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test_prompt: prompting.o test_prompting.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
 test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parsetext.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
+	$(FC) $(FFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
 
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
