@@ -1,4 +1,11 @@
 
+**3.11.7: (15/12/25)**
+
+- option for nonlinear corrections to Rafikov planet wake exact solution
+- automated plotting of .trajectory files from phantom orbit reconstructor^TM Shamrock native .sham data reader implemented
+- --shift=x,y,z flag to centre on sink but shift it to a different position
+- issues with template and license files fixed (thanks to Phil Wyett)
+
 **3.11.6: (30/10/25)**
 
 - bug fix causing seg fault in interactive mode if pixel number changes between window refreshes
