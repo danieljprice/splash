@@ -51,9 +51,12 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     3.11.7  : (XX/11/25)
+!     3.11.7  : (15/12/25)
 !             option for nonlinear corrections to Rafikov planet wake exact solution;
 !             automated plotting of .trajectory files from phantom orbit reconstructor^TM
+!             Shamrock native .sham data reader implemented;
+!             --shift=x,y,z flag to centre on sink but shift it to a different position;
+!             issues with template and license files fixed (thanks to Phil Wyett)
 !     3.11.6  : (30/10/25)
 !             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
 !             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
@@ -662,7 +665,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.7 [14th Nov 2025]'
+ character(len=*), parameter :: version = 'v3.11.7 [15th Dec 2025]'
 
  !
  ! initialise some basic code variables
@@ -1214,7 +1217,7 @@ subroutine print_header
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
-   '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
+   '   free software; can redistribute w/conditions (see LICENSE) *',/,/, &
    '           https://splash-viz.readthedocs.io',/,/, &
    ' Please cite Price (2007), PASA 24, 159 if you use SPLASH in print',/)
 
