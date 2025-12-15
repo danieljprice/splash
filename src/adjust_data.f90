@@ -160,7 +160,8 @@ subroutine adjust_data_codeunits
              if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
-                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='sink',xi=xsink)
+                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,&
+                     iverbose,label='sink',xi=xsink)
                 if (all(abs(x0+666.) > tiny(0.))) then
                    print "(a,3(1x,es10.3),a)",' :: SHIFTING TO x=',x0(1:ndim),' from --shift flag'
                    call shift_positions(dat(:,:,j),ntot,ndim,x0)
