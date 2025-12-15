@@ -61,12 +61,10 @@ module json_utils
  public :: json_array_get_element
  public :: json_array_length
  public :: json_read
- public :: parse_int64_array
- public :: parse_int_array
 
  interface json_read
   module procedure json_get_string_or_array, json_get_real, json_get_integer, json_get_logical,&
-                   json_get_value_by_path
+                   json_get_value_by_path, json_get_array_int64, json_get_array_int
  end interface json_read
 
 contains
@@ -210,6 +208,74 @@ subroutine json_get_integer(json_text, key, value, ierr)
  if (allocated(raw)) deallocate(raw)
 
 end subroutine json_get_integer
+
+!-----------------------------------------------------------------
+! get an integer(kind=int64) array from a JSON text
+!-----------------------------------------------------------------
+subroutine json_get_array_int64(json_text, key, values, ierr)
+ character(len=*), intent(in) :: json_text
+ character(len=*), intent(in) :: key
+ integer(kind=int64), allocatable, intent(out) :: values(:)
+ integer, intent(out) :: ierr
+ character(:), allocatable :: raw
+ integer :: kind, parse_err
+
+ ierr = json_success
+ call json_get_raw_value(json_text, key, raw, kind, ierr)
+ if (ierr /= json_success) then
+    allocate(values(0))
+    return
+ endif
+
+ if (kind /= json_kind_array) then
+    ierr = json_err_type
+    allocate(values(0))
+    if (allocated(raw)) deallocate(raw)
+    return
+ endif
+
+ call parse_int64_array(raw, values, parse_err)
+ if (allocated(raw)) deallocate(raw)
+ if (parse_err /= 0) then
+    ierr = json_err_parse
+    if (.not. allocated(values)) allocate(values(0))
+ endif
+
+end subroutine json_get_array_int64
+
+!-----------------------------------------------------------------
+! get an integer array from a JSON text
+!-----------------------------------------------------------------
+subroutine json_get_array_int(json_text, key, values, ierr)
+ character(len=*), intent(in) :: json_text
+ character(len=*), intent(in) :: key
+ integer, allocatable, intent(out) :: values(:)
+ integer, intent(out) :: ierr
+ character(:), allocatable :: raw
+ integer :: kind, parse_err
+
+ ierr = json_success
+ call json_get_raw_value(json_text, key, raw, kind, ierr)
+ if (ierr /= json_success) then
+    allocate(values(0))
+    return
+ endif
+
+ if (kind /= json_kind_array) then
+    ierr = json_err_type
+    allocate(values(0))
+    if (allocated(raw)) deallocate(raw)
+    return
+ endif
+
+ call parse_int_array(raw, values, parse_err)
+ if (allocated(raw)) deallocate(raw)
+ if (parse_err /= 0) then
+    ierr = json_err_parse
+    if (.not. allocated(values)) allocate(values(0))
+ endif
+
+end subroutine json_get_array_int
 
 !-----------------------------------------------------------------
 ! get a logical value from a JSON text

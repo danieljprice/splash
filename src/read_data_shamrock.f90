@@ -31,7 +31,7 @@ module readdata_shamrock
  use json_utils,      only:json_read,json_get_value_by_path, &
                            json_array_length,json_array_get_element,json_success, &
                            json_kind_number,json_kind_string,json_kind_object, &
-                           json_kind_array,parse_int64_array,parse_int_array
+                           json_kind_array,json_err_type
  implicit none
  private
 
@@ -399,10 +399,7 @@ subroutine read_shamrock_header(user_header,sched_header,file_header,fields,offs
  real,                              intent(out) :: kernel_hfact, particle_mass
  integer,                           intent(out) :: ierr
  character(len=:), allocatable :: layout_text
- character(len=:), allocatable :: elem_text
- character(len=:), allocatable :: tmp
- character(len=:), allocatable :: arr_text
- integer :: nfields,kind,i,istat,arr_len
+ integer :: nfields,i,istat,arr_len
 
  ierr = 0
  kernel_hfact = 1.2
@@ -429,65 +426,37 @@ subroutine read_shamrock_header(user_header,sched_header,file_header,fields,offs
 
  allocate(fields(nfields))
  do i = 1, nfields
-    call json_array_get_element(layout_text,i-1,elem_text,kind,istat)
-    if (istat /= json_success .or. kind /= json_kind_object) then
-       ierr = 1
-       exit
-    endif
-    call json_read(elem_text,'field_name',tmp,istat)
-    if (istat /= json_success) then
-       ierr = 1
-       exit
-    endif
-    fields(i)%name = trim(tmp)
-    if (allocated(tmp)) deallocate(tmp)
-    call json_read(elem_text,'type',tmp,istat)
-    if (istat /= json_success) then
-       ierr = 1
-       exit
-    endif
-    fields(i)%ftype = trim(tmp)
-    if (allocated(tmp)) deallocate(tmp)
-    if (allocated(elem_text)) deallocate(elem_text)
+    call get_field(layout_text,i-1,fields(i),ierr)
+    if (ierr /= json_success) exit
  enddo
- if (allocated(tmp)) deallocate(tmp)
- if (allocated(elem_text)) deallocate(elem_text)
  if (allocated(layout_text)) deallocate(layout_text)
+
  if (ierr /= 0) then
     if (allocated(fields)) deallocate(fields)
     allocate(fields(0), offsets(0), bytecounts(0), pids(0))
     return
  endif
 
- call json_read(file_header,'offsets',arr_text,istat)
+ call json_read(file_header,'offsets',offsets,istat)
  if (istat /= json_success) then
     ierr = 1
     allocate(offsets(0), bytecounts(0), pids(0))
     return
  endif
- call parse_int64_array(arr_text,offsets,ierr)
- if (allocated(arr_text)) deallocate(arr_text)
- if (ierr /= 0) return
 
- call json_read(file_header,'bytecounts',arr_text,istat)
+ call json_read(file_header,'bytecounts',bytecounts,istat)
  if (istat /= json_success) then
     ierr = 1
     allocate(bytecounts(0), pids(0))
     return
  endif
- call parse_int64_array(arr_text,bytecounts,ierr)
- if (allocated(arr_text)) deallocate(arr_text)
- if (ierr /= 0) return
 
- call json_read(file_header,'pids',arr_text,istat)
+ call json_read(file_header,'pids',pids,istat)
  if (istat /= json_success) then
     ierr = 1
     allocate(pids(0))
     return
  endif
- call parse_int_array(arr_text,pids,ierr)
- if (allocated(arr_text)) deallocate(arr_text)
- if (ierr /= 0) return
 
  arr_len = size(pids)
  if (size(offsets) /= arr_len .or. size(bytecounts) /= arr_len) then
@@ -495,6 +464,51 @@ subroutine read_shamrock_header(user_header,sched_header,file_header,fields,offs
  endif
 
 end subroutine read_shamrock_header
+
+!-----------------------------------------------------------------
+! extract a single field from the layout array
+!-----------------------------------------------------------------
+subroutine get_field(layout_text,index,field,ierr)
+ character(len=*), intent(in) :: layout_text
+ integer, intent(in) :: index
+ type(shamrock_field), intent(inout) :: field
+ integer, intent(out) :: ierr
+ character(len=:), allocatable :: elem_text
+ character(len=:), allocatable :: tmp
+ integer :: kind, stat
+
+ ierr = json_success
+
+ call json_array_get_element(layout_text,index,elem_text,kind,stat)
+ if (stat /= json_success .or. kind /= json_kind_object) then
+    ierr = 1
+    if (allocated(elem_text)) deallocate(elem_text)
+    return
+ endif
+
+ call json_read(elem_text,'field_name',tmp,stat)
+ if (stat /= json_success) then
+    ierr = 1
+    if (allocated(tmp)) deallocate(tmp)
+    if (allocated(elem_text)) deallocate(elem_text)
+    return
+ endif
+ field%name = trim(tmp)
+ if (allocated(tmp)) deallocate(tmp)
+
+ call json_read(elem_text,'type',tmp,stat)
+ if (stat /= json_success) then
+    ierr = 1
+    if (allocated(tmp)) deallocate(tmp)
+    if (allocated(elem_text)) deallocate(elem_text)
+    return
+ endif
+ field%ftype = trim(tmp)
+ if (allocated(tmp)) deallocate(tmp)
+
+ if (allocated(elem_text)) deallocate(elem_text)
+
+end subroutine get_field
 
 !-----------------------------------------------------------------
 ! get the header pairs from the user header by parsing the JSON
