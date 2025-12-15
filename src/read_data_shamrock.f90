@@ -31,7 +31,7 @@ module readdata_shamrock
  use json_utils,      only:json_read,json_get_value_by_path, &
                            json_array_length,json_array_get_element,json_success, &
                            json_kind_number,json_kind_string,json_kind_object, &
-                           json_kind_array,json_err_type
+                           json_kind_array
  implicit none
  private
 
@@ -560,6 +560,12 @@ subroutine read_int64_and_string(iu,str,ierr)
 
  ierr = 0
  read(iu,iostat=ierr) len_str
+ if (ierr /= 0 .or. len_str < 0_int64) then
+    ierr = 1
+    allocate(character(len=0) :: str)
+    return
+ endif
+
  allocate(character(len=int(len_str)) :: str)
  read(iu,iostat=ierr) str
 
