@@ -186,7 +186,7 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
-   FFLAGS= -O3 -nbs
+   FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
@@ -202,7 +202,7 @@ endif
 ifeq ($(SYSTEM),ifx)
 #  this is for the intel fortran compiler (version 10)
    FC= ifx
-   FFLAGS= -O3 -nbs
+   FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
