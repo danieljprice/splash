@@ -20,7 +20,9 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install gfortran and cairo on Linux
-      run: sudo apt-get install gfortran libcairo2-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install gfortran libcairo2-dev
 
     - name: Check gfortran version
       run: gfortran --version
@@ -32,25 +34,25 @@ jobs:
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash
-      run: make SYSTEM=gfortran withgiza
+      run: make -j 4 SYSTEM=gfortran withgiza
 
     - name: clean
       run: make clean
 
     - name: compile libexact
-      run: make SYSTEM=gfortran libexact
+      run: make -j 4 SYSTEM=gfortran libexact
 
     - name: compile libread
-      run: make SYSTEM=gfortran libread
+      run: make -j 4 SYSTEM=gfortran libread
 
     - name: clean
       run: make clean
 
     - name: compile splash in single precision
-      run: make SYSTEM=gfortran DOUBLEPRECISION=no withgiza
+      run: make -j 4 SYSTEM=gfortran DOUBLEPRECISION=no withgiza
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
-      run: make SYSTEM=gfortran DEBUG=yes withgiza
+      run: make -j 4 SYSTEM=gfortran DEBUG=yes withgiza
