@@ -673,7 +673,9 @@ compilers:
 	@echo "(end of possible selections)"; echo;
 
 checkpgplot:
-   ifeq (X${PGPLOT_DIR}, X)
+   ifneq ($(BACKEND),pgplot)
+	@# Not using PGPLOT, skip check
+   else ifeq (X${PGPLOT_DIR}, X)
 	@echo; echo "ERROR: PGPLOT_DIR should be set before compiling splash"; echo; ${MAKE} err;
    else
 	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; echo; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
@@ -786,7 +788,9 @@ err:
 
 ## other stuff
 
+ifeq ($(BACKEND),pgplot)
 plotlib_pgplot.o: checkpgplot
+endif
 
 plotlib_giza.o : giza-fortran.o
 
@@ -846,6 +850,37 @@ test_prompt: prompting.o test_prompting.o
 test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parsetext.o
 	$(FC) $(FFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
 
+
+depends: clean
+	@echo '*********************************************************************************'
+	@echo 'Generating dependency lines using makedepf90, writing to .depends'
+	@echo '*********************************************************************************'
+	@echo "  Using git to get list of tracked source files..."; \
+	  SOURCE_FILES=$$(cd .. && git ls-files 'src/*.f90' 'src/*.F90' | sed 's|^src/||' | \
+	    grep -v '^plotlib_pgplot\.f90$$' | grep -v '^plotlib_mock\.f90$$'); \
+	if [ "$(BACKEND)" = "pgplot" ]; then \
+	  SOURCE_FILES=$$(echo $$SOURCE_FILES | sed 's|plotlib_giza\.f90||g'); \
+	fi; \
+	if ! command -v makedepf90 > /dev/null 2>&1; then \
+	  echo "  Error: makedepf90 not found in PATH"; \
+	  echo "    Please install it:"; \
+	  echo "    - Debian/Ubuntu: sudo apt-get install makedepf90"; \
+	  echo "    - Or download from: https://github.com/outpaddling/makedepf90"; \
+	  exit 1; \
+	fi; \
+	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
+	cd ../src && makedepf90 -free $$SOURCE_FILES > ../build/.depends || \
+	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
+	if [ ! -s ../build/.depends ]; then \
+	  echo "  Error: .depends file is empty"; exit 1; \
+	fi; \
+	echo "  Successfully created .depends with $$(grep -c '\.o ' ../build/.depends 2>/dev/null || echo 0) dependency entries"
+	@echo '*************************************************************************'
+	@echo 'Dependency file .depends created successfully'
+	@echo ' -- run "make depends" again if you alter code dependencies'
+	@echo '*************************************************************************'
+	@echo 'Removing object files...'
+	@rm -f $(SRCDIR)/*.o $(SRCDIR)/H5Part/*.o
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
 #
@@ -856,6 +891,7 @@ cleanread:
 
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise
+	rm -f $(SRCDIR)/*.o $(SRCDIR)/H5Part/*.o
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall
