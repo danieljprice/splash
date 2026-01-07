@@ -1,67 +1,163 @@
-globaldata.o multiplot.mod settings_data.mod labels.mod filenames.mod particle_data.mod params.mod: globaldata.f90
-asciiutils.o asciiutils.mod: asciiutils.f90
-setpage.o pagesetup.mod: setpage.f90
-transform.o transforms.mod: transform.f90
-prompting.o prompting.mod: prompting.f90
-geometry.o geometry.mod: geometry.f90
-plotutils.o plotutils.mod: plotutils.f90
-colourbar.o colourbar.mod: pagesetup.mod colourbar.f90
-colours.o colours.mod: colours.f90
-colourparts.o colourparts.mod: colourparts.f90
-shapes.o shapes.mod: transforms.mod prompting.mod params.mod shapes.f90
-units.o settings_units.mod: settings_data.mod labels.mod prompting.mod params.mod units.f90
-write_pixmap.o write_pixmap.mod: colours.mod filenames.mod write_pixmap.f90
-write_sphdata.o write_sphdata.mod: params.mod settings_units.mod labels.mod write_sphdata.f90
-analysis.o analysis.mod: prompting.mod params.mod filenames.mod asciiutils.mod labels.mod analysis.f90
-discplot.o disc.mod: transforms.mod discplot.f90
-exact_fromfile.o exactfromfile.mod: exact_fromfile.f90
-exact_mhdshock.o mhdshock.mod: exact_mhdshock.f90
-exact_polytrope.o polytrope.mod: exact_polytrope.f90
-exact_rhoh.o rhoh.mod: exact_rhoh.f90
-exact_sedov.o sedov.mod: exact_sedov.f90
-exact_shock.o shock.mod: exact_shock.f90
-exact_shock_sr.o shock_sr.mod: exact_shock_sr.f90
-exact_wave.o wave.mod: exact_wave.f90
-exact_toystar1D.o toystar1d.mod: exact_toystar1D.f90
-exact_toystar2D.o toystar2d.mod: exact_toystar2D.f90
-exact_densityprofiles.o densityprofiles.mod: exact_densityprofiles.f90
-exact_torus.o torus.mod: exact_torus.f90
-exact_ringspread.o ringspread.mod: exact_ringspread.f90
-exact.o exact.mod: transforms.mod ringspread.mod densityprofiles.mod wave.mod toystar2d.mod toystar1d.mod torus.mod shock_sr.mod shock.mod sedov.mod rhoh.mod polytrope.mod mhdshock.mod exactfromfile.mod labels.mod filenames.mod prompting.mod settings_data.mod exact.f90
-limits.o limits.mod: asciiutils.mod settings_data.mod particle_data.mod geometry.mod labels.mod params.mod limits.f90
-allocate.o mem_allocation.mod: particle_data.mod allocate.f90
-titles.o titles.mod: filenames.mod asciiutils.mod titles.f90
-system_f2003.o system_commands.mod: system_f2003.f90
-system_utils.o system_utils.mod: system_commands.mod system_utils.f90
-options_render.o settings_render.mod: params.mod prompting.mod colours.mod labels.mod colourbar.mod options_render.f90
-options_particleplots.o settings_part.mod: multiplot.mod geometry.mod prompting.mod particle_data.mod settings_render.mod limits.mod labels.mod exact.mod settings_data.mod params.mod options_particleplots.f90
-calc_quantities.o calcquantities.mod: settings_units.mod mem_allocation.mod settings_part.mod settings_data.mod particle_data.mod labels.mod calc_quantities.f90
-get_data.o getdata.mod: system_utils.mod asciiutils.mod settings_units.mod calcquantities.mod geometry.mod labels.mod prompting.mod particle_data.mod settings_part.mod settings_data.mod limits.mod filenames.mod exact.mod get_data.f90
-convert.o convert.mod: prompting.mod getdata.mod analysis.mod write_sphdata.mod filenames.mod settings_data.mod particle_data.mod convert.f90
-options_data.o options_data.mod: settings_units.mod labels.mod limits.mod calcquantities.mod getdata.mod prompting.mod filenames.mod params.mod settings_data.mod options_data.f90
-options_limits.o settings_limits.mod: transforms.mod labels.mod limits.mod prompting.mod calcquantities.mod settings_data.mod filenames.mod multiplot.mod options_limits.f90
-options_page.o settings_page.mod: filenames.mod prompting.mod params.mod shapes.mod settings_limits.mod options_page.f90
-options_powerspec.o settings_powerspec.mod: prompting.mod labels.mod limits.mod settings_data.mod options_powerspec.f90
-options_vecplot.o settings_vecplot.mod: limits.mod labels.mod settings_data.mod prompting.mod options_vecplot.f90
-options_xsecrotate.o settings_xsecrot.mod: transforms.mod multiplot.mod calcquantities.mod settings_data.mod prompting.mod limits.mod labels.mod filenames.mod options_xsecrotate.f90
-pdfs.o pdfs.mod: asciiutils.mod filenames.mod plotutils.mod transforms.mod prompting.mod pdfs.f90
-rotate.o rotation.mod: rotate.f90
-interpolate1D.o interpolations1d.mod: interpolate1D.f90
-interpolate2D.o interpolations2d.mod: interpolate2D.f90
-interpolate3D.o interpolations3d.mod: interpolate3D.f90
-interpolate3D_xsec.o xsections3d.mod: interpolate3D_xsec.f90
-interpolate3D_projection.o projections3d.mod: interpolate3D_projection.f90
-interpolate3D_opacity.o interpolate3d_opacity.mod: colours.mod projections3d.mod interpolate3D_opacity.f90
-interpolate_vec.o interpolate_vec.mod: interpolate_vec.f90
-interactive.o interactive_routines.mod: colours.mod settings_part.mod labels.mod calcquantities.mod filenames.mod transforms.mod settings_limits.mod settings_data.mod limits.mod settings_vecplot.mod settings_page.mod multiplot.mod shapes.mod settings_xsecrot.mod colourbar.mod interactive.f90
-fieldlines.o fieldlines.mod: fieldlines.f90
-legends.o legends.mod: legends.f90
-particleplot.o particleplots.mod: geometry.mod interpolations2d.mod settings_part.mod settings_data.mod labels.mod params.mod particleplot.f90
-powerspectrums.o powerspectrums.mod: interpolations3d.mod powerspectrums.f90
-render.o render.mod: settings_vecplot.mod legends.mod plotutils.mod colourbar.mod render.f90
-plotstep.o timestep_plotting.mod: asciiutils.mod rotation.mod fieldlines.mod interpolate_vec.mod geometry.mod shapes.mod legends.mod colourbar.mod write_pixmap.mod exactfromfile.mod disc.mod pagesetup.mod render.mod xsections3d.mod interpolate3d_opacity.mod interpolations3d.mod interpolations2d.mod interpolations1d.mod powerspectrums.mod particleplots.mod interactive_routines.mod transforms.mod colourparts.mod settings_units.mod settings_vecplot.mod settings_limits.mod toystar2d.mod toystar1d.mod exact.mod filenames.mod pdfs.mod projections3d.mod particle_data.mod settings_powerspec.mod settings_xsecrot.mod settings_render.mod settings_part.mod settings_page.mod settings_data.mod titles.mod prompting.mod multiplot.mod limits.mod labels.mod colours.mod params.mod plotstep.f90
-timestepping.o timestepping.mod: params.mod settings_part.mod getdata.mod timestep_plotting.mod settings_page.mod settings_data.mod particle_data.mod filenames.mod timestepping.f90
-defaults.o defaults.mod: shapes.mod titles.mod settings_units.mod settings_powerspec.mod settings_xsecrot.mod settings_vecplot.mod settings_render.mod settings_part.mod options_data.mod settings_limits.mod multiplot.mod exact.mod settings_page.mod settings_data.mod particle_data.mod limits.mod labels.mod filenames.mod defaults.f90
-menu.o mainmenu.mod: settings_units.mod params.mod timestepping.mod getdata.mod geometry.mod defaults.mod transforms.mod prompting.mod multiplot.mod settings_xsecrot.mod settings_vecplot.mod settings_render.mod settings_page.mod settings_part.mod settings_limits.mod settings_data.mod options_data.mod limits.mod labels.mod filenames.mod menu.f90
-splash.o: settings_page.mod timestepping.mod analysis.mod write_sphdata.mod convert.mod write_pixmap.mod asciiutils.mod system_utils.mod system_commands.mod settings_xsecrot.mod settings_data.mod projections3d.mod mem_allocation.mod mainmenu.mod limits.mod defaults.mod getdata.mod filenames.mod splash.f90
-read_data_sphNG.o sphngread.mod: settings_units.mod geometry.mod calcquantities.mod labels.mod system_utils.mod mem_allocation.mod settings_data.mod particle_data.mod params.mod read_data_sphNG.f90
+H5Part/H5Part.o : H5Part/H5Part.F90 
+H5Part/H5PartAttrib.o : H5Part/H5PartAttrib.f90 
+adjust_data.o : adjust_data.f90 get_h.o allocate.o globaldata.o partutils.o geometry.o globaldata.o globaldata.o system_utils.o globaldata.o labels.o 
+allocate.o : allocate.f90 globaldata.o 
+analysis.o : analysis.f90 utils_vectors.o extinction.o lightcurve.o geomutils.o partutils.o globaldata.o options_particleplots.o globaldata.o system_utils.o globaldata.o globaldata.o asciiutils.o labels.o 
+asciiutils.o : asciiutils.f90 
+blackbody.o : blackbody.f90 globaldata.o physcon.o 
+byteswap.o : byteswap.f90 
+calc_quantities.o : calc_quantities.f90 partutils.o geomutils.o timing.o units.o allocate.o globaldata.o globaldata.o asciiutils.o geometry.o fparser.o prompting.o globaldata.o globaldata.o labels.o 
+colourbar.o : colourbar.f90 ${PLOTLIB:.f90=.o} 
+colourparts.o : colourparts.f90 ${PLOTLIB:.f90=.o} 
+colours.o : colours.f90 globaldata.o ${PLOTLIB:.f90=.o} 
+contours.o : contours.f90 globaldata.o asciiutils.o 
+convert.o : convert.f90 labels.o system_utils.o limits.o asciiutils.o get_data.o convert_grid.o analysis.o write_griddata.o write_sphdata.o globaldata.o globaldata.o globaldata.o 
+convert_grid.o : convert_grid.f90 globaldata.o timing.o asciiutils.o geometry.o globaldata.o write_griddata.o system_utils.o interpolate2D.o interpolate3D_geom.o interpolate3D.o interpolation.o rotate.o options_xsecrotate.o options_render.o options_particleplots.o globaldata.o units.o limits.o labels.o globaldata.o 
+cubicsolve.o : cubicsolve.f90 
+dataread_utils.o : dataread_utils.f90 globaldata.o 
+defaults.o : defaults.f90 calc_quantities.o shapes.o globaldata.o globaldata.o titles.o units.o options_powerspec.o options_xsecrotate.o options_vecplot.o options_render.o options_page.o options_particleplots.o options_data.o options_limits.o globaldata.o exact.o 
+denoise.o : denoise.f90 system_utils.o imageutils.o write_fits.o 
+discplot.o : discplot.f90 ${PLOTLIB:.f90=.o} partutils.o physcon.o globaldata.o transform.o 
+exact.o : exact.f90 transform.o exact_bondi.o exact_Cshock.o exact_gresho.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_densityprofiles.o exact_wave.o exact_toystar2D.o exact_toystar1D.o exact_torus.o exact_shock_sr.o exact_shock.o exact_sedov.o exact_rhoh.o exact_polytrope.o exact_fromfile.o system_utils.o partutils.o globaldata.o physcon.o map_columns.o labels.o asciiutils.o exact_planetdisc.o exact_mhdshock.o exact_function.o globaldata.o prompting.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o 
+exact_Cshock.o : exact_Cshock.f90 
+exact_bondi.o : exact_bondi.f90 
+exact_densityprofiles.o : exact_densityprofiles.f90 
+exact_dustywaves.o : exact_dustywaves.f90 cubicsolve.o 
+exact_fromfile.o : exact_fromfile.f90 asciiutils.o 
+exact_function.o : exact_function.f90 fparser.o 
+exact_gresho.o : exact_gresho.f90 
+exact_mhdshock.o : exact_mhdshock.f90 
+exact_planetdisc.o : exact_planetdisc.f90 geometry.o ${PLOTLIB:.f90=.o} 
+exact_polytrope.o : exact_polytrope.f90 
+exact_rhoh.o : exact_rhoh.f90 
+exact_ringspread.o : exact_ringspread.f90 
+exact_rochelobe.o : exact_rochelobe.f90 ${PLOTLIB:.f90=.o} 
+exact_sedov.o : exact_sedov.f90 
+exact_shock.o : exact_shock.f90 
+exact_shock_sr.o : exact_shock_sr.f90 
+exact_torus.o : exact_torus.f90 
+exact_toystar1D.o : exact_toystar1D.f90 ${PLOTLIB:.f90=.o} 
+exact_toystar2D.o : exact_toystar2D.f90 ${PLOTLIB:.f90=.o} 
+exact_wave.o : exact_wave.f90 
+extinction.o : extinction.f90 globaldata.o rotate.o units.o options_xsecrotate.o options_render.o options_particleplots.o globaldata.o interpolation.o globaldata.o interpolate3D_projection.o limits.o labels.o 
+fieldlines.o : fieldlines.f90 sort.o kernels.o ${PLOTLIB:.f90=.o} 
+fparser.o : fparser.f90 
+geometry.o : geometry.f90 
+geomutils.o : geomutils.f90 globaldata.o labels.o geometry.o globaldata.o 
+get_data.o : get_data.f90 units.o globaldata.o labels.o read_data.o adjust_data.o geomutils.o timing.o calc_quantities.o prompting.o globaldata.o globaldata.o limits.o globaldata.o asciiutils.o 
+get_h.o : get_h.f90 timing.o kernels.o 
+globaldata.o : globaldata.f90 
+imageutils.o : imageutils.f90 interpolate3D.o interpolate2D.o kernels.o 
+initialise.o : initialise.f90 globaldata.o globaldata.o limits.o labels.o globaldata.o 
+interactive.o : interactive.f90 system_utils.o pagecolours.o colours.o options_particleplots.o calc_quantities.o globaldata.o transform.o options_limits.o options_vecplot.o options_page.o legends.o particleplot.o partutils.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o options_render.o limits.o labels.o globaldata.o shapes.o options_xsecrotate.o colourbar.o 
+interpolate1D.o : interpolate1D.f90 kernels.o 
+interpolate2D.o : interpolate2D.f90 interpolation.o timing.o kernels.o 
+interpolate3D.o : interpolate3D.f90 timing.o interpolation.o kernels.o 
+interpolate3D_geom.o : interpolate3D_geom.f90 interpolation.o geometry.o kernels.o 
+interpolate3D_opacity.o : interpolate3D_opacity.f90 timing.o interpolation.o sort.o kernels.o interpolate3D_projection.o 
+interpolate3D_proj_geom.o : interpolate3D_proj_geom.f90 timing.o geometry.o kernels.o interpolate3D_projection.o interpolation.o 
+interpolate3D_projection.o : interpolate3D_projection.f90 timing.o kernels.o 
+interpolate3D_xsec.o : interpolate3D_xsec.f90 kernels.o 
+interpolate_vec.o : interpolate_vec.f90 
+interpolation.o : interpolation.f90 
+kernels.o : kernels.f90 asciiutils.o 
+labels.o : labels.f90 asciiutils.o globaldata.o 
+legends.o : legends.f90 prompting.o globaldata.o parsetext.o asciiutils.o ${PLOTLIB:.f90=.o} 
+libexact.o : libexact.f90 libutils.o exact_bondi.o exact_planetdisc.o exact_Cshock.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_torus.o exact_densityprofiles.o exact_rhoh.o exact_mhdshock.o exact_gresho.o exact_toystar2D.o exact_toystar1D.o exact_polytrope.o exact_sedov.o exact_shock_sr.o exact_shock.o 
+libinclude.o : libinclude.f90 
+libinterpolation.o : libinterpolation.f90 interpolate3D_proj_geom.o interpolate3D_opacity.o interpolate3D_xsec.o interpolate3D_projection.o 
+libread.o : libread.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o globaldata.o labels.o get_data.o read_data.o 
+libutils.o : libutils.F90 libinclude.f90 
+lightcurve.o : lightcurve.f90 write_fits.o system_utils.o rotate.o options_xsecrotate.o blackbody.o globaldata.o write_pixmap.o physcon.o units.o options_render.o options_particleplots.o globaldata.o interpolation.o globaldata.o interpolate3D_opacity.o lightcurve_utils.o limits.o labels.o globaldata.o 
+lightcurve_utils.o : lightcurve_utils.f90 utils_vectors.o physcon.o globaldata.o 
+limits.o : limits.f90 asciiutils.o globaldata.o globaldata.o geometry.o labels.o globaldata.o 
+map_columns.o : map_columns.f90 prompting.o promptlist.o labels.o asciiutils.o 
+menu.o : menu.f90 write_pixmap.o system_utils.o geometry.o globaldata.o globaldata.o timestepping.o geomutils.o get_data.o defaults.o transform.o prompting.o globaldata.o units.o options_xsecrotate.o options_vecplot.o options_render.o options_page.o options_particleplots.o options_limits.o globaldata.o options_data.o limits.o labels.o globaldata.o 
+moments.o : moments.f90 timing.o interpolate1D.o 
+no_fits.o : no_fits.f90 
+options_data.o : options_data.f90 fparser.o units.o labels.o limits.o calc_quantities.o get_data.o prompting.o globaldata.o globaldata.o globaldata.o 
+options_limits.o : options_limits.f90 partutils.o transform.o labels.o limits.o prompting.o calc_quantities.o globaldata.o globaldata.o globaldata.o 
+options_page.o : options_page.f90 legends.o globaldata.o pagecolours.o prompting.o globaldata.o ${PLOTLIB:.f90=.o} shapes.o labels.o options_limits.o 
+options_particleplots.o : options_particleplots.f90 asciiutils.o geomutils.o globaldata.o calc_quantities.o ${PLOTLIB:.f90=.o} globaldata.o prompting.o globaldata.o options_render.o limits.o labels.o exact.o geometry.o globaldata.o globaldata.o 
+options_powerspec.o : options_powerspec.f90 prompting.o labels.o limits.o globaldata.o 
+options_render.o : options_render.f90 asciiutils.o interpolate3D_projection.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o prompting.o colours.o kernels.o labels.o colourbar.o 
+options_vecplot.o : options_vecplot.f90 legends.o limits.o labels.o globaldata.o prompting.o 
+options_xsecrotate.o : options_xsecrotate.f90 transform.o globaldata.o limits.o calc_quantities.o globaldata.o promptlist.o prompting.o labels.o globaldata.o 
+pagecolours.o : pagecolours.f90 ${PLOTLIB:.f90=.o} 
+parsetext.o : parsetext.f90 ${PLOTLIB:.f90=.o} asciiutils.o fparser.o 
+particleplot.o : particleplot.f90 geometry.o ${PLOTLIB:.f90=.o} sort.o partutils.o transform.o interpolate2D.o options_particleplots.o globaldata.o labels.o globaldata.o 
+partutils.o : partutils.f90 globaldata.o 
+pdfs.o : pdfs.f90 asciiutils.o 
+physcon.o : physcon.f90 globaldata.o 
+${PLOTLIB:.f90=.o} : plotlib_giza.f90 
+plotstep.o : plotstep.f90 rotate.o fieldlines.o interpolate_vec.o shapes.o asciiutils.o legends.o geomutils.o geometry.o plotutils.o pdfs.o write_pixmap.o exact_fromfile.o discplot.o setpage.o render.o interpolate3D_xsec.o interpolate3D_opacity.o interpolate3D_proj_geom.o interpolate3D.o interpolate2D.o interpolate1D.o interpolation.o powerspectrums.o particleplot.o partutils.o interactive.o transform.o colourparts.o units.o options_vecplot.o options_limits.o exact_toystar2D.o exact_toystar1D.o exact.o adjust_data.o globaldata.o calc_quantities.o system_utils.o ${PLOTLIB:.f90=.o} interpolate3D_projection.o globaldata.o options_powerspec.o options_xsecrotate.o options_render.o options_particleplots.o pagecolours.o options_page.o globaldata.o titles.o prompting.o globaldata.o limits.o labels.o colourbar.o colours.o globaldata.o 
+plotutils.o : plotutils.f90 ${PLOTLIB:.f90=.o} 
+powerspectrums.o : powerspectrums.f90 
+prompting.o : prompting.f90 
+promptlist.o : promptlist.f90 prompting.o 
+read.o : read.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o get_data.o read_data.o 
+read_composition.o : read_composition.f90 globaldata.o asciiutils.o 
+read_data.o : read_data.F90 asciiutils.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
+read_data_UCLA.o : read_data_UCLA.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_VINE.o : read_data_VINE.f90 geometry.o system_utils.o allocate.o labels.o globaldata.o globaldata.o globaldata.o 
+read_data_aly.o : read_data_aly.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
+read_data_amuse_hdf5.o : read_data_amuse_hdf5.f90 geometry.o asciiutils.o system_utils.o allocate.o options_page.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_ascii.o : read_data_ascii.f90 globaldata.o geometry.o system_utils.o asciiutils.o allocate.o globaldata.o globaldata.o globaldata.o labels.o 
+read_data_bauswein.o : read_data_bauswein.f90 geometry.o labels.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_cactus_hdf5.o : read_data_cactus_hdf5.f90 geometry.o dataread_utils.o read_data_cactus_hdf5_futils.o asciiutils.o system_utils.o labels.o allocate.o options_page.o globaldata.o globaldata.o globaldata.o 
+read_data_cactus_hdf5_futils.o : read_data_cactus_hdf5_futils.f90 utils_vectors.o sort.o asciiutils.o labels.o globaldata.o 
+read_data_dragon.o : read_data_dragon.f90 geometry.o system_utils.o labels.o allocate.o units.o globaldata.o globaldata.o globaldata.o 
+read_data_egaburov.o : read_data_egaburov.f90 geometry.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_falcON_hdf5.o : read_data_falcON_hdf5.f90 geometry.o dataread_utils.o asciiutils.o system_utils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_fits.o : read_data_fits.f90 geometry.o asciiutils.o system_utils.o labels.o imageutils.o write_fits.o allocate.o globaldata.o globaldata.o 
+read_data_flash_hdf5.o : read_data_flash_hdf5.f90 geometry.o system_utils.o labels.o asciiutils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_foulkes.o : read_data_foulkes.f90 geometry.o labels.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_gadget.o : read_data_gadget.f90 asciiutils.o geometry.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_gadget_hdf5.o : read_data_gadget_hdf5.f90 geometry.o asciiutils.o system_utils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_gadget_jsb.o : read_data_gadget_jsb.f90 geometry.o allocate.o globaldata.o labels.o globaldata.o globaldata.o 
+read_data_h5part.o : read_data_h5part.f90 geometry.o H5Part/H5PartAttrib.o H5Part/H5Part.o system_utils.o asciiutils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_jjm.o : read_data_jjm.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_jjm_multiphase.o : read_data_jjm_multiphase.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_mbate.o : read_data_mbate.f90 geometry.o allocate.o labels.o units.o globaldata.o globaldata.o globaldata.o 
+read_data_mhutch.o : read_data_mhutch.f90 geometry.o labels.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_ndspmhd.o : read_data_ndspmhd.f90 labels.o system_utils.o geometry.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
+read_data_oilonwater.o : read_data_oilonwater.f90 units.o geometry.o physcon.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_pbob.o : read_data_pbob.f90 system_utils.o geometry.o asciiutils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_rsph.o : read_data_rsph.f90 labels.o geometry.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
+read_data_seren.o : read_data_seren.f90 geometry.o asciiutils.o system_utils.o labels.o allocate.o units.o globaldata.o globaldata.o globaldata.o 
+read_data_shamrock.o : read_data_shamrock.f90 geometry.o asciiutils.o labels.o allocate.o globaldata.o globaldata.o utils_json.o globaldata.o 
+read_data_silo.o : read_data_silo.f90 geometry.o asciiutils.o system_utils.o allocate.o options_page.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_snsph.o : read_data_snsph.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_sphNG.o : read_data_sphNG.f90 units.o partutils.o byteswap.o read_composition.o lightcurve_utils.o calc_quantities.o system_utils.o allocate.o globaldata.o geometry.o globaldata.o labels.o asciiutils.o globaldata.o 
+read_data_sphysics.o : read_data_sphysics.f90 geometry.o allocate.o globaldata.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_spyros.o : read_data_spyros.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_sro.o : read_data_sro.f90 units.o geometry.o labels.o globaldata.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_starsmasher.o : read_data_starsmasher.f90 geometry.o prompting.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_tipsy.o : read_data_tipsy.F90 geometry.o labels.o allocate.o globaldata.o globaldata.o byteswap.o globaldata.o 
+read_data_urban.o : read_data_urban.f90 geometry.o labels.o asciiutils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_vanaverbeke.o : read_data_vanaverbeke.f90 geometry.o labels.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
+read_data_vtk.o : read_data_vtk.f90 geometry.o byteswap.o asciiutils.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
+render.o : render.f90 options_vecplot.o legends.o contours.o ${PLOTLIB:.f90=.o} plotutils.o colourbar.o 
+rotate.o : rotate.f90 ${PLOTLIB:.f90=.o} 
+set_options_from_dataread.o : set_options_from_dataread.f90 limits.o calc_quantities.o options_xsecrotate.o options_render.o asciiutils.o labels.o globaldata.o globaldata.o globaldata.o options_particleplots.o exact.o 
+setpage.o : setpage.f90 transform.o asciiutils.o ${PLOTLIB:.f90=.o} 
+shapes.o : shapes.f90 parsetext.o asciiutils.o transform.o ${PLOTLIB:.f90=.o} exact_function.o prompting.o globaldata.o promptlist.o 
+sort.o : sort.f90 
+sph_moments.o : sph_moments.f90 kernels.o moments.o system_utils.o write_fits.o 
+splash.o : splash.f90 interactive.o labels.o globaldata.o exact.o set_options_from_dataread.o read_data.o colours.o options_xsecrotate.o options_render.o options_particleplots.o options_page.o timestepping.o analysis.o write_griddata.o write_sphdata.o convert.o write_pixmap.o asciiutils.o system_utils.o system_f2003.o globaldata.o interpolate3D_projection.o allocate.o menu.o kernels.o limits.o initialise.o defaults.o geomutils.o get_data.o globaldata.o 
+system_f2003.o : system_f2003.f90 
+system_utils.o : system_utils.f90 system_f2003.o asciiutils.o 
+timestepping.o : timestepping.f90 globaldata.o options_particleplots.o get_data.o ${PLOTLIB:.f90=.o} plotstep.o options_page.o globaldata.o globaldata.o globaldata.o 
+timing.o : timing.f90 
+titles.o : titles.f90 globaldata.o asciiutils.o 
+transform.o : transform.f90 
+units.o : units.f90 asciiutils.o globaldata.o globaldata.o prompting.o labels.o globaldata.o 
+utils_json.o : utils_json.f90 globaldata.o 
+utils_vectors.o : utils_vectors.f90 
+write_data_gadget.o : write_data_gadget.f90 globaldata.o limits.o globaldata.o labels.o 
+write_data_phantom.o : write_data_phantom.f90 
+write_fits.o : write_fits.f90 
+write_griddata.o : write_griddata.F90 asciiutils.o 
+write_pfm.o : write_pfm.f90 
+write_pixmap.o : write_pixmap.f90 asciiutils.o colours.o labels.o write_pfm.o globaldata.o 
+write_sphdata.o : write_sphdata.f90 geomutils.o globaldata.o write_data_gadget.o write_data_phantom.o globaldata.o globaldata.o units.o labels.o asciiutils.o 
