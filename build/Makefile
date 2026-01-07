@@ -48,14 +48,7 @@ CAIRO_CFLAGS= -I$(X11_DIR)/include
 # (giza is the default backend for splash v2.x, but can
 #  still be compiled with PGPLOT, just with disabled features)
 #--------------------------------------------------------------
-ifneq ($(BACKEND), pgplot)
-#-- C A I R O --
-   GIZA_DIR= $(PREFIX)
-   PLOTLIB= giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
-   CFLAGS= -fPIC -Wall -Wextra -O3 -g
-   CC = gcc
-else
+ifeq ($(BACKEND), pgplot)
 #-- P G P L O T --
    PLOTLIB= plotlib_pgplot.f90
 #
@@ -63,6 +56,17 @@ else
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
    PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+else
+   ifeq ($(BACKEND), none)
+      PLOTLIB= plotlib_mock.f90
+   else
+#-- C A I R O --
+      GIZA_DIR= $(PREFIX)
+      PLOTLIB= giza-fortran.F90 plotlib_giza.f90
+      PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
+      CFLAGS= -fPIC -Wall -Wextra -O3 -g
+      CC = gcc
+   endif
 endif
 #--------------------------------------------------------------
 
@@ -555,7 +559,7 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 libutils.f90 geometry.f90 exact_shock.f90 \
+SRCLIBEXACT= $(PLOTLIB) libutils.f90 geometry.f90 exact_shock.f90 \
 	exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
 	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
@@ -565,10 +569,12 @@ SRCLIBEXACT= plotlib_mock.f90 libutils.f90 geometry.f90 exact_shock.f90 \
 OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 
-.PHONY: libexact
-libexact: checksystem $(OBJLIBEXACTALL)
-	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+.PHONY: libexact libexact2
+libexact:
+	${MAKE} libexact2 BACKEND=none
 
+libexact2: checksystem $(OBJLIBEXACTALL)
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
 
 #
 # libread: data read library
@@ -869,7 +875,7 @@ depends: clean
 	  exit 1; \
 	fi; \
 	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
-	cd ../src && makedepf90 -free $$SOURCE_FILES > ../build/.depends || \
+	cd ../src && makedepf90 -free $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
 	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
 	if [ ! -s ../build/.depends ]; then \
 	  echo "  Error: .depends file is empty"; exit 1; \
