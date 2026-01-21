@@ -83,7 +83,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  use colours,            only:colour_set
  use colourbar,          only:barisvertical
  use labels,             only:label,ipowerspec,ih,ipmass,irho,ikappa,iamvec,isurfdens, &
-                               is_coord,itoomre,iutherm,ipdf,ix,icolpixmap,get_z_dir,&
+                               is_coord,itoomre,iomegasq,iutherm,ipdf,ix,ivx,icolpixmap,get_z_dir,&
                                unitslabel,set_required_labels
  use limits,             only:lim,rangeset,limits_are_equal
  use multiplot,          only:multiplotx,multiploty,irendermulti,icontourmulti, &
@@ -523,6 +523,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
  !!--need mass for some exact solutions
  if (iexact==7 .or. iploty==isurfdens) required(ipmass) = .true.
  if (iploty==itoomre .and. iploty > 0) required(iutherm) = .true.
+ if (iploty==iomegasq .and. iploty > 0) required(ivx:ivx+ndimV-1) = .true.
  !!--only require actual dependencies of calculated quantities
  if (any(required(ncolumns+1:ncolumns+ncalc))) call get_calc_data_dependencies(required)
  !if (any(required(ncolumns+1:ncolumns+ncalc))) required = .true.
@@ -654,8 +655,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use toystar1D,          only:exact_toystar_ACplane
  use toystar2D,          only:exact_toystar_ACplane2D
  use labels,             only:label,shortlabel,labelvec,iamvec,lenlabel, &
-                               lenunitslabel,ih,irho,ipmass,ix,iacplane, &
-                               ipowerspec,isurfdens,itoomre,ispsound,iutherm, &
+                               lenunitslabel,ih,irho,ipmass,ix,ivx,iacplane, &
+                               ipowerspec,isurfdens,itoomre,iomegasq,ispsound,iutherm, &
                                ipdf,icolpixmap,is_coord,labeltype, &
                                labelzintegration,unitslabel,integrate_label, &
                                get_sink_type,get_unitlabel_coldens,ikappa,&
@@ -749,7 +750,6 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
  real, parameter :: tol = 1.e-10 ! used to compare real numbers
  real, parameter :: error_in_log = -666. ! magic number used to flag error with log(0.)
- real(doub_prec) :: unit_mass,unit_dens,unit_r,unit_u,unit_dz
  real, dimension(:), allocatable    :: xplot,yplot,zplot
  real, dimension(:), allocatable    :: hh,weight
  real, dimension(:), allocatable    :: renderplot,contourplot
@@ -2380,9 +2380,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
           !  => these all involve a new "y column"
           !     but use a particle property as the x axis
           !--------------------------------------------------------------
-          if (iploty==isurfdens .or. iploty==itoomre .or. iploty==ipdf) then
+          if (iploty==isurfdens .or. iploty==itoomre .or. iploty==iomegasq .or. iploty==ipdf) then
              just = 0
-             if (iploty==itoomre) then
+             if (iploty==iomegasq) then
+                itemp = 3
+                label(iploty) = '\kappa^2/\Omega^2'
+                labely = trim(label(iploty))
+             elseif (iploty==itoomre) then
                 itemp = 2
                 label(iploty) = 'Q_{Toomre}'
                 labely = trim(label(iploty))
@@ -2394,6 +2398,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 label(iploty) = 'PDF ('//trim(label(iplotx))//')'
                 labely = trim(label(iploty))
              endif
+
              yplot(:) = 0.
 
              if (itrans(iploty) /= 0) then
@@ -2402,63 +2407,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
              if ((.not.interactivereplot) .or. irerender) then
                 !--call routines which actually calculate disc properties from the particles
-                if (iploty==isurfdens .or. iploty==itoomre) then
-                   if (ispsound > 0 .and. ispsound <= ndataplots) then
-                      icol = ispsound   ! sound speed is present in data
-                   elseif (iutherm > 0 .and. iutherm <= ndataplots) then
-                      icol = iutherm    ! use thermal energy if spsound not present
-                   else
-                      icol = 0
-                   endif
-                   ! work out the unit of mass, r needed for computing Toomre Q
-                   unit_mass = 1.d0
-                   unit_r    = 1.d0
-                   unit_u    = 1.d0
-                   unit_dz   = 1.d0
-                   unit_dens = 1.d0
-                   if (iRescale) then
-                      if (ix(1) > 0) unit_r = units(ix(1))
-                      if (icol > 0)  unit_u = units(icol)
-                      if (irho > 0)  unit_dens = units(irho)
-                      unit_dz = unitzintegration
-                   endif
-                   !
-                   ! use mass of first sink particle for Toomre Q calculation
-                   !
-                   !isinktype = get_sink_type(ntypes)
-                   !call locate_nth_particle_of_type(1,isink1,isinktype,iamtype,npartoftype,ntoti)
-                   !mstari = 1.d0
-
-                   if (ipmass > 0 .and. ipmass <= ndataplots) then
-                      !if (isink1 > 0) mstari = dat(isink1,ipmass)
-                      if (iRescale) unit_mass = units(ipmass)
-                      if (icol > 0) then
-                         call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
-                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
-                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
-                            iusetype,npartoftype,gammai,mstari,&
-                            unit_u,dat(1:ntoti,icol),icol==ispsound)
-                      else
-                         call disccalc(itemp,ntoti,xplot(1:ntoti),ntoti,dat(1:ntoti,ipmass),&
-                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
-                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
-                            iusetype,npartoftype,gammai,mstari)
-                      endif
-                   else
-                      if (iRescale .and. irho > 0) unit_mass = units(irho)*unitzintegration**3
-                      if (icol > 0) then
-                         call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
-                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
-                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
-                            iusetype,npartoftype,gammai,mstari,&
-                            unit_u,dat(1:ntoti,icol),icol==ispsound)
-                      else
-                         call disccalc(itemp,ntoti,xplot(1:ntoti),1,masstype(1),&
-                            unit_mass,unit_dens,unit_r,unit_dz,xmin,xmax,yminadapti,ymaxadapti,&
-                            itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
-                            iusetype,npartoftype,gammai,mstari)
-                      endif
-                   endif
+                if (iploty==isurfdens .or. iploty==itoomre .or. iploty==iomegasq) then
+                   call disccalc(itemp,ntoti,xplot(1:ntoti),masstype(1),&
+                                 xmin,xmax,yminadapti,ymaxadapti,&
+                                 itrans(iplotx),itrans(iploty),icolourme(1:ntoti),iamtype,&
+                                 iusetype,npartoftype,gammai,mstari,&
+                                 dat,units,unitzintegration,iRescale,&
+                                 ipmass,irho,ispsound,iutherm,ix,ivx)
                 elseif (iploty==ipdf) then
                    if (npdfbins > 0) then
                       ngrid = npdfbins
@@ -2506,7 +2461,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 call plot_sci(linecolourthisstep)
                 call plot_sls(linestylethisstep)
              endif
-             if (iploty==itoomre .or. iploty==isurfdens) then
+             if (iploty==itoomre .or. iploty==isurfdens .or. iploty==iomegasq) then
                 call discplot()
              elseif (iploty==ipdf) then
                 !

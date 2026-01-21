@@ -44,7 +44,7 @@ module labels
  integer :: idivb,iJfirst,irhostar,ipmomx
  integer :: iacplane,ipowerspec
  integer :: icv,iradenergy,iradFx
- integer :: isurfdens,itoomre
+ integer :: isurfdens,itoomre,iomegasq
  integer :: ipdf,icolpixmap
  integer :: irhorestframe,idustfrac,ideltav
  integer :: idustfracsum,ideltavsum
