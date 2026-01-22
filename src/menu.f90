@@ -33,7 +33,7 @@ contains
 
 subroutine menu
  use filenames,        only:defaultsfile,limitsfile,unitsfile,fileprefix,set_filenames
- use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
+ use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,iomegasq,ipdf,icolpixmap,is_coord,ix
  use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
  use options_data,     only:submenu_data
  use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
@@ -293,7 +293,7 @@ subroutine menu
                 endif
                 ivecplot = 0
              endif
-          elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
+          elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens .or. ipicky==iomegasq) then
              print "(a)",' setting x axis to r'
              if (ipicky==itoomre) call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
              ipickx = 1
@@ -697,8 +697,9 @@ end function allowrendering
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params,        only:maxplot
- use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,iutherm,ipdf,label,icolpixmap
- use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
+ use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,&
+                         iutherm,ipdf,label,icolpixmap,ivx,iomegasq
+ use settings_data, only:ndim,ndimV,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
  use system_utils,  only:lenvironment
  use write_pixmap,  only:ireadpixmap
@@ -723,6 +724,11 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
           nextra = nextra + 1
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'
+       endif
+       if (ivx > 0 .and. ndimV >= 2) then
+          nextra = nextra + 1
+          iomegasq = ncolumns + ncalc + nextra
+          label(iomegasq) = '\kappa^2/\Omega^2'
        endif
     endif
     if (ndim==3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
