@@ -52,7 +52,7 @@ subroutine disccalc(iplot,npart,rpart,pmass_in,rminin,rmaxin,ymin,ymax,&
  integer(kind=int1), dimension(:), intent(in)  :: iamtype
  logical, dimension(maxparttypes), intent(in)  :: usetype
  integer, dimension(maxparttypes), intent(in)  :: noftype
- real(doub_prec),                  intent(in)  :: units(:),units_dz
+ real,                             intent(in)  :: units(:),units_dz
  logical,                          intent(in)  :: iRescale
  real, dimension(:,:),             intent(in)  :: dat
  integer,                          intent(in)  :: ipmass,irho,ispsound,iutherm,ix(:),ivx
