@@ -65,7 +65,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                                  integrate_log,get_colour_temperature
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
  use rotation,              only:rotate_particles
- use system_utils,          only:get_command_flag
+ use system_utils,          only:get_command_flag,renvironment
  use readwrite_fits,        only:write_fits_cube,write_fits_image,write_fits_image
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
@@ -75,17 +75,16 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real,    intent(out) :: lum,rphoto,temp,lum_bb,r_bb,Tc,badfrac
  integer, intent(out) :: ierr
  character(len=*), intent(in) :: specfile
- integer :: n,isinktype,npixx,npixy,j,i,k,nfreq
+ integer :: n,isinktype,npixx,npixy,j,i,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
  real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,badpix
  real, dimension(:,:,:), allocatable :: img_nu,img_tmp
- real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor
- real :: ax,ay,az,xi(3),betaz,lorentz,doppler_factor,doppler_factor_max,taui,lprev,badarea
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col
+ real :: betaz,lorentz,doppler_factor,doppler_factor_max,tempi,badarea
  logical :: relativistic
- character(len=20) :: tmpfile
 
  lum = 0.
  rphoto = 0.
@@ -108,8 +107,12 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !--allow for reduction in opacity by factor of v/c for photon trapping
  !
  relativistic = .not.get_command_flag('nonrel') .and. (ivx > 0 .and. ndimV >= 3 .and. ipmomx > 0)
- if (relativistic) print "(a)",' relativistic corrections ON (use --nonrel to switch off)'
+ if (relativistic) print "(a)",' Relativistic corrections ON (use --nonrel to disable)'
 
+ !--allow for colour correction to temperature by factor of f_col
+ f_col = max(renvironment('fcol',1.0),renvironment('f_col',1.0))
+ print "(/,a,f4.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
+                          ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)
  !
@@ -205,8 +208,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
     opacity(i) = opacity(i)*opacity_factor
+    tempi = dat(i,itemp)*f_col
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
-    flux_nu(:,i) = B_nu(dat(i,itemp),freq*doppler_factor)
+    flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
  enddo
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
