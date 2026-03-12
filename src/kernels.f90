@@ -494,7 +494,6 @@ real function pint3D(r0, R_0, d1, d2, hi)
  real, intent(in) :: r0
  real(doub_prec) :: ar0, aR_0
  real(doub_prec) :: int1, int2
- integer :: fflag = 0
 
  if (abs(r0) < tiny(0.)) then
     pint3D = 0.d0
@@ -524,13 +523,13 @@ real function pint3D(r0, R_0, d1, d2, hi)
 
  if (d1*d2  >=  0) then
     pint3D = pint3D*(int1 + int2)
-    if (int1 + int2 < 0.d0) print*, 'Error: int1 + int2 < 0'
+    if (int1 + int2 < 0.d0) pint3D = 0. !print*, 'Error: int1 + int2 < 0'
  elseif (abs(d1)  <  abs(d2)) then
     pint3D = pint3D*(int2 - int1)
-    if (int2 - int1 < 0.d0) print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
+    if (int2 - int1 < 0.d0) pint3D = 0.! print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
  else
     pint3D = pint3D*(int1 - int2)
-    if (int1 - int2 < 0.d0) print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
+    if (int1 - int2 < 0.d0) pint3D = 0. !print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
  endif
 
 end function pint3D
@@ -538,13 +537,12 @@ end function pint3D
 real(doub_prec) function full_integral_3D(d, r0, R_0, h)
 
  real(doub_prec), intent(in) :: d, r0, R_0, h
- real(doub_prec) :: B1, B2, B3, a, logs, u, u2, h2
+ real(doub_prec) :: B1, B2, B3, a, h2
  real(doub_prec), parameter :: pi = 4.*atan(1.)
- real(doub_prec) :: tanphi, phi, a2, cosp, cosp2, mu2, mu2_1, r0h, r03, r0h2, r0h3, r0h_2, r0h_3, tanp
- real(doub_prec) :: r2, R_, linedist2, phi1, phi2, cosphi, sinphi
- real(doub_prec) :: I0, I1, I_1, I_2, I_3, I_4, I_5
- real(doub_prec) :: J_1, J_2, J_3, J_4, J_5
- real(doub_prec) :: D1, D2, D3
+ real(doub_prec) :: tanphi, phi, a2, cosp, r0h, r03, r0h2, r0h3, r0h_2, r0h_3
+ real(doub_prec) :: r2, R_, linedist2, cosphi
+ real(doub_prec) :: I0, I1, I_2, I_3, I_4, I_5
+ real(doub_prec) :: D2, D3
 
  r0h = r0/h
  tanphi = abs(d)/R_0
@@ -653,7 +651,7 @@ end subroutine get_I_terms
 !------------------------------------------------------------
 pure elemental real function soft_func(x,eps) result(f)
  real, intent(in)  :: x,eps
- real :: q,q2, q4, q6
+ real :: q,q2,q4
 
  q = x/eps
  q2 = q*q
