@@ -105,7 +105,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
        ncomp = ncomp + 1
        labels(icomp_col_start) = 'A_V'
        print "(a,i0,a)", '> got ',ncomp,' extra columns from '//trim(filename)
-       iexist = .false.
+       return
     endif
  endif
 

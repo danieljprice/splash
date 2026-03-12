@@ -119,7 +119,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--print limits information
  !
- call write_gridlimits(ndim,xmin,xmax,label(ix(1:ndim)))
+ call write_gridlimits(ndim,xmin,xmax,xlab)
  !
  !--get environment variable options
  !
