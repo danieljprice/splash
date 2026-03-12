@@ -119,7 +119,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--print limits information
  !
- call write_gridlimits(ndim,xmin,xmax,label(ix(1:ndim)))
+ call write_gridlimits(ndim,xmin,xmax,xlab)
  !
  !--get environment variable options
  !
@@ -186,7 +186,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  icolourme(:) = 1
  call get_particle_subset(icolourme,dat,ncolumns)
- mask = (icolourme > 0 .and. weight > 0.)
+ mask = (icolourme(1:ninterp) > 0 .and. weight > 0.)
 
  !
  !--work out how many pixels to use
@@ -365,6 +365,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
             pixwidthx(1),pixwidthx(2),pixwidthx(3),inormalise,&
             isperiodic(1),isperiodic(2),isperiodic(3))
        mtotgrid = sum(datgrid)*product(pixwidthx)
+       if (iRescale) mtotgrid = mtotgrid /( units(irho) * units(ih)**3)
     endif
     if (present(rhogrid)) rhogrid = datgrid
     rhogrid_tmp = datgrid
