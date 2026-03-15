@@ -63,8 +63,18 @@ Citation
 Please cite [Price (2007)](https://adsabs.harvard.edu/abs/2007PASA...24..159P)
 when using SPLASH.
 
+Star History
+------------
+<a href="https://www.star-history.com/?repos=danieljprice%2Fsplash&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=danieljprice/splash&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=danieljprice/splash&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=danieljprice/splash&type=date&legend=top-left" />
+ </picture>
+</a>
+
 License
 -------
 See [LICENSE](LICENSE) file for usage and distribution conditions
 
-Copyright (c) 2004-2025 Daniel Price and contributors
+Copyright (c) 2004-2026 Daniel Price and contributors
