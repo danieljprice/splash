@@ -131,10 +131,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  enddo
 
  const = cnormk3D  ! normalisation constant (3D)
- nsub = 0
- maxsubpix = 0
- meansubpix = 0
- ncount = 0
+ nsub = 0; ncount = 0; maxsubpix = 0; meansubpix = 0
  !
  !--loop over particles
  !
@@ -259,7 +256,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
        datsmooth = datsmooth/datnorm
     end where
  endif
- print "(20x,a,i0,a,i0,a,f6.1/)",'particles on subgrid: ',nsub,&
+ if (nsub > 0 .and. ncount > 0) print "(20x,a,i0,a,i0,a,f6.1/)",'particles on subgrid: ',nsub,&
        ' max subpixels: ',maxsubpix,' mean subpixels: ',meansubpix/real(ncount)
 
 end subroutine interpolate3Dgeom
@@ -284,6 +281,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  integer :: iprintinterval,iprintnext
  integer :: ipixmin(3),ipixmax(3)
  integer :: ipixi,jpixi,kpixi,isub,jsub,ksub,nsubpix
+ integer :: nsub,ncount,maxsubpix,meansubpix
  real :: xminpix(3),hmin,dsubpix(3)
  real :: xi(3),xci(3),xcoord(3),hi,hi1,hi21,radkern,wab,q2,const
  real :: term(3),termnorm,xpix(3),dx(3),ddatnorm
@@ -335,6 +333,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  enddo
 
  const = cnormk3D  ! normalisation constant (3D)
+ nsub = 0; ncount = 0; maxsubpix = 0; meansubpix = 0
  !
  !--loop over particles
  !
@@ -352,7 +351,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(iprogress) &
 !$omp firstprivate(iprintnext) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix)
+!$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix) &
+!$omp reduction(+:nsub,meansubpix,ncount) &
+!$omp reduction(max:maxsubpix)
 !$omp master
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
@@ -392,10 +393,16 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     if (ierr /= 0) cycle over_parts
 
     if (hi < hmin) then
+       nsub = nsub + 1
        nsubpix = max(2, int(hmin/hi) + 1)
     else
        nsubpix = 1
     endif
+    ! statistics on sub-pixel interpolation
+    maxsubpix = max(maxsubpix,nsubpix)
+    meansubpix = meansubpix + nsubpix
+    ncount = ncount + 1
+
     dsubpix(:) = pixwidth(:) / real(nsubpix)
     !
     !--loop over pixels, adding the contribution from this particle
@@ -467,6 +474,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     enddo
     !$omp end parallel do
  endif
+
+ if (nsub > 0 .and. ncount > 0) print "(20x,a,i0,a,i0,a,f6.1/)",'particles on subgrid: ',nsub,&
+       ' max subpixels: ',maxsubpix,' mean subpixels: ',meansubpix/real(ncount)
 
 end subroutine interpolate3Dgeom_vec
 

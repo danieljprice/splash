@@ -1081,11 +1081,11 @@ subroutine grid_total_mass_geom(rhogrid,npixels,pixwidthx,xmin,igeom,mtotgrid)
  integer, intent(in)   :: npixels(3),igeom
  real, intent(in)      :: pixwidthx(3),xmin(3)
  real(doub_prec), intent(in)  :: rhogrid(npixels(1),npixels(2),npixels(3))
- real(doub_prec), intent(out) :: mtotgrid
+ real, intent(out) :: mtotgrid
  integer :: i,j,k
- real(doub_prec) :: r,theta,vol
+ real :: r,theta,vol
 
- mtotgrid = 0._doub_prec
+ mtotgrid = 0.
  select case(igeom)
  case(igeom_cylindrical)
     do k = 1, npixels(3)
