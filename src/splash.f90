@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2025 Daniel Price
+!     Copyright (C) 2005-2026 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,11 +51,24 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     4.0.0   : (01/03/24)
+!     4.0.0   : (19/03/26)
 !             user-friendly interactive mode;
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!     3.12.0  : (16/03/26)
+!             sub-pixel interpolation in splash to grid for non-Cartesian geometries;
+!             added --fcol flag in splash calc lightcurve for spectral hardening factor;
+!             seg fault in splash to grid fixed;
+!             automatically read visual extinction from AV_ files alongside phantom dumps;
+!             splash can now be compiled in parallel with make -j flag;
+!             added a column for kappa^2/omega^2 when plotting in cylindrical coordinates
+!     3.11.7  : (15/12/25)
+!             option for nonlinear corrections to Rafikov planet wake exact solution;
+!             automated plotting of .trajectory files from phantom orbit reconstructor^TM
+!             Shamrock native .sham data reader implemented;
+!             --shift=x,y,z flag to centre on sink but shift it to a different position;
+!             issues with template and license files fixed (thanks to Phil Wyett)
 !     3.11.6  : (30/10/25)
 !             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
 !             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
@@ -664,7 +677,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [30th Oct 2025]'
+ character(len=*), parameter :: version = 'v4.0.0 [19th Mar 2026]'
 
  !
  ! initialise some basic code variables
@@ -1215,7 +1228,7 @@ subroutine print_header
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
-   '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
+   '   free software; can redistribute w/conditions (see LICENSE) *',/,/, &
    '           https://splash-viz.readthedocs.io',/,/, &
    ' Please cite Price (2007), PASA 24, 159 if you use SPLASH in print',/)
 

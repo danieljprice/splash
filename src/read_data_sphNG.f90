@@ -1436,7 +1436,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real(doub_prec) :: Xfrac,Yfrac
  real :: xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei,m1,rad_corotate
  logical :: skip_corrupted_block_3,get_temperature,get_kappa,get_kappa_tot
- logical :: get_ionfrac,need_to_allocate_iphase,got_tag
+ logical :: get_ionfrac,need_to_allocate_iphase,need_to_allocate_iorig,got_tag,got_iorig
+ integer(kind=8), dimension(:), allocatable :: iorig
  character(len=lentag) :: tagsreal(maxinblock), tagtmp
 
  integer, parameter :: splash_max_iversion = 1
@@ -1470,6 +1471,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  gotbinary   = .false.
  gotiphase   = .false.
  skip_corrupted_block_3 = .false.
+ got_iorig = .false.
 
  dumpfile = trim(rootname)
  !
@@ -1809,6 +1811,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     endif
 
     need_to_allocate_iphase = (npart_max > maxpart) .or. .not.allocated(iphase)
+    need_to_allocate_iorig = (ncomp > 0)
     if (npart_max > maxpart .or. j > maxstep .or. ncolumns > maxcol) then
        if (lowmemorymode) then
           call alloc(max(npart_max+2,maxpart),j,ilastrequired)
@@ -1843,6 +1846,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !--allocate memory for iphase array now that gotbinary is known
 !
     if (need_to_allocate_iphase) call allocate_iphase(iphase,max(npart_max+2,maxpart),phantomdump,gotbinary,npart_max+1)
+    if (need_to_allocate_iorig) allocate(iorig(max(npart_max+2,maxpart)))
 !
 !--Arrays
 !
@@ -1883,7 +1887,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              if (tagged) read(iunit,end=33,iostat=ierr) ! skip tags
              read(iunit,end=33,iostat=ierr)
           enddo
-          if (nint1(iarr) < 1) then
+          if (nint1(iarr) < 1 .and. nint8(iarr) < 1) then
              if (.not.phantomdump .or. any(npartoftypei(2:) > 0)) then
                 if (iverbose > 0) print "(a)",' WARNING: can''t locate iphase in dump'
              elseif (phantomdump) then
@@ -1899,6 +1903,15 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 gotiphase = .true.
                 read(iunit,end=33,iostat=ierr) iphase(i1:i2)
                 !--skip remaining integer arrays
+                nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
+             case('iorig')
+                if (allocated(iorig)) then
+                   read(iunit,end=33,iostat=ierr) iorig(i1:i2)
+                   got_iorig = .true.
+                else
+                   read(iunit,end=33,iostat=ierr)
+                   got_iorig = .false.
+                endif
                 nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
              case default
                 got_tag = .true. ! needed because we already read the tag
@@ -2255,7 +2268,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  endif
 
  if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
-    call read_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp)
+    if (allocated(iorig) .and. .not.got_iorig) deallocate(iorig) ! did not find iorig in dump
+    call read_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp,iorig)
  endif
  !
  !--calculate the temperature from density and internal energy (using physical units)

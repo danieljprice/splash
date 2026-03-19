@@ -54,6 +54,7 @@ module readdata
  use readdata_urban,        only:read_data_urban,        set_labels_urban
  use readdata_starsmasher,  only:read_data_starsmasher,  set_labels_starsmasher
  use readdata_vtk,          only:read_data_vtk,          set_labels_vtk
+ use readdata_shamrock,     only:read_data_shamrock,     set_labels_shamrock
 
  ! Make hdf5 fortran/c modules available if compiled with hdf5
 #ifdef HDF5
@@ -287,6 +288,10 @@ subroutine select_data_format(string_in,ierr)
    read_data=> read_data_vtk
    set_labels=>set_labels_vtk
 
+ case('shamrock')
+   read_data=>read_data_shamrock
+   set_labels=>set_labels_shamrock
+
  ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
 #ifdef HDF5
  case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
@@ -362,6 +367,7 @@ subroutine print_available_formats(string)
  print "(a)"  ,' -vtk                 : vtk legacy binary format (auto)'
  print "(a)"  ,' -ndspmhd             : ndspmhd code (auto)'
  print "(a)"  ,' -gandalf,-seren      : Gandalf/Seren code'
+ print "(a)"  ,' -shamrock            : Shamrock code'
 #ifdef HDF5
  print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code (auto)'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
@@ -458,6 +464,8 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     call select_data_format('vtk',ierr)
  elseif (any((index(extensions, '.pb') > 0))) then
     call select_data_format('phantom', ierr)
+ elseif (any((index(extensions, '.sham') > 0))) then
+    call select_data_format('shamrock', ierr)
  elseif (any((index(extensions, '.pbob') > 0))) then
     call select_data_format('pbob', ierr)
  elseif (any((index(extensions, '.csv') > 0))) then

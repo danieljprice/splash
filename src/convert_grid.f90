@@ -41,7 +41,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use labels,               only:label,labelvec,irho,ih,ipmass,ix,ivx,iBfirst,get_sink_type
  use limits,               only:lim,get_particle_subset
  use settings_units,       only:units,unit_interp
- use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,icoordsnew,xorigin,iverbose
+ use settings_data,        only:ndim,ndimV,UseTypeInRenderings,iRescale,required,debugmode,&
+                                icoords,icoordsnew,xorigin,iverbose
  use settings_part,        only:iplotpartoftype
  use settings_render,      only:npix,inormalise=>inormalise_interpolations,&
                                 idensityweightedinterpolation,exact_rendering
@@ -56,7 +57,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  use readwrite_griddata,   only:open_gridfile_w,write_grid,write_gridlimits
  use particle_data,        only:icolourme
  use params,               only:int8
- use geometry,             only:coord_is_length,igeom_cartesian,labelcoord,labelcoordsys
+ use geometry,             only:coord_is_length,igeom_cartesian, &
+                               igeom_cylindrical,igeom_spherical, &
+                               igeom_flaredcyl,igeom_logflared, &
+                               labelcoord,labelcoordsys
  use asciiutils,           only:strip
  use timing,               only:wall_time,print_time
  use filenames,            only:tagline
@@ -119,16 +123,27 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  !--print limits information
  !
- call write_gridlimits(ndim,xmin,xmax,label(ix(1:ndim)))
+ call write_gridlimits(ndim,xmin,xmax,xlab)
  !
  !--get environment variable options
  !
+ call get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  if (present(icols)) then
     icoltogrid(:) = 0
     icoltogrid(1:size(icols)) = icols(:)
     ncolstogrid = count(icols > 0)
- else
-    call get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
+ endif
+ !
+ !--for non-Cartesian geometries, default to periodic phi (second coordinate)
+ !  when the user has not explicitly requested any periodic boundaries
+ !
+ if (.not.any(isperiodic(1:ndim))) then
+    if ((igeom==igeom_cylindrical .or. igeom==igeom_spherical .or. &
+         igeom==igeom_flaredcyl   .or. igeom==igeom_logflared) &
+        .and. abs((xmax(2)-xmin(2)) - 2.*pi) < 1.e-3) then
+       print "(a)",' Assuming PERIODIC boundary for non-Cartesian geometry with 2 pi range in '//trim(xlab(2))
+       isperiodic(2) = .true.
+    endif
  endif
  !
  !--check for errors
@@ -186,7 +201,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !
  icolourme(:) = 1
  call get_particle_subset(icolourme,dat,ncolumns)
- mask = (icolourme > 0 .and. weight > 0.)
+ mask = (icolourme(1:ninterp) > 0 .and. weight > 0.)
 
  !
  !--work out how many pixels to use
@@ -328,15 +343,22 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  endif
 
  if (ndim==3) then
+    mtotgrid = 0.
     call wall_time(t1)
+    x = dat(1:ninterp,ix(1))
+    y = dat(1:ninterp,ix(2))
+    z = dat(1:ninterp,ix(3))
     if (igeom /= igeom_cartesian) then
+       if (ipmass > 0) then
+          call get_mass_in_box(ninterp,x,y,z,dat(1:ninterp,ipmass),mask,mtot,icoords,igeom,xmin,xmax)
+          print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
+       endif
+
        call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
             dat(1:ninterp,ih),weight(1:ninterp),dat(1:ninterp,irho),icolourme,ninterp,&
             xmin,datgrid,npixels,pixwidthx,xorigin,inormalise,isperiodic)
+       call grid_total_mass_geom(datgrid,npixels,pixwidthx,xmin,igeom,mtotgrid)
     else
-       x = dat(1:ninterp,ix(1))
-       y = dat(1:ninterp,ix(2))
-       z = dat(1:ninterp,ix(3))
        if (abs(anglez)>0. .or. abs(angley)>0. .or. abs(anglex)>0.) then
           print*, 'Rotating particles around (z,y,x) by',anglez,angley,anglex
           print*, 'WARNING: This does not rotate vector components'
@@ -351,11 +373,8 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
              z(i) = xi(3)
           enddo
        endif
-       mask = (mask .and. (x >= xmin(1) .and. x <= xmax(1)) .and. &
-                          (y >= xmin(2) .and. y <= xmax(2)) .and. &
-                          (z >= xmin(3) .and. z <= xmax(3)))
-       if (ipmass > 0.) then
-          mtot = sum(dat(1:ninterp,ipmass),mask=mask)
+       if (ipmass > 0) then
+          call get_mass_in_box(ninterp,x,y,z,dat(1:ninterp,ipmass),mask,mtot,icoords,igeom,xmin,xmax)
           print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
        endif
 
@@ -365,6 +384,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
             pixwidthx(1),pixwidthx(2),pixwidthx(3),inormalise,&
             isperiodic(1),isperiodic(2),isperiodic(3))
        mtotgrid = sum(datgrid)*product(pixwidthx)
+       if (iRescale) mtotgrid = mtotgrid /( units(irho) * units(ih)**3)
     endif
     if (present(rhogrid)) rhogrid = datgrid
     rhogrid_tmp = datgrid
@@ -1004,5 +1024,94 @@ logical function iszero(partmin,partmax,ndim)
  endif
 
 end function iszero
+
+!----------------------------------------------------
+! total mass on particles in the grid volume
+!----------------------------------------------------
+subroutine get_mass_in_box(ninterp,x,y,z,m,mask,mtot,icoords,igeom,xmin,xmax)
+ use geometry, only:coord_transform,igeom_cartesian,igeom_cylindrical,igeom_spherical
+ integer, intent(in)    :: ninterp
+ real,    intent(in)    :: x(ninterp),y(ninterp),z(ninterp),m(ninterp)
+ logical, intent(inout) :: mask(ninterp)
+ real,    intent(out)   :: mtot
+ integer, intent(in)    :: icoords,igeom
+ real,    intent(in)    :: xmin(3),xmax(3)
+ real :: xc(3),xi(3),tot_volume
+ real, parameter :: pi = 4.*atan(1.)
+ integer :: i
+
+ if (igeom == igeom_cartesian) then
+    mask = (mask .and. (x >= xmin(1) .and. x <= xmax(1)) .and. &
+                       (y >= xmin(2) .and. y <= xmax(2)) .and. &
+                       (z >= xmin(3) .and. z <= xmax(3)))
+    mtot = sum(m(1:ninterp),mask=mask)
+ else
+    mtot = 0.
+    do i=1,ninterp
+       if (mask(i)) then
+          xi = [x(i),y(i),z(i)]
+          call coord_transform(xi,3,icoords,xc,3,igeom)
+          if (xc(1) >= xmin(1) .and. xc(1) <= xmax(1) .and. &
+              xc(2) >= xmin(2) .and. xc(2) <= xmax(2) .and. &
+              xc(3) >= xmin(3) .and. xc(3) <= xmax(3)) then
+             mtot = mtot + m(i)
+          endif
+       endif
+    enddo
+    select case(igeom)
+    case(igeom_cylindrical)
+       tot_volume = pi*(xmax(1)**2 - xmin(1)**2)*(xmax(3) - xmin(3))
+    case(igeom_spherical)
+       tot_volume = 4./3.*pi*(xmax(1)**3 - xmin(1)**3)
+    case default
+       tot_volume = 0.
+    end select
+    if (tot_volume > 0.) print "(20x,a,es10.4,/)",'grid volume: ',tot_volume
+ endif
+
+end subroutine get_mass_in_box
+
+!----------------------------------------------------
+! total mass on grid with correct volume elements for
+! non-Cartesian geometries (R dR d(phi) dz or r^2 sin(theta) dr d(phi) d(theta))
+!----------------------------------------------------
+subroutine grid_total_mass_geom(rhogrid,npixels,pixwidthx,xmin,igeom,mtotgrid)
+ use params,   only:doub_prec
+ use geometry, only:igeom_cylindrical,igeom_spherical
+ integer, intent(in)   :: npixels(3),igeom
+ real, intent(in)      :: pixwidthx(3),xmin(3)
+ real(doub_prec), intent(in)  :: rhogrid(npixels(1),npixels(2),npixels(3))
+ real, intent(out) :: mtotgrid
+ integer :: i,j,k
+ real :: r,theta,vol
+
+ mtotgrid = 0.
+ select case(igeom)
+ case(igeom_cylindrical)
+    do k = 1, npixels(3)
+       do j = 1, npixels(2)
+          do i = 1, npixels(1)
+             r = real(xmin(1) + (i - 0.5)*pixwidthx(1), kind=doub_prec)
+             vol = r * real(pixwidthx(1)*pixwidthx(2)*pixwidthx(3), kind=doub_prec)
+             mtotgrid = mtotgrid + rhogrid(i,j,k)*vol
+          enddo
+       enddo
+    enddo
+ case(igeom_spherical)
+    do k = 1, npixels(3)
+       theta = xmin(3) + (k - 0.5)*pixwidthx(3)
+       do j = 1, npixels(2)
+          do i = 1, npixels(1)
+             r = real(xmin(1) + (i - 0.5)*pixwidthx(1), kind=doub_prec)
+             vol = r*r*sin(theta) * real(product(pixwidthx), kind=doub_prec)
+             mtotgrid = mtotgrid + rhogrid(i,j,k)*vol
+          enddo
+       enddo
+    enddo
+ case default
+    mtotgrid = sum(rhogrid)*product(real(pixwidthx, kind=doub_prec))
+ end select
+
+end subroutine grid_total_mass_geom
 
 end module convert_grid

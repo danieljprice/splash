@@ -73,13 +73,14 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  real, intent(in) :: xmin(3),pixwidth(3),xorigin(3)
  real(doub_prec), intent(out), dimension(npix(1),npix(2),npix(3)) :: datsmooth
  logical, intent(in) :: normalise,periodic(3)
- real, dimension(npix(1),npix(2),npix(3)) :: datnorm
+ real(doub_prec), dimension(npix(1),npix(2),npix(3)) :: datnorm
 
  integer :: i,ipix,jpix,kpix,ierr
  integer :: iprintinterval,iprintnext
  integer :: ipixmin(3),ipixmax(3)
- integer :: ipixi,jpixi,kpixi
- real :: xminpix(3),hmin !,dhmin3
+ integer :: ipixi,jpixi,kpixi,nsub,isub,jsub,ksub,nsubpix
+ integer :: maxsubpix,meansubpix,ncount
+ real :: xminpix(3),hmin,dsubpix(3)
  real :: xi(3),xci(3),xcoord(3),hi,hi1,hi21,radkern,wab,q2,const
  real :: term,termnorm,xpix(3),dx(3)
  !real :: t_start,t_end
@@ -120,8 +121,6 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  !call cpu_time(t_start)
 
  xminpix(:) = xmin(:) - 0.5*pixwidth(:)
- !print*,' GRID LIMITS (min)',xminpix + 0.5*pixwidth
- !print*,' GRID LIMITS (max)',xminpix + npix*pixwidth
  !
  !--use a minimum smoothing length on the grid to make
  !  sure that particles contribute to at least one pixel
@@ -132,6 +131,7 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
  enddo
 
  const = cnormk3D  ! normalisation constant (3D)
+ nsub = 0; ncount = 0; maxsubpix = 0; meansubpix = 0
  !
  !--loop over particles
  !
@@ -142,13 +142,16 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 !$omp shared(npix,const,igeom) &
 !$omp shared(datnorm,normalise,periodic) &
 !$omp shared(iprintprogress,iprintinterval) &
-!$omp shared(hmin) & !,dhmin3) &
+!$omp shared(hmin) &
 !$omp private(hi,xi,xci,xcoord,xpix,radkern,hi1,hi21) &
 !$omp private(term,termnorm) &
-!$omp private(iprogress,iprintnext) &
+!$omp private(iprogress) &
+!$omp firstprivate(iprintnext) &
 !$omp private(ipixmin,ipixmax,ierr) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx,q2,wab)
+!$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix) &
+!$omp reduction(+:nsub,meansubpix,ncount) &
+!$omp reduction(max:maxsubpix)
 !$omp master
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
@@ -171,22 +174,11 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
     if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
 
     hi = hh(i)
-    if (hi <= 0.) then
-       cycle over_parts
-    elseif (hi < hmin) then
-       !
-       !--use minimum h to capture subgrid particles
-       !  (get better results *without* adjusting weights)
-       !
-       termnorm = const*weight(i) !*(hi*hi*hi)*dhmin3
-       hi = hmin
-    else
-       termnorm = const*weight(i)
-    endif
+    if (hi <= 0.) cycle over_parts
     hi1 = 1./hi
     hi21 = hi1*hi1
     radkern = radkernel*hi   ! radius of the smoothing kernel
-    !termnorm = const*weight(i)
+    termnorm = const*weight(i)
     term = termnorm*dat(i)
     !
     !--set kernel related quantities
@@ -195,43 +187,53 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
     xci(2) = y(i) + xorigin(2)
     xci(3) = z(i) + xorigin(3)
     call get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,npix,pixwidth,xmin,periodic,igeom,ierr)
-    !print*,' got particle ',i,' x,y,z = ',xci,' r,phi,z = ',xi,' R=',radkern,' pixel limits = ',&
-    !    (ipixmin(ipix),ipixmax(ipix),ipix=1,3)
-    !read*
     if (ierr /= 0) cycle over_parts
 
+    if (hi < hmin) then
+       nsub = nsub + 1
+       nsubpix = max(2, int(hmin/hi) + 1)
+    else
+       nsubpix = 1
+    endif
+    ! statistics on sub-pixel interpolation
+    maxsubpix = max(maxsubpix,nsubpix)
+    meansubpix = meansubpix + nsubpix
+    ncount = ncount + 1
+
+    dsubpix(:) = pixwidth(:) / real(nsubpix)
     !
     !--loop over pixels, adding the contribution from this particle
+    !  When nsubpix > 1 we sub-divide each pixel and average the kernel
+    !  so that small kernels still contribute to the coarse grid.
     !
     do kpix = ipixmin(3),ipixmax(3)
        kpixi = kpix
        if (periodic(3)) kpixi = iroll(kpix,npix(3))
-       xcoord(3) = xminpix(3) + kpix*pixwidth(3)
 
        do jpix = ipixmin(2),ipixmax(2)
           jpixi = jpix
           if (periodic(2)) jpixi = iroll(jpix,npix(2))
-          xcoord(2) = xminpix(2) + jpix*pixwidth(2)
 
           do ipix = ipixmin(1),ipixmax(1)
              ipixi = ipix
              if (periodic(1)) ipixi = iroll(ipix,npix(1))
-             xcoord(1) = xminpix(1) + ipix*pixwidth(1)
 
-             !--now transform to get location of pixel in cartesians
-             call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
-
-             !--find distances using cartesians and perform interpolation
-             dx   = xpix(:) - xci(:)
-             q2   = (dx(1)*dx(1) + dx(2)*dx(2) + dx(3)*dx(3))*hi21
-             !
-             !--SPH kernel - standard cubic spline
-             !
-             if (q2 < radkernel2) then
-                wab = wkernel(q2)
-                !
-                !--calculate data value at this pixel using the summation interpolant
-                !
+             wab = 0.
+             do ksub = 1,nsubpix
+                xcoord(3) = xmin(3) + (kpix-1)*pixwidth(3) + (ksub-0.5)*dsubpix(3)
+                do jsub = 1,nsubpix
+                   xcoord(2) = xmin(2) + (jpix-1)*pixwidth(2) + (jsub-0.5)*dsubpix(2)
+                   do isub = 1,nsubpix
+                      xcoord(1) = xmin(1) + (ipix-1)*pixwidth(1) + (isub-0.5)*dsubpix(1)
+                      call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
+                      dx = xpix(:) - xci(:)
+                      q2 = (dx(1)*dx(1) + dx(2)*dx(2) + dx(3)*dx(3))*hi21
+                      if (q2 < radkernel2) wab = wab + wkernel(q2)
+                   enddo
+                enddo
+             enddo
+             wab = wab / real(nsubpix**3)
+             if (wab > 0.) then
                 !$omp atomic
                 datsmooth(ipixi,jpixi,kpixi) = datsmooth(ipixi,jpixi,kpixi) + term*wab
                 if (normalise) then
@@ -254,11 +256,16 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
        datsmooth = datsmooth/datnorm
     end where
  endif
-
- return
+ if (nsub > 0 .and. ncount > 0) print "(20x,a,i0,a,i0,a,f6.1/)",'particles on subgrid: ',nsub,&
+       ' max subpixels: ',maxsubpix,' mean subpixels: ',meansubpix/real(ncount)
 
 end subroutine interpolate3Dgeom
 
+!------------------------------------------------------------------------------
+!
+! Same functionality as interpolate3Dgeom, but for vector quantities
+!
+!------------------------------------------------------------------------------
 subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
      xmin,datsmooth,npix,pixwidth,xorigin,normalise,periodic)
  integer, intent(in) :: igeom,npart,npix(3)
@@ -273,8 +280,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  integer :: i,ipix,jpix,kpix,ierr
  integer :: iprintinterval,iprintnext
  integer :: ipixmin(3),ipixmax(3)
- integer :: ipixi,jpixi,kpixi
- real :: xminpix(3),hmin !,dhmin3
+ integer :: ipixi,jpixi,kpixi,isub,jsub,ksub,nsubpix
+ integer :: nsub,ncount,maxsubpix,meansubpix
+ real :: xminpix(3),hmin,dsubpix(3)
  real :: xi(3),xci(3),xcoord(3),hi,hi1,hi21,radkern,wab,q2,const
  real :: term(3),termnorm,xpix(3),dx(3),ddatnorm
  !real :: t_start,t_end
@@ -325,6 +333,7 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
  enddo
 
  const = cnormk3D  ! normalisation constant (3D)
+ nsub = 0; ncount = 0; maxsubpix = 0; meansubpix = 0
  !
  !--loop over particles
  !
@@ -334,14 +343,17 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 !$omp shared(xminpix,pixwidth,xorigin) &
 !$omp shared(npix,const,igeom) &
 !$omp shared(datnorm,normalise,periodic) &
-!$omp shared(hmin) & !,dhmin3) &
+!$omp shared(hmin) &
 !$omp shared(iprintprogress,iprintinterval) &
 !$omp private(hi,xi,xci,xcoord,xpix,radkern,hi1,hi21) &
 !$omp private(term,termnorm) &
 !$omp private(ipixmin,ipixmax,ierr) &
-!$omp private(iprogress,iprintnext) &
+!$omp private(iprogress) &
+!$omp firstprivate(iprintnext) &
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
-!$omp private(dx,q2,wab)
+!$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix) &
+!$omp reduction(+:nsub,meansubpix,ncount) &
+!$omp reduction(max:maxsubpix)
 !$omp master
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
 !$omp end master
@@ -364,22 +376,11 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     if (itype(i) < 0 .or. weight(i) < tiny(0.)) cycle over_parts
 
     hi = hh(i)
-    if (hi <= 0.) then
-       cycle over_parts
-    elseif (hi < hmin) then
-       !
-       !--use minimum h to capture subgrid particles
-       !  (get better results *without* adjusting weights)
-       !
-       termnorm = const*weight(i) !*(hi*hi*hi)*dhmin3
-       hi = hmin
-    else
-       termnorm = const*weight(i)
-    endif
+    if (hi <= 0.) cycle over_parts
+    termnorm = const*weight(i)
     hi1 = 1./hi
     hi21 = hi1*hi1
     radkern = radkernel*hi   ! radius of the smoothing kernel
-    !termnorm = const*weight(i)
     term(:) = termnorm*datvec(i,:)
     !
     !--set kernel related quantities
@@ -391,38 +392,49 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 
     if (ierr /= 0) cycle over_parts
 
+    if (hi < hmin) then
+       nsub = nsub + 1
+       nsubpix = max(2, int(hmin/hi) + 1)
+    else
+       nsubpix = 1
+    endif
+    ! statistics on sub-pixel interpolation
+    maxsubpix = max(maxsubpix,nsubpix)
+    meansubpix = meansubpix + nsubpix
+    ncount = ncount + 1
+
+    dsubpix(:) = pixwidth(:) / real(nsubpix)
     !
     !--loop over pixels, adding the contribution from this particle
     !
     do kpix = ipixmin(3),ipixmax(3)
        kpixi = kpix
        if (periodic(3)) kpixi = iroll(kpix,npix(3))
-       xcoord(3) = xminpix(3) + kpix*pixwidth(3)
 
        do jpix = ipixmin(2),ipixmax(2)
           jpixi = jpix
           if (periodic(2)) jpixi = iroll(jpix,npix(2))
-          xcoord(2) = xminpix(2) + jpix*pixwidth(2)
 
           do ipix = ipixmin(1),ipixmax(1)
              ipixi = ipix
              if (periodic(1)) ipixi = iroll(ipix,npix(1))
-             xcoord(1) = xminpix(1) + ipix*pixwidth(1)
 
-             !--now transform to get location of pixel in cartesians
-             call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
-
-             !--find distances using cartesians and perform interpolation
-             dx   = xpix(:) - xci(:)
-             q2   = (dx(1)*dx(1) + dx(2)*dx(2) + dx(3)*dx(3))*hi21
-             !
-             !--SPH kernel - standard cubic spline
-             !
-             if (q2 < radkernel2) then
-                wab = wkernel(q2)
-                !
-                !--calculate data value at this pixel using the summation interpolant
-                !
+             wab = 0.
+             do ksub = 1,nsubpix
+                xcoord(3) = xmin(3) + (kpix-1)*pixwidth(3) + (ksub-0.5)*dsubpix(3)
+                do jsub = 1,nsubpix
+                   xcoord(2) = xmin(2) + (jpix-1)*pixwidth(2) + (jsub-0.5)*dsubpix(2)
+                   do isub = 1,nsubpix
+                      xcoord(1) = xmin(1) + (ipix-1)*pixwidth(1) + (isub-0.5)*dsubpix(1)
+                      call coord_transform(xcoord,3,igeom,xpix,3,igeom_cartesian)
+                      dx = xpix(:) - xci(:)
+                      q2 = (dx(1)*dx(1) + dx(2)*dx(2) + dx(3)*dx(3))*hi21
+                      if (q2 < radkernel2) wab = wab + wkernel(q2)
+                   enddo
+                enddo
+             enddo
+             wab = wab / real(nsubpix**3)
+             if (wab > 0.) then
                 !$omp atomic
                 datsmooth(1,ipixi,jpixi,kpixi) = datsmooth(1,ipixi,jpixi,kpixi) + term(1)*wab
                 !$omp atomic
@@ -462,6 +474,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
     enddo
     !$omp end parallel do
  endif
+
+ if (nsub > 0 .and. ncount > 0) print "(20x,a,i0,a,i0,a,f6.1/)",'particles on subgrid: ',nsub,&
+       ' max subpixels: ',maxsubpix,' mean subpixels: ',meansubpix/real(ncount)
 
 end subroutine interpolate3Dgeom_vec
 
@@ -504,16 +519,23 @@ subroutine get_pixel_limits(xci,xi,radkern,ipixmin,ipixmax,npix,pixwidth,xmin,pe
  call get_coord_limits(radkern,xci,xi,xpixmin,xpixmax,igeom)
  !print*,' R min = ',xpixmin(1),' Rmax = ',xpixmax(1)
  !
- !--now work out contributions to pixels in the the transformed space
+ !--now work out contributions to pixels in the transformed space.
+ !  For periodic dimensions use the bounding-box range (may extend
+ !  outside [1,npix]); the caller wraps with iroll().  Clamp only
+ !  if the range exceeds a full period.
  !
- do i=1,3
-    ipixmin(i) = int((xpixmin(i) - xmin(i))/pixwidth(i))+1
-    if (ipixmin(i) < 1) ierr = ierr + 1
-    ipixmax(i) = int((xpixmax(i) - xmin(i))/pixwidth(i))+1
-    if (ipixmax(i) < 1) ierr = ierr + 1
-    if (.not.periodic(i)) then
-       if (ipixmin(i) < 1)       ipixmin(i) = 1         ! make sure they only contribute
-       if (ipixmax(i) > npix(i)) ipixmax(i) = npix(i)   ! to pixels in the image
+ do i = 1, 3
+    ipixmin(i) = int((xpixmin(i) - xmin(i))/pixwidth(i)) + 1
+    ipixmax(i) = int((xpixmax(i) - xmin(i))/pixwidth(i)) + 1
+    if (periodic(i)) then
+       if (ipixmax(i) - ipixmin(i) >= npix(i)) then
+          ipixmin(i) = 1
+          ipixmax(i) = npix(i)
+       endif
+    else
+       if (ipixmin(i) < 1)       ipixmin(i) = 1
+       if (ipixmax(i) > npix(i)) ipixmax(i) = npix(i)
+       if (ipixmin(i) > npix(i) .or. ipixmax(i) < 1) ierr = ierr + 1
     endif
  enddo
 
