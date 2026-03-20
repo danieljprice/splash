@@ -181,7 +181,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     zptmax = huge(zptmax)
  endif
  ibutton = 0
- !call draw_buttons(onclick=.true.)
+ call draw_buttons(onclick=.true.)
 
  interactiveloop: do while (.not.iexit)
     if (print_help) then
@@ -3201,8 +3201,8 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
  use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
-                               xleft_vp0,ytop_vp0,button_pressed,press_button,inbutton,&
-                               button_type,ibutton_irregular
+                               button_pressed,press_button,inbutton,&
+                               button_type,ibutton_irregular,xleft_vp0,ybottom_vp0
  real(kind=c_double), intent(in) :: xpt,ypt
  integer(kind=c_int), intent(in) :: mode
  character(len=128) :: string
@@ -3222,8 +3222,9 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
 
  ! save settings and query window
  call plot_qwin(xmin,xmax,ymin,ymax)
- call get_posxy(xleft_vp0,0.,xminvp,yminvp,xmin,xmax,ymin,ymax)
- call get_posxy(1.,ytop_vp0,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
+ call get_posxy(xleft_vp0,ybottom_vp0,xminvp,yminvp,xmin,xmax,ymin,ymax)
+ call get_posxy(1.02,1.,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
+
  plot_xy = .true.
  plot_help = .true.
 
@@ -3247,12 +3248,12 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
     plot_xy = .false.
     plot_help = .false.
-    !if (show_buttons) call erase_buttons()
+    if (show_buttons) call erase_buttons()
  else
  !
  ! draw the button set if the mouse is moving
  !
-    !if (show_buttons) call draw_buttons(onclick=.false.)
+    if (show_buttons) call draw_buttons(onclick=.false.)
  endif
 
  ! plot x,y position as cursor moves
@@ -3272,11 +3273,11 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
     string = 'click to zoom on colour bar'
     plot_xy = .false.
  case(2,8)   ! rectangle or circle selection
-    string = 'zoom; 0=hide; 1-9=colours; p=select; c=circles; '//&
-             'x/y=restrict x/y; r=restrict x & y; R=reset; q=quit'
+    string = 'click=zoom 0=hide 1-9=colour p=select c=circles '//&
+             'x/y/r=crop R=reset crop; q=quit'
  case(1) ! line drawing
     if (button_type(button_pressed)==ibutton_irregular) then
-       string='left click/a)dd points; middle click/d)elete points; q)uit/abort; 0=hide; 1-9=colours; p=select'
+       string='left click/a)dd points; middle click/d)elete; q)uit/abort; 0=hide; 1-9=colours; p=select'
     else
        string = 'click to draw line'
     endif
@@ -3286,9 +3287,9 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
        case(10)
           string = 'press m or M to change colour map'
        case(9)
-          string = 'press i to invert the colour map'
+          string = 'i to invert the colour map'
        case(8)
-          string = 'press f/F to flip rendered quantity to next/previous column'
+          string = 'f/F to flip render to next/previous column'
        case(7)
           string = 'backspace to delete colour bar / annotation'
        case(4:6)
@@ -3298,9 +3299,9 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
        end select
     else ! cursor is not inside the colour bar
        if (xpti > xmin .and. xpti < xmax .and. ypti < ymin) then
-          string = '+/- zoom x; a=adapt x; l=log x; o=centre x on zero; C=centre x on cursor'
+          string = '+/- zoom x; a=adapt x; l=log x; o=centre on origin; C=centre on cursor'
        elseif (ypti > ymin .and. ypti < ymax .and. xpti < xmin) then
-          string = '+/- zoom y; a=adapt y; l=log y; o=centre y on zero; C=centre y on cursor'
+          string = '+/- zoom y; a=adapt y; l=log y; o=centre on origin; C=centre on cursor'
        else
           ! cursor inside plot boundaries
           select case(imessage)
@@ -3321,7 +3322,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
           case(2:3)
               string = 'press Enter to toggle Hollywood mode'
           case default
-              string = 'click to zoom'
+              string = 'click or +/- to zoom, a to adapt'
           end select
        endif
     endif

@@ -21,7 +21,7 @@
 !-----------------------------------------------------------------
 module interactive_help
  implicit none
- character(len=128) :: help_msg = ''
+ character(len=128) :: help_msg = '', last_msg = ''
 
  public :: print_message,print_last_message
  public :: clear_messages
@@ -39,50 +39,72 @@ contains
 !--------------------------------
 subroutine print_message(line1,line2,onclick)
  use plotlib,           only:plot_qch,plot_qwin,plot_sch,plot_qcs,plot_set_opacity,&
-                             plotlib_supports_alpha,plot_text,plot_stbg
+                             plotlib_supports_alpha,plot_text,plot_stbg,plot_ptxt,&
+                             plot_get_clipping,plot_set_clipping
  use legends,           only:plot_box_around_text_xy
- use interactive_utils, only:get_posxy
+ use interactive_utils, only:get_posxy,get_vptxy
  character(len=*), intent(in) :: line1,line2
  logical, intent(in), optional :: onclick
  real :: xmin,xmax,ymin,ymax,x0,y0,x1,y1
- real :: xch,ych,oldch
- real, parameter :: xpos = -0.01, ypos = -0.02 ! position in viewport coords
+ real :: xch,ych,oldch,fjust
+ real, parameter :: xpos = 1.0, ypos = -0.02 ! position in viewport coords
+ real, parameter :: xpos_c = 0.5
  logical :: my_onclick
+ logical, parameter :: centre_text = .true.
+ integer :: oldclip
 
  my_onclick = .true.
  if (present(onclick)) my_onclick = onclick
 
  call plot_qch(oldch)
  call plot_qwin(xmin,xmax,ymin,ymax)
+ call plot_get_clipping(oldclip)
 
  call plot_stbg(0)
  call plot_sch(1.0)
  call plot_qcs(0,xch,ych)
  if (plotlib_supports_alpha) call plot_set_opacity(0.25)
+ call plot_set_clipping(0)
 
  ! line 2
  if (trim(line2) /= trim(help_msg) .or. my_onclick) then
-    call get_posxy(xpos,ypos,x1,y1,xmin,xmax,ymin,ymax)
+    if (centre_text) then
+       call get_posxy(xpos_c,ypos,x1,y1,xmin,xmax,ymin,ymax)
+       fjust = 0.5
+    else
+       call get_posxy(xpos,ypos,x1,y1,xmin,xmax,ymin,ymax)
+       fjust = 0.0
+    endif
 
-    ! block out pixels behind text by drawing a box
-    call plot_box_around_text_xy(x1,y1,0.,1.0,line2)
+    ! erase the previous help message at the same anchor first
+    if (len_trim(help_msg) > 0) then
+       call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(help_msg))
+    endif
+
+    ! block out pixels behind the new text by drawing a box
+    call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(line2))
 
     ! plot the help text
-    if (len_trim(line2) > 0) call plot_text(x1,y1,line2)
+    if (len_trim(line2) > 0) call plot_ptxt(x1,y1,0.,fjust,trim(line2))
 
     ! save previous message
     help_msg = line2
  endif
 
  ! line 1
- call get_posxy(xpos,ypos+1.5*ych,x0,y0,xmin,xmax,ymin,ymax)
- call plot_box_around_text_xy(x0,y0,0.,1.0,line1)
- if (len_trim(line1) > 0) call plot_text(x0,y0,line1)
+ call get_posxy(xpos,ypos,x0,y0,xmin,xmax,ymin,ymax)
+ if (len_trim(last_msg) > 0) then
+    call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(last_msg))
+ endif
+ call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(line1))
+ if (len_trim(line1) > 0) call plot_ptxt(x0,y0,0.,1.0,trim(line1))
+ last_msg = line1
 
  ! restore settings
  if (plotlib_supports_alpha) call plot_set_opacity(1.0)
  call plot_stbg(-1)
  call plot_sch(oldch)
+ call plot_set_clipping(oldclip)
 
 end subroutine print_message
 
@@ -145,7 +167,8 @@ end subroutine print_last_message
 !----------------------------------------------------
 subroutine clear_messages()
 
- help_msg = ''
+ !help_msg = ''
+ last_msg = ''
 
 end subroutine clear_messages
 

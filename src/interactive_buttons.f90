@@ -49,7 +49,7 @@ module interactive_buttons
  logical, private :: buttons_drawn = .false.
  integer, private :: nbuttons = 0
 
- real, parameter, public :: xleft_vp0 = -0.01, ytop_vp0=1.02
+ real, parameter, public :: xleft_vp0 = -0.01, ybottom_vp0=-0.02
  type(button) :: buttons(maxbuttons)
 
  public :: draw_buttons,inbutton,erase_buttons,button_type
@@ -119,7 +119,7 @@ subroutine draw_button(i,itype,msg)
  integer, intent(in) :: i,itype
  character(len=*), intent(in) :: msg
  real :: xmin,xmax,ymin,ymax
- real :: xleft_vp,ytop_vp,oldch,x0,y0,width
+ real :: xleft_vp,ybottom_vp,oldch,x0,y0,width
  real :: xleft,xright,ybottom,ytop,xch,ych,xsize,ysize,xbuf,ybuf
  integer :: oldfill,oldclip,oldls
  integer, parameter :: npts = 14
@@ -152,19 +152,19 @@ subroutine draw_button(i,itype,msg)
  ybuf = 0.075*ych
  if (itype==ibutton_erase) then
     xleft_vp = xleft_vp0 - xbuf
-    ytop_vp = ytop_vp0 + ybuf
+    ybottom_vp = ybottom_vp0 - ybuf
     ysize = ysize + 2.*ybuf ! erase an area slightly larger than original drawing
-    xsize = xsize + xbuf
+    xsize = xsize + 3.*xbuf
     width = i*xsize + xbuf
  else
     xleft_vp = xleft_vp0 + (i-1)*(xsize+xbuf)
-    ytop_vp = ytop_vp0
+    ybottom_vp = ybottom_vp0
     width = xsize
  endif
  ! translate from viewport to world coords
- call get_posxy(xleft_vp,ytop_vp,xleft,ytop,xmin,xmax,ymin,ymax)
+ call get_posxy(xleft_vp,ybottom_vp,xleft,ybottom,xmin,xmax,ymin,ymax)
  ! translate from viewport to world coords
- call get_posxy(xleft_vp+width,ytop_vp-ysize,xright,ybottom,xmin,xmax,ymin,ymax)
+ call get_posxy(xleft_vp+width,ybottom_vp+ysize,xright,ytop,xmin,xmax,ymin,ymax)
 
  call plot_qcs(4,xch,ych)
  buttons(i)%x(1) = xleft
@@ -174,7 +174,7 @@ subroutine draw_button(i,itype,msg)
  buttons(i)%type = itype
  buttons(i)%help = trim(msg)
  if (itype==ibutton_erase) then
-    call plot_rect(buttons(i)%x(1),buttons(i)%x(2),buttons(i)%y(1),buttons(i)%y(2))
+    call plot_rect(buttons(i)%x(1),buttons(i)%x(2),buttons(i)%y(1),buttons(i)%y(2),0.2*ych)
  else
     call plot_rect(buttons(i)%x(1),buttons(i)%x(2),buttons(i)%y(1),buttons(i)%y(2),0.2*ych)
  endif
@@ -200,15 +200,15 @@ subroutine draw_button(i,itype,msg)
     call plot_pt1(x0,y0,23)
  case(ibutton_text)
     xbuf = 0.25*xsize
-    ybuf = 0.15*ysize
+    ybuf = 0.12*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'T')
  case(ibutton_plus)
     xbuf = 0.3*xsize
-    ybuf = 0.3*ysize
+    ybuf = 0.25*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'+')
  case(ibutton_minus)
     xbuf = 0.4*xsize
-    ybuf = 0.3*ysize
+    ybuf = 0.25*ysize
     call plot_text(buttons(i)%x(1)+xbuf,buttons(i)%y(1)+ybuf,'-')
  case(ibutton_adapt)
     xbuf = 0.1*xsize
@@ -327,8 +327,7 @@ subroutine print_button_help(xpt,ypt,ibutton)
  integer, intent(out) :: ibutton
 
  ibutton = inbutton(xpt,ypt)
- if (ibutton > 0) call print_message('                           ',&
-                                     buttons(ibutton)%help)
+ if (ibutton > 0) call print_message(buttons(ibutton)%help)
 
 end subroutine print_button_help
 
