@@ -22,7 +22,10 @@
 module interactive_utils
  implicit none
  public :: inslice,inrectangle,incircle,inpoly
- public :: adapt_limits_interactive,get_vptxy,get_posxy
+ public :: adapt_limits_interactive,get_vptxy,get_posxy,get_button_anchor
+ public :: get_pix2viewport_factor, get_xw_margin_bounds
+ ! from GIZA_XW_MARGIN in giza-driver-xw.c
+ integer, parameter, private :: giza_margin_xw = 20
 
 contains
 
@@ -147,5 +150,46 @@ subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
  y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
 
 end subroutine get_posxy
+
+!---------------------------------------------
+! get the anchor position for the button set
+!---------------------------------------------
+subroutine get_button_anchor(xleft_vp0,ybottom_vp0)
+ real, intent(out) :: xleft_vp0,ybottom_vp0
+ real :: pix_to_viewport_x,pix_to_viewport_y
+
+ call get_pix2viewport_factor(pix_to_viewport_x,pix_to_viewport_y)
+ xleft_vp0 = -18.*pix_to_viewport_x   ! start 18 pixels left of viewport edge
+ ybottom_vp0 = -18.*pix_to_viewport_y ! start 18 pixels below bottom margin
+
+end subroutine get_button_anchor
+
+!---------------------------------------------
+! get the y bounds of the X-window margin
+!---------------------------------------------
+subroutine get_xw_margin_bounds(y1,y2)
+ real, intent(out) :: y1,y2
+ real :: pix_to_viewport_x,pix_to_viewport_y
+
+ call get_pix2viewport_factor(pix_to_viewport_x,pix_to_viewport_y)
+ y1 = -20.*pix_to_viewport_y
+ y2 = -1.*pix_to_viewport_y
+
+end subroutine get_xw_margin_bounds
+
+!---------------------------------------------
+! get conversion factor from viewport coordinates to pixels
+!---------------------------------------------
+subroutine get_pix2viewport_factor(xfac,yfac)
+ use plotlib, only:plot_qcs
+ real, intent(out) :: xfac,yfac
+ real :: xch,ych,xch_pix,ych_pix
+
+ call plot_qcs(0,xch,ych)
+ call plot_qcs(3,xch_pix,ych_pix)
+ xfac = xch / xch_pix * giza_margin_xw / 20.
+ yfac = ych / ych_pix * giza_margin_xw / 20.
+
+end subroutine get_pix2viewport_factor
 
 end module interactive_utils

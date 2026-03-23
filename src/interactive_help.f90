@@ -42,16 +42,17 @@ subroutine print_message(line1,line2,onclick)
                              plotlib_supports_alpha,plot_text,plot_stbg,plot_ptxt,&
                              plot_get_clipping,plot_set_clipping
  use legends,           only:plot_box_around_text_xy
- use interactive_utils, only:get_posxy,get_vptxy
+ use interactive_utils, only:get_posxy,get_vptxy,get_button_anchor,get_xw_margin_bounds
  character(len=*), intent(in) :: line1,line2
  logical, intent(in), optional :: onclick
  real :: xmin,xmax,ymin,ymax,x0,y0,x1,y1
  real :: xch,ych,oldch,fjust
- real, parameter :: xpos = 1.0, ypos = -0.02 ! position in viewport coords
+ real, parameter :: xpos = 1.0 ! position in viewport coords
  real, parameter :: xpos_c = 0.5
  logical :: my_onclick
  logical, parameter :: centre_text = .true.
  integer :: oldclip
+ real :: xpos_tmp,ypos,ym(2),ym_vp(2)
 
  my_onclick = .true.
  if (present(onclick)) my_onclick = onclick
@@ -60,9 +61,22 @@ subroutine print_message(line1,line2,onclick)
  call plot_qwin(xmin,xmax,ymin,ymax)
  call plot_get_clipping(oldclip)
 
- call plot_stbg(0)
+ !call plot_stbg(0)
  call plot_sch(1.0)
+ call get_button_anchor(xpos_tmp,ypos)
+
+ ! get y bounds of X-window margin in world coordinates
+ call get_xw_margin_bounds(ym_vp(1),ym_vp(2))
+ call get_posxy(xpos_c,ym_vp(1),x1,ym(1),xmin,xmax,ymin,ymax)
+ call get_posxy(xpos_c,ym_vp(2),x1,ym(2),xmin,xmax,ymin,ymax)
+
+ ! shrink character height if it is too large to fit in the margin
  call plot_qcs(0,xch,ych)
+ if (ych > 0.85*abs(ym_vp(2) - ym_vp(1))) then
+    call plot_sch(0.85*abs(ym_vp(2) - ym_vp(1))/ych)
+    call plot_qcs(0,xch,ych)
+ endif
+
  if (plotlib_supports_alpha) call plot_set_opacity(0.25)
  call plot_set_clipping(0)
 
@@ -78,11 +92,11 @@ subroutine print_message(line1,line2,onclick)
 
     ! erase the previous help message at the same anchor first
     if (len_trim(help_msg) > 0) then
-       call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(help_msg))
+       call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(help_msg),ybounds=ym)
     endif
 
     ! block out pixels behind the new text by drawing a box
-    call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(line2))
+    call plot_box_around_text_xy(x1,y1,fjust,1.0,trim(line2),ybounds=ym)
 
     ! plot the help text
     if (len_trim(line2) > 0) call plot_ptxt(x1,y1,0.,fjust,trim(line2))
@@ -94,9 +108,9 @@ subroutine print_message(line1,line2,onclick)
  ! line 1
  call get_posxy(xpos,ypos,x0,y0,xmin,xmax,ymin,ymax)
  if (len_trim(last_msg) > 0) then
-    call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(last_msg))
+    call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(last_msg),ybounds=ym)
  endif
- call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(line1))
+ call plot_box_around_text_xy(x0,y0,1.0,1.0,trim(line1),ybounds=ym)
  if (len_trim(line1) > 0) call plot_ptxt(x0,y0,0.,1.0,trim(line1))
  last_msg = line1
 

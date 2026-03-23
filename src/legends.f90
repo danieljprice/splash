@@ -132,16 +132,23 @@ end subroutine plot_box_around_text
 !-----------------------------------------------------------------
 !  utility routine for plotting translucent box behind text
 !-----------------------------------------------------------------
-subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string)
+subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string,ybounds)
  use plotlib, only:plot_qci,plot_sci,plot_sfs, &
                    plot_set_opacity,plot_rect
  real, intent(in) :: xpos,ypos,fjust,alpha
  character(len=*), intent(in) :: string
- real :: xbuf,ybuf,dx,dy,xch,ych,x1,x2,y1,y2
- real, dimension(4) :: xbox,ybox
+ real, intent(in), optional :: ybounds(2) ! optional override of y size
+ real :: ych,x1,x2,y1,y2
  integer :: ic
 
  call get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+!
+!--override y bounds if provided
+!
+ if (present(ybounds)) then
+    y1 = ybounds(1)
+    y2 = ybounds(2)
+ endif
 !
 !--draw box around the string
 !

@@ -3202,16 +3202,19 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  use timing,          only:wall_time
  use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
                                button_pressed,press_button,inbutton,&
-                               button_type,ibutton_irregular,xleft_vp0,ybottom_vp0
+                               button_type,ibutton_irregular,ibutton_text
+ use interactive_utils,   only:get_button_anchor
  real(kind=c_double), intent(in) :: xpt,ypt
  integer(kind=c_int), intent(in) :: mode
  character(len=128) :: string
  character(len=20) :: strx,stry,strxy
  logical :: iamincolourbar,plot_xy,plot_help,show_buttons
- integer :: imessage,ibutton
+ integer :: ibutton
  real :: xmin,xmax,ymin,ymax,xpti,ypti
  real :: xminvp,xmaxvp,yminvp,ymaxvp
+ real :: xleft_vp0,ybottom_vp0
  real, save :: tprev = -1.
+ integer, save :: imessage = 0
  real :: t
 
  call wall_time(t)
@@ -3222,6 +3225,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
 
  ! save settings and query window
  call plot_qwin(xmin,xmax,ymin,ymax)
+ call get_button_anchor(xleft_vp0,ybottom_vp0)
  call get_posxy(xleft_vp0,ybottom_vp0,xminvp,yminvp,xmin,xmax,ymin,ymax)
  call get_posxy(1.02,1.,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
 
@@ -3262,7 +3266,10 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  strxy = '('//trim(strx)//', '//trim(stry)//')'
 
  ! print help message below this
- imessage = 1 ! mod(int((t-tprev)/2.),10) ! change message every 2 seconds
+ if (t-tprev > 5.) then  ! wait at least 5 seconds before changing message
+    imessage = mod(imessage+1,10) 
+    tprev = t
+ endif
 
  ! work out if cursor is in the colour bar
  iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin,xmax,ymin,ymax)
@@ -3273,59 +3280,63 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
     string = 'click to zoom on colour bar'
     plot_xy = .false.
  case(2,8)   ! rectangle or circle selection
-    string = 'click=zoom 0=hide 1-9=colour p=select c=circles '//&
-             'x/y/r=crop R=reset crop; q=quit'
+    string = 'click to zoom, 0=hide 1-9=colour p=select c)ircles '//&
+             'x/y/r=crop R)eset crop q)uit'
  case(1) ! line drawing
     if (button_type(button_pressed)==ibutton_irregular) then
-       string='left click/a)dd points; middle click/d)elete; q)uit/abort; 0=hide; 1-9=colours; p=select'
-    else
+       string = 'click to a)dd; middle click/d)elete q)uit 0=hide 1-9=colour p=select'
+    else 
        string = 'click to draw line'
     endif
- case(0) ! no band mode, just a free cursor
-    if (iamincolourbar) then ! cursor is inside the colour bar
-       select case(imessage)
-       case(10)
-          string = 'press m or M to change colour map'
-       case(9)
-          string = 'i to invert the colour map'
-       case(8)
-          string = 'f/F to flip render to next/previous column'
-       case(7)
-          string = 'backspace to delete colour bar / annotation'
-       case(4:6)
-          string = 'click to zoom on colour bar'
-       case default
-          string = 'press l for log, a to adapt'
-       end select
-    else ! cursor is not inside the colour bar
-       if (xpti > xmin .and. xpti < xmax .and. ypti < ymin) then
-          string = '+/- zoom x; a=adapt x; l=log x; o=centre on origin; C=centre on cursor'
-       elseif (ypti > ymin .and. ypti < ymax .and. xpti < xmin) then
-          string = '+/- zoom y; a=adapt y; l=log y; o=centre on origin; C=centre on cursor'
-       else
-          ! cursor inside plot boundaries
+ case(0) ! no band mode,  just a free cursor
+    if (button_type(button_pressed)==ibutton_text) then
+       string = 'click to add text'
+    else
+       if (iamincolourbar) then ! cursor is inside the colour bar
           select case(imessage)
           case(10)
-              string = 'press o to recentre plot on the origin'
+             string = 'press m or M to change colour map'
           case(9)
-              string = 'type 3 and space to advance 3 timesteps'
+             string = 'i to invert the colour map'
           case(8)
-              string = 'press space for next snapshot, b for previous'
+             string = 'f/F to flip render to next/prev column'
           case(7)
-              string = 'type a number and -/+ to zoom in/out by factor'
-          case(6)
-              string = 'press p to label closest particle'
-          case(5)
-              string = 'press g to draw line and measure a gradient'
-          case(4)
-              string = 'ctrl-t to add text; \^ to add arrow + text'
-          case(2:3)
-              string = 'press Enter to toggle Hollywood mode'
+             string = 'backspace to delete colour bar / annotation'
+          case(4:6)
+             string = 'click to zoom on colour bar'
           case default
-              string = 'click or +/- to zoom, a to adapt'
+             string = 'press l for log, a to adapt'
           end select
+       else ! cursor is not inside the colour bar
+          if (xpti > xmin .and. xpti < xmax .and. ypti < ymin) then
+             string = '+/- zoom x a)dapt l)og o)rigin centre C)ursor centre'
+          elseif (ypti > ymin .and. ypti < ymax .and. xpti < xmin) then
+             string = '+/- zoom y a)dapt l)og o)rigin centre C)ursor centre'
+          else
+             ! cursor inside plot boundaries
+             select case(imessage)
+             case(10)
+                string = 'press o to centre plot on origin'
+             case(9)
+                string = 'type 3 and space to advance 3 timesteps'
+             case(8)
+                string = 'space for next snapshot, b for previous'
+             case(7)
+                string = 'type a number and -/+ to zoom in/out by factor'
+             case(6)
+                string = 'press p to label closest particle'
+             case(5)
+                string = 'press g to draw line and measure a gradient'
+             case(4)
+                string = 'ctrl-t to add text; ^ to add arrow + text'
+             case(2)
+                string = 'press Enter to enter/exit Hollywood mode'
+             case default
+                string = 'click or +/- to zoom, a to adapt'
+             end select
+          endif
        endif
-    endif
+    endif   
  end select
  if (.not.plot_help) string = ''
  if (.not.plot_xy) strxy = ''
