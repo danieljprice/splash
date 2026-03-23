@@ -972,7 +972,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('R')
        call reset_ranges
        iadvance = 0
-       interactivereplot = .true.
+       interactivereplot = .false.
        iexit = .true.
        !
        !--save as end point of animation sequence
@@ -3198,6 +3198,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  use plotlib,         only:plot_qwin
  use settings_render, only:iColourBarStyle
  use legends,         only:plot_box_around_text_xy
+ use limits,          only:anyrangeset
  use parsetext,       only:number_to_string
  use timing,          only:wall_time
  use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
@@ -3280,8 +3281,12 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
     string = 'click to zoom on colour bar'
     plot_xy = .false.
  case(2,8)   ! rectangle or circle selection
-    string = 'click to zoom, 0=hide 1-9=colour p=select c)ircles '//&
-             'x/y/r=crop R)eset crop q)uit'
+    if (anyrangeset()) then
+       string = 'R=reset crop 0=hide 1-9=colour q=quit'
+    else
+       string = '0=hide 1-9=colour p=select c=circles '//&
+                'x/y/r=crop q=quit'
+    endif
  case(1) ! line drawing
     if (button_type(button_pressed)==ibutton_irregular) then
        string = 'click to a)dd; middle click/d)elete q)uit 0=hide 1-9=colour p=select'
@@ -3334,6 +3339,9 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
              case default
                 string = 'click or +/- to zoom, a to adapt'
              end select
+             if (anyrangeset()) then
+                string = 'R to reset current range restrictions, click to zoom'
+             endif
           endif
        endif
     endif   
