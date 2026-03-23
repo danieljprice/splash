@@ -3237,24 +3237,23 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  show_buttons = (mode==0 .or. mode==2 .or. mode==8) &
            .or. (mode==1 .and. button_type(button_pressed)==ibutton_irregular)
 
- if (.not.show_buttons) call erase_buttons()
- if (mode==0) then
-    call print_button_help(xpt,ypt,ibutton)
- endif
- if (ibutton > 0) return
-
- ! restore default button press if not cursor is no longer hovering
- ! over one of the instant-action buttons
- if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpt,ypt) > 0)) then
-    call press_button()
- endif
-
  ! print nothing if cursor is outside the viewport, so do not contaminate screenshots
  if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
     plot_xy = .false.
     plot_help = .false.
     if (show_buttons) call erase_buttons()
  else
+    if (.not.show_buttons) call erase_buttons()
+    if (mode==0) then
+       call print_button_help(xpt,ypt,ibutton)
+    endif
+    if (ibutton > 0) return
+  
+    ! restore default button press if not cursor is no longer hovering
+    ! over one of the instant-action buttons
+    if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpt,ypt) > 0)) then
+       call press_button()
+    endif
  !
  ! draw the button set if the mouse is moving
  !
