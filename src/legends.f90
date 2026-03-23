@@ -497,9 +497,10 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
  else
     call plot_qcs(4,xch,ych)
     !--draw horizontal "error bar" above text
-    ypos = ymin + (vpos+1.25)*ych
+    ypos = ymin + (vpos+1.33)*ych
     xpos = xmin + hpos*(xmax-xmin)
-    call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
+    call plot_err1(5,xpos,ypos,0.5*dxscale,0.)
+    !call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
 
     !--write text at the position specified
     call plot_annotate('B',-vpos,hpos,0.5,trim(text))
