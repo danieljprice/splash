@@ -298,7 +298,8 @@ FUNCTION evalf (i, Val) RESULT (res)
     CASE  (cerf);   Comp(i)%Stack(SP)=erf(Comp(i)%Stack(SP))
     CASE  (cerfc);  Comp(i)%Stack(SP)=erfc(Comp(i)%Stack(SP))
     CASE  (cerfcs); Comp(i)%Stack(SP)=erfc_scaled(Comp(i)%Stack(SP))
-    CASE  (cgamma); if (abs(Comp(i)%Stack(SP) + abs(nint(Comp(i)%Stack(SP)))) < tiny(0._rn)) then; EvalErrType=8; res=zero; return; ENDIF
+    CASE  (cgamma); if (abs(Comp(i)%Stack(SP) + abs(nint(Comp(i)%Stack(SP)))) < tiny(0._rn)) then; &
+       EvalErrType=8; res=zero; return; ENDIF
        Comp(i)%Stack(SP)=gamma(Comp(i)%Stack(SP))
     CASE  DEFAULT; SP=SP+1; Comp(i)%Stack(SP)=Val(Comp(i)%ByteCode(IP)-VarBegin+1)
     END SELECT
