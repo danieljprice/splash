@@ -287,7 +287,8 @@ end subroutine read_tipsyheader_binary
 !----------------------------------------------------
 subroutine read_tipsybody_ascii(iunit,ierr,nread)
  integer, intent(in) :: iunit
- integer, intent(out) :: ierr, nread
+ integer, intent(out) :: ierr
+ integer, intent(inout) :: nread
  integer :: i,ic,icol,nerr
 
  !--pmass,x,y,z,vx,vy,vz

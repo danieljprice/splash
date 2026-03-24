@@ -133,7 +133,7 @@ subroutine rotate_axes2D(ioption,xmin,xmax,xorigin,anglez)
  case(1)
     !--rotated axes
     print*,'plotting rotated (2D) axes...'
-
+    xpt = 0.
     do idim=1,2
        !--plot to max of each axis
        xpt(:,2) = 0.

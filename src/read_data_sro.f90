@@ -80,7 +80,7 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  integer :: i,j,k,ierr,ierr1
  integer :: nprint,nptmass,npart_max,nstep_max
  integer :: n1,n2,idump,ncol
- logical :: iexist,magfield,minidump,doubleprec,iabunfileopen
+ logical :: iexist,magfield,minidump,doubleprec,iabunfileopen,reset_cm,corotating
  character(len=len(rootname)) :: dumpfile
  character(len=13) :: abunfile
  character(len=10) :: string
@@ -522,7 +522,8 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  !
  !--reset centre of mass to zero
  !
- if (allocated(dat) .and. n2==0 .and. lenvironment('RSPLASH_RESET_CM')) then
+ reset_cm = lenvironment('RSPLASH_RESET_CM')
+ if (allocated(dat) .and. n2==0 .and. reset_cm) then
     if (minidump) then
        call reset_centre_of_mass(dat(1:nprint,1:3,j-1),dat(1:nprint,7,j-1),nprint)
     else ! full dumps ipmass = 9
@@ -533,7 +534,8 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  !
  !--transform velocities to corotating frame
  !
- if (.not.minidump .and. allocated(dat) .and. lenvironment('RSPLASH_COROTATING')) then
+ corotating = lenvironment('RSPLASH_COROTATING')
+ if (.not.minidump .and. allocated(dat) .and. corotating) then
     print*,'TRANSFORMING VELOCITIES TO CORORATING FRAME'
     call set_corotating_vels(dat(1:nprint,9,j-1),dat(1:nprint,4:5,j-1),n1,nprint)
  endif

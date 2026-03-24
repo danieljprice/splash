@@ -177,7 +177,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m
+ logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m,ignore_errors
  real(doub_prec)                    :: timetemp,ztemp,headervalstmp(maxhdr)
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
@@ -202,7 +202,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !
 !--check if first data file exists
 !
- useids = lenvironment('GSPLASH_USEIDS') .or. lenvironment('GSPLASH_CHECKIDS')
+ useids = lenvironment('GSPLASH_USEIDS')
+ if (.not.useids) useids = lenvironment('GSPLASH_CHECKIDS')
  if (useids) then
     print "(1x,a)",'reading GADGET HDF5 format: sorted by particle id (--useids)'
  else
@@ -613,7 +614,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !
 !--pause with fatal errors
 !
- if (goterrors .and. .not.lenvironment('GSPLASH_IGNORE_ERRORS')) then
+ ignore_errors = lenvironment('GSPLASH_IGNORE_ERRORS')
+ if (goterrors .and. .not.ignore_errors) then
     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
     print "(a,/)",'    Please REPORT this and/or fix your file ***'
     print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'

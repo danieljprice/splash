@@ -127,7 +127,7 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  integer :: iheadlength
  integer :: i,j,ierr,nparti,ntoti,i1,icol
  integer :: npart_max,nstep_max,ncolstep,nptmass
- logical :: iexist,mhdread,useipindx
+ logical :: iexist,mhdread,useipindx,use_hfac
  character(len=len(rootname)+10)    :: dumpfile
  integer, parameter                 :: maxheadlength = 1000
  integer, dimension(maxheadlength)  :: iheader
@@ -160,10 +160,11 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  ndim = 3
  ndimV = 3
  mhdread = .false.
- if (lenvironment('VSPLASH_MHD') .or. lenvironment('VINE_MHD')) then
-    mhdread = .true.
- endif
- if (lenvironment('VSPLASH_HFAC') .or. lenvironment('VINE_HFAC')) then
+ mhdread = lenvironment('VSPLASH_MHD')
+ if (.not.mhdread) mhdread = lenvironment('VINE_MHD')
+ use_hfac = lenvironment('VSPLASH_HFAC')
+ if (.not.use_hfac) use_hfac = lenvironment('VINE_HFAC')
+ if (use_hfac) then
     hfactor = 2.8
  else
     hfactor = 1.0

@@ -113,6 +113,7 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  integer, dimension(6) :: i0,i1all,i2all
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
  logical               :: iexist,reallocate,checkids,goterrors
+ logical               :: ignore_iflagcool,ignore_errors
  logical, dimension(6) :: ireadtype
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
@@ -301,8 +302,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     else
 
        iformat = 0
-       if (iFlagCool==1 .and. .not.(lenvironment('GSPLASH_IGNORE-IFLAGCOOL') &
-                               .or. lenvironment('GSPLASH_IGNORE_IFLAGCOOL'))) then
+       ignore_iflagcool = lenvironment('GSPLASH_IGNORE-IFLAGCOOL')
+       if (.not.ignore_iflagcool) ignore_iflagcool = lenvironment('GSPLASH_IGNORE_IFLAGCOOL')
+       if (iFlagCool==1 .and. .not.ignore_iflagcool) then
           iformat = 1
           ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
           if (ifile==1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
@@ -1011,7 +1013,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 !
 !--pause with fatal errors
 !
- if (goterrors .and. .not.(lenvironment('GSPLASH_IGNORE_ERRORS').or.lenvironment('GSPLASH_IGNORE-ERRORS'))) then
+ ignore_errors = lenvironment('GSPLASH_IGNORE_ERRORS')
+ if (.not.ignore_errors) ignore_errors = lenvironment('GSPLASH_IGNORE-ERRORS')
+ if (goterrors .and. .not.ignore_errors) then
     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
     print "(a,/)",'    Please REPORT this and/or fix your file ***'
     print "(a)",'     (set --ignore-errors=yes to skip this message)'
@@ -1168,7 +1172,7 @@ end subroutine allocate_temp1
 !!------------------------------------------------------------
 
 subroutine set_labels_gadget
- use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,set_vector_labels, &
+ use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,set_vector_labels, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
