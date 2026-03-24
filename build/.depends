@@ -49,7 +49,10 @@ get_h.o : get_h.f90 timing.o kernels.o
 globaldata.o : globaldata.f90 
 imageutils.o : imageutils.f90 interpolate3D.o interpolate2D.o kernels.o 
 initialise.o : initialise.f90 globaldata.o globaldata.o limits.o labels.o globaldata.o 
-interactive.o : interactive.f90 system_utils.o pagecolours.o colours.o options_particleplots.o calc_quantities.o globaldata.o transform.o options_limits.o options_vecplot.o options_page.o legends.o particleplot.o partutils.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o options_render.o limits.o labels.o globaldata.o shapes.o options_xsecrotate.o colourbar.o 
+interactive.o : interactive.f90 timing.o parsetext.o system_utils.o pagecolours.o colours.o options_particleplots.o calc_quantities.o globaldata.o transform.o options_limits.o options_vecplot.o options_page.o legends.o interactive_buttons.o particleplot.o partutils.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o options_render.o limits.o labels.o globaldata.o shapes.o options_xsecrotate.o interactive_utils.o interactive_help.o colourbar.o 
+interactive_buttons.o : interactive_buttons.f90 interactive_help.o interactive_utils.o ${PLOTLIB:.f90=.o} 
+interactive_help.o : interactive_help.f90 parsetext.o interactive_utils.o legends.o ${PLOTLIB:.f90=.o} 
+interactive_utils.o : interactive_utils.f90 ${PLOTLIB:.f90=.o} limits.o globaldata.o 
 interpolate1D.o : interpolate1D.f90 kernels.o 
 interpolate2D.o : interpolate2D.f90 interpolation.o timing.o kernels.o 
 interpolate3D.o : interpolate3D.f90 timing.o interpolation.o kernels.o 
@@ -96,7 +99,7 @@ powerspectrums.o : powerspectrums.f90
 prompting.o : prompting.f90 
 promptlist.o : promptlist.f90 prompting.o 
 read.o : read.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o get_data.o read_data.o 
-read_composition.o : read_composition.f90 globaldata.o asciiutils.o 
+read_composition.o : read_composition.f90 globaldata.o globaldata.o asciiutils.o 
 read_data.o : read_data.F90 asciiutils.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
 read_data_UCLA.o : read_data_UCLA.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_VINE.o : read_data_VINE.f90 geometry.o system_utils.o allocate.o labels.o globaldata.o globaldata.o globaldata.o 
@@ -141,7 +144,7 @@ render.o : render.f90 options_vecplot.o legends.o contours.o ${PLOTLIB:.f90=.o} 
 rotate.o : rotate.f90 ${PLOTLIB:.f90=.o} 
 set_options_from_dataread.o : set_options_from_dataread.f90 limits.o calc_quantities.o options_xsecrotate.o options_render.o asciiutils.o labels.o globaldata.o globaldata.o globaldata.o options_particleplots.o exact.o 
 setpage.o : setpage.f90 transform.o asciiutils.o ${PLOTLIB:.f90=.o} 
-shapes.o : shapes.f90 parsetext.o asciiutils.o transform.o ${PLOTLIB:.f90=.o} exact_function.o prompting.o globaldata.o promptlist.o 
+shapes.o : shapes.f90 legends.o interactive_help.o parsetext.o asciiutils.o transform.o ${PLOTLIB:.f90=.o} exact_function.o prompting.o globaldata.o promptlist.o 
 sort.o : sort.f90 
 sph_moments.o : sph_moments.f90 kernels.o moments.o system_utils.o write_fits.o 
 splash.o : splash.f90 interactive.o labels.o globaldata.o exact.o set_options_from_dataread.o read_data.o colours.o options_xsecrotate.o options_render.o options_particleplots.o options_page.o timestepping.o analysis.o write_griddata.o write_sphdata.o convert.o write_pixmap.o asciiutils.o system_utils.o system_f2003.o globaldata.o interpolate3D_projection.o allocate.o menu.o kernels.o limits.o initialise.o defaults.o geomutils.o get_data.o globaldata.o 
