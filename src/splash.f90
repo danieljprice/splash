@@ -960,7 +960,7 @@ program splash
     irotate = .true.
  endif
  if (get_command_flag('npix')) then  ! e.g. --npix=128
-    npix = get_command_option('npix',default=real(npix))
+    npix = nint(get_command_option('npix',default=real(npix)))
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',track_string)

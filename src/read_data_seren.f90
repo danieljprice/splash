@@ -501,17 +501,20 @@ subroutine read_serenbody(iunit,ierr_out)
  allocate(dummy_int(1:ptot),stat=ierr)
  if (ierr /= 0) then
     print *,' ERROR allocating memory'
-    goto 56
+    ierr_out = -2
+    return
  endif
  if (doubleprec) allocate(dummy_dp_scalar(1:ptot),stat=ierr)
  if (ierr /= 0) then
     print *,' ERROR allocating memory'
-    goto 56
+    ierr_out = -2
+    return
  endif
  allocate(dummy_scalar(1:ptot),stat=ierr)
  if (ierr /= 0) then
     print *,' ERROR allocating memory'
-    goto 56
+    ierr_out = -2
+    return
  endif
 
  write (6,'(A,A)',ADVANCE="NO") "Loading: "
@@ -553,7 +556,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:NDIMtemp,pfirst:plast)
-             dummy(1:NDIMtemp,pfirst:plast) = real(dummy_dp(1:NDIMtemp,pfirst:plast))
+             dummy(1:NDIMtemp,pfirst:plast) = real(dummy_dp(1:NDIMtemp,pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy(1:NDIMtemp,pfirst:plast)
           endif
@@ -571,14 +574,14 @@ subroutine read_serenbody(iunit,ierr_out)
           ierr_out = -1
        endif
        deallocate(dummy)
-       if (doubleprec) deallocate(dummy_dp)
+       if (allocated(dummy_dp)) deallocate(dummy_dp)
     case ("h")
        ! Smoothing lengths
        pfirst = typedata(2,i); plast = typedata(3,i)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
           endif
@@ -601,7 +604,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
           endif
@@ -626,7 +629,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:VDIMtemp,pfirst:plast)
-             dummy(1:VDIMtemp,pfirst:plast) = real(dummy_dp(1:VDIMtemp,pfirst:plast))
+             dummy(1:VDIMtemp,pfirst:plast) = real(dummy_dp(1:VDIMtemp,pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy(1:VDIMtemp,pfirst:plast)
           endif
@@ -644,14 +647,14 @@ subroutine read_serenbody(iunit,ierr_out)
           ierr_out = -1
        endif
        deallocate(dummy)
-       if (doubleprec) deallocate(dummy_dp)
+      if (allocated(dummy_dp)) deallocate(dummy_dp)
     case ("rho")
        ! Densities
        pfirst = typedata(2,i); plast = typedata(3,i)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
           endif
@@ -674,7 +677,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
           endif
@@ -697,7 +700,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+             dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
           endif
@@ -722,7 +725,7 @@ subroutine read_serenbody(iunit,ierr_out)
        if (iambinaryfile>=1) then
           if (doubleprec) then
              read(iunit,end=55,iostat=ierr) dummy_dp(1:BDIMtemp,pfirst:plast)
-             dummy(1:BDIMtemp,pfirst:plast) = real(dummy_dp(1:BDIMtemp,pfirst:plast))
+             dummy(1:BDIMtemp,pfirst:plast) = real(dummy_dp(1:BDIMtemp,pfirst:plast),kind=SP)
           else
              read(iunit,end=55,iostat=ierr) dummy(1:BDIMtemp,pfirst:plast)
           endif
@@ -740,7 +743,7 @@ subroutine read_serenbody(iunit,ierr_out)
           ierr_out = -1
        endif
        deallocate(dummy)
-       if (doubleprec) deallocate(dummy_dp)
+       if (allocated(dummy_dp)) deallocate(dummy_dp)
     case ("sink_v1")
        ! Load sinks in sink data storage, will add them later
        pfirst = typedata(2,i); plast = typedata(3,i)
@@ -755,7 +758,7 @@ subroutine read_serenbody(iunit,ierr_out)
              read(iunit,end=55,iostat=ierr) idummy2
              if (doubleprec) then
                 read(iunit,end=55,iostat=ierr) raux_dp
-                raux = real(raux_dp)
+                raux = real(raux_dp,kind=SP)
              else
                 read(iunit,end=55,iostat=ierr) raux
              endif
@@ -764,11 +767,13 @@ subroutine read_serenbody(iunit,ierr_out)
              read(iunit,fmt=*,end=55,iostat=ierr) idummy2
              read(iunit,sink_format_string) raux(1:sink_data_length)
           endif
-          if (ix(1)/=0) sink_dat_array(s,ix(1):ix(NDIMtemp),1) = raux(2:NDIMtemp+1)
-          if (ivx/=0) sink_dat_array(s,ivx:ivx+VDIMtemp-1,1) = raux(NDIMtemp+2:NDIMtemp+VDIMtemp+1)
-          if (ipmass/=0) sink_dat_array(s,ipmass,1) = raux(NDIMtemp+VDIMtemp+2)
-          if (ih/=0) sink_dat_array(s,ih,1) = raux(NDIMtemp+VDIMtemp+3)
-          if (itemp/=0) sink_dat_array(s,itemp,1) = raux(NDIMtemp+VDIMtemp+11)
+          if (allocated(sink_dat_array) .and. allocated(raux)) then
+             if (ix(1)/=0) sink_dat_array(s,ix(1):ix(NDIMtemp),1) = raux(2:NDIMtemp+1)
+             if (ivx/=0) sink_dat_array(s,ivx:ivx+VDIMtemp-1,1) = raux(NDIMtemp+2:NDIMtemp+VDIMtemp+1)
+             if (ipmass/=0) sink_dat_array(s,ipmass,1) = raux(NDIMtemp+VDIMtemp+2)
+             if (ih/=0) sink_dat_array(s,ih,1) = raux(NDIMtemp+VDIMtemp+3)
+             if (itemp/=0) sink_dat_array(s,itemp,1) = raux(NDIMtemp+VDIMtemp+11)
+          endif
        enddo
     case default
        !print*,' WARNING: unknown data type ', trim(data_id(i))
@@ -880,7 +885,7 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
-                dummy_scalar(pfirst:plast) = real(dummy_int(pfirst:plast))
+                dummy_scalar(pfirst:plast) = real(dummy_int(pfirst:plast),kind=SP)
              elseif (typecode==3) then
                 ! Long integer data array
                 allocate(dummy_ilp_int(1:ptot))
@@ -893,14 +898,14 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
-                dummy_scalar(pfirst:plast) = real(dummy_ilp_int(pfirst:plast))
+                dummy_scalar(pfirst:plast) = real(dummy_ilp_int(pfirst:plast),kind=SP)
                 deallocate(dummy_ilp_int)
              elseif (typecode==4) then
                 ! PR data array
                 if (iambinaryfile>=1) then
                    if (doubleprec) then
                       read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-                      dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+                      dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
                    else
                       read(iunit,end=55,iostat=ierr) dummy_scalar(pfirst:plast)
                    endif
@@ -915,7 +920,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 if (iambinaryfile>=1) then
                    if (.NOT.doubleprec) allocate(dummy_dp_scalar(pfirst:plast))
                    read(iunit,end=55,iostat=ierr) dummy_dp_scalar(pfirst:plast)
-                   dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast))
+                   dummy_scalar(pfirst:plast) = real(dummy_dp_scalar(pfirst:plast),kind=SP)
                    if (.NOT.doubleprec) deallocate(dummy_dp_scalar)
                 else
                    do k=pfirst,plast
@@ -965,7 +970,7 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
-                dummy(1:width,pfirst:plast) = real(dummy_int_2D(1:width,pfirst:plast))
+                dummy(1:width,pfirst:plast) = real(dummy_int_2D(1:width,pfirst:plast),kind=SP)
                 deallocate(dummy_int_2D)
              elseif (typecode == 3) then
                 ! Long integer data array
@@ -979,7 +984,7 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
-                dummy(1:width,pfirst:plast) = real(dummy_ilp_int_2D(1:width,pfirst:plast))
+                dummy(1:width,pfirst:plast) = real(dummy_ilp_int_2D(1:width,pfirst:plast),kind=SP)
                 deallocate(dummy_ilp_int_2D)
              elseif (typecode == 4) then
                 ! PR data array
@@ -987,7 +992,7 @@ subroutine read_serenbody(iunit,ierr_out)
                 if (iambinaryfile>=1) then
                    if (doubleprec) then
                       read(iunit,end=55,iostat=ierr) dummy_dp(1:width,pfirst:plast)
-                      dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast))
+                      dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast),kind=SP)
                    else
                       read(iunit,end=55,iostat=ierr) dummy(1:width,pfirst:plast)
                    endif
@@ -997,13 +1002,13 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
-                if (doubleprec) deallocate(dummy_dp)
+                if (allocated(dummy_dp)) deallocate(dummy_dp)
              elseif (typecode == 5) then
                 ! DP data array
                 if (iambinaryfile>=1) then
                    allocate(dummy_dp(1:width,1:ptot),stat=ierr)
                    read(iunit,end=55,iostat=ierr) dummy_dp(1:width,pfirst:plast)
-                   dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast))
+                   dummy(1:width,pfirst:plast) = real(dummy_dp(1:width,pfirst:plast),kind=SP)
                    deallocate(dummy_dp)
                 else
                    do k=pfirst,plast
@@ -1011,6 +1016,7 @@ subroutine read_serenbody(iunit,ierr_out)
                       if (ierr1 /= 0) ierr = ierr1
                    enddo
                 endif
+                if (allocated(dummy_dp)) deallocate(dummy_dp)
              endif
              do k=pfirst,plast
                 dat(k,iunknown(unknown):iunknown(unknown)+width-1,step) = dummy(1:width,k)
@@ -1027,7 +1033,7 @@ subroutine read_serenbody(iunit,ierr_out)
  enddo
  write (6,*)
 
- if (stot>0) then
+ if (stot>0 .and. allocated(sink_dat_array)) then
     ! Load sink stuff into end of dat array
     dat(ptot+1:ptot+stot,1:ncolumns,step) = sink_dat_array(1:stot,1:ncolumns,1)
  endif
@@ -1038,10 +1044,6 @@ subroutine read_serenbody(iunit,ierr_out)
  if (iambinaryfile>=1) print "(a)",' ERROR: end of file in binary read'
  if (iambinaryfile==0) print "(a)",' ERROR: end of file in ascii read'
  ierr_out = -3
- return
-
-56 continue
- ierr_out = -2
 
  return
 end subroutine
@@ -1098,7 +1100,7 @@ end subroutine read_data_seren
 
 subroutine set_labels_seren
  use labels, only:label,iamvec,labelvec,labeltype,unitslabel=>unitslabel_default,&
- &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenlabel,lenunitslabel,make_vector_label
+ &ix,ivx,ipmass,ih,irho,iBfirst,iutherm,lenunitslabel,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
@@ -1107,7 +1109,7 @@ subroutine set_labels_seren
  integer :: i, j, width, unit_no
  integer :: nunknown                ! Number of unknown data types
  character(len=lenunitslabel) :: unit_base, unit_string
- character(len=lenlabel)      :: type_names(1:7)
+ character(len=8)             :: type_names(1:7)
  logical                      :: type_use_render(1:7)
 
  if (ndim <= 0 .or. ndim > 3) then
