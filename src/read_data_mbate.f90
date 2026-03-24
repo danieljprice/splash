@@ -93,7 +93,7 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  real :: timesi, gammasi
  real :: rhozeros, RK2s
  real :: escaps,tkins,tgravs,tterms
- real :: dtmaxs,tcomp
+ real :: dtmaxs
 
  nstepsread = 0
  nstep_max = 0

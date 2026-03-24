@@ -68,7 +68,7 @@ subroutine read_data_jjmmulti(rootname,indexstart,ipos,nstepsread)
  integer :: istep,nprint,npart_max,nstep_max,icol,ncolstep
  logical :: iexist
  character(LEN=LEN(rootname)+4) :: dumpfile
- real :: timei,dti,hi,pmass,totmass,rhozero
+ real :: timei,dti,hi
 
  nstepsread = 0
  nstep_max = 0
@@ -164,7 +164,6 @@ subroutine read_data_jjmmulti(rootname,indexstart,ipos,nstepsread)
           !print*,i,(dat(i,icol,j),icol = 1,ncolstep),iamtype(i,j)
           !--make a fake column for mass
        enddo
-600    format(2x,7(e12.5),1(i5))
        time(j) = timei
 
        if (ierr /= 0) then

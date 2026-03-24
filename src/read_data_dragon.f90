@@ -745,7 +745,6 @@ subroutine set_labels_dragon
 end subroutine set_labels_dragon
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
- use labels, only:ipmass,ih,irho
  use params
  use settings_data, only:ndim
  use unit_constants

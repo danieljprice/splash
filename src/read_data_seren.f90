@@ -110,7 +110,7 @@ contains
 subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep,headervals
  use params
- use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread,ntypes
+ use settings_data,  only:ndim,ndimV,ncolumns,ncalc,ipartialread
  use settings_units, only:unitzintegration, unit_interp
  use mem_allocation, only:alloc
  use labels,         only:labeltype,labelzintegration,headertags,print_types
@@ -122,10 +122,9 @@ subroutine read_data_seren(rootname,istepstart,ipos,nstepsread)
  character(len=*), intent(in) :: rootname
  character(len=len(rootname)+10) :: datfile
  integer, parameter :: iunit = 16
- integer :: i,j,step,ierr,iambinaryfile,itype
+ integer :: i,j,step,ierr,iambinaryfile
  integer :: npart_max,nstep_max
  logical :: iexist,reallocate,doubleprec
- character(len=50) :: string
 
  integer            :: idata(1:50)
  integer (kind=ILP) :: ilpdata(1:50)

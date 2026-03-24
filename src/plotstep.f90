@@ -744,7 +744,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: irenderpart,icolours_temp
  integer :: npixyvec,nfreqpts,ipixxsec
  integer :: icolourprev,linestyleprev
- integer :: ierr,ipt,nplots,nyplotstart,nyplotend,iaxisy,iaxistemp,icol
+ integer :: ierr,ipt,nplots,nyplotstart,nyplotend,iaxisy,iaxistemp
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
  integer :: iframe,isize,isinktype,isink1,isink2,itrackoffset,itracktype
 

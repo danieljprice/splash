@@ -1177,7 +1177,6 @@ subroutine set_labels_gadget
  use asciiutils,    only:lcase
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
- character(len=lenlabel) :: tmplabel
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'

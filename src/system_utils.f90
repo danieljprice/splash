@@ -192,7 +192,6 @@ end function ienvstring
 real function renvstring(string,errval)
  character(len=*), intent(in)  :: string
  real, intent(in), optional :: errval
- character(len=5) :: fmtstring
  integer :: ierr
 
  if (len_trim(string) > 0) then

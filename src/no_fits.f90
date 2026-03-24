@@ -164,7 +164,6 @@ end subroutine read_fits_cube
   character(len=*), intent(in) :: filename
   integer,          intent(in) :: naxes(2)
   real(kind=real64),intent(in) :: image(naxes(1),naxes(2))
-  real(kind=real32), allocatable :: img32(:,:)
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
 
