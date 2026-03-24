@@ -52,7 +52,7 @@ void read_gadget_hdf5_header(char *filename,
     hid_t file_id;
     hid_t group_id, dataset_id;
     hid_t attrib_id, dataspace_id;
-    herr_t status;
+    herr_t status = 0;
     herr_t HDF5_error = -1;
 
     *ierr = 0;
@@ -406,7 +406,7 @@ void read_gadget_hdf5_data(char *filename,
     hid_t group_id;
     herr_t status;
     herr_t HDF5_error = -1;
-    char groupname[12];
+    char groupname[32];
     char datasetname[256], namevels[256], namemass[256];
 
     int i, ndimV, rank;

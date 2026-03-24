@@ -183,6 +183,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
           }
           if (mystep == istep) {
              nsub++;
+             int ierr;
              ierr = read_cactus_dataset(file_id,name,ncol,ncells,ndim,&n,time,deltax,inheader);
              if (ierr != 0) {
                 printf("ERROR reading dataset %s \n",name);

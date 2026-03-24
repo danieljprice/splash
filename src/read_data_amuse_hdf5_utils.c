@@ -180,7 +180,7 @@ void read_amuse_hdf5_data(char *filename,
    hid_t     group_id, group_id1, group_id2;
    herr_t    status;
    herr_t    HDF5_error = -1;
-   char      groupname[12];
+   char      groupname[32];
    char      datasetname[256];
    int i;
 
