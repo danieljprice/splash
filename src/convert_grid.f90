@@ -339,7 +339,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
 
  if (ipmass > 0.) then
     mtot = sum(dat(1:ninterp,ipmass),mask=(icolourme(1:ninterp) > 0 .and. weight(1:ninterp) > 0.))
-    print "(9x,a23,1x,es10.4)",'total mass on parts:',mtot
+    print "(9x,a23,1x,es11.4)",'total mass on parts:',mtot
  endif
 
  if (ndim==3) then
@@ -351,7 +351,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
     if (igeom /= igeom_cartesian) then
        if (ipmass > 0) then
           call get_mass_in_box(ninterp,x,y,z,dat(1:ninterp,ipmass),mask,mtot,icoords,igeom,xmin,xmax)
-          print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
+          print "(9x,a23,1x,es11.4,/)",'mass on parts in box:',mtot
        endif
 
        call interpolate3Dgeom(igeom,dat(1:ninterp,ix(1)),dat(1:ninterp,ix(2)),dat(1:ninterp,ix(3)),&
@@ -375,7 +375,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
        endif
        if (ipmass > 0) then
           call get_mass_in_box(ninterp,x,y,z,dat(1:ninterp,ipmass),mask,mtot,icoords,igeom,xmin,xmax)
-          print "(9x,a23,1x,es10.4,/)",'mass on parts in box:',mtot
+          print "(9x,a23,1x,es11.4,/)",'mass on parts in box:',mtot
        endif
 
        call interpolate3D(x,y,z,&
@@ -412,7 +412,7 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  !--print error if mass is not conserved
  !
  if (mtotgrid > 0.) then
-    print "(9x,a23,1x,es10.4,/)",'total mass on grid:',mtotgrid
+    print "(9x,a23,1x,es11.4,/)",'total mass on grid:',mtotgrid
     err = 100.*(mtotgrid - mtot)/mtot
     if (abs(err) > 1) print "(/,a,1pg8.1,a,/)",' WARNING! MASS NOT CONSERVED BY ',err,&
     '% BY INTERPOLATION'
@@ -1068,7 +1068,7 @@ subroutine get_mass_in_box(ninterp,x,y,z,m,mask,mtot,icoords,igeom,xmin,xmax)
     case default
        tot_volume = 0.
     end select
-    if (tot_volume > 0.) print "(20x,a,es10.4,/)",'grid volume: ',tot_volume
+    if (tot_volume > 0.) print "(20x,a,es11.4,/)",'grid volume: ',tot_volume
  endif
 
 end subroutine get_mass_in_box
