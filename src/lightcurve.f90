@@ -112,7 +112,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !--allow for colour correction to temperature by factor of f_col
  f_col = renvironment('fcol', -1.0)
  if (f_col < 0.0) f_col = renvironment('f_col', 1.0)
- print "(/,a,f4.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
+ print "(/,a,f5.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
                           ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)

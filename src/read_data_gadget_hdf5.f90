@@ -653,7 +653,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
        endif
        if (hfact < 1.125 .or. hfact > 1.45) then
           print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
-          print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
+          print "(3x,a,f5.1,a,/,3x,a,f5.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
 
@@ -676,7 +676,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
               'A good default is h = 1.2 (m/rho)^1/ndim ', &
               'corresponding to around 58 neighbours in 3D.'
        else
-          print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+          print "(/,1x,a,f5.1,a,/,1x,a,f5.2,a,i1,a,/)", &
                 'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                 'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
        endif

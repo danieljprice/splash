@@ -263,7 +263,7 @@ subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
        enddo
        hfact = hfactmean/real(nhfac)
        havewarned = .true.
-       print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+       print "(/,1x,a,f5.1,a,/,1x,a,f5.2,a,i1,a,/)", &
              'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
              'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
     endif

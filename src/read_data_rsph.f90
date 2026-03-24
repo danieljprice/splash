@@ -165,7 +165,7 @@ subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  if (ierr /= 0) then
     print*,'WARNING: errors during dheader read'
  endif
- print "(1x,a,20(1x,1pe8.2))",'dheader = ',dheader(1:isizeheader)
+ print "(1x,a,20(1x,1pe9.2))",'dheader = ',dheader(1:isizeheader)
  do icol=1,ncolumns-ndim
     read(iunit,iostat=ierr,end=80) cheader(icol)(1:isizeheader)
  enddo
