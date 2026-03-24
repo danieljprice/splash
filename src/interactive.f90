@@ -3245,13 +3245,13 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  else
     if (.not.show_buttons) call erase_buttons()
     if (mode==0) then
-       call print_button_help(xpt,ypt,ibutton)
+       call print_button_help(xpti,ypti,ibutton)
     endif
     if (ibutton > 0) return
   
     ! restore default button press if not cursor is no longer hovering
     ! over one of the instant-action buttons
-    if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpt,ypt) > 0)) then
+    if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpti,ypti) > 0)) then
        call press_button()
     endif
  !
