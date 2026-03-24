@@ -58,12 +58,10 @@ contains
 subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
  use params
-!  use labels
  use filenames, only:nfiles
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,ntypes, &
                           buffer_data
  use mem_allocation, only:alloc
- use geometry, only:labelcoordsys
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname

@@ -344,21 +344,21 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
                 if (.not. allocated(x1c)) allocate(x1c(npts))
                 if (ierr == 0) then
                    x1c = bs(rval(1,:))
-                   have_x1c = .true.
+                   got_x1c = .true.
                 endif
              elseif (trim(tagarr(ncolstep+1)) == 'X2C_NATIVE_COORDINATES') then
                 if (allocated(x2c) .and. size(x2c) /= npts) deallocate(x2c)
                 if (.not. allocated(x2c)) allocate(x2c(npts))
                 if (ierr == 0) then
                    x2c = bs(rval(1,:))
-                   have_x2c = .true.
+                   got_x2c = .true.
                 endif
              elseif (trim(tagarr(ncolstep+1)) == 'X3C_NATIVE_COORDINATES') then
                 if (allocated(x3c) .and. size(x3c) /= npts) deallocate(x3c)
                 if (.not. allocated(x3c)) allocate(x3c(npts))
                 if (ierr == 0) then
                    x3c = bs(rval(1,:))
-                   have_x3c = .true.
+                   got_x3c = .true.
                 endif
              else
                 if (present(dat) .and. debugmode) print*,'skipping float '//trim(tagarr(ncolstep+1))//' as npts /= ncells'
@@ -534,7 +534,7 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
     if (debugmode) print*,' Added fake mass column (cell mass)'
 
     ! Construct position data from cell coordinates
-    if (present(dat) .and. have_x1c .and. have_x2c .and. have_x3c) then
+    if (present(dat) .and. got_x1c .and. got_x2c .and. got_x3c) then
        !print*,'npts = ',npts,size(x1c),size(x2c),size(x3c),nx-1,ny-1,nz-1
        igeom = igeom_spherical
        do k = 1, nz-1
