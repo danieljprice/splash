@@ -33,7 +33,7 @@ jobs:
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
-    - name: compile splash
+    - name: compile splash (with NOWARN=yes to enforce no compiler warnings)
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
 
     - name: compile splash with HDF5 and FITS

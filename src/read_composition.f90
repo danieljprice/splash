@@ -140,12 +140,12 @@ end subroutine check_for_composition_file
 
 subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig)
  use asciiutils,      only:get_ncolumns
- use iso_fortran_env, only:int64
+ use params,          only:int8
  real, intent(inout) :: dat(:,:)
  character(len=*), intent(in) :: filename
  integer, intent(in) :: ncomp,icomp_col_start
  integer, intent(inout) :: ntotal
- integer(kind=int64), allocatable, intent(in) :: iorig(:)
+ integer(kind=int8), allocatable, intent(in) :: iorig(:)
  integer :: iu,ierr,i,ncols,nhdr
 
  open(newunit=iu,file=trim(filename),form='formatted',status='old',iostat=ierr)
@@ -201,43 +201,51 @@ end function get_av_filename
 ! iorig(particle_index); otherwise id_tmp is treated as dump index 1..ntotal.
 !-----------------------------------------------------------------
 subroutine read_av_into_column(filename,ntotal,dat,icol,iorig)
- use iso_fortran_env, only:int64
- use params,          only:doub_prec
+ use params, only:doub_prec,int8
  real, intent(inout) :: dat(:,:)
  character(len=*), intent(in) :: filename
  integer, intent(in) :: icol
  integer, intent(in) :: ntotal
- integer(kind=int64), allocatable, intent(in) :: iorig(:)
+ integer(kind=int8), allocatable, intent(in) :: iorig(:)
  integer :: iu,ierr,npart_av,k,max_id,orig_id
  integer, allocatable :: id_tmp(:)
  real(doub_prec), allocatable :: val_tmp(:), lookup(:)
 
  dat(1:ntotal,icol) = 0.0
+
+ ! open the AV file
  open(newunit=iu,file=trim(filename),access='stream',form='unformatted',status='old',iostat=ierr)
  if (ierr /= 0) then
     print*, "WARNING: Could not open A_V file "//trim(filename)//", using A_V = 0"
     return
  endif
+
+ ! read number of particles
  read(iu,iostat=ierr) npart_av
  if (ierr /= 0 .or. npart_av <= 0) then
     print*, "WARNING: Invalid A_V header in "//trim(filename)//", using A_V = 0"
     close(iu)
     return
  endif
+
+ ! read arrays
  allocate(id_tmp(npart_av), val_tmp(npart_av))
  read(iu,iostat=ierr) id_tmp
  read(iu,iostat=ierr) val_tmp
  close(iu)
+
  if (ierr /= 0) then
     print*, "WARNING: Error reading A_V data from "//trim(filename)//", using A_V = 0"
     deallocate(id_tmp, val_tmp)
     return
  endif
+
  max_id = maxval(id_tmp(1:npart_av))
  if (max_id < 1) then
     deallocate(id_tmp, val_tmp)
     return
  endif
+
  allocate(lookup(max_id))
  lookup = 0.0d0
  do k = 1, npart_av
@@ -245,6 +253,7 @@ subroutine read_av_into_column(filename,ntotal,dat,icol,iorig)
        lookup(id_tmp(k)) = val_tmp(k)
     endif
  enddo
+
  if (allocated(iorig) .and. size(iorig) >= ntotal) then
    print "(a,i0,a,i0,a)", ' Loaded A_V for ',npart_av,' particles from '//&
                           trim(filename)//' using ',max_id,' unique IDs'
@@ -262,6 +271,7 @@ subroutine read_av_into_column(filename,ntotal,dat,icol,iorig)
     enddo
  endif
  deallocate(id_tmp, val_tmp, lookup)
+
 end subroutine read_av_into_column
 
 end module readcomposition

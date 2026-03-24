@@ -64,9 +64,10 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module asciiread
- use labels, only:lenlabel,label
+ use labels,  only:lenlabel,label
+ use params,  only:maxplot
  integer :: icoltype
- character(len=lenlabel), dimension(size(label)) :: label_orig
+ character(len=lenlabel), dimension(maxplot+2) :: label_orig
 
 end module asciiread
 

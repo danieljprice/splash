@@ -149,6 +149,8 @@ else
     CXXLIBS= -lstdc++
 endif
 
+PIELDFLAGS= -pie
+
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -233,6 +235,8 @@ ifeq ($(SYSTEM),aocc)
    KNOWN_SYSTEM=yes
    CC= clang
    CFLAGS= -O3 -fPIC
+   NOWARNFLAG=-Werror
+   PIELDFLAGS= -fpie
 endif
 
 ifeq ($(SYSTEM),pgf90)
@@ -286,7 +290,6 @@ endif
 # these are the flags used for linking
 #
 LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS)
-PIELDFLAGS= -pie
 
 #
 # this is an option to change the endian-ness at compile time
