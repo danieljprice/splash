@@ -396,16 +396,16 @@ subroutine set_labels_ascii
                          '  in the current directory with one label per line'
     endif
  else
-    overcols: do i=1,ncolumns
+    do i=1,ncolumns
        read(51,"(a)",iostat=ierr) label_orig(i)
        if (ierr < 0) then
           if (iverbose > 0) print "(a,i3)",' end of file in columns file: read to column ',i-1
-          exit overcols
+          exit
        elseif (ierr > 0) then
           if (iverbose > 0) print "(a)",' *** error reading from columns file ***'
-          exit overcols
+          exit
        endif
-    enddo overcols
+    enddo
     close(unit=51)
  endif
 !
