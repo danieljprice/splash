@@ -62,7 +62,7 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 module sphNGread
- use params
+ use params, only:doub_prec,sing_prec,int1,int8,maxplot,maxparttypes,maxhdr
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
@@ -98,7 +98,7 @@ contains
  ! function mapping iphase setting in sphNG to splash particle types
  !-------------------------------------------------------------------
 elemental integer function itypemap_sphNG(iphase)
- integer*1, intent(in) :: iphase
+ integer(kind=int1), intent(in) :: iphase
 
  select case(int(iphase))
  case(0)
@@ -119,7 +119,7 @@ end function itypemap_sphNG
  ! function mapping iphase setting in Phantom to splash particle types
  !---------------------------------------------------------------------
 elemental integer function itypemap_phantom(iphase)
- integer*1, intent(in) :: iphase
+ integer(kind=int1), intent(in) :: iphase
 
  select case(int(iphase))
  case(1:2)
@@ -170,8 +170,8 @@ end subroutine extract_int
  !------------------------------------------
 subroutine extract_real8(tag,rval,r8arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*8,                intent(out) :: rval
- real*8,                intent(in)  :: r8arr(:)
+ real(doub_prec),       intent(out) :: rval
+ real(doub_prec),       intent(in)  :: r8arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -200,8 +200,8 @@ end subroutine extract_real8
  !------------------------------------------
 subroutine extract_real4(tag,rval,r4arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*4,                intent(out) :: rval
- real*4,                intent(in)  :: r4arr(:)
+ real(sing_prec),       intent(out) :: rval
+ real(sing_prec),       intent(in)  :: r4arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -257,8 +257,8 @@ end subroutine extract_intarr
  !------------------------------------------
 subroutine extract_real8arr(tag,rval,r8arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*8,                intent(out) :: rval(:)
- real*8,                intent(in)  :: r8arr(:)
+ real(doub_prec),       intent(out) :: rval(:)
+ real(doub_prec),       intent(in)  :: r8arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -285,8 +285,8 @@ end subroutine extract_real8arr
  !------------------------------------------
 subroutine extract_real4arr(tag,rval,r4arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*4,                intent(out) :: rval(:)
- real*4,                intent(in)  :: r4arr(:)
+ real(sing_prec),       intent(out) :: rval(:)
+ real(sing_prec),       intent(in)  :: r4arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -726,11 +726,11 @@ end subroutine read_header
 subroutine read_block_header(iunit,iblock,iarr,iverbose,debug,&
                               isize,nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,&
                               ntotblock,npart,ntotal,nptmasstot,ncolstep,ierr)
- integer,   intent(in)    :: iunit,iblock,iarr,iverbose
- logical,   intent(in)    :: debug
- integer*8, intent(out)   :: isize(:)
- integer,   intent(out)   :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,ierr
- integer,   intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
+ integer,       intent(in)    :: iunit,iblock,iarr,iverbose
+ logical,       intent(in)    :: debug
+ integer(int8), intent(out)   :: isize(:)
+ integer,       intent(out)   :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,ierr
+ integer,       intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
 
  read(iunit,iostat=ierr) isize(iarr),nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
  if (iarr==1) then
@@ -1336,14 +1336,14 @@ end subroutine check_iphase_matches_npartoftype
 ! allocate and reallocate the iphase array as needed
 !------------------------------------------------------------
 subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
- integer*1, allocatable, intent(inout) :: iphase(:)
+ integer(kind=int1), allocatable, intent(inout) :: iphase(:)
  integer, intent(in) :: nmax,nlocbinary
  logical, intent(in) :: phantomdump,gotbinary
- integer*1, allocatable :: iphase_old(:)
+ integer(kind=int1), allocatable :: iphase_old(:)
  integer :: ncopy
 
  if (allocated(iphase)) then
-    iphase_old = iphase ! allocates memory for iphase_old as well
+    allocate(iphase_old,source=iphase)
     deallocate(iphase)
  endif
  allocate(iphase(nmax))
@@ -1387,7 +1387,6 @@ contains
 subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use particle_data,  only:dat,gamma,time,headervals,&
                       iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
- !use params,         only:int1,int8
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
@@ -1422,12 +1421,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  character(len=len(rootname)+10) :: dumpfile,compfile
  character(len=100) :: fileident
 
- integer*8, dimension(maxarrsizes) :: isize
+ integer(kind=int8), dimension(maxarrsizes) :: isize
  integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
- integer*1, dimension(:), allocatable :: iphase,level
+ integer(kind=int1), dimension(:), allocatable :: iphase,level
  integer, dimension(:), allocatable :: listpm
  real(doub_prec), dimension(:), allocatable :: dattemp
- real*4, dimension(:), allocatable :: dattempsingle,massfac
+ real(sing_prec), dimension(:), allocatable :: dattempsingle,massfac
  real(doub_prec) :: r8,unit_dens,unit_ergg
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2

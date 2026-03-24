@@ -30,7 +30,7 @@ module system_utils
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
  public :: envlist,ienvlist,lenvlist,renvlist,get_command_option,count_matching_args
  public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
- public :: set_environment_variable
+ public :: set_environment_variable,to_utf8_safe
 
  private
 
