@@ -109,7 +109,7 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
 
   /* loop over all datasets looking for dataset matching the desired iteration number
      set function value to true (1) if it is present  */
-  int i,nsub,ierr;
+  int i,nsub;
   int mylen = LEN_NAME;
   char name[LEN_NAME];
   char thorn[LEN_NAME],thornprev[LEN_NAME];
@@ -184,6 +184,10 @@ int read_cactus_iteration(hid_t file_id,int istep,int *next,int *nsteps,int *nce
           if (mystep == istep) {
              nsub++;
              ierr = read_cactus_dataset(file_id,name,ncol,ncells,ndim,&n,time,deltax,inheader);
+             if (ierr != 0) {
+                printf("ERROR reading dataset %s \n",name);
+                return -1;
+             }
           } else if (mystep > istep && have_indexed) {
              break;;
           }
@@ -260,11 +264,22 @@ int read_cactus_dataset(hid_t file_id,char *name,int *ncol,int *ncells,int *ndim
      attrib_id = H5Aopen_idx(dataset_id,i);
      ssize_t  attr_status;
      attr_status = H5Aget_name(attrib_id, 256, name_attr);
-
+     if (attr_status == HDF5_error) {
+        printf("ERROR reading attribute name %s \n",name_attr);
+        return 4;
+     }
      hid_t  type_id;
      type_id = H5Aget_type(attrib_id);
+     if (type_id == HDF5_error) {
+        printf("ERROR reading attribute type %s \n",name_attr);
+        return 5;
+     }
      
      isize = (int) H5Aget_storage_size(attrib_id);
+     if (isize == HDF5_error) {
+        printf("ERROR reading attribute storage size %s \n",name_attr);
+        return 6;
+     }
      /*type_class = H5Tget_native_type(type_id,H5T_DIR_ASCEND);*/
      if (strcmp(name_attr,"time")==0) {
         status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,time);
