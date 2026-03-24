@@ -118,33 +118,33 @@ subroutine transform(array,itrans,errval)
        !
        select case(string(i:i))
        case('1')
-          where (arraytemp > 0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = log10(arraytemp)
           elsewhere
              arraytemp = errvali
           end where
        case('2')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = abs(arraytemp)
           end where
        case('3')
-          where (arraytemp  /=  0. .and. arraytemp /= errvali)
+          where (abs(arraytemp) > tiny(arraytemp) .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = 1./arraytemp
           elsewhere
              arraytemp = errvali
           end where
        case('4')
-          where (arraytemp  >  0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = sqrt(arraytemp)
           elsewhere
              arraytemp = errvali
           end where
        case('5')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = arraytemp**2
           end where
        case('6')
-          where (arraytemp > 0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = log(arraytemp)
           elsewhere
              arraytemp = errvali
@@ -243,27 +243,27 @@ subroutine transform_inverse(array,itrans,errval)
        !
        select case(string(i:i))
        case('1')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = 10**arraytemp
           end where
        case('3')
-          where (arraytemp  /=  0. .and. arraytemp /= errvali)
+          where (abs(arraytemp) > tiny(arraytemp) .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = 1./arraytemp
           elsewhere
              arraytemp = errvali
           end where
        case('4')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = arraytemp**2
           end where
        case('5')
-          where (arraytemp  >  0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = sqrt(arraytemp)
           elsewhere
              arraytemp = errvali
           end where
        case('6')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = exp(arraytemp)
           end where
        end select
@@ -343,33 +343,33 @@ subroutine transform2(array,itrans,errval)
        !
        select case(string(i:i))
        case('1')
-          where (arraytemp > 0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = log10(arraytemp)
           elsewhere
              arraytemp = errvali
           end where
        case('2')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = abs(arraytemp)
           end where
        case('3')
-          where (arraytemp  /=  0. .and. arraytemp /= errvali)
+          where (abs(arraytemp) > tiny(arraytemp) .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = 1./arraytemp
           elsewhere
              arraytemp = errvali
           end where
        case('4')
-          where (arraytemp  >  0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = sqrt(arraytemp)
           elsewhere
              arraytemp = errvali
           end where
        case('5')
-          where (arraytemp /= errvali)
+          where (abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = arraytemp**2
           end where
        case('6')
-          where (arraytemp > 0. .and. arraytemp /= errvali)
+          where (arraytemp > 0. .and. abs(arraytemp - errvali) > tiny(errvali))
              arraytemp = log(arraytemp)
           elsewhere
              arraytemp = errvali
@@ -421,13 +421,13 @@ subroutine transform_limits(xmin,xmax,itrans)
        case('1')
           if (xmintemp > 0) then
              xmintemp = log10(xmintemp)
-          elseif (xmintemp==0) then
+          elseif (abs(xmintemp) < tiny(xmintemp)) then
              print*,' log10(xmin = 0): min set to ',zerolog
              xmintemp = log10(zerolog)
           endif
           if (xmaxtemp > 0) then
              xmaxtemp = log10(xmaxtemp)
-          elseif (xmaxtemp==0) then
+          elseif (abs(xmaxtemp) < tiny(xmaxtemp)) then
              print*,' log10(xmax = 0): max set to ',zerolog
              xmaxtemp = log10(zerolog)
           endif
@@ -447,18 +447,18 @@ subroutine transform_limits(xmin,xmax,itrans)
              xmaxtemp = abs(xmaxtemp)
           endif
        case('3')
-          if (xmintemp  /=  0) then
+          if (abs(xmintemp) > tiny(xmintemp)) then
              xmintemp = 1./xmintemp
           else
              xmintemp = 0.
           endif
-          if (xmaxtemp  /=  0) then
+          if (abs(xmaxtemp) > tiny(xmaxtemp)) then
              xmaxtemp = 1./xmaxtemp
           else
              xmaxtemp = 0.
           endif
        case('4')
-          if (xmintemp  >=  0) then
+          if (xmintemp  >=  0.) then
              xmintemp = sqrt(xmintemp)
           else
              xmintemp = 0.
@@ -474,13 +474,13 @@ subroutine transform_limits(xmin,xmax,itrans)
        case('6')
           if (xmintemp > 0) then
              xmintemp = log(xmintemp)
-          elseif (xmintemp==0) then
+          elseif (abs(xmintemp) < tiny(xmintemp)) then
              print*,' ln(xmin = 0): min set to ',zerolog
              xmintemp = log(zerolog)
           endif
-          if (xmaxtemp > 0) then
+          if (xmaxtemp > 0.) then
              xmaxtemp = log(xmaxtemp)
-          elseif (xmaxtemp==0) then
+          elseif (abs(xmaxtemp) < tiny(xmaxtemp)) then
              print*,' ln(xmax = 0): max set to ',zerolog
              xmaxtemp = log(zerolog)
           endif
@@ -538,18 +538,18 @@ subroutine transform_limits_inverse(xmin,xmax,itrans)
           !--if minimum is zero give limits opposite signs
           !  (but same magnitude), otherwise do nothing
           !
-          if (xmintemp==0.) then
+          if (abs(xmintemp) < tiny(xmintemp)) then
              xtemp = max(abs(xmintemp),abs(xmaxtemp))
              xmintemp = -xtemp
              xmaxtemp = xtemp
           endif
        case('3')
-          if (xmintemp  /=  0) then
+          if (abs(xmintemp) > tiny(xmintemp)) then
              xmintemp = 1./xmintemp
           else
              xmintemp = 0.
           endif
-          if (xmaxtemp  /=  0) then
+          if (abs(xmaxtemp) > tiny(xmaxtemp)) then
              xmaxtemp = 1./xmaxtemp
           else
              xmaxtemp = 0.
