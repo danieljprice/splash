@@ -547,6 +547,11 @@ real(doub_prec) function full_integral_3D(d, r0, R_0, h)
  r0h = r0/h
  tanphi = abs(d)/R_0
  phi = atan(tanphi)
+ B1 = 0.d0
+ B2 = 0.d0
+ B3 = 0.d0
+ a = 0.d0
+ h2 = 0.d0
 
  if (abs(r0h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
     full_integral_3D = 0.0

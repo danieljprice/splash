@@ -673,7 +673,7 @@ program splash
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
- logical :: using_default_options,got_exact,sort,sort_pad
+ logical :: using_default_options,got_exact,sort,sort_pad,exact_flag
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
@@ -960,7 +960,7 @@ program splash
     irotate = .true.
  endif
  if (get_command_flag('npix')) then  ! e.g. --npix=128
-    npix = get_command_option('npix',default=real(npix))
+    npix = nint(get_command_option('npix',default=real(npix)))
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',track_string)
@@ -969,7 +969,8 @@ program splash
     iexact = 17
     ispiral = 1
  endif
- if (.not.got_exact .and. get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
+ exact_flag = get_command_flag('exact')
+ if (.not.got_exact .and. exact_flag) then  ! e.g. --exact=myfile.dat
     iexact = 2
     call envlist('exact',nfiles_exact,filename_exact)
     if (len_trim(filename_exact(1))==0) then
@@ -980,7 +981,7 @@ program splash
     iexact = 2 ! override setting in defaults file
     call split(exactfile,',',filename_exact,nfiles_exact)
  endif
- if (get_command_flag('codeunits') .or. get_command_flag('code')) then
+ if (get_command_flag('code')) then
     iRescale = .false.
     enforce_code_units = .true.
  endif

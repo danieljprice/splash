@@ -96,8 +96,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder
- integer(kind=selected_int_kind(12)) :: ipart
- integer :: nsubgrid,nok
+ integer :: ipart,nsubgrid,nok
  real :: hi,hi1,hi21,radkern,q2,wab,pmassav
 
  !real, dimension(npixx,npixy) :: datnorm

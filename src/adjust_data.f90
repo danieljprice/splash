@@ -73,7 +73,7 @@ subroutine adjust_data_codeunits
  real, dimension(3) :: x0,v0,xsink
  integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2),iorigin
- logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles
+ logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles,corotate,get_h
  character(len=20), dimension(3) :: list
  character(len=30) :: string
 
@@ -105,7 +105,8 @@ subroutine adjust_data_codeunits
     !
     isinklist = ienvlist('SPLASH_COROTATE',2)
     got_sinks = all(isinklist > 0)
-    if (lenvironment('SPLASH_COROTATE') .or. got_sinks) then
+    corotate = lenvironment('SPLASH_COROTATE')
+    if (corotate .or. got_sinks) then
        itype = get_sink_type(ntypes)
        if (itype > 0) then
           if (all(npartoftype(itype,:) < 2)) then
@@ -142,9 +143,11 @@ subroutine adjust_data_codeunits
     !--environment variable setting to centre plots on a selected sink particle
     !
     !--can specify either just "true" for sink #1, or specify a number for a particular sink
-    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK') .or. lenvironment('SPLASH_CENTER_ON_SINK')
+    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK')
+    if (.not.centreonsink) centreonsink = lenvironment('SPLASH_CENTER_ON_SINK')
     isink        = max(ienvironment('SPLASH_CENTRE_ON_SINK'),ienvironment('SPLASH_CENTER_ON_SINK'))
-    dontCentreVelocity = lenvironment('SPLASH_DONTCENTREVEL') .or. lenvironment('SPLASH_DONTCENTERVEL')
+    dontCentreVelocity = lenvironment('SPLASH_DONTCENTREVEL')
+    if (.not.dontCentreVelocity) dontCentreVelocity = lenvironment('SPLASH_DONTCENTERVEL')
     if (isink > 0 .or. centreonsink .and. all(ix(1:ndim) > 0)) then
        if (isink==0) isink = 1
        itype = get_sink_type(ntypes)
@@ -275,7 +278,9 @@ subroutine adjust_data_codeunits
     dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
  endif
 
- if (ndim >= 1 .and. (lenvironment('SPLASH_GETH') .or. lenvironment('SPLASH_GET_H'))) then
+ get_h = lenvironment('SPLASH_GETH')
+ if (.not.get_h) get_h = lenvironment('SPLASH_GET_H')
+ if (ndim >= 1 .and. get_h) then
     call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
  endif
 

@@ -248,7 +248,7 @@ subroutine image_rotate(naxes,image,angle,err)
  real, allocatable      :: x(:),y(:),weight(:),dat(:),hh(:)
  integer, allocatable   :: mask(:)
  integer :: npixels,i,j,n,ierr
- real :: dx,dy,xmin,ymin,anglerad,xpos(2),x0,y0
+ real :: dx,dy,xmin,ymin,anglerad,x0,y0
 
  ! choose default kernel if not already set
  if (.not.associated(wfunc)) call select_kernel(0)

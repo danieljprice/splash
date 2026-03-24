@@ -235,6 +235,8 @@ subroutine Tsolve(T,r)
     T = 0.760326*r**(-1.307)/2.   ! This guess is calibrated for rcrit=8M, and works ok up to r ~ 10^7 M
  elseif ((iswind .and. r<rcrit) .or. (.not.iswind .and. r>=rcrit)) then
     T = 100.
+ else
+    T = 1000. ! generic guess for other cases
  endif
 
  converged = .false.

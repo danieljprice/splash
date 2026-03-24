@@ -736,6 +736,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  logical, intent(out) :: isperiodic(3)
  character(len=1), intent(in) :: xlab(3)
  integer :: nstring,i,icol
+ logical :: dens_only
  character(len=30), dimension(12) :: strings
  !
  !--SPLASH_TO_GRID can be set to comma separated list of columns
@@ -757,7 +758,8 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  !--for backwards compatibility, support the SPLASH_TO_GRID_DENSITY_ONLY option
  !  but only if SPLASH_TO_GRID is not set
  !
- if (ncolstogrid==0 .and. lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')) then
+ dens_only = lenvironment('SPLASH_TO_GRID_DENSITY_ONLY')
+ if (ncolstogrid==0 .and. dens_only) then
     ncolstogrid = 1
     icoltogrid(1) = irho
  endif

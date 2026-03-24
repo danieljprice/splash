@@ -68,7 +68,7 @@ subroutine read_data_gadget_jsb(rootname,istart,ipos,nstepsread)
  character(LEN=LEN(rootname)+10) :: datfile
  integer, dimension(maxparttypes) :: npartoftypei
  integer, dimension(:), allocatable :: iamtemp
- integer :: i,itype,icol,ifile,idashpos,ierr
+ integer :: i,itype,icol,ierr
  integer :: index1,index2,indexstart,indexend,Nmassesdumped
  integer :: ncol_max,npart_max,nstep_max,ntoti
  logical :: iexist,reallocate

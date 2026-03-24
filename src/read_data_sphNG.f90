@@ -62,7 +62,7 @@
 ! the 'required' flag set to false are not read (read is therefore much faster)
 !-------------------------------------------------------------------------
 module sphNGread
- use params
+ use params, only:doub_prec,sing_prec,int1,int8,maxplot,maxparttypes,maxhdr
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
@@ -98,7 +98,7 @@ contains
  ! function mapping iphase setting in sphNG to splash particle types
  !-------------------------------------------------------------------
 elemental integer function itypemap_sphNG(iphase)
- integer*1, intent(in) :: iphase
+ integer(kind=int1), intent(in) :: iphase
 
  select case(int(iphase))
  case(0)
@@ -119,7 +119,7 @@ end function itypemap_sphNG
  ! function mapping iphase setting in Phantom to splash particle types
  !---------------------------------------------------------------------
 elemental integer function itypemap_phantom(iphase)
- integer*1, intent(in) :: iphase
+ integer(kind=int1), intent(in) :: iphase
 
  select case(int(iphase))
  case(1:2)
@@ -170,8 +170,8 @@ end subroutine extract_int
  !------------------------------------------
 subroutine extract_real8(tag,rval,r8arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*8,                intent(out) :: rval
- real*8,                intent(in)  :: r8arr(:)
+ real(doub_prec),       intent(out) :: rval
+ real(doub_prec),       intent(in)  :: r8arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -200,8 +200,8 @@ end subroutine extract_real8
  !------------------------------------------
 subroutine extract_real4(tag,rval,r4arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*4,                intent(out) :: rval
- real*4,                intent(in)  :: r4arr(:)
+ real(sing_prec),       intent(out) :: rval
+ real(sing_prec),       intent(in)  :: r4arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -257,8 +257,8 @@ end subroutine extract_intarr
  !------------------------------------------
 subroutine extract_real8arr(tag,rval,r8arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*8,                intent(out) :: rval(:)
- real*8,                intent(in)  :: r8arr(:)
+ real(doub_prec),       intent(out) :: rval(:)
+ real(doub_prec),       intent(in)  :: r8arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -285,8 +285,8 @@ end subroutine extract_real8arr
  !------------------------------------------
 subroutine extract_real4arr(tag,rval,r4arr,tags,ntags,ierr)
  character(len=*),      intent(in)  :: tag
- real*4,                intent(out) :: rval(:)
- real*4,                intent(in)  :: r4arr(:)
+ real(sing_prec),       intent(out) :: rval(:)
+ real(sing_prec),       intent(in)  :: r4arr(:)
  character(len=lentag), intent(in)  :: tags(:)
  integer,               intent(in)  :: ntags
  integer,               intent(out) :: ierr
@@ -386,7 +386,7 @@ subroutine fake_header_tags(nreals,realarr,tagsreal)
           ipos = ilocbinary + 1
        endif
        if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
-       if (any(realarr(ilocbinary:ilocbinary+14) /= 0.)) then
+       if (any(abs(realarr(ilocbinary:ilocbinary+14)) > tiny(0.))) then
           tagsreal(ipos:ipos+2) = (/'x1','y1','z1'/)
           if (nreals >= ilocbinary+15) then
              tagsreal(ipos+3:ipos+9) = (/'m1','h1','x2','y2','z2','m2','h2'/)
@@ -726,19 +726,19 @@ end subroutine read_header
 subroutine read_block_header(iunit,iblock,iarr,iverbose,debug,&
                               isize,nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,&
                               ntotblock,npart,ntotal,nptmasstot,ncolstep,ierr)
- integer,   intent(in)    :: iunit,iblock,iarr,iverbose
- logical,   intent(in)    :: debug
- integer*8, intent(out)   :: isize(:)
- integer,   intent(out)   :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,ierr
- integer,   intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
+ integer,       intent(in)    :: iunit,iblock,iarr,iverbose
+ logical,       intent(in)    :: debug
+ integer(int8), intent(out)   :: isize(:)
+ integer,       intent(out)   :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8,ierr
+ integer,       intent(inout) :: ntotblock,npart,ntotal,nptmasstot,ncolstep
 
  read(iunit,iostat=ierr) isize(iarr),nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
  if (iarr==1) then
-    ntotblock = isize(iarr)
+    ntotblock = int(isize(iarr),kind=kind(ntotblock))
     if (npart <= 0) npart = ntotblock
     ntotal = ntotal + ntotblock
  elseif (iarr==2) then
-    nptmasstot = nptmasstot + isize(iarr)
+    nptmasstot = nptmasstot + int(isize(iarr),kind=kind(nptmasstot))
  endif
  if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
  if (isize(iarr) > 0 .and. iblock==1) then
@@ -1336,22 +1336,24 @@ end subroutine check_iphase_matches_npartoftype
 ! allocate and reallocate the iphase array as needed
 !------------------------------------------------------------
 subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
- integer*1, allocatable, intent(inout) :: iphase(:)
+ integer(kind=int1), allocatable, intent(inout) :: iphase(:)
  integer, intent(in) :: nmax,nlocbinary
  logical, intent(in) :: phantomdump,gotbinary
- integer*1, allocatable :: iphase_old(:)
+ integer(kind=int1), allocatable :: iphase_old(:)
+ logical :: reallocate
  integer :: ncopy
 
- if (allocated(iphase)) then
-    iphase_old = iphase ! allocates memory for iphase_old as well
+ reallocate = allocated(iphase)
+ if (reallocate) then
+    iphase_old = iphase  ! allocate and copy contents
     deallocate(iphase)
  endif
  allocate(iphase(nmax))
 
  if (phantomdump) then
-    iphase(:) = 1
+    iphase = 1
  else
-    iphase(:) = 0
+    iphase = 0
  endif
 
  if (gotbinary) then
@@ -1359,7 +1361,7 @@ subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
     iphase(nlocbinary+1) = -3
  endif
 
- if (allocated(iphase_old)) then
+ if (reallocate) then
     ncopy = min(size(iphase_old),size(iphase))
     iphase(1:ncopy) = iphase_old(1:ncopy)
     deallocate(iphase_old)
@@ -1387,7 +1389,6 @@ contains
 subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use particle_data,  only:dat,gamma,time,headervals,&
                       iamtype,npartoftype,maxpart,maxstep,maxcol,masstype
- !use params,         only:int1,int8
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
@@ -1422,12 +1423,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  character(len=len(rootname)+10) :: dumpfile,compfile
  character(len=100) :: fileident
 
- integer*8, dimension(maxarrsizes) :: isize
+ integer(kind=int8), dimension(maxarrsizes) :: isize
  integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
- integer*1, dimension(:), allocatable :: iphase,level
+ integer(kind=int1), dimension(:), allocatable :: iphase,level
  integer, dimension(:), allocatable :: listpm
  real(doub_prec), dimension(:), allocatable :: dattemp
- real*4, dimension(:), allocatable :: dattempsingle,massfac
+ real(sing_prec), dimension(:), allocatable :: dattempsingle,massfac
  real(doub_prec) :: r8,unit_dens,unit_ergg
  real(sing_prec) :: r4
  real, dimension(:,:), allocatable :: dattemp2
@@ -1645,13 +1646,15 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
 !
-    if (smalldump .and. nreal(1)==5 .and. iblock==1 .and. lenvironment('SSPLASH_FIX_CORRUPT')) then
-       print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
-       nreal(1) = 3
-       ncolstep = ncolstep - 2
+    if (smalldump .and. nreal(1)==5 .and. iblock==1) then
+       if (lenvironment('SSPLASH_FIX_CORRUPT')) then
+          print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
+          nreal(1) = 3
+          ncolstep = ncolstep - 2
+       endif
     endif
 
-    npart_max = maxval(isize(1:narrsizes))
+    npart_max = int(maxval(isize(1:narrsizes)),kind=kind(npart_max))
     npart_max = max(npart_max,npart+nptmasstot,ntotal)
 !
 !--work out from array header how many columns we are going to read
@@ -1856,7 +1859,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     istartmhd = 0
     istartrt = 0
     i1 = i2 + 1
-    i2 = i1 + isize(1) - 1
+    i2 = i1 + int(isize(1),kind=kind(i2)) - 1
     if (debug) then
        print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
     elseif (nblocks > 1) then
@@ -1864,7 +1867,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        write(*,"('.')",ADVANCE="no")
     endif
     iptmass1 = iptmass2 + 1
-    iptmass2 = iptmass1 + isize(2) - 1
+    iptmass2 = iptmass1 + int(isize(2),kind=kind(iptmass2)) - 1
     nptmass = nptmasstot
     if (nptmass > 0 .and. debug) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
@@ -1936,9 +1939,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
        endif
 
-       if (iarr==3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
-          nskip = nskip - 1
-          print*,' FIXING HACKED DUMP FILE'
+       if (iarr==3) then
+          if (lenvironment('SSPLASH_BEN_HACKED')) then
+             nskip = nskip - 1
+             print*,' FIXING HACKED DUMP FILE'
+          endif
        endif
        !print*,'skipping ',nskip
        do i=1,nskip
@@ -1953,7 +1958,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              allocate(level(isize(iarr)),massfac(isize(iarr)))
              read(iunit,end=33,iostat=ierr) level
              ! m = m/2**(level-1)
-             massfac(1:isize(iarr)) = 1./2**(level(1:isize(iarr))-1)
+             massfac(1:isize(iarr)) = real(1./2**(level(1:isize(iarr))-1),kind=kind(massfac))
              if (iblock==1) print "(a,i2)",' :: '//trim(tagtmp)//' max level = ',maxval(level)
              deallocate(level)
           case default
@@ -2005,12 +2010,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
                       iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattemp(i))
                             !if (debug) print*,'sink ',i,' col = '//tagtmp//' data = ',dat(npart+i,iloc,j),npart+i,iloc,j,ilocvx,ivx
                          enddo
                       elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
                                dat(npart+i,ih,j) = real(dattemp(i))
                                if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
@@ -2036,11 +2041,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
                       iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
                          enddo
                       elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
                                dat(npart+i,ih,j) = real(dattempsingle(i))
                                if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
@@ -2055,7 +2060,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 call set_sink_merged(npart+1,int(npart+isize(iarr)),ih,ipmass,dat(:,:,j))
                 ! DEFINE density on sink particles (needed for opacity rendering)
                 if (required(irho)) call set_sink_density(npart+1,int(npart+isize(iarr)),ih,ipmass,irho,dat(:,:,j))
-                npart  = npart + isize(iarr)
+                npart  = npart + int(isize(iarr),kind=kind(npart))
              endif
           elseif (smalldump .and. iarr==2 .and. allocated(listpm)) then
 !--for sphNG, read sink particle masses from block 2 for small dumps
@@ -2072,7 +2077,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                    read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                    if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
                    if (ipmass > 0) then
-                      do i=1,isize(iarr)
+                      do i=1,int(isize(iarr),kind=kind(i))
                          dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
                       enddo
                    else
@@ -2087,7 +2092,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                    read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
                    if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
                    if (ipmass > 0) then
-                      do i=1,isize(iarr)
+                      do i=1,int(isize(iarr),kind=kind(i))
                          dat(listpm(iptmass1+i-1),ipmass,j) = real(dattempsingle(i))
                       enddo
                    else
@@ -2183,7 +2188,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
           endif
 
-          if (debug) print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
+          if (debug .and. allocated(dattempsingle)) then
+             print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
+          endif
 !        real4s may need converting
           imaxcolumnread = max(imaxcolumnread,icolumn)
           if ((nreal(iarr)+nreal4(iarr)) > 6) imaxcolumnread = max(imaxcolumnread,6)
@@ -2330,7 +2337,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           !
           do i=1,npart
              itype = itypemap_phantom(iphase(i))
-             iamtype(i,j) = itype
+             iamtype(i,j) = int(itype,kind=int1)
              if (ih > 0 .and. required(ih)) then
                 if (dat(i,ih,j) <= 0. .and. itype /= itypemap_sink_phantom) iamtype(i,j) = itypemap_unknown_phantom
              endif
@@ -2341,7 +2348,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           !
           do i=1,npart
              itype = itypemap_sphNG(iphase(i))
-             iamtype(i,j) = itype
+             iamtype(i,j) = int(itype,kind=int1)
              select case(itype)
              case(1)
                 ngas = ngas + 1
@@ -2421,7 +2428,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              !          print*,ipos,' appended', dattemp2(i,1:3)
              dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
              !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
-             iphase(ipos) = iphaseminthistype
+             iphase(ipos) = int(iphaseminthistype,kind=int1)
           enddo
 
           select case(itype)

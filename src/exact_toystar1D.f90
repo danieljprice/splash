@@ -133,9 +133,9 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
     !
     nsteps = 1000*(int(time) + 1)
 
-    Hprev = H0
-    Cprev = C0
-    Aprev = A0
+    Hprev = H0; H = H0
+    Cprev = C0; C = C0
+    Aprev = A0; A = A0
 
     !      PRINT*,' nsteps,H,C,A in = ',nsteps,H0,C0,A0
     dt = time/nsteps

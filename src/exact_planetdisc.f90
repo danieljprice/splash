@@ -56,6 +56,7 @@ subroutine exact_planetdisc(iplot,ispiral,use_clockwise,use_nonlin,time,HonR,rpl
  real, parameter :: pi = 4.*atan(1.)
  real :: p,t0,dt,dir
 
+ phimin = 0.; phimax = 0.; dphi = 0.; coeff = 0.
  p = 0.5
  t0 = 0.
  ierr = 0

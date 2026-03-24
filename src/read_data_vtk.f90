@@ -243,6 +243,7 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
  integer :: nx,ny,nz,grid_type,ncells,icell,j,k,nvertices
  logical :: found_dimensions,found_points
  logical :: in_cell_data,in_point_data
+ logical :: got_x1c,got_x2c,got_x3c
  real    :: xin(3),xout(3)
  integer :: igeom
 
@@ -255,6 +256,9 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
  found_points = .false.
  in_cell_data = .false.
  in_point_data = .false.
+ got_x1c = .false.
+ got_x2c = .false.
+ got_x3c = .false.
  grid_type = 0  ! 0=unknown, 1=unstructured, 2=structured
  ncells = 0
 
@@ -336,14 +340,26 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
                 ! put single scalar values in the header
                 call add_to_header(headervals,headertags,nheader,real(bs(rval(1,1))),tagarr(ncolstep+1))
              elseif (trim(tagarr(ncolstep+1)) == 'X1C_NATIVE_COORDINATES') then
+                if (allocated(x1c) .and. size(x1c) /= npts) deallocate(x1c)
                 if (.not. allocated(x1c)) allocate(x1c(npts))
-                if (ierr == 0) x1c = bs(rval(1,:))
+                if (ierr == 0) then
+                   x1c = bs(rval(1,:))
+                   got_x1c = .true.
+                endif
              elseif (trim(tagarr(ncolstep+1)) == 'X2C_NATIVE_COORDINATES') then
+                if (allocated(x2c) .and. size(x2c) /= npts) deallocate(x2c)
                 if (.not. allocated(x2c)) allocate(x2c(npts))
-                if (ierr == 0) x2c = bs(rval(1,:))
+                if (ierr == 0) then
+                   x2c = bs(rval(1,:))
+                   got_x2c = .true.
+                endif
              elseif (trim(tagarr(ncolstep+1)) == 'X3C_NATIVE_COORDINATES') then
+                if (allocated(x3c) .and. size(x3c) /= npts) deallocate(x3c)
                 if (.not. allocated(x3c)) allocate(x3c(npts))
-                if (ierr == 0) x3c = bs(rval(1,:))
+                if (ierr == 0) then
+                   x3c = bs(rval(1,:))
+                   got_x3c = .true.
+                endif
              else
                 if (present(dat) .and. debugmode) print*,'skipping float '//trim(tagarr(ncolstep+1))//' as npts /= ncells'
              endif
@@ -518,7 +534,7 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
     if (debugmode) print*,' Added fake mass column (cell mass)'
 
     ! Construct position data from cell coordinates
-    if (present(dat) .and. allocated(x1c) .and. allocated(x2c) .and. allocated(x3c)) then
+    if (present(dat) .and. got_x1c .and. got_x2c .and. got_x3c) then
        !print*,'npts = ',npts,size(x1c),size(x2c),size(x3c),nx-1,ny-1,nz-1
        igeom = igeom_spherical
        do k = 1, nz-1
@@ -558,6 +574,9 @@ subroutine read_vtk_legacy_binary(filename,npart,ncolstep,ierr,dat,headertags,he
  endif
 
  close(iu)
+ if (allocated(x1c)) deallocate(x1c)
+ if (allocated(x2c)) deallocate(x2c)
+ if (allocated(x3c)) deallocate(x3c)
 
 end subroutine read_vtk_legacy_binary
 

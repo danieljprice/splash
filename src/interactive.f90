@@ -2466,7 +2466,7 @@ contains
 integer function getpanel(vptx,vpty)
  real, intent(in) :: vptx,vpty
  real :: vptxmini,vptxmaxi,vptymini,vptymaxi
- integer :: i,icol
+ integer :: i,icol,iminus
 
  getpanel = 0
  !
@@ -2486,8 +2486,9 @@ integer function getpanel(vptx,vpty)
        icol = icol + 1
        if (icol > nacross) icol = 1
        if (icol > 1 .and. i > 1) then
+          iminus = max(1,i-1)
           ! if column>1 assign panel by being to the right of previous panel
-          vptxmini = vptxmax(i-1)+barwmulti(i-1)
+          vptxmini = vptxmax(iminus)+barwmulti(iminus)
        else
           vptxmini = -0.1 ! allow for some error
        endif

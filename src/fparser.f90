@@ -259,12 +259,12 @@ FUNCTION evalf (i, Val) RESULT (res)
     CASE   (cAdd); Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)+Comp(i)%Stack(SP); SP=SP-1
     CASE   (cSub); Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)-Comp(i)%Stack(SP); SP=SP-1
     CASE   (cMul); Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)*Comp(i)%Stack(SP); SP=SP-1
-    CASE   (cDiv); if (Comp(i)%Stack(SP)==0._rn) then; EvalErrType=1; res=zero; return; ENDIF
+    CASE   (cDiv); if (abs(Comp(i)%Stack(SP)) < tiny(0._rn)) then; EvalErrType=1; res=zero; return; ENDIF
        Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)/Comp(i)%Stack(SP); SP=SP-1
        ! D. Price: check for zero to negative powers and negative numbers to fractional powers
-    CASE   (cPow); if (Comp(i)%Stack(SP-1)==0._rn .and.Comp(i)%Stack(SP)<0._rn) &
+    CASE   (cPow); if (abs(Comp(i)%Stack(SP-1)) < tiny(0._rn) .and.Comp(i)%Stack(SP)<0._rn) &
                       THEN; EvalErrType=1; res=zero; return; ENDIF
-       if (Comp(i)%Stack(SP-1)<=0._rn .and.(Comp(i)%Stack(SP) /= nint(Comp(i)%Stack(SP)))) &
+       if (Comp(i)%Stack(SP-1)<=0._rn .and.(abs(Comp(i)%Stack(SP) - nint(Comp(i)%Stack(SP))) > tiny(0._rn))) &
                       THEN; EvalErrType=5; res=zero; return; ENDIF
        Comp(i)%Stack(SP-1)=Comp(i)%Stack(SP-1)**Comp(i)%Stack(SP); SP=SP-1
     CASE   (cAbs); Comp(i)%Stack(SP)=ABS(Comp(i)%Stack(SP))
@@ -298,7 +298,8 @@ FUNCTION evalf (i, Val) RESULT (res)
     CASE  (cerf);   Comp(i)%Stack(SP)=erf(Comp(i)%Stack(SP))
     CASE  (cerfc);  Comp(i)%Stack(SP)=erfc(Comp(i)%Stack(SP))
     CASE  (cerfcs); Comp(i)%Stack(SP)=erfc_scaled(Comp(i)%Stack(SP))
-    CASE  (cgamma); if (Comp(i)%Stack(SP)==-abs(nint(Comp(i)%Stack(SP)))) then; EvalErrType=8; res=zero; return; ENDIF
+    CASE  (cgamma); if (abs(Comp(i)%Stack(SP) + abs(nint(Comp(i)%Stack(SP)))) < tiny(0._rn)) then; &
+       EvalErrType=8; res=zero; return; ENDIF
        Comp(i)%Stack(SP)=gamma(Comp(i)%Stack(SP))
     CASE  DEFAULT; SP=SP+1; Comp(i)%Stack(SP)=Val(Comp(i)%ByteCode(IP)-VarBegin+1)
     END SELECT
@@ -776,6 +777,7 @@ RECURSIVE subroutine CompileSubstr (i, F, b, e, Var)
  CHARACTER (LEN=*), dimension(:), INTENT(in) :: Var       ! Array with variable names
  integer(is)                                 :: n
  integer                                     :: b2,j,k,io,m
+ logical                                     :: two_args
  CHARACTER (LEN=*),                PARAMETER :: calpha = 'abcdefghijklmnopqrstuvwxyz'// &
                                                             'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
  !----- -------- --------- --------- --------- --------- --------- --------- -------
@@ -796,7 +798,8 @@ RECURSIVE subroutine CompileSubstr (i, F, b, e, Var)
        b2 = b+INDEX(F(b:e),'(')-1
        if (CompletelyEnclosed(F, b2, e)) then             ! Case 3: F(b:e) = 'fcn(...)'
 !            write(*,*)'3. F(b:e) = "fcn(...)"'
-          if (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) then
+          two_args = TwoArgs(F,b2+1,e-1,m)
+          if (n == cAtan2 .and. two_args) then
 !                print*,' SPLITTING ',b,m,e,' F(b:e)=',F(b2+1:e-1)
              CALL CompileSubstr (i, F, b2+1, m-1, Var)
              CALL CompileSubstr (i, F, m+1, e-1, Var)
@@ -819,7 +822,8 @@ RECURSIVE subroutine CompileSubstr (i, F, b, e, Var)
           b2 = b+INDEX(F(b+1:e),'(')
           if (CompletelyEnclosed(F, b2, e)) then          ! Case 5: F(b:e) = '-fcn(...)'
 !               write(*,*)'5. F(b:e) = "-fcn(...)"'
-             if (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) then
+             two_args = TwoArgs(F,b2+1,e-1,m)
+             if (n == cAtan2 .and. two_args) then
                 CALL CompileSubstr (i, F, b2+1, m-1, Var)
                 CALL CompileSubstr (i, F, m+1, e-1, Var)
              ELSE

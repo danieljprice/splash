@@ -177,7 +177,7 @@ subroutine read_data_falcON_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: i,j,ierr,ierror(8),istep,nsteps_to_read
  integer               :: ncolstep,npart_max,nstep_max,ntoti,ntotall
  integer               :: npartoftypei(maxparttypes)
- logical               :: iexist,reallocate,debug,goterrors
+ logical               :: iexist,reallocate,debug,goterrors,fsplash_debug
  real(doub_prec)       :: timetemp,hperiodic(3)
  !integer, dimension(maxplot) :: isrequired
 
@@ -211,7 +211,8 @@ subroutine read_data_falcON_hdf5(rootname,istepstart,ipos,nstepsread)
  !
  ndim  = 3
  ndimV = 3
- debug = (debugmode .or. lenvironment('FSPLASH_DEBUG'))
+ fsplash_debug = lenvironment('FSPLASH_DEBUG')
+ debug = (debugmode .or. fsplash_debug)
  !
  ! read data from snapshots
  !

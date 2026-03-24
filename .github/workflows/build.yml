@@ -34,16 +34,16 @@ jobs:
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash
-      run: make -j 4 SYSTEM=gfortran withgiza
+      run: make -j 4 SYSTEM=gfortran withgiza NOWARN=yes
 
     - name: clean
       run: make clean
 
     - name: compile libexact
-      run: make -j 4 SYSTEM=gfortran libexact
+      run: make -j 4 SYSTEM=gfortran libexact NOWARN=yes
 
     - name: compile libread
-      run: make -j 4 SYSTEM=gfortran libread
+      run: make -j 4 SYSTEM=gfortran libread NOWARN=yes
 
     - name: clean
       run: make clean

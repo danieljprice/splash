@@ -94,7 +94,7 @@ end subroutine exact_ringspread
 !----------------------------------------------------------------------
 double precision function ringspreadfunc(x,tau)
  double precision, intent(in) :: x, tau
- double precision :: xfunc,besfunc,dummy,term
+ double precision :: xfunc,besfunc,dum1,dum2,dum3,term
 
  if (tau <= epsilon(tau) .or. x <= tiny(x)) then
     ringspreadfunc = 0.
@@ -105,7 +105,7 @@ double precision function ringspreadfunc(x,tau)
     !--prevent blowups at t=0: no point evaluating
     !  the Bessel function if the exp term is zero.
     if (term > tiny(term)) then
-       call bessik(xfunc,0.25d0,besfunc,dummy,dummy,dummy)
+       call bessik(xfunc,0.25d0,besfunc,dum1,dum2,dum3)
     else
        besfunc = 0.
     endif

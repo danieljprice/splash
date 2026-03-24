@@ -69,7 +69,6 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  integer, parameter :: maxptmass = 1000
- real, parameter :: pi=4.*atan(1.)
  integer :: i,j,ifile,ierr,ipart
  integer :: npart_max,nstep_max,ncolstep,npart,nptmassi,nunknown
  logical :: iexist,doubleprec
@@ -93,11 +92,12 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  real :: timesi, gammasi
  real :: rhozeros, RK2s
  real :: escaps,tkins,tgravs,tterms
- real :: dtmaxs,tcomp
+ real :: dtmaxs
 
  nstepsread = 0
  nstep_max = 0
  npart_max = maxpart
+ doubleprec = .false.
  ifile = 1
  buffer_steps_in_file = .true.
 
@@ -201,7 +201,10 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemp)) deallocate(dattemp)
           allocate(dattemp(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data_mbate'
+          if (ierr /= 0) then
+             print*,'not enough memory in read_data_mbate'
+             return
+          endif
 
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
              nprint, n1, n2, timei, gammai, rhozero, RK2, &
@@ -219,7 +222,10 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemps)) deallocate(dattemps)
           allocate(dattemps(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data_mbate'
+          if (ierr /= 0) then
+             print*,'not enough memory in read_data_mbate'
+             return
+          endif
 
           print "(a)",'single precision dump'
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
@@ -258,9 +264,9 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
        do i=1,nprint
           if (iphase(i)==0) then
              ipart = ipart + 1
-             if (doubleprec) then
+             if (doubleprec .and. allocated(dattemp)) then
                 dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
-             else
+             elseif (allocated(dattemps)) then
                 dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
              endif
           endif
@@ -274,9 +280,9 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
           if (iphase(i) >= 1) then
              ipart = ipart + 1
              nptmassi = nptmassi + 1
-             if (doubleprec) then
+             if (doubleprec .and. allocated(dattemp)) then
                 dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
-             else
+             elseif (allocated(dattemps)) then
                 dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
              endif
           endif
@@ -291,9 +297,9 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
           if (iphase(i) < 0) then
              ipart = ipart + 1
              nunknown = nunknown + 1
-             if (doubleprec) then
+             if (doubleprec .and. allocated(dattemp)) then
                 dat(ipart,1:ncolstep,j) = real(dattemp(i,1:ncolstep))
-             else
+             elseif (allocated(dattemps)) then
                 dat(ipart,1:ncolstep,j) = dattemps(i,1:ncolstep)
              endif
           endif

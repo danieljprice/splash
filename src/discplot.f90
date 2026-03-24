@@ -57,7 +57,7 @@ subroutine disccalc(iplot,npart,rpart,pmass_in,rminin,rmaxin,ymin,ymax,&
  real, dimension(:,:),             intent(in)  :: dat
  integer,                          intent(in)  :: ipmass,irho,ispsound,iutherm,ix(:),ivx
 
- integer :: i,ibin
+ integer :: i,ibin,ibin_plus,ibin_minus
  real :: pmassi,rbin,deltar,area,rmin,rmax
  real :: x,y,vx,vy,r,vphi
  real(doub_prec) :: sigmai,toomreq,epicyclic,Omegai,spsoundi,dOmegasq_dr
@@ -216,16 +216,22 @@ subroutine disccalc(iplot,npart,rpart,pmass_in,rminin,rmaxin,ymin,ymax,&
 !
 !--average Keplerian rotation frequency in each bin
 !
-   do ibin=1,nbins
+    do ibin=1,nbins
        omegasq(ibin) = omegasq(ibin)/real(ninbin(ibin))
-   enddo
-   do ibin=1,nbins
+    enddo
+    do ibin=1,nbins
        ! compute epicyclic frequency r*dOmega^2/dr + 4 Omega^2
        if (ibin < nbins) then
-          dOmegasq_dr = (omegasq(ibin+1) - omegasq(ibin))/(radius(ibin+1) - radius(ibin))
+          ibin_plus = ibin + 1
+          ibin_minus = ibin
+       elseif (ibin > 1) then
+          ibin_plus = ibin
+          ibin_minus = ibin - 1
        else
-          dOmegasq_dr = (omegasq(ibin) - omegasq(ibin-1))/(radius(ibin) - radius(ibin-1))
+          ibin_plus = ibin
+          ibin_minus = ibin
        endif
+       dOmegasq_dr = (omegasq(ibin_plus) - omegasq(ibin_minus))/(radius(ibin_plus) - radius(ibin_minus))
        epicyclic = radius(ibin)*dOmegasq_dr + 4*omegasq(ibin)
        yplot(ibin) = epicyclic/omegasq(ibin)
     enddo
@@ -277,8 +283,8 @@ subroutine disccalc(iplot,npart,rpart,pmass_in,rminin,rmaxin,ymin,ymax,&
 !
 !--return min and max of y axis so adaptive plot limits can be set
 !
- ymin = minval(yplot(1:nbins),mask=(yplot(1:nbins) /= 0.))
- ymax = maxval(yplot(1:nbins),mask=(yplot(1:nbins) /= 0.))
+ ymin = minval(yplot(1:nbins),mask=(abs(yplot(1:nbins)) > tiny(0.)))
+ ymax = maxval(yplot(1:nbins),mask=(abs(yplot(1:nbins)) > tiny(0.)))
 
 end subroutine disccalc
 

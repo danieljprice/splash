@@ -108,6 +108,12 @@ void read_gadget_hdf5_header(char *filename,
         attrib_id = H5Aopen_idx(group_id, i);
         ssize_t attr_status;
         attr_status = H5Aget_name(attrib_id, 256, name);
+        if (attr_status == HDF5_error)
+        {
+            printf(" ERROR reading attribute %s \n", name);
+            *ierr = 3;
+            return;
+        }
 
         hid_t type_id;
         type_id = H5Aget_type(attrib_id);

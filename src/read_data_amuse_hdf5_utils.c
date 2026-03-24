@@ -90,9 +90,13 @@ void read_amuse_hdf5_header(char   *filename,
       attrib_id = H5Aopen_idx(group_id,i);
       ssize_t  attr_status;
       attr_status = H5Aget_name(attrib_id, 256, name);
+      if (attr_status == HDF5_error)
+      {
+         printf(" ERROR reading attribute %s \n", name);
+         *ierr = 3;
+      }
       
-      hid_t  type_id;
-      type_id = H5Aget_type(attrib_id);
+      H5Aget_type(attrib_id);
       /*type_class = H5Tget_native_type(type_id,H5T_DIR_ASCEND);*/
       if (strcmp(name,"time")==0) {
          status = H5Aread(attrib_id,H5T_NATIVE_DOUBLE,time);

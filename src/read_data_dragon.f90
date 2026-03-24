@@ -85,7 +85,7 @@ contains
 
 subroutine read_data_dragon(rootname,istepstart,ipos,nstepsread)
  use particle_data, only:dat,iamtype,npartoftype,time,gamma,maxpart,maxcol,maxstep
- use params
+ use params,        only:doub_prec,sing_prec,int1
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,ntypes
  use settings_units, only:unitzintegration, unit_interp
  use mem_allocation, only:alloc
@@ -423,72 +423,23 @@ subroutine read_dragonbody_binary(iunitb,ierr)
  integer, intent(in) :: iunitb
  integer, intent(out) :: ierr
  real(doub_prec), dimension(:,:), allocatable :: dummyx
+ real(sing_prec), dimension(:,:), allocatable :: dummyx_sp
  real(doub_prec), dimension(:), allocatable :: dummy
+ real(sing_prec), dimension(:), allocatable :: dummy_sp
  integer, dimension(:), allocatable :: idumtype
  integer :: icol
 
- if (doubleprec .and. any(required(1:ndim+ndimV))) then
-    allocate(dummyx(3,ntoti),stat=ierr)
-    if (ierr /= 0) then
-       print *,' ERROR allocating memory'
-       goto 56
-    endif
- endif
-
  !--positions
- if (any(required(1:ndim))) then
-    if (doubleprec) then
-       read(iunitb,end=55,iostat=ierr) dummyx(1:ndim,1:ntoti)
-       do i=1,ntoti
-          dat(i,1:ndim,j) = real(dummyx(1:ndim,i))
-       enddo
-    else
-       read(iunitb,end=55,iostat=ierr) (dat(i,1:ndim,j),i=1,ntoti)
-    endif
-    if (ierr /= 0) print*,' WARNING: errors reading positions '
- else
-    read(iunitb,end=55,iostat=ierr)
-    if (ierr /= 0) print*,' WARNING: error skipping positions '
- endif
-
+ call read_vector_data(iunitb,ndim,j,1,ndim,dummyx,dummyx_sp,dat,required(1:ndim),'positions',ierr)
+ if (ierr /= 0) return
+ 
  !--velocities
- if (any(required(ndim+1:ndim+ndimV))) then
-    if (doubleprec) then
-       read(iunitb,end=55,iostat=ierr) dummyx(1:ndimV,1:ntoti)
-       do i=1,ntoti
-          dat(i,ndim+1:ndim+ndimV,j) = real(dummyx(1:ndimV,i))
-       enddo
-    else
-       read(iunitb,end=55,iostat=ierr) (dat(i,ndim+1:ndim+ndimV,j),i=1,ntoti)
-    endif
-    if (ierr /= 0) print*,' WARNING: errors reading velocities '
- else
-    read(iunitb,end=55,iostat=ierr)
-    if (ierr /= 0) print*,' WARNING: error skipping velocities '
- endif
-
- if (doubleprec .and. any(required(ndim+ndimV+1:ncolstep))) then
-    allocate(dummy(ntoti),stat=ierr)
-    if (ierr /= 0) then
-       print*,' ERROR allocating memory'
-       goto 56
-    endif
- endif
+ call read_vector_data(iunitb,ndimV,j,ndim+1,ndim+ndimV,dummyx,dummyx_sp,dat,required(ndim+1:ndim+ndimV),'velocities',ierr)
+ if (ierr /= 0) return
 
  !--the rest
  do icol = ndim+ndimV+1,nlastcol
-    if (required(icol)) then
-       if (doubleprec) then
-          read(iunitb,end=55,iostat=ierr) dummy(1:ntoti)
-          dat(1:ntoti,icol,j) = real(dummy(1:ntoti))
-       else
-          read(iunitb,end=55,iostat=ierr) dat(1:ntoti,icol,j)
-       endif
-       if (ierr /= 0) print*,' WARNING: errors reading '//trim(label(icol))
-    else
-       read(iunitb,end=55,iostat=ierr)
-       if (ierr /= 0) print*,' WARNING: error skipping '//trim(label(icol))
-    endif
+    call read_scalar_data(iunitb,j,icol,dummy,dummy_sp,dat,required(icol),label(icol),ierr)
  enddo
 
  if (size(iamtype(:,j)) > 1) then
@@ -497,8 +448,8 @@ subroutine read_dragonbody_binary(iunitb,ierr)
        print*,'error reading type, assuming all gas'
        iamtype(1:ntoti,j) = 1
     else
-       read(iunitb,end=55,iostat=ierr) idumtype(1:ntoti)
-       iamtype(1:ntoti,j) = idumtype(1:ntoti)
+       read(iunitb,iostat=ierr) idumtype(1:ntoti)
+       iamtype(1:ntoti,j) = int(idumtype(1:ntoti),kind=int1)
     endif
     deallocate(idumtype)
     if (ierr /= 0) print*,' WARNING: error reading itype'
@@ -506,34 +457,84 @@ subroutine read_dragonbody_binary(iunitb,ierr)
 
  !--extra columns beyond itype
  do icol = nlastcol+1,nlastcol+nextracols
-    if (required(icol)) then
-       if (doubleprec) then
-          read(iunitb,end=55,iostat=ierr) dummy(1:ntoti)
-          dat(1:ntoti,icol,j) = real(dummy(1:ntoti))
-       else
-          read(iunitb,end=55,iostat=ierr) dat(1:ntoti,icol,j)
-       endif
-       if (ierr /= 0) print*,' WARNING: errors reading '//trim(label(icol))
-    else
-       read(iunitb,end=55,iostat=ierr)
-       if (ierr /= 0) print*,' WARNING: error skipping '//trim(label(icol))
-    endif
+    call read_scalar_data(iunitb,j,icol,dummy,dummy_sp,dat,required(icol),label(icol),ierr)
  enddo
 
  if (allocated(dummyx)) deallocate(dummyx)
+ if (allocated(dummyx_sp)) deallocate(dummyx_sp)
  if (allocated(dummy)) deallocate(dummy)
- return
-
-55 continue
- print "(a)",' ERROR: end of file in binary read'
-56 continue
- ierr = -1
-
- if (allocated(dummyx)) deallocate(dummyx)
- if (allocated(dummy)) deallocate(dummy)
- return
+ if (allocated(dummy_sp)) deallocate(dummy_sp)
 
 end subroutine read_dragonbody_binary
+
+!----------------------------------------------------
+! read vector data from binary file
+!----------------------------------------------------
+subroutine read_vector_data(iunitb,ndim,j,istart,iend,dummyx,dummyx_sp,dat,is_required,label,ierr)
+ integer, intent(in) :: iunitb,ndim,j,istart,iend
+ real(doub_prec), dimension(:,:), allocatable, intent(out) :: dummyx
+ real(sing_prec), dimension(:,:), allocatable, intent(out) :: dummyx_sp
+ real,            dimension(:,:,:), intent(inout) :: dat
+ logical, dimension(ndim), intent(in) :: is_required
+ character(len=*), intent(in) :: label
+ integer, intent(out) :: ierr
+ integer :: i,i1,i2,ndim_read
+
+ i1 = istart
+ i2 = min(iend,i1+ndim-1)
+ ndim_read = i2 - i1 + 1
+
+ if (any(is_required(1:ndim))) then
+    if (doubleprec) then
+       if (.not.allocated(dummyx)) allocate(dummyx(ndim,ntoti))
+       read(iunitb,iostat=ierr) dummyx(1:ndim,1:ntoti)
+       do i=1,ntoti
+          dat(i,i1:i2,j) = real(dummyx(1:ndim_read,i))
+       enddo
+    else
+       if (.not.allocated(dummyx_sp)) allocate(dummyx_sp(ndim,ntoti))
+       read(iunitb,iostat=ierr) dummyx_sp(1:ndim,1:ntoti)
+       do i=1,ntoti
+          dat(i,i1:i2,j) = real(dummyx_sp(1:ndim_read,i))
+       enddo
+    endif
+    if (ierr /= 0) print*,' WARNING: errors reading '//trim(label)
+ else
+    read(iunitb,iostat=ierr)
+    if (ierr /= 0) print*,' WARNING: error skipping '//trim(label)
+ endif
+
+end subroutine read_vector_data
+
+!----------------------------------------------------
+! read scalar data from binary file
+!----------------------------------------------------
+subroutine read_scalar_data(iunitb,j,icol,dummy,dummy_sp,dat,is_required,label,ierr)
+ integer, intent(in) :: iunitb,j,icol
+ real(doub_prec), dimension(:), allocatable, intent(out) :: dummy
+ real(sing_prec), dimension(:), allocatable, intent(out) :: dummy_sp
+ real,            dimension(:,:,:), intent(inout) :: dat
+ logical, intent(in) :: is_required
+ character(len=*), intent(in) :: label
+ integer, intent(out) :: ierr
+
+ if (is_required) then
+    if (doubleprec) then
+       if (.not.allocated(dummy)) allocate(dummy(ntoti))
+       read(iunitb,iostat=ierr) dummy(1:ntoti)
+       dat(1:ntoti,icol,j) = real(dummy(1:ntoti))
+    else
+       if (.not.allocated(dummy_sp)) allocate(dummy_sp(ntoti))
+       read(iunitb,iostat=ierr) dummy_sp(1:ntoti)
+       dat(1:ntoti,icol,j) = real(dummy_sp(1:ntoti))
+    endif
+    if (ierr /= 0) print*,' WARNING: errors reading '//trim(label)
+ else
+    read(iunitb,iostat=ierr)
+    if (ierr /= 0) print*,' WARNING: error skipping '//trim(label)
+ endif
+
+end subroutine read_scalar_data
 
 !----------------------------------------------------
 ! ascii body read
@@ -576,7 +577,7 @@ subroutine read_dragonbody_ascii(iunita,ierr)
     nerr = 0
     do i=1,ntoti
        read(iunita,*,end=55,iostat=ierr) idumtype
-       iamtype(i,j) = idumtype
+       iamtype(i,j) = int(idumtype,kind=int1)
        if (ierr /= 0) nerr = nerr + 1
     enddo
     if (nerr > 0) print*,' WARNING: ',nerr,' errors reading itype'
@@ -745,7 +746,6 @@ subroutine set_labels_dragon
 end subroutine set_labels_dragon
 
 subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegration)
- use labels, only:ipmass,ih,irho
  use params
  use settings_data, only:ndim
  use unit_constants

@@ -117,6 +117,7 @@ subroutine menu
     enddo
 
     ichoose = 0
+    threecol = .false.
 
 !---------------------------------------------------------------------------
 !  print menu
@@ -739,6 +740,7 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  integer, intent(in)    :: ncolumns
  integer, intent(inout) :: ncalc
  integer, intent(out)   :: nextra,numplot,ndataplots
+ logical :: turb_mode
 
  !
  !-add extra columns (but not if nothing read from file)
@@ -764,13 +766,14 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
           label(iomegasq) = '\kappa^2/\Omega^2'
        endif
     endif
-    if (ndim==3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
+    turb_mode = lenvironment('SPLASH_TURB')
+    if (ndim==3 .and. turb_mode) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
        label(ipdf) = 'PDF'
     endif
 
-    if (ndim <= 1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
+    if (ndim <= 1 .and. turb_mode) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
        nextra = nextra + 1      ! one extra plot = power spectrum
        ipowerspec = ncolumns + ncalc + nextra
        label(ipowerspec) = '1D power spectrum'
