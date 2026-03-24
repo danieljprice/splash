@@ -218,12 +218,12 @@ ifeq ($(SYSTEM),ifx)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
-   NOWARNFLAG=-Werror
+   NOWARNFLAG= -diag-error=warn,remark,vec,par,openmp
 endif
 
 ifeq ($(SYSTEM),aocc)
    FC= flang
-   FFLAGS= -O3 -fPIC -flto -march=native -Qunused-arguments
+   FFLAGS= -O3 -fPIC -Qunused-arguments
    OMPFLAGS= -fopenmp
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    DEBUGFLAG= -fcheck=all -g --debug
