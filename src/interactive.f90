@@ -15,13 +15,15 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
 
 module interactive_routines
- use colourbar, only:barisvertical,incolourbar,incolourbarlabel,adjustcolourbar
+ use colourbar,        only:barisvertical,incolourbar,incolourbarlabel,adjustcolourbar
+ use interactive_help, only:print_message,print_last_message,clear_messages
+ use interactive_utils
  implicit none
  public :: interactive_part,interactive_step,interactive_multi
  public :: set_movie_mode,save_limits
@@ -77,14 +79,19 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use labels,           only:is_coord,ix,get_sink_type
  use limits,           only:assert_sensible_limits
  use settings_render,  only:projlabelformat,iapplyprojformat
- use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew
+ use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew,iverbose
  use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
                              plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
-                             plot_shift_click,plot_lcur,plot_poly
+                             plot_shift_click,plot_lcur,plot_poly,plot_set_motion_callback,&
+                             plot_scroll_down,plot_scroll_up
  use params,           only:int1,maxparttypes
  use part_utils,       only:igettype
  use particleplots,    only:plot_kernel_gr
+ use interactive_buttons, only:draw_buttons,press_button_if_inside,inbutton,button_type,&
+                               press_button,ibutton_plus,ibutton_minus,ibutton_rectangle,&
+                               ibutton_forward,ibutton_backward,ibutton_text,ibutton_circle,&
+                               ibutton_adapt,ibutton_irregular
  use legends,          only:in_legend
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
@@ -107,6 +114,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  integer, parameter :: maxpts = 64
  integer :: i,iclosest,iclosestsink,ierr,ixsec,ishape,ilegend,itype,npts
  integer :: nmarked,ncircpart,itrackparttemp,iadvancenew,itypesink
+ integer :: ibutton,new_button
  integer, dimension(1000) :: icircpart
  real :: xpt,ypt
  real :: xpt2,ypt2,xcen,ycen,xminwin,xmaxwin,yminwin,ymaxwin
@@ -123,11 +131,10 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  logical, save :: in_movie_mode = .false.
 
  if (plot_qcur()) then
-    if (.not.print_help) print*,'entering interactive mode...press h in plot window for help'
-    !print*, plot_left_click
+    if (.not.print_help .and. iverbose > 0) print*,'entering interactive mode...press h in plot window for help'
+    call print_last_message()
  else
-    !print*,'cannot enter interactive mode: device has no cursor'
-    return
+    return  ! cannot enter interactive mode: device has no cursor
  endif
 
  mixedtypes = size(iamtype) >= npart
@@ -137,12 +144,16 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  char = 'A'
  xline = 0.
  yline = 0.
+ !if (x_sec .and. ndim==3) call init_zbar(xmin,xmax,ymin,ymax,zslicepos-10.*dzslice,zslicepos+10.*dzslice)
  !
  !--convert saved cursor position (saved in viewport coords)
  !  back to coordinates
  !
  call plot_qwin(xminwin,xmaxwin,yminwin,ymaxwin)
  call get_posxy(xcursor,ycursor,xpt,ypt,xminwin,xmaxwin,yminwin,ymaxwin)
+
+ ierr = plot_set_motion_callback(handle_cursor_motion)
+ !call handle_cursor_motion(xpt,ypt,0)
 
 !  xpt = 0.
 !  ypt = 0.
@@ -169,6 +180,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     zptmin = -huge(zptmin)
     zptmax = huge(zptmax)
  endif
+ ibutton = 0
+ call draw_buttons(onclick=.true.)
 
  interactiveloop: do while (.not.iexit)
     if (print_help) then
@@ -229,6 +242,70 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     !--query the position of the colour bar
     iamincolourbar = incolourbar(iColourBarStyle,4,xpt,ypt,xmin,xmax,ymin,ymax)
 
+    !--handle scroll keys differently depending on context
+    select case(char)
+    case(plot_scroll_up)
+       if (iplotz > 0 .and. ndim==3 .and. (x_sec .or. use3Dperspective)) then
+          char = 'u'
+       elseif (iplotz > 0 .and. rotation .and. ndim >= 3) then
+          char = '['
+       endif
+    case(plot_scroll_down)
+       if (iplotz > 0 .and. ndim==3 .and. (x_sec .or. use3Dperspective)) then
+          char = 'd'
+       elseif (iplotz > 0 .and. rotation .and. ndim >= 3) then
+          char = ']'
+       endif
+    case(plot_left_click)
+       if (ibutton > 0) then
+          new_button = inbutton(xpt,ypt)
+          if (new_button > 0 .and. (new_button /= ibutton)) then
+             ibutton = press_button_if_inside(xpt,ypt)
+             cycle
+          endif
+          ! button was pressed last click, so now take deferred action
+          select case(button_type(ibutton))
+          case(ibutton_text)    ! deferred action
+             char = achar(20)
+          case(ibutton_circle)  ! deferred action
+             char = plot_right_click
+          case(ibutton_irregular)  ! deferred action
+             char = plot_shift_click
+          end select
+          ibutton = 0
+       else
+          ibutton = press_button_if_inside(xpt,ypt)
+          if (ibutton > 0) then
+             ! take instant action on these buttons
+             select case(button_type(ibutton))
+             case(ibutton_forward)
+                char = ' '
+                ibutton = 0
+             case(ibutton_backward)
+                char = 'b'
+                ibutton = 0
+             case(ibutton_plus)
+                char = '+'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_minus)
+                char = '_'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_adapt)
+                char = 'a'
+                xpt = 0.5*(xmin + xmax)
+                ypt = 0.5*(ymin + ymax)
+                ibutton = 0
+             case(ibutton_text,ibutton_circle,ibutton_rectangle,ibutton_irregular)
+                cycle ! does not match instant type, use deferred action
+             end select
+          endif
+       endif
+    end select
+
     select case(char)
        !
        !--particle plot stuff
@@ -237,8 +314,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iclosest > 0 .and. iclosest <= npart) then
           print*,' closest particle = ',iclosest,'x = ',xcoords(iclosest),' y =',ycoords(iclosest)
           call plot_number(iclosest,xcoords(iclosest),ycoords(iclosest))
+          call print_message(xcoords(iclosest),ycoords(iclosest),'closest particle')
        else
-          print*,'error: could not determine closest particle'
+          call print_message(xpt,ypt,'error: could not determine closest particle')
        endif
     case('c')
        if (iclosest > 0 .and. iclosest <= npart) then
@@ -260,7 +338,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              call plot_circ(xcoords(iclosest),ycoords(iclosest),2.*hi(iclosest))
           endif
        else
-          print*,'error: could not determine closest particle'
+          call print_message(xpt,ypt,'error: could not determine closest particle')
        endif
     case('t')
        !--track closest particle (must save to activate)
@@ -322,7 +400,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           !--plot line joining the two points
           call plot_line(4,xline,yline)
        case default
-          print*,' action cancelled'
+          call print_message(xpt,ypt,'action cancelled')
        end select
        !
        !--help
@@ -449,7 +527,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              interactivereplot = .true.
              iexit = .true.
           else
-             print*,'click to set rendering limits'
+             !print*,'click to set rendering limits'
              if (verticalbar) then
                 ierr = plot_band(3,1,xpt,ypt,xpt2,ypt2,char2)
              else
@@ -476,7 +554,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           !--zoom or mark particles
           !
        else
-          print*,'select area: '
+          call print_message(xpt,ypt,'select area')
           !--Note: circle selection is not implemented in PGPLOT
           iselectpoly = (char==plot_shift_click .or.((.not.leftclick).and.plotlib_is_pgplot))
           iselectcircle = (char==plot_right_click .and. .not.plotlib_is_pgplot)
@@ -491,18 +569,18 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                 print*,'c = close polygon and plot circles of interaction on selected parts'
              endif
           else
-             print*,'left click : zoom'
-             if (irender <= 0) print*,'1-9 = mark selected particles with colours 1-9'
-             print*,'0 = hide selected particles'
-             print*,'p = plot selected particles only'
-             print*,'c = plot circles of interaction on selected parts'
+             !print*,'left click : zoom'
+             !if (irender <= 0) print*,'1-9 = mark selected particles with colours 1-9'
+             !print*,'0 = hide selected particles'
+             !print*,'p = plot selected particles only'
+             !print*,'c = plot circles of interaction on selected parts'
           endif
-          if (leftclick .or. iselectcircle) then
-             print*,'x = use particles within x parameter range only'
-             print*,'y = use particles within y parameter range only'
-             print*,'r = use particles within x and y parameter range only'
-             print*,'R = remove all range restrictions'
-          endif
+          !if (leftclick .or. iselectcircle) then
+             !print*,'x = use particles within x parameter range only'
+             !print*,'y = use particles within y parameter range only'
+             !print*,'r = use particles within x and y parameter range only'
+             !print*,'R = remove all range restrictions'
+          !endif
 
           npts = 1
           xpts(1) = xpt   ! to avoid problems with uninitialised variables
@@ -520,6 +598,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              xptmax = maxval(xpts(1:npts))
              yptmin = minval(ypts(1:npts))
              yptmax = maxval(ypts(1:npts))
+             call press_button()
           elseif (iselectcircle) then
              ierr = plot_band(8,1,xpt,ypt,xpt2,ypt2,char2)
              rptmax2 = (xpt2-xpt)**2 + (ypt2-ypt)**2
@@ -528,6 +607,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              xptmax = xpt + rr
              yptmin = ypt - rr
              yptmax = ypt + rr
+             call press_button()
           else ! left click: rectangle selection
              ierr = plot_band(2,1,xpt,ypt,xpt2,ypt2,char2)
              xptmin = min(xpt,xpt2)
@@ -649,7 +729,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              interactivereplot = .true.
              iexit = .true.
           case default
-             print*,' action cancelled'
+             call print_message(xpt,ypt,'action cancelled')
           end select
        endif
        !
@@ -729,7 +809,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           iexit = .true.
        else
-          if (xpt >= xmin .and. xpt <= xmax .and. ypt <= ymaxin) then
+          if (xpt >= xmin .and. xpt <= xmax .and. ypt <= ymaxin .or. ibutton > 0) then
              xmin = xcen - 0.5*xlength
              xmax = xcen + 0.5*xlength
              call assert_sensible_limits(xmin,xmax)
@@ -738,7 +818,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              irerender = .true.
              iexit = .true.
           endif
-          if (ypt >= ymin .and. ypt <= ymax .and. xpt <= xmaxin) then
+          if (ypt >= ymin .and. ypt <= ymax .and. xpt <= xmaxin .or. ibutton > 0) then
              ymin = ycen - 0.5*ylength
              ymax = ycen + 0.5*ylength
              call assert_sensible_limits(ymin,ymax)
@@ -763,9 +843,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              if (itrans(irender)==1 .and. renderminadapt < rendermaxadapt-5.) then ! if logged
                 if (abs(rendermin-(rendermaxadapt-4.)) > epsilon(0.)) then
                    rendermin = rendermaxadapt - 4. ! if logged, do not give 20 orders of mag
-                   print "(a)",' *** MIN SET 4 DEX FROM MAX, PRESS ''a'' AGAIN TO GIVE FULL RANGE ***'
+                   call print_message(&
+                        ' colour bar range limited to 4 dex from max: Press ''a'' again for full range')
                 else
                    rendermin = renderminadapt
+                   call print_message(&
+                        ' that''s a lot of orders of magnitude! Press ''a'' again to limit to 4 dex')
                 endif
              else
                 rendermin = renderminadapt
@@ -800,21 +883,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (ivecx > 0 .and. ivecy > 0) then
           !print*,'decreasing vector arrow size'
           vecmax = zoomfac*scalefac*vecmax
+          call print_message('vmax=',vecmax,'decreasing vector arrow size')
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
        endif
     case('V')
        if (ivecx > 0 .and. ivecy > 0) then
-          !print*,'increasing vector arrow size'
           vecmax = vecmax/(zoomfac*scalefac)
+          call print_message('vmax=',vecmax,'increasing vector arrow size')
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
        endif
     case('w','W')
        if (ivecx > 0 .and. ivecy > 0) then
-          !print*,'adapting vector arrow size'
+          call print_message('adapting vector arrow size')
           vecmax = -1.0
           iadvance = 0
           interactivereplot = .true.
@@ -825,8 +909,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !
     case('k')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
-          print*,'decreasing opacity by factor of ',1.5*zoomfac*scalefac
           rkappa = rkappa/(zoomfac*scalefac)
+          call print_message('kappa=',rkappa,'decreasing opacity')
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -834,8 +918,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('K')
        if (ndim==3 .and. iplotz > 0 .and. irender /= 0 .and. use3Dopacity) then
-          print*,'increasing opacity by factor of ',1.5*zoomfac*scalefac
           rkappa = rkappa*(zoomfac*scalefac)
+          call print_message('kappa=',rkappa,'increasing opacity')
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -865,7 +949,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           iexit = .true.
        elseif (xpt < xmin) then
           if (is_coord(iploty,ndim) .and. irender > 0) then
-             print "(a)",'error: cannot log coordinate axes with rendering'
+             call print_message('error: cannot log coordinate axes with rendering')
           else
              call change_itrans(iploty,ymin,ymax)
              iadvance = 0
@@ -874,7 +958,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           endif
        elseif (ypt < ymin) then
           if (is_coord(iplotx,ndim) .and. irender > 0) then
-             print "(a)",'error: cannot log coordinate axes with rendering'
+             call print_message('error: cannot log coordinate axes with rendering')
           else
              call change_itrans(iplotx,xmin,xmax)
              iadvance = 0
@@ -888,7 +972,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('R')
        call reset_ranges
        iadvance = 0
-       interactivereplot = .true.
+       interactivereplot = .false.
        iexit = .true.
        !
        !--save as end point of animation sequence
@@ -902,12 +986,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !
     case(',')
        if (rotation) then
-          !print*,'changing z rotation angle by -15 degrees...'
           if (int(scalefac) > 1) then
              anglez = anglez - int(scalefac)
           else
              anglez = anglez - 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -915,12 +999,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('<')
        if (rotation) then
-          !print*,'changing z rotation angle by -30 degrees...'
           if (int(scalefac) > 1) then
              anglez = anglez - int(scalefac)
           else
              anglez = anglez - 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -928,12 +1012,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('.')
        if (rotation) then
-          !print*,'changing z rotation angle by 15 degrees...'
           if (int(scalefac) > 1) then
              anglez = anglez + int(scalefac)
           else
              anglez = anglez + 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -941,12 +1025,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('>')
        if (rotation) then
-          !print*,'changing z rotation angle by 30 degrees...'
           if (int(scalefac) > 1) then
              anglez = anglez + int(scalefac)
           else
              anglez = anglez + 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -954,12 +1038,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('/')
        if (rotation .and. ndim >= 2) then
-          !print*,'changing y rotation angle by -15 degrees...'
           if (int(scalefac) > 1) then
              angley = angley - int(scalefac)
           else
              angley = angley - 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -967,12 +1051,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('?')
        if (rotation .and. ndim >= 2) then
-          !print*,'changing y rotation angle by -30 degrees...'
           if (int(scalefac) > 1) then
              angley = angley - int(scalefac)
           else
              angley = angley - 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -980,12 +1064,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('\')
        if (rotation .and. ndim >= 2) then
-          !print*,'changing y rotation angle by 15 degrees...'
           if (int(scalefac) > 1) then
              angley = angley + int(scalefac)
           else
              angley = angley + 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -993,26 +1077,25 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('|')
        if (rotation .and. ndim >= 2) then
-          !print*,'changing y rotation angle by 30 degrees...'
-          !print*,'changing y rotation angle by 15 degrees...'
           if (int(scalefac) > 1) then
              angley = angley + int(scalefac)
           else
              angley = angley + 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
           iexit = .true.
        endif
-    case('[')
+    case('[',plot_scroll_left)
        if (rotation .and. ndim >= 3) then
-          !print*,'changing x rotation angle by -15 degrees...'
           if (int(scalefac) > 1) then
              anglex = anglex - int(scalefac)
           else
              anglex = anglex - 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1020,25 +1103,25 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('{')
        if (rotation .and. ndim >= 3) then
-          !print*,'changing x rotation angle by -30 degrees...'
           if (int(scalefac) > 1) then
              anglex = anglex - int(scalefac)
           else
              anglex = anglex - 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
           iexit = .true.
        endif
-    case(']')
+    case(']',plot_scroll_right)
        if (rotation .and. ndim >= 3) then
-          !print*,'changing x rotation angle by 15 degrees...'
           if (int(scalefac) > 1) then
              anglex = anglex + int(scalefac)
           else
              anglex = anglex + 15.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1046,12 +1129,12 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        endif
     case('}')
        if (rotation .and. ndim >= 3) then
-          !print*,'changing x rotation angle by 30 degrees...'
           if (int(scalefac) > 1) then
              anglex = anglex + int(scalefac)
           else
              anglex = anglex + 30.
           endif
+          call print_rotation(anglez,angley,anglex,ndim)
           iadvance = 0
           interactivereplot = .true.
           irerender = .true.
@@ -1114,19 +1197,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
              if (int(scalefac) > 1) dzslice = scalefac
-             print*,'shifting cross section position up by ',dzslice
-             zslicepos = zslicepos + dzslice
+             !print*,'shifting cross section position up by ',dzslice
+             zslicepos = zslicepos + 0.25*dzslice
+             call print_message('z=',zslicepos,'press s to save cross section position')
              iadvance = 0
              interactivereplot = .true.
              irerender = .true.
              iexit = .true.
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
+                !print*,'resetting z position'
                 zobserver = 1.
+                call print_message('observer height reset')
              else
-                print*,'shifting perspective position up by factor of ',scalefac
+                !print*,'shifting perspective position up by factor of ',scalefac
                 zobserver = scalefac*zoomfac*zobserver
+                call print_message('observer height=',zobserver,'press s to save')
              endif
              iadvance = 0
              interactivereplot = .true.
@@ -1137,20 +1223,19 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('U') ! move cross section up by 2*dxsec
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
-             print*,'shifting cross section position up by ',2.*dzslice
              zslicepos = zslicepos + 2.*dzslice
+             call print_message('z=',zslicepos,'press s to save cross section position')
              iadvance = 0
              interactivereplot = .true.
              irerender = .true.
              iexit = .true.
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
                 zobserver = 1.
              else
-                print*,'shifting perspective position up by factor of 2'
                 zobserver = 2.*scalefac*zoomfac*zobserver
              endif
+             call print_message('observer height=',zobserver,'press s to save')
              iadvance = 0
              interactivereplot = .true.
              irerender = .true.
@@ -1161,15 +1246,17 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
              if (int(scalefac) > 1) dzslice = scalefac
-             print*,'shifting cross section position down by ',dzslice
-             zslicepos = zslicepos - dzslice
+             !print*,'shifting cross section position down by ',dzslice
+             zslicepos = zslicepos - 0.25*dzslice
+             call print_message('z=',zslicepos,'press s to save cross section position')
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
+                call print_message('observer height reset')
                 zobserver = 1.
              else
-                print*,'shifting perspective position down'
-                zobserver = zobserver/(zoomfac*scalefac)
+                !print*,'shifting perspective position down'
+                 zobserver = zobserver/(zoomfac*scalefac)
+                 call print_message('observer height=',zobserver,'press s to save')
              endif
           endif
           iadvance = 0
@@ -1180,15 +1267,15 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('D') ! move cross section down by 2*dxsec
        if (iplotz > 0 .and. ndim==3) then
           if (x_sec) then
-             print*,'shifting cross section position down by ',2.*dzslice
              zslicepos = zslicepos - 2.*dzslice
+             call print_message('z=',zslicepos,'press s to save cross section position')
           elseif (use3Dperspective) then
              if (abs(zobserver) < tiny(0.)) then
-                print*,'resetting z position'
+                call print_message('observer height reset')
                 zobserver = 1.
              else
-                print*,'shifting perspective position down by factor of 2'
                 zobserver = zobserver/(2.*zoomfac*scalefac)
+                call print_message('observer height=',zobserver,'press s to save')
              endif
           endif
           iadvance = 0
@@ -1200,20 +1287,20 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        !--general plot stuff
        !
     case('G') ! move legend here
-       print*,'setting legend position to current location...'
+       call print_message(xpt,ypt,'setting legend position to current location')
        call mvlegend(xpt,ypt,xmin,xmax,ymax)
        iadvance = 0
        interactivereplot = .true.
        iexit = .true.
     case('T') ! move title here
-       print*,'setting title position to current location...'
+       call print_message(xpt,ypt,'setting title position to current location')
        call mvtitle(xpt,ypt,xmin,xmax,ymax)
        iadvance = 0
        interactivereplot = .true.
        iexit = .true.
     case('H') ! move vector legend here
        if (ivecx > 0 .and. ivecy > 0) then
-          print*,'setting vector plot legend to current location...'
+          call print_message(xpt,ypt,'moving vector plot legend to current location')
           call mvlegendvec(xpt,ypt,xmin,xmax,ymax)
        endif
        iadvance = 0
@@ -1296,6 +1383,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           interactivereplot = .true.
           iexit = .true.
        endif
+       call press_button()
     case(achar(8)) ! delete plot annotation / colour bar (backspace)
        ishape = inshape(xpt,ypt,itrans(iplotx),itrans(iploty),xmin,xmax,ymin,ymax)
        if (ishape > 0) then
@@ -1323,7 +1411,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
              interactivereplot = .true.
              iexit = .true.
           else
-             print*,' nothing to delete at x,y =',xpt,',',ypt
+             call print_message(xpt,ypt,'nothing to delete here')
           endif
        endif
        !
@@ -1333,7 +1421,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        iadvance = -666
        !print*,'quitting...'
        iexit = .true.
-    case('b','B',plot_scroll_left) ! right click -> go back
+    case('b','B') ! right click -> go back
        iadvance = -abs(iadvance)
        iexit = .true.
     case('r') ! replot
@@ -1341,7 +1429,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        interactivereplot = .true.
        irerender = .true.
        iexit = .true.
-    case(' ',plot_scroll_right) ! space
+    case(' ') ! space
        iadvance = abs(iadvance)
        iexit = .true.
     case('0','1','2','3','4','5','6','7','8','9')
@@ -1381,7 +1469,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        if (iachar(char) >= iachar('a')) then
           print*,' x, y = ',xpt,ypt,'; unknown option "',trim(char), '" ',iachar(char)
        endif
-       print*,' x, y = ',xpt,ypt,'; GOT ',iachar(char)
+       call print_message(xpt,ypt,'unknown option')
+       !print*,' x, y = ',xpt,ypt,'; GOT ',iachar(char)
     end select
 
     !
@@ -1407,24 +1496,31 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     !
     if (iadvance /= -666 .and. iexit) then
        if (istep + iadvance  >  ilaststep .and. iframe==nframes) then
-          print "(1x,a)",'reached last timestep'
+          call print_message('reached last timestep')
+          !print "(1x,a)",'reached last timestep'
           if (ilaststep-istep  > 0) then
              iadvance= ilaststep - istep
           else
              iexit = .false.
           endif
+          call clear_messages()
        elseif (istep + iadvance  <  1 .and. iframe==1) then
-          print "(1x,a)",'reached first timestep: can''t go back'
+          call print_message('reached first timestep: can''t go back')
+          !print "(1x,a)",'reached first timestep: can''t go back'
           if (1-istep  < 0) then
              iadvance= 1 - istep
           else
              iexit = .false.
           endif
+          call clear_messages()
        endif
     endif
 
+    iverbose = 0
+    if (interactivereplot) iverbose = -1
+
  enddo interactiveloop
- return
+
 end subroutine interactive_part
 
 !
@@ -2511,129 +2607,6 @@ end subroutine reset_panel
 
 end subroutine interactive_multi
 
-!--------------------------------------------------------------------
-! utilities to determine whether a point is in or out of a selection
-!--------------------------------------------------------------------
-logical function inslice(x,xmin,xmax)
- real, intent(in) :: x,xmin,xmax
-
- inslice = (x >= xmin .and. x <= xmax)
-
-end function inslice
-
-logical function inrectangle(x,y,xmin,xmax,ymin,ymax)
- real, intent(in) :: x,y,xmin,xmax,ymin,ymax
-
- inrectangle = (x >= xmin .and. x <= xmax .and. y >= ymin .and. y <= ymax)
-
-end function inrectangle
-
-logical function incircle(x,y,r2)
- real, intent(in) :: x,y,r2
-
- incircle = ((x*x + y*y) <= r2)
-
-end function incircle
-
-!
-! Point in polygon
-! See: http://en.wikipedia.org/wiki/Even-odd_rule
-!
-logical function inpoly(x,y,xpts,ypts,npts)
- real, intent(in) :: x,y
- real, dimension(:), intent(in) :: xpts,ypts
- integer, intent(in) :: npts
- integer :: i,j
-
- inpoly = .false.
- j = npts
- do i=1,npts
-    if (((ypts(i) > y) .neqv. (ypts(j) > y)) .and. &
-        (x < (xpts(j) - xpts(i))*(y-ypts(i))/(ypts(j) - ypts(i)) + xpts(i))) then
-       inpoly = .not. inpoly
-    endif
-    j = i
- enddo
-
-end function inpoly
-
-!------------------------------------------------------------
-! utility which adapts plot limits based only on the
-! particles being plotted
-!------------------------------------------------------------
-subroutine adapt_limits_interactive(labeli,np,xarr,xmin,xmax,icolourpart,iamtype,iusetype)
- use params, only:int1
- use limits, only:assert_sensible_limits
- character(len=*), intent(in)    :: labeli
- integer, intent(in)             :: np
- real, dimension(np), intent(in) :: xarr
- real, intent(out)               :: xmin,xmax
- integer(kind=int1), dimension(:) , intent(in) :: iamtype
- integer,            dimension(np), intent(in) :: icolourpart
- logical,            dimension(:),  intent(in) :: iusetype
- integer :: itype,i
- logical :: mixedtypes
-
- xmin =  huge(xmin)
- xmax = -huge(xmax)
- mixedtypes = size(iamtype) >= np
-
- if (mixedtypes) then
-    do i=1,np
-       itype = int(iamtype(i))
-       if (itype > 0 .and. itype <= np) then
-          if (iusetype(itype) .and. icolourpart(i) > 0) then
-             xmin = min(xmin,xarr(i))
-             xmax = max(xmax,xarr(i))
-          endif
-       endif
-    enddo
- else
-    xmin = minval(xarr,mask=(icolourpart >= 0))
-    xmax = maxval(xarr,mask=(icolourpart >= 0))
- endif
- call assert_sensible_limits(xmin,xmax)
-
- !print "(1x,a)",' resetting '//trim(labeli)//' limits'
-
-end subroutine adapt_limits_interactive
-
-!------------------------------------------------------------
-! utility which translates between world co-ordinates (x,y)
-! and viewport co-ordinates (relative to the whole viewport)
-!------------------------------------------------------------
-subroutine get_vptxy(x,y,vptx,vpty)
- use plotlib, only:plot_qvp,plot_qwin
- real, intent(in) :: x,y
- real, intent(out) :: vptx,vpty
- real :: xmini,xmaxi,ymini,ymaxi
- real :: vptxmini,vptxmaxi,vptymini,vptymaxi
-
- call plot_qvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
- call plot_qwin(xmini,xmaxi,ymini,ymaxi)
- vptx = vptxmini + (x-xmini)/(xmaxi-xmini)*(vptxmaxi-vptxmini)
- vpty = vptymini + (y-ymini)/(ymaxi-ymini)*(vptymaxi-vptymini)
-
-end subroutine get_vptxy
-
-!------------------------------------------------------------
-! utility to return x,y coordinates given viewport coords
-! (only works for single-panelled plots)
-!------------------------------------------------------------
-subroutine get_posxy(vptx,vpty,x,y,xmini,xmaxi,ymini,ymaxi)
- use plotlib, only:plot_qvp
- real, intent(in) :: vptx,vpty
- real, intent(out) :: x,y
- real, intent(in) :: xmini,xmaxi,ymini,ymaxi
- real :: vptxmini,vptxmaxi,vptymini,vptymaxi
-
- call plot_qvp(0,vptxmini,vptxmaxi,vptymini,vptymaxi)
- x = xmini + (vptx-vptxmini)/(vptxmaxi-vptxmini)*(xmaxi-xmini)
- y = ymini + (vpty-vptymini)/(vptymaxi-vptymini)*(ymaxi-ymini)
-
- return
-end subroutine get_posxy
-
 !-----------------------------------------------------------
 ! These subroutines interface to the actual plot settings
 !-----------------------------------------------------------
@@ -2769,7 +2742,6 @@ subroutine mvlegend(xi,yi,xmin,xmax,ymax,ipanel)
  if (present(ipanel)) then
     if (ipanel > 0 .and. iPlotLegendOnlyOnPanel > 0) iPlotLegendOnlyOnPanel = ipanel
  endif
- print*,'hpos = ',hposlegend,' vpos = ',vposlegend,' just = ',fjustlegend
 
 end subroutine mvlegend
 !
@@ -2786,7 +2758,6 @@ subroutine mvlegendvec(xi,yi,xmin,xmax,ymax)
  !--query character height in world coordinates
  call plot_qcs(4,xch,ych)
  vposlegendvec = (ymax - yi)/ych
- print*,'hpos = ',hposlegendvec,' vpos = ',vposlegendvec
 
 end subroutine mvlegendvec
 !
@@ -2812,9 +2783,7 @@ subroutine mvtitle(xi,yi,xmin,xmax,ymax)
  else
     fjusttitle = 0.5
  endif
- print*,'hpos = ',hpostitle,' vpos = ',vpostitle,' just = ',fjusttitle
 
- return
 end subroutine mvtitle
 
 !
@@ -2928,7 +2897,6 @@ subroutine restrict_range(iplot,xmin,xmax)
     range(iplot,2) = xmax
  endif
 
- return
 end subroutine restrict_range
 
 !
@@ -2939,7 +2907,6 @@ subroutine reset_ranges()
 
  call reset_all_ranges()
 
- return
 end subroutine reset_ranges
 
 !
@@ -2951,7 +2918,6 @@ subroutine reset_limits2(icol)
 
  call reset_lim2(icol)
 
- return
 end subroutine reset_limits2
 
 !
@@ -3079,7 +3045,6 @@ subroutine save_rotation(ndim,anglexi,angleyi,anglezi)
     angley = angleyi
  endif
 
- return
 end subroutine save_rotation
 
 !
@@ -3093,7 +3058,6 @@ subroutine save_xsecpos(xsecpos,xsec)
  xsecpos_nomulti = xsecpos
  xsec_nomulti = xsec
 
- return
 end subroutine save_xsecpos
 
 !
@@ -3106,7 +3070,6 @@ subroutine save_perspective(zpos,dz)
  zobserver = zpos
  dzscreenfromobserver = dz
 
- return
 end subroutine save_perspective
 !
 !--saves 3D opacity
@@ -3117,7 +3080,6 @@ subroutine save_opacity(rkappai)
 
  taupartdepth = rkappai
 
- return
 end subroutine save_opacity
 !
 !--save the current paper size
@@ -3227,5 +3189,193 @@ subroutine unset_movie_mode()
  call delete_text(get_copyright())
 
 end subroutine unset_movie_mode
+
+!
+!--callback function to handle cursor movement
+!
+subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
+ use iso_c_binding,   only:c_double,c_int
+ use plotlib,         only:plot_qwin
+ use settings_render, only:iColourBarStyle
+ use legends,         only:plot_box_around_text_xy
+ use limits,          only:anyrangeset
+ use parsetext,       only:number_to_string
+ use timing,          only:wall_time
+ use interactive_buttons, only:draw_buttons,erase_buttons,print_button_help,max_button_instant,&
+                               button_pressed,press_button,inbutton,&
+                               button_type,ibutton_irregular,ibutton_text
+ use interactive_utils,   only:get_button_anchor
+ real(kind=c_double), intent(in) :: xpt,ypt
+ integer(kind=c_int), intent(in) :: mode
+ character(len=128) :: string
+ character(len=20) :: strx,stry,strxy
+ logical :: iamincolourbar,plot_xy,plot_help,show_buttons
+ integer :: ibutton
+ real :: xmin,xmax,ymin,ymax,xpti,ypti
+ real :: xminvp,xmaxvp,yminvp,ymaxvp
+ real :: xleft_vp0,ybottom_vp0
+ real, save :: tprev = -1.
+ integer, save :: imessage = 0
+ real :: t
+
+ call wall_time(t)
+ if (tprev < 0.) tprev = t
+ xpti = xpt
+ ypti = ypt
+ ibutton = 0
+
+ ! save settings and query window
+ call plot_qwin(xmin,xmax,ymin,ymax)
+ call get_button_anchor(xleft_vp0,ybottom_vp0)
+ call get_posxy(xleft_vp0,ybottom_vp0,xminvp,yminvp,xmin,xmax,ymin,ymax)
+ call get_posxy(1.02,1.,xmaxvp,ymaxvp,xmin,xmax,ymin,ymax)
+
+ plot_xy = .true.
+ plot_help = .true.
+
+ ! whether or not to show buttons (hide if not in default mode)
+ show_buttons = (mode==0 .or. mode==2 .or. mode==8) &
+           .or. (mode==1 .and. button_type(button_pressed)==ibutton_irregular)
+
+ ! print nothing if cursor is outside the viewport, so do not contaminate screenshots
+ if (xpti < xminvp .or. xpti > xmaxvp .or. ypti < yminvp .or. ypti > ymaxvp) then
+    plot_xy = .false.
+    plot_help = .false.
+    if (show_buttons) call erase_buttons()
+ else
+    if (.not.show_buttons) call erase_buttons()
+    if (mode==0) then
+       call print_button_help(xpti,ypti,ibutton)
+    endif
+    if (ibutton > 0) return
+  
+    ! restore default button press if not cursor is no longer hovering
+    ! over one of the instant-action buttons
+    if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpti,ypti) > 0)) then
+       call press_button()
+    endif
+ !
+ ! draw the button set if the mouse is moving
+ !
+    if (show_buttons) call draw_buttons(onclick=.false.)
+ endif
+
+ ! plot x,y position as cursor moves
+ call number_to_string(xpti,3,strx)
+ call number_to_string(ypti,3,stry)
+ strxy = '('//trim(strx)//', '//trim(stry)//')'
+
+ ! print help message below this
+ if (t-tprev > 5.) then  ! wait at least 5 seconds before changing message
+    imessage = mod(imessage, 10) + 1
+    tprev = t
+ endif
+
+ ! work out if cursor is in the colour bar
+ iamincolourbar = incolourbar(iColourBarStyle,4,xpti,ypti,xmin,xmax,ymin,ymax)
+
+ string = '' ! no message by default
+ select case(mode)
+ case(3,4) ! line selection i.e. have clicked on colour bar
+    string = 'click to zoom on colour bar'
+    plot_xy = .false.
+ case(2,8)   ! rectangle or circle selection
+    if (anyrangeset()) then
+       string = 'R=reset crop 0=hide 1-9=colour q=quit'
+    else
+       string = '0=hide 1-9=colour p=select c=circles '//&
+                'x/y/r=crop q=quit'
+    endif
+ case(1) ! line drawing
+    if (button_type(button_pressed)==ibutton_irregular) then
+       string = 'click to a)dd; middle click/d)elete q)uit 0=hide 1-9=colour p=select'
+    else 
+       string = 'click to draw line'
+    endif
+ case(0) ! no band mode,  just a free cursor
+    if (button_type(button_pressed)==ibutton_text) then
+       string = 'click to add text'
+    else
+       if (iamincolourbar) then ! cursor is inside the colour bar
+          select case(imessage)
+          case(10)
+             string = 'press m or M to change colour map'
+          case(9)
+             string = 'i to invert the colour map'
+          case(8)
+             string = 'f/F to flip render to next/prev column'
+          case(7)
+             string = 'backspace to delete colour bar / annotation'
+          case(4:6)
+             string = 'click to zoom on colour bar'
+          case default
+             string = 'press l for log, a to adapt'
+          end select
+       else ! cursor is not inside the colour bar
+          if (xpti > xmin .and. xpti < xmax .and. ypti < ymin) then
+             string = '+/- zoom x a)dapt l)og o)rigin centre C)ursor centre'
+          elseif (ypti > ymin .and. ypti < ymax .and. xpti < xmin) then
+             string = '+/- zoom y a)dapt l)og o)rigin centre C)ursor centre'
+          else
+             ! cursor inside plot boundaries
+             select case(imessage)
+             case(10)
+                string = 'press o to centre plot on origin'
+             case(9)
+                string = 'type 3 and space to advance 3 timesteps'
+             case(8)
+                string = 'space for next snapshot, b for previous'
+             case(7)
+                string = 'type a number and -/+ to zoom in/out by factor'
+             case(6)
+                string = 'press p to label closest particle'
+             case(5)
+                string = 'press g to draw line and measure a gradient'
+             case(4)
+                string = 'ctrl-t to add text; ^ to add arrow + text'
+             case(2)
+                string = 'press Enter to enter/exit Hollywood mode'
+             case default
+                string = 'click or +/- to zoom, a to adapt'
+             end select
+             if (anyrangeset()) then
+                string = 'R to reset current range restrictions, click to zoom'
+             endif
+          endif
+       endif
+    endif   
+ end select
+ if (.not.plot_help) string = ''
+ if (.not.plot_xy) strxy = ''
+
+ call print_message(strxy,string,onclick=.false.)
+
+end subroutine handle_cursor_motion
+
+!--------------------------------
+! print rotation information
+!--------------------------------
+subroutine print_rotation(z,y,x,ndim)
+ use settings_xsecrot, only:xorigin
+ real, intent(in) :: z,y,x
+ integer, intent(in) :: ndim
+ character(len=64) :: string
+ integer :: ierr
+
+ if (ndim==2) then
+    write(string,"(1x,a,f6.2,a)",iostat=ierr) &
+       'rotating around z by (',z,')'
+ else
+    if (all(abs(xorigin) < tiny(0.))) then
+       write(string,"(1x,a,2(f6.2,1x),f6.2,a)",iostat=ierr) &
+          'rotation: (z, y, x) = (',z,y,x,')'
+    else
+       write(string,"(1x,2(a,2(f6.2,1x),f6.2),a)",iostat=ierr) &
+          'rotation: (z, y, x) = (',z,y,x,') about (',xorigin(1:3),')'
+    endif
+ endif
+ call print_message(string)
+
+end subroutine print_rotation
 
 end module interactive_routines

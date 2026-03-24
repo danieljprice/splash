@@ -33,6 +33,7 @@ module legends
 
  public :: legend, legend_vec, legend_markers, legend_scale
  public :: prompt_panelselect, ipanelselect
+ public :: plot_box_around_text_xy
  public :: in_legend
 
  ! store bounding box of each legend in global variables
@@ -118,39 +119,60 @@ end subroutine legend
 !  utility routine for plotting translucent box in legends
 !-----------------------------------------------------------------
 subroutine plot_box_around_text(pos,string,hpos,vpos,fjust)
- use plotlib, only:plot_qci,plot_sci,plot_sfs,plot_set_opacity,plot_rect
  character(len=1), intent(in) :: pos
  character(len=*), intent(in) :: string
  real, intent(in) :: hpos,vpos,fjust
- real :: x1,x2,y1,y2,ych
+ real :: xpos,ypos
+
+ call get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ call plot_box_around_text_xy(xpos,ypos,fjust,0.5,string)
+
+end subroutine plot_box_around_text
+
+!-----------------------------------------------------------------
+!  utility routine for plotting translucent box behind text
+!-----------------------------------------------------------------
+subroutine plot_box_around_text_xy(xpos,ypos,fjust,alpha,string,ybounds)
+ use plotlib, only:plot_qci,plot_sci,plot_sfs, &
+                   plot_set_opacity,plot_rect
+ real, intent(in) :: xpos,ypos,fjust,alpha
+ character(len=*), intent(in) :: string
+ real, intent(in), optional :: ybounds(2) ! optional override of y size
+ real :: ych,x1,x2,y1,y2
  integer :: ic
 
- call get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+ call get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+!
+!--override y bounds if provided
+!
+ if (present(ybounds)) then
+    y1 = ybounds(1)
+    y2 = ybounds(2)
+ endif
 !
 !--draw box around the string
 !
  call plot_qci(ic) ! query colour index
  call plot_sci(0)  ! background colour
  call plot_sfs(1)  ! solid fill style
- call plot_set_opacity(0.5)
+ call plot_set_opacity(alpha)
  call plot_rect(x1,x2,y1,y2,0.2*ych) ! draw a (rounded) rectangle
  call plot_set_opacity(1.0)
  call plot_sci(ic) ! restore colour index
 
-end subroutine plot_box_around_text
+end subroutine plot_box_around_text_xy
 
-!-----------------------------------------------------------------
-!  helper routine to find the bounding box of a text string
-!-----------------------------------------------------------------
-subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
- use plotlib, only:plot_qwin,plot_qcs,plot_qtxt
+!--------------------------------------------------------------------------
+!  convert hpos, vpos to x,y coordinate location in viewport
+!  where hpos is fraction of viewport, vpos is distance in character
+!  heights from top (pos='T') or bottom (pos='B') of viewport
+!--------------------------------------------------------------------------
+subroutine get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ use plotlib, only:plot_qwin,plot_qcs
  character(len=1), intent(in) :: pos
- character(len=*), intent(in) :: string
- real, intent(in)  :: hpos,vpos,fjust
- real, intent(out) :: x1,x2,y1,y2,ych
- real :: xmin,xmax,ymin,ymax,xpos,ypos
- real :: xbuf,ybuf,dx,dy,xch
- real :: xbox(4),ybox(4)
+ real, intent(in)  :: hpos,vpos
+ real, intent(out) :: xpos,ypos
+ real :: xmin,xmax,ymin,ymax,xch,ych
 !
 !--convert hpos and vpos to x, y to plot arrow
 !
@@ -163,21 +185,56 @@ subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
  case default ! 'T' = from top
     ypos = ymax - (vpos + 1.)*ych
  end select
-!
-!--enquire bounding box of string
-!
- call plot_qtxt(xpos,ypos,0.0,0.0,trim(string),xbox,ybox)
 
+end subroutine get_xy_from_hpos_vpos
+
+!-----------------------------------------------------------------
+!  find the bounding box of a text string 
+!  text is placed at hpos,vpos with justification fjust
+!-----------------------------------------------------------------
+subroutine get_box_around_text(pos,string,hpos,vpos,fjust,x1,x2,y1,y2,ych)
+ character(len=1), intent(in) :: pos
+ character(len=*), intent(in) :: string
+ real, intent(in) :: hpos,vpos,fjust
+ real, intent(out) :: x1,x2,y1,y2,ych
+ real :: xpos,ypos
+
+ call get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
+ call get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+
+end subroutine get_box_around_text
+
+!-----------------------------------------------------------------
+!  find the bounding box of a text string in x,y coordinates
+!  text is placed at xpos, ypos with justification fjust
+!-----------------------------------------------------------------
+subroutine get_box_around_text_xy(string,xpos,ypos,fjust,x1,x2,y1,y2,ych)
+ use plotlib, only:plot_qcs,plot_qtxt
+ real, intent(in)  :: xpos,ypos,fjust
+ real, intent(out) :: x1,x2,y1,y2,ych
+ character(len=*), intent(in) :: string
+ real :: xbox(4),ybox(4),xbox_tmp(4),ybox_tmp(4)
+ real :: xbuf,ybuf,dx,dy,xch
+
+ call plot_qcs(4,xch,ych) ! get character height
+!
+!--enquire bounding box of fake string that includes p,q,f, g and l
+!
+ call plot_qtxt(xpos,ypos,0.0,0.0,"pqflg",xbox_tmp,ybox)
+!
+!--enquire bounding box of actual string
+!
+ call plot_qtxt(xpos,ypos,0.0,0.0,string,xbox,ybox_tmp)
  xbuf = 0.25*xch
- ybuf = 0.5*ych
+ ybuf = 0.33*ych
  dx = xbox(3) - xbox(1)
  dy = ybox(3) - ybox(1) + 0.25*ych
  x1 = xpos - fjust*dx - xbuf
  x2 = x1 + dx + 2.*xbuf
- y1 = ypos
+ y1 = ypos - ybuf
  y2 = y1 + dy + ybuf
 
-end subroutine get_box_around_text
+end subroutine get_box_around_text_xy
 
 !-----------------------------------------------------------------
 !  save the bounding box of a text string into the relevant
@@ -211,9 +268,10 @@ end subroutine save_bbox
 !-----------------------------------------------------------------
 
 subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
- use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_numb,plot_qtxt, &
+ use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_qtxt, &
                    plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
                    plot_qvp,plot_svp,plot_swin,plot_arro,plot_set_opacity
+ use parsetext, only:number_to_string
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
  character(len=*), intent(in) :: label,unitslabel
  real :: xmin,xmax,ymin,ymax
@@ -221,7 +279,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
  real :: dxbuffer,dybuffer,dxbox,dybox
  real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
- integer :: icolindex,mm,pp,nc,ndec
+ integer :: icolindex
  character(len=len(label)+20) :: string
 
 !
@@ -241,15 +299,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !
  adjustlength = sqrt(0.5*dx**2 + ych**2)/dx
  vecmaxnew = adjustlength*vecmax
- ndec = 2
- if (vecmaxnew < tiny(vecmaxnew)) then
-    string = '0'
-    nc = 1
- else
-    mm=int(vecmaxnew/10.**(int(log10(vecmaxnew)-ndec)))
-    pp=int(log10(vecmaxnew)-ndec)
-    call plot_numb(mm,pp,0,string,nc)
- endif
+ call number_to_string(vecmaxnew,2,string) ! 2 decimal places
  string = '='//trim(string)
 ! write(string,"('=',1pe7.1)") vecmax
 !
@@ -447,9 +497,10 @@ subroutine legend_scale(dxscale,hpos,vpos,text)
  else
     call plot_qcs(4,xch,ych)
     !--draw horizontal "error bar" above text
-    ypos = ymin + (vpos+1.25)*ych
+    ypos = ymin + (vpos+1.33)*ych
     xpos = xmin + hpos*(xmax-xmin)
-    call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
+    call plot_err1(5,xpos,ypos,0.5*dxscale,0.)
+    !call plot_err1(5,xpos,ypos,0.5*dxscale,1.0)
 
     !--write text at the position specified
     call plot_annotate('B',-vpos,hpos,0.5,trim(text))

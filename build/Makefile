@@ -457,16 +457,17 @@ SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
          exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
-         exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
+         exact_ringspread.f90 exact_gresho.f90 exact.f90 \
+         legends.f90 interactive_utils.f90 interactive_help.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
-         legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
+         options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 \
          lightcurve_utils.f90 $(READFILES) lightcurve.f90 extinction.f90 \
          read_data.F90 get_h.f90\
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
-         particleplot.f90 interactive.f90  \
+         particleplot.f90 interactive_buttons.f90 interactive.f90  \
          convert_grid.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
@@ -488,7 +489,7 @@ OBJECTS= $(OBJECTS3:.cc=.o)
 
 all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS) $(PIELDFLAGS)
-	@echo; echo ' SPLASH v3 successfully compiled! ';
+	@echo; echo ' SPLASH v4 successfully compiled! ';
 	@echo; echo '   "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin';
 	@echo; echo ' If you do not have admin privileges, add the following to your .bashrc or equialent:';
 	@echo; echo '   export SPLASH_DIR=$$HOME/splash';

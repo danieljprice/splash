@@ -2018,7 +2018,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                       zplot(1:ntoti),hh(1:ntoti),ntoti,iplotx,iploty, &
                       icolourme(1:ntoti),iamtype,npartoftype(:),PlotOnRender_tmp(:), &
                       (x_sec.or.use3Dperspective),zslicemin,zslicemax,labelz, &
-                      xmin,xmax,ymin,ymax,ifastparticleplot,interactive)
+                      xmin,xmax,ymin,ymax,ifastparticleplot,(interactive .and. iverbose > 0))
                    endif
 
                 elseif (ndim==2 .and. x_sec) then
@@ -3905,13 +3905,8 @@ subroutine rotationandperspective(anglexi,angleyi,anglezi,dzscreen,zobs,xploti,y
  anglerady = angleyi*pi/180.
  angleradx = anglexi*pi/180.
  if (plot_qcur()) then  ! only print for interactive devices
-    if (ndim==3) then
-       print "(1x,a,2(f6.2,1x),f6.2,a)",'rotation: (z, y, x) = (',anglezi,angleyi,anglexi,')'
-    else
-       print "(1x,a,f6.2)",'rotating particles about z by ',anglezi
-    endif
     if (ndim==3 .and. use3Dperspective) then
-       print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
+       !print*,' observer height = ',zobs,', screen at ',zobs-dzscreen
     elseif (ndim==3) then
        if (abs(zobs) > tiny(zobs) .or. abs(dzscreen) > tiny(dzscreen)) then
           print "(a)",' INTERNAL ERROR: no 3D perspective but observer set'

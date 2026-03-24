@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     4.0.0   : (19/03/26)
+!             user-friendly interactive mode;
+!             interactive buttons now appear in the plotting window;
+!             cursor movement generates context-dependent help;
+!             cube viz: slice through data using scroll wheel on your mouse
 !     3.12.0  : (16/03/26)
 !             sub-pixel interpolation in splash to grid for non-Cartesian geometries;
 !             added --fcol flag in splash calc lightcurve for spectral hardening factor;
@@ -672,7 +677,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.12.0 [16th Mar 2026]'
+ character(len=*), parameter :: version = 'v4.0.0 [19th Mar 2026]'
 
  !
  ! initialise some basic code variables
@@ -689,7 +694,7 @@ program splash
  call set_filenames(trim(fileprefix))
 
  evsplash = .false.
- lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
+ lowmemorymode = lenvironment('SPLASH_LOWMEM')
  debugmode = lenvironment('SPLASH_DEBUG')
  !
  !  read all arguments off command line
@@ -886,8 +891,7 @@ program splash
  if (nfiles > 0) then
     il = len_trim(rootname(1))
     if (extension(rootname(1))=='.ev'   .or. &
-        extension(rootname(1))=='.mdot' .or. &
-        extension(rootname(1))=='.out') then
+        extension(rootname(1))=='.mdot') then
        evsplash = .true.
        fileprefix = 'evsplash'
        call set_filenames(trim(fileprefix))

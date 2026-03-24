@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -36,12 +36,15 @@ module plotlib
  use giza, only: &
       plot_arro=>giza_arrow, &
       plot_annotate=>giza_annotate, &
+      plot_axis=>giza_axis, &
       plot_band=>giza_band, &
       plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
       plot_circ=>giza_circle, &
       plot_close=>giza_close, &
       plot_curs=>giza_get_key_press, &
+      plot_set_motion_callback=>giza_set_motion_callback, &
+      plot_end_motion_callback=>giza_end_motion_callback, &
       plot_ebuf=>giza_end_buffer, &
       plot_end=>giza_close_device, &
       plot_env=>giza_set_environment, &
@@ -86,6 +89,8 @@ module plotlib
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
       plot_rgb_from_table=>giza_rgb_from_table, &
+      plot_set_clipping=>giza_set_clipping, &
+      plot_get_clipping=>giza_get_clipping, &
       giza_contour,            &
       giza_get_character_size, &
       giza_get_surface_size,   &
@@ -98,6 +103,7 @@ module plotlib
       giza_set_colour_table,   &
       giza_stop_prompting,     &
       giza_start_prompting,    &
+      giza_set_font,           &
       plot_left_click=>giza_left_click_f,     &
       plot_right_click=>giza_right_click_f,   &
       plot_middle_click=>giza_middle_click_f, &
@@ -145,6 +151,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  integer, intent(in), optional :: paperunits
  real                          :: width,height
  integer                       :: units, id
+ character(len=12) :: string
 
  if (present(papersizex)) then
     width = papersizex
@@ -177,6 +184,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  else
     ierr = 0
  endif
+ call get_environment_variable('GIZA_FONT',string)
+ if (len_trim(string) <= 0) call giza_set_font('Helvetica')
 
  if (ierr==0) then
     call giza_stop_prompting
@@ -334,7 +343,7 @@ subroutine plot_qinf(item,value,length)
 
  select case(item)
  case('VERSION','version')
-    value = 'giza-1.1'
+    value = 'giza-1.3'
  case('STATE','state')
     print*,' WARNING: query for STATE not yet implemented in giza'
  case('USER','user')
@@ -487,6 +496,17 @@ subroutine plot_pap(widthin,aspect,paperunits)
  call giza_set_paper_size(units,width,width*aspect)
 
 end subroutine plot_pap
+
+subroutine plot_line1(x1, y1, x2, y2)
+ real,intent(in) :: x1, y1, x2, y2
+ real :: xpts(2),ypts(2)
+
+ xpts = (/x1,x2/)
+ ypts = (/y1,y2/)
+
+ call plot_line(2,xpts,ypts)
+
+end subroutine plot_line1
 
 !
 !--this subroutine can be called  to
