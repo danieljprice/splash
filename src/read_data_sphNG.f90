@@ -2183,7 +2183,9 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              if (ierr /=0) print "(a)",'ERROR in memory allocation (read_data_sphNG: dattempsingle)'
           endif
 
-          if (debug) print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
+          if (debug .and. allocated(dattempsingle)) then
+             print*,'DEBUG: SIZE of dattempsingle',size(dattempsingle)
+          endif
 !        real4s may need converting
           imaxcolumnread = max(imaxcolumnread,icolumn)
           if ((nreal(iarr)+nreal4(iarr)) > 6) imaxcolumnread = max(imaxcolumnread,6)

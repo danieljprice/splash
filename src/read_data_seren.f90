@@ -494,6 +494,8 @@ subroutine read_serenbody(iunit,ierr_out)
     allocate(sink_dat_array(1:stot,1:ncolumns,1))
     sink_dat_array = 0.
     write (sink_format_string,'(A,I0,A)') "(", sink_data_length, "E18.10)"
+ else
+    allocate(sink_dat_array(0,0,0)) ! avoid compiler warning
  endif
 
  ierr_out = 0

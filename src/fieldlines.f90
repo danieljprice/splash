@@ -25,7 +25,7 @@
 !
 module fieldlines
  implicit none
- public :: streamlines,vecplot3D_proj
+ public :: streamlines,vecplot3D_proj,fieldlines2D
  private :: trace2D,interpolate_pt
 
  private
@@ -71,7 +71,7 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
  real, dimension(npixx,npixy) :: datpix2
  double precision :: fyj,fyjhalf,term,termi,termj,fxprevi,fyjprev
  double precision, dimension(npixx) :: fx,fxhalf
- integer :: i,j
+ integer :: i,j,iminus,iminus2,jminus,jminus2
  !
  !--check for errors in input
  !
@@ -95,14 +95,16 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
        else
           fyjprev = fyj
           !--trapezoidal rule in x
-          termj = 0.5*pixwidth*(vecpixy(i-1,j)+vecpixy(i,j))
+          iminus = max(1,i-1)
+          termj = 0.5*pixwidth*(vecpixy(iminus,j)+vecpixy(i,j))
           fyj = fyj - termj
           if (mod(i-1,2)==0) then ! 3, 5, 7, 9 ...
              !
              !--for odd points, use trapezoidal solution at half grid points
              !  to get Simpson's rule
              !
-             fyjhalf = fyjhalf - pixwidth*(vecpixy(i-2,j)+vecpixy(i,j))
+             iminus2 = max(1,i-2)
+             fyjhalf = fyjhalf - pixwidth*(vecpixy(iminus2,j)+vecpixy(i,j))
              term = term + 4./3.*fyj - 1./3.*fyjhalf
           else
              !
@@ -121,10 +123,12 @@ subroutine streamlines(vecpixx,vecpixy,datpix,npixx,npixy,pixwidth)
           fxprevi = 0.
        else
           fxprevi = fx(i)
-          termi = 0.5*pixwidth*(vecpixx(i,j-1)+vecpixx(i,j))
+          jminus = max(1,j-1)
+          termi = 0.5*pixwidth*(vecpixx(i,jminus)+vecpixx(i,j))
           fx(i) = fx(i) + termi
           if (mod(j-1,2)==0) then
-             fxhalf(i) = fxhalf(i) + pixwidth*(vecpixx(i,j-2)+vecpixx(i,j))
+             jminus2 = max(1,j-2)
+             fxhalf(i) = fxhalf(i) + pixwidth*(vecpixx(i,jminus2)+vecpixx(i,j))
              term = term + 4./3.*fx(i) - 1./3.*fxhalf(i)
           else
              term = term + 4./3.*fxprevi - 1./3.*fxhalf(i) + termi

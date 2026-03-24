@@ -117,6 +117,7 @@ subroutine menu
     enddo
 
     ichoose = 0
+    threecol = .false.
 
 !---------------------------------------------------------------------------
 !  print menu

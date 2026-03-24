@@ -647,7 +647,7 @@ end subroutine initialise_plotting
 
 subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ivecplot, &
                     iamtype,npartoftype,masstype,dat,timei,gammai,headervalsi,ipagechange,iadvance)
- use params,             only:int1,maxparttypes,doub_prec,maxhdr
+ use params,             only:int1,maxparttypes,maxhdr
  use colours,            only:colour_set
  use filenames,          only:nsteps,rootname,ifileopen,tagline
  use exact,              only:exact_solution,atstar,ctstar,&
@@ -3015,7 +3015,7 @@ subroutine page_setup(dummy_run)
     if (.not.dum) print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
     call fix_equal_limits(ymin,ymax)
  endif
- if (irender > 0 .and. abs(rendermax-rendermin) < tiny(rendermax) .or.rendermax /= rendermax) then
+ if (irender > 0 .and. abs(rendermax-rendermin) < tiny(rendermax) .or. isnan(rendermax)) then
     if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
     call fix_equal_limits(rendermin,rendermax)
  endif
