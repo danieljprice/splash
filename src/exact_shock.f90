@@ -344,6 +344,8 @@ subroutine get_pstar(gamma,p_L,p_R,v_L,v_R,c_L,c_R,pr,vstar)
  prnew = ((c_L + c_R + (v_L - v_R)*0.5*(gamma-1.))/denom)**(1./power)
  pr = p_L
  its = 0
+ f_L = 0.
+ f_R = 0.
 
  !!print*,'initial guess = ',prnew
 

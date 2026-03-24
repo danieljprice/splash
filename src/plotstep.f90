@@ -764,7 +764,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 
  logical :: iPlotColourBar,rendering,inormalise,logged,loggedcont
  logical :: dumxsec,isetrenderlimits,isetvectorlimits,iscoordplot,inorm_label,plot_exact
- logical :: ichangesize,initx,inity,initz,isameweights,got_h
+ logical :: ichangesize,initx,inity,initz,isameweights,got_h,movie_mode
  logical, parameter :: isperiodicx = .false. ! feature not implemented
  logical, parameter :: isperiodicy = .false. ! feature not implemented
  logical, parameter :: isperiodicz = .false. ! feature not implemented
@@ -1843,7 +1843,8 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                                call transform_limits(contmin,contmax,itrans(icontourplot))
                             endif
                          endif
-                         if (iadapt .and. get_command_flag('movie')) then
+                         movie_mode = get_command_flag('movie')
+                         if (iadapt .and. movie_mode) then
                             call save_limits(irenderplot,rendermin,rendermax)
                          endif
                       endif
@@ -2889,6 +2890,7 @@ subroutine page_setup(dummy_run)
  real    :: barwidth, TitleOffset,xminmargin,xmaxmargin,yminmargin,ymaxmargin
  real    :: xminpix,xmaxpix,yminpix,ymaxpix,dxpix
  logical :: ipanelchange,dum,iprint_axes,lastrow
+ logical :: same_limits_x,same_limits_y,same_limits_render,same_limits_cont
  logical, intent(in), optional :: dummy_run
  character(len=7) :: string
  !--------------------------------------------
@@ -2956,14 +2958,16 @@ subroutine page_setup(dummy_run)
  !--------------------------------------------------------------
  if ((((interactive .and. ((ipanel==nacross*ndown .and. istepsonpage==nstepsperpage) .or. lastplot)) &
         .or. (iadapt .and. lastinpanel)) .and. .not.dum).and. iverbose >= 0) then
-    if (.not.same_limits(xmin,xmax,xminwas,xmaxwas)) &
-          print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelx),xmin,xmax
-    if (.not.same_limits(ymin,ymax,yminwas,ymaxwas)) &
-          print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labely),ymin,ymax
+    same_limits_x = same_limits(xmin,xmax,xminwas,xmaxwas)
+    same_limits_y = same_limits(ymin,ymax,yminwas,ymaxwas)
+    if (.not.same_limits_x) print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelx),xmin,xmax
+    if (.not.same_limits_y) print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labely),ymin,ymax
     if (irender > 0 .and. .not.(ndim==2 .and. x_sec)) then
-       if (.not.same_limits(rendermin,rendermax,renderminwas,rendermaxwas)) &
+       same_limits_render = same_limits(rendermin,rendermax,renderminwas,rendermaxwas)
+       same_limits_cont   = same_limits(contmin,contmax,contminwas,contmaxwas)
+       if (.not.same_limits_render) print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelrender),rendermin,rendermax
              print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelrender),rendermin,rendermax
-       if (gotcontours .and. .not.same_limits(contmin,contmax,contminwas,contmaxwas)) &
+       if (gotcontours .and. .not.same_limits_cont) &
              print "(1x,a,' min, max = ',1pg12.5,2x,1pg12.5)",trim(labelcont),contmin,contmax
     endif
  endif

@@ -797,10 +797,14 @@ RECURSIVE subroutine CompileSubstr (i, F, b, e, Var)
        b2 = b+INDEX(F(b:e),'(')-1
        if (CompletelyEnclosed(F, b2, e)) then             ! Case 3: F(b:e) = 'fcn(...)'
 !            write(*,*)'3. F(b:e) = "fcn(...)"'
-          if (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) then
+          if (n == cAtan2 ) then
+             if (TwoArgs(F,b2+1,e-1,m)) then
 !                print*,' SPLITTING ',b,m,e,' F(b:e)=',F(b2+1:e-1)
-             CALL CompileSubstr (i, F, b2+1, m-1, Var)
-             CALL CompileSubstr (i, F, m+1, e-1, Var)
+                CALL CompileSubstr (i, F, b2+1, m-1, Var)
+                CALL CompileSubstr (i, F, m+1, e-1, Var)
+             else
+                CALL CompileSubstr(i, F, b2+1, e-1, Var)
+             endif
           ELSE
              CALL CompileSubstr(i, F, b2+1, e-1, Var)
           ENDIF
@@ -820,9 +824,13 @@ RECURSIVE subroutine CompileSubstr (i, F, b, e, Var)
           b2 = b+INDEX(F(b+1:e),'(')
           if (CompletelyEnclosed(F, b2, e)) then          ! Case 5: F(b:e) = '-fcn(...)'
 !               write(*,*)'5. F(b:e) = "-fcn(...)"'
-             if (n == cAtan2 .and. TwoArgs(F,b2+1,e-1,m)) then
-                CALL CompileSubstr (i, F, b2+1, m-1, Var)
-                CALL CompileSubstr (i, F, m+1, e-1, Var)
+             if (n == cAtan2 ) then
+                if (TwoArgs(F,b2+1,e-1,m)) then
+                   CALL CompileSubstr (i, F, b2+1, m-1, Var)
+                   CALL CompileSubstr (i, F, m+1, e-1, Var)
+                else
+                   CALL CompileSubstr(i, F, b2+1, e-1, Var)
+                endif
              ELSE
                 CALL CompileSubstr(i, F, b2+1, e-1, Var)
              ENDIF

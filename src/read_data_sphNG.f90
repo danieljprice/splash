@@ -386,7 +386,7 @@ subroutine fake_header_tags(nreals,realarr,tagsreal)
           ipos = ilocbinary + 1
        endif
        if (debug) print*,'DEBUG: reading binary information from header ',ilocbinary
-       if (any(realarr(ilocbinary:ilocbinary+14) /= 0.)) then
+       if (any(abs(realarr(ilocbinary:ilocbinary+14)) > tiny(0.))) then
           tagsreal(ipos:ipos+2) = (/'x1','y1','z1'/)
           if (nreals >= ilocbinary+15) then
              tagsreal(ipos+3:ipos+9) = (/'m1','h1','x2','y2','z2','m2','h2'/)
@@ -1646,10 +1646,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !--this is a bug fix for a corrupt version of wdump outputting bad
 !  small dump files
 !
-    if (smalldump .and. nreal(1)==5 .and. iblock==1 .and. lenvironment('SSPLASH_FIX_CORRUPT')) then
-       print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
-       nreal(1) = 3
-       ncolstep = ncolstep - 2
+    if (smalldump .and. nreal(1)==5 .and. iblock==1) then
+       if (lenvironment('SSPLASH_FIX_CORRUPT')) then
+          print*,'FIXING CORRUPT HEADER ON SMALL DUMPS: assuming nreal=3 not 5'
+          nreal(1) = 3
+          ncolstep = ncolstep - 2
+       endif
     endif
 
     npart_max = int(maxval(isize(1:narrsizes)),kind=kind(npart_max))
@@ -1937,9 +1939,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           nskip = nint(iarr) + nint1(iarr) + nint2(iarr) + nint4(iarr) + nint8(iarr)
        endif
 
-       if (iarr==3 .and. lenvironment('SSPLASH_BEN_HACKED')) then
-          nskip = nskip - 1
-          print*,' FIXING HACKED DUMP FILE'
+       if (iarr==3) then
+          if (lenvironment('SSPLASH_BEN_HACKED')) then
+             nskip = nskip - 1
+             print*,' FIXING HACKED DUMP FILE'
+          endif
        endif
        !print*,'skipping ',nskip
        do i=1,nskip

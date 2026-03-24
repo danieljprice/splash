@@ -163,7 +163,7 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    FC= gfortran
-   FFLAGS= -O3 -fPIC -Wall -Wno-unused-dummy-argument
+   FFLAGS= -O3 -fPIC -Wall -Wextra -Wno-unused-dummy-argument
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
    DEBUGFLAG= -Wextra -g -frange-check -fcheck=all -fbacktrace \
