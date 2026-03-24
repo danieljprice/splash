@@ -210,7 +210,7 @@ ifeq ($(SYSTEM),ifx)
    FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
-   DEBUGFLAG= -C -g
+   DEBUGFLAG= -check all -WB -traceback -g -debug all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
@@ -218,6 +218,21 @@ ifeq ($(SYSTEM),ifx)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
+   NOWARNFLAG=-Werror
+endif
+
+ifeq ($(SYSTEM),aocc)
+   FC= flang
+   FFLAGS= -O3 -fPIC -flto -march=native -Qunused-arguments
+   OMPFLAGS= -fopenmp
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
+   DEBUGFLAG= -fcheck=all -g --debug
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+   CC= clang
+   CFLAGS= -O3 -fPIC
 endif
 
 ifeq ($(SYSTEM),pgf90)
@@ -676,6 +691,7 @@ checksystem:
 compilers:
 	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
 	@if type -p ifx > /dev/null; then echo "make SYSTEM=ifx"; fi;
+	@if type -p flang > /dev/null; then echo "make SYSTEM=aocc"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
 	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;

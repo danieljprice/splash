@@ -1,58 +1,65 @@
-# This is a basic workflow to help you get started with Actions
-
 name: build
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - {compiler: gcc,   version: 'latest', system: gfortran}
+          - {compiler: intel, version: 'latest', system: ifx}
+          - {compiler: aocc,  version: 'latest', system: aocc}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Install gfortran and cairo on Linux
+    - uses: actions/checkout@v4
+
+    - uses: fortran-lang/setup-fortran@v1
+      with:
+        compiler: ${{ matrix.toolchain.compiler }}
+        version: ${{ matrix.toolchain.version }}
+
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install gfortran libcairo2-dev
-
-    - name: Check gfortran version
-      run: gfortran --version
-
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v4
+        sudo apt-get install libcairo2-dev libhdf5-dev libcfitsio-dev
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash
-      run: make -j 4 SYSTEM=gfortran withgiza NOWARN=yes
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
+
+    - name: compile splash with HDF5 and FITS
+      run: |
+        make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} \
+          HDF5=yes FITS=yes withgiza NOWARN=yes \
+          HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
+          HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)"
 
     - name: clean
       run: make clean
 
     - name: compile libexact
-      run: make -j 4 SYSTEM=gfortran libexact NOWARN=yes
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libexact NOWARN=yes
 
     - name: compile libread
-      run: make -j 4 SYSTEM=gfortran libread NOWARN=yes
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libread NOWARN=yes
 
     - name: clean
       run: make clean
 
     - name: compile splash in single precision
-      run: make -j 4 SYSTEM=gfortran DOUBLEPRECISION=no withgiza
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
-      run: make -j 4 SYSTEM=gfortran DEBUG=yes withgiza
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
