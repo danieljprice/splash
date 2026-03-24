@@ -69,7 +69,6 @@ subroutine read_data_mbate(rootname,indexstart,ipos,nstepsread)
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
  integer, parameter :: maxptmass = 1000
- real, parameter :: pi=4.*atan(1.)
  integer :: i,j,ifile,ierr,ipart
  integer :: npart_max,nstep_max,ncolstep,npart,nptmassi,nunknown
  logical :: iexist,doubleprec

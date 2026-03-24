@@ -136,8 +136,6 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     do i=1,3
        v_on_c(i,:) = dat(1:n,ivx+i-1)/c ! velocity in units of speed of light
     enddo
- endif
- if (allocated(v_on_c)) then
     call rotate_particles(n,x,y,z,anglex,angley,anglez,v=v_on_c)
  else
     call rotate_particles(n,x,y,z,anglex,angley,anglez)
@@ -201,7 +199,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  opacity_factor = 1.
  doppler_factor_max = 0.
  do i=1,n
-    if (relativistic) then
+    if (relativistic .and. allocated(v_on_c)) then
        betaz = 1. + v_on_c(3,i)
        lorentz = 1./sqrt(1. - dot_product(v_on_c(:,i),v_on_c(:,i)))
        doppler_factor = betaz*lorentz               ! nu / nu_0, Lorentz transform

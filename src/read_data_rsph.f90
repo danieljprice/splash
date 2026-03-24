@@ -47,9 +47,12 @@
 !-------------------------------------------------------------------------
 
 module readdata_rsph
+ use params, only:maxplot
  implicit none
 
  public :: read_data_rsph, set_labels_rsph
+
+ character(len=10), dimension(maxplot) :: cheader
 
  private
 contains
@@ -57,8 +60,8 @@ contains
 
 subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  use particle_data, only:npartoftype,time,gamma,dat,maxpart,maxstep,maxcol
- use params
- use filenames, only:nfiles
+ use params,        only:int8,doub_prec
+ use filenames,     only:nfiles
  use settings_data, only:ndim,ndimV,ncolumns,ncalc,ntypes, &
                           buffer_data
  use mem_allocation, only:alloc
@@ -71,16 +74,14 @@ subroutine read_data_rsph(rootname,indexstart,ipos,nstepsread)
  integer :: ntoti
  logical :: singleprecision
 
- integer*2, dimension(10) :: sheader
+ integer(kind=2), dimension(10) :: sheader
  integer, dimension(10) :: iheader
- integer*8, dimension(10):: lheader
+ integer(kind=int8), dimension(10):: lheader
  real, dimension(10) :: rheader
  real(doub_prec), dimension(10) :: dheader
  character(len=100) :: headerstring
- character(len=10), dimension(maxplot) :: cheader
  real, dimension(:,:), allocatable :: dattemp
  real(doub_prec), dimension(:,:), allocatable :: dattempd
- common /chead/ cheader
 
  iunit = 11 ! file unit number
  nstepsread = 0
@@ -289,13 +290,10 @@ end subroutine read_data_rsph
 subroutine set_labels_rsph
  use labels, only:ix,ivx,ih,irho,iutherm,ipmass,ipr,iBfirst, &
              iamvec,labelvec,label,labeltype
- use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes, &
                     UseTypeInRenderings
  use geometry, only:labelcoord
  integer :: i,j
- character(len=10), dimension(maxplot) :: cheader
- common /chead/ cheader
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_rsph ***'

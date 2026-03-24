@@ -734,11 +734,11 @@ subroutine read_block_header(iunit,iblock,iarr,iverbose,debug,&
 
  read(iunit,iostat=ierr) isize(iarr),nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
  if (iarr==1) then
-    ntotblock = isize(iarr)
+    ntotblock = int(isize(iarr),kind=kind(ntotblock))
     if (npart <= 0) npart = ntotblock
     ntotal = ntotal + ntotblock
  elseif (iarr==2) then
-    nptmasstot = nptmasstot + isize(iarr)
+    nptmasstot = nptmasstot + int(isize(iarr),kind=kind(nptmasstot))
  endif
  if (debug) print*,'DEBUG: array size ',iarr,' size = ',isize(iarr)
  if (isize(iarr) > 0 .and. iblock==1) then
@@ -1650,7 +1650,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        ncolstep = ncolstep - 2
     endif
 
-    npart_max = maxval(isize(1:narrsizes))
+    npart_max = int(maxval(isize(1:narrsizes)),kind=kind(npart_max))
     npart_max = max(npart_max,npart+nptmasstot,ntotal)
 !
 !--work out from array header how many columns we are going to read
@@ -1855,7 +1855,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     istartmhd = 0
     istartrt = 0
     i1 = i2 + 1
-    i2 = i1 + isize(1) - 1
+    i2 = i1 + int(isize(1),kind=kind(i2)) - 1
     if (debug) then
        print "(1x,a10,i4,3(a,i12))",'MPI block ',iblock,':  particles: ',i1,' to ',i2,' of ',npart
     elseif (nblocks > 1) then
@@ -1863,7 +1863,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        write(*,"('.')",ADVANCE="no")
     endif
     iptmass1 = iptmass2 + 1
-    iptmass2 = iptmass1 + isize(2) - 1
+    iptmass2 = iptmass1 + int(isize(2),kind=kind(iptmass2)) - 1
     nptmass = nptmasstot
     if (nptmass > 0 .and. debug) print "(15x,3(a,i12))",'  pt. masses: ',iptmass1,' to ',iptmass2,' of ',nptmass
 
@@ -1952,7 +1952,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              allocate(level(isize(iarr)),massfac(isize(iarr)))
              read(iunit,end=33,iostat=ierr) level
              ! m = m/2**(level-1)
-             massfac(1:isize(iarr)) = 1./2**(level(1:isize(iarr))-1)
+             massfac(1:isize(iarr)) = real(1./2**(level(1:isize(iarr))-1),kind=kind(massfac))
              if (iblock==1) print "(a,i2)",' :: '//trim(tagtmp)//' max level = ',maxval(level)
              deallocate(level)
           case default
@@ -2004,12 +2004,12 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
                       iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattemp(i))
                             !if (debug) print*,'sink ',i,' col = '//tagtmp//' data = ',dat(npart+i,iloc,j),npart+i,iloc,j,ilocvx,ivx
                          enddo
                       elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
                                dat(npart+i,ih,j) = real(dattemp(i))
                                if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
@@ -2035,11 +2035,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
                       iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
                       if (iloc > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
                          enddo
                       elseif (trim(tagtmp)=='hsoft' .and. ih > 0) then
-                         do i=1,isize(iarr)
+                         do i=1,int(isize(iarr),kind=kind(i))
                             if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
                                dat(npart+i,ih,j) = real(dattempsingle(i))
                                if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
@@ -2054,7 +2054,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 call set_sink_merged(npart+1,int(npart+isize(iarr)),ih,ipmass,dat(:,:,j))
                 ! DEFINE density on sink particles (needed for opacity rendering)
                 if (required(irho)) call set_sink_density(npart+1,int(npart+isize(iarr)),ih,ipmass,irho,dat(:,:,j))
-                npart  = npart + isize(iarr)
+                npart  = npart + int(isize(iarr),kind=kind(npart))
              endif
           elseif (smalldump .and. iarr==2 .and. allocated(listpm)) then
 !--for sphNG, read sink particle masses from block 2 for small dumps
@@ -2071,7 +2071,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                    read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                    if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
                    if (ipmass > 0) then
-                      do i=1,isize(iarr)
+                      do i=1,int(isize(iarr),kind=kind(i))
                          dat(listpm(iptmass1+i-1),ipmass,j) = real(dattemp(i))
                       enddo
                    else
@@ -2086,7 +2086,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                    read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
                    if (nptmass /= isize(iarr)) print "(a)",'ERROR: nptmass /= block size'
                    if (ipmass > 0) then
-                      do i=1,isize(iarr)
+                      do i=1,int(isize(iarr),kind=kind(i))
                          dat(listpm(iptmass1+i-1),ipmass,j) = real(dattempsingle(i))
                       enddo
                    else
@@ -2331,7 +2331,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           !
           do i=1,npart
              itype = itypemap_phantom(iphase(i))
-             iamtype(i,j) = itype
+             iamtype(i,j) = int(itype,kind=int1)
              if (ih > 0 .and. required(ih)) then
                 if (dat(i,ih,j) <= 0. .and. itype /= itypemap_sink_phantom) iamtype(i,j) = itypemap_unknown_phantom
              endif
@@ -2342,7 +2342,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           !
           do i=1,npart
              itype = itypemap_sphNG(iphase(i))
-             iamtype(i,j) = itype
+             iamtype(i,j) = int(itype,kind=int1)
              select case(itype)
              case(1)
                 ngas = ngas + 1
@@ -2422,7 +2422,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              !          print*,ipos,' appended', dattemp2(i,1:3)
              dat(ipos,1:ncolcopy,j) = dattemp2(i,1:ncolcopy)
              !--we make iphase = 1 for point masses (could save iphase and copy across but no reason to)
-             iphase(ipos) = iphaseminthistype
+             iphase(ipos) = int(iphaseminthistype,kind=int1)
           enddo
 
           select case(itype)
