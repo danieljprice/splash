@@ -1340,18 +1340,20 @@ subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
  integer, intent(in) :: nmax,nlocbinary
  logical, intent(in) :: phantomdump,gotbinary
  integer(kind=int1), allocatable :: iphase_old(:)
+ logical :: reallocate
  integer :: ncopy
 
- if (allocated(iphase)) then
-    allocate(iphase_old,source=iphase)
+ reallocate = allocated(iphase)
+ if (reallocate) then
+    iphase_old = iphase  ! allocate and copy contents
     deallocate(iphase)
  endif
  allocate(iphase(nmax))
 
  if (phantomdump) then
-    iphase(:) = 1
+    iphase = 1
  else
-    iphase(:) = 0
+    iphase = 0
  endif
 
  if (gotbinary) then
@@ -1359,7 +1361,7 @@ subroutine allocate_iphase(iphase,nmax,phantomdump,gotbinary,nlocbinary)
     iphase(nlocbinary+1) = -3
  endif
 
- if (allocated(iphase_old)) then
+ if (reallocate) then
     ncopy = min(size(iphase_old),size(iphase))
     iphase(1:ncopy) = iphase_old(1:ncopy)
     deallocate(iphase_old)

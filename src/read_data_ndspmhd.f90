@@ -85,7 +85,6 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  integer, dimension(:), allocatable :: itype
  character(len=20) :: geomfile
 
- iunit = 11 ! file unit number
  ndim_max = 1
  ndimV_max = 1
  nstepsread = 0
@@ -102,7 +101,7 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  !
  !--open data file and read data
  !
- open(unit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
+ open(newunit=iunit,iostat=ierr,file=datfile,status='old',form='unformatted')
  if (ierr /= 0) then
     print*,' *** Error opening '//trim(datfile)//' ***'
     return
@@ -263,16 +262,13 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
 
 
  if (ntoti > 0) then
-    if (singleprecision) then
-       allocate(dattemp(ntoti))
-    else
-       allocate(dattempd(ntoti))
-    endif
     do icol=1,ncolstep
        if (singleprecision) then
+          if (.not.allocated(dattemp)) allocate(dattemp(ntoti))
           read (iunit,iostat=ierr) dattemp(1:ntoti)
           dat(1:ntoti,icol,i) = real(dattemp(1:ntoti))
        else
+          if (.not.allocated(dattempd)) allocate(dattempd(ntoti))
           read (iunit,iostat=ierr) dattempd(1:ntoti)
           dat(1:ntoti,icol,i) = real(dattempd(1:ntoti))
        endif
@@ -319,7 +315,7 @@ subroutine read_data_ndspmhd(rootname,indexstart,ipos,nstepsread)
  !
  !--close data file and return
  !
- close(unit=11)
+ close(iunit)
 
  ilast = i
 !

@@ -131,23 +131,23 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     if (reallocate_step) then
        allocate(npartoftypetemp(maxparttypes,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
-       npartoftypetemp = npartoftype
+       npartoftypetemp(:,1:maxstepold) = npartoftype(:,1:maxstepold)
        deallocate(npartoftype)
 
        allocate(masstypetemp(maxparttypes,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
-       masstypetemp = masstype
+       masstypetemp(:,1:maxstepold) = masstype(:,1:maxstepold)
        deallocate(masstype)
 
        allocate(timetemp(maxstep),gammatemp(maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (timetemp,gammatemp)'
-       timetemp = time
-       gammatemp = gamma
+       timetemp(1:maxstepold) = time(1:maxstepold)
+       gammatemp(1:maxstepold) = gamma(1:maxstepold)
        deallocate(time,gamma)
 
-       allocate(headervalstemp(maxhdr,maxstep))
+       allocate(headervalstemp(maxhdr,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (hdrvalstemp)'
-       headervalstemp = headervals
+       headervalstemp(:,1:maxstepold) = headervals(:,1:maxstepold)
        deallocate(headervals)
     endif
 
@@ -173,7 +173,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
  endif
 
  if (reallocate) then
-    dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
+    dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp
     deallocate(dattemp)
  else
     dat = 0.
@@ -217,7 +217,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     if (ierr /= 0) stop 'error allocating memory for icolourme array'
     icolourme = 1
 
-    if (reallocate_part) then
+    if (reallocate_part .and. allocated(icolourmetemp)) then
        icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
        deallocate(icolourmetemp)
     endif
@@ -256,7 +256,6 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     endif
  endif
 
- return
 end subroutine alloc
 
 

@@ -281,12 +281,9 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate a temporary array for itstepbin (MHD or point masses only)
 !
-    if (mhdread .or. nptmass > 0) then
-       if (allocated(itstepbin)) deallocate(itstepbin)
-       allocate(itstepbin(npart_max),stat=ierr)
-       !itstepbin = 0
-       if (ierr /= 0) print*,'not enough memory in read_data_VINE (itstepbin)'
-    endif
+    if (allocated(itstepbin)) deallocate(itstepbin)
+    allocate(itstepbin(npart_max),stat=ierr)
+    if (ierr /= 0) print*,'not enough memory in read_data_VINE (itstepbin)'
 !
 !--now read the timestep data in the dumpfile
 !
