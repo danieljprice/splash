@@ -163,15 +163,16 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    FC= gfortran
-   FFLAGS= -O3 -fPIC
+   FFLAGS= -O3 -fPIC -Wall -Wno-unused-dummy-argument
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
+   DEBUGFLAG= -Wextra -g -frange-check -fcheck=all -fbacktrace \
               -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
+   NOWARNFLAG=-Werror
 endif
 
 ifeq ($(SYSTEM),sunf95)
@@ -302,6 +303,10 @@ endif
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     FFLAGS += $(DEBUGFLAG)
+endif
+
+ifeq ($(NOWARN), yes)
+    FFLAGS+= $(NOWARNFLAG)
 endif
 
 #
