@@ -836,7 +836,7 @@ withgiza: ../giza/lib/libgiza.a
 
 ../giza/lib/libgiza.a:
 	@echo "Compiling local copy of giza..."
-	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
+	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" FC="" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
 	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
