@@ -90,6 +90,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
  omegasq = omega**2
  B = 0.
  D = 0.
+ smode = morder
 
  if (linear) then
 !---------------------------------------------------------------------------

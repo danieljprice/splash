@@ -92,6 +92,11 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
  nstepsread = 0
  nstep_max = 0
  npart_max = maxpart
+ allocate(datdb(1,1),stat=ierr)
+ if (ierr /= 0) then
+    print*,'*** error allocating scratch array for double conversion ***'
+    return
+ endif
  iabunfileopen = .false.
  hfact = 1.5
  dhfact3 = 1./hfact**3
@@ -483,7 +488,7 @@ subroutine read_data_sro(rootname,indexstart,ipos,nstepsread)
           print "(a)",' *** ERROR: npart in abundance file differs from full dump ***'
        else
           rewind(41)
-          if (doubleprec) then
+          if (doubleprec .and. allocated(datdb)) then
              read(41,iostat=ierr1) nprint,((datdb(i,k),k=1,max_spec+2),i=1,nprint),Etot_burn_cgsdb
              dat(:,ncol+1:ncolumns,j) = real(datdb(:,1:max_spec+2))
              print*,' Etot_burn (cgs) = ',Etot_burn_cgsdb

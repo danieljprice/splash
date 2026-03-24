@@ -277,8 +277,8 @@ subroutine disccalc(iplot,npart,rpart,pmass_in,rminin,rmaxin,ymin,ymax,&
 !
 !--return min and max of y axis so adaptive plot limits can be set
 !
- ymin = minval(yplot(1:nbins),mask=(yplot(1:nbins) /= 0.))
- ymax = maxval(yplot(1:nbins),mask=(yplot(1:nbins) /= 0.))
+ ymin = minval(yplot(1:nbins),mask=(abs(yplot(1:nbins)) > tiny(0.)))
+ ymax = maxval(yplot(1:nbins),mask=(abs(yplot(1:nbins)) > tiny(0.)))
 
 end subroutine disccalc
 
