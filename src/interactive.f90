@@ -3267,7 +3267,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
 
  ! print help message below this
  if (t-tprev > 5.) then  ! wait at least 5 seconds before changing message
-    imessage = mod(imessage+1,10) 
+    imessage = mod(imessage, 10) + 1
     tprev = t
  endif
 

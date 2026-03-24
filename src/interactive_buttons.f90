@@ -121,7 +121,7 @@ end subroutine erase_buttons
  real :: xleft_vp,ybottom_vp,oldch,x0,y0,width
  real :: xleft,xright,ybottom,ytop,xch,ych,xsize,ysize,xbuf,ybuf
  real :: pix_to_viewport_x,pix_to_viewport_y
- real :: xleft_vp0,ybottom_vp0,fac
+ real :: xleft_vp0,ybottom_vp0,fac,xadapt_size
  integer :: oldfill,oldclip,oldls
  integer, parameter :: npts = 14
  real :: xpts(npts),ypts(npts)
@@ -231,12 +231,12 @@ end subroutine erase_buttons
  case(ibutton_adapt)
     xbuf = 0.1*xsize
     ybuf = 0.1*ysize
-    xsize = 3.9
+    xadapt_size = 3.9
     call plot_sls(1)
-    call plot_line1(x0+xbuf,y0+ybuf,x0+xsize*xbuf,y0+xsize*ybuf)
-    call plot_line1(x0-xbuf,y0-ybuf,x0-xsize*xbuf,y0-xsize*ybuf)
-    call plot_line1(x0-xbuf,y0+ybuf,x0-xsize*xbuf,y0+xsize*ybuf)
-    call plot_line1(x0+xbuf,y0-ybuf,x0+xsize*xbuf,y0-xsize*ybuf)
+    call plot_line1(x0+xbuf,y0+ybuf,x0+xadapt_size*xbuf,y0+xadapt_size*ybuf)
+    call plot_line1(x0-xbuf,y0-ybuf,x0-xadapt_size*xbuf,y0-xadapt_size*ybuf)
+    call plot_line1(x0-xbuf,y0+ybuf,x0-xadapt_size*xbuf,y0+xadapt_size*ybuf)
+    call plot_line1(x0+xbuf,y0-ybuf,x0+xadapt_size*xbuf,y0-xadapt_size*ybuf)
  case(ibutton_irregular)
     call plot_sch(0.33*fac)
     xpts(:) = (/0.1358,0.1830,0.3393,0.5224,0.7149,0.8179,0.8279,&
