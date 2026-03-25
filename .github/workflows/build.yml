@@ -37,9 +37,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          brew install cairo hdf5 cfitsio libX11
+          brew install cairo libx11 freetype hdf5 cfitsio
         fi
-      shell: bash
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
