@@ -8,14 +8,20 @@ on:
 
 jobs:
   build-matrix:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
         toolchain:
           - {compiler: gcc,   version: 'latest', system: gfortran}
           - {compiler: intel, version: 'latest', system: ifx}
           - {compiler: aocc,  version: 'latest', system: aocc}
+        exclude:
+          - os: macos-latest
+            toolchain: {compiler: intel, version: 'latest', system: ifx}
+          - os: macos-latest
+            toolchain: {compiler: aocc,  version: 'latest', system: aocc}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -27,8 +33,13 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install libcairo2-dev libhdf5-dev libcfitsio-dev
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          brew install cairo hdf5 cfitsio
+        fi
+      shell: bash
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
