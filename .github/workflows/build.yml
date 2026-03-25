@@ -37,7 +37,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          brew install cairo hdf5 cfitsio
+          brew install cairo hdf5 cfitsio libX11
         fi
       shell: bash
 
