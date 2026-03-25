@@ -119,7 +119,10 @@ subroutine convert_to_grid(time,dat,ntypes,npartoftype,masstype,itype,ncolumns,f
  xmax(1:ndim) = lim(ix(1:ndim),2)
  xlab(:) = (/'x','y','z'/)
  igeom = max(icoordsnew,1)  ! ensure it is not zero
- if (igeom /= igeom_cartesian) xlab = strip(labelcoord(:,igeom),'\')
+ if (igeom /= igeom_cartesian) then
+    xlab = labelcoord(:,igeom)
+    xlab = strip(xlab,'\')
+ endif
  !
  !--print limits information
  !
