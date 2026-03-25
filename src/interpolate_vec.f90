@@ -169,8 +169,8 @@ subroutine interpolate_vec_average(x,y,vecx,vecy,itype, &
  do j=1,npixy
     do i=1,npixx
        if (numcell(i,j) /= 0) then
-          vecpixx(i,j) = vecpixx(i,j)/float(numcell(i,j))
-          vecpixy(i,j) = vecpixy(i,j)/float(numcell(i,j))
+          vecpixx(i,j) = vecpixx(i,j)/real(numcell(i,j))
+          vecpixy(i,j) = vecpixy(i,j)/real(numcell(i,j))
        endif
     enddo
  enddo

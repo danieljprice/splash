@@ -84,7 +84,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
        radstar = sqrt(H0/C0)
     endif
     xplot(1) = -radstar
-    dx = (radstar-xplot(1))/float(npts-1)
+    dx = (radstar-xplot(1))/real(npts-1)
 
     do i=2,npts
        xplot(i) = xplot(1)+dx*(i-1)
@@ -109,7 +109,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
     enddo
 
     if (iplot==6) then        ! plot By \propto rho
-       dx = (H0**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
+       dx = (H0**gam1)/real(npts-1) ! ie (rhomax - 0)/npts
        xplot(1) = 0.
        yplot(1) = sigma*xplot(1)
        do i=2,npts
@@ -192,7 +192,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
        radstar = sqrt(H/C)
     endif
     xplot(1) = -radstar
-    dx = (radstar-xplot(1))/float(npts-1)
+    dx = (radstar-xplot(1))/real(npts-1)
 
     do i=2,npts
        xplot(i) = xplot(1)+dx*(i-1)
@@ -216,7 +216,7 @@ subroutine exact_toystar1D(iplot,time,gamma,H0,A0,C0, &
     enddo
 
     if (iplot==6) then        ! plot By \propto rho
-       dx = (H**gam1)/float(npts-1) ! ie (rhomax - 0)/npts
+       dx = (H**gam1)/real(npts-1) ! ie (rhomax - 0)/npts
        xplot(1) = 0.
        yplot(1) = sigma*xplot(1)
        do i=2,npts

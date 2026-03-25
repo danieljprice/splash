@@ -337,7 +337,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
           if (.not.nomenu) call prompt(' enter number of '//trim(label(iplotz))// &
                       ' cross-section slices',nxsec)
           !!--dz is the distance between slices
-          dz = (lim(iplotz,2)-lim(iplotz,1))/float(nxsec)
+          dz = (lim(iplotz,2)-lim(iplotz,1))/real(nxsec)
           zslicepos = lim(iplotz,1) - 0.5*dz
           xsecpos_nomulti = zslicepos
        else
@@ -367,7 +367,7 @@ subroutine initialise_plotting(ipicky,ipickx,irender_nomulti,icontour_nomulti,iv
                 npartdim = int(maxval(npartoftype(:,1))**(1./real(ndim)))
                 print*,'average # of particles in each dimension = ',npartdim
                 if (npartdim > 0) then
-                   dzsuggest = (lim(iplotz,2)-lim(iplotz,1))/float(npartdim)
+                   dzsuggest = (lim(iplotz,2)-lim(iplotz,1))/real(npartdim)
                 else
                    dzsuggest = 0.01*(lim(iplotz,2)-lim(iplotz,1))
                 endif
