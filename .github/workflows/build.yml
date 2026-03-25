@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-matrix:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -63,3 +63,15 @@ jobs:
 
     - name: compile splash with debug flags
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
+
+  build:
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - run: |
+        if [ "${{ contains(needs.build-matrix.result, 'failure') || contains(needs.build-matrix.result, 'cancelled') }}" == "true" ]; then
+          echo "Matrix build failed"
+          exit 1
+        fi
+        echo "All matrix jobs passed"
