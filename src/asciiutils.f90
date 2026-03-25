@@ -1362,21 +1362,31 @@ end function get_value
 ! match multiple tags against a list of strings
 ! e.g. find 'x','y','z' in list of labels
 !-----------------------------------------------
-subroutine match_taglist(taglist,tags,istartmatch,nmatch)
+subroutine match_taglist(taglist,tags,istartmatch,nmatch,lower)
  character(len=*), intent(in)  :: taglist(:)
  character(len=*), intent(in)  :: tags(:)
  integer,          intent(out) :: istartmatch,nmatch
+ logical,          intent(in), optional :: lower
  integer :: i,j
+ character(len=len(taglist)) :: taglistj
+ logical :: use_lower
+
+ use_lower = .false.
+ if (present(lower)) use_lower = lower
 
  istartmatch = 0
  nmatch = 0
  if (size(taglist) < 1) return
  do i=1,size(tags)
-    if (nmatch <= 1 .and. trim(tags(i))==trim(taglist(1))) then
+    taglistj = trim(taglist(1))
+    if (use_lower) taglistj = trim(lcase(taglistj))
+    if (nmatch <= 1 .and. trim(tags(i))==trim(taglistj)) then
        nmatch = 1
        istartmatch = i
        do j=2,min(size(taglist),size(tags)-i+1)
-          if (trim(tags(i+j-1))==trim(taglist(j))) then
+          taglistj = trim(taglist(j))
+          if (use_lower) taglistj = trim(lcase(taglistj))
+          if (trim(tags(i+j-1))==trim(taglistj)) then
              nmatch = nmatch + 1
           endif
        enddo

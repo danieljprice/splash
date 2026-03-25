@@ -425,9 +425,9 @@ subroutine set_labels_ascii
  do i=2,ndim
     ix(i) = ix(1)+i-1
  enddo
- call match_taglist((/'vx','vy','vz'/),lcase(label(1:ncolumns)),ivx,ndimV)
- call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
- if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+ call match_taglist((/'vx','vy','vz'/),label(1:ncolumns),ivx,ndimV,lower=.true.)
+ call match_taglist((/'bx','by','bz'/),label(1:ncolumns),iBfirst,ndimVtemp,lower=.true.)
+ if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),label(1:ncolumns),ivx,ndimV,lower=.true.)
 !
 !--make labels safe for plotting
 !
