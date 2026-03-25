@@ -45,12 +45,14 @@ jobs:
 
     - name: compile splash (with NOWARN=yes to enforce no compiler warnings)
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
-           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
+           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)" \
+           CAIRO_LIBS="$(pkg-config --libs cairo)" CAIRO_CFLAGS="$(pkg-config --cflags cairo)"
 
     - name: compile splash with HDF5 and FITS
       run: |
           make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)" \
+          CAIRO_LIBS="$(pkg-config --libs cairo)" CAIRO_CFLAGS="$(pkg-config --cflags cairo)" \
           HDF5=yes FITS=yes HDF5ROOT=/usr/ \
           HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
           HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)"
@@ -69,14 +71,16 @@ jobs:
 
     - name: compile splash in single precision
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza \
-           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
+           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)" \
+           CAIRO_LIBS="$(pkg-config --libs cairo)" CAIRO_CFLAGS="$(pkg-config --cflags cairo)"
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza \
-           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
+           X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)" \
+           CAIRO_LIBS="$(pkg-config --libs cairo)" CAIRO_CFLAGS="$(pkg-config --cflags cairo)"
 
   build:
     needs: build-matrix
