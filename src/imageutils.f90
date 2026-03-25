@@ -121,7 +121,7 @@ subroutine image_denoise(naxes,image,hh,iterations,imax,beam,skip,err)
        enddo
     enddo
     !print*,' sampling ',n,' pixels of ',naxes(1)*naxes(2)
-    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g8.3))",its,niter,&
+    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g10.3))",its,niter,&
                    'beam: min = ',minval(hh(1:n)),' max = ',maxval(hh(1:n)),' mean = ',sum(hh(1:n))/n
 
     ! set weights for interpolation
@@ -217,7 +217,7 @@ subroutine image_denoise3D(naxes,image,hh,iterations,imax,beam,err)
           enddo
        enddo
     enddo
-    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g8.3))",its,niter,&
+    if (niter > 0) print "(' Iteration: ',i2,' of ',i2,': ',3(a,1g10.3))",its,niter,&
                    'beam: min = ',minval(hh),' max = ',maxval(hh),' mean = ',sum(hh(1:npixels))/npixels
 
     weight(1:npixels) = dx*dy*dz/hh(1:npixels)**3

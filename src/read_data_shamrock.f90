@@ -26,8 +26,7 @@
 !
 !-----------------------------------------------------------------
 module readdata_shamrock
- use params,          only:maxplot
- use iso_fortran_env, only:int64,int8
+ use params,          only:maxplot,int1,int8
  use json_utils,      only:json_read,json_get_value_by_path, &
                            json_array_length,json_array_get_element,json_success, &
                            json_kind_number,json_kind_string,json_kind_object, &
@@ -66,8 +65,8 @@ subroutine read_data_shamrock(rootname,istepstart,ipos,nstepsread)
  logical :: iexist,reallocate
  integer :: nfields,ncolstep,npart,nsteps_to_read,idx_xyz,nheader,npatches,ierr,i,iu
  integer, allocatable :: pids(:)
- integer(kind=int64) :: base_pos
- integer(kind=int64), allocatable :: offsets(:), bytecounts(:), field_counts(:)
+ integer(kind=int8) :: base_pos
+ integer(kind=int8), allocatable :: offsets(:), bytecounts(:), field_counts(:)
  character(len=:),    allocatable :: user_header,sched_header,file_header
  character(len=len(rootname)+16) :: datfile
  real :: kernel_hfact, particle_mass
@@ -101,11 +100,11 @@ subroutine read_data_shamrock(rootname,istepstart,ipos,nstepsread)
     return
  endif
 
- call read_int64_and_string(iu,user_header,ierr)
+ call read_int8_and_string(iu,user_header,ierr)
  if (ierr /= 0) print "(a)",' ERROR reading user header'
- call read_int64_and_string(iu,sched_header,ierr)
+ call read_int8_and_string(iu,sched_header,ierr)
  if (ierr /= 0) print "(a)",' ERROR reading scheduler header'
- call read_int64_and_string(iu,file_header,ierr)
+ call read_int8_and_string(iu,file_header,ierr)
  if (ierr /= 0) print "(a)",' ERROR reading file header'
 
  inquire(unit=iu,pos=base_pos,iostat=ierr)
@@ -394,7 +393,7 @@ subroutine read_shamrock_header(user_header,sched_header,file_header,fields,offs
                                 bytecounts,pids,kernel_hfact,particle_mass,ierr)
  character(len=*),                  intent(in)  :: user_header,sched_header,file_header
  type(shamrock_field), allocatable, intent(out) :: fields(:)
- integer(kind=int64),  allocatable, intent(out) :: offsets(:), bytecounts(:)
+ integer(kind=int8),  allocatable, intent(out) :: offsets(:), bytecounts(:)
  integer, allocatable,              intent(out) :: pids(:)
  real,                              intent(out) :: kernel_hfact, particle_mass
  integer,                           intent(out) :: ierr
@@ -552,15 +551,15 @@ end subroutine get_header_pairs
 !-----------------------------------------------------------------
 ! read 64 bit integer and the string following it from file
 !-----------------------------------------------------------------
-subroutine read_int64_and_string(iu,str,ierr)
+subroutine read_int8_and_string(iu,str,ierr)
  integer, intent(in) :: iu
  character(len=:), allocatable, intent(out) :: str
  integer, intent(out) :: ierr
- integer(kind=int64) :: len_str
+ integer(kind=int8) :: len_str
 
  ierr = 0
  read(iu,iostat=ierr) len_str
- if (ierr /= 0 .or. len_str < 0_int64) then
+ if (ierr /= 0 .or. len_str < 0_int8) then
     ierr = 1
     allocate(character(len=0) :: str)
     return
@@ -569,18 +568,18 @@ subroutine read_int64_and_string(iu,str,ierr)
  allocate(character(len=int(len_str)) :: str)
  read(iu,iostat=ierr) str
 
-end subroutine read_int64_and_string
+end subroutine read_int8_and_string
 
 !-----------------------------------------------------------------
 ! read the patch counts from the file
 !-----------------------------------------------------------------
 subroutine read_patch_counts(iu,pos_start,nfields,counts,ierr)
  integer, intent(in) :: iu
- integer(kind=int64), intent(in) :: pos_start
+ integer(kind=int8), intent(in) :: pos_start
  integer, intent(in) :: nfields
- integer(kind=int64), intent(out) :: counts(:)
+ integer(kind=int8), intent(out) :: counts(:)
  integer, intent(out) :: ierr
- integer(kind=int64) :: prehead
+ integer(kind=int8) :: prehead
  integer :: j
 
  ierr = 0
@@ -600,13 +599,13 @@ subroutine read_shamrock_data(iu,base_pos,npatches,fields,offsets, &
                               istepstart,npart,counts_buffer,idx_xyz,ierr)
  type(shamrock_field), intent(in) :: fields(:)
  integer, intent(in) :: npatches
- integer(kind=int64), intent(in) :: offsets(:),base_pos
- integer(kind=int64), intent(inout) :: counts_buffer(:)
+ integer(kind=int8), intent(in) :: offsets(:),base_pos
+ integer(kind=int8), intent(inout) :: counts_buffer(:)
  integer, intent(in) :: iu, istepstart, npart
  integer, intent(in) :: idx_xyz
  integer, intent(out) :: ierr
  integer :: patch,nfields,i1,nobj,ios,npart_got
- integer(kind=int64) :: pos
+ integer(kind=int8) :: pos
 
  ierr = 0
  nfields = size(fields)
@@ -640,7 +639,7 @@ end subroutine read_shamrock_data
 subroutine read_patch_data_block(iu,nfields,fields,counts,istepstart,i1,ierr)
  type(shamrock_field), intent(in)  :: fields(:)
  integer,              intent(in)  :: nfields,istepstart,i1,iu
-   integer(kind=int64),  intent(in)  :: counts(:)
+   integer(kind=int8),  intent(in)  :: counts(:)
  integer,              intent(out) :: ierr
    integer :: idx
 
@@ -667,13 +666,13 @@ end subroutine read_patch_data_block
 subroutine read_vector_field(iu,field,count,i1,istepstart,ierr)
  use particle_data, only:dat
  type(shamrock_field), intent(in) :: field
- integer(kind=int64),  intent(in) :: count
+ integer(kind=int8),  intent(in) :: count
  integer, intent(in) :: iu, i1, istepstart
  integer, intent(out) :: ierr
  real, allocatable :: flat(:)
  integer :: p,comp,base_col
- integer(kind=int64) :: size_bytes, aligned_bytes, pad_bytes
- integer(kind=int8), allocatable :: pad(:)
+ integer(kind=int8) :: size_bytes, aligned_bytes, pad_bytes
+ integer(kind=int1), allocatable :: pad(:)
 
  ierr = 0
  if (count <= 0) return
@@ -693,10 +692,10 @@ subroutine read_vector_field(iu,field,count,i1,istepstart,ierr)
  enddo
  deallocate(flat)
 
- size_bytes = count*field%ncomp*8_int64
+ size_bytes = count*field%ncomp*8_int8
  aligned_bytes = align8(size_bytes)
  pad_bytes = aligned_bytes - size_bytes
- if (pad_bytes > 0_int64) then
+ if (pad_bytes > 0_int8) then
     allocate(pad(pad_bytes))
     read(iu,iostat=ierr) pad
     deallocate(pad)
@@ -711,12 +710,12 @@ end subroutine read_vector_field
 subroutine read_scalar_field(iu,field,count,i1,istepstart,ierr)
  use particle_data, only:dat
  type(shamrock_field), intent(in) :: field
- integer(kind=int64),  intent(in) :: count
+ integer(kind=int8),  intent(in) :: count
  integer, intent(in)  :: iu,i1,istepstart
  integer, intent(out) :: ierr
  real, allocatable :: values(:)
- integer(kind=int64) :: size_bytes, aligned_bytes, pad_bytes
- integer(kind=int8), allocatable :: pad(:)
+ integer(kind=int8) :: size_bytes, aligned_bytes, pad_bytes
+ integer(kind=int1), allocatable :: pad(:)
 
  ierr = 0
  if (count <= 0) return
@@ -730,10 +729,10 @@ subroutine read_scalar_field(iu,field,count,i1,istepstart,ierr)
  dat(i1+1:i1+count,field%col_start,istepstart) = real(values)
  deallocate(values)
 
- size_bytes = count*8_int64
+ size_bytes = count*8_int8
  aligned_bytes = align8(size_bytes)
  pad_bytes = aligned_bytes - size_bytes
- if (pad_bytes > 0_int64) then
+ if (pad_bytes > 0_int8) then
     allocate(pad(pad_bytes))
     read(iu,iostat=ierr) pad
     deallocate(pad)
@@ -745,13 +744,13 @@ end subroutine read_scalar_field
 !-----------------------------------------------------------------
 ! align the number of bytes to the next multiple of 8
 !-----------------------------------------------------------------
-integer(kind=int64) function align8(nbytes) result(res)
- integer(kind=int64), intent(in) :: nbytes
- integer(kind=int64) :: rem
+integer(kind=int8) function align8(nbytes) result(res)
+ integer(kind=int8), intent(in) :: nbytes
+ integer(kind=int8) :: rem
 
  res = nbytes
- rem = modulo(res,8_int64)
- if (rem /= 0_int64) res = res + (8_int64 - rem)
+ rem = modulo(res,8_int8)
+ if (rem /= 0_int8) res = res + (8_int8 - rem)
 
 end function align8
 

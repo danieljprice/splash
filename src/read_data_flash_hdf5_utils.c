@@ -92,7 +92,7 @@ void read_flash_hdf5_header(char *filename, float *time, int *npart, int *ncol, 
    h_t    header[lenheader];
 
    hid_t strtype = H5Tcopy(H5T_C_S1);
-   status = H5Tset_size (strtype, 80);
+   (void) H5Tset_size (strtype, 80);
 
    hid_t compound_id = H5Tcreate(H5T_COMPOUND, sizeof(h_t));
    H5Tinsert(compound_id,"name",HOFFSET(h_t, name), strtype);
@@ -184,7 +184,8 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
    if (status == HDF5_error) { printf("ERROR creating hyperslab \n"); *ierr = 4; }
    if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
    // read ID
-   H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+   status = H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+   if (status == HDF5_error) { printf("ERROR reading particle ID data \n"); *ierr = 4; }
    int* tempid = 0;
    tempid = malloc(*npart*sizeof(int));
 
@@ -211,7 +212,8 @@ void read_flash_hdf5_data(char *filename, int *npart, int *ncol, int *isrequired
           if (!H5Sselect_valid(dataspace_id)) { printf("ERROR selecting hyperslab \n"); *ierr = 5; }
           //printf(" getting column %i count %i \n",i,count[0]);
 
-          H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+          status = H5Dread(dataset_id,H5T_NATIVE_DOUBLE,memspace_id,dataspace_id,H5P_DEFAULT,temp);
+          if (status == HDF5_error) { printf("ERROR reading particle data \n"); *ierr = 4; }
 
           // call Fortran back, sending values in temp array to fill into the main splash dat array
 

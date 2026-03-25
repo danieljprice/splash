@@ -119,8 +119,8 @@ subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
  print "(a)",' header info: '
  print "(2(a11,i10))",' igatherb: ',igatherb,' ntot: ',ntot
  print "(2(a11,i10))",' ninit: ',ninit,' ninit1: ',ninit1
- print "(3(a11,1pe10.4))",' hbav1: ',hbav1,' dttot: ',dttot,' xmacc: ',xmacc
- print "(3(a11,1pe10.4))",' accelx: ',xlxacc,' accely: ',xlyacc,' accelz: ',xlzacc
+ print "(3(a11,1pe11.4))",' hbav1: ',hbav1,' dttot: ',dttot,' xmacc: ',xmacc
+ print "(3(a11,1pe11.4))",' accelx: ',xlxacc,' accely: ',xlyacc,' accelz: ',xlzacc
 !
 !--(re)allocate memory
 !

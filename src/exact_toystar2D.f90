@@ -116,7 +116,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
     radstar = sqrt((2.*polyk*gamma*denscentre**gamm1)/gamm1)
 
     xplot(1) = 0.
-    dx = (radstar-xplot(1))/float(npts-1)
+    dx = (radstar-xplot(1))/real(npts-1)
 
     do i=1,npts
        xplot(i) = xplot(1)+dx*(i-1)
@@ -232,7 +232,7 @@ subroutine exact_toystar2D(iplot,time,gamma,polyk,totmass, &
        radstar = sqrt(H/C)
     endif
     xplot(1) = 0.
-    dx = (radstar-xplot(1))/float(npts-1)
+    dx = (radstar-xplot(1))/real(npts-1)
 
     do i=1,npts
        xplot(i) = xplot(1)+dx*(i-1)

@@ -26,8 +26,8 @@
 !
 !----------------------------------------------------------------------
 module readwrite_fits
- use iso_fortran_env, only:real32,real64
  implicit none
+ integer, parameter :: real32 = 4, real64 = 8
  public :: read_fits_image,write_fits_image,fits_error
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header

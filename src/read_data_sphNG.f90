@@ -1509,14 +1509,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
     if ( Xfrac < 0. .or. Xfrac > 1.) then
        Xfrac = Xfrac_default
-       print "(1x,a,f5.3)",'ERROR: Input Xfrac is not between 0 and 1, using default value of ',Xfrac
+       print "(1x,a,f6.3)",'ERROR: Input Xfrac is not between 0 and 1, using default value of ',Xfrac
     endif
     if ( Yfrac < 0. .or. Yfrac > 1.) then
        Yfrac = Yfrac_default
-       print "(1x,a,f5.3)",'ERROR: Input Yfrac is not between 0 and 1, using default value of ',Yfrac
+       print "(1x,a,f6.3)",'ERROR: Input Yfrac is not between 0 and 1, using default value of ',Yfrac
     endif
     if ( Xfrac + Yfrac > 1.) then
-       print "(1x,a,f5.3,a,f5.3,a,f5.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
+       print "(1x,a,f6.3,a,f6.3,a,f6.3)",'ERROR: Xfrac + Yfrac = ',Xfrac+Yfrac,' exceeds 1. Using default values of Xfrac = ',&
          Xfrac_default,' and Yfrac = ',Yfrac_default
        Xfrac = Xfrac_default
        Yfrac = Yfrac_default
@@ -2486,7 +2486,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     if (rad_corotate > tiny(rad_corotate) .and. isink1 > 0) then
        m1 = dat(isink1,4,j)
        omega = -sqrt(m1 / rad_corotate**3)
-       print "(a,g8.2,a,g8.2)",' :: COROTATING FRAME at R = ',rad_corotate,' around sink particle #1, M=',m1
+       print "(a,g9.2,a,g9.2)",' :: COROTATING FRAME at R = ',rad_corotate,' around sink particle #1, M=',m1
     else
        omega = renvironment('SSPLASH_OMEGAT')
     endif

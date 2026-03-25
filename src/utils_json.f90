@@ -26,8 +26,7 @@
 !
 !-----------------------------------------------------------------
 module json_utils
- use iso_fortran_env, only:int64
- use params,          only:doub_prec
+ use params, only:doub_prec,int8
  implicit none
  private
 
@@ -64,7 +63,7 @@ module json_utils
 
  interface json_read
   module procedure json_get_string_or_array, json_get_real, json_get_integer, json_get_logical,&
-                   json_get_value_by_path, json_get_array_int64, json_get_array_int
+                   json_get_value_by_path, json_get_array_int8, json_get_array_int
  end interface json_read
 
 contains
@@ -78,7 +77,7 @@ subroutine json_read_file(filename, content, ierr)
  integer, intent(out) :: ierr
  integer :: iu, ios
  logical :: exists
- integer(int64) :: file_size
+ integer(int8) :: file_size
 
  inquire(file=filename, exist=exists)
  if (.not. exists) then
@@ -96,14 +95,14 @@ subroutine json_read_file(filename, content, ierr)
  endif
 
  inquire(unit=iu, size=file_size, iostat=ios)
- if (ios /= 0 .or. file_size < 0_int64) then
+ if (ios /= 0 .or. file_size < 0_int8) then
     close(iu)
     ierr = json_err_io
     allocate(character(len=0) :: content)
     return
  endif
 
- if (file_size == 0_int64) then
+ if (file_size == 0_int8) then
     allocate(character(len=0) :: content)
  else
     allocate(character(len=int(file_size)) :: content)
@@ -210,12 +209,12 @@ subroutine json_get_integer(json_text, key, value, ierr)
 end subroutine json_get_integer
 
 !-----------------------------------------------------------------
-! get an integer(kind=int64) array from a JSON text
+! get an integer(kind=int8) array from a JSON text
 !-----------------------------------------------------------------
-subroutine json_get_array_int64(json_text, key, values, ierr)
+subroutine json_get_array_int8(json_text, key, values, ierr)
  character(len=*), intent(in) :: json_text
  character(len=*), intent(in) :: key
- integer(kind=int64), allocatable, intent(out) :: values(:)
+ integer(kind=int8), allocatable, intent(out) :: values(:)
  integer, intent(out) :: ierr
  character(:), allocatable :: raw
  integer :: kind, parse_err
@@ -234,14 +233,14 @@ subroutine json_get_array_int64(json_text, key, values, ierr)
     return
  endif
 
- call parse_int64_array(raw, values, parse_err)
+ call parse_int8_array(raw, values, parse_err)
  if (allocated(raw)) deallocate(raw)
  if (parse_err /= 0) then
     ierr = json_err_parse
     if (.not. allocated(values)) allocate(values(0))
  endif
 
-end subroutine json_get_array_int64
+end subroutine json_get_array_int8
 
 !-----------------------------------------------------------------
 ! get an integer array from a JSON text
@@ -1114,9 +1113,9 @@ end function detect_value_kind
 !-----------------------------------------------------------------
 ! parse an array of 64 bit integers from a JSON text
 !-----------------------------------------------------------------
-subroutine parse_int64_array(array_text,values,ierr)
+subroutine parse_int8_array(array_text,values,ierr)
  character(len=*), intent(in) :: array_text
- integer(kind=int64), allocatable, intent(out) :: values(:)
+ integer(kind=int8), allocatable, intent(out) :: values(:)
  integer, intent(out) :: ierr
  integer :: n,i,value_kind
  character(len=:), allocatable :: elem
@@ -1138,12 +1137,12 @@ subroutine parse_int64_array(array_text,values,ierr)
     endif
     if (allocated(elem)) deallocate(elem)
     if (ierr /= 0) then
-       values = 0_int64
+       values = 0_int8
        return
     endif
  enddo
 
-end subroutine parse_int64_array
+end subroutine parse_int8_array
 
 !-----------------------------------------------------------------
 ! parse an array of integers from a JSON text

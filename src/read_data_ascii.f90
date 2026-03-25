@@ -64,9 +64,10 @@
 ! in the module 'particle_data'
 !-------------------------------------------------------------------------
 module asciiread
- use labels, only:lenlabel,label
+ use labels,  only:lenlabel,label
+ use params,  only:maxplot
  integer :: icoltype
- character(len=lenlabel), dimension(size(label)) :: label_orig
+ character(len=lenlabel), dimension(maxplot+2) :: label_orig
 
 end module asciiread
 
@@ -396,16 +397,16 @@ subroutine set_labels_ascii
                          '  in the current directory with one label per line'
     endif
  else
-    overcols: do i=1,ncolumns
+    do i=1,ncolumns
        read(51,"(a)",iostat=ierr) label_orig(i)
        if (ierr < 0) then
           if (iverbose > 0) print "(a,i3)",' end of file in columns file: read to column ',i-1
-          exit overcols
+          exit
        elseif (ierr > 0) then
           if (iverbose > 0) print "(a)",' *** error reading from columns file ***'
-          exit overcols
+          exit
        endif
-    enddo overcols
+    enddo
     close(unit=51)
  endif
 !
@@ -424,9 +425,9 @@ subroutine set_labels_ascii
  do i=2,ndim
     ix(i) = ix(1)+i-1
  enddo
- call match_taglist((/'vx','vy','vz'/),lcase(label(1:ncolumns)),ivx,ndimV)
- call match_taglist((/'bx','by','bz'/),lcase(label(1:ncolumns)),iBfirst,ndimVtemp)
- if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),lcase(label(1:ncolumns)),ivx,ndimV)
+ call match_taglist((/'vx','vy','vz'/),label(1:ncolumns),ivx,ndimV,lower=.true.)
+ call match_taglist((/'bx','by','bz'/),label(1:ncolumns),iBfirst,ndimVtemp,lower=.true.)
+ if (ndimV==0 .and. ivx==0) call match_taglist((/'ux','uy','uz'/),label(1:ncolumns),ivx,ndimV,lower=.true.)
 !
 !--make labels safe for plotting
 !

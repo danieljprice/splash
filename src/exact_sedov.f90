@@ -63,7 +63,7 @@ subroutine exact_sedov(iplot,time,gam,rhozero,energy,rmax,rplot,yplot,ierr)
  print*,' eta0 = ',eta_0, ' gamma = ',gam
 
  power = 1./(ndim+2)
- dr = rmax/float(npts-1)
+ dr = rmax/real(npts-1)
 !
 !--calculate radius and velocity of shock from dimensional analysis
 !

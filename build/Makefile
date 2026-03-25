@@ -149,6 +149,8 @@ else
     CXXLIBS= -lstdc++
 endif
 
+PIELDFLAGS= -pie
+
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -210,7 +212,7 @@ ifeq ($(SYSTEM),ifx)
    FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
-   DEBUGFLAG= -C -g
+   DEBUGFLAG= -check all -WB -traceback -g -debug all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
@@ -218,6 +220,23 @@ ifeq ($(SYSTEM),ifx)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
+   NOWARNFLAG= -diag-error=warn,remark,vec,par,openmp
+endif
+
+ifeq ($(SYSTEM),aocc)
+   FC= flang
+   FFLAGS= -O3 -fPIC -Qunused-arguments
+   OMPFLAGS= -fopenmp
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
+   DEBUGFLAG= -fcheck=all -g --debug
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+   CC= clang
+   CFLAGS= -O3 -fPIC
+   NOWARNFLAG=-Werror
+   PIELDFLAGS= -fpie
 endif
 
 ifeq ($(SYSTEM),pgf90)
@@ -271,7 +290,6 @@ endif
 # these are the flags used for linking
 #
 LDFLAGS= $(X11_LIBS) $(PGPLOTLIBS)
-PIELDFLAGS= -pie
 
 #
 # this is an option to change the endian-ness at compile time
@@ -676,6 +694,7 @@ checksystem:
 compilers:
 	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
 	@if type -p ifx > /dev/null; then echo "make SYSTEM=ifx"; fi;
+	@if type -p flang > /dev/null; then echo "make SYSTEM=aocc"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
 	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;
@@ -820,7 +839,7 @@ withgiza: ../giza/lib/libgiza.a
 
 ../giza/lib/libgiza.a:
 	@echo "Compiling local copy of giza..."
-	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
+	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" FC="" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
 	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
