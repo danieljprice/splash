@@ -40,9 +40,9 @@ jobs:
           brew install cairo libx11 freetype hdf5 cfitsio
         fi
 
-    - name: Set HOMEBREW_PREFIX (macOS)
+    - name: Set PREFIX (macOS)
       if: runner.os == 'macOS'
-      run: echo "HOMEBREW_PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
+      run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
@@ -55,9 +55,9 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
             FITS=yes HDF5=yes \
-            PREFIX="${{ env.HOMEBREW_PREFIX }}" \
-            HDF5ROOT="${{ env.HOMEBREW_PREFIX }}" \
-            FITS_DIR="${{ env.HOMEBREW_PREFIX }}" \
+            PREFIX="${{ env.PREFIX }}" \
+            HDF5ROOT="${{ env.PREFIX }}" \
+            FITS_DIR="${{ env.PREFIX }}" \
             X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
           else
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
