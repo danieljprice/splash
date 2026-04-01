@@ -48,7 +48,13 @@ jobs:
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash (with NOWARN=yes to enforce no compiler warnings)
-      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
+      run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+             PREFIX="${{ env.PREFIX }}"
+          else
+             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
+          fi
 
     - name: compile splash with HDF5 and FITS
       run: |
@@ -57,8 +63,7 @@ jobs:
             FITS=yes HDF5=yes \
             PREFIX="${{ env.PREFIX }}" \
             HDF5ROOT="${{ env.PREFIX }}" \
-            FITS_DIR="${{ env.PREFIX }}" \
-            X11_DIR="${{ env.PREFIX }}"
+            FITS_DIR="${{ env.PREFIX }}"
           else
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
             HDF5ROOT=/usr/ \
