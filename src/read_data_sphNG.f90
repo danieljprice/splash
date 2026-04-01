@@ -66,7 +66,7 @@ module sphNGread
  implicit none
  real(doub_prec) :: udist,umass,utime,umagfd
  real :: tfreefall,dtmax
- integer :: istartmhd,istartrt,nmhd,idivvcol,idivvxcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol
+ integer :: istartmhd,istartrt,nmhd,idivvcol,idivvxcol,icurlvxcol,icurlvycol,icurlvzcol,iHIIcol,iHeIIcol,iHeIIIcol,iextracols
  integer :: nhydroreal4,istart_extra_real4
  integer :: itempcol = 0
  integer :: ncolstepfirst = 0
@@ -1392,7 +1392,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread,&
                       lowmemorymode,ntypes,iverbose,ndusttypes
  use mem_allocation, only:alloc
- use system_utils,   only:lenvironment,renvironment
+ use system_utils,   only:lenvironment,renvironment,envlist
  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,&
                           iutherm,itemp,ikappa,irhorestframe,labelreq,nreq,get_sink_type
  use calcquantities, only:calc_quantities
@@ -1405,7 +1405,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer, intent(in)  :: indexstart,iposn
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
- integer :: i,j,k,ierr,iunit
+ integer :: i,j,k,ierr,iunit,iu_extra
  integer :: intg1,int2,int3,ilocvx,iversion
  integer :: i1,iarr,i2,iptmass1,iptmass2
  integer :: npart_max,nstep_max,ncolstep,icolumn,idustarr,nptmasstot
@@ -1415,13 +1415,14 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
- integer :: icentre,icomp_col_start,ncomp,isink1
+ integer :: icentre,icomp_col_start,ncomp,nextracols,isink1
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
 
  character(len=len(rootname)+10) :: dumpfile,compfile
  character(len=100) :: fileident
+ character(len=30), dimension(10) :: labelextra
 
  integer(kind=int8), dimension(maxarrsizes) :: isize
  integer, dimension(maxarrsizes) :: nint,nint1,nint2,nint4,nint8,nreal,nreal4,nreal8
@@ -1445,11 +1446,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  real, parameter :: Xfrac_default=0.69843,Yfrac_default=0.28731
 
  nstepsread = 0
+ nextracols = 0
  nstep_max = 0
  npart_max = maxpart
  npart = 0
  iunit = 15
  ipmass = 4
+ iextracols = 0
  idivvcol = 0
  idivvxcol = 0
  icurlvxcol = 0
@@ -1496,6 +1499,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  get_kappa_tot = lenvironment("SPLASH_GET_KAPPATOT")
  get_kappa = lenvironment("SPLASH_GET_KAPPA") .or. get_kappa_tot
  get_ionfrac = lenvironment("SPLASH_GET_ION")
+ call envlist('SPLASH_EXTRACOLS',nextracols,labelextra)
+
  if ((get_temperature .or. get_kappa) .and. itempcol > 0 .and. required(itempcol)) then
     required(irho) = .true.
     required(irhorestframe) = .true.
@@ -1770,6 +1775,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
              ncolstepfirst = ncolstep   !  save number of columns
           elseif (ncolstep < ncolstepfirst) then
              ncolstep = ncolstepfirst   !  used saved number of columns
+          endif
+          if (nextracols > 0) then
+             print "(a,i2,a)",' READING ',nextracols,' EXTRA COLUMNS '
+             iextracols = ncolstep + 1
+             ncolstep = ncolstep + nextracols
           endif
           inquire(file=trim(dumpfile)//'.divv',exist=iexist)
           if (iexist) then
@@ -2273,6 +2283,23 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
        close(66)
     endif
  endif
+ !
+ !--read extra columns for phantom dumps
+ !
+ if (phantomdump .and. iextracols /= 0) then
+    do i=1,nextracols
+       print "(a)",' reading extra columns from '//trim(dumpfile)//'.'//trim(labelextra(i))//'.extras'
+       open(newunit=iu_extra,file=trim(dumpfile)//'.'//trim(labelextra(i))//'.extras',form='unformatted',status='old',iostat=ierr)
+       if (ierr /= 0) then
+          print "(a)",' ERROR opening '//trim(dumpfile)//'.'//trim(labelextra(i))//'.extras'
+       else
+          read(iu_extra,iostat=ierr) dat(1:ntotal,iextracols+i-1,j)
+          if (ierr /= 0) print "(a)",' WARNING: ERRORS reading extra columns from file'
+          close(iu_extra)
+          if (trim(labelextra(i))=='kappa') ikappa = iextracols+i-1
+       endif
+    enddo
+endif
 
  if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
     if (allocated(iorig) .and. .not.got_iorig) deallocate(iorig) ! did not find iorig in dump
@@ -2640,11 +2667,12 @@ subroutine set_labels_sphNG
                            get_nearest_mass_unit,get_nearest_velocity_unit
  use sphNGread
  use asciiutils,      only:lcase,make_tags_unique,match_tag
- use system_utils,    only:lenvironment,get_environment_or_flag
- integer :: i,j,idustlast
+ use system_utils,    only:lenvironment,get_environment_or_flag,envlist
+ integer :: i,j,idustlast,nextracols
  real(doub_prec)   :: unitx,unitvel,unitmass
  character(len=20) :: string,unitlabelx,unitlabelv
  character(len=20) :: deltav_string
+ character(len=30), dimension(10) :: labelextra
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_sphNG ***'
@@ -2840,6 +2868,14 @@ subroutine set_labels_sphNG
  if (iHIIcol > 0) label(iHIIcol) = 'HII fraction'
  if (iHeIIcol > 0) label(iHeIIcol) = 'HeII fraction'
  if (iHeIIIcol > 0) label(iHeIIIcol) = 'HeIII fraction'
+
+ ! Labels for extra columns
+ call envlist('SPLASH_EXTRACOLS',nextracols,labelextra)
+ if (nextracols > 0) then
+    do i=iextracols,iextracols+nextracols-1
+       label(i) = trim(labelextra(i-iextracols+1))
+    enddo
+ endif
  if (icurlvxcol > 0 .and. icurlvycol > 0 .and. icurlvzcol > 0) then
     call make_vector_label('curl v',icurlvxcol,ndimV,iamvec,labelvec,label,labelcoord(:,1))
  endif
