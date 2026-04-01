@@ -51,7 +51,8 @@ jobs:
       run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
              make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
-             PREFIX="${{ env.PREFIX }}"
+             PREFIX="${{ env.PREFIX }}" \
+             X11_DIR="${{ env.PREFIX }}"
           else
              make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
           fi
@@ -63,7 +64,8 @@ jobs:
             FITS=yes HDF5=yes \
             PREFIX="${{ env.PREFIX }}" \
             HDF5ROOT="${{ env.PREFIX }}" \
-            FITS_DIR="${{ env.PREFIX }}"
+            FITS_DIR="${{ env.PREFIX }}" \
+            X11_DIR="${{ env.PREFIX }}"
           else
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
             HDF5ROOT=/usr/ \
@@ -85,12 +87,14 @@ jobs:
       run: make clean
 
     - name: compile splash in single precision
+      if: runner.os == 'Linux':
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
+      if: runner.os == 'Linux':
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
 
   build:
