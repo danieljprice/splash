@@ -57,9 +57,11 @@ jobs:
             FITS=yes HDF5=yes \
             PREFIX="${{ env.HOMEBREW_PREFIX }}" \
             HDF5ROOT="${{ env.HOMEBREW_PREFIX }}" \
-            FITS_DIR="${{ env.HOMEBREW_PREFIX }}"
+            FITS_DIR="${{ env.HOMEBREW_PREFIX }}" \
+            X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
           else
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+            HDF5ROOT=/usr/ \
             FITS=yes HDF5=yes
           fi
 
