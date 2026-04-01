@@ -58,10 +58,12 @@ jobs:
             PREFIX="${{ env.PREFIX }}" \
             HDF5ROOT="${{ env.PREFIX }}" \
             FITS_DIR="${{ env.PREFIX }}" \
-            X11_LIBS="$(pkg-config --libs x11)" X11_CFLAGS="$(pkg-config --cflags x11)"
+            X11_DIR="${{ env.PREFIX }}"
           else
             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
             HDF5ROOT=/usr/ \
+            HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
+            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
             FITS=yes HDF5=yes
           fi
 
