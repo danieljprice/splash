@@ -87,14 +87,14 @@ jobs:
       run: make clean
 
     - name: compile splash in single precision
-      if: runner.os == 'Linux':
+      if: runner.os == 'Linux'
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
-      if: runner.os == 'Linux':
+      if: runner.os == 'Linux'
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
 
   build:
