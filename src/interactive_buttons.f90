@@ -113,7 +113,7 @@ end subroutine erase_buttons
  subroutine draw_button(i,itype,msg)
  use plotlib, only:plot_qwin,plot_qcs,plot_qfs,plot_sfs,plot_rect,plot_sls,&
                    plot_set_opacity,plot_set_clipping,plot_get_clipping,&
-                   plot_qls,plot_qch,plot_sch,plot_pt1,plot_line1,plot_poly,plot_circ
+                   plot_qls,plot_qch,plot_sch,plot_pt1,plot_line1,plot_poly
  use interactive_utils, only:get_posxy,get_button_anchor,get_pix2viewport_factor
  integer, intent(in) :: i,itype
  character(len=*), intent(in) :: msg
@@ -221,7 +221,8 @@ end subroutine erase_buttons
  case(ibutton_backward)
     call plot_pt1(x0,y0,28)
  case(ibutton_circle)
-    call plot_circ(x0,y0,0.5*ych*fac)
+    call plot_sls(1)
+    call plot_pt1(x0,y0,22)
  case(ibutton_text)
     call plot_button_text_centered(x0,y0,'a')
  case(ibutton_plus)
