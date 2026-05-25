@@ -242,6 +242,9 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  badarea = count(badpix > 0.)*dx*dy
  badfrac = 0.
  if (area > 0.) badfrac = badarea/area
+
+ print "(a,1pg10.3,a)",'       maximum opacity = ',maxval(opacity),' cm^2/g'
+ print "(a,1pg10.3)",  ' maximum optical depth = ',maxval(taupix)
  print "(a,1pg10.3,a)",' emitting area = ',area/au**2,' au^2 (pixels where dtau > 1/3)'
  print "(a,1pg10.3,a,2pf6.2,a)",' unresolved area = ',badarea/au**2,' au^2 (',badfrac,'%)'
  if (badarea/area > 0.05) print "(/,1x,a,2pf6.2,a)",'WARNING: ',badfrac,'% of photosphere is UNRESOLVED!'
@@ -298,7 +301,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     call write_fits_image('img_'//trim(specfile)//'_mom0.fits',img,(/npixx,npixy/),ierr)
 
     write(*,"(/,a)") 'Writing image into FITS cube ...'
-    allocate(img_tmp(nfreq,npixx,npixy),stat=ierr)
+    allocate(img_tmp(npixx,npixy,nfreq),stat=ierr)
     if (ierr == 0) then
        !$omp parallel do default(none) private(i) &
        !$omp shared(nfreq,npixx,npixy,img_nu,img_tmp)

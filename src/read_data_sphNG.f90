@@ -2748,10 +2748,11 @@ subroutine set_labels_sphNG
           label(i) = 'opacity'
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
+          if (ikappa == 0) ikappa = i
        case('kappa')
           unitslabel(i) = ' [cm^2/g]'
           units(i) = udist**2/umass
-          ikappa = i
+          if (ikappa == 0) ikappa = i
        case('radFx')
           iradFx = i
        case('radP')
