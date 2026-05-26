@@ -47,12 +47,13 @@ contains
 !---------------------------------------------------------
 subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
                           lum,rphoto,temp,lum_bb,r_bb,Tc,badfrac,specfile,ierr)
- use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx
+ use labels,                only:ix,ih,irho,ipmass,itemp,ikappa,ivx,ipmomx,get_sink_type
  use limits,                only:lim,get_particle_subset
  use lightcurve_utils,      only:get_temp_from_u
  use interpolate3D_opacity, only:interp3D_proj_opacity
+ use kernels,               only:radkernel
  use particle_data,         only:icolourme
- use interpolation,         only:get_n_interp,set_interpolation_weights
+ use interpolation,         only:get_n_interp,set_interpolation_weights,weight_sink
  use settings_data,         only:iRescale,iverbose,required,UseTypeInRenderings,ndimV
  use settings_part,         only:iplotpartoftype
  use settings_render,       only:npix,inormalise=>inormalise_interpolations,&
@@ -63,7 +64,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use filenames,             only:tagline
  use blackbody,             only:B_nu,logspace,Wien_nu_from_T,nu_to_lam,&
                                  integrate_log,get_colour_temperature
- use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth
+ use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth,rendersinks
  use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag,renvironment
  use readwrite_fits,        only:write_fits_cube,write_fits_image,write_fits_image
@@ -78,12 +79,13 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  integer :: n,isinktype,npixx,npixy,j,i,nfreq
  integer, parameter :: iu1 = 45
  real, dimension(3) :: xmin,xmax
- real, dimension(:),   allocatable :: weight,x,y,z,flux,opacity
+ real, dimension(:),   allocatable :: weight,x,y,z,h,flux,opacity
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,badpix
  real, dimension(:,:,:), allocatable :: img_nu,img_tmp
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col
  real :: betaz,lorentz,doppler_factor,doppler_factor_max,tempi,badarea
+ real :: rstar,lstar
  logical :: relativistic
 
  lum = 0.
@@ -120,8 +122,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
  !
- n = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),.false.)
- allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),stat=ierr)
+ n = get_n_interp(ntypes,npartoftype,UseTypeInRenderings,iplotpartoftype,size(itype),rendersinks)
+ allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),h(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
     ierr = 3
@@ -130,6 +132,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  x(1:n) = dat(1:n,ix(1))
  y(1:n) = dat(1:n,ix(2))
  z(1:n) = dat(1:n,ix(3))
+ h(1:n) = dat(1:n,ih)
 
  if (relativistic) then
     allocate(v_on_c(3,n),stat=ierr)
@@ -149,7 +152,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
  dy = (xmax(2)-xmin(2))/npixy
- print "(a,i0,a,i0,a)",' Using ',npixx,' x ',npixy,' pixels'
+ print "(3(a,i0),a)",' Ray-tracing ',n,' particles -> ',npixx,' x ',npixy,' pixel image'
  print "(2(1x,a,es10.3,'->',es10.3,a,/))",'x = [',xmin(1),xmax(1),']','y = [',xmin(2),xmax(2),']'
  !
  !--allocate memory for image
@@ -159,10 +162,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  !--set interpolation weights (w = m/(rho*h^ndim)
  !
- isinktype = 0 !get_sink_type(ntypes)
+ isinktype = get_sink_type(ntypes)
  call set_interpolation_weights(weight,dat,itype,(iplotpartoftype .and. UseTypeInRenderings),&
       n,npartoftype,masstype,ntypes,ncolumns,irho,ipmass,ih,ndim,iRescale,&
-      idensityweightedinterpolation,inormalise,units,unit_interp,required,.false.,isinktype)
+      idensityweightedinterpolation,inormalise,units,unit_interp,required,rendersinks,isinktype)
  !
  !--set default mask and apply range restrictions to data
  !
@@ -198,6 +201,12 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  doppler_factor = 1.
  opacity_factor = 1.
  doppler_factor_max = 0.
+ !$omp parallel do default(none) &
+ !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel) &
+ !$omp shared(opacity,relativistic,v_on_c,itemp,f_col) &
+ !$omp private(i,betaz,lorentz,tempi,rstar,lstar) &
+ !$omp firstprivate(opacity_factor,doppler_factor) &
+ !$omp reduction(max:doppler_factor_max)
  do i=1,n
     if (relativistic .and. allocated(v_on_c)) then
        betaz = 1. + v_on_c(3,i)
@@ -207,10 +216,24 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        doppler_factor_max = max(doppler_factor,doppler_factor_max)
     endif
     opacity(i) = opacity(i)*opacity_factor
-    tempi = dat(i,itemp)*f_col
+    if (abs(weight(i) - weight_sink) < tiny(0.)) then
+       tempi = dat(i,itemp)
+       print "(a,1pg10.3,a)",' => Using sink particle: Teff = ',tempi,' K'
+       if (opacity(i) < tiny(0.)) then
+          print "(a)",' WARNING: opacity is <=0 for sink, setting to 0.35 cm^2/g'
+          opacity(i) = 0.35
+       endif
+       rstar = h(i)
+       h(i) = rstar / radkernel
+       lstar = 4.*pi*rstar**2*steboltz*tempi**4
+       print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
+    else
+       tempi = dat(i,itemp)*f_col
+    endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
     flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
  enddo
+ !$omp end parallel do
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
  if (allocated(img_nu)) deallocate(img_nu)
@@ -221,7 +244,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  zobs = huge(zobs)  ! no 3D perspective
  dzobs = 0.
  call interp3D_proj_opacity(x,y,z,&
-      dat(1:n,ipmass),n,dat(1:n,ih),weight, &
+      dat(1:n,ipmass),n,h,weight, &
       flux,z,icolourme(1:n), &
       n,xmin(1),xmin(2),img,taupix,npixx,npixy,&
       dx,dy,zobs,dzobs,opacity,huge(zobs),iverbose,.false.,datv=flux_nu,datvpix=img_nu,badpix=badpix)

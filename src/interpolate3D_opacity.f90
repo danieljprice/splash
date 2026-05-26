@@ -104,7 +104,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
  real :: hmin,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix
- real :: fopacity,tau,rkappatemp,xi,yi
+ real :: fopacity,tau,tau_before,rkappatemp,xi,yi
  real :: t_start,t_end,t_used
  logical :: adjustzperspective,rendersink
  real, dimension(npixx) :: xpix,dx2i
@@ -217,7 +217,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 !$omp private(hi1,hi21,hsmooth,term,dati,datvi,pixwidthz) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(dx2i,q2,xpixi,ypix,zpix,dy,dy2,wab,dfac,pixint) &
-!$omp private(ipart,i,ipix,jpix,tau,fopacity) &
+!$omp private(ipart,i,ipix,jpix,tau,tau_before,fopacity) &
 !$omp reduction(+:nused,nsink,nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !!$omp do ordered schedule(dynamic)
@@ -386,13 +386,16 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                 wab = pixint*dfac
 
                 tau = wab*term
-                tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                tau_before = tausmooth(ipix,jpix)
+                tausmooth(ipix,jpix) = tau_before + tau
                 !
                 !--render, obscuring previously drawn pixels by relevant amount
                 !  also calculate total optical depth for each pixel
                 !
                 if (backwards) then
-                   fopacity = exp(-tausmooth(ipix,jpix))*tau
+                   ! line below correctly handles the case where a particle is highly optically thick
+                   ! and reduces to exp(-tau_before)*tau when the opacity is small, matching forward rendering
+                   fopacity = exp(-tau_before)*(1. - exp(-tau))
                    datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
                    if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
                    if (present(badpix)) then
@@ -412,13 +415,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                    wab = wfromtable(q2)
 
                    tau = wab*term
-                   tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                   tau_before = tausmooth(ipix,jpix)
+                   tausmooth(ipix,jpix) = tau_before + tau
                    !
                    !--render, obscuring previously drawn pixels by relevant amount
                    !  also calculate total optical depth for each pixel
                    !
                    if (backwards) then
-                      fopacity = exp(-tausmooth(ipix,jpix))*tau
+                      fopacity = exp(-tau_before)*(1. - exp(-tau))
                       datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
                       if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
                       if (present(badpix)) then
