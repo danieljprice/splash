@@ -1278,9 +1278,12 @@ end subroutine set_sink_density
 !----------------------------------------------------------------------
 !  Map sink particle data to splash columns
 !----------------------------------------------------------------------
-integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
- use labels, only:ix,ipmass,ih,ivx
+integer function map_sink_property_to_column(k,ilocvx,ncolmax,tag) result(iloc)
+ use labels,     only:ix,ipmass,ih,ivx,itemp,label
+ use asciiutils, only:lcase,match_tag
  integer, intent(in) :: k,ilocvx,ncolmax
+ character(len=*), intent(in) :: tag
+ integer :: iTdust
 
  select case(k)
  case(1:3)
@@ -1296,6 +1299,21 @@ integer function map_sink_property_to_column(k,ilocvx,ncolmax) result(iloc)
        iloc = 0
     endif
  end select
+
+ ! if column not found by index, try to match by tag
+ if (iloc==0) then
+    select case(trim(lcase(tag)))
+    case('teff')
+       ! map Teff into temperature column if it exists
+       if (itemp > 0) then
+          iloc = itemp
+       else ! otherwise map Teff into Tdust column if it exists
+          iTdust = match_tag(label,'Tdust')
+          if (iTdust > 0) iloc = iTdust
+       endif
+    end select
+ endif
+
  if (iloc > ncolmax) iloc = 0  ! error occurred
 
 end function map_sink_property_to_column
@@ -2008,7 +2026,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       read(iunit,end=33,iostat=ierr) dattemp(1:isize(iarr))
                       if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
 
-                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
+                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)),tagtmp)
                       if (iloc > 0) then
                          do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattemp(i))
@@ -2019,6 +2037,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                             if (abs(dat(npart+i,ih,j)) < tiny(0.)) then
                                dat(npart+i,ih,j) = real(dattemp(i))
                                if (i == 1) print*,'zero accretion radius: taking sink particle radius from softening length'
+                            endif
+                         enddo
+                      elseif (trim(tagtmp)=='Reff' .and. ih > 0) then
+                         do i=1,int(isize(iarr),kind=kind(i))
+                            if (dattemp(i) > dat(npart+i,ih,j)) then
+                               dat(npart+i,ih,j) = real(dattemp(i))
+                               print "(a,1pg10.3,a,i0)",' => setting h to Reff = ',dattemp(i),' for sink particle ',npart+i
                             endif
                          enddo
                       else
@@ -2039,7 +2064,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                       read(iunit,end=33,iostat=ierr) dattempsingle(1:isize(iarr))
                       if (ierr /= 0) print*,' ERROR during read of sink particle data, array ',k
 
-                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)))
+                      iloc = map_sink_property_to_column(k,ilocvx,size(dat(1,:,j)),tagtmp)
                       if (iloc > 0) then
                          do i=1,int(isize(iarr),kind=kind(i))
                             dat(npart+i,iloc,j) = real(dattempsingle(i))
