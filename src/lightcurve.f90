@@ -152,7 +152,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  dx = (xmax(1)-xmin(1))/npixx
  npixy = int((xmax(2)-xmin(2) - 0.5*dx)/dx) + 1
  dy = (xmax(2)-xmin(2))/npixy
- print "(3(a,i0),a)",' Ray-tracing ',n,' particles -> ',npixx,' x ',npixy,' pixel image'
+ print "(/,3(a,i0),a)",' Ray-tracing ',n,' particles -> ',npixx,' x ',npixy,' pixel image'
  print "(2(1x,a,es10.3,'->',es10.3,a,/))",'x = [',xmin(1),xmax(1),']','y = [',xmin(2),xmax(2),']'
  !
  !--allocate memory for image
