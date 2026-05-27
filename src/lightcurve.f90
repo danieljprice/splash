@@ -322,6 +322,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (get_command_flag('writefits')) then
     write(*,"(/,a)") 'Writing total intensity to fits image ...'
     call write_fits_image('img_'//trim(specfile)//'_mom0.fits',img,(/npixx,npixy/),ierr)
+    if (ierr /= 0) then
+       write(*,"(a)") ' ERROR: mom0 FITS image not written; skipping cube'
+       return
+    endif
 
     write(*,"(/,a)") 'Writing image into FITS cube ...'
     allocate(img_tmp(npixx,npixy,nfreq),stat=ierr)
