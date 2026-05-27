@@ -81,15 +81,15 @@ download_dist_file()
 unpack_dist_file()
 {
    echo ":: unpacking $distfile to $installprefix";
-   if [ $extension==".tar.xz" ]; then
-      tar -Jxf $distfile;
+   if [ "$extension" = ".tar.xz" ]; then
+      tar -Jxf "$distfile";
    else
-      tar xfz $distfile;
+      tar xfz "$distfile";
    fi
-   if [ ! -d $pkg_dir ]; then
+   if [ ! -d "$pkg_dir" ]; then
       echo; echo "ERROR: failed to unpack (no directory $pkg_dir)"; echo;
       return 1;
-      if [ $extension==".tar.xz" ]; then
+      if [ "$extension" = ".tar.xz" ]; then
       #
       #--install xzutils if tar -Jxf fails...
       #
