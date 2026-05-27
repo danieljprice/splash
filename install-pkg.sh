@@ -87,9 +87,10 @@ unpack_dist_file()
       tar xfz "$distfile";
    fi
    if [ ! -d "$pkg_dir" ]; then
-      echo; echo "ERROR: failed to unpack (no directory $pkg_dir)"; echo;
-      return 1;
-      if [ "$extension" = ".tar.xz" ]; then
+      if [ "$extension" != ".tar.xz" ]; then
+         echo; echo "ERROR: failed to unpack (no directory $pkg_dir)"; echo;
+         return 1;
+      else
       #
       #--install xzutils if tar -Jxf fails...
       #
