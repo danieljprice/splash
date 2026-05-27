@@ -557,7 +557,9 @@ subroutine set_sink_reff_and_teff(dat,npartoftype,iamtype,nsteps,ntypes)
  itype = get_sink_type(ntypes)
  if (itype <= 0 .or. (ih <= 0 .and. itemp <= 0)) return
 
- nsink = npartoftype(itype,1)
+ nsink = maxval(npartoftype(itype,:))
+ if (nsink <= 0) return
+
  allocate(reff_list(nsink),teff_list(nsink))
  reff_list = renvlist('SPLASH_REFF',nsink,errval=-666.)
  teff_list = renvlist('SPLASH_TEFF',nsink,errval=-666.)
@@ -575,6 +577,7 @@ subroutine set_sink_reff_and_teff(dat,npartoftype,iamtype,nsteps,ntypes)
        endif
     enddo
  enddo
+ deallocate(reff_list,teff_list)
 
 end subroutine set_sink_reff_and_teff
 
