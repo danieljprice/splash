@@ -284,6 +284,11 @@ subroutine adjust_data_codeunits
     call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
  endif
 
+ !
+ !--overwrite effective radius and effective temperature for sink particles
+ !
+ call set_sink_reff_and_teff(dat,npartoftype,iamtype,nstepsinfile(ifileopen),ntypes)
+
 end subroutine adjust_data_codeunits
 
 !-----------------------------------------------------------------
@@ -533,6 +538,53 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
 
 end subroutine fake_twofluids
 
+!------------------------------------------------------
+! overwrite radius (h) and effective temperature for sink particles
+! from SPLASH_REFF and SPLASH_TEFF environment variables
+!------------------------------------------------------
+subroutine set_sink_reff_and_teff(dat,npartoftype,iamtype,nsteps,ntypes)
+ use params,         only:int1
+ use system_utils,   only:renvlist
+ use labels,         only:ih,itemp,get_sink_type
+ use part_utils,     only:locate_nth_particle_of_type
+ integer, intent(in) :: ntypes,nsteps
+ integer, dimension(:,:), intent(in) :: npartoftype
+ integer(int1), dimension(:,:), intent(in) :: iamtype
+ real, dimension(:,:,:), intent(inout) :: dat
+ real, dimension(:), allocatable :: reff_list,teff_list
+ integer :: i,j,itype,nsink,isinkpos,ntot
+
+ itype = get_sink_type(ntypes)
+ if (itype <= 0 .or. (ih <= 0 .and. itemp <= 0)) return
+
+ nsink = maxval(npartoftype(itype,:))
+ if (nsink <= 0) return
+
+ allocate(reff_list(nsink),teff_list(nsink))
+ reff_list = renvlist('SPLASH_REFF',nsink,errval=-666.)
+ teff_list = renvlist('SPLASH_TEFF',nsink,errval=-666.)
+ do j=1,nsteps
+    do i=1,npartoftype(itype,j)
+       call locate_nth_particle_of_type(i,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
+       if (isinkpos <= 0) cycle
+       if (reff_list(i) > 0. .and. ih > 0) then
+          print "(a,1pg10.3,a,i0)",' => setting Reff = ',reff_list(i),' for sink particle ',i
+          dat(isinkpos,ih,j) = reff_list(i)
+       endif
+       if (teff_list(i) > 0. .and. itemp > 0) then
+          print "(a,1pg10.3,a,i0)",' => setting Teff to ',teff_list(i),' for sink particle ',i
+          dat(isinkpos,itemp,j) = teff_list(i)
+       endif
+    enddo
+ enddo
+ deallocate(reff_list,teff_list)
+
+end subroutine set_sink_reff_and_teff
+
+!-------------------------------------------------------------------
+! compute h for all particles in the dataset if not already present
+! WARNING: this is a SLOW routine, use with caution
+!-------------------------------------------------------------------
 subroutine get_h_on_all_particles(dat,npartoftype,nsteps,ndim,ncol)
  use labels,        only:ih,irho,ix,label,ipmass
  use get_h,         only:compute_h_and_density

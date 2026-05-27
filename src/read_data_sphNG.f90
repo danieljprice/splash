@@ -2826,6 +2826,8 @@ subroutine set_labels_sphNG
           unitslabel(i) = ' [cm/s]'
        case('temperature')
           itemp = i
+       case('Tdust')
+          if (itemp == 0) itemp = i
        case('vrel')
           ivrel = i
        case('px')
@@ -2855,8 +2857,12 @@ subroutine set_labels_sphNG
  if (idivvxcol > 0) label(idivvxcol) = 'div vx'
  if (idivvcol > 0) label(idivvcol) = 'div v'
  if (itemp > 0) then
-    label(itemp) = 'temperature'
-    unitslabel(itemp) = ' [K]'
+    if (match_tag(label,'Tdust') == itemp) then
+       unitslabel(itemp) = ' [K]'
+    else
+       label(itemp) = 'temperature'
+       unitslabel(itemp) = ' [K]'
+    endif
  endif
  if (itempcol > 0) then
     if (itempcol /= itemp) label(itempcol) = 'temperature (from u)'
