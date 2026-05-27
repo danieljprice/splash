@@ -62,6 +62,55 @@ module readwrite_fits
 contains
 
 !---------------------------------------------------
+! print cfitsio error stack for a given status
+!---------------------------------------------------
+subroutine report_fitsio_error(context,status)
+ character(len=*), intent(in) :: context
+ integer,          intent(in) :: status
+ character(len=80) :: errtext,msg
+ integer :: i
+
+ errtext = ''
+ call ftgerr(status,errtext)
+ write(*,"(1x,a,1x,i0,1x,a)") 'CFITSIO error in '//trim(context)//': status =',status,trim(errtext)
+
+ do i=1,50
+    msg = ''
+    call ftgmsg(msg)
+    if (len_trim(msg) == 0) exit
+    write(*,"(1x,a)") trim(msg)
+ enddo
+
+ call ftcmsg()
+
+end subroutine report_fitsio_error
+
+!---------------------------------------------------
+! close FITS unit (always use status=0 for cleanup)
+!---------------------------------------------------
+subroutine fits_close_unit(iunit)
+ integer, intent(in) :: iunit
+ integer :: istat
+
+ istat = 0
+ call ftclos(iunit,istat)
+ istat = 0
+ call ftfiou(iunit,istat)
+
+end subroutine fits_close_unit
+
+!---------------------------------------------------
+! CFITSIO extended filename: leading '!' overwrites file
+!---------------------------------------------------
+function fits_newfile_name(filename) result(fitsname)
+ character(len=*), intent(in)  :: filename
+ character(len=len_trim(filename)+1) :: fitsname
+
+ fitsname = '!'//trim(filename)
+
+end function fits_newfile_name
+
+!---------------------------------------------------
 ! subroutine to read image from FITS file
 ! using cfitsio library
 !---------------------------------------------------
@@ -324,15 +373,26 @@ subroutine write_fits_image(filename,image,naxes,ierr,hdr)
  character(len=80), intent(in), optional :: hdr(:)
  integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
  logical :: simple,extend
+ character(len=len_trim(filename)+1) :: fitsname
 
  !  Get an unused Logical Unit Number to use to open the FITS file.
  ierr = 0
  call ftgiou(iunit,ierr)
+ if (ierr /= 0) then
+    call report_fitsio_error('ftgiou (image)',ierr)
+    return
+ endif
 
- !  Create the new empty FITS file.
+ !  Create the new empty FITS file (overwrite if it already exists).
  blocksize=1
  print "(a)",' writing '//trim(filename)
- call ftinit(iunit,filename,blocksize,ierr)
+ fitsname = fits_newfile_name(filename)
+ call ftinit(iunit,fitsname,blocksize,ierr)
+ if (ierr /= 0) then
+    call report_fitsio_error('ftinit (image)',ierr)
+    call fits_close_unit(iunit)
+    return
+ endif
 
  !  Initialize parameters about the FITS image
  simple=.true.
@@ -342,18 +402,36 @@ subroutine write_fits_image(filename,image,naxes,ierr,hdr)
 
  !  Write the required header keywords.
  call ftphpr(iunit,simple,bitpix,2,naxes,0,1,extend,ierr)
+ if (ierr /= 0) then
+    call report_fitsio_error('ftphpr (image header)',ierr)
+    call fits_close_unit(iunit)
+    return
+ endif
  !  Write additional header keywords, if present
- if (present(hdr)) call write_fits_head(iunit,hdr,ierr)
+ if (present(hdr)) then
+    call write_fits_head(iunit,hdr,ierr)
+    if (ierr /= 0) then
+       call report_fitsio_error('write_fits_head (image header)',ierr)
+       call fits_close_unit(iunit)
+       return
+    endif
+ endif
 
  group=1
  firstpixel=1
  npixels = naxes(1)*naxes(2)
+ if (npixels /= size(image)) then
+    ierr = 1
+    print "(a,2(i0,a))",' ERROR: npixels mismatch (',npixels,' vs ',size(image),')'
+    call fits_close_unit(iunit)
+    return
+ endif
  ! write as real*4
  call ftppre(iunit,group,firstpixel,npixels,image,ierr)
+ if (ierr /= 0) call report_fitsio_error('ftppre (image pixels)',ierr)
 
  !  Close the file and free the unit number
- call ftclos(iunit, ierr)
- call ftfiou(iunit, ierr)
+ call fits_close_unit(iunit)
 
 end subroutine write_fits_image
 
@@ -389,19 +467,25 @@ subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
  character(len=80), intent(in), optional :: hdr(:)
  integer :: iunit,blocksize,group,firstpixel,bitpix,npixels
  logical :: simple,extend
+ character(len=len_trim(filename)+1) :: fitsname
 
  !  Get an unused Logical Unit Number to use to open the FITS file.
  ierr = 0
  call ftgiou(iunit,ierr)
-
- !  Create the new empty FITS file.
- blocksize=1
- call ftinit(iunit,filename,blocksize,ierr)
  if (ierr /= 0) then
-    print "(a)",' ERROR: '//trim(filename)//' already exists or is not writeable'
+    call report_fitsio_error('ftgiou (cube)',ierr)
     return
- else
-    print "(a)",' writing '//trim(filename)
+ endif
+
+ !  Create the new empty FITS file (overwrite if it already exists).
+ blocksize=1
+ print "(a)",' writing '//trim(filename)
+ fitsname = fits_newfile_name(filename)
+ call ftinit(iunit,fitsname,blocksize,ierr)
+ if (ierr /= 0) then
+    call report_fitsio_error('ftinit (cube)',ierr)
+    call fits_close_unit(iunit)
+    return
  endif
 
  !  Initialize parameters about the FITS image
@@ -412,18 +496,36 @@ subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
 
  !  Write the required header keywords.
  call ftphpr(iunit,simple,bitpix,3,naxes,0,1,extend,ierr)
+ if (ierr /= 0) then
+    call report_fitsio_error('ftphpr (cube header)',ierr)
+    call fits_close_unit(iunit)
+    return
+ endif
  !  Write additional header keywords, if present
- if (present(hdr)) call write_fits_head(iunit,hdr,ierr)
+ if (present(hdr)) then
+    call write_fits_head(iunit,hdr,ierr)
+    if (ierr /= 0) then
+       call report_fitsio_error('write_fits_head (cube header)',ierr)
+       call fits_close_unit(iunit)
+       return
+    endif
+ endif
 
  group=1
  firstpixel=1
  npixels = product(naxes)
+ if (npixels /= size(image)) then
+    ierr = 1
+    print "(a,2(i0,a))",' ERROR: npixels mismatch (',npixels,' vs ',size(image),')'
+    call fits_close_unit(iunit)
+    return
+ endif
  ! write as real*4
  call ftppre(iunit,group,firstpixel,npixels,image,ierr)
+ if (ierr /= 0) call report_fitsio_error('ftppre (cube pixels)',ierr)
 
  !  Close the file and free the unit number
- call ftclos(iunit, ierr)
- call ftfiou(iunit, ierr)
+ call fits_close_unit(iunit)
 
 end subroutine write_fits_cube
 
