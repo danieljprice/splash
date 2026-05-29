@@ -422,12 +422,6 @@ subroutine write_fits_image(filename,image,naxes,ierr,hdr)
  group=1
  firstpixel=1
  npixels = naxes(1)*naxes(2)
- if (npixels /= size(image)) then
-    ierr = 1
-    print "(a,2(i0,a))",' ERROR: npixels mismatch (',npixels,' vs ',size(image),')'
-    call fits_close_unit(iunit)
-    return
- endif
  ! write as real*4
  call ftppre(iunit,group,firstpixel,npixels,image,ierr)
  if (ierr /= 0) call report_fitsio_error('ftppre (image pixels)',ierr)
@@ -516,12 +510,6 @@ subroutine write_fits_cube(filename,image,naxes,ierr,hdr)
  group=1
  firstpixel=1
  npixels = product(naxes)
- if (npixels /= size(image)) then
-    ierr = 1
-    print "(a,2(i0,a))",' ERROR: npixels mismatch (',npixels,' vs ',size(image),')'
-    call fits_close_unit(iunit)
-    return
- endif
  ! write as real*4
  call ftppre(iunit,group,firstpixel,npixels,image,ierr)
  if (ierr /= 0) call report_fitsio_error('ftppre (cube pixels)',ierr)
