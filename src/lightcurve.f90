@@ -67,7 +67,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  use settings_xsecrot,      only:anglex,angley,anglez,taupartdepth,rendersinks
  use rotation,              only:rotate_particles
  use system_utils,          only:get_command_flag,renvironment
- use readwrite_fits,        only:write_fits_cube,write_fits_image,write_fits_image
+ use readwrite_fits,        only:write_fits_cube,write_fits_image,have_fits_library
  integer, intent(in)  :: ncolumns,ntypes,ndim
  integer, intent(in)  :: npartoftype(:)
  integer(kind=int1), intent(in) :: itype(:)
@@ -86,7 +86,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col
  real :: betaz,lorentz,doppler_factor,doppler_factor_max,tempi,badarea
  real :: rstar,lstar
- logical :: relativistic
+ logical :: relativistic,nofits
 
  lum = 0.
  rphoto = 0.
@@ -110,6 +110,17 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  !
  relativistic = .not.get_command_flag('nonrel') .and. (ivx > 0 .and. ndimV >= 3 .and. ipmomx > 0)
  if (relativistic) print "(a)",' Relativistic corrections ON (use --nonrel to disable)'
+
+ nofits = get_command_flag('nofits')
+ if (have_fits_library) then
+    if (.not.nofits) then
+       print "(a)",' FITS output ON (writes img_*_mom0.fits and img_*.fits cube; use --nofits to disable)'
+    else
+       print "(a)",' FITS output disabled (--nofits)'
+    endif
+ else
+    print "(a)",' FITS output not available (recompile splash with FITS=yes to enable)'
+ endif
 
  !--allow for colour correction to temperature by factor of f_col
  f_col = renvironment('fcol', -1.0)
@@ -319,7 +330,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
          minval(img),maxval(img),'intensity','lum.pix',0.)
  endif
 
- if (get_command_flag('writefits')) then
+ if (have_fits_library .and. .not.nofits) then
     write(*,"(/,a)") 'Writing total intensity to fits image ...'
     call write_fits_image('img_'//trim(specfile)//'_mom0.fits',img,(/npixx,npixy/),ierr)
     if (ierr /= 0) then

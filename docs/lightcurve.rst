@@ -37,6 +37,8 @@ Therefore, before running ``splash calc lightcurve``, it is necessary to first r
 
 After setting and saving the settings, you can now exit splash and run the above commandline, with the optional ``--kappa`` and ``--temperature`` flag to ask splash to compute opacity and temperature respectively (more on that later).
 
+If splash was compiled with cfitsio (``FITS=yes``), FITS images and a spectral cube are written for each dump by default (see :ref:`sec:lcfits`). Use ``--nofits`` to turn this off.
+
 
 By default, this calculates the lightcurve seen by an observer at +z direction infinitely away from the source.
 The viewing direction can be rotated by using the ``--anglex, --angley, --anglez`` :ref:`sec:commandline`.
@@ -289,12 +291,44 @@ where ``6.96e10`` cm is approximately one solar radius and ``5772`` K is the sol
 temperature.
 
 
+.. _sec:lcfits:
+
+FITS and pixmap output
+----------------------
+
+When splash is built with the cfitsio library (``make SYSTEM=... FITS=yes``), each dump
+processed by ``splash calc lightcurve`` writes FITS files in addition to the model spectrum
+(``<basename>.spec``):
+
++-------------------------------+----------------------------------------------------------+
+| ``img_<basename>_mom0.fits``  | 2D map of frequency-integrated intensity (moment 0)      |
++-------------------------------+----------------------------------------------------------+
+| ``img_<basename>.fits``       | 3D spectral cube (two spatial axes plus frequency)       |
++-------------------------------+----------------------------------------------------------+
+
+Here ``<basename>`` is the dump filename without directory or extension (the same stem as
+``<basename>.spec``).
+
+FITS output is **on by default** in FITS-enabled builds. Splash prints a short message at
+startup; use ``--nofits`` to suppress writing FITS files::
+
+    splash calc lightcurve dump_* --temperature --kappa --nofits
+
+If splash was built without FITS support, a message explains that FITS output is not available
+and that you must recompile with ``FITS=yes``.
+
+An optional ASCII pixmap of the integrated intensity map can be written with ``--writepix``
+(file ``lum.pix``).
+
+
 .. _sec:lcoutput:
 
 Output file explanations
 ------------------------
 
-Outputs are written to the file ``lightcurve.out`` by default. Note that there are some more information printed on screen as well.
+Outputs are written to the file ``lightcurve.out`` by default (one row per input dump).
+Per-dump spectra are written to ``<basename>.spec``; see :ref:`sec:lcfits` for FITS and pixmap
+files. Note that there is also more information printed on screen.
 
 Splash roughly estimates if the photosphere in the dump has enough resolution.
 This information is printed on screen.

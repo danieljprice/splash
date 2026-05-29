@@ -28,8 +28,10 @@
 module readwrite_fits
  implicit none
  integer, parameter :: real32 = 4, real64 = 8
+ logical, parameter :: have_fits_library = .true.
 
  public :: read_fits_image,write_fits_image,fits_error
+ public :: have_fits_library
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
  public :: get_floats_from_fits_header,get_from_header,get_from_header_s
