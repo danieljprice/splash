@@ -52,15 +52,15 @@ subroutine menu
  use getdata,          only:get_data
  use geomutils,        only:set_coordlabels
  use timestepping
- integer            :: i,icol,ihalf,iadjust,indexi,ierr
+ integer            :: i,icol,indexi,ierr
  integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
  integer            :: iamvecprev, ivecplottemp,ichoose
- integer            :: maxdigits,ithird
+ integer            :: maxdigits
  character(len=5)   :: ioption
  character(len=120) :: vecprompt,string
  character(len=20)  :: rprompt
  character(len=2)   :: fmtstrlen
- character(len=64)  :: fmtstr1,fmtstr2,fmtstr3
+ character(len=64)  :: fmtstr3
  character(len=9)   :: sep
  logical            :: iAllowRendering,threecol
 
@@ -137,43 +137,11 @@ subroutine menu
           threecol = .true.
           sep = "(79('-'))"
           print sep
-          ithird = numplot/3                ! print in three columns
-          ihalf = 2*numplot/3               ! print in three columns
-          iadjust = 0
-          if (mod(numplot,3) > 0) iadjust = 1
-          fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                         //trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                         //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-          print fmtstr1, &
-             (i,transform_label(label(i),itrans(i)), &
-             ithird + i + iadjust, transform_label(label(ithird + i), &
-             itrans(ithird+i+iadjust)),ihalf+i+2*iadjust,transform_label(label(ihalf + i + 2*iadjust), &
-             itrans(ihalf+i+2*iadjust)),i=1,ithird)
-          if (iadjust /= 0) then
-             fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-             print fmtstr2, &
-                 ithird + iadjust,transform_label(label(ithird + iadjust), &
-                 itrans(ithird+iadjust)),ihalf+2*iadjust,&
-                 transform_label(label(ihalf+2*iadjust),itrans(ihalf+i+2*iadjust))
-          endif
+          call print_menu_columns(numplot,3,maxdigits,label,itrans)
        else
           sep="(55('-'))"
           print sep
-          ihalf = numplot/2                ! print in two columns
-          iadjust = mod(numplot,2)
-          fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                        //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-          print fmtstr1, &
-             (i,transform_label(label(i),itrans(i)), &
-             ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
-             itrans(ihalf+i+iadjust)),i=1,ihalf)
-          if (iadjust /= 0) then
-             fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
-             print fmtstr2, &
-                 ihalf + iadjust,transform_label(label(ihalf + iadjust), &
-                 itrans(ihalf+iadjust))
-          endif
+          call print_menu_columns(numplot,2,maxdigits,label,itrans)
        endif
 !
 !--multiplot
@@ -904,5 +872,52 @@ subroutine print_header
  endif
 
 end subroutine print_header
+
+!----------------------------------------------
+! print data columns in strict column-major order:
+! read down col 1 (1..ncol1), then col 2, then col 3, ...
+!----------------------------------------------
+subroutine print_menu_columns(numplot,nvis,maxdigits,label,itrans)
+ use transforms, only:transform_label
+ integer, intent(in) :: numplot,nvis,maxdigits
+ character(len=*), intent(in) :: label(:)
+ integer, intent(in) :: itrans(:)
+ character(len=2) :: fmtstrlen
+ character(len=64) :: fmt1,fmt2,fmt3
+ integer :: i,ic2,ic3,ncol1
+
+ if (numplot <= 0 .or. nvis < 1) return
+ ncol1 = (numplot + nvis - 1)/nvis
+ write(fmtstrlen,"(a1,i1)") "i",maxdigits
+ fmt3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+ fmt2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+ fmt1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+
+ do i = 1, ncol1
+    ic2 = i + ncol1
+    if (nvis >= 3) then
+       ic3 = i + 2*ncol1
+       if (ic3 <= numplot) then
+          print fmt3, i,transform_label(label(i),itrans(i)), &
+               ic2,transform_label(label(ic2),itrans(ic2)), &
+               ic3,transform_label(label(ic3),itrans(ic3))
+       elseif (ic2 <= numplot) then
+          print fmt2, i,transform_label(label(i),itrans(i)), &
+               ic2,transform_label(label(ic2),itrans(ic2))
+       else
+          print fmt1, i,transform_label(label(i),itrans(i))
+       endif
+    elseif (ic2 <= numplot) then
+       print fmt2, i,transform_label(label(i),itrans(i)), &
+            ic2,transform_label(label(ic2),itrans(ic2))
+    else
+       print fmt1, i,transform_label(label(i),itrans(i))
+    endif
+ enddo
+
+end subroutine print_menu_columns
 
 end module mainmenu
