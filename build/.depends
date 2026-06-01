@@ -65,6 +65,7 @@ interpolate_vec.o : interpolate_vec.f90
 interpolation.o : interpolation.f90 
 kernels.o : kernels.f90 asciiutils.o 
 labels.o : labels.f90 asciiutils.o globaldata.o 
+labels_chem.o : labels_chem.f90 asciiutils.o labels.o 
 legends.o : legends.f90 prompting.o globaldata.o parsetext.o asciiutils.o ${PLOTLIB:.f90=.o} 
 libexact.o : libexact.f90 libutils.o exact_bondi.o exact_planetdisc.o exact_Cshock.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_torus.o exact_densityprofiles.o exact_rhoh.o exact_mhdshock.o exact_gresho.o exact_toystar2D.o exact_toystar1D.o exact_polytrope.o exact_sedov.o exact_shock_sr.o exact_shock.o 
 libinclude.o : libinclude.f90 
@@ -99,8 +100,8 @@ powerspectrums.o : powerspectrums.f90
 prompting.o : prompting.f90 
 promptlist.o : promptlist.f90 prompting.o 
 read.o : read.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o get_data.o read_data.o 
-read_composition.o : read_composition.F90 globaldata.o globaldata.o asciiutils.o 
-read_composition_hdf5.o : read_composition_hdf5.f90 asciiutils.o globaldata.o labels.o globaldata.o 
+read_composition.o : read_composition.F90 globaldata.o globaldata.o asciiutils.o labels_chem.o 
+read_composition_hdf5.o : read_composition_hdf5.f90 asciiutils.o labels.o globaldata.o labels_chem.o 
 read_data.o : read_data.F90 asciiutils.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
 read_data_UCLA.o : read_data_UCLA.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_VINE.o : read_data_VINE.f90 geometry.o system_utils.o allocate.o labels.o globaldata.o globaldata.o globaldata.o 

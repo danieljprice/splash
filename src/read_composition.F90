@@ -25,6 +25,7 @@
 !
 !-----------------------------------------------------------------
 module readcomposition
+ use labelschem, only:format_chemistry_label
 #ifdef HDF5
  use readcomposition_hdf5, only:check_for_composition_hdf5,read_composition_hdf5
 #endif
@@ -67,7 +68,7 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
  integer, intent(out) :: ncomp,icomp_col_start
  character(len=*), intent(out) :: filename
 
- integer :: iu,nrows,nheaderlines,nlabels,ierr
+ integer :: iu,nrows,nheaderlines,nlabels,ierr,i,icol
  character(len=len(dumpfile)) :: prefix
 #ifdef HDF5
  integer :: ierr_h5
@@ -157,6 +158,10 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
        ncolstep = ncolstep + ncomp
        call read_column_labels(iu,nheaderlines,ncomp,nlabels,&
             labels(icomp_col_start:icomp_col_start+ncomp-1))
+       do i=1,ncomp
+          icol = icomp_col_start + i - 1
+          labels(icol) = format_chemistry_label(labels(icol))
+       enddo
        print "(a,i0,a)", '> got ',ncomp,' extra columns from '//trim(filename)
     endif
  endif

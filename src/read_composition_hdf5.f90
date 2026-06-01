@@ -29,6 +29,7 @@
 !
 !-----------------------------------------------------------------
 module readcomposition_hdf5
+ use labelschem, only:format_chemistry_label
  use params, only:maxplot,int8
  use labels, only:lenlabel,ih,label
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
@@ -288,20 +289,16 @@ subroutine apply_extra_labels_from_buf(tagarr, icomp_col_start, ncomp)
 end subroutine apply_extra_labels_from_buf
 
 !-----------------------------------------------------------------
-! C callback: store sidecar species name (h -> H_abund to avoid ih clash)
+! C callback: store formatted sidecar species name for plot labels
 !-----------------------------------------------------------------
 subroutine set_extra_column_label_phantom(icol,name) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_char
- use asciiutils, only:fstring,lcase
+ use asciiutils, only:fstring
  integer(kind=c_int), intent(in) :: icol
  character(kind=c_char), intent(in) :: name(256)
 
  if (icol >= 1 .and. icol <= size(extra_labels_buf)) then
-    if (trim(lcase(fstring(name))) == 'h') then
-       extra_labels_buf(icol) = 'H_abund'
-    else
-       extra_labels_buf(icol) = trim(fstring(name))
-    endif
+    extra_labels_buf(icol) = format_chemistry_label(fstring(name))
  endif
 
 end subroutine set_extra_column_label_phantom

@@ -2714,11 +2714,7 @@ subroutine set_labels_sphNG
        case('m')
           if (icomp_col_start <= 0 .or. i < icomp_col_start) ipmass = i
        case('h')
-          if (icomp_col_start <= 0 .or. i < icomp_col_start) then
-             ih = i
-          elseif (trim(lcase(tagarr(i))) == 'h') then
-             label(i) = 'H_abund'
-          endif
+          if (icomp_col_start <= 0 .or. i < icomp_col_start) ih = i
        case('rho')
           if (icomp_col_start <= 0 .or. i < icomp_col_start) irho = i
        case('vx')

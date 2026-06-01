@@ -159,7 +159,7 @@ static void trim_name(char *s)
 static int name_in_skip_list(const char *name)
 {
     static const char *skip[] = {
-        "x", "y", "z", "vx", "vy", "vz", "vxyz", "vels", "rho", "pmass", "mass",
+        "x", "y", "z", "vx", "vy", "vz", "vxyz", "vels", "rho", "density", "pmass", "mass",
         "time", "id", "iorig", "iphase", "tag", "av", "u", "divv", "dt", "alpha", "beta",
         "temp", "temperature",
         "placeholder", /* phantom dummy column (often all NaN) */
