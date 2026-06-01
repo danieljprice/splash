@@ -30,11 +30,7 @@ module readcomposition
 #endif
  implicit none
 
- integer :: icomp_col_start_save = 0
- integer :: ncomp_save = 0
-
  public :: check_for_composition_file,read_composition
- public :: icomp_col_start_save,ncomp_save
 
  private
 
@@ -82,8 +78,6 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
 
  ncomp = 0
  icomp_col_start = 0
- ncomp_save = 0
- icomp_col_start_save = 0
 
  ! first see if file_00000.cols exists
  filename = trim(dumpfile)//'.cols'
@@ -121,8 +115,6 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
     if (iexist) then
        call check_for_composition_hdf5(trim(dumpfile),ntotal,ncolstep,icomp_col_start,ncomp,&
             labels,filename,ierr_h5)
-       icomp_col_start_save = icomp_col_start
-       ncomp_save = ncomp
        return
     endif
  endif
@@ -175,7 +167,7 @@ end subroutine check_for_composition_file
 !-----------------------------------------------------------------
 ! read extra composition columns into dat
 !-----------------------------------------------------------------
-subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig,istep)
+subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig)
  use asciiutils,      only:get_ncolumns
  use params,          only:int8
 #ifdef HDF5
@@ -185,7 +177,6 @@ subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig,iste
  character(len=*), intent(in) :: filename
  integer, intent(in) :: ncomp,icomp_col_start
  integer, intent(inout) :: ntotal
- integer, intent(in) :: istep
  integer(kind=int8), allocatable, intent(in) :: iorig(:)
  integer :: iu,ierr,i,ncols,nhdr
 #ifdef HDF5
@@ -195,7 +186,7 @@ subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig,iste
 #ifdef HDF5
  if (index(filename,'.h5') > 0) then
     call read_composition_hdf5(trim(filename),ntotal,dat,icomp_col_start,ncomp,&
-         required(icomp_col_start:icomp_col_start+ncomp-1),ierr_h5,istep,iorig=iorig)
+         required(icomp_col_start:icomp_col_start+ncomp-1),ierr_h5,iorig=iorig)
     return
  endif
 #endif

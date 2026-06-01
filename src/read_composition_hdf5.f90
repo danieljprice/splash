@@ -23,21 +23,22 @@
 ! HDF5 extra columns for Phantom binary dumps (requires HDF5=yes build).
 ! Reads chemistry sidecar files (dump_XXXXX.h5) via read_phantom_hdf5_utils.c.
 !
+! C reads HDF5 and calls back into Fortran with no access to subroutine
+! arguments. dat_slice_ptr and iorig_ptr bridge the caller's arrays; C passes
+! icomp_col_start into read_extra_column_fromc_phantom for column indexing.
+!
 !-----------------------------------------------------------------
 module readcomposition_hdf5
  use params, only:maxplot,int8
  use labels, only:lenlabel,ih,label
- use particle_data, only:dat
  use, intrinsic :: iso_c_binding, only:c_int,c_double,c_char
  implicit none
 
- integer :: icomp_col_start_save = 0
- integer :: ncomp_save = 0
  integer :: h5_npart_save = 0
  integer :: ntotal_save = 0
- integer :: istep_save = 1
  integer, allocatable :: h5_particle_ids(:)
  integer(kind=int8), dimension(:), pointer :: iorig_ptr => null()
+ real, dimension(:,:), pointer :: dat_slice_ptr => null()
  logical, save :: use_live_scatter = .false.
  logical, save :: scatter_mode_set = .false.
  character(len=lenlabel), dimension(maxplot) :: extra_labels_buf
@@ -90,36 +91,28 @@ subroutine check_for_composition_hdf5(dumpfile,ntotal,ncolstep,icomp_col_start,n
  ncomp = 0
  icomp_col_start = 0
  ierr = 0
- ncomp_save = 0
- icomp_col_start_save = 0
  h5_npart_save = 0
  filename = trim(dumpfile)//'.h5'
 
  ntotal_c = ntotal
  extra_labels_buf = ' '
- icomp_col_start_save = ncolstep + 1
  call phantom_hdf5_extra_check(cstring(filename),ntotal_c,ncomp_c,npart_c,ierr_c)
  if (ierr_c /= 0) then
     ierr = ierr_c
-    icomp_col_start_save = 0
     return
  endif
- if (ncomp_c <= 0) then
-    icomp_col_start_save = 0
-    return
- endif
+ if (ncomp_c <= 0) return
 
  h5_npart_save = npart_c
+ icomp_col_start = ncolstep + 1
  if (ncolstep + ncomp_c > maxplot) then
     print "(1x,a,i0,a,i0,a)",'ERROR: too many columns (',ncolstep+ncomp_c,' > maxplot=',maxplot,') from '//trim(filename)
-    icomp_col_start_save = 0
+    icomp_col_start = 0
     h5_npart_save = 0
     return
  endif
 
- icomp_col_start = icomp_col_start_save
  ncomp = ncomp_c
- ncomp_save = ncomp_c
  ncolstep = icomp_col_start + ncomp - 1
  call apply_extra_labels_from_buf(labels, icomp_col_start, ncomp)
  print "(a,i0,a)",'> got ',ncomp,' extra columns from '//trim(filename)
@@ -129,14 +122,13 @@ end subroutine check_for_composition_hdf5
 !-----------------------------------------------------------------
 ! read extra composition columns from Phantom HDF5 sidecar into dat
 !-----------------------------------------------------------------
-subroutine read_composition_hdf5(filename,ntotal,dat,icomp_col_start,ncomp,required_mask,ierr,istep,iorig)
+subroutine read_composition_hdf5(filename,ntotal,dat,icomp_col_start,ncomp,required_mask,ierr,iorig)
  use asciiutils, only:cstring
- real, intent(inout) :: dat(:,:)
+ real, intent(inout), target :: dat(:,:)
  character(len=*), intent(in) :: filename
  integer, intent(in) :: ncomp,icomp_col_start,ntotal
  logical, intent(in) :: required_mask(:)
  integer, intent(out) :: ierr
- integer, intent(in) :: istep
  integer(kind=int8), target, intent(in), optional :: iorig(:)
  integer :: i,nreq
  integer, dimension(:), allocatable :: isrequired
@@ -144,9 +136,6 @@ subroutine read_composition_hdf5(filename,ntotal,dat,icomp_col_start,ncomp,requi
 
  ierr = 0
  if (ncomp <= 0) return
-
- icomp_col_start_save = icomp_col_start
- ncomp_save = ncomp
 
  nreq = min(ncomp,size(required_mask))
  if (nreq < 1 .or. .not.any(required_mask(1:nreq))) return
@@ -158,7 +147,7 @@ subroutine read_composition_hdf5(filename,ntotal,dat,icomp_col_start,ncomp,requi
  enddo
 
  ntotal_save = ntotal
- istep_save = istep
+ dat_slice_ptr => dat
  scatter_mode_set = .false.
  use_live_scatter = .false.
 
@@ -189,6 +178,7 @@ subroutine read_composition_hdf5(filename,ntotal,dat,icomp_col_start,ncomp,requi
 
  if (allocated(h5_particle_ids)) deallocate(h5_particle_ids)
  nullify(iorig_ptr)
+ nullify(dat_slice_ptr)
  ntotal_save = 0
 
  deallocate(isrequired)
@@ -198,20 +188,20 @@ end subroutine read_composition_hdf5
 !-----------------------------------------------------------------
 ! scatter one HDF5 sidecar column into dat by original particle id
 !-----------------------------------------------------------------
-subroutine scatter_extra_column_by_id(icolput, npart_h5, values)
+subroutine scatter_extra_column_by_id(icolput, icomp_col_start, npart_h5, values)
  use params, only:sing_prec
- integer, intent(in) :: icolput,npart_h5
+ integer, intent(in) :: icolput,icomp_col_start,npart_h5
  real(kind=c_double), intent(in) :: values(npart_h5)
  integer :: k,p,orig_id,max_id,nmatched
  real(kind=sing_prec), allocatable :: lookup(:)
  logical, allocatable :: id_present(:)
 
- if (icolput < 1 .or. icolput > size(dat,2)) return
- if (istep_save < 1 .or. istep_save > size(dat,3)) return
+ if (icolput < 1 .or. .not.associated(dat_slice_ptr)) return
+ if (icolput > size(dat_slice_ptr,2)) return
  if (npart_h5 <= 0 .or. ntotal_save <= 0) return
 
  if (use_live_scatter .or. .not.allocated(h5_particle_ids) .or. .not.associated(iorig_ptr)) then
-    call scatter_extra_by_live_particle_order(icolput, npart_h5, values)
+    call scatter_extra_by_live_particle_order(icolput, icomp_col_start, npart_h5, values)
     return
  endif
 
@@ -241,7 +231,7 @@ subroutine scatter_extra_column_by_id(icolput, npart_h5, values)
        print "(a,i0,a,i0,a)",' WARNING: HDF5 sidecar id match low (',nmatched,'/',npart_h5,&
           '); using live-particle order for chemistry columns'
        deallocate(lookup,id_present)
-       call scatter_extra_by_live_particle_order(icolput, npart_h5, values)
+       call scatter_extra_by_live_particle_order(icolput, icomp_col_start, npart_h5, values)
        return
     endif
  endif
@@ -249,7 +239,7 @@ subroutine scatter_extra_column_by_id(icolput, npart_h5, values)
  do p=1,ntotal_save
     orig_id = int(iorig_ptr(p))
     if (orig_id >= 1 .and. orig_id <= max_id .and. id_present(orig_id)) then
-       dat(p,icolput,istep_save) = real(lookup(orig_id), kind=kind(dat(1,1,1)))
+       dat_slice_ptr(p,icolput) = real(lookup(orig_id), kind=kind(dat_slice_ptr(1,1)))
     endif
  enddo
  deallocate(lookup,id_present)
@@ -259,20 +249,20 @@ end subroutine scatter_extra_column_by_id
 !-----------------------------------------------------------------
 ! scatter one HDF5 sidecar column using live-particle order in the dump
 !-----------------------------------------------------------------
-subroutine scatter_extra_by_live_particle_order(icolput, npart_h5, values)
- integer, intent(in) :: icolput,npart_h5
+subroutine scatter_extra_by_live_particle_order(icolput, icomp_col_start, npart_h5, values)
+ integer, intent(in) :: icolput,icomp_col_start,npart_h5
  real(kind=c_double), intent(in) :: values(npart_h5)
  integer :: p,nlive
 
- if (icolput < 1 .or. icolput > size(dat,2)) return
- if (istep_save < 1 .or. istep_save > size(dat,3)) return
+ if (icolput < 1 .or. .not.associated(dat_slice_ptr)) return
+ if (icolput > size(dat_slice_ptr,2)) return
  nlive = 0
  do p=1,ntotal_save
-    if (ih > 0 .and. (icomp_col_start_save <= 0 .or. ih < icomp_col_start_save) &
-        .and. ih <= size(dat,2) .and. dat(p,ih,istep_save) <= 0.) cycle
+    if (ih > 0 .and. (icomp_col_start <= 0 .or. ih < icomp_col_start) &
+        .and. ih <= size(dat_slice_ptr,2) .and. dat_slice_ptr(p,ih) <= 0.) cycle
     nlive = nlive + 1
     if (nlive > npart_h5) exit
-    dat(p,icolput,istep_save) = real(values(nlive), kind=kind(dat(1,1,1)))
+    dat_slice_ptr(p,icolput) = real(values(nlive), kind=kind(dat_slice_ptr(1,1)))
  enddo
 
 end subroutine scatter_extra_by_live_particle_order
@@ -319,14 +309,14 @@ end subroutine set_extra_column_label_phantom
 !-----------------------------------------------------------------
 ! C callback: scatter one sidecar column read from HDF5 into dat
 !-----------------------------------------------------------------
-subroutine read_extra_column_fromc_phantom(icol,npart,temparr) bind(c)
+subroutine read_extra_column_fromc_phantom(icol,npart,temparr,icomp_col_start) bind(c)
  use, intrinsic :: iso_c_binding, only:c_int,c_double
- integer(kind=c_int), intent(in) :: icol,npart
+ integer(kind=c_int), intent(in) :: icol,npart,icomp_col_start
  real(kind=c_double), intent(in) :: temparr(npart)
  integer :: icolput
 
- icolput = icomp_col_start_save + icol - 1
- call scatter_extra_column_by_id(icolput, npart, temparr)
+ icolput = icomp_col_start + icol - 1
+ call scatter_extra_column_by_id(icolput, icomp_col_start, npart, temparr)
 
 end subroutine read_extra_column_fromc_phantom
 

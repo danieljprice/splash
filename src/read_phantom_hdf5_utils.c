@@ -21,7 +21,7 @@
 void set_blocklabel_phantom(int *icol, int *irank, char *name);
 void read_phantom_hdf5_data_fromc(int *icol, int *npart, double temparr[], char *name);
 void set_extra_column_label_phantom(int *icol, char *name);
-void read_extra_column_fromc_phantom(int *icol, int *npart, double temparr[]);
+void read_extra_column_fromc_phantom(int *icol, int *npart, double temparr[], int *icomp_col_start);
 
 /* bind(c) entry points */
 int phantom_hdf5_is_phantom_file(char *filename);
@@ -36,6 +36,7 @@ static const herr_t HDF5_error = -1;
 static int extra_nonfinite_nvals = 0;
 static unsigned char *extra_particle_bad = NULL;
 static int extra_particle_bad_np = 0;
+static int extra_icomp_col_start = 0;
 
 /*
  * allocate or reset per-particle NaN/Inf tracking for sidecar reads
@@ -161,7 +162,6 @@ static int name_in_skip_list(const char *name)
         "x", "y", "z", "vx", "vy", "vz", "vxyz", "vels", "rho", "pmass", "mass",
         "time", "id", "iorig", "iphase", "tag", "av", "u", "divv", "dt", "alpha", "beta",
         "temp", "temperature",
-        "h", /* H abundance in chemistry sidecar; not SPH smoothing length */
         "placeholder", /* phantom dummy column (often all NaN) */
         NULL
     };
@@ -489,7 +489,7 @@ static int process_one_particle_dataset(hid_t particles_id, const phantom_datase
                     if (skip_core)
                         sanitize_extra_buffer(buffer, np);
                     if (skip_core)
-                        read_extra_column_fromc_phantom(icol, &np, buffer);
+                        read_extra_column_fromc_phantom(icol, &np, buffer, &extra_icomp_col_start);
                     else
                         read_phantom_hdf5_data_fromc(icol, &np, buffer, name);
                 }
@@ -525,7 +525,7 @@ static int process_one_particle_dataset(hid_t particles_id, const phantom_datase
                         if (skip_core)
                             sanitize_extra_buffer(buffer, np);
                         if (skip_core)
-                            read_extra_column_fromc_phantom(icol, &np, buffer);
+                            read_extra_column_fromc_phantom(icol, &np, buffer, &extra_icomp_col_start);
                         else
                             read_phantom_hdf5_data_fromc(icol, &np, buffer, name);
                     }
@@ -974,11 +974,11 @@ void phantom_hdf5_extra_read(char *filename, int *ntotal, int *icomp_col_start, 
     hid_t file_id, particles_id;
     int nc = 0, np = 0;
 
-    (void)icomp_col_start;
     (void)ntotal;
     *ierr = 0;
     if (*ncomp <= 0)
         return;
+    extra_icomp_col_start = *icomp_col_start;
     reset_extra_nonfinite_tracking(0);
     file_id = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file_id == HDF5_error)
