@@ -18,22 +18,31 @@
 !  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
-!-----------------------------------------------------------------!-----------------------------------------------------------------
+!-----------------------------------------------------------------
 !
 ! This file is for reading the composition file for each particle
 ! it also performs a check to see if composition file exists or not
 !
 !-----------------------------------------------------------------
 module readcomposition
+#ifdef HDF5
+ use readcomposition_hdf5, only:check_for_composition_hdf5,read_composition_hdf5
+#endif
  implicit none
 
+ integer :: icomp_col_start_save = 0
+ integer :: ncomp_save = 0
+
  public :: check_for_composition_file,read_composition
+ public :: icomp_col_start_save,ncomp_save
 
  private
 
 contains
 
-! This function returns the prefix of the filename
+!-----------------------------------------------------------------
+! return filename prefix (part before last "_")
+!-----------------------------------------------------------------
 function get_prefix(filename) result(prefix)
  character(len=*), intent(in) :: filename
  character(len=len(filename)) :: prefix
@@ -49,6 +58,9 @@ function get_prefix(filename) result(prefix)
 
 end function get_prefix
 
+!-----------------------------------------------------------------
+! check for extra composition data (.cols, .comp, .h5 sidecar, AV_*)
+!-----------------------------------------------------------------
 subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,ncomp,labels,filename)
  use asciiutils,    only:get_ncolumns,get_nrows,read_column_labels,basename
  use settings_data, only:debugmode
@@ -61,11 +73,17 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
 
  integer :: iu,nrows,nheaderlines,nlabels,ierr
  character(len=len(dumpfile)) :: prefix
+#ifdef HDF5
+ integer :: ierr_h5
+ character(len=len(dumpfile)+4) :: h5file
+#endif
 
  logical :: iexist
 
  ncomp = 0
  icomp_col_start = 0
+ ncomp_save = 0
+ icomp_col_start_save = 0
 
  ! first see if file_00000.cols exists
  filename = trim(dumpfile)//'.cols'
@@ -93,6 +111,22 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
     inquire(file=filename,exist=iexist)
     if (debugmode) print*,' DEBUG: looking for '//trim(filename)//' exist = ',iexist
  endif
+
+ ! look for dump_00100.h5 sidecar with extra columns
+#ifdef HDF5
+ if (.not.iexist) then
+    h5file = trim(dumpfile)//'.h5'
+    inquire(file=h5file,exist=iexist)
+    if (debugmode) print*,' DEBUG: looking for '//trim(h5file)//' exist = ',iexist
+    if (iexist) then
+       call check_for_composition_hdf5(trim(dumpfile),ntotal,ncolstep,icomp_col_start,ncomp,&
+            labels,filename,ierr_h5)
+       icomp_col_start_save = icomp_col_start
+       ncomp_save = ncomp
+       return
+    endif
+ endif
+#endif
 
  ! look for an AV_00100 file to match the dumpfile number
  if (.not.iexist) then
@@ -138,15 +172,33 @@ subroutine check_for_composition_file(dumpfile,ntotal,ncolstep,icomp_col_start,n
 
 end subroutine check_for_composition_file
 
-subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig)
+!-----------------------------------------------------------------
+! read extra composition columns into dat
+!-----------------------------------------------------------------
+subroutine read_composition(filename,ntotal,dat,icomp_col_start,ncomp,iorig,istep)
  use asciiutils,      only:get_ncolumns
  use params,          only:int8
+#ifdef HDF5
+ use settings_data,   only:required
+#endif
  real, intent(inout) :: dat(:,:)
  character(len=*), intent(in) :: filename
  integer, intent(in) :: ncomp,icomp_col_start
  integer, intent(inout) :: ntotal
+ integer, intent(in) :: istep
  integer(kind=int8), allocatable, intent(in) :: iorig(:)
  integer :: iu,ierr,i,ncols,nhdr
+#ifdef HDF5
+ integer :: ierr_h5
+#endif
+
+#ifdef HDF5
+ if (index(filename,'.h5') > 0) then
+    call read_composition_hdf5(trim(filename),ntotal,dat,icomp_col_start,ncomp,&
+         required(icomp_col_start:icomp_col_start+ncomp-1),ierr_h5,istep,iorig=iorig)
+    return
+ endif
+#endif
 
  open(newunit=iu,file=trim(filename),form='formatted',status='old',iostat=ierr)
  if (ierr /= 0) then
