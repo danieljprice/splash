@@ -83,6 +83,9 @@ jobs:
     - name: compile libread
       run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libread NOWARN=yes
 
+    - name: compile libread with HDF5
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libread NOWARN=yes HDF5=yes HDF5ROOT="${{ env.PREFIX }}"
+
     - name: clean
       run: make clean
 
