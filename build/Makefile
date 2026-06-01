@@ -904,7 +904,7 @@ depends: clean
 	  exit 1; \
 	fi; \
 	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
-	cd ../src && makedepf90 -free -D DP -D HDF5 -D FITS $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
+	cd ../src && makedepf90 -free -D HDF5 -D FITS $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
 	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
 	if [ ! -s ../build/.depends ]; then \
 	  echo "  Error: .depends file is empty"; exit 1; \
