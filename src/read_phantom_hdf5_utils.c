@@ -87,15 +87,16 @@ static void print_extra_nonfinite_warning(void)
 {
     int i, nbad = 0;
 
-    if (!extra_particle_bad || extra_nonfinite_nvals <= 0)
-        return;
-    for (i = 0; i < extra_particle_bad_np; i++)
-        if (extra_particle_bad[i])
-            nbad++;
-    if (nbad > 0)
-        printf(" WARNING: chemistry sidecar had NaN/Inf on %i particle%s (%i values across"
-               " species; set to 0)\n",
-               nbad, nbad == 1 ? "" : "s", extra_nonfinite_nvals);
+    if (extra_particle_bad && extra_nonfinite_nvals > 0)
+    {
+        for (i = 0; i < extra_particle_bad_np; i++)
+            if (extra_particle_bad[i])
+                nbad++;
+        if (nbad > 0)
+            printf(" WARNING: chemistry sidecar had NaN/Inf on %i particle%s (%i values across"
+                   " species; set to 0)\n",
+                   nbad, nbad == 1 ? "" : "s", extra_nonfinite_nvals);
+    }
     free(extra_particle_bad);
     extra_particle_bad = NULL;
     extra_particle_bad_np = 0;

@@ -201,7 +201,8 @@ subroutine scatter_extra_column_by_id(icolput, icomp_col_start, npart_h5, values
  if (icolput > size(dat_slice_ptr,2)) return
  if (npart_h5 <= 0 .or. ntotal_save <= 0) return
 
- if (use_live_scatter .or. .not.allocated(h5_particle_ids) .or. .not.associated(iorig_ptr)) then
+ if (use_live_scatter .or. .not.allocated(h5_particle_ids) .or. .not.associated(iorig_ptr) &
+     .or. npart_h5 > size(h5_particle_ids)) then
     call scatter_extra_by_live_particle_order(icolput, icomp_col_start, npart_h5, values)
     return
  endif

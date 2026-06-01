@@ -100,9 +100,9 @@ powerspectrums.o : powerspectrums.f90
 prompting.o : prompting.f90 
 promptlist.o : promptlist.f90 prompting.o 
 read.o : read.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o get_data.o read_data.o 
-read_composition.o : read_composition.F90 globaldata.o globaldata.o asciiutils.o labels_chem.o 
+read_composition.o : read_composition.F90 globaldata.o globaldata.o asciiutils.o read_composition_hdf5.o labels_chem.o 
 read_composition_hdf5.o : read_composition_hdf5.f90 asciiutils.o labels.o globaldata.o labels_chem.o 
-read_data.o : read_data.F90 asciiutils.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
+read_data.o : read_data.F90 asciiutils.o read_data_fits.o read_data_gadget_hdf5.o read_data_flash_hdf5.o read_data_cactus_hdf5.o read_data_amuse_hdf5.o read_data_phantom_hdf5.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
 read_data_UCLA.o : read_data_UCLA.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_VINE.o : read_data_VINE.f90 geometry.o system_utils.o allocate.o labels.o globaldata.o globaldata.o globaldata.o 
 read_data_aly.o : read_data_aly.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 

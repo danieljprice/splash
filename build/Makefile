@@ -414,7 +414,8 @@ READFILES_HDF5= hdf5_helper_utils.c             read_data_gadget_hdf5_utils.c   
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
                 read_data_cactus_hdf5_utils.c   read_data_cactus_hdf5_futils.f90   read_data_cactus_hdf5.f90 \
                 read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90 \
-                read_phantom_hdf5_utils.c       read_data_phantom_hdf5.f90
+                read_phantom_hdf5_utils.c       read_data_phantom_hdf5.f90 \
+                read_composition_hdf5.f90
                 #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
 
 READFILES_FITS= write_fits.f90 read_data_fits.f90
@@ -608,7 +609,7 @@ SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 la
             allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 read_composition_hdf5.f90 read_composition.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_composition.F90 \
             $(READFILES) read_data.F90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
@@ -903,7 +904,7 @@ depends: clean
 	  exit 1; \
 	fi; \
 	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
-	cd ../src && makedepf90 -free $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
+	cd ../src && makedepf90 -free -D DP -D HDF5 -D FITS $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
 	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
 	if [ ! -s ../build/.depends ]; then \
 	  echo "  Error: .depends file is empty"; exit 1; \
