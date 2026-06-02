@@ -459,7 +459,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     elseif (any((index(extensions, '.pb') > 0))) then
        call select_data_format("phantom_hdf5", ierr)
     else
-       call select_data_format('gadget_hdf5',ierr)
+       call guess_format_from_file_header(filenames(1),ierr)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
     call select_data_format('fits',ierr)
@@ -503,9 +503,9 @@ subroutine guess_format_from_file_header(filename,ierr)
 #ifdef HDF5
  elseif (file_format_is_phantom_hdf5(filename)) then
     call select_data_format('phantom_hdf5',ierr)
-#endif
  elseif (index(filename,'.hdf5') > 0 .or. index(filename,'.h5') > 0) then
     call select_data_format('gadget_hdf5',ierr)
+#endif
  elseif (file_format_is_ndspmhd(filename)) then
     call select_data_format('ndspmhd',ierr)
  elseif (file_format_is_tipsy(filename)) then
