@@ -65,13 +65,14 @@ interpolate_vec.o : interpolate_vec.f90
 interpolation.o : interpolation.f90 
 kernels.o : kernels.f90 asciiutils.o 
 labels.o : labels.f90 asciiutils.o globaldata.o 
+labels_chem.o : labels_chem.f90 asciiutils.o labels.o 
 legends.o : legends.f90 prompting.o globaldata.o parsetext.o asciiutils.o ${PLOTLIB:.f90=.o} 
 libexact.o : libexact.f90 libutils.o exact_bondi.o exact_planetdisc.o exact_Cshock.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_torus.o exact_densityprofiles.o exact_rhoh.o exact_mhdshock.o exact_gresho.o exact_toystar2D.o exact_toystar1D.o exact_polytrope.o exact_sedov.o exact_shock_sr.o exact_shock.o 
 libinclude.o : libinclude.f90 
 libinterpolation.o : libinterpolation.f90 interpolate3D_proj_geom.o interpolate3D_opacity.o interpolate3D_xsec.o interpolate3D_projection.o 
 libread.o : libread.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o globaldata.o labels.o get_data.o read_data.o 
 libutils.o : libutils.F90 libinclude.f90 
-lightcurve.o : lightcurve.f90 write_fits.o system_utils.o rotate.o options_xsecrotate.o blackbody.o globaldata.o write_pixmap.o physcon.o units.o options_render.o options_particleplots.o globaldata.o interpolation.o globaldata.o interpolate3D_opacity.o lightcurve_utils.o limits.o labels.o globaldata.o 
+lightcurve.o : lightcurve.f90 write_fits.o system_utils.o rotate.o options_xsecrotate.o blackbody.o globaldata.o write_pixmap.o physcon.o units.o options_render.o options_particleplots.o globaldata.o interpolation.o globaldata.o kernels.o interpolate3D_opacity.o lightcurve_utils.o limits.o labels.o globaldata.o 
 lightcurve_utils.o : lightcurve_utils.f90 utils_vectors.o physcon.o globaldata.o 
 limits.o : limits.f90 asciiutils.o globaldata.o globaldata.o geometry.o labels.o globaldata.o 
 map_columns.o : map_columns.f90 prompting.o promptlist.o labels.o asciiutils.o 
@@ -99,15 +100,16 @@ powerspectrums.o : powerspectrums.f90
 prompting.o : prompting.f90 
 promptlist.o : promptlist.f90 prompting.o 
 read.o : read.f90 libutils.o globaldata.o globaldata.o globaldata.o asciiutils.o initialise.o get_data.o read_data.o 
-read_composition.o : read_composition.f90 globaldata.o globaldata.o asciiutils.o 
-read_data.o : read_data.F90 asciiutils.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
+read_composition.o : read_composition.F90 globaldata.o globaldata.o asciiutils.o read_composition_hdf5.o labels_chem.o 
+read_composition_hdf5.o : read_composition_hdf5.f90 asciiutils.o labels.o globaldata.o labels_chem.o 
+read_data.o : read_data.F90 asciiutils.o read_data_fits.o read_data_gadget_hdf5.o read_data_flash_hdf5.o read_data_cactus_hdf5.o read_data_amuse_hdf5.o read_data_phantom_hdf5.o read_data_shamrock.o read_data_vtk.o read_data_starsmasher.o read_data_urban.o read_data_spyros.o read_data_vanaverbeke.o read_data_rsph.o read_data_oilonwater.o read_data_mbate.o read_data_jjm_multiphase.o read_data_jjm.o read_data_gadget_jsb.o read_data_foulkes.o read_data_egaburov.o read_data_bauswein.o read_data_aly.o read_data_UCLA.o read_data_mhutch.o read_data_tipsy.o read_data_seren.o read_data_dragon.o read_data_sro.o read_data_VINE.o read_data_gadget.o read_data_ndspmhd.o read_data_ascii.o read_data_sphNG.o 
 read_data_UCLA.o : read_data_UCLA.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_VINE.o : read_data_VINE.f90 geometry.o system_utils.o allocate.o labels.o globaldata.o globaldata.o globaldata.o 
 read_data_aly.o : read_data_aly.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
-read_data_amuse_hdf5.o : read_data_amuse_hdf5.f90 geometry.o asciiutils.o system_utils.o allocate.o options_page.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_amuse_hdf5.o : read_data_amuse_hdf5.f90 geometry.o asciiutils.o system_utils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
 read_data_ascii.o : read_data_ascii.f90 globaldata.o geometry.o system_utils.o asciiutils.o allocate.o globaldata.o globaldata.o globaldata.o labels.o 
 read_data_bauswein.o : read_data_bauswein.f90 geometry.o labels.o system_utils.o allocate.o globaldata.o globaldata.o globaldata.o 
-read_data_cactus_hdf5.o : read_data_cactus_hdf5.f90 geometry.o dataread_utils.o read_data_cactus_hdf5_futils.o asciiutils.o system_utils.o labels.o allocate.o options_page.o globaldata.o globaldata.o globaldata.o 
+read_data_cactus_hdf5.o : read_data_cactus_hdf5.f90 geometry.o dataread_utils.o read_data_cactus_hdf5_futils.o asciiutils.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_cactus_hdf5_futils.o : read_data_cactus_hdf5_futils.f90 utils_vectors.o sort.o asciiutils.o labels.o globaldata.o 
 read_data_dragon.o : read_data_dragon.f90 geometry.o system_utils.o labels.o allocate.o units.o globaldata.o globaldata.o globaldata.o 
 read_data_egaburov.o : read_data_egaburov.f90 geometry.o system_utils.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
@@ -126,10 +128,11 @@ read_data_mhutch.o : read_data_mhutch.f90 geometry.o labels.o system_utils.o all
 read_data_ndspmhd.o : read_data_ndspmhd.f90 labels.o system_utils.o geometry.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
 read_data_oilonwater.o : read_data_oilonwater.f90 units.o geometry.o physcon.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_pbob.o : read_data_pbob.f90 system_utils.o geometry.o asciiutils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
-read_data_rsph.o : read_data_rsph.f90 labels.o geometry.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
+read_data_phantom_hdf5.o : read_data_phantom_hdf5.f90 geometry.o asciiutils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_rsph.o : read_data_rsph.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o globaldata.o 
 read_data_seren.o : read_data_seren.f90 geometry.o asciiutils.o system_utils.o labels.o allocate.o units.o globaldata.o globaldata.o globaldata.o 
 read_data_shamrock.o : read_data_shamrock.f90 geometry.o asciiutils.o labels.o allocate.o globaldata.o globaldata.o utils_json.o globaldata.o 
-read_data_silo.o : read_data_silo.f90 geometry.o asciiutils.o system_utils.o allocate.o options_page.o globaldata.o globaldata.o labels.o globaldata.o 
+read_data_silo.o : read_data_silo.f90 geometry.o asciiutils.o system_utils.o allocate.o globaldata.o globaldata.o labels.o globaldata.o 
 read_data_snsph.o : read_data_snsph.f90 geometry.o labels.o allocate.o globaldata.o globaldata.o globaldata.o 
 read_data_sphNG.o : read_data_sphNG.f90 units.o partutils.o byteswap.o read_composition.o lightcurve_utils.o calc_quantities.o system_utils.o allocate.o globaldata.o geometry.o globaldata.o labels.o asciiutils.o globaldata.o 
 read_data_sphysics.o : read_data_sphysics.f90 geometry.o allocate.o globaldata.o globaldata.o globaldata.o labels.o globaldata.o 

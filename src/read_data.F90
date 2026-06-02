@@ -58,6 +58,8 @@ module readdata
 
  ! Make hdf5 fortran/c modules available if compiled with hdf5
 #ifdef HDF5
+ use readdata_phantom_hdf5, only:read_data_phantom_hdf5, set_labels_phantom_hdf5, &
+                                 file_format_is_phantom_hdf5
  use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5
  use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5
 ! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
@@ -295,8 +297,8 @@ subroutine select_data_format(string_in,ierr)
  ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
 #ifdef HDF5
  case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
-   print "(a)",  'Phantom HDF5 files are currently not supported :( '
-   stop
+   read_data=>read_data_phantom_hdf5
+   set_labels=>set_labels_phantom_hdf5
 
  case('gadget_hdf5','swift')
    read_data=>read_data_gadget_hdf5
@@ -364,6 +366,7 @@ subroutine print_available_formats(string)
  endif
  print "(a)"  ,' -ascii,-csv          : ascii text/csv format (default)'
  print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes (auto)'
+ print "(a)"  ,' -phantom_hdf5        : Phantom HDF5 format'
  print "(a)"  ,' -vtk                 : vtk legacy binary format (auto)'
  print "(a)"  ,' -ndspmhd             : ndspmhd code (auto)'
  print "(a)"  ,' -gandalf,-seren      : Gandalf/Seren code'
@@ -456,7 +459,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     elseif (any((index(extensions, '.pb') > 0))) then
        call select_data_format("phantom_hdf5", ierr)
     else
-       call select_data_format('gadget_hdf5',ierr)
+       call guess_format_from_file_header(filenames(1),ierr)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
     call select_data_format('fits',ierr)
@@ -497,8 +500,12 @@ subroutine guess_format_from_file_header(filename,ierr)
     call select_data_format('sphNG',ierr)
  elseif (file_format_is_gadget(filename)) then
     call select_data_format('gadget',ierr)
- elseif (index(filename,'.hdf5') > 0) then
+#ifdef HDF5
+ elseif (file_format_is_phantom_hdf5(filename)) then
+    call select_data_format('phantom_hdf5',ierr)
+ elseif (index(filename,'.hdf5') > 0 .or. index(filename,'.h5') > 0) then
     call select_data_format('gadget_hdf5',ierr)
+#endif
  elseif (file_format_is_ndspmhd(filename)) then
     call select_data_format('ndspmhd',ierr)
  elseif (file_format_is_tipsy(filename)) then

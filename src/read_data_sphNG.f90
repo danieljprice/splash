@@ -70,6 +70,7 @@ module sphNGread
  integer :: nhydroreal4,istart_extra_real4
  integer :: itempcol = 0
  integer :: ncolstepfirst = 0
+ integer :: icomp_col_start = 0,ncomp = 0
  integer :: nhydroarrays,nmhdarrays,ndustarrays,ndustlarge
  logical :: phantomdump,smalldump,mhddump,rtdump,usingvecp,igotmass,h2chem,rt_in_header
  logical :: usingeulr,cleaning
@@ -1433,7 +1434,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  integer :: ipos,nptmass,nptmassi,ndust,nstar,nunknown,ilastrequired
  integer :: imaxcolumnread,nhydroarraysinfile,nhdr,nkilled
  integer :: itype,iphaseminthistype,iphasemaxthistype,nthistype,iloc,idenscol
- integer :: icentre,icomp_col_start,ncomp,isink1
+ integer :: icentre,isink1,icolmax_hydro
  integer, dimension(maxparttypes) :: npartoftypei
  real,    dimension(maxparttypes) :: massoftypei
  logical :: iexist, doubleprec,imadepmasscolumn,gotbinary,gotiphase
@@ -1814,6 +1815,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           endif
           call check_for_composition_file(trim(dumpfile),&
                npart,ncolstep,icomp_col_start,ncomp,tagarr,compfile)
+          if (ncomp > 0 .and. .not.tagged) print "(a)", &
+             ' WARNING: HDF5 chemistry sidecar with non-tagged dump is not supported; labels/plots may be wrong'
        endif
     endif
 !
@@ -1873,6 +1876,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !
     imaxcolumnread = 0
     icolumn = 0
+    icolmax_hydro = ncolstep
+    if (ncomp > 0 .and. icomp_col_start > 1) icolmax_hydro = icomp_col_start - 1
     idustarr   = 0
     istartmhd = 0
     istartrt = 0
@@ -1925,7 +1930,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 read(iunit,end=33,iostat=ierr) iphase(i1:i2)
                 !--skip remaining integer arrays
                 nskip = nint1(iarr) - 1 + nint2(iarr) + nint4(iarr) + nint8(iarr)
-             case('iorig')
+             case('iorig','id')
                 if (allocated(iorig)) then
                    read(iunit,end=33,iostat=ierr) iorig(i1:i2)
                    got_iorig = .true.
@@ -2154,7 +2159,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           do i=1,nreal(iarr)
              tagtmp = ''
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-             icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idustarr,ncolstep)
+             icolumn = assign_column(tagtmp,iarr,i,6,imaxcolumnread,idustarr,icolmax_hydro)
              if (tagged) tagarr(icolumn) = tagtmp
              ! force data read if label matches one of the required columns
              if (.not.required(icolumn)) then
@@ -2223,7 +2228,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           do i=1,nreal4(iarr)
              tagtmp = ''
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-             icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idustarr,ncolstep)
+             icolumn = assign_column(tagtmp,iarr,i,4,imaxcolumnread,idustarr,icolmax_hydro)
              if (debug) print*,'reading real4 to col:',icolumn,' tag = ',trim(tagtmp),' required = ',required(icolumn)
              if (tagged) tagarr(icolumn) = tagtmp
 
@@ -2250,7 +2255,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           do i=1,nreal8(iarr)
              tagtmp = ''
              if (tagged) read(iunit,end=33,iostat=ierr) tagtmp
-             icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idustarr,ncolstep)
+             icolumn = assign_column(tagtmp,iarr,i,8,imaxcolumnread,idustarr,icolmax_hydro)
              if (debug) print*,'reading real8 to col:',icolumn,' tag = ',trim(tagtmp),' required = ',required(icolumn)
              if (tagged) tagarr(icolumn) = tagtmp
              if (required(icolumn)) then
@@ -2273,7 +2278,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  read*
 34 continue
 
- call set_labels_sphNG
  !
  !--emit warning if we find particles with h = 0
  !
@@ -2299,8 +2303,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     endif
  endif
 
- if (icomp_col_start > 0 .and. any(required(icomp_col_start:icomp_col_start+ncomp))) then
-    if (allocated(iorig) .and. .not.got_iorig) deallocate(iorig) ! did not find iorig in dump
+ if (icomp_col_start > 0 .and. ncomp > 0) then
+    if (allocated(iorig) .and. .not.got_iorig) deallocate(iorig) ! did not find id/iorig in dump
     call read_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp,iorig)
  endif
  !
@@ -2699,14 +2703,20 @@ subroutine set_labels_sphNG
  !
  if (tagged) then
     do i=1,ncolumns
+       ! chemistry names set in check_for_composition_file (do not use tagarr 'h' for ih)
+       if (ncomp > 0 .and. i >= icomp_col_start &
+           .and. i <= icomp_col_start + ncomp - 1) then
+          if (len_trim(label(i)) == 0 .and. len_trim(tagarr(i)) > 0) label(i) = trim(tagarr(i))
+          cycle
+       endif
        label(i) = tagarr(i)
        select case(trim(tagarr(i)))
        case('m')
-          ipmass = i
+          if (icomp_col_start <= 0 .or. i < icomp_col_start) ipmass = i
        case('h')
-          ih = i
+          if (icomp_col_start <= 0 .or. i < icomp_col_start) ih = i
        case('rho')
-          irho = i
+          if (icomp_col_start <= 0 .or. i < icomp_col_start) irho = i
        case('vx')
           ivx = i
        case('pressure')
