@@ -121,6 +121,11 @@ subroutine set_abundance_column_range(istart, n)
  if (n <= 0) then
     iabund_start = 0
     iabund_end = 0
+ elseif (istart < 1 .or. istart + n - 1 > maxplot) then
+    print "(1x,a,i0,a,i0,a,i0,a)",' WARNING: invalid abundance column range (',istart,':',istart+n-1,&
+         ' > maxplot=',maxplot,')'
+    iabund_start = 0
+    iabund_end = 0
  else
     iabund_start = istart
     iabund_end = istart + n - 1

@@ -2801,7 +2801,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
     !
     !--if we save the limits for one dust density, apply to whole grid
-    ! 
+    !
     do i=irhodust_start,irhodust_end
        xmintemp = xmin
        xmaxtemp = xmax
@@ -3058,8 +3058,7 @@ subroutine sync_itrans_linked_columns(iplot)
  elseif (iplot > 0 .and. iabund_start > 0 .and. iplot >= iabund_start &
      .and. iplot <= iabund_end .and. iabund_start /= iabund_end) then
     print*,'>> applying transform to all chemical abundances <<'
-    iend = min(iabund_end,size(itrans))
-    itrans(iabund_start:iend) = itrans(iplot)
+    itrans(iabund_start:iabund_end) = itrans(iplot)
  endif
 
 end subroutine sync_itrans_linked_columns
