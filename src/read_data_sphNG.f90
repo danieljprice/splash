@@ -1413,7 +1413,8 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment,renvironment
  use labels,         only:ipmass,irho,ih,ix,ivx,labeltype,print_types,headertags,&
-                          iutherm,itemp,ikappa,irhorestframe,labelreq,nreq,get_sink_type
+                          iutherm,itemp,ikappa,irhorestframe,labelreq,nreq,get_sink_type,&
+                          set_abundance_column_range
  use calcquantities, only:calc_quantities
  use asciiutils,     only:make_tags_unique,match_tag
  use sphNGread
@@ -1648,7 +1649,10 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 !
 !--read array header from this block
 !
-    if (iblock==1) ncolstep = 0
+    if (iblock==1) then
+       ncolstep = 0
+       call set_abundance_column_range(0, 0)
+    endif
     do iarr=1,narrsizes
        call read_block_header(iunit,iblock,iarr,iverbose,debug, &
            isize,nint(iarr),nint1(iarr),nint2(iarr),nint4(iarr),nint8(iarr),&
@@ -1815,6 +1819,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
           endif
           call check_for_composition_file(trim(dumpfile),&
                npart,ncolstep,icomp_col_start,ncomp,tagarr,compfile)
+          call set_abundance_column_range(icomp_col_start, ncomp)
           if (ncomp > 0 .and. .not.tagged) print "(a)", &
              ' WARNING: HDF5 chemistry sidecar with non-tagged dump is not supported; labels/plots may be wrong'
        endif

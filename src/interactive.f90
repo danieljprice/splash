@@ -2791,7 +2791,7 @@ end subroutine mvtitle
 !--saves current plot limits
 !
 subroutine save_limits(iplot,xmin,xmax,setlim2)
- use labels, only:irhodust_start,irhodust_end
+ use labels, only:irhodust_start,irhodust_end,iabund_start,iabund_end
  integer, intent(in) :: iplot
  real,    intent(in) :: xmin,xmax
  logical, intent(in), optional :: setlim2
@@ -2801,7 +2801,7 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
  if (iplot > 0 .and. iplot >= irhodust_start .and. iplot <= irhodust_end) then
     !
     !--if we save the limits for one dust density, apply to whole grid
-    ! 
+    !
     do i=irhodust_start,irhodust_end
        xmintemp = xmin
        xmaxtemp = xmax
@@ -2812,6 +2812,20 @@ subroutine save_limits(iplot,xmin,xmax,setlim2)
        endif
     enddo
     print*,'> applying saved limits to all dust species <'
+ elseif (iplot > 0 .and. iabund_start > 0 .and. iplot >= iabund_start .and. iplot <= iabund_end) then
+    !
+    !--if we save the limits for one abundance column, apply to all species
+    !
+    do i=iabund_start,iabund_end
+       xmintemp = xmin
+       xmaxtemp = xmax
+       if (present(setlim2)) then
+          call save_limits_i(i,xmintemp,xmaxtemp,setlim2)
+       else
+          call save_limits_i(i,xmintemp,xmaxtemp)
+       endif
+    enddo
+    print*,'> applying saved limits to all chemical abundances <'
  else
     !
     !--otherwise just pass options through to save_limits_i
@@ -2983,7 +2997,6 @@ subroutine change_itrans(iplot,xmin,xmax)
  use multiplot,     only:itrans
  use settings_data, only:numplot
  use transforms,    only:transform_limits,transform_limits_inverse
- use labels,        only:irhodust_start,irhodust_end
  integer, intent(in) :: iplot
  real, intent(inout) :: xmin, xmax
 
@@ -2999,12 +3012,7 @@ subroutine change_itrans(iplot,xmin,xmax)
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
- if (iplot > 0 .and. irhodust_start > 0 .and. iplot >= irhodust_start &
-     .and. iplot <= irhodust_end .and. irhodust_start /= irhodust_end) then
-    print*,'>> applying transform to all dust densities <<'
-    irhodust_end = min(irhodust_end,size(itrans))
-    itrans(irhodust_start:irhodust_end) = itrans(iplot)
- endif
+ call sync_itrans_linked_columns(iplot)
 
 end subroutine change_itrans
 
@@ -3029,8 +3037,31 @@ subroutine change_itrans2(iplot,xmin,xmax,xmina,xmaxa)
        xmin = max(xmax-4.,xmin) ! no more than 4 dex by default
     endif
  endif
+ call sync_itrans_linked_columns(iplot)
 
 end subroutine change_itrans2
+
+!
+!--copy log transform to all columns in a linked group (dust, abundances)
+!
+subroutine sync_itrans_linked_columns(iplot)
+ use multiplot, only:itrans
+ use labels, only:irhodust_start,irhodust_end,iabund_start,iabund_end
+ integer, intent(in) :: iplot
+ integer :: iend
+
+ if (iplot > 0 .and. irhodust_start > 0 .and. iplot >= irhodust_start &
+     .and. iplot <= irhodust_end .and. irhodust_start /= irhodust_end) then
+    print*,'>> applying transform to all dust densities <<'
+    iend = min(irhodust_end,size(itrans))
+    itrans(irhodust_start:iend) = itrans(iplot)
+ elseif (iplot > 0 .and. iabund_start > 0 .and. iplot >= iabund_start &
+     .and. iplot <= iabund_end .and. iabund_start /= iabund_end) then
+    print*,'>> applying transform to all chemical abundances <<'
+    itrans(iabund_start:iabund_end) = itrans(iplot)
+ endif
+
+end subroutine sync_itrans_linked_columns
 
 !
 !--saves rotation options

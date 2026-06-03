@@ -50,6 +50,7 @@ module labels
  integer :: idustfracsum,ideltavsum
  integer :: igrainsize,igraindens,ivrel
  integer :: irhodust_start,irhodust_end
+ integer :: iabund_start,iabund_end
  integer :: nreq
 
  public
@@ -103,9 +104,34 @@ subroutine reset_columnids
  ipmomx = 0
  irhodust_start = 0
  irhodust_end = 0
+ iabund_start = 0
+ iabund_end = 0
  headertags = ''
 
 end subroutine reset_columnids
+
+!--------------------------------------------------------------
+!
+!  record contiguous range of chemistry abundance columns
+!
+!--------------------------------------------------------------
+subroutine set_abundance_column_range(istart, n)
+ integer, intent(in) :: istart, n
+
+ if (n <= 0) then
+    iabund_start = 0
+    iabund_end = 0
+ elseif (istart < 1 .or. istart + n - 1 > maxplot) then
+    print "(1x,a,i0,a,i0,a,i0,a)",' WARNING: invalid abundance column range (',istart,':',istart+n-1,&
+         ' > maxplot=',maxplot,')'
+    iabund_start = 0
+    iabund_end = 0
+ else
+    iabund_start = istart
+    iabund_end = istart + n - 1
+ endif
+
+end subroutine set_abundance_column_range
 
 !--------------------------------------------------------------
 !
