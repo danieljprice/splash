@@ -38,3 +38,6 @@ jobs:
       run: |
         pwd
         ls
+        ls ..
+        which splash
+        splash --version
