@@ -30,6 +30,8 @@ jobs:
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+          git clone https://github.com/danieljprice/giza
+          make SYSTEM=gfortran withgiza
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install cairo libx11 freetype hdf5 cfitsio
         fi
@@ -39,5 +41,3 @@ jobs:
         pwd
         ls
         ls ..
-        which splash
-        splash --version
