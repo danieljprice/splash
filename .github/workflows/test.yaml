@@ -39,5 +39,5 @@ jobs:
     - name: Check files
       run: |
         pwd
+        cd
         ls
-        ls ..
