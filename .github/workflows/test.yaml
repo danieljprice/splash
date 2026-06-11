@@ -32,7 +32,7 @@ jobs:
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          cd ../../
+          cd 
           git clone https://github.com/danieljprice/phantom.git
           export OMP_SCHEDULE="dynamic"
           export OMP_STACKSIZE=512M
@@ -45,5 +45,6 @@ jobs:
 
     - name: Check files
       run: |
+        cd
         pwd
         ls
