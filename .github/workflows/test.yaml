@@ -33,10 +33,6 @@ jobs:
           echo "Contents of current dir"
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          export SPLASH_DIR=/home/runner/work/splash/splash
-          export PATH=$PATH:$SPLASH_DIR/bin
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
-          splash --version
           echo "Contents of home dir"
           pwd
         fi
@@ -44,6 +40,10 @@ jobs:
         
     - name: Check files
       run: |
+        export SPLASH_DIR=/home/runner/work/splash/splash
+        export PATH=$PATH:$SPLASH_DIR/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
+        splash --version
         cd 
         mkdir test_data ; cd test_data
         echo "ls should be empty"
