@@ -48,8 +48,7 @@ jobs:
         mkdir test_data ; cd test_data
         echo "ls should be empty"
         ls
-        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
-        
+        echo $ $SPLASH_DIR
         splash 2i_00000 -r 6 -dev simple_render.png
         ls $SPLASH_DIR/tests
         echo 'ls should have 2i_00000'
