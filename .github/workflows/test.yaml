@@ -29,19 +29,22 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get update
-          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev giza-dev
-          git clone https://github.com/danieljprice/giza.git; cd giza; ./configure; make; sudo make install; cd ..
+          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev 
           echo 'Luego de giza'
-          git clone https://github.com/danieljprice/splash.git
           echo 'Luego de clonar splash'
-          cd splash; make SYSTEM=gfortran withgiza
+          echo "Contents of current dir"
+          pwd
+          ls
+          cd splash; make SYSTEM=gfortran
           sudo make install
+          
           splash --version
           cd
           echo "Aqui esta home:"
           pwd
         fi
 
+        
     - name: Check files
       run: |
         cd 
