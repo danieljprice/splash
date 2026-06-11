@@ -31,7 +31,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev giza-dev
           git clone https://github.com/danieljprice/giza.git; cd giza; ./configure; make; sudo make install; cd ..
+          echo 'Luego de giza'
           git clone https://github.com/danieljprice/splash.git
+          echo 'Luego de clonar splash'
           cd splash; make SYSTEM=gfortran withgiza
           sudo make install
           splash --version
