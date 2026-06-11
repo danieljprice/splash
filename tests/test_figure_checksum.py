@@ -11,4 +11,5 @@ def get_file_sha256(filename):
 
     return sha256_hash.hexdigest()
 
-print(get_file_sha256('out_2i.png'))
+
+print(get_file_sha256('out_2i.png') == 'ec2a8715867fc605573f71880fe24a820f5cd743ee0216f8c3f3e7935fa854a7')
