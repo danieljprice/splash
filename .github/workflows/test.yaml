@@ -43,13 +43,9 @@ jobs:
         export SPLASH_DIR=/home/runner/work/splash/splash
         export PATH=$PATH:$SPLASH_DIR/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
-        splash --version
-        cd 
+
         mkdir test_data ; cd test_data
-        echo "ls should be empty"
-        ls
-        echo $SPLASH_DIR
-        splash 2i_00000 -r 6 -dev simple_render.png
-        ls $SPLASH_DIR/tests
-        echo 'ls should have 2i_00000'
         wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+
+        splash 2i_00000 -r 6 -dev simple_render.png
+        ls -lh
