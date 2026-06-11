@@ -47,5 +47,5 @@ jobs:
         mkdir test_data ; cd test_data
         wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
-        splash 2i_00000 -r 6 -dev simple_render.png
+        splash 2i_00000 -r 6 -dev 'out_2i.png
         ls -lh
