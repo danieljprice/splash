@@ -33,6 +33,7 @@ jobs:
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
           echo 'Splash directory:'
+          cd /home/runner/work/splash/splash/
           splash --version
           pwd
         fi
