@@ -33,6 +33,7 @@ jobs:
           echo "Contents of current dir"
           pwd
           ls
+          cat INSTALL
           cd
           echo "Contents of home dir"
           pwd
