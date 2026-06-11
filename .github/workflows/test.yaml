@@ -37,7 +37,7 @@ jobs:
           pwd
 #        elif [ "$RUNNER_OS" == "macOS" ]; then
 #          brew install cairo libx11 freetype hdf5 cfitsio
-#        fi
+        fi
 
     - name: Check files
       run: |
