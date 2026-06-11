@@ -32,12 +32,6 @@ jobs:
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          cd 
-          git clone https://github.com/danieljprice/phantom.git
-          export OMP_SCHEDULE="dynamic"
-          export OMP_STACKSIZE=512M
-          ulimit -s unlimited
-          export SYSTEM=gfortran
           
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install cairo libx11 freetype hdf5 cfitsio
@@ -45,6 +39,10 @@ jobs:
 
     - name: Check files
       run: |
-        cd
-        pwd
+        cd 
+        mkdir test_data ; cd test_data
+        echo "ls should be empty"
+        ls
+        wget https://zenodo.org/records/10052253/files/2i_00000?download=1
+        echo 'ls should have 2i_00000'
         ls
