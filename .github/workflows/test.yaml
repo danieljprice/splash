@@ -28,9 +28,10 @@ jobs:
     - name: Install dependencies
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
+          pwd
           cd
-          echo "Check foo" 
-          ls
+          echo "Check actions-runner" 
+          ls actions-runner
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev 
           echo 'Luego de giza'
