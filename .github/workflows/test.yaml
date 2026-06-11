@@ -43,6 +43,6 @@ jobs:
         mkdir test_data ; cd test_data
         echo "ls should be empty"
         ls
-        wget https://zenodo.org/records/10052253/files/2i_00000?download=1
+        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
         echo 'ls should have 2i_00000'
         ls
