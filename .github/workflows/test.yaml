@@ -33,7 +33,10 @@ jobs:
           echo "Contents of current dir"
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
+          export SPLASH_DIR=/home/runner/work/splash/splash
+          export PATH=$PATH:$SPLASH_DIR/bin
 
+          which splash
           echo "Contents of home dir"
           pwd
         fi
