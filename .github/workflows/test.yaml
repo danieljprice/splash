@@ -32,10 +32,12 @@ jobs:
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          brew install cairo libx11 freetype hdf5 cfitsio
-        fi
+          echo 'Splash directory:'
+          splash --version
+          pwd
+#        elif [ "$RUNNER_OS" == "macOS" ]; then
+#          brew install cairo libx11 freetype hdf5 cfitsio
+#        fi
 
     - name: Check files
       run: |
@@ -44,7 +46,7 @@ jobs:
         echo "ls should be empty"
         ls
         wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+        
         echo 'ls should have 2i_00000'
         ls -lh
         pwd
-        
