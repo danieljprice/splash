@@ -32,9 +32,10 @@ jobs:
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          echo 'Splash directory:'
-          cd /home/runner/work/splash/
+          sudo make install
           splash --version
+          cd
+          echo "Aqui esta home:"
           pwd
         fi
 
