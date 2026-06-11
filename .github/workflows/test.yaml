@@ -31,10 +31,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev 
           echo "Contents of current dir"
-          pwd
-          ls
-          cat INSTALL
-          cd
+          git clone https://github.com/danieljprice/giza
+          make SYSTEM=gfortran withgiza
+
           echo "Contents of home dir"
           pwd
         fi
