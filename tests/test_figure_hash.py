@@ -8,7 +8,7 @@ test_data_dir = Path(os.environ.get("SPLASH_DIR")) / 'data'
 
 # Load your images
 img1 = Image.open(test_data_dir / 'out_2i.png')
-img2 = Image.open('out_2i_2.png')
+img2 = Image.open(test_data_dir / 'out_2i_2.png')
 
 # Generate perceptual hashes (pHash)
 hash1 = imagehash.phash(img1)
