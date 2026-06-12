@@ -1,15 +1,30 @@
-import hashlib
-
-def get_file_sha256(filename):
-    sha256_hash = hashlib.sha256()
-
-    # Read the file in binary mode
-    with open(filename, "rb") as f:
-        # Read in 64KB chunks to efficiently handle large files
-        for byte_block in iter(lambda: f.read(65536), b""):
-            sha256_hash.update(byte_block)
-
-    return sha256_hash.hexdigest()
+from PIL import Image
+import imagehash
+from pathlib import Path
+import os
 
 
-print(get_file_sha256('out_2i.png') == 'ec2a8715867fc605573f71880fe24a820f5cd743ee0216f8c3f3e7935fa854a7')
+test_data_dir = Path(os.environ.get("SPLASH_DIR")) / 'data' 
+
+# Load your images
+img1 = Image.open(test_data_dir / 'out_2i.png')
+img2 = Image.open('out_2i_2.png')
+
+# Generate perceptual hashes (pHash)
+hash1 = imagehash.phash(img1)
+hash2 = imagehash.phash(img2)
+
+print(f"Hash 1: {hash1}")
+print(f"Hash 2: {hash2}")
+
+# Calculate Hamming Distance (number of differing bits)
+# A distance of 0 means the images are perceptually identical.
+hamming_dist = hash1 - hash2
+print(f"Hamming Distance: {hamming_dist}")
+
+# Evaluate similarity based on a standard threshold
+threshold = 10
+if hamming_dist <= threshold:
+    print("The images are visually similar or near-duplicates!")
+else:
+    print("The images are different.")

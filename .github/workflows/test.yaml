@@ -44,9 +44,10 @@ jobs:
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
 
 
+        pwd
         mkdir test_data ; cd test_data
         wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
-        splash 2i_00000 -r 6 -dev out_2i.png
+        splash 2i_00000 -r 6 -dev out_2i_2.png
 
         python $SPLASH_DIR/tests/test_figure_hash.py        
