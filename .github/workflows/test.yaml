@@ -39,6 +39,8 @@ jobs:
 
     - name: Download data snapshots
       run: |
+        mkdir test_data ; cd test_data
+        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
     - name: Unit tests
       run: |
