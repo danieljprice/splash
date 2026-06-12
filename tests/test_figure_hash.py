@@ -5,15 +5,15 @@ import os
 import pytest
 
 
-class TestImageHash():
+class TestImageHash:
     test_data_dir = Path(os.environ.get("SPLASH_DIR")) / 'data' 
 
 
     def test_dens_render(self):
 
         # Load your images
-        img1 = Image.open(test_data_dir / 'out_2i.png')
-        img2 = Image.open(test_data_dir / 'out_2i_2.png')
+        img1 = Image.open(self.test_data_dir / 'out_2i.png')
+        img2 = Image.open(self.test_data_dir / 'out_2i_2.png')
 
         # Generate perceptual hashes (pHash)
         hash1 = imagehash.phash(img1)
