@@ -33,8 +33,7 @@ jobs:
           echo "Contents of current dir"
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          echo "Contents of home dir"
-          pwd
+          pip install imagehash
         fi
 
         
@@ -50,4 +49,4 @@ jobs:
 
         splash 2i_00000 -r 6 -dev out_2i.png
 
-        python $SPLASH_DIR/tests/test_figure_checksum.py        
+        python $SPLASH_DIR/tests/test_figure_hash.py        
