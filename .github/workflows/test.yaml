@@ -36,18 +36,15 @@ jobs:
           pip install imagehash pytest
         fi
 
-        
-    - name: Check files
+
+    - name: Download data snapshots
+      run: |
+
+    - name: Unit tests
       run: |
         export SPLASH_DIR=/home/runner/work/splash/splash
         export PATH=$PATH:$SPLASH_DIR/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
 
-
-        pwd
-        mkdir test_data ; cd test_data
-        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
-
         splash 2i_00000 -r 6 -dev $SPLASH_DIR/data/out_2i_2.png
-
-        python $SPLASH_DIR/tests/test_figure_hash.py        
+        pytest $SPLASH_DIR/tests/test_figure_hash.py        
