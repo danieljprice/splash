@@ -42,12 +42,12 @@ jobs:
         mkdir test_data ; cd test_data
         wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
-    - name: Unit tests
+    - name: Run unit tests
       run: |
         export SPLASH_DIR=/home/runner/work/splash/splash
         export PATH=$PATH:$SPLASH_DIR/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
 
         cd test_data
-        splash 2i_00000 -r 6 -dev $SPLASH_DIR/data/out_2i_2.png
-        pytest $SPLASH_DIR/tests/test_figure_hash.py        
+        python $SPLASH_DIR/scripts/generate_renders_testing.py
+        pytest -v $SPLASH_DIR/tests/test_figure_hash.py        

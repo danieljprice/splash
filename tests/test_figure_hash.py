@@ -3,27 +3,64 @@ import imagehash
 from pathlib import Path
 import os
 import pytest
+from enum import IntEnum
+
+
+class Threshold(IntEnum):
+    LOW    = 10
+    MEDIUM =  7
+    HIGH   =  4
+
+
+SPLASH_DIR  = Path(os.environ.get("SPLASH_DIR"))
+TARGET_DIR  = Path("./")
+CONTROL_DIR = SPLASH_DIR / "data/control_images"
+BAD_PLOT    = CONTROL_DIR / "bad_plot.png"
+
+
+@pytest.fixture
+def image_pair():
+    def _load(image_name):
+        control = Image.open(CONTROL_DIR / image_name)
+        target  = Image.open(TARGET_DIR  / image_name)
+        return control, target
+    return _load
 
 
 class TestImageHash:
-    test_data_dir = Path(os.environ.get("SPLASH_DIR")) / 'data' 
 
+    def test_log_rho_render(self, image_pair):
+        assert (TARGET_DIR / "log_rho_render.png").exists()
+        control, target = image_pair("log_rho_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
-    def test_dens_render(self):
+    def test_log_rho_sink0_render(self, image_pair):
+        assert (TARGET_DIR / "log_rho_sink0_render.png").exists()
+        control, target = image_pair("log_rho_sink0_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
-        # Load your images
-        img1 = Image.open(self.test_data_dir / 'out_2i.png')
-        img2 = Image.open(self.test_data_dir / 'out_2i_2.png')
+    def test_log_rho_sink1_render(self, image_pair):
+        assert (TARGET_DIR / "log_rho_sink1_render.png").exists()
+        control, target = image_pair("log_rho_sink1_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
-        # Generate perceptual hashes (pHash)
-        hash1 = imagehash.phash(img1)
-        hash2 = imagehash.phash(img2)
- 
-        # Calculate Hamming Distance (number of differing bits)
-        # A distance of 0 means the images are perceptually identical.
-        hamming_dist = hash1 - hash2
-        print(f"Hamming Distance: {hamming_dist}")
+    def test_log_rho_sink2_render(self, image_pair):
+        assert (TARGET_DIR / "log_rho_sink2_render.png").exists()
+        control, target = image_pair("log_rho_sink2_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
-        # Evaluate similarity based on a standard threshold
-        threshold = 10
-        assert hamming_dist <= threshold
+    def test_log_rho_v_render(self, image_pair):
+        assert (TARGET_DIR / "log_rho_v_render.png").exists()
+        control, target = image_pair("log_rho_v_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
+
+    def test_log_u_render(self, image_pair):
+        assert (TARGET_DIR / "log_u_render.png").exists()
+        control, target = image_pair("log_u_render.png")
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
