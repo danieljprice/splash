@@ -36,15 +36,16 @@ jobs:
             git \
             wget \
             gfortran \
+            cmake \
             make \
+            libpng-dev \
             libcairo2-dev \
             libhdf5-dev \
             libcfitsio-dev \
-            libx11-dev 
+            libx11-dev \ 
+            python3 
           git clone https://github.com/danieljprice/giza
-          cd giza && ./configure --prefix=/usr/local && make && make install
-          cd ..
-          make SYSTEM=gfortran withgiza PGPLOT=no X11=no
+          make SYSTEM=gfortran withgiza
           pip install imagehash pytest numpy
 
       - name: Download data snapshots
