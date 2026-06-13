@@ -39,7 +39,7 @@ jobs:
             libx11-dev \
             python3 \
             python3-pip \
-            python-venv 
+            python3-venv 
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
           python3 -m pip install imagehash pytest numpy --break-system-packages
