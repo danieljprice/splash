@@ -50,4 +50,5 @@ jobs:
 
         cd test_data
         python $SPLASH_DIR/scripts/generate_renders_testing.py
+        ls
         pytest -v $SPLASH_DIR/tests/test_figure_hash.py        
