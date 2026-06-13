@@ -5,7 +5,7 @@ name: test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "unit-test" ]
   pull_request:
     branches: [ "main" ]
 
