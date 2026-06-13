@@ -53,6 +53,8 @@ jobs:
 
       - name: Run unit tests
         run: |
+          pwd
+          ls
           export SPLASH_DIR=/home/runner/work/splash/splash/
           export PATH=$PATH:$SPLASH_DIR/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
