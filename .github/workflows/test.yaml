@@ -33,9 +33,7 @@ jobs:
           echo "Contents of current dir"
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          pip install imagehash pytest
-          pip show imagehash
-          pip show Pillow
+          pip install imagehash pytest numpy
         fi
 
 
