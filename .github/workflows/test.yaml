@@ -1,11 +1,10 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "unit-test" ]
   pull_request:
     branches: [ "main" ]
 
@@ -16,42 +15,41 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         toolchain:
-          - {compiler: gcc,   version: 'latest', system: gfortran}
-        python-version: ["3.14"]
+          - {compiler: gcc, version: 'latest', system: gfortran}
+        python-version: ["3.12"]
     runs-on: ${{ matrix.os }}
-
+    container:
+      image: debian:12.11
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-#          sudo apt-get update
-#          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev 
-#          echo "Contents of current dir"
-#          git clone https://github.com/danieljprice/giza
-#          make SYSTEM=gfortran withgiza
-#          pip install imagehash pytest numpy
-#          pip show imagehash
-#          pip show imagehash
-        fi
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
+      - name: Install dependencies
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            apt-get update
+            apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+            echo "Contents of current dir"
+            git clone https://github.com/danieljprice/giza
+            make SYSTEM=gfortran withgiza
+            pip install imagehash pytest numpy
+            pip show imagehash
+          fi
 
-    - name: Download data snapshots
-      run: |
-#        mkdir test_data ; cd test_data
-#        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+      - name: Download data snapshots
+        run: |
+          mkdir test_data ; cd test_data
+          wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
-    - name: Run unit tests
-      run: |
-        export SPLASH_DIR=/home/runner/work/splash/splash
-        export PATH=$PATH:$SPLASH_DIR/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
-
-#        cd test_data
-#        python $SPLASH_DIR/scripts/generate_renders_testing.py
-#        pytest -v $SPLASH_DIR/tests/test_figure_hash.py        
+      - name: Run unit tests
+        run: |
+          export SPLASH_DIR=/home/runner/work/splash/splash
+          export PATH=$PATH:$SPLASH_DIR/bin
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
+          cd test_data
+          python $SPLASH_DIR/scripts/generate_renders_testing.py
+          pytest -v $SPLASH_DIR/tests/test_figure_hash.py
