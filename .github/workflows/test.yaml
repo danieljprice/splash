@@ -40,12 +40,12 @@ jobs:
             libcairo2-dev \
             libhdf5-dev \
             libcfitsio-dev
+            libx11-dev
           git clone https://github.com/danieljprice/giza
           cd giza && ./configure && make && make install
           cd ..
-          make SYSTEM=gfortran withgiza PGPLOT=no X11=no
+          make SYSTEM=gfortran withgiza
           pip install imagehash pytest numpy
-          pip show imagehash
 
       - name: Download data snapshots
         shell: bash
