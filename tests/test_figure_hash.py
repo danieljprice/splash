@@ -18,10 +18,6 @@ CONTROL_DIR = SPLASH_DIR / "data/control_images"
 BAD_PLOT    = CONTROL_DIR / "bad_plot.png"
 
 
-def hamming(img1, img2):
-    return imagehash.phash(img1).hash_diff(imagehash.phash(img2))
-
-
 @pytest.fixture
 def image_pair():
     def _load(image_name):
@@ -36,35 +32,35 @@ class TestImageHash:
     def test_log_rho_render(self, image_pair):
         assert (TARGET_DIR / "log_rho_render.png").exists()
         control, target = image_pair("log_rho_render.png")
-        assert hamming(control, target) <= Threshold.HIGH
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
     def test_log_rho_sink0_render(self, image_pair):
         assert (TARGET_DIR / "log_rho_sink0_render.png").exists()
         control, target = image_pair("log_rho_sink0_render.png")
-        assert hamming(control, target) <= Threshold.HIGH
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
     def test_log_rho_sink1_render(self, image_pair):
         assert (TARGET_DIR / "log_rho_sink1_render.png").exists()
         control, target = image_pair("log_rho_sink1_render.png")
-        assert hamming(control, target) <= Threshold.HIGH
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
     def test_log_rho_sink2_render(self, image_pair):
         assert (TARGET_DIR / "log_rho_sink2_render.png").exists()
         control, target = image_pair("log_rho_sink2_render.png")
-        assert hamming(control, target) <= Threshold.HIGH
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
     def test_log_rho_v_render(self, image_pair):
         assert (TARGET_DIR / "log_rho_v_render.png").exists()
         control, target = image_pair("log_rho_v_render.png")
-        assert hamming(control, target) <= Threshold.HIGH
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
 
     def test_log_u_render(self, image_pair):
         assert (TARGET_DIR / "log_u_render.png").exists()
         control, target = image_pair("log_u_render.png")
-        assert hamming(control, target) <= Threshold.HIGH 
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
+        assert imagehash.phash(control) - imagehash.phash(target) <= Threshold.HIGH
+        assert imagehash.phash(Image.open(BAD_PLOT)) - imagehash.phash(target) > Threshold.LOW
