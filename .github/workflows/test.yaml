@@ -43,7 +43,7 @@ jobs:
           git clone https://github.com/danieljprice/giza
           cd giza && ./configure && make && make install
           cd ..
-          make SYSTEM=gfortran withgiza
+          make SYSTEM=gfortran withgiza PGPLOT=no X11=no
           pip install imagehash pytest numpy
           pip show imagehash
 
