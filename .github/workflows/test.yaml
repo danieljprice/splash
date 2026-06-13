@@ -43,7 +43,7 @@ jobs:
             libhdf5-dev \
             libcfitsio-dev \
             libx11-dev \
-            python
+            python-is-python3 2to3
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
           pip install imagehash pytest numpy
