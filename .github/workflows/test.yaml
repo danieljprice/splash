@@ -40,7 +40,7 @@ jobs:
     - name: Download data snapshots
       run: |
         mkdir test_data ; cd test_data
-#        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+        wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
 
     - name: Run unit tests
       run: |
@@ -49,5 +49,5 @@ jobs:
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
 
         cd test_data
-#        python $SPLASH_DIR/scripts/generate_renders_testing.py
-#        pytest -v $SPLASH_DIR/tests/test_figure_hash.py        
+        python $SPLASH_DIR/scripts/generate_renders_testing.py
+        pytest -v $SPLASH_DIR/tests/test_figure_hash.py        
