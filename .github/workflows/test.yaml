@@ -32,7 +32,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
             apt-get update
-            apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+            apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev wget
             echo "Contents of current dir"
             git clone https://github.com/danieljprice/giza
             make SYSTEM=gfortran withgiza
