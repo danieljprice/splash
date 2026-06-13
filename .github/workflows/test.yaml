@@ -38,10 +38,11 @@ jobs:
             libcfitsio-dev \
             libx11-dev \
             python3 \
-            python3-pip 
+            python3-pip \
+            python-venv 
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
-          pip install imagehash pytest numpy
+          python3 -m pip install imagehash pytest numpy --break-system-packages
 
       - name: Download data snapshots
         shell: bash
