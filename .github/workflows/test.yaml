@@ -29,21 +29,29 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
+        shell: bash
         run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            apt-get update
-            apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev wget
-            echo "Contents of current dir"
-            git clone https://github.com/danieljprice/giza
-            make SYSTEM=gfortran withgiza
-            pip install imagehash pytest numpy
-            pip show imagehash
-          fi
+          apt-get update
+          apt-get install -y \
+            wget \
+            gfortran \
+            make \
+            libcairo2-dev \
+            libhdf5-dev \
+            libcfitsio-dev
+          git clone https://github.com/danieljprice/giza
+          cd giza && ./configure && make && make install
+          cd ..
+          make SYSTEM=gfortran withgiza
+          pip install imagehash pytest numpy
+          pip show imagehash
 
       - name: Download data snapshots
+        shell: bash
         run: |
-          mkdir test_data ; cd test_data
+          mkdir -p test_data && cd test_data
           wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+
 
       - name: Run unit tests
         run: |
