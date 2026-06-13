@@ -22,12 +22,6 @@ jobs:
       image: debian:12.11
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install dependencies
         shell: bash
         run: |
@@ -43,8 +37,8 @@ jobs:
             libhdf5-dev \
             libcfitsio-dev \
             libx11-dev \
-            python-is-python3 2to3 \
-            python3-pip
+            python3 \
+            python3-pip \
           git clone https://github.com/danieljprice/giza
           make SYSTEM=gfortran withgiza
           pip install imagehash pytest numpy
