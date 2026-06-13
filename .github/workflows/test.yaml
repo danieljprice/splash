@@ -39,7 +39,7 @@ jobs:
             make \
             libcairo2-dev \
             libhdf5-dev \
-            libcfitsio-dev
+            libcfitsio-dev \
             libx11-dev
           git clone https://github.com/danieljprice/giza
           cd giza && ./configure && make && make install
