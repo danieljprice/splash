@@ -57,5 +57,5 @@ jobs:
           export PATH=$PATH:$SPLASH_DIR/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
           cd test_data
-          python $SPLASH_DIR/scripts/generate_renders_testing.py
+          python3 $SPLASH_DIR/scripts/generate_renders_testing.py
           pytest -v $SPLASH_DIR/tests/test_figure_hash.py
