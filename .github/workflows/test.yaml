@@ -42,9 +42,9 @@ jobs:
             libcfitsio-dev \
             libx11-dev 
           git clone https://github.com/danieljprice/giza
-          cd giza && ./configure && make && make install
+          cd giza && ./configure --prefix=/usr/local && make && make install
           cd ..
-          make SYSTEM=gfortran withgiza
+          make SYSTEM=gfortran withgiza 
           pip install imagehash pytest numpy
 
       - name: Download data snapshots
