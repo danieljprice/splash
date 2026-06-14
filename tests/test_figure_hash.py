@@ -37,38 +37,20 @@ def image_pair():
 
 class TestImageHash:
 
-    def test_log_rho_render(self, image_pair):
-        assert (TARGET_DIR / "log_rho_render.png").exists()
-        control, target = image_pair("log_rho_render.png")
-        assert hamming(control, target) <= Threshold.LOW
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
-
-    def test_log_rho_sink0_render(self, image_pair):
-        assert (TARGET_DIR / "log_rho_sink0_render.png").exists()
-        control, target = image_pair("log_rho_sink0_render.png")
-        assert hamming(control, target) <= Threshold.LOW
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
-
-    def test_log_rho_sink1_render(self, image_pair):
-        assert (TARGET_DIR / "log_rho_sink1_render.png").exists()
-        control, target = image_pair("log_rho_sink1_render.png")
-        assert hamming(control, target) <= Threshold.RELAXED  
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
-
-    def test_log_rho_sink2_render(self, image_pair):
-        assert (TARGET_DIR / "log_rho_sink2_render.png").exists()
-        control, target = image_pair("log_rho_sink2_render.png")
-        assert hamming(control, target) <= Threshold.RELAXED  
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
-
-    def test_log_rho_v_render(self, image_pair):
-        assert (TARGET_DIR / "log_rho_v_render.png").exists()
-        control, target = image_pair("log_rho_v_render.png")
-        assert hamming(control, target) <= Threshold.LOW  
-        assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
-
-    def test_log_u_render(self, image_pair):
-        assert (TARGET_DIR / "log_u_render.png").exists()
-        control, target = image_pair("log_u_render.png")
-        assert hamming(control, target) <= Threshold.LOW
+    @pytest.mark.parametrize(
+        "image_name, threshold",
+        [
+            ("log_rho_render.png", Threshold.LOW),
+            ("log_rho_sink0_render.png", Threshold.LOW),
+            ("log_rho_sink1_render.png", Threshold.RELAXED),
+            ("log_rho_sink2_render.png", Threshold.RELAXED),
+            ("log_rho_v_render.png", Threshold.LOW),
+            ("log_u_render.png", Threshold.LOW),
+        ]
+    )
+    def test_renders(self, image_name, threshold, image_pair):
+        target_path = TARGET_DIR / image_name
+        assert target_path.exists()
+        control, target = image_pair(image_name)
+        assert hamming(control, target) <= threshold
         assert hamming(Image.open(BAD_PLOT), target) > Threshold.LOW
