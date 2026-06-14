@@ -13,7 +13,7 @@ class Threshold(IntEnum):
     RELAXED  = 15  # Known sensitivity to platform/version differences
 
 
-SPLASH_DIR  = Path(os.environ.get("SPLASH_DIR"))
+SPLASH_DIR  = Path(os.environ.get("SPLASH_DIR", Path(__file__).resolve().parents[1]))
 TARGET_DIR  = Path("./")
 CONTROL_DIR = SPLASH_DIR / "data/control_images"
 BAD_PLOT    = CONTROL_DIR / "bad_plot.png"
