@@ -1,5 +1,4 @@
 import subprocess
-from pathlib import Path
 
 RENDERS = [
     ["splash", "2i_00000", "-r", "6",  "-p", "render_testing",                    "-dev", "log_rho_render.png"  ],
