@@ -1,0 +1,110 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        toolchain:
+          - {compiler: gcc,   version: 'latest', system: gfortran}
+          - {compiler: intel, version: 'latest', system: ifx}
+          - {compiler: aocc,  version: 'latest', system: aocc}
+        exclude:
+          - os: macos-latest
+            toolchain: {compiler: intel, version: 'latest', system: ifx}
+          - os: macos-latest
+            toolchain: {compiler: aocc,  version: 'latest', system: aocc}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: fortran-lang/setup-fortran@v1
+      with:
+        compiler: ${{ matrix.toolchain.compiler }}
+        version: ${{ matrix.toolchain.version }}
+
+    - name: Install dependencies
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          brew install cairo libx11 freetype hdf5 cfitsio
+        fi
+
+    - name: Set PREFIX (macOS)
+      if: runner.os == 'macOS'
+      run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
+
+    - name: get a copy of giza
+      run: git clone https://github.com/danieljprice/giza
+
+    - name: compile splash (with NOWARN=yes to enforce no compiler warnings)
+      run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+             PREFIX="${{ env.PREFIX }}" \
+             X11_DIR="${{ env.PREFIX }}"
+          else
+             make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
+          fi
+
+    - name: compile splash with HDF5 and FITS
+      run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+            FITS=yes HDF5=yes \
+            PREFIX="${{ env.PREFIX }}" \
+            HDF5ROOT="${{ env.PREFIX }}" \
+            FITS_DIR="${{ env.PREFIX }}" \
+            X11_DIR="${{ env.PREFIX }}"
+          else
+            make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+            HDF5ROOT=/usr/ \
+            HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
+            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
+            FITS=yes HDF5=yes
+          fi
+
+    - name: clean
+      run: make clean
+
+    - name: compile libexact
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libexact NOWARN=yes
+
+    - name: compile libread
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libread NOWARN=yes
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash in single precision
+      if: runner.os == 'Linux'
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza
+
+    - name: clean
+      run: make clean
+
+    - name: compile splash with debug flags
+      if: runner.os == 'Linux'
+      run: make -j 4 SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
+
+  build:
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - run: |
+        if [ "${{ contains(needs.build-matrix.result, 'failure') || contains(needs.build-matrix.result, 'cancelled') }}" == "true" ]; then
+          echo "Matrix build failed"
+          exit 1
+        fi
+        echo "All matrix jobs passed"

@@ -22,12 +22,6 @@ jobs:
       image: debian:12.11
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install dependencies
         shell: bash
         run: |
@@ -36,16 +30,19 @@ jobs:
             git \
             wget \
             gfortran \
+            cmake \
             make \
+            libpng-dev \
             libcairo2-dev \
             libhdf5-dev \
-            libcfitsio-dev
+            libcfitsio-dev \
+            libx11-dev \
+            python3 \
+            python3-pip \
+            python3-venv 
           git clone https://github.com/danieljprice/giza
-          cd giza && ./configure && make && make install
-          cd ..
-          make SYSTEM=gfortran withgiza PGPLOT=no X11=no
-          pip install imagehash pytest numpy
-          pip show imagehash
+          make SYSTEM=gfortran withgiza
+          python3 -m pip install imagehash pytest numpy --break-system-packages
 
       - name: Download data snapshots
         shell: bash
@@ -56,9 +53,9 @@ jobs:
 
       - name: Run unit tests
         run: |
-          export SPLASH_DIR=/home/runner/work/splash/splash
+          export SPLASH_DIR=/__w/splash/splash/
           export PATH=$PATH:$SPLASH_DIR/bin
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
           cd test_data
-          python $SPLASH_DIR/scripts/generate_renders_testing.py
+          python3 $SPLASH_DIR/scripts/generate_renders_testing.py
           pytest -v $SPLASH_DIR/tests/test_figure_hash.py
