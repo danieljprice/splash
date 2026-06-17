@@ -362,7 +362,9 @@ subroutine submenu_exact(iexact)
     over_files: do i=1,nfiles
        iexist = .false.
        do while(.not.iexist)
-          if (i==1) print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
+         if (i==1) print "(/,a,/,a)", &
+            'Use %f for current filename, e.g. %f.exact looks for dump_000.exact', &
+            'Use %p for file prefix,      e.g. %p.exact looks for dump.exact'
           write(str,"(i4)") i
           call prompt('enter filename #'//trim(adjustl(str)),filename_exact(i))
           !--substitute %f/%p for filename
@@ -729,7 +731,11 @@ subroutine resolve_exact_filename(filename,rootname)
 
  idash = index(rootname,'_',back=.true.)
  if (idash==0) idash = len_trim(rootname)+1
- call string_replace(filename,'%p',trim(rootname(1:idash-1)))
+ if (idash > 1) then
+    call string_replace(filename,'%p',trim(rootname(1:idash-1)))
+ else
+    call string_replace(filename,'%p','')
+ endif
  call string_replace(filename,'%f',trim(rootname))
 
 end subroutine resolve_exact_filename
