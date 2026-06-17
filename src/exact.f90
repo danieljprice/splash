@@ -365,9 +365,9 @@ subroutine submenu_exact(iexact)
           if (i==1) print "(/,a)",'Use %f to represent current dump file, e.g. %f.exact looks for dump_000.exact'
           write(str,"(i4)") i
           call prompt('enter filename #'//trim(adjustl(str)),filename_exact(i))
-          !--substitute %f for filename
+          !--substitute %f/%p for filename
           filename_tmp = filename_exact(i)
-          call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+          call resolve_exact_filename(filename_tmp,trim(rootname(ifileopen)))
           !--check the first file for errors
           inquire(file=filename_tmp,exist=iexist)
           if (iexist) then
@@ -716,6 +716,24 @@ subroutine options_exact(iexact)
 
 end subroutine options_exact
 
+!-----------------------------------------------------------------------
+! substitute %f and %p placeholders in exact solution filenames
+! %f = full dump filename, %p = dump prefix before last underscore
+! (e.g. hh48_00010 -> hh48 for .trajectory files)
+!-----------------------------------------------------------------------
+subroutine resolve_exact_filename(filename,rootname)
+ use asciiutils, only:string_replace
+ character(len=*), intent(inout) :: filename
+ character(len=*), intent(in)    :: rootname
+ integer :: idash
+
+ idash = index(rootname,'_',back=.true.)
+ if (idash==0) idash = len_trim(rootname)+1
+ call string_replace(filename,'%p',trim(rootname(1:idash-1)))
+ call string_replace(filename,'%f',trim(rootname))
+
+end subroutine resolve_exact_filename
+
  !-----------------------------------------------------------------------
  ! read exact solution parameters from files
  ! (in ndspmhd these files are used in the input to the code)
@@ -723,7 +741,7 @@ end subroutine options_exact
  ! called after main data read and if exact solution chosen from menu
  !-----------------------------------------------------------------------
 subroutine read_exactparams(iexact,rootname,ierr)
- use settings_data,  only:ndim,iverbose
+ use settings_data,  only:ndim,iverbose,idefaults_file_read
  use prompting,      only:prompt
  use exactfunction,  only:check_function
  use filenames,      only:fileprefix,ifileopen
@@ -799,7 +817,8 @@ subroutine read_exactparams(iexact,rootname,ierr)
           filename = trim(rootname(1:idash-1))//'.profile'
           inquire(file=filename,exist=iexist)
           if (iexist) then
-             filename_exact(1) = filename
+             ! store with %p so trajectory/profile paths update for each dump
+             filename_exact(1) = '%p.profile'
              nfiles = 1
              ierr = 0
           else
@@ -812,9 +831,11 @@ subroutine read_exactparams(iexact,rootname,ierr)
                 inquire(file=filename,exist=iexist)
                 if (iexist) then
                    nfiles = nfiles + 1
-                   filename_exact(nfiles) = filename
+                   write(filename_exact(nfiles),"(a,i1)") '%p.trajectory',i
                    iExactLineStyle = 1
                    ExactAlpha = 0.5
+                   ! orbit trajectories are for overlay only, not quantitative comparison
+                   if (.not.idefaults_file_read) iCalculateExactErrors = .false.
                    ierr = 0
                 endif
              enddo
@@ -1252,9 +1273,9 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     enddo
  case(2) ! exact solution read from file
     do i=1,nfiles
-       !--substitute %f for filename
+       !--substitute %f/%p for filename
        filename_tmp = filename_exact(i)
-       call string_replace(filename_tmp,'%f',trim(rootname(ifileopen)))
+       call resolve_exact_filename(filename_tmp,trim(rootname(ifileopen)))
        !--auto-magically map columns onto splash columns (if not mapped manually)
        if (iauto_map_columns) then
           call map_columns_in_file(filename_tmp,ncols,nrows,imapexact,&
