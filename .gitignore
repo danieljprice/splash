@@ -22,5 +22,5 @@ Portfile*
 releasenotes*
 ChangeLog
 giza*
-tests
+tests/*f90
 __pycache__

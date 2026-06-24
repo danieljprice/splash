@@ -1,0 +1,61 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+name: test
+
+on:
+  push:
+    branches: [ "unit-test" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        toolchain:
+          - {compiler: gcc, version: 'latest', system: gfortran}
+        python-version: ["3.12"]
+    runs-on: ${{ matrix.os }}
+    container:
+      image: debian:12.11
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y \
+            git \
+            wget \
+            gfortran \
+            cmake \
+            make \
+            libpng-dev \
+            libcairo2-dev \
+            libhdf5-dev \
+            libcfitsio-dev \
+            libx11-dev \
+            python3 \
+            python3-pip \
+            python3-venv 
+          git clone https://github.com/danieljprice/giza
+          make SYSTEM=gfortran withgiza
+          python3 -m pip install imagehash pytest numpy --break-system-packages
+
+      - name: Download data snapshots
+        shell: bash
+        run: |
+          mkdir -p test_data && cd test_data
+          wget -O 2i_00000 "https://zenodo.org/records/10052253/files/2i_00000?download=1"
+
+
+      - name: Run unit tests
+        run: |
+          export SPLASH_DIR=/__w/splash/splash/
+          export PATH=$PATH:$SPLASH_DIR/bin
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPLASH_DIR/giza/lib
+          cd test_data
+          python3 $SPLASH_DIR/scripts/generate_renders_testing.py
+          pytest -v $SPLASH_DIR/tests/test_figure_hash.py
