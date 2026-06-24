@@ -337,9 +337,9 @@ end function shortstring
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab,lc)
  use asciiutils, only:string_delete,lcase
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortlabel
+ character(len=*), intent(in)           :: string
+ character(len=*), intent(in), optional :: unitslab
+ character(len=lenlabel)                :: shortlabel
  logical, intent(in), optional :: lc
 
  if (present(unitslab)) then
