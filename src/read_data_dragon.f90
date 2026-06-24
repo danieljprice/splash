@@ -753,7 +753,7 @@ subroutine find_weights(out_unit_interp,out_unitzintegration,out_labelzintegrati
 
  real(doub_prec), intent(out)      :: out_unit_interp
  real, intent(out)                 :: out_unitzintegration
- character(len=20), intent(out)    :: out_labelzintegration
+ character(len=*), intent(out)     :: out_labelzintegration
  real(doub_prec)                   :: dm_unit, dh_unit, drho_unit, dr_unit
  logical                           :: do_dimweight, do_zintegration
  character(len=20)                 :: rho_length_label
