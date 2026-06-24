@@ -259,7 +259,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
     else
        tempi = (dat(i,itemp)*f_col)+o_col
-       if (tempi < =0.0) ierr = 6
+       if (tempi <= 0.0) ierr = 6
        
     endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
@@ -267,7 +267,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  enddo
  !$omp end parallel do
 
- if (ierr = 6) then
+ if (ierr == 6) then
      print *,"ERROR: choice of temperature offset has resulted in a zero or negative temperature for at least one particle, aborting..."
      return
  endif
