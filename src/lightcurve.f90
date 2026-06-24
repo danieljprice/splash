@@ -137,6 +137,17 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  xmax(1) = renvironment('SPLASH_MARGIN_XMAX', xmax(1))
  xmin(2) = renvironment('SPLASH_MARGIN_YMIN', xmin(2))
  xmax(2) = renvironment('SPLASH_MARGIN_YMAX', xmax(2))
+
+ if (xmax(1) <= xmin(1)) then
+    print *,"ERROR: maximum x axis render bound less than or equal to minimum x axis render region bound, aborting..."
+    ierr = 3
+    return
+ endif
+ if (xmax(2) <= xmin(2)) then
+    print *,"ERROR: maximum y axis render bound less than or equal to minimum y axis render region bound, aborting..."
+    ierr = 4
+    return
+ endif
  !
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
@@ -145,7 +156,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),h(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
-    ierr = 3
+    ierr = 5
     return
  endif
  x(1:n) = dat(1:n,ix(1))
@@ -221,7 +232,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  opacity_factor = 1.
  doppler_factor_max = 0.
  !$omp parallel do default(none) &
- !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel) &
+ !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel,ierr) &
  !$omp shared(opacity,relativistic,v_on_c,itemp,f_col,o_col) &
  !$omp private(i,betaz,lorentz,tempi,rstar,lstar) &
  !$omp firstprivate(opacity_factor,doppler_factor) &
@@ -248,11 +259,19 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
     else
        tempi = (dat(i,itemp)*f_col)+o_col
+       if (tempi < =0.0) ierr = 6
+       
     endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
-    flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+    if (ierr /= 6) flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
  enddo
  !$omp end parallel do
+
+ if (ierr = 6) then
+     print *,"ERROR: choice of temperature offset has resulted in a zero or negative temperature for at least one particle, aborting..."
+     return
+ endif
+ 
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
  if (allocated(img_nu)) deallocate(img_nu)
