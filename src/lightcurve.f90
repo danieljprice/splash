@@ -127,7 +127,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (f_col < 0.0) f_col = renvironment('f_col', 1.0)
  print "(/,a,f5.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
                           ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
- o_col = renvironment('o_col')
+ o_col = renvironment('ocol')
  print "(a,f8.2)"," Temperature offset: ",o_col
 
  !If the user does not provide a limit for the render region it is calculated automatically.
