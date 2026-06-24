@@ -222,7 +222,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  doppler_factor_max = 0.
  !$omp parallel do default(none) &
  !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel) &
- !$omp shared(opacity,relativistic,v_on_c,itemp,f_col) &
+ !$omp shared(opacity,relativistic,v_on_c,itemp,f_col,o_col) &
  !$omp private(i,betaz,lorentz,tempi,rstar,lstar) &
  !$omp firstprivate(opacity_factor,doppler_factor) &
  !$omp reduction(max:doppler_factor_max)
@@ -247,7 +247,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        lstar = 4.*pi*rstar**2*steboltz*tempi**4
        print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
     else
-       tempi = dat(i,itemp)*f_col
+       tempi = (dat(i,itemp)*f_col)+o_col
     endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
     flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
