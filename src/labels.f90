@@ -284,9 +284,9 @@ end function get_z_coord
 !
 !-----------------------------------------------------------------
 elemental function strip_units(string,unitslab)
- character(len=lenlabel), intent(in) :: string
- character(len=*),        intent(in) :: unitslab
- character(len=lenlabel)             :: strip_units
+ character(len=*), intent(in) :: string
+ character(len=*), intent(in) :: unitslab
+ character(len=lenlabel) :: strip_units
  integer :: ipos
 
  strip_units = string
@@ -310,9 +310,9 @@ end function strip_units
 !-----------------------------------------------------------------
 elemental function shortstring(string,unitslab)
  use asciiutils, only:string_delete
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortstring
+ character(len=*), intent(in)           :: string
+ character(len=*), intent(in), optional :: unitslab
+ character(len=lenlabel) :: shortstring
 
  shortstring = string
  !--strip off the units label
