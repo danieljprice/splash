@@ -83,7 +83,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,badpix
  real, dimension(:,:,:), allocatable :: img_nu,img_tmp
- real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col,o_col
  real :: betaz,lorentz,doppler_factor,doppler_factor_max,tempi,badarea
  real :: rstar,lstar
  logical :: relativistic,nofits
@@ -127,8 +127,16 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (f_col < 0.0) f_col = renvironment('f_col', 1.0)
  print "(/,a,f5.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
                           ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
+ o_col = renvironment('o_col')
+ print "(a,f8.2)"," Temperature offset: ",o_col
+
+ !If the user does not provide a limit for the render region it is calculated automatically.
  xmin(1:ndim) = lim(ix(1:ndim),1)
- xmax(1:ndim) = lim(ix(1:ndim),2)
+ xmax(1:ndim) = lim(ix(1:ndim),2)      
+ xmin(1) = renvironment('SPLASH_MARGIN_XMIN', xmin(1))
+ xmax(1) = renvironment('SPLASH_MARGIN_XMAX', xmax(1))
+ xmin(2) = renvironment('SPLASH_MARGIN_YMIN', xmin(2))
+ xmax(2) = renvironment('SPLASH_MARGIN_YMAX', xmax(2))
  !
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
