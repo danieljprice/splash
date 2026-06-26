@@ -133,7 +133,7 @@ end subroutine writepixmap
 subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
  integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
- real, dimension(npixx,npixy) :: datpixTruncated
+ real,    dimension(:,:), allocatable :: datpixTruncated
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
  character(len=*), intent(in) :: label,filename
  character(len=10) :: stringx,stringy
@@ -149,6 +149,15 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
     print*,'error opening '//trim(filename)
     return
  endif
+
+ allocate(datpixTruncated(npixx,npixy),stat=ierr)
+ if (ierr /= 0) then
+    print *,"ERROR: Memory allocation of datpixTruncated failed"
+    close(iunit)
+    return
+ endif
+ datpixTruncated=datpix
+ 
  write(*,"(a)",ADVANCE='NO') '> writing pixel map to file '//trim(filename)//' ...'
 
  write(stringx,"(i10)") npixx
@@ -162,9 +171,8 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(a,1pe14.6)",          err=66) '# time = ',time
- write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
-
- datpixTruncated=datpix
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy)) 
+ 
  nSmallNegative = count((datpix > -1.0E-99) .and. (datpix < 0.0))
  nSmallPositive = count((datpix < 1.0E-99) .and. (datpix > 0.0))
  nLargeNegative = count(datpix < -9.999999E99)
@@ -184,6 +192,7 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
        write(iunit,fmtstring,err=66) datpixTruncated(1:npixx,j)
     enddo
  endif
+ deallocate(datpixTruncated)
  close(iunit)
  print "(a)",'OK'
  
