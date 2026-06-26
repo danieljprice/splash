@@ -74,10 +74,13 @@ where the :math:`w_{\mathrm{col}, ij}` is the dimensionless column kernel.
 
 The spectra were then summed across the frequencies and pixels to produce the bolometric luminosity, listed in [02  Luminosity] in the outputted .out file.
 
+The bounds of the ray-traced region is by default equal to the extent of the particle positions in the dump file. Any number of these automatically calculated bounds can be overriden with the ``SPLASH_MARGIN_XMIN``, ``SPLASH_MARGIN_XMAX``, ``SPLASH_MARGIN_YMIN`` and ``SPLASH_MARGIN_YMAX`` environment variables or the ``--xmin``, ``--xmax``, ``--ymin`` and ``--ymax`` flags. The units of these bounds are the same as the units of the particle positions.
 
 When ``--temperature`` is set, temperature :math:`T` is computed at **read time** from density :math:`\rho` and
 specific internal energy :math:`u` using *get_temp_from_u()* in ``lightcurve_utils.f90``, assuming gas and
 radiation pressure in local thermodynamic equilibrium (see :ref:`sec:lckappa`).
+
+The temperature for each SPH particle can be altered with a scaling factor (called the spectral hardening factor) and constant offset. The scaling factor is set using the flag ``--fcol`` and the constant offset with the flag ``--ocol``. The scaling factor is applied first and the constant offset is added to the scaled temperature.
 
 Opacity :math:`\kappa` used in the ray trace is described in :ref:`sec:lckappa`.
 
