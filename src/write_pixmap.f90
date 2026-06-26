@@ -169,8 +169,8 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  nSmallPositive = count((datpix < 1.0E-99) .and. (datpix > 0.0))
  nLargeNegative = count(datpix < -9.999999E99)
  nLargePositive = count(datpix > 9.999999E99)
- where((datpix > -9.999999E-99) .and. (datpix < 0.0)) datpixTruncated = -1.0E-99
- where((datpix < 9.999999E-99) .and. (datpix > 0.0)) datpixTruncated = 1.0E-99
+ where((datpix > -1.0E-99) .and. (datpix < 0.0)) datpixTruncated = -1.0E-99
+ where((datpix < 1.0E-99) .and. (datpix > 0.0)) datpixTruncated = 1.0E-99
  where(datpix < -9.999999E99) datpixTruncated = -9.999999E99
  where(datpix > 9.999999E99) datpixTruncated = 9.999999E99
 
