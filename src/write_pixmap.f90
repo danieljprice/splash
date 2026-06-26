@@ -133,11 +133,13 @@ end subroutine writepixmap
 subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
  integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
+ real, dimension(npixx,npixy) :: datpixTruncated
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
  character(len=*), intent(in) :: label,filename
  character(len=10) :: stringx,stringy
  character(len=30) :: fmtstring
  integer :: ierr,j
+ integer :: nSmallNegative, nSmallPositive, nLargeNegative, nLargePositive
  integer, parameter :: iunit = 166
 !
 !--write ascii file
@@ -162,18 +164,42 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a,1pe14.6)",          err=66) '# time = ',time
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
 
+ datpixTruncated=datpix
+ nSmallNegative = count((datpix > -9.999999E-99) .and. (datpix < 0.0))
+ nSmallPositive = count((datpix < 9.999999E-99) .and. (datpix > 0.0))
+ nLargeNegative = count(datpix < -9.999999E99)
+ nLargePositive = count(datpix > 9.999999E99)
+ where((datpix > -9.999999E-99) .and. (datpix < 0.0)) datpixTruncated = -9.999999E-99
+ where((datpix < 9.999999E-99) .and. (datpix > 0.0)) datpixTruncated = 9.999999E-99
+ where(datpix < -9.999999E99) datpixTruncated = -9.999999E99
+ where(datpix > 9.999999E99) datpixTruncated = 9.999999E99
+
  write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
  if (ierr /= 0) then
     do j=1,npixy
-       write(iunit,*,err=66) datpix(1:npixx,j)
+       write(iunit,*,err=66) datpixTruncated(1:npixx,j)
     enddo
  else
     do j=1,npixy
-       write(iunit,fmtstring,err=66) datpix(1:npixx,j)
+       write(iunit,fmtstring,err=66) datpixTruncated(1:npixx,j)
     enddo
  endif
  close(iunit)
  print "(a)",'OK'
+ 
+ if (nSmallNegative > 0) then
+    print "(a,i9,a)","  WARNING: ",nSmallNegative," pixel values are between -9.999999E-99 and 0, setting them to -9.999999E-99"
+ endif
+ if (nSmallPositive > 0) then
+    print "(a,i9,a)","  WARNING: ",nSmallPositive," pixels values are between 0 and 9.999999E-99, setting them to 9.999999E-99"
+ endif
+ if (nLargeNegative > 0) then
+    print "(a,i9,a)","  WARNING: ",nLargeNegative," pixels values are smaller than -9.999999E99, setting them to -9.999999E99"
+ endif
+ if (nLargePositive > 0) then
+    print "(a,i9,a)","  WARNING: ",nLargePositive," pixels values are larger than 9.999999E99, setting them to 9.999999E99"
+ endif
+ 
  return
 
 66 continue
