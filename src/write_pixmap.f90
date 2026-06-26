@@ -165,12 +165,12 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
 
  datpixTruncated=datpix
- nSmallNegative = count((datpix > -9.999999E-99) .and. (datpix < 0.0))
- nSmallPositive = count((datpix < 9.999999E-99) .and. (datpix > 0.0))
+ nSmallNegative = count((datpix > -1.0E-99) .and. (datpix < 0.0))
+ nSmallPositive = count((datpix < 1.0E-99) .and. (datpix > 0.0))
  nLargeNegative = count(datpix < -9.999999E99)
  nLargePositive = count(datpix > 9.999999E99)
- where((datpix > -9.999999E-99) .and. (datpix < 0.0)) datpixTruncated = -9.999999E-99
- where((datpix < 9.999999E-99) .and. (datpix > 0.0)) datpixTruncated = 9.999999E-99
+ where((datpix > -9.999999E-99) .and. (datpix < 0.0)) datpixTruncated = -1.0E-99
+ where((datpix < 9.999999E-99) .and. (datpix > 0.0)) datpixTruncated = 1.0E-99
  where(datpix < -9.999999E99) datpixTruncated = -9.999999E99
  where(datpix > 9.999999E99) datpixTruncated = 9.999999E99
 
@@ -188,10 +188,10 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  print "(a)",'OK'
  
  if (nSmallNegative > 0) then
-    print "(a,i9,a)","  WARNING: ",nSmallNegative," pixel values are between -9.999999E-99 and 0, setting them to -9.999999E-99"
+    print "(a,i9,a)","  WARNING: ",nSmallNegative," pixel values are between -1.0E-99 and 0, setting them to -1.0E-99"
  endif
  if (nSmallPositive > 0) then
-    print "(a,i9,a)","  WARNING: ",nSmallPositive," pixels values are between 0 and 9.999999E-99, setting them to 9.999999E-99"
+    print "(a,i9,a)","  WARNING: ",nSmallPositive," pixels values are between 0 and 1.0E-99, setting them to 1.0E-99"
  endif
  if (nLargeNegative > 0) then
     print "(a,i9,a)","  WARNING: ",nLargeNegative," pixels values are smaller than -9.999999E99, setting them to -9.999999E99"
