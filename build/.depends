@@ -165,5 +165,5 @@ write_data_phantom.o : write_data_phantom.f90
 write_fits.o : write_fits.f90 
 write_griddata.o : write_griddata.F90 asciiutils.o 
 write_pfm.o : write_pfm.f90 
-write_pixmap.o : write_pixmap.f90 asciiutils.o colours.o labels.o write_pfm.o globaldata.o 
+write_pixmap.o : write_pixmap.F90 asciiutils.o colours.o labels.o write_pfm.o globaldata.o 
 write_sphdata.o : write_sphdata.f90 geomutils.o globaldata.o write_data_gadget.o write_data_phantom.o globaldata.o globaldata.o units.o labels.o asciiutils.o 

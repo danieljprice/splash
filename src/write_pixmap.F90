@@ -38,9 +38,52 @@ module write_pixmap
  public :: isinputformat,isoutputformat
  public :: readpixmap
 
+ !The limits for numbers that can be written with the formatting string "1pe14.6"
+#ifdef DP
+ real, parameter, private :: sN = -1.0E-99
+ real, parameter, private :: sP = 1.0E-99
+ real, parameter, private :: lN = -9.999999E99
+ real, parameter, private :: lP = 9.999999E99
+#endif
+
  private
 
 contains
+
+!-----------------------------------------------------------------
+! Truncates the datmin and datmax values for pixmap headers if they are outside the range
+! that can be formatted with the formatting string "1pe14.6"
+!-----------------------------------------------------------------
+subroutine truncateHeaderMinMax(datmin,datmax,datminTruncated,datmaxTruncated)
+ real, intent(in) :: datmin,datmax
+ real, intent(out) :: datminTruncated,datmaxTruncated
+ logical :: datminChanged = .false.
+ logical :: datmaxChanged = .false. 
+ 
+ datminTruncated=datmin
+ datmaxTruncated=datmax
+ 
+#ifdef DP
+ if((datmin > sN) .and. (datmin < 0.0)) then; datminTruncated = sN; datminChanged=.true.; endif
+ if((datmin < sP) .and. (datmin > 0.0)) then; datminTruncated = sP; datminChanged=.true.; endif
+ if(datmin < lN) then; datminTruncated = lN; datminChanged=.true.; endif
+ if(datmin > lP) then; datminTruncated = lP; datminChanged=.true.; endif
+ 
+ if((datmax > sN) .and. (datmax < 0.0)) then; datmaxTruncated = sN; datmaxChanged=.true.; endif
+ if((datmax < sP) .and. (datmax > 0.0)) then; datmaxTruncated = sP; datmaxChanged=.true.; endif
+ if(datmax < lN) then; datmaxTruncated = lN; datmaxChanged=.true.; endif
+ if(datmax > lP) then; datmaxTruncated = lP; datmaxChanged=.true.; endif
+ 
+ if(datminChanged) then
+    print "(a,1pe14.6,a)"," WARNING: pixmap header datmin altered to the value",datminTruncated," as it was either "&
+                          //">9.999999E99, <-9.999999E99, (>1.0E-99 and <0), (<1.0E-99 and >0)"
+ endif
+ if(datmaxChanged) then
+    print "(a,1pe14.6,a)"," WARNING: pixmap header datmax altered to the value",datmaxTruncated," as it was either "&
+                          //">9.999999E99, <-9.999999E99, (>1.0E-99 and <0), (<1.0E-99 and >0)"
+ endif
+#endif
+end subroutine
 
 !-----------------------------------------------------------------
 ! utility to check if an output format selection is valid
@@ -133,11 +176,14 @@ end subroutine writepixmap
 subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,filename,time)
  integer, intent(in) :: npixx,npixy
  real,    intent(in), dimension(npixx,npixy) :: datpix
+ real,    dimension(:,:), allocatable :: datpixTruncated
  real,    intent(in) :: xmin,ymin,dx,datmin,datmax,time
+ real :: datminTruncated,datmaxTruncated
  character(len=*), intent(in) :: label,filename
  character(len=10) :: stringx,stringy
  character(len=30) :: fmtstring
  integer :: ierr,j
+ integer :: nSmallNegative, nSmallPositive, nLargeNegative, nLargePositive
  integer, parameter :: iunit = 166
 !
 !--write ascii file
@@ -147,6 +193,17 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
     print*,'error opening '//trim(filename)
     return
  endif
+
+ allocate(datpixTruncated(npixx,npixy),stat=ierr)
+ if (ierr /= 0) then
+    print *,"ERROR: Memory allocation of datpixTruncated failed"
+    close(iunit)
+    return
+ endif
+ datpixTruncated=datpix
+
+ call truncateHeaderMinMax(datmin,datmax,datminTruncated,datmaxTruncated)
+
  write(*,"(a)",ADVANCE='NO') '> writing pixel map to file '//trim(filename)//' ...'
 
  write(stringx,"(i10)") npixx
@@ -156,24 +213,52 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a)",err=66) '#   do j=1,'//trim(adjustl(stringy))
  write(iunit,"(a)",err=66) '#      write(*,*) dat(1:'//trim(adjustl(stringx))//',j)'
  write(iunit,"(a)",err=66) '#   enddo'
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datminTruncated,' max = ',datmaxTruncated
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(a,1pe14.6)",          err=66) '# time = ',time
- write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
+ write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy)) 
+
+#ifdef DP
+ nSmallNegative = count((datpix > -1.0E-99) .and. (datpix < 0.0))
+ nSmallPositive = count((datpix < 1.0E-99) .and. (datpix > 0.0))
+ nLargeNegative = count(datpix < -9.999999E99)
+ nLargePositive = count(datpix > 9.999999E99)
+ where((datpix > -1.0E-99) .and. (datpix < 0.0)) datpixTruncated = -1.0E-99
+ where((datpix < 1.0E-99) .and. (datpix > 0.0)) datpixTruncated = 1.0E-99
+ where(datpix < -9.999999E99) datpixTruncated = -9.999999E99
+ where(datpix > 9.999999E99) datpixTruncated = 9.999999E99
+#endif
 
  write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
  if (ierr /= 0) then
     do j=1,npixy
-       write(iunit,*,err=66) datpix(1:npixx,j)
+       write(iunit,*,err=66) datpixTruncated(1:npixx,j)
     enddo
  else
     do j=1,npixy
-       write(iunit,fmtstring,err=66) datpix(1:npixx,j)
+       write(iunit,fmtstring,err=66) datpixTruncated(1:npixx,j)
     enddo
  endif
+ deallocate(datpixTruncated)
  close(iunit)
  print "(a)",'OK'
+
+#ifdef DP
+ if (nSmallNegative > 0) then
+    print "(a,i9,a)","  WARNING: ",nSmallNegative," pixel values are between -1.0E-99 and 0, setting them to -1.0E-99"
+ endif
+ if (nSmallPositive > 0) then
+    print "(a,i9,a)","  WARNING: ",nSmallPositive," pixels values are between 0 and 1.0E-99, setting them to 1.0E-99"
+ endif
+ if (nLargeNegative > 0) then
+    print "(a,i9,a)","  WARNING: ",nLargeNegative," pixels values are smaller than -9.999999E99, setting them to -9.999999E99"
+ endif
+ if (nLargePositive > 0) then
+    print "(a,i9,a)","  WARNING: ",nLargePositive," pixels values are larger than 9.999999E99, setting them to 9.999999E99"
+ endif
+#endif
+ 
  return
 
 66 continue
@@ -192,6 +277,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
  real, intent(in), dimension(npixx,npixy) :: datpix
  real, intent(in), dimension(npixx,npixy), optional :: brightness
  real, intent(in) :: xmin,ymin,dx,datmin,datmax
+ real :: datminTruncated,datmaxTruncated
  character(len=*), intent(in) :: label
  integer, intent(in) :: istep
  character(len=120) :: filename
@@ -217,6 +303,9 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
     print*,'error opening ppm file'
     return
  endif
+
+ call truncateHeaderMinMax(datmin,datmax,datminTruncated,datmaxTruncated)
+
  write(*,"(a)",ADVANCE='NO') '> writing pixel map to file '//trim(filename)//' ...'
 !
 !--PPM header
@@ -224,7 +313,7 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
  maxcolour = 255
  write(iunit,"(a)",err=66) 'P3'
  write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by '//trim(tagline)
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
+ write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datminTruncated,' max = ',datmaxTruncated
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
  write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(i4,1x,i4)",err=66) npixx, npixy
