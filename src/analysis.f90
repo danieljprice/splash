@@ -412,7 +412,7 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
     required(ipmass) = .true.
     required(itemp) = .true.
     required(ikappa) = .true.
-    if (ivx > 0) required(ivx:ivx+ndimV-1) = .true.
+    if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) required(ivx:ivx+ndimV-1) = .true.
     !
     !--set filename and header line
     !
