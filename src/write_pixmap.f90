@@ -39,10 +39,10 @@ module write_pixmap
  public :: readpixmap
 
  !The limits for numbers that can be written with the formatting string "1pe14.6"
- real(kind=8), parameter, private :: sN = -1.0E-99
- real(kind=8), parameter, private :: sP = 1.0E-99
- real(kind=8), parameter, private :: lN = -9.999999E99
- real(kind=8), parameter, private :: lP = 9.999999E99
+ real(kind=8), parameter, private :: sN = -1.0d-99
+ real(kind=8), parameter, private :: sP = 1.0d-99
+ real(kind=8), parameter, private :: lN = -9.999999d99
+ real(kind=8), parameter, private :: lP = 9.999999d99
 
  private
 
