@@ -238,7 +238,6 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  close(iunit)
  print "(a)",'OK'
 
-#ifdef DP
  if (nSmallNegative > 0) then
     print "(a,i9,a)","  WARNING: ",nSmallNegative," pixel values are between -1.0E-99 and 0, setting them to -1.0E-99"
  endif
@@ -251,7 +250,6 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  if (nLargePositive > 0) then
     print "(a,i9,a)","  WARNING: ",nLargePositive," pixels values are larger than 9.999999E99, setting them to 9.999999E99"
  endif
-#endif
  
  return
 
