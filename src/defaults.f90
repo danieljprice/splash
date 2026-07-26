@@ -46,12 +46,14 @@ contains
    use settings_xsecrot,   only:defaults_set_xsecrotate
    use settings_powerspec, only:defaults_set_powerspec
    use settings_units,     only:defaults_set_units
+   use settings_data,      only:iverbose
    use titles,             only:pagetitles,steplegend
    logical, intent(in) :: use_evdefaults
-   integer :: i
+   integer :: i,iverbose_save
   !
   !--set defaults for submenu options
   !
+   iverbose_save = iverbose
    call defaults_set_data
    call defaults_set_limits
    call defaults_set_page
@@ -66,7 +68,7 @@ contains
   !--if using evsplash, override some default options
   !
    if (use_evdefaults) then
-      print "(a)",' ** ev mode: using default settings for .ev files **'
+      if (iverbose_save >= 0) print "(a)",' ** ev mode: using default settings for .ev files **'
       call defaults_set_page_ev
       call defaults_set_part_ev
    endif
@@ -170,7 +172,7 @@ end subroutine defaults_write
 subroutine defaults_read(filename)
  use filenames,          only:rootname,maxfile
  use multiplot,          only:multi
- use settings_data,      only:dataopts,idustfrac_plot,idefaults_file_read
+ use settings_data,      only:dataopts,idustfrac_plot,idefaults_file_read,iverbose
  use settings_part,      only:plotopts
  use settings_page,      only:pageopts
  use settings_render,    only:renderopts
@@ -251,19 +253,21 @@ subroutine defaults_read(filename)
 66  continue
 
     close(unit=iunit)
-    if (nerr > 0) then
-       print "(a)",' WARNING: '//trim(filename)//' incomplete (from old code version)'
-    else
-       print*,'read '//trim(filename)
+    if (iverbose >= 0) then
+       if (nerr > 0) then
+          print "(a)",' WARNING: '//trim(filename)//' incomplete (from old code version)'
+       else
+          print*,'read '//trim(filename)
+       endif
     endif
     return
  else
-    print*,trim(filename)//' not found: using default settings'
+    if (iverbose >= 0) print*,trim(filename)//' not found: using default settings'
     return
  endif
 
 88 continue
- print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
+ if (iverbose >= 0) print "(a)",' *** error opening defaults file '//trim(filename)//': using default settings'
 
  return
 end subroutine defaults_read

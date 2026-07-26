@@ -278,8 +278,11 @@ subroutine adjust_data_codeunits
     dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
  endif
 
- get_h = lenvironment('SPLASH_GETH')
- if (.not.get_h) get_h = lenvironment('SPLASH_GET_H')
+ !
+ !--recompute smoothing lengths (--geth / --get_h)
+ !
+ get_h = get_command_flag('geth')
+ if (.not.get_h) get_h = get_command_flag('get_h')
  if (ndim >= 1 .and. get_h) then
     call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
  endif

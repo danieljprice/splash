@@ -682,4 +682,58 @@ subroutine set_vector_labels(ncolumns,ndimV,iamveci,labelveci,labeli,labelcoordi
 
 end subroutine set_vector_labels
 
+!-----------------------------------------------------------------
+!
+!  print dump file header tags and values
+!
+!-----------------------------------------------------------------
+subroutine print_headers(headervals1)
+ real, intent(in) :: headervals1(:)
+ integer :: i,nhdr
+
+ nhdr = min(count_non_blank(headertags),size(headervals1))
+ do i=1,nhdr
+    print "(1x,a,' = ',1pg14.6)",trim(headertags(i)),headervals1(i)
+ enddo
+
+end subroutine print_headers
+
+!-----------------------------------------------------------------
+!
+!  print column labels one per line (no numbers)
+!
+!-----------------------------------------------------------------
+subroutine print_column_labels(ncolumns,ncalc)
+ integer, intent(in) :: ncolumns,ncalc
+ integer :: i,nlab
+
+ nlab = min(ncolumns + ncalc,size(label),ubound(unitslabel,1))
+ do i=1,nlab
+    if (len_trim(label(i))==0) cycle
+    if (len_trim(unitslabel(i)) > 0 .and. index(label(i),trim(unitslabel(i)))==0) then
+       print "(a)",trim(label(i))//trim(unitslabel(i))
+    else
+       print "(a)",trim(label(i))
+    endif
+ enddo
+
+end subroutine print_column_labels
+
+!-----------------------------------------------------------------
+!
+!  print original column labels one per line (no units, no numbers)
+!
+!-----------------------------------------------------------------
+subroutine print_column_labels_orig(ncolumns)
+ integer, intent(in) :: ncolumns
+ integer :: i,nlab
+
+ nlab = min(ncolumns,size(labelorig))
+ do i=1,nlab
+    if (len_trim(labelorig(i))==0) cycle
+    print "(a)",trim(labelorig(i))
+ enddo
+
+end subroutine print_column_labels_orig
+
 end module labels

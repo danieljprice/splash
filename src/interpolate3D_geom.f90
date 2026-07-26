@@ -152,9 +152,9 @@ subroutine interpolate3Dgeom(igeom,x,y,z,hh,weight,dat,itype,npart,&
 !$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix) &
 !$omp reduction(+:nsub,meansubpix,ncount) &
 !$omp reduction(max:maxsubpix)
-!$omp master
+!$omp masked
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
+!$omp end masked
 
 !$omp do schedule (guided, 2)
  over_parts: do i=1,npart
@@ -354,9 +354,9 @@ subroutine interpolate3Dgeom_vec(igeom,x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(dx,q2,wab,isub,jsub,ksub,nsubpix,dsubpix) &
 !$omp reduction(+:nsub,meansubpix,ncount) &
 !$omp reduction(max:maxsubpix)
-!$omp master
+!$omp masked
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
+!$omp end masked
 
 !$omp do schedule (guided, 2)
  over_parts: do i=1,npart

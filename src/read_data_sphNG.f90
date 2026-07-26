@@ -1516,10 +1516,13 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  get_kappa_tot = lenvironment("SPLASH_GET_KAPPATOT")
  get_kappa = lenvironment("SPLASH_GET_KAPPA") .or. get_kappa_tot
  get_ionfrac = lenvironment("SPLASH_GET_ION")
- if ((get_temperature .or. get_kappa) .and. itempcol > 0 .and. required(itempcol)) then
-    required(irho) = .true.
-    required(irhorestframe) = .true.
-    required(iutherm) = .true.
+ ! force read of rho/u when deriving T or kappa (itempcol may still be 0 on first call)
+ if (get_temperature .or. get_kappa) then
+    if (itempcol == 0 .or. required(itempcol)) then
+       if (irho > 0) required(irho) = .true.
+       if (irhorestframe > 0) required(irhorestframe) = .true.
+       if (iutherm > 0) required(iutherm) = .true.
+    endif
  endif
  if (get_ionfrac .or. get_kappa) then
     required(irho) = .true.
@@ -1548,7 +1551,7 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
  enddo
 
  if (iverbose >= 1) print "(1x,a)",'reading sphNG format'
- write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
+ if (iverbose >= 0) write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
  debug = lenvironment('SSPLASH_DEBUG')
  if (debug) iverbose = 1
@@ -2312,40 +2315,6 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
     if (allocated(iorig) .and. .not.got_iorig) deallocate(iorig) ! did not find id/iorig in dump
     call read_composition(compfile,ntotal,dat(:,:,j),icomp_col_start,ncomp,iorig)
  endif
- !
- !--calculate the temperature from density and internal energy (using physical units)
- !
- unit_dens = umass/(udist**3)
- !
- !--use primitive density for relativistic code
- !
- idenscol = irho
- if (irhorestframe > 0) idenscol = irhorestframe
-
- if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
-    unit_ergg = (udist/utime)**2
-    dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,dat(1:ntotal,iutherm,j)*unit_ergg) !irho = density
- endif
- if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0) then
-    write(*,"(1x,a,3(f5.2,1x))",advance='no') 'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
-    if (get_kappa_tot) then
-       write(*,*) ' (opacity uses electron scattering, Kramers and H-)'
-    else
-       write(*,*) ' (electron scattering opacity only)'
-    endif
-    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,&
-                                         dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac,get_kappa_tot)
- endif
- if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
-     .and. any(required(iHIIcol:iHeIIIcol))) then
-    do i=1,ntotal
-       call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
-                                real(Xfrac),real(Yfrac),xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
-       dat(i,iHIIcol,j)=xHIIi
-       dat(i,iHeIIcol,j)=xHeIIi
-       dat(i,iHeIIIcol,j)=xHeIIIi
-    enddo
- endif
 
  !--set flag to indicate that only part of this file has been read
  if (.not.all(required(1:ncolstep))) ipartialread = .true.
@@ -2480,7 +2449,51 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
 
  endif iphasealloc
 
+ !
+ !--set labels before deriving T/kappa so iutherm, itemp etc. are known
+ !
  call set_labels_sphNG
+ !
+ !--calculate temperature from density and internal energy (physical units)
+ !  must come after set_labels so the u column index (iutherm) is identified
+ !
+ unit_dens = umass/(udist**3)
+ !--use primitive density for relativistic code
+ idenscol = irho
+ if (irhorestframe > 0) idenscol = irhorestframe
+
+ if (get_temperature .and. itempcol > 0 .and. required(itempcol)) then
+    if (iutherm > 0 .and. idenscol > 0) then
+       unit_ergg = (udist/utime)**2
+       dat(1:ntotal,itempcol,j) = get_temp_from_u(dat(1:ntotal,idenscol,j)*unit_dens,&
+                                                  dat(1:ntotal,iutherm,j)*unit_ergg)
+    else
+       if (iverbose >= 0) print "(a)",' WARNING: --temp requested but cannot locate density/u columns; temperature not computed'
+    endif
+ endif
+ if (get_kappa .and. ikappa > 0 .and. required(ikappa) .and. itemp > 0 .and. idenscol > 0) then
+    if (iverbose >= 0) then
+       write(*,"(1x,a,3(f5.2,1x))",advance='no') 'X,Y,Z = ',Xfrac,Yfrac,1.-Xfrac-Yfrac
+       if (get_kappa_tot) then
+          write(*,*) ' (opacity uses electron scattering, Kramers and H-)'
+       else
+          write(*,*) ' (electron scattering opacity only)'
+       endif
+    endif
+    dat(1:ntotal,ikappa,j) = get_opacity(dat(1:ntotal,idenscol,j)*unit_dens,&
+                                         dat(1:ntotal,itemp,j)*1.d0,Xfrac,Yfrac,get_kappa_tot)
+ endif
+ if (get_ionfrac .and. iHIIcol > 0 .and. iHeIIcol > 0 .and. iHeIIIcol > 0&
+     .and. any(required(iHIIcol:iHeIIIcol)) .and. idenscol > 0 .and. itemp > 0) then
+    do i=1,ntotal
+       call ionisation_fraction(real(dat(i,idenscol,j)*unit_dens),dat(i,itemp,j),&
+                                real(Xfrac),real(Yfrac),xHIi,xHIIi,xHeIi,xHeIIi,xHeIIIi,nei)
+       dat(i,iHIIcol,j)=xHIIi
+       dat(i,iHeIIcol,j)=xHeIIi
+       dat(i,iHeIIIcol,j)=xHeIIIi
+    enddo
+ endif
+
  if (.not.phantomdump) then
     if (ngas /= npart - nptmassi - ndust - nstar - nunknown) &
            print*,'WARNING!!! ngas =',ngas,'but should be',npart-nptmassi-ndust-nstar-nunknown

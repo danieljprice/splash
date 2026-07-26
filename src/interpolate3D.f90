@@ -171,9 +171,9 @@ subroutine interpolate3D(x,y,z,hh,weight,dat,itype,npart,&
 !$omp private(pixint,wint,negflag,dfac,threadid) &
 !$omp firstprivate(iprintnext) &
 !$omp reduction(+:nwarn,usedpart)
-!$omp master
+!$omp masked
 !$ print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
+!$omp end masked
 
 !$omp do schedule (guided, 2)
  over_parts: do i=1,npart
@@ -471,9 +471,9 @@ subroutine interpolate3D_vec(x,y,z,hh,weight,datvec,itype,npart,&
 !$omp private(ipix,jpix,kpix,ipixi,jpixi,kpixi) &
 !$omp private(dx2i,nxpix,zpix,dz,dz2,dyz2,dy,ypix,q2,wab) &
 !$omp reduction(+:nwarn)
-!$omp master
+!$omp masked
 !$  print "(1x,a,i3,a)",'Using ',omp_get_num_threads(),' cpus'
-!$omp end master
+!$omp end masked
  !
  !--loop over particles
  !

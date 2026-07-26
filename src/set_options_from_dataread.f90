@@ -55,7 +55,7 @@ subroutine set_options_dataread()
              if (iverbose >= 1) print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
           endif
        enddo
-       print*
+       if (iverbose >= 1) print*
     endif
     ! Set particle colouring if it can't render
     if (irho==0 .or. ih==0) then
@@ -78,7 +78,7 @@ subroutine set_options_dataread()
  !--for fits cubes, turn on cross section by default if 3D
  if (ndim >= 3 .and. .not.idefaults_file_read .and. ifileopen > 0) then  ! only on first data read
     if (index(rootname(ifileopen),'.fits') > 0) then
-       print "(a)",' turning cross section ON for fits cube'
+       if (iverbose >= 0) print "(a)",' turning cross section ON for fits cube'
        xsec_nomulti = .true.
     endif
  endif

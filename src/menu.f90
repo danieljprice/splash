@@ -37,7 +37,7 @@ subroutine menu
  use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
  use options_data,     only:submenu_data
  use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                             buffer_data,ncolumns,icoords,icoordsnew,iRescale
+                             buffer_data,ncolumns,icoords,icoordsnew,iRescale,iverbose
  use settings_limits,  only:submenu_limits,iadapt
  use settings_part,    only:submenu_particleplots,mstari
  use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
@@ -402,7 +402,7 @@ subroutine menu
              call set_filenames(trim(fileprefix))
           endif
           call defaults_write(defaultsfile)
-          call write_limits(limitsfile)
+          call write_limits(limitsfile,iverbose)
           if (iRescale) call write_unitsfile(unitsfile,ncolumns)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
