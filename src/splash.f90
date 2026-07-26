@@ -652,7 +652,7 @@ program splash
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename,match_column,&
-                              sort_filenames_for_comparison,split,extension
+                              sort_filenames_for_comparison,split_string,extension
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -1008,7 +1008,7 @@ program splash
     endif
  elseif (got_exact) then
     iexact = 2 ! override setting in defaults file
-    call split(exactfile,',',filename_exact,nfiles_exact)
+    call split_string(exactfile,',',filename_exact,nfiles_exact)
  endif
  if (get_command_flag('code')) then
     iRescale = .false.
