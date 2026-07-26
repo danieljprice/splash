@@ -181,29 +181,29 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 !
 !--type array if necessary
 !
+ if (.not.allocated(iamtypetemp)) allocate(iamtypetemp(0,0)) ! to avoid compiler warning
  if (present(mixedtypes)) then
     if (mixedtypes .and. .not.allocated(iamtype)) then
        allocate(iamtype(maxpart,maxstep), stat=ierr)
        if (ierr /= 0) stop 'error allocating memory for type array'
        iamtype = 1
        !--copy contents if reallocating
-       if (allocated(iamtypetemp)) then
+       if (reallocate_itype) then
           iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-          deallocate(iamtypetemp)
        endif
     elseif (.not.mixedtypes) then
        !--if called with mixedtypes explictly false, deallocate itype array
        if (allocated(iamtype)) deallocate(iamtype)
     endif
- elseif (allocated(iamtypetemp)) then
+ elseif (reallocate_itype) then
     !--if called without mixedtypes, preserve contents of itype array
     allocate(iamtype(maxpart,maxstep), stat=ierr)
     if (ierr /= 0) stop 'error allocating memory for type array'
     iamtype = 1
 
     iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-    deallocate(iamtypetemp)
  endif
+ if (allocated(iamtypetemp)) deallocate(iamtypetemp)
  !--make sure iamtype is always allocated for safety, just with size=1 if not used
  if (.not.allocated(iamtype)) then
     allocate(iamtype(1,maxstep),stat=ierr)
