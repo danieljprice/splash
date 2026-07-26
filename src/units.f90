@@ -587,7 +587,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
  if (i <= ncolumns) then
-    print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
+    if (isverbose >= 0) print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
     ierr = -1
  endif
  if (ierrzunits .and. ndim==3) then

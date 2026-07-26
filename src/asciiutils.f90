@@ -37,7 +37,7 @@ module asciiutils
  public :: string_replace,string_delete,get_nheaderlines,string_sub
  public :: ucase,lcase,strip
  public :: get_line_containing
- public :: enumerate,isdigit,get_digits,integer_to_string,split
+ public :: enumerate,isdigit,get_digits,integer_to_string,split_string
  public :: get_column_labels,read_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: match_column,match_tag_start,match_integer,match_lists
@@ -537,7 +537,7 @@ integer function ncolumnsline_csv(line,ntot) result(ncols)
  real :: dum
 
  ! split line by commas
- call split(line,',',fields,nfields)
+ call split_string(line,',',fields,nfields)
 
  ! report how many columns contain real numbers
  ! or blank (non-text) entries
@@ -573,7 +573,7 @@ subroutine readline_csv(line,ncols,datcol)
  integer :: nfields,i,icol,ierr
 
  ! split line by commas
- call split(line,',',fields,nfields)
+ call split_string(line,',',fields,nfields)
 
  ! read only columns that contain real numbers
  icol = 0
@@ -1013,7 +1013,7 @@ end function enumerate
 ! Split a string into substrings based on a delimiter
 !
 !---------------------------------------------------------------------------
-pure subroutine split(string,delim,stringarr,nsplit)
+pure subroutine split_string(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: string
  character(len=*), intent(in)  :: delim
  character(len=*), intent(out), dimension(:), optional :: stringarr
@@ -1050,7 +1050,7 @@ pure subroutine split(string,delim,stringarr,nsplit)
     i = iend + len(delim) + 1
  enddo
 
-end subroutine split
+end subroutine split_string
 
 !---------------------------------------------------------------------------
 !
@@ -1095,7 +1095,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     i1 = max(index(line,'[')+1,i1)    ! strip leading square bracket
     ! try with different number of spaces between brackets (if labels not found)
     over_spaces1: do i=4,0,-1
-       call split(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
+       call split_string(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
        if (nlabels > 1) exit over_spaces1
     enddo over_spaces1
  elseif (index(line,',') > 1 .or. is_csv) then
@@ -1103,7 +1103,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     ! format style 2: mylabel1,mylabel2,mylabel3
     !
     istyle = 2
-    call split(line(i1:),',',labels,nlabelstmp)
+    call split_string(line(i1:),',',labels,nlabelstmp)
     if (is_csv) then
        nlabels = nlabelstmp  ! allow blank/arbitrary labels in csv format
     else
@@ -1117,7 +1117,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     ! try splitting with 4, then 3, then 2 spaces until the number of labels decreases
     nlabels_prev = 0
     over_spaces: do i=4,2,-1
-       call split(line(i1:),spaces(1:i),labels,nlabelstmp)
+       call split_string(line(i1:),spaces(1:i),labels,nlabelstmp)
        ! quit if we already have the target number of labels
        if (nlabelstmp == ntarget) exit over_spaces
 
@@ -1126,7 +1126,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
        if ((nlabelstmp < nlabels_prev .or. nlabelstmp >= max(nlabels_prev,2)  &
             .and. i < 4 .and. .not. (ntarget > 0 .and. nlabelstmp > ntarget))) then
           ! take the answer with the previous number of spaces
-          call split(line(i1:),spaces(1:i+1),labels,nlabelstmp)
+          call split_string(line(i1:),spaces(1:i+1),labels,nlabelstmp)
           exit over_spaces
        endif
        nlabels_prev = nlabelstmp
@@ -1142,7 +1142,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
        ! (this style is also dangerous)
        !
        istyle = 4
-       call split(line(i1:),' ',labels,nlabelstmp)
+       call split_string(line(i1:),' ',labels,nlabelstmp)
        nlabels = count_sensible_labels(nlabelstmp,labels)
     endif
  endif

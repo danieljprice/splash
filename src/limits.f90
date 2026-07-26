@@ -86,7 +86,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol,use_type)
  !
  first = .true.
  do j=ifromcol,itocol
-    call warn_minmax(label(j),lim(j,1),lim(j,2),first)
+    if (iverbose >= 0) call warn_minmax(label(j),lim(j,1),lim(j,2),first)
  enddo
 
  lim2(ifromcol:itocol,:) = 0.
@@ -121,12 +121,13 @@ end subroutine rescale_limits
 !----------------------------------------------------------
 ! save plot limits for all columns to a file
 !----------------------------------------------------------
-subroutine write_limits(limitsfile)
+subroutine write_limits(limitsfile,iverbose)
  use settings_data, only:numplot,ndataplots
  character(len=*), intent(in) :: limitsfile
+ integer, intent(in) :: iverbose
  integer :: i
 
- print*,'saving plot limits to file ',trim(limitsfile)
+ if (iverbose >= 0) print*,'saving plot limits to file ',trim(limitsfile)
 
  open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
  do i=1,numplot
@@ -145,10 +146,10 @@ subroutine write_limits(limitsfile)
  return
 
 998 continue
- print*,'*** error opening limits file: limits not saved'
+ if (iverbose >= 0) print*,'*** error opening limits file: limits not saved'
  return
 999 continue
- print*,'*** error saving limits'
+ if (iverbose >= 0) print*,'*** error saving limits'
  close(unit=55)
 
 end subroutine write_limits
@@ -158,7 +159,7 @@ end subroutine write_limits
 !----------------------------------------------------------
 subroutine read_limits(limitsfile,ierr)
  use labels,        only:label
- use settings_data, only:numplot,ncolumns,ncalc
+ use settings_data, only:numplot,ncolumns,ncalc,iverbose
  use asciiutils,    only:ncolumnsline
  character(len=*), intent(in) :: limitsfile
  integer,         intent(out) :: ierr
@@ -176,7 +177,7 @@ subroutine read_limits(limitsfile,ierr)
  endif
 
  open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
- print "(a)",' read '//trim(limitsfile)
+ if (iverbose >= 0) print "(a)",' read '//trim(limitsfile)
  do i=1,numplot
     read(54,"(a)",err=998,end=999) line
     ncolsline = ncolumnsline(line)
@@ -193,19 +194,21 @@ subroutine read_limits(limitsfile,ierr)
     !
     !--warn if limits are the same
     !
-    call warn_minmax(label(i),lim(i,1),lim(i,2))
+    if (iverbose >= 0) call warn_minmax(label(i),lim(i,1),lim(i,2))
  enddo
  close(unit=54)
  return
 
 997 continue
- print*,trim(limitsfile),' not found'
+ if (iverbose >= 0) print*,trim(limitsfile),' not found'
  ierr = 1
  return
 998 continue
- call print_rangeinfo()
- call print_lim2info()
- print*,'*** error reading limits from file'
+ if (iverbose >= 0) then
+    call print_rangeinfo()
+    call print_lim2info()
+    print*,'*** error reading limits from file'
+ endif
  ierr = 2
  close(unit=54)
  return
@@ -213,13 +216,15 @@ subroutine read_limits(limitsfile,ierr)
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
  if (i < ncolumns+ncalc) then
-    print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
+    if (iverbose >= 0) print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
     ierr = -1
  endif
 
  !--print info about range restrictions read from file
- call print_rangeinfo()
- call print_lim2info()
+ if (iverbose >= 0) then
+    call print_rangeinfo()
+    call print_lim2info()
+ endif
  close(unit=54)
 
 end subroutine read_limits

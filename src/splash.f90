@@ -646,12 +646,13 @@ program splash
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              track_string,iRescale,enforce_code_units,UseTypeinRenderings
+                              track_string,iRescale,enforce_code_units,UseTypeinRenderings,&
+                              iverbose,iCalcQuantities
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename,match_column,&
-                              sort_filenames_for_comparison,split,extension
+                              sort_filenames_for_comparison,split_string,extension
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -668,12 +669,15 @@ program splash
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral,nfiles_exact=>nfiles,filename_exact
  use multiplot,          only:itrans
- use labels,             only:lenlabel,label,unitslabel,shortlabel,irho
+ use labels,             only:lenlabel,label,unitslabel,shortlabel,irho,&
+                              print_headers,print_column_labels,print_column_labels_orig
  use interactive_routines, only:set_movie_mode
+ use particle_data,      only:headervals
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  logical :: using_default_options,got_exact,sort,sort_pad,exact_flag
+ logical :: do_print_header,do_print_labels,do_print_labelsorig
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
@@ -712,6 +716,9 @@ program splash
  nomenu = .false.
  got_format = .false.
  got_exact = .false.
+ do_print_header = .false.
+ do_print_labels = .false.
+ do_print_labelsorig = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -836,6 +843,12 @@ program splash
        case('-formats')
           call print_available_formats
           stop
+       case('header','-header')
+          do_print_header = .true.
+       case('labels','-labels')
+          do_print_labels = .true.
+       case('labelsorig','-labelsorig')
+          do_print_labelsorig = .true.
        case('-help')
           call print_usage
           print "(/,a,/)",'Userguide: https://splash-viz.readthedocs.io'
@@ -898,14 +911,22 @@ program splash
     endif
  endif
  !
- ! print header
+ ! quiet mode for --header / --labels: skip banner and suppress read chatter
  !
- call print_header
+ if (.not.(do_print_header .or. do_print_labels .or. do_print_labelsorig)) call print_header
+ !
+ ! set quiet before defaults_set so even early messages honour iverbose=-1
+ !
+ if (do_print_header .or. do_print_labels .or. do_print_labelsorig) iverbose = -1
  !
  ! set default options (used if defaults file does not exist)
  !
  call defaults_set(evsplash)
  if (use_360) call defaults_set_360()
+ !
+ ! re-apply quiet settings (defaults_set resets iverbose)
+ !
+ if (do_print_header .or. do_print_labels .or. do_print_labelsorig) iverbose = -1
 
  !
  ! read default options from file if it exists
@@ -929,11 +950,19 @@ program splash
        else
           defaultsfile = trim(string)//'.defaults'
        endif
-       print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
+       if (iverbose >= 0) print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
        call defaults_read(defaultsfile)
        call set_filenames(trim(fileprefix))
        using_default_options = .false.
     endif
+ endif
+
+ !
+ ! re-apply quiet settings after defaults (namelist may reset iCalcQuantities)
+ !
+ if (do_print_header .or. do_print_labels .or. do_print_labelsorig) then
+    iverbose = -1
+    if (do_print_header .and. .not.do_print_labels .and. .not.do_print_labelsorig) iCalcQuantities = .false.
  endif
 
  !
@@ -979,7 +1008,7 @@ program splash
     endif
  elseif (got_exact) then
     iexact = 2 ! override setting in defaults file
-    call split(exactfile,',',filename_exact,nfiles_exact)
+    call split_string(exactfile,',',filename_exact,nfiles_exact)
  endif
  if (get_command_flag('code')) then
     iRescale = .false.
@@ -1000,7 +1029,7 @@ program splash
  endif
  if (nfiles >= 1 .and. rootname(1)(1:1) /= ' ') then
     ihavereadfilenames = .true.
-    if (nfiles > 1) print*,nfiles,' filenames read from command line'
+    if (nfiles > 1 .and. iverbose >= 0) print*,nfiles,' filenames read from command line'
  else
     ihavereadfilenames = .false.
     !print "(a)",' no filenames read from command line'
@@ -1016,7 +1045,7 @@ program splash
        stop
     endif
  endif
- if (lowmemorymode) print "(a)",' << running in low memory mode >>'
+ if (lowmemorymode .and. iverbose >= 0) print "(a)",' << running in low memory mode >>'
 
  !
  ! Guess format if not already set
@@ -1036,12 +1065,12 @@ program splash
     !--if no kernel has been set
     call get_environment_or_flag('SPLASH_KERNEL',string)
     if (len_trim(string) > 0) then
-       call select_kernel_by_name(string)
+       call select_kernel_by_name(string,verbose=(iverbose >= 0))
     else
-       call select_kernel(0)
+       call select_kernel(0,verbose=(iverbose >= 0))
     endif
  else
-    call select_kernel(ikernel)
+    call select_kernel(ikernel,verbose=(iverbose >= 0))
  endif
 
  ! set geometry defaults
@@ -1068,6 +1097,17 @@ program splash
     ! (e.g. switch on sink particles if there is no gas)
     !
     call set_options_dataread()
+    !
+    ! print header tags/values and/or column labels, then exit
+    !
+    if (do_print_header .or. do_print_labels .or. do_print_labelsorig) then
+       if (do_print_header .and. allocated(headervals)) then
+          call print_headers(headervals(:,1))
+       endif
+       if (do_print_labels) call print_column_labels(ncolumns,ncalc)
+       if (do_print_labelsorig) call print_column_labels_orig(ncolumns)
+       stop
+    endif
     !
     !  translate from string to column id
     !
@@ -1256,6 +1296,9 @@ subroutine print_usage(quit)
  print "(a)",' -b, --buffer      : buffer all data files into memory'
  !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
+ print "(a)",' --header          : print dump file header tags and values, then exit'
+ print "(a)",' --labels          : print column labels one per line, then exit'
+ print "(a)",' --labelsorig      : print original column labels (no units), then exit'
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : x axis'
  print "(a)",' -y column         : y axis'
