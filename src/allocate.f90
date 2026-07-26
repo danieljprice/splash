@@ -187,7 +187,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        if (ierr /= 0) stop 'error allocating memory for type array'
        iamtype = 1
        !--copy contents if reallocating
-       if (reallocate_itype) then
+       if (allocated(iamtypetemp)) then
           iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
           deallocate(iamtypetemp)
        endif
@@ -195,7 +195,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        !--if called with mixedtypes explictly false, deallocate itype array
        if (allocated(iamtype)) deallocate(iamtype)
     endif
- elseif (reallocate_itype) then
+ elseif (allocated(iamtypetemp)) then
     !--if called without mixedtypes, preserve contents of itype array
     allocate(iamtype(maxpart,maxstep), stat=ierr)
     if (ierr /= 0) stop 'error allocating memory for type array'
