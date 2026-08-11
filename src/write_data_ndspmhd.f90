@@ -236,7 +236,7 @@ subroutine write_sphdata_ndspmhd(time,gamma,dat,iamtype,ntotal,ntypes,npartoftyp
 !
 !--particle types (all gas)
 !
- write(idump,iostat=ierr) (1,i=1,ngas)
+ write(idump,iostat=ierr) (0,i=1,ngas)
  if (ierr /= 0) then
     print "(a)",' ERROR writing ndspmhd particle types'
  else
