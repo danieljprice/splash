@@ -371,6 +371,49 @@ elemental function shortlabel(string,unitslab,lc)
 
 end function shortlabel
 
+!--------------------------------------------------------------
+!
+!  find column index matching a name
+!  tries label synonyms first (e.g. rho/density, alpha/\alpha),
+!  then a case-insensitive shortlabel match
+!
+!--------------------------------------------------------------
+integer function find_column(colname,ncolumns) result(icol)
+ use asciiutils, only:lcase,string_delete
+ character(len=*), intent(in) :: colname
+ integer, intent(in), optional :: ncolumns
+ integer :: i,n
+ character(len=lenlabel) :: want,have
+
+ icol = 0
+ n = size(label)
+ if (present(ncolumns)) n = min(n,max(ncolumns,0))
+ if (n <= 0) return
+
+ want = label_synonym(colname)
+ do i=1,n
+    if (len_trim(label(i))==0) cycle
+    if (trim(label_synonym(label(i)))==trim(want)) then
+       icol = i
+       return
+    endif
+ enddo
+
+ ! fallback: short label, case-insensitive (also ignore spaces)
+ want = trim(adjustl(lcase(colname)))
+ call string_delete(want,' ')
+ do i=1,n
+    if (len_trim(label(i))==0) cycle
+    have = shortlabel(label(i),unitslabel(i),lc=.true.)
+    call string_delete(have,' ')
+    if (trim(have)==trim(want)) then
+       icol = i
+       return
+    endif
+ enddo
+
+end function find_column
+
 !---------------------------------------------------------------
 ! interface for adjusting the label for column-integrated plots
 !---------------------------------------------------------------
