@@ -335,6 +335,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     call write_fits_image('img_'//trim(specfile)//'_mom0.fits',img,(/npixx,npixy/),ierr)
     if (ierr /= 0) then
        write(*,"(a)") ' ERROR: mom0 FITS image not written; skipping cube'
+       ierr = 0
        return
     endif
 
@@ -349,7 +350,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        !$omp end parallel do
        call write_fits_cube('img_'//trim(specfile)//'.fits',img_tmp,(/npixx,npixy,nfreq/),ierr)
     endif
-    if (ierr /= 0) write(*,*) 'Error writing to FITS cube !!!'
+    if (ierr /= 0) then
+       write(*,*) 'Error writing to FITS cube !!!'
+       ierr = 0
+    endif
     if (allocated(img_tmp)) deallocate(img_tmp)
  endif
 
