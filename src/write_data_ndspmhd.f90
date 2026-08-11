@@ -149,10 +149,12 @@ subroutine write_sphdata_ndspmhd(time,gamma,dat,iamtype,ntotal,ntypes,npartoftyp
  idivv   = find_column('div v',ncolumns)
 !
 !--essential columns: x, v, h, rho, u, pmass
+!  (stop on first write failure so later iostats cannot mask it)
 !
+ ierr = 0
  do i=1,ndim
     call fill_column(coldat,dat,igas,ngas,ix(i),0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
  enddo
  do i=1,ndimV
     if (ivx > 0) then
@@ -160,69 +162,76 @@ subroutine write_sphdata_ndspmhd(time,gamma,dat,iamtype,ntotal,ntypes,npartoftyp
     else
        coldat = 0.
     endif
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
  enddo
  call fill_column(coldat,dat,igas,ngas,ih,0.)
- write(idump,iostat=ierr) coldat
+ call write_coldat(idump,coldat,ierr)
  call fill_column(coldat,dat,igas,ngas,irho,0.)
- write(idump,iostat=ierr) coldat
+ call write_coldat(idump,coldat,ierr)
  call fill_column(coldat,dat,igas,ngas,iutherm,0.)
- write(idump,iostat=ierr) coldat
+ call write_coldat(idump,coldat,ierr)
  if (ipmass > 0) then
     call fill_column(coldat,dat,igas,ngas,ipmass,pmass_default)
  else
     coldat = pmass_default
  endif
- write(idump,iostat=ierr) coldat
+ call write_coldat(idump,coldat,ierr)
 
  if (iformat==2) then
     !
     !--MHD: alpha(3), B, psi, then info columns
     !
     call fill_column(coldat,dat,igas,ngas,ialpha,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     call fill_column(coldat,dat,igas,ngas,ialphau,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     coldat = 0.  ! alphaB
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     do i=1,ndimV
        call fill_column(coldat,dat,igas,ngas,iBfirst+i-1,0.)
-       write(idump,iostat=ierr) coldat
+       call write_coldat(idump,coldat,ierr)
     enddo
     coldat = 0.  ! psi
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     call write_pressure(idump,coldat,dat,igas,ngas,gamma,ierr)
     call fill_column(coldat,dat,igas,ngas,idivv,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     coldat = 0.  ! div B
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     do i=1,ndimV
        coldat = 0.  ! J
-       write(idump,iostat=ierr) coldat
+       call write_coldat(idump,coldat,ierr)
     enddo
     coldat = 0.  ! grad h
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     do i=1,ndimV
        coldat = 0.  ! force
-       write(idump,iostat=ierr) coldat
+       call write_coldat(idump,coldat,ierr)
     enddo
  else
     !
     !--hydro: alpha(2), P, div v, grad h, force
     !
     call fill_column(coldat,dat,igas,ngas,ialpha,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     call fill_column(coldat,dat,igas,ngas,ialphau,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     call write_pressure(idump,coldat,dat,igas,ngas,gamma,ierr)
     call fill_column(coldat,dat,igas,ngas,idivv,0.)
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     coldat = 0.  ! grad h
-    write(idump,iostat=ierr) coldat
+    call write_coldat(idump,coldat,ierr)
     do i=1,ndimV
        coldat = 0.  ! force
-       write(idump,iostat=ierr) coldat
+       call write_coldat(idump,coldat,ierr)
     enddo
+ endif
+
+ if (ierr /= 0) then
+    print "(a)",' ERROR writing ndspmhd particle data'
+    close(idump)
+    deallocate(coldat,igas)
+    return
  endif
 !
 !--particle types (all gas)
@@ -288,6 +297,23 @@ end subroutine select_gas_particles
 
 !-----------------------------------------------------------------
 !+
+!  write one column array; skip if a previous write already failed
+!+
+!-----------------------------------------------------------------
+subroutine write_coldat(iunit,coldat,ierr)
+ integer, intent(in) :: iunit
+ real, intent(in) :: coldat(:)
+ integer, intent(inout) :: ierr
+ integer :: ierr_write
+
+ if (ierr /= 0) return
+ write(iunit,iostat=ierr_write) coldat
+ ierr = ierr_write
+
+end subroutine write_coldat
+
+!-----------------------------------------------------------------
+!+
 !  copy one data column for the selected gas particles
 !+
 !-----------------------------------------------------------------
@@ -318,10 +344,11 @@ subroutine write_pressure(iunit,coldat,dat,igas,ngas,gamma,ierr)
  integer, intent(in) :: iunit,igas(:),ngas
  real, intent(inout) :: coldat(:)
  real, intent(in) :: dat(:,:),gamma
- integer, intent(out) :: ierr
+ integer, intent(inout) :: ierr
  integer :: i
  real :: rhoi,ui
 
+ if (ierr /= 0) return
  if (ipr > 0) then
     call fill_column(coldat,dat,igas,ngas,ipr,0.)
  elseif (irho > 0 .and. iutherm > 0) then
@@ -333,7 +360,7 @@ subroutine write_pressure(iunit,coldat,dat,igas,ngas,gamma,ierr)
  else
     coldat(1:ngas) = 0.
  endif
- write(iunit,iostat=ierr) coldat(1:ngas)
+ call write_coldat(iunit,coldat(1:ngas),ierr)
 
 end subroutine write_pressure
 

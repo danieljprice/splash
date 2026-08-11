@@ -205,14 +205,15 @@ subroutine set_labels_shamrock
  do i = 1, ncolumns
     label(i) = trim(tagarr(i))
  enddo
+ ! expand vector labels (v,v,v -> v_x,v_y,v_z) before column lookup
+ call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
+
  irho = find_column('density',ncolumns)
  ih = find_column('h',ncolumns)
  if (ih == 0) ih = find_column('hpart',ncolumns)
  ipmass = find_column('pmass',ncolumns)
  if (ipmass == 0) ipmass = find_column('mass',ncolumns)
  ivx = find_column('vx',ncolumns)
-
- call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 
  if (ix(1) > 0) label(ix(1:ndim)) = labelcoord(1:ndim,1)
  if (irho > 0)  label(irho) = 'density'
