@@ -199,8 +199,9 @@ end function is_density
 elemental function label_synonym(string)
  use asciiutils, only:lcase,string_delete
  character(len=*), intent(in) :: string
- character(len=max(len(string),8)) :: label_synonym
- character(len=len(string)) :: labeli
+ ! pad so fixed substrings (e.g. labeli(1:13)) are safe for short inputs
+ character(len=max(len(string),20)) :: label_synonym
+ character(len=max(len(string),20)) :: labeli
  integer :: k
 
  ! remove leading spaces and make lower case
