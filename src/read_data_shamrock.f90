@@ -193,7 +193,7 @@ end subroutine read_data_shamrock
 !-----------------------------------------------------------------
 subroutine set_labels_shamrock
  use labels,        only:label,labeltype,ix,iamvec,labelvec,irho,ih,ipmass,  &
-                          set_vector_labels,label_synonym,ivx
+                          set_vector_labels,find_column,ivx
  use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings,ncolumns
  use geometry,      only:labelcoord
  integer :: i
@@ -204,17 +204,13 @@ subroutine set_labels_shamrock
 
  do i = 1, ncolumns
     label(i) = trim(tagarr(i))
-    select case (trim(label(i)))
-    case('rho')
-       irho = i
-    case('h','hpart')
-       ih = i
-    case('mass')
-       ipmass = i
-    case('vx')
-       ivx = i
-    end select
  enddo
+ irho = find_column('density',ncolumns)
+ ih = find_column('h',ncolumns)
+ if (ih == 0) ih = find_column('hpart',ncolumns)
+ ipmass = find_column('pmass',ncolumns)
+ if (ipmass == 0) ipmass = find_column('mass',ncolumns)
+ ivx = find_column('vx',ncolumns)
 
  call set_vector_labels(ncolumns,ndimV,iamvec,labelvec,label,labelcoord(:,1))
 

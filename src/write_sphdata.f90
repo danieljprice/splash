@@ -52,6 +52,8 @@ logical function issphformat(string)
     issphformat = .true.
  case('gadget')
     issphformat = .true.
+ case('ndspmhd')
+    issphformat = .true.
  case('none')
     verbose = .false.
  end select
@@ -73,6 +75,7 @@ logical function issphformat(string)
     endif
     print "(a)",  '        to phantom : convert SPH data to binary dump file for PHANTOM'
     print "(a)",  '        to gadget  : convert SPH data to default GADGET snapshot file format'
+    print "(a)",  '        to ndspmhd : convert SPH data to ndspmhd binary dump file (.dat)'
  elseif (.not.issphformat) then
     print "(a)",'Convert mode: '
     print "(a)",'   splash to ascii     : convert to ascii; type "splash to" for other formats'
@@ -88,6 +91,7 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
  use params,         only:int1,maxplot,doub_prec
  use write_data_phantom, only:write_sphdata_phantom
  use write_data_gadget,  only:write_sphdata_gadget
+ use write_data_ndspmhd, only:write_sphdata_ndspmhd
  use filenames,      only:tagline
  use geomutils,      only:change_coords
  use asciiutils,     only:lcase
@@ -336,6 +340,9 @@ subroutine write_sphdump(time,gamma,dat,npart,ntypes,npartoftype,masstype,itype,
                                ipmass,irho,iutherm,filename,0.)
  case('gadget')
     call write_sphdata_gadget(time,dat,itype,npart,ntypes,npartoftype,&
+                               masstype,ncolumns,filename)
+ case('ndspmhd')
+    call write_sphdata_ndspmhd(time,gamma,dat,itype,npart,ntypes,npartoftype,&
                                masstype,ncolumns,filename)
  case default
     print "(a)",' ERROR: unknown output format '''//trim(outformat)//''' in write_sphdump'

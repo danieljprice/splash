@@ -15,7 +15,7 @@ convert.o : convert.f90 labels.o system_utils.o limits.o asciiutils.o get_data.o
 convert_grid.o : convert_grid.f90 globaldata.o timing.o asciiutils.o geometry.o globaldata.o write_griddata.o system_utils.o interpolate2D.o interpolate3D_geom.o interpolate3D.o interpolation.o rotate.o options_xsecrotate.o options_render.o options_particleplots.o globaldata.o units.o limits.o labels.o globaldata.o 
 cubicsolve.o : cubicsolve.f90 
 dataread_utils.o : dataread_utils.f90 globaldata.o 
-defaults.o : defaults.f90 calc_quantities.o shapes.o globaldata.o globaldata.o titles.o units.o options_powerspec.o options_xsecrotate.o options_vecplot.o options_render.o options_page.o options_particleplots.o options_data.o options_limits.o globaldata.o exact.o 
+defaults.o : defaults.f90 calc_quantities.o shapes.o globaldata.o titles.o globaldata.o units.o options_powerspec.o options_xsecrotate.o options_vecplot.o options_render.o options_page.o options_particleplots.o options_data.o options_limits.o globaldata.o exact.o 
 denoise.o : denoise.f90 system_utils.o imageutils.o write_fits.o 
 discplot.o : discplot.f90 ${PLOTLIB:.f90=.o} partutils.o physcon.o globaldata.o transform.o 
 exact.o : exact.f90 transform.o exact_bondi.o exact_Cshock.o exact_gresho.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_densityprofiles.o exact_wave.o exact_toystar2D.o exact_toystar1D.o exact_torus.o exact_shock_sr.o exact_shock.o exact_sedov.o exact_rhoh.o exact_polytrope.o exact_fromfile.o system_utils.o partutils.o globaldata.o physcon.o map_columns.o labels.o asciiutils.o exact_planetdisc.o exact_mhdshock.o exact_function.o globaldata.o prompting.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o 
@@ -150,7 +150,7 @@ setpage.o : setpage.f90 transform.o asciiutils.o ${PLOTLIB:.f90=.o}
 shapes.o : shapes.f90 legends.o interactive_help.o parsetext.o asciiutils.o transform.o ${PLOTLIB:.f90=.o} exact_function.o prompting.o globaldata.o promptlist.o 
 sort.o : sort.f90 
 sph_moments.o : sph_moments.f90 kernels.o moments.o system_utils.o write_fits.o 
-splash.o : splash.f90 interactive.o labels.o globaldata.o exact.o set_options_from_dataread.o read_data.o colours.o options_xsecrotate.o options_render.o options_particleplots.o options_page.o timestepping.o analysis.o write_griddata.o write_sphdata.o convert.o write_pixmap.o asciiutils.o system_utils.o system_f2003.o globaldata.o interpolate3D_projection.o allocate.o menu.o kernels.o limits.o initialise.o defaults.o geomutils.o get_data.o globaldata.o 
+splash.o : splash.f90 globaldata.o interactive.o labels.o globaldata.o exact.o set_options_from_dataread.o read_data.o colours.o options_xsecrotate.o options_render.o options_particleplots.o options_page.o timestepping.o analysis.o write_griddata.o write_sphdata.o convert.o write_pixmap.o asciiutils.o system_utils.o system_f2003.o globaldata.o interpolate3D_projection.o allocate.o menu.o kernels.o limits.o initialise.o defaults.o geomutils.o get_data.o globaldata.o 
 system_f2003.o : system_f2003.f90 
 system_utils.o : system_utils.f90 system_f2003.o asciiutils.o 
 timestepping.o : timestepping.f90 globaldata.o options_particleplots.o get_data.o ${PLOTLIB:.f90=.o} plotstep.o options_page.o globaldata.o globaldata.o globaldata.o 
@@ -161,9 +161,10 @@ units.o : units.f90 asciiutils.o globaldata.o globaldata.o prompting.o labels.o 
 utils_json.o : utils_json.f90 globaldata.o 
 utils_vectors.o : utils_vectors.f90 
 write_data_gadget.o : write_data_gadget.f90 globaldata.o limits.o globaldata.o labels.o 
+write_data_ndspmhd.o : write_data_ndspmhd.f90 asciiutils.o globaldata.o globaldata.o globaldata.o labels.o 
 write_data_phantom.o : write_data_phantom.f90 
 write_fits.o : write_fits.f90 
 write_griddata.o : write_griddata.F90 asciiutils.o 
 write_pfm.o : write_pfm.f90 
 write_pixmap.o : write_pixmap.f90 asciiutils.o colours.o labels.o write_pfm.o globaldata.o 
-write_sphdata.o : write_sphdata.f90 geomutils.o globaldata.o write_data_gadget.o write_data_phantom.o globaldata.o globaldata.o units.o labels.o asciiutils.o 
+write_sphdata.o : write_sphdata.f90 geomutils.o globaldata.o write_data_ndspmhd.o write_data_gadget.o write_data_phantom.o globaldata.o globaldata.o units.o labels.o asciiutils.o 
