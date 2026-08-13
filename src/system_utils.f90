@@ -369,7 +369,8 @@ end function rflaglist
 subroutine get_option(variable,value,err)
  character(len=*), intent(in) :: variable
  character(len=*), intent(out) :: value
- character(len=80) :: string,optname
+ character(len=256) :: string
+ character(len=80) :: optname
  integer, intent(out) :: err
  integer :: nargs,iarg,ieq
 
