@@ -83,7 +83,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  real, dimension(:),   allocatable :: freq,spectrum,bb_spectrum
  real, dimension(:,:), allocatable :: img,taupix,flux_nu,v_on_c,badpix
  real, dimension(:,:,:), allocatable :: img_nu,img_tmp
- real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col
+ real :: zobs,dzobs,dx,dy,area,freqmin,freqmax,lam_max,freq_max,bb_scale,opacity_factor,f_col,o_col
  real :: betaz,lorentz,doppler_factor,doppler_factor_max,tempi,badarea
  real :: rstar,lstar
  logical :: relativistic,nofits
@@ -127,8 +127,18 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (f_col < 0.0) f_col = renvironment('f_col', 1.0)
  print "(/,a,f5.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
                           ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
+ o_col = renvironment('ocol',0.)
+ if (abs(o_col) > tiny(0.)) print "(a,1pg10.3)",' temperature offset o_col = ',o_col
+
+
+ !--render region from plot limits (splash.limits and/or --xmin/--limits/--lim)
  xmin(1:ndim) = lim(ix(1:ndim),1)
  xmax(1:ndim) = lim(ix(1:ndim),2)
+ if (xmax(1) <= xmin(1) .or. xmax(2) <= xmin(2)) then
+    print "(a)",' ERROR: invalid render bounds (check .limits file or command line flags)'
+    ierr = 3
+    return
+ endif
  !
  !--set number of particles to use in the interpolation routines
  !  and allocate memory for weights
@@ -137,7 +147,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),h(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
-    ierr = 3
+    ierr = 4
     return
  endif
  x(1:n) = dat(1:n,ix(1))
@@ -198,11 +208,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     print "(a,1pg10.2,a)",' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
  !
- ! specify source function for each particle
+ ! specify source function for each particle (can be frequency-dependent)
  !
- flux = steboltz*dat(1:n,itemp)**4 ! grey version
-
- ! frequency-dependent version
  nfreq = 128
  freqmin = 1e8
  freqmax = 1e22
@@ -214,7 +221,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  doppler_factor_max = 0.
  !$omp parallel do default(none) &
  !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel) &
- !$omp shared(opacity,relativistic,v_on_c,itemp,f_col) &
+ !$omp shared(opacity,relativistic,v_on_c,itemp,f_col,o_col) &
  !$omp private(i,betaz,lorentz,tempi,rstar,lstar) &
  !$omp firstprivate(opacity_factor,doppler_factor) &
  !$omp reduction(max:doppler_factor_max)
@@ -239,12 +246,19 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        lstar = 4.*pi*rstar**2*steboltz*tempi**4
        print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
     else
-       tempi = dat(i,itemp)*f_col
+       tempi = dat(i,itemp)*f_col + o_col
     endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
-    flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+    if (tempi > 0.) then
+       flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+       flux(i) = steboltz*tempi**4 ! grey version
+    else
+       flux_nu(:,i) = 0.
+       flux(i) = 0.
+    endif
  enddo
  !$omp end parallel do
+
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
  if (allocated(img_nu)) deallocate(img_nu)

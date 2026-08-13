@@ -51,11 +51,15 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     4.0.0   : (19/03/26)
+!     4.0.0   : (13/08/26)
 !             user-friendly interactive mode;
 !             interactive buttons now appear in the plotting window;
 !             cursor movement generates context-dependent help;
 !             cube viz: slice through data using scroll wheel on your mouse
+!             added --limits=min,max flag to set coordinate limits;
+!             added --lim=halfwidth flag to set coordinate limits to centred box;
+!             flags --xmin,--xmax,--ymin,--ymax,--zmin,--zmax override limits in splash.limits file;
+!             flags --xminmargin,--xmaxmargin,--yminmargin,--ymaxmargin to adjust page margins
 !     3.12.0  : (16/03/26)
 !             sub-pixel interpolation in splash to grid for non-Cartesian geometries;
 !             added --fcol flag in splash calc lightcurve for spectral hardening factor;
@@ -660,6 +664,7 @@ program splash
  use analysis,           only:isanalysis
  use timestepping,       only:timestep_loop
  use settings_page,      only:interactive,nomenu,xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
+ use settings_limits,    only:iadapt,iadaptcoords
  use settings_part,      only:initialise_coord_transforms
  use settings_render,    only:icolours,rgbfile,npix
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
@@ -678,6 +683,7 @@ program splash
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  logical :: using_default_options,got_exact,sort,sort_pad,exact_flag
  logical :: do_print_header,do_print_labels,do_print_labelsorig
+ logical :: limits_overridden
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
@@ -1014,10 +1020,10 @@ program splash
     iRescale = .false.
     enforce_code_units = .true.
  endif
- xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
- xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
- yminpagemargin = renvironment('SPLASH_MARGIN_YMIN',errval=0.)
- ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX',errval=0.)
+ xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=0.)
+ xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=0.)
+ yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=0.)
+ ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=0.)
  !
  ! check that we have got filenames
  !
@@ -1149,8 +1155,15 @@ program splash
 
     !
     ! read plot limits from file (overrides get_data limits settings)
+    ! and apply any command-line limit overrides (--xmin, --limits, --lim, ...)
     !
-    if (ivegotdata) call read_limits(trim(limitsfile),ierr)
+    if (ivegotdata) then
+       call read_limits(trim(limitsfile),ierr,limits_overridden)
+       if (limits_overridden) then
+          iadapt = .false.
+          iadaptcoords = .false.
+       endif
+    endif
     !
     ! if device is mp4 auto-render column density in Hollywood mode if nothing is set
     !

@@ -442,10 +442,27 @@ Command line flags (or environment variables) that affect all data reads are:
 |                      |                       | :ref:`sec:menu-r` is also turned on, otherwise  |
 |                      |                       | slow rendering can result.                      |
 +----------------------+-----------------------+-------------------------------------------------+
-| ---xmin=0.1          | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
-| ---xmax=0.1          | SPLASH_MARGIN_XMAX    | page margin (set to fraction of viewport,       |
-| ---ymin=0.1          | SPLASH_MARGIN_YMIN    | negative values are allowed).                   |
-| ---ymax=0.1          | SPLASH_MARGIN_YMAX    |                                                 |
+| ---xmin=0.0          |                       | override plot limits for x,y,z coordinate       |
+| ---xmax=1.0          |                       | columns after splash.limits is read.            |
+| ---ymin=0.0          |                       | Mutually exclusive with --limits and --lim.     |
+| ---ymax=1.0          |                       |                                                 |
+| ---zmin=0.0          |                       |                                                 |
+| ---zmax=1.0          |                       |                                                 |
++----------------------+-----------------------+-------------------------------------------------+
+| ---limits=-1.0,1.0   |                       | set plot limits:                                |
+| ---limits=[-1.0,1.0] |                       | - 2 values: same range on all coordinate axes   |
+|                      |                       | - 2*ndim values: one min,max pair per axis      |
+|                      |                       | - other counts: one min,max pair per column     |
+|                      |                       | Mutually exclusive with --xmin and --lim.       |
++----------------------+-----------------------+-------------------------------------------------+
+| ---lim=1.0           |                       | centred box [-lim,lim] on all coordinate axes   |
+|                      |                       | (same as menu "centred cube"). Exclusive with   |
+|                      |                       | --xmin and --limits.                            |
++----------------------+-----------------------+-------------------------------------------------+
+| ---xminmargin=0.1    | SPLASH_XMINMARGIN     | manually adjust the page margins (fractions     |
+| ---xmaxmargin=0.1    | SPLASH_XMAXMARGIN     | of viewport; negative values allowed).          |
+| ---yminmargin=0.1    | SPLASH_YMINMARGIN     |                                                 |
+| ---ymaxmargin=0.1    | SPLASH_YMAXMARGIN     |                                                 |
 +----------------------+-----------------------+-------------------------------------------------+
 
 .. _sec:splash:
