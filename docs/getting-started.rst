@@ -449,10 +449,10 @@ Command line flags (or environment variables) that affect all data reads are:
 | ---zmin=0.0          |                       |                                                 |
 | ---zmax=1.0          |                       |                                                 |
 +----------------------+-----------------------+-------------------------------------------------+
-| ---limits=-1.0,1.0   |                       | set coordinate limits:                          |
-| ---limits=[-1.0,1.0] |                       | - 2 values applies to all coordinates           |
-|                      |                       | - 2*ndim values applies to all coordinates      |
-|                      |                       | - more than 2*ndim applies to all columnss      |
+| ---limits=-1.0,1.0   |                       | set plot limits:                                |
+| ---limits=[-1.0,1.0] |                       | - 2 values: same range on all coordinate axes   |
+|                      |                       | - 2*ndim values: one min,max pair per axis      |
+|                      |                       | - other counts: one min,max pair per column     |
 |                      |                       | Mutually exclusive with --xmin and --lim.       |
 +----------------------+-----------------------+-------------------------------------------------+
 | ---lim=1.0           |                       | centred box [-lim,lim] on all coordinate axes   |

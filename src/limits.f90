@@ -548,8 +548,11 @@ subroutine override_limits_from_flags(overridden)
     ! set x, y and z limits from --lim=halfwidth flag
     !
     halfwidth = get_command_option('lim',default=-1.)
-    if (halfwidth < 0. .or. ndim < 1) then
-       print "(a)",' ERROR: --lim=halfwidth requires identified coordinate columns'
+    if (halfwidth <= 0.) then
+       print "(a)",' ERROR: --lim requires a positive halfwidth, e.g. --lim=1.0'
+       stop
+    elseif (ndim < 1) then
+       print "(a)",' ERROR: --lim given but coordinate columns are not set'
        stop
     endif
     do i=1,ndim
@@ -560,9 +563,13 @@ subroutine override_limits_from_flags(overridden)
     !
     ! set individual column limits from --limits=[min,max,min,max,...]
     !
-    vals = rflaglist('limits',maxvals,ngot=nvals)
+    vals = rflaglist('limits',maxvals,errval=huge(0.),ngot=nvals)
     if (nvals < 2 .or. mod(nvals,2) /= 0) then
        print "(a)",' ERROR: --limits requires an even number of comma-separated values'
+       stop
+    endif
+    if (any(vals(1:nvals) >= huge(0.))) then
+       print "(a)",' ERROR: --limits contains a value that is not a number'
        stop
     endif
     if (nvals == 2 .and. ndim >= 1) then
