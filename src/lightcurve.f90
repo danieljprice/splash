@@ -208,11 +208,8 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     print "(a,1pg10.2,a)",' WARNING: using fixed opacity kappa = ',maxval(opacity),' cm^2/g for lightcurve'
  endif
  !
- ! specify source function for each particle
+ ! specify source function for each particle (can be frequency-dependent)
  !
- flux = steboltz*dat(1:n,itemp)**4 ! grey version
-
- ! frequency-dependent version
  nfreq = 128
  freqmin = 1e8
  freqmax = 1e22
@@ -254,8 +251,10 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
     if (tempi > 0.) then
        flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+       flux(i) = steboltz*tempi**4 ! grey version
     else
        flux_nu(:,i) = 0.
+       flux(i) = 0.
     endif
  enddo
  !$omp end parallel do
