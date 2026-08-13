@@ -127,25 +127,16 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  if (f_col < 0.0) f_col = renvironment('f_col', 1.0)
  print "(/,a,f5.2,/,a,/)",' SPECTRAL HARDENING FACTOR f_col = ',f_col, &
                           ' (use --fcol=1.7 for radiation-pressure dominated flows; Shimura & Takahara 1995)'
- o_col = renvironment('ocol')
- print "(a,f8.2)"," Temperature offset: ",o_col
+ o_col = renvironment('ocol',0.)
+ if (abs(o_col) > tiny(0.)) print "(a,1pg10.3)",' temperature offset o_col = ',o_col
 
- !If the user does not provide a limit for the render region it is calculated automatically.
+
+ !--render region from plot limits (splash.limits and/or --xmin/--limits/--lim)
  xmin(1:ndim) = lim(ix(1:ndim),1)
- xmax(1:ndim) = lim(ix(1:ndim),2)      
- xmin(1) = renvironment('SPLASH_MARGIN_XMIN', xmin(1))
- xmax(1) = renvironment('SPLASH_MARGIN_XMAX', xmax(1))
- xmin(2) = renvironment('SPLASH_MARGIN_YMIN', xmin(2))
- xmax(2) = renvironment('SPLASH_MARGIN_YMAX', xmax(2))
-
- if (xmax(1) <= xmin(1)) then
-    print *,"ERROR: maximum x axis render bound less than or equal to minimum x axis render region bound, aborting..."
+ xmax(1:ndim) = lim(ix(1:ndim),2)
+ if (xmax(1) <= xmin(1) .or. xmax(2) <= xmin(2)) then
+    print "(a)",' ERROR: invalid render bounds (check .limits file or command line flags)'
     ierr = 3
-    return
- endif
- if (xmax(2) <= xmin(2)) then
-    print *,"ERROR: maximum y axis render bound less than or equal to minimum y axis render region bound, aborting..."
-    ierr = 4
     return
  endif
  !
@@ -156,7 +147,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  allocate(weight(n),x(n),y(n),z(n),flux(n),opacity(n),h(n),stat=ierr)
  if (ierr /= 0) then
     print*,' ERROR allocating memory for interpolation weights, aborting...'
-    ierr = 5
+    ierr = 4
     return
  endif
  x(1:n) = dat(1:n,ix(1))
@@ -232,7 +223,7 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
  opacity_factor = 1.
  doppler_factor_max = 0.
  !$omp parallel do default(none) &
- !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel,ierr) &
+ !$omp shared(n,nfreq,freq,flux,flux_nu,dat,h,weight,radkernel) &
  !$omp shared(opacity,relativistic,v_on_c,itemp,f_col,o_col) &
  !$omp private(i,betaz,lorentz,tempi,rstar,lstar) &
  !$omp firstprivate(opacity_factor,doppler_factor) &
@@ -258,20 +249,17 @@ subroutine get_lightcurve(ncolumns,dat,npartoftype,masstype,itype,ndim,ntypes,&
        lstar = 4.*pi*rstar**2*steboltz*tempi**4
        print "(a,2(es10.3,a),/)",' Luminosity of sink = ',lstar,' erg/s = ',lstar/Lsun,' L_sun'
     else
-       tempi = (dat(i,itemp)*f_col)+o_col
-       if (tempi <= 0.0) ierr = 6
-       
+       tempi = dat(i,itemp)*f_col + o_col
     endif
     !call get_opacity_nongrey(nfreq,freq,dat(i,temp),dat(i,rho),opacity_nu(:,i))
-    if (ierr /= 6) flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+    if (tempi > 0.) then
+       flux_nu(:,i) = B_nu(tempi,freq*doppler_factor)
+    else
+       flux_nu(:,i) = 0.
+    endif
  enddo
  !$omp end parallel do
 
- if (ierr == 6) then
-     print *,"ERROR: choice of temperature offset has resulted in a zero or negative temperature for at least one particle, aborting..."
-     return
- endif
- 
  if (relativistic) print*,' max relativistic correction=',doppler_factor_max
 
  if (allocated(img_nu)) deallocate(img_nu)
