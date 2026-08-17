@@ -181,6 +181,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 !
 !--type array if necessary
 !
+ if (.not.allocated(iamtypetemp)) allocate(iamtypetemp(0,0)) ! to avoid compiler warning
  if (present(mixedtypes)) then
     if (mixedtypes .and. .not.allocated(iamtype)) then
        allocate(iamtype(maxpart,maxstep), stat=ierr)
@@ -189,7 +190,6 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        !--copy contents if reallocating
        if (reallocate_itype) then
           iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-          deallocate(iamtypetemp)
        endif
     elseif (.not.mixedtypes) then
        !--if called with mixedtypes explictly false, deallocate itype array
@@ -202,8 +202,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     iamtype = 1
 
     iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-    deallocate(iamtypetemp)
  endif
+ if (allocated(iamtypetemp)) deallocate(iamtypetemp)
  !--make sure iamtype is always allocated for safety, just with size=1 if not used
  if (.not.allocated(iamtype)) then
     allocate(iamtype(1,maxstep),stat=ierr)
@@ -248,8 +248,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
        masstype(:,1:maxstepold) = masstypetemp(:,1:maxstepold)
        time(1:maxstepold) = timetemp(1:maxstepold)
-       gamma(1:maxstepold) = gammatemp(1:maxstepold)
-       headervals(:,1:maxstepold) = headervalstemp(:,1:maxstepold)
+       if (allocated(gammatemp)) gamma(1:maxstepold) = gammatemp(1:maxstepold)
+       if (allocated(headervalstemp)) headervals(:,1:maxstepold) = headervalstemp(:,1:maxstepold)
        deallocate(npartoftypetemp,masstypetemp)
        deallocate(timetemp,gammatemp)
        deallocate(headervalstemp)

@@ -69,12 +69,17 @@ contains
 ! cnormk values and pointer to kernel function
 !
 !--------------------------------------
-subroutine select_kernel(j)
+subroutine select_kernel(j,verbose)
  integer, intent(in) :: j
+ logical, intent(in), optional :: verbose
+ logical :: isverbose
+
+ isverbose = .true.
+ if (present(verbose)) isverbose = verbose
 
  if (j >= 1 .and. j <= nkernels) then
     !--print only if NOT using the default kernel
-    print "(a,/)",' Using '//trim(kernelname(j))//' kernel'
+    if (isverbose) print "(a,/)",' Using '//trim(kernelname(j))//' kernel'
  endif
 
  select case(j)
@@ -135,10 +140,15 @@ end subroutine select_kernel
 ! Kernel selection based on string
 !
 !--------------------------------------
-subroutine select_kernel_by_name(string)
+subroutine select_kernel_by_name(string,verbose)
  use asciiutils, only:lcase
  character(len=*), intent(in) :: string
+ logical, intent(in), optional :: verbose
  integer :: i,jkern
+ logical :: isverbose
+
+ isverbose = .true.
+ if (present(verbose)) isverbose = verbose
 
  jkern = 0
  !
@@ -169,7 +179,7 @@ subroutine select_kernel_by_name(string)
     end select
  endif
 
- call select_kernel(jkern)
+ call select_kernel(jkern,verbose=isverbose)
 
 end subroutine select_kernel_by_name
 

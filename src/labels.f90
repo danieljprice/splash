@@ -199,8 +199,9 @@ end function is_density
 elemental function label_synonym(string)
  use asciiutils, only:lcase,string_delete
  character(len=*), intent(in) :: string
- character(len=max(len(string),8)) :: label_synonym
- character(len=len(string)) :: labeli
+ ! pad so fixed substrings (e.g. labeli(1:13)) are safe for short inputs
+ character(len=max(len(string),20)) :: label_synonym
+ character(len=max(len(string),20)) :: labeli
  integer :: k
 
  ! remove leading spaces and make lower case
@@ -284,9 +285,9 @@ end function get_z_coord
 !
 !-----------------------------------------------------------------
 elemental function strip_units(string,unitslab)
- character(len=lenlabel), intent(in) :: string
- character(len=*),        intent(in) :: unitslab
- character(len=lenlabel)             :: strip_units
+ character(len=*), intent(in) :: string
+ character(len=*), intent(in) :: unitslab
+ character(len=lenlabel) :: strip_units
  integer :: ipos
 
  strip_units = string
@@ -310,9 +311,9 @@ end function strip_units
 !-----------------------------------------------------------------
 elemental function shortstring(string,unitslab)
  use asciiutils, only:string_delete
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortstring
+ character(len=*), intent(in)           :: string
+ character(len=*), intent(in), optional :: unitslab
+ character(len=lenlabel) :: shortstring
 
  shortstring = string
  !--strip off the units label
@@ -337,9 +338,9 @@ end function shortstring
 !-----------------------------------------------------------------
 elemental function shortlabel(string,unitslab,lc)
  use asciiutils, only:string_delete,lcase
- character(len=lenlabel), intent(in)           :: string
- character(len=*),        intent(in), optional :: unitslab
- character(len=lenlabel)                       :: shortlabel
+ character(len=*), intent(in)           :: string
+ character(len=*), intent(in), optional :: unitslab
+ character(len=lenlabel)                :: shortlabel
  logical, intent(in), optional :: lc
 
  if (present(unitslab)) then
@@ -370,6 +371,49 @@ elemental function shortlabel(string,unitslab,lc)
  endif
 
 end function shortlabel
+
+!--------------------------------------------------------------
+!
+!  find column index matching a name
+!  tries label synonyms first (e.g. rho/density, alpha/\alpha),
+!  then a case-insensitive shortlabel match
+!
+!--------------------------------------------------------------
+integer function find_column(colname,ncolumns) result(icol)
+ use asciiutils, only:lcase,string_delete
+ character(len=*), intent(in) :: colname
+ integer, intent(in), optional :: ncolumns
+ integer :: i,n
+ character(len=lenlabel) :: want,have
+
+ icol = 0
+ n = size(label)
+ if (present(ncolumns)) n = min(n,max(ncolumns,0))
+ if (n <= 0) return
+
+ want = label_synonym(colname)
+ do i=1,n
+    if (len_trim(label(i))==0) cycle
+    if (trim(label_synonym(label(i)))==trim(want)) then
+       icol = i
+       return
+    endif
+ enddo
+
+ ! fallback: short label, case-insensitive (also ignore spaces)
+ want = trim(adjustl(lcase(colname)))
+ call string_delete(want,' ')
+ do i=1,n
+    if (len_trim(label(i))==0) cycle
+    have = shortlabel(label(i),unitslabel(i),lc=.true.)
+    call string_delete(have,' ')
+    if (trim(have)==trim(want)) then
+       icol = i
+       return
+    endif
+ enddo
+
+end function find_column
 
 !---------------------------------------------------------------
 ! interface for adjusting the label for column-integrated plots
@@ -681,5 +725,59 @@ subroutine set_vector_labels(ncolumns,ndimV,iamveci,labelveci,labeli,labelcoordi
  enddo
 
 end subroutine set_vector_labels
+
+!-----------------------------------------------------------------
+!
+!  print dump file header tags and values
+!
+!-----------------------------------------------------------------
+subroutine print_headers(headervals1)
+ real, intent(in) :: headervals1(:)
+ integer :: i,nhdr
+
+ nhdr = min(count_non_blank(headertags),size(headervals1))
+ do i=1,nhdr
+    print "(1x,a,' = ',1pg14.6)",trim(headertags(i)),headervals1(i)
+ enddo
+
+end subroutine print_headers
+
+!-----------------------------------------------------------------
+!
+!  print column labels one per line (no numbers)
+!
+!-----------------------------------------------------------------
+subroutine print_column_labels(ncolumns,ncalc)
+ integer, intent(in) :: ncolumns,ncalc
+ integer :: i,nlab
+
+ nlab = min(ncolumns + ncalc,size(label),ubound(unitslabel,1))
+ do i=1,nlab
+    if (len_trim(label(i))==0) cycle
+    if (len_trim(unitslabel(i)) > 0 .and. index(label(i),trim(unitslabel(i)))==0) then
+       print "(a)",trim(label(i))//trim(unitslabel(i))
+    else
+       print "(a)",trim(label(i))
+    endif
+ enddo
+
+end subroutine print_column_labels
+
+!-----------------------------------------------------------------
+!
+!  print original column labels one per line (no units, no numbers)
+!
+!-----------------------------------------------------------------
+subroutine print_column_labels_orig(ncolumns)
+ integer, intent(in) :: ncolumns
+ integer :: i,nlab
+
+ nlab = min(ncolumns,size(labelorig))
+ do i=1,nlab
+    if (len_trim(labelorig(i))==0) cycle
+    print "(a)",trim(labelorig(i))
+ enddo
+
+end subroutine print_column_labels_orig
 
 end module labels

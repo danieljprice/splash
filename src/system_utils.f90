@@ -28,9 +28,10 @@ module system_utils
  use asciiutils, only:lcase,cstring
  implicit none
  public :: ienvironment,lenvironment,renvironment,lenvstring,ienvstring
- public :: envlist,ienvlist,lenvlist,renvlist,get_command_option,count_matching_args
+ public :: envlist,ienvlist,lenvlist,renvlist,rflaglist,get_command_option,count_matching_args
  public :: get_command_flag,get_user,get_copyright,get_environment_or_flag
  public :: set_environment_variable,to_utf8_safe
+ public :: get_command_option_string
 
  private
 
@@ -213,22 +214,43 @@ end function renvstring
  !--this routine returns an arbitrary number of
  !  comma separated strings
  !
-subroutine envlist(variable,nlist,list)
+subroutine envlist(variable,nlist,list,flag_only)
  character(len=*), intent(in) :: variable
  integer, intent(out) :: nlist
  character(len=*), dimension(:), intent(out), optional :: list
- character(len=120) :: string
+ logical, intent(in), optional :: flag_only
+ character(len=256) :: string
  character(len=10) :: dummy
- integer :: i1,i2,ierr
- logical :: notlistfull
+ integer :: i1,i2,ierr,iloc,iend
+ logical :: notlistfull,use_flag_only
 
  !--set list to blank strings if argument is present
  if (present(list)) then
     list = ' '
  endif
 
- !--get envlist from the environment
- call get_environment_or_flag(variable,string)
+ use_flag_only = .false.
+ if (present(flag_only)) use_flag_only = flag_only
+
+ if (use_flag_only) then
+    ! command-line flag only (e.g. MY_GOOD_FOO -> --foo)
+    iloc = index(variable,'_',back=.true.)
+    call get_option(variable(iloc+1:),string,ierr)
+    if (ierr /= 0) string = ''
+ else
+    call get_environment_or_flag(variable,string)
+ endif
+
+ ! strip optional surrounding [ ]
+ string = adjustl(string)
+ if (len_trim(string) >= 1) then
+    if (string(1:1)=='[') string = adjustl(string(2:))
+ endif
+ iend = len_trim(string)
+ if (iend >= 1) then
+    if (string(iend:iend)==']') string(iend:iend) = ' '
+ endif
+ string = adjustl(string)
 
  !--split the string on commas
  i1 = 1
@@ -302,26 +324,43 @@ end function lenvlist
 !
 !--return comma separated list of reals
 !
-function renvlist(variable,nlist,errval)
+function renvlist(variable,nlist,errval,ngot,flag_only) result(vals)
  character(len=*), intent(in) :: variable
  integer, intent(in) :: nlist
  real, intent(in), optional :: errval
+ integer, intent(out), optional :: ngot
+ logical, intent(in), optional :: flag_only
  character(len=30), dimension(nlist) :: list
- real :: renvlist(nlist)
- integer :: i,ngot
+ real :: vals(nlist)
+ integer :: i,nfound
 
- ngot = nlist
- call envlist(variable,ngot,list)
+ nfound = nlist
+ call envlist(variable,nfound,list,flag_only=flag_only)
+ if (present(ngot)) ngot = nfound
 
  do i=1,nlist
     if (present(errval)) then
-       renvlist(i) = renvstring(list(i),errval=errval)
+       vals(i) = renvstring(list(i),errval=errval)
     else
-       renvlist(i) = renvstring(list(i))
+       vals(i) = renvstring(list(i))
     endif
  enddo
 
 end function renvlist
+
+!
+!--comma-separated real list from a command-line flag only
+!
+function rflaglist(variable,nlist,errval,ngot) result(vals)
+ character(len=*), intent(in) :: variable
+ integer, intent(in) :: nlist
+ real, intent(in), optional :: errval
+ integer, intent(out), optional :: ngot
+ real :: vals(nlist)
+
+ vals = renvlist(variable,nlist,errval=errval,ngot=ngot,flag_only=.true.)
+
+end function rflaglist
 
 !
 !--find logical-valued option from command line arguments
@@ -330,17 +369,19 @@ end function renvlist
 subroutine get_option(variable,value,err)
  character(len=*), intent(in) :: variable
  character(len=*), intent(out) :: value
- character(len=80) :: string
+ character(len=256) :: string
+ character(len=80) :: optname
  integer, intent(out) :: err
  integer :: nargs,iarg,ieq
 
  err = 1
+ value = ''
  nargs = command_argument_count()
  do iarg=1,nargs
     call get_command_argument(iarg,string)
-    if (string(1:2)=='--' .and. index(lcase(string),lcase(variable)) > 0) then
+    call extract_option_name(string,optname,ieq)
+    if (trim(lcase(optname))==trim(lcase(variable))) then
        err = 0
-       ieq = index(string,'=',back=.true.)
        if (ieq > 0) then
           value = string(ieq+1:)
        else
@@ -357,19 +398,22 @@ end subroutine get_option
 real function get_command_option(variable,default) result(val)
  character(len=*), intent(in) :: variable
  real, intent(in), optional   :: default
- character(len=80) :: string
- integer :: ierr,nargs,ieq,iarg
+ character(len=256) :: string
+ logical :: ispresent
+ integer :: ierr
 
  val = 0.
  if (present(default)) val = default
- nargs = command_argument_count()
- do iarg=1,nargs
-    call get_command_argument(iarg,string)
-    ieq = index(string,'=')
-    if (string(1:1)=='-' .and. index(string,variable) > 0 .and. ieq > 0) then
-       read(string(ieq+1:),*,iostat=ierr) val
+ call get_command_option_string(variable,string,ispresent)
+ if (.not.ispresent .or. len_trim(string) == 0) return
+ read(string,*,iostat=ierr) val
+ if (ierr /= 0) then
+    if (present(default)) then
+       val = default
+    else
+       val = 0.
     endif
- enddo
+ endif
 
 end function get_command_option
 
@@ -379,17 +423,80 @@ end function get_command_option
 !
 logical function get_command_flag(variable) result(val)
  character(len=*), intent(in) :: variable
- character(len=80) :: string
- integer :: nargs,iarg
+ character(len=80) :: string,optname
+ integer :: nargs,iarg,ieq
 
  val = .false.
  nargs = command_argument_count()
  do iarg=1,nargs
     call get_command_argument(iarg,string)
-    if (string(1:1)=='-' .and. index(string,variable) > 0) val = .true.
+    call extract_option_name(string,optname,ieq)
+    if (trim(lcase(optname))==trim(lcase(variable))) val = .true.
  enddo
 
 end function get_command_flag
+
+!
+!--extract the option name from a command-line argument
+!  e.g. --xmin=1.0 or -xmin=1.0 -> 'xmin'; --lim -> 'lim'
+!
+subroutine extract_option_name(arg,name,ieq)
+ character(len=*), intent(in)  :: arg
+ character(len=*), intent(out) :: name
+ integer,          intent(out) :: ieq
+ integer :: istart
+
+ name = ''
+ ieq = index(arg,'=')
+ if (arg(1:2)=='--') then
+    istart = 3
+ elseif (arg(1:1)=='-') then
+    istart = 2
+ else
+    return
+ endif
+ if (ieq > istart) then
+    name = adjustl(arg(istart:ieq-1))
+ else
+    name = adjustl(arg(istart:))
+    ieq = 0
+ endif
+
+end subroutine extract_option_name
+
+!
+!--return the string value of an exact --name=value option
+!
+subroutine get_command_option_string(variable,value,ispresent)
+ character(len=*), intent(in)  :: variable
+ character(len=*), intent(out) :: value
+ logical,          intent(out) :: ispresent
+ character(len=256) :: string,optname
+ integer :: nargs,iarg,ieq,arglen
+
+ value = ''
+ ispresent = .false.
+ nargs = command_argument_count()
+ do iarg=1,nargs
+    call get_command_argument(iarg,string,length=arglen)
+    if (arglen > len(string)) then
+       print "(a)",' ERROR: command-line argument too long'
+       stop
+    endif
+    call extract_option_name(string,optname,ieq)
+    if (trim(lcase(optname))==trim(lcase(variable))) then
+       ispresent = .true.
+       if (ieq > 0) then
+          if (len_trim(string(ieq+1:)) > len(value)) then
+             print "(a)",' ERROR: --'//trim(variable)//' value too long'
+             stop
+          endif
+          value = string(ieq+1:)
+       endif
+    endif
+ enddo
+
+end subroutine get_command_option_string
 
 !
 !--count the number of arguments matching a certain substring

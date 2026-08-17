@@ -202,9 +202,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
  ncpus = 0
  !$omp parallel
- !$omp master
+ !$omp masked
  !$ ncpus = omp_get_num_threads()
- !$omp end master
+ !$omp end masked
  !$omp end parallel
 
  if (ncpus > 0 .and. iverbose >= 0) then

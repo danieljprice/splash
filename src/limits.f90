@@ -31,7 +31,8 @@ module limits
  use params
  implicit none
  real, dimension(maxplot,2) :: lim,range,lim2
- private :: warn_minmax
+ private :: warn_minmax,check_coord_column,set_coord_limits,&
+            read_limits_file,override_limits_from_flags
 
  public
 
@@ -86,7 +87,7 @@ subroutine set_limits(ifromstep,itostep,ifromcol,itocol,use_type)
  !
  first = .true.
  do j=ifromcol,itocol
-    call warn_minmax(label(j),lim(j,1),lim(j,2),first)
+    if (iverbose >= 0) call warn_minmax(label(j),lim(j,1),lim(j,2),first)
  enddo
 
  lim2(ifromcol:itocol,:) = 0.
@@ -121,12 +122,13 @@ end subroutine rescale_limits
 !----------------------------------------------------------
 ! save plot limits for all columns to a file
 !----------------------------------------------------------
-subroutine write_limits(limitsfile)
+subroutine write_limits(limitsfile,iverbose)
  use settings_data, only:numplot,ndataplots
  character(len=*), intent(in) :: limitsfile
+ integer, intent(in) :: iverbose
  integer :: i
 
- print*,'saving plot limits to file ',trim(limitsfile)
+ if (iverbose >= 0) print*,'saving plot limits to file ',trim(limitsfile)
 
  open(unit=55,file=limitsfile,status='replace',form='formatted',ERR=998)
  do i=1,numplot
@@ -145,20 +147,33 @@ subroutine write_limits(limitsfile)
  return
 
 998 continue
- print*,'*** error opening limits file: limits not saved'
+ if (iverbose >= 0) print*,'*** error opening limits file: limits not saved'
  return
 999 continue
- print*,'*** error saving limits'
+ if (iverbose >= 0) print*,'*** error saving limits'
  close(unit=55)
 
 end subroutine write_limits
 
 !----------------------------------------------------------
+! read plot limits from file, then apply command-line overrides
+!----------------------------------------------------------
+subroutine read_limits(limitsfile,ierr,overridden)
+ character(len=*), intent(in) :: limitsfile
+ integer,         intent(out) :: ierr
+ logical, intent(out), optional :: overridden
+
+ call read_limits_file(limitsfile,ierr)
+ call override_limits_from_flags(overridden)
+
+end subroutine read_limits
+
+!----------------------------------------------------------
 ! read plot limits for all columns from a file
 !----------------------------------------------------------
-subroutine read_limits(limitsfile,ierr)
+subroutine read_limits_file(limitsfile,ierr)
  use labels,        only:label
- use settings_data, only:numplot,ncolumns,ncalc
+ use settings_data, only:numplot,ncolumns,ncalc,iverbose
  use asciiutils,    only:ncolumnsline
  character(len=*), intent(in) :: limitsfile
  integer,         intent(out) :: ierr
@@ -176,7 +191,7 @@ subroutine read_limits(limitsfile,ierr)
  endif
 
  open(unit=54,file=limitsfile,status='old',form='formatted',err=997)
- print "(a)",' read '//trim(limitsfile)
+ if (iverbose >= 0) print "(a)",' read '//trim(limitsfile)
  do i=1,numplot
     read(54,"(a)",err=998,end=999) line
     ncolsline = ncolumnsline(line)
@@ -193,19 +208,21 @@ subroutine read_limits(limitsfile,ierr)
     !
     !--warn if limits are the same
     !
-    call warn_minmax(label(i),lim(i,1),lim(i,2))
+    if (iverbose >= 0) call warn_minmax(label(i),lim(i,1),lim(i,2))
  enddo
  close(unit=54)
  return
 
 997 continue
- print*,trim(limitsfile),' not found'
+ if (iverbose >= 0) print*,trim(limitsfile),' not found'
  ierr = 1
  return
 998 continue
- call print_rangeinfo()
- call print_lim2info()
- print*,'*** error reading limits from file'
+ if (iverbose >= 0) then
+    call print_rangeinfo()
+    call print_lim2info()
+    print*,'*** error reading limits from file'
+ endif
  ierr = 2
  close(unit=54)
  return
@@ -213,16 +230,18 @@ subroutine read_limits(limitsfile,ierr)
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
  if (i < ncolumns+ncalc) then
-    print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
+    if (iverbose >= 0) print "(a,i3)",' end of file in '//trim(limitsfile)//': limits read to column ',i
     ierr = -1
  endif
 
  !--print info about range restrictions read from file
- call print_rangeinfo()
- call print_lim2info()
+ if (iverbose >= 0) then
+    call print_rangeinfo()
+    call print_lim2info()
+ endif
  close(unit=54)
 
-end subroutine read_limits
+end subroutine read_limits_file
 
 !----------------------------------------------------------
 ! get a subset of the particles by enforcing range restrictions
@@ -462,5 +481,141 @@ logical function limits_are_equal(n,iplotx,iploty)
  enddo
 
 end function limits_are_equal
+
+!----------------------------------------------------------
+! check that coordinate axis idim maps to a valid plot column
+!----------------------------------------------------------
+subroutine check_coord_column(idim,flag)
+ use labels,        only:ix
+ use settings_data, only:ndim,numplot
+ integer, intent(in) :: idim
+ character(len=*), intent(in) :: flag
+
+ if (idim < 1 .or. idim > ndim .or. ix(idim) <= 0 .or. ix(idim) > numplot) then
+    print "(a)",' ERROR: '//trim(flag)//' given but coordinate column is not set'
+    stop
+ endif
+
+end subroutine check_coord_column
+
+!----------------------------------------------------------
+! set lim for coordinate axis idim after validating ix(idim)
+!----------------------------------------------------------
+subroutine set_coord_limits(idim,xlo,xhi,flag)
+ use labels, only:ix
+ integer, intent(in) :: idim
+ real, intent(in) :: xlo,xhi
+ character(len=*), intent(in) :: flag
+
+ call check_coord_column(idim,flag)
+ lim(ix(idim),1:2) = (/xlo,xhi/)
+
+end subroutine set_coord_limits
+
+!----------------------------------------------------------
+! apply --xmin/--limits/--lim overrides (mutually exclusive)
+!----------------------------------------------------------
+subroutine override_limits_from_flags(overridden)
+ use labels,        only:ix
+ use geometry,      only:labelcoord
+ use settings_data, only:ndim,numplot
+ use system_utils,  only:get_command_flag,get_command_option,rflaglist
+ integer, parameter :: maxvals = 2*maxplot
+ real :: vals(maxvals),xmin,xmax,halfwidth
+ logical, intent(out), optional :: overridden
+ logical :: have_axis,have_limits,have_lim,have_min(3),have_max(3)
+ integer :: i,nvals,nfam,icol
+
+ do i=1,3
+    have_min(i) = get_command_flag(trim(labelcoord(i,1))//'min')
+    have_max(i) = get_command_flag(trim(labelcoord(i,1))//'max')
+ enddo
+ have_axis = any(have_min .or. have_max)
+ have_limits = get_command_flag('limits')
+ have_lim    = get_command_flag('lim')
+
+ nfam = count((/have_axis,have_limits,have_lim/))
+ if (present(overridden)) overridden = (nfam > 0)
+ if (nfam > 1) then
+    print "(a)",' ERROR: use only one of --xmin/--xmax/... or --limits=... or --lim=...'
+    stop
+ elseif (nfam == 0) then
+    return
+ endif
+
+ if (have_lim) then
+    !
+    ! set x, y and z limits from --lim=halfwidth flag
+    !
+    halfwidth = get_command_option('lim',default=-1.)
+    if (halfwidth <= 0.) then
+       print "(a)",' ERROR: --lim requires a positive halfwidth, e.g. --lim=1.0'
+       stop
+    elseif (ndim < 1) then
+       print "(a)",' ERROR: --lim given but coordinate columns are not set'
+       stop
+    endif
+    do i=1,ndim
+       call set_coord_limits(i,-halfwidth,halfwidth,'--lim')
+    enddo
+    print "(2(a,1pg10.3),a)",' plot limits: centred box [',-halfwidth,',',halfwidth,']'
+ elseif (have_limits) then
+    !
+    ! set individual column limits from --limits=[min,max,min,max,...]
+    !
+    vals = rflaglist('limits',maxvals,errval=huge(0.),ngot=nvals)
+    if (nvals < 2 .or. mod(nvals,2) /= 0) then
+       print "(a)",' ERROR: --limits requires an even number of comma-separated values'
+       stop
+    endif
+    if (any(vals(1:nvals) >= huge(0.))) then
+       print "(a)",' ERROR: --limits contains a value that is not a number'
+       stop
+    endif
+    if (nvals == 2 .and. ndim >= 1) then
+       !
+       ! if we have exactly 2 values then apply to all coordinate axes (like --lim)
+       !
+       do i=1,ndim
+          call set_coord_limits(i,vals(1),vals(2),'--limits')
+       enddo
+       print "(a,2(1x,1pg10.3))",' plot limits: coordinate axes set to ',vals(1:2)
+    elseif (nvals == 2*ndim .and. ndim >= 1) then
+       ! 
+       ! if we have exactly 2*ndim values then these
+       ! are assumed to apply to coordinate columns
+       !
+       do i=1,ndim
+          call set_coord_limits(i,vals(2*i-1),vals(2*i),'--limits')
+       enddo
+       print "(a,i2,a)",' plot limits: set from --limits for ',ndim,' axes'
+    else
+       !
+       ! otherwise apply to all columns
+       !
+       do icol=1,nvals/2
+          if (icol > numplot) then
+             print "(a,i3)",' ERROR: --limits column index exceeds numplot: ',icol
+             stop
+          endif
+          lim(icol,1:2) = vals(2*icol-1:2*icol)
+       enddo
+       print "(a,i3,a)",' plot limits: overrode ',nvals/2,' columns from --limits'
+    endif
+ else
+    !
+    ! set x,y and z limits from --xmin/--xmax flags
+    !
+    do i=1,ndim
+       if (.not. have_min(i) .and. .not. have_max(i)) cycle
+       call check_coord_column(i,'--'//trim(labelcoord(i,1))//'min/max')
+       xmin = get_command_option(trim(labelcoord(i,1))//'min',default=lim(ix(i),1))
+       xmax = get_command_option(trim(labelcoord(i,1))//'max',default=lim(ix(i),2))
+       lim(ix(i),1:2) = (/xmin,xmax/)
+       print "(a,2(1x,1pg10.3))",' plot limits: '//trim(labelcoord(i,1))//' set to',xmin,xmax
+    enddo
+ endif
+
+end subroutine override_limits_from_flags
 
 end module limits

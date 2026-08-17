@@ -737,7 +737,7 @@ subroutine get_splash2grid_options(ndim,ncolstogrid,icoltogrid,isperiodic,xlab)
  integer, intent(in)  :: ndim
  integer, intent(out) :: ncolstogrid,icoltogrid(:)
  logical, intent(out) :: isperiodic(3)
- character(len=1), intent(in) :: xlab(3)
+ character(len=*), intent(in) :: xlab(3)
  integer :: nstring,i,icol
  logical :: dens_only
  character(len=30), dimension(12) :: strings
