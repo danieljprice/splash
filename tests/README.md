@@ -1,12 +1,12 @@
 # CLI render regression tests
 # ===========================
 #
-# Black-box tests that run the `splash` binary, write PNGs, and compare
-# `imagehash.phash` distances to expectations in
+# This directory contains both Fortran unit tests
+# and a regression testing script that runs `splash` on a binary dump from phantom, 
+# writes pngs, and compare `imagehash.phash` distances to expectations in
 # https://github.com/danieljprice/splash-testdata (latest `main`).
 #
-# The Phantom dump used for renders lives in that repo (`datafiles/binary_00000`,
-# a few MB). Do not download large Zenodo snapshots in CI.
+# The Phantom dump used for renders lives in that repo (`datafiles/binary_00000`)
 #
 # ## Dependencies (CI uses apt + unpinned pip)
 #
@@ -14,16 +14,21 @@
 #   sudo apt-get install -y python3-pytest python3-pil python3-pip
 #   pip3 install imagehash
 #
-# macOS (smoke only — do not update goldens from Mac renders):
+# macOS:
 #   brew install python
 #   pip3 install pytest pillow imagehash
 #
+# ## Workflow run
+#
+# Regression testing is performed automatically in github actions
+# via .github/workflows/regresssion.yml
+#  
 # ## Local run
 #
 # 1. Build splash and put `bin/` on PATH (and giza libs on the library path).
 # 2. Clone fixtures:
 #
-#        git clone --depth 1 https://github.com/danieljprice/splash-testdata.git
+#        git clone https://github.com/danieljprice/splash-testdata.git
 #        mkdir -p test_data
 #
 # 3. Generate renders and run pytest:
@@ -35,6 +40,6 @@
 #
 # ## Updating expected hashes
 #
-# Recompute on Linux only (never from macOS splash output). Update
+# Recompute on Linux is preferred. Update
 # `control_images/` and `expected_hashes.json` in splash-testdata and push
 # to that repository's `main`.
