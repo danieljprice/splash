@@ -3201,10 +3201,11 @@ subroutine set_movie_mode(live)
     ipapersizeunits = 0
     papersizex      = 1280.
     aspectratio     = 0.5625
+    ! set black bg before paper resize so expand margins are not white
+    if (live) call set_pagecolours(iPageColours)
     if (live) call plot_pap(papersizex,aspectratio,ipapersizeunits)
     iColourBarStyle = 8
     call set_floating_bar_style(iColourBarStyle,4)
-    if (live) call set_pagecolours(iPageColours)
     adjustlimitstodevice = .true.
  endif
  call add_text(0.025,0.05,get_copyright())
@@ -3229,8 +3230,8 @@ subroutine unset_movie_mode()
     papersizex   = 800.
     aspectratio  = 600./800.
     iColourBarStyle   = 1
-    call plot_pap(papersizex,aspectratio,0)
     call set_pagecolours(iPageColours)
+    call plot_pap(papersizex,aspectratio,0)
     ! adjustlimitstodevice restored by caller from pre-Hollywood value
  endif
  call delete_text(get_copyright())
