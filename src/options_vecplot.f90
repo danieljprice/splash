@@ -26,18 +26,21 @@
 !-------------------------------------------------------------------------
 module settings_vecplot
  implicit none
- integer :: npixvec,minpartforarrow,iVecLegendOnPanel
+ integer, parameter :: ivecstyle_streamlines = 0
+ integer, parameter :: ivecstyle_arrows = 1
+ integer, parameter :: ivecstyle_ironfilings = 2
+ integer :: npixvec,minpartforarrow,iVecLegendOnPanel,ivecstyle
  logical :: UseBackgndColorVecplot, iplotpartvec
- logical :: iVecplotLegend,iplotstreamlines,iplotarrowheads
+ logical :: iVecplotLegend,iplotarrowheads
  logical :: iplotsynchrotron,ihidearrowswherenoparts,iallarrowssamelength
- real :: hposlegendvec,vposlegendvec
+ real :: hposlegendvec,vposlegendvec,streamdensity
  real :: rcrit,zcrit,synchrotronspecindex,uthermcutoff
 
  namelist /vectoropts/ npixvec, UseBackgndColorVecplot,iplotpartvec,&
-          iVecplotLegend,hposlegendvec,vposlegendvec,iplotstreamlines, &
+          iVecplotLegend,hposlegendvec,vposlegendvec, &
           iplotarrowheads,iplotsynchrotron,rcrit,zcrit,synchrotronspecindex, &
           uthermcutoff,ihidearrowswherenoparts,minpartforarrow,iallarrowssamelength,&
-          iVecLegendOnPanel
+          iVecLegendOnPanel,ivecstyle,streamdensity
 
 contains
 
@@ -46,14 +49,15 @@ contains
 !---------------------------------------------
 subroutine defaults_set_vecplot
 
- npixvec = 40        ! pixels in x direction on vector plots
+ npixvec = 40        ! pixels in x direction on vector plots (arrow style)
  UseBackgndColorVecplot = .false. ! plot vector plot using black/white
  iplotpartvec = .true.   ! whether to plot particles on vector plot
  iVecplotLegend = .true.
  iVecLegendOnPanel = 0   ! all panels
  hposlegendvec = 0.02
  vposlegendvec = 2.0      ! same default as time legend; inside the viewport
- iplotstreamlines = .false. ! plot stream lines instead of arrows
+ ivecstyle = ivecstyle_streamlines
+ streamdensity = 1.0
  iplotarrowheads = .true.
  iplotsynchrotron = .false.
  zcrit = 2.5 ! kpc
@@ -84,7 +88,7 @@ subroutine submenu_vecplot(ichoose)
 
  if (ians <= 0 .or. ians > 7) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
-             print_logical(iVecplotLegend),print_logical(iplotstreamlines), &
+             print_logical(iVecplotLegend),ivecstyle, &
              print_logical(iplotarrowheads), &
              print_logical(ihidearrowswherenoparts), &
              print_logical(iallarrowssamelength)
@@ -93,7 +97,7 @@ subroutine submenu_vecplot(ichoose)
              ' 1) change number of pixels                   (',i4,' )',/, &
              ' 2) use background colour for arrows          ( ',a,' )',/, &
              ' 3) vector plot legend settings               ( ',a,' )',/, &
-             ' 4) plot stream/field lines instead of arrows ( ',a,' )',/, &
+             ' 4) vector plot style                         (',i4,' )',/, &
              ' 5) turn arrow heads on/off                   ( ',a,' )',/, &
              ' 6) hide arrows where there are no particles  ( ',a,' )',/, &
              ' 7) all arrows same length - ie. direction only ( ',a,' )')
@@ -124,10 +128,15 @@ subroutine submenu_vecplot(ichoose)
     endif
 !------------------------------------------------------------------------
  case(4)
-    iplotstreamlines = .not.iplotstreamlines
-    print "(2(a,/))",' Note: the number of stream lines plotted is determined by', &
-                     ' the "change number of contours" option in the r)ender menu'
-    call prompt('use stream lines instead of arrows? ',iplotstreamlines)
+    if (ndim==3) then
+       call prompt('enter vector plot style (0=streamlines, 1=arrows, 2=iron filings)', &
+                   ivecstyle,0,2)
+    else
+       call prompt('enter vector plot style (0=streamlines, 1=arrows)',ivecstyle,0,1)
+    endif
+    if (ivecstyle == ivecstyle_streamlines) then
+       call prompt('enter streamline density',streamdensity,0.05,10.)
+    endif
 !------------------------------------------------------------------------
  case(5)
     iplotarrowheads = .not.iplotarrowheads

@@ -113,6 +113,7 @@ module plotlib
       plot_scroll_left=>giza_scroll_left_f,   &
       plot_scroll_right=>giza_scroll_right_f, &
       giza_vector,             &
+      giza_streamplot,         &
       giza_format_number,      &
       giza_query_device,       &
       giza_draw_pixels, &
@@ -458,6 +459,16 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
  call giza_vector(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,c,nc,affine,blank)
 
 end subroutine plot_vect
+
+subroutine plot_streamplot(a,b,idim,jdim,i1,i2,j1,j2,density,tr,blank)
+ integer,intent(in) :: idim,jdim,i1,i2,j1,j2
+ real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,density
+ real               :: affine(6)
+
+ call convert_tr_to_affine(tr,affine)
+ call giza_streamplot(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,density,affine,blank)
+
+end subroutine plot_streamplot
 
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
  use giza, only:giza_draw_pixels,giza_filter_default
