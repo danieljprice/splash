@@ -93,6 +93,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
                                ibutton_forward,ibutton_backward,ibutton_text,ibutton_circle,&
                                ibutton_adapt,ibutton_irregular
  use legends,          only:in_legend
+ use settings_limits,  only:adjustlimitstodevice
  integer, intent(in) :: npart,icontour,ndim,iplotz,ivecx,ivecy,istep,ilaststep,iframe,nframes
  integer, intent(inout) :: irender,iColourBarStyle
  integer, intent(inout) :: iplotx,iploty,itrackpart,icolourscheme
@@ -129,6 +130,9 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  logical :: iadvanceset, leftclick, iselectpoly, iselectcircle
  logical, save :: print_help = .true.
  logical, save :: in_movie_mode = .false.
+ ! limits / adjust-to-device flag from before Hollywood entry (restored on exit)
+ real,    save :: xmin_pre_movie, xmax_pre_movie, ymin_pre_movie, ymax_pre_movie
+ logical, save :: adjustlimits_pre_movie = .false.
 
  if (plot_qcur()) then
     if (.not.print_help .and. iverbose > 0) print*,'entering interactive mode...press h in plot window for help'
@@ -1341,10 +1345,22 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           iexit = .true.
        endif
     case(achar(13))
+       ! Hollywood mode: paper size / colours change aspect ratio. adjustlimitstodevice
+       ! expands limits to match; without saving/restoring, each enter/exit zooms out.
        if (in_movie_mode) then
           call unset_movie_mode()
+          xmin = xmin_pre_movie
+          xmax = xmax_pre_movie
+          ymin = ymin_pre_movie
+          ymax = ymax_pre_movie
+          adjustlimitstodevice = adjustlimits_pre_movie
           in_movie_mode = .false.
        else
+          xmin_pre_movie = xmin
+          xmax_pre_movie = xmax
+          ymin_pre_movie = ymin
+          ymax_pre_movie = ymax
+          adjustlimits_pre_movie = adjustlimitstodevice
           call set_movie_mode(.true.)
           in_movie_mode = .true.
        endif
@@ -3200,7 +3216,6 @@ end subroutine set_movie_mode
 !
 subroutine unset_movie_mode()
  use settings_page,   only:iaxis,papersizex,aspectratio,ipapersize,iPageColours
- use settings_limits, only:adjustlimitstodevice
  use settings_render, only:iColourBarStyle
  use pagecolours,     only:set_pagecolours
  use plotlib,         only:plotlib_is_pgplot,plot_pap
@@ -3216,7 +3231,7 @@ subroutine unset_movie_mode()
     iColourBarStyle   = 1
     call plot_pap(papersizex,aspectratio,0)
     call set_pagecolours(iPageColours)
-    adjustlimitstodevice = .true.
+    ! adjustlimitstodevice restored by caller from pre-Hollywood value
  endif
  call delete_text(get_copyright())
 
@@ -3280,7 +3295,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
        call print_button_help(xpti,ypti,ibutton)
     endif
     if (ibutton > 0) return
-  
+
     ! restore default button press if not cursor is no longer hovering
     ! over one of the instant-action buttons
     if (mode==0 .and. (button_pressed <= max_button_instant .and. .not.inbutton(xpti,ypti) > 0)) then
@@ -3321,7 +3336,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
  case(1) ! line drawing
     if (button_type(button_pressed)==ibutton_irregular) then
        string = 'click to a)dd; middle click/d)elete q)uit 0=hide 1-9=colour p=select'
-    else 
+    else
        string = 'click to draw line'
     endif
  case(0) ! no band mode,  just a free cursor
@@ -3375,7 +3390,7 @@ subroutine handle_cursor_motion(xpt,ypt,mode) bind(C)
              endif
           endif
        endif
-    endif   
+    endif
  end select
  if (.not.plot_help) string = ''
  if (.not.plot_xy) strxy = ''
