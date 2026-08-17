@@ -13,9 +13,10 @@ set -euo pipefail
 TESTDATA_DIR="${TESTDATA_DIR:?Set TESTDATA_DIR to a splash-testdata checkout}"
 WORK_DIR="${WORK_DIR:-.}"
 
-DUMP="${DUMP_NAME:-2i_00000}"
+DUMP="${DUMP_NAME:-binary_00000}"
 PREFIX=render_testing
 CONFIG_SRC="${TESTDATA_DIR}/config"
+DUMP_SRC="${TESTDATA_DIR}/datafiles/${DUMP}"
 # Phantom binary dump (override with SPLASH_FORMAT if needed)
 FORMAT="${SPLASH_FORMAT:-phantom}"
 
@@ -28,11 +29,14 @@ mkdir -p "${WORK_DIR}"
 cd "${WORK_DIR}"
 
 if [[ ! -f "${DUMP}" ]]; then
-  echo "error: dump file '${DUMP}' not found in ${WORK_DIR}" >&2
-  exit 1
+  if [[ -f "${DUMP_SRC}" ]]; then
+    cp -f "${DUMP_SRC}" "./${DUMP}"
+  else
+    echo "error: dump file '${DUMP}' not found in ${WORK_DIR} or ${DUMP_SRC}" >&2
+    exit 1
+  fi
 fi
 
-# reject empty/truncated downloads
 if [[ ! -s "${DUMP}" ]]; then
   echo "error: dump file '${DUMP}' is empty" >&2
   exit 1

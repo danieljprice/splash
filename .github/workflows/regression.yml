@@ -27,7 +27,6 @@ jobs:
             python3-pytest \
             python3-pil \
             python3-pip \
-            wget \
             git
 
       - name: Install imagehash
@@ -41,14 +40,9 @@ jobs:
       - name: Clone splash-testdata (latest main)
         run: git clone --depth 1 https://github.com/danieljprice/splash-testdata.git
 
-      - name: Download Phantom dump
-        run: |
-          mkdir -p test_data
-          wget -O test_data/2i_00000 \
-            "https://zenodo.org/records/10052253/files/2i_00000?download=1"
-
       - name: Generate renders
         run: |
+          mkdir -p test_data
           export PATH="${PWD}/bin:${PATH}"
           export LD_LIBRARY_PATH="${PWD}/giza/lib:${LD_LIBRARY_PATH:-}"
           export TESTDATA_DIR="${PWD}/splash-testdata"
