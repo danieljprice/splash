@@ -22,5 +22,15 @@ Portfile*
 releasenotes*
 ChangeLog
 giza*
-tests/*f90
-__pycache__
+# Keep pytest suite tracked; ignore local Fortran experiments under tests/
+tests/*.f90
+tests/*.mod
+tests/test_allocarr
+tests/test_cubic
+__pycache__/
+test_data/
+.tmp-*/
+.venv/
+.tmp-venv/
+.tmp-fetch/
+.tmp-splash-testdata/
