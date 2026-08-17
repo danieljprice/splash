@@ -37,7 +37,7 @@ module plotlib
       plot_arro=>giza_arrow, &
       plot_annotate=>giza_annotate, &
       plot_axis=>giza_axis, &
-      plot_band=>giza_band, &
+      giza_band, &
       plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
       plot_circ=>giza_circle, &
@@ -507,6 +507,25 @@ subroutine plot_line1(x1, y1, x2, y2)
  call plot_line(2,xpts,ypts)
 
 end subroutine plot_line1
+
+!--------------------------------------------------------------------------
+!  rubber-band cursor: draw in grey, then restore the previous pen colour.
+!  giza_band uses the current colour index, which is usually the foreground.
+!--------------------------------------------------------------------------
+integer function plot_band(mode, moveCurs, xanc, yanc, x, y, ch)
+ integer, intent(in) :: mode, moveCurs
+ real, intent(in)    :: xanc, yanc
+ real, intent(inout) :: x, y
+ character(len=*), intent(out) :: ch
+ integer :: icol
+ real :: r, g, b
+
+ call plot_qci(icol)
+ call plot_qcr(icol, r, g, b)
+ call plot_scr(icol, 0.6, 0.6, 0.6)
+ plot_band = giza_band(mode, moveCurs, xanc, yanc, x, y, ch)
+ call plot_scr(icol, r, g, b)
+end function plot_band
 
 !
 !--this subroutine can be called  to

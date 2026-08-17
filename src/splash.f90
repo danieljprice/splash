@@ -59,7 +59,9 @@ program splash
 !             added --limits=min,max flag to set coordinate limits;
 !             added --lim=halfwidth flag to set coordinate limits to centred box;
 !             flags --xmin,--xmax,--ymin,--ymax,--zmin,--zmax override limits in splash.limits file;
-!             flags --xminmargin,--xmaxmargin,--yminmargin,--ymaxmargin to adjust page margins
+!             flags --xminmargin,--xmaxmargin,--yminmargin,--ymaxmargin to adjust page margins;
+!             vector plot legend defaults to the same vertical position as the time legend;
+!             interactive rubber-band kept grey
 !     3.12.0  : (16/03/26)
 !             sub-pixel interpolation in splash to grid for non-Cartesian geometries;
 !             added --fcol flag in splash calc lightcurve for spectral hardening factor;
