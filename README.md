@@ -65,7 +65,6 @@ when using SPLASH.
 
 Star History
 ------------
-## Star History
 <a href="https://www.star-history.com/?repos=danieljprice%2Fsplash&type=date&legend=top-left">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=danieljprice/splash&type=date&theme=dark&legend=top-left&sealed_token=cILCHPDNqRNSJFEYJWT5t6H3-nEen7vcpf8wX4VygR1ZJtqlPkGdf5NIXKPYyswTx9n1SoVBjhViq9Oq-WWQWfH128z_8CPdEzcVt3_n4xOAyHt52o80YTaElTBEC1hSut4gQ3y2Wt6iE3hWC4T93aTOTPFFrA2T_MNBJfHB9ZQXgTekW0GZGr8XUS2Y" />
