@@ -182,8 +182,8 @@ subroutine get_xy_from_hpos_vpos(pos,hpos,vpos,xpos,ypos)
  select case(pos)
  case('B') ! from bottom
     ypos = ymin + (vpos + 1.)*ych
- case default ! 'T' = from top
-    ypos = ymax - (vpos + 1.)*ych
+ case default ! 'T' = from top; match giza_annotate('T', -vpos)
+    ypos = ymax - (vpos + 0.5)*ych
  end select
 
 end subroutine get_xy_from_hpos_vpos
@@ -269,7 +269,7 @@ end subroutine save_bbox
 
 subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  use plotlib, only:plot_qwin,plot_qch,plot_sch,plot_qcs,plot_qtxt, &
-                   plot_qci,plot_sci,plot_sfs,plot_rect,plot_sci,plot_text, &
+                   plot_qci,plot_qfs,plot_sci,plot_sfs,plot_rect,plot_text, &
                    plot_qvp,plot_svp,plot_swin,plot_arro,plot_set_opacity
  use parsetext, only:number_to_string
  real, intent(in) :: vecmax,dx,hpos,vpos,charheight
@@ -279,18 +279,18 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
  real :: xpos,ypos,xbox(4),ybox(4),dxlabel,dxstring
  real :: dxbuffer,dybuffer,dxbox,dybox
  real :: xminnew,xmaxnew,yminnew,ymaxnew,x1,x2,y1,y2
- integer :: icolindex
+ integer :: icolindex,ifillstyle
  character(len=len(label)+20) :: string
 
 !
 !--convert hpos and vpos to x, y to plot arrow
+!  (same convention as the time legend, so the same vpos aligns them)
 !
  call plot_qwin(xmin,xmax,ymin,ymax)
  call plot_qch(charheightarrow)
  call plot_sch(charheight)
- xpos = xmin + hpos*(xmax-xmin)
+ call get_xy_from_hpos_vpos('T',hpos,vpos,xpos,ypos)
  call plot_qcs(4,xch,ych)
- ypos = ymax - (vpos + 1.)*ych
 !
 !--format string containing numerical value
 !  vecmax corresponds to arrow of length dx
@@ -323,6 +323,7 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !--draw box around all of the legend
 !
  call plot_qci(icolindex)
+ call plot_qfs(ifillstyle)
 ! draw a (rounded) rectangle in the background colour with solid fill style
  call plot_sci(0)
  call plot_sfs(1)
@@ -382,8 +383,9 @@ subroutine legend_vec(label,unitslabel,vecmax,dx,hpos,vpos,charheight)
 !! call pgmtext('t',-vpos,hpos+0.02,0.0,trim(string))
  call plot_text(xpos,ypos,trim(string)//trim(unitslabel))
 !
-!--restore colour index
+!--restore colour index and fill style so later annotation is unaffected
  call plot_sci(icolindex)
+ call plot_sfs(ifillstyle)
 
 end subroutine legend_vec
 

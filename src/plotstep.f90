@@ -3249,7 +3249,7 @@ subroutine legends_and_title
        call plot_sci(0)
        call plot_set_opacity(alphalegend)
     endif
-    usebox = (ivectorplot > 0)
+    usebox = (ivectorplot > 0)  ! hide arrows behind the time legend
     if (istepsonpage==1) then
        nhdr = count_non_blank(headertags)
        call legend(legendtext,timei,nhdr,headervalsi,headertags,labeltimeunits,&

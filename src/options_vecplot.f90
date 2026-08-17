@@ -52,7 +52,7 @@ subroutine defaults_set_vecplot
  iVecplotLegend = .true.
  iVecLegendOnPanel = 0   ! all panels
  hposlegendvec = 0.02
- vposlegendvec = -1.5
+ vposlegendvec = 2.0      ! same default as time legend; inside the viewport
  iplotstreamlines = .false. ! plot stream lines instead of arrows
  iplotarrowheads = .true.
  iplotsynchrotron = .false.
