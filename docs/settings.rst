@@ -1821,10 +1821,12 @@ interpolated vector field. Choose the style
 from option 4 in the :ref:`sec:menu-v`:
 
 * ``0`` streamlines (default). Trajectories are integrated with RK2 and
-  spaced with an occupancy mask. If this style is selected you are also
-  prompted for the line density.
+  spaced with an occupancy mask. You are also prompted for the line
+  density and whether to draw direction arrows with heads.
 * ``1`` arrows. One arrow is drawn at the centre of each vector pixel
-  (the previous default).
+  (the previous default). Follow-up prompts set arrow heads and whether
+  all arrows have the same length (direction only). With heads off in 3D
+  you can also enable a synchrotron polarisation map.
 * ``2`` iron filings (3D only). Short lit line segments on particles in the
   active z-slice for cross sections, or on the projected volume otherwise;
   not a 2D streamplot of the projected field.
@@ -1836,8 +1838,9 @@ regions; the old stream-function contour method is no longer used.
 Turning arrow heads off for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:ref:`sec:vectorplots` can be plotted using arrows without heads using the ``turn
-arrow heads on/off`` option in the :ref:`sec:menu-v`.
+:ref:`sec:vectorplots` can be plotted using arrows without heads. This is
+a follow-up prompt when choosing streamlines or arrows from option 4
+in the :ref:`sec:menu-v` (see :ref:`sec:vecstyle`).
 
 Hiding vector arrows where there are no SPH particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1859,12 +1862,13 @@ cross section/projection`` option in the :ref:`sec:menu-x`. Setting this to cros
 section and plotting :ref:`sec:vectorplots` produces a vector plot in a cross
 section slice.
 
-Making all arrow the same length (i.e., showing direction only, not magnitude)
+Making all arrows the same length (i.e., showing direction only, not magnitude)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot all vector arrows of the same length (instead of the
 default option where the length of the arrow is proportional to the
-vector magnitude) can be set from the :ref:`sec:menu-v`.
+vector magnitude) is a follow-up prompt when choosing the arrow style
+from option 4 in the :ref:`sec:menu-v` (see :ref:`sec:vecstyle`).
 
 .. _sec:menu-x:
 

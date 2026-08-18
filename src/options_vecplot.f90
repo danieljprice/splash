@@ -86,22 +86,18 @@ subroutine submenu_vecplot(ichoose)
  ians = ichoose
  print "(a)",'--------------- vector plot options -------------------'
 
- if (ians <= 0 .or. ians > 7) then
+ if (ians <= 0 .or. ians > 5) then
     print 10,npixvec,print_logical(UseBackgndColorVecplot), &
              print_logical(iVecplotLegend),ivecstyle, &
-             print_logical(iplotarrowheads), &
-             print_logical(ihidearrowswherenoparts), &
-             print_logical(iallarrowssamelength)
+             print_logical(ihidearrowswherenoparts)
 10  format( &
              ' 0) exit ',/, &
              ' 1) change number of pixels                   (',i4,' )',/, &
              ' 2) use background colour for arrows          ( ',a,' )',/, &
              ' 3) vector plot legend settings               ( ',a,' )',/, &
              ' 4) vector plot style                         (',i4,' )',/, &
-             ' 5) turn arrow heads on/off                   ( ',a,' )',/, &
-             ' 6) hide arrows where there are no particles  ( ',a,' )',/, &
-             ' 7) all arrows same length - ie. direction only ( ',a,' )')
-    call prompt('enter option',ians,0,7)
+             ' 5) hide arrows where there are no particles  ( ',a,' )')
+    call prompt('enter option',ians,0,5)
  endif
 !
 !--options
@@ -136,40 +132,36 @@ subroutine submenu_vecplot(ichoose)
     endif
     if (ivecstyle == ivecstyle_streamlines) then
        call prompt('enter streamline density',streamdensity,0.05,10.)
+       call prompt('plot arrow heads on streamlines? ',iplotarrowheads)
+    elseif (ivecstyle == ivecstyle_arrows) then
+       call prompt('plot arrow heads? ',iplotarrowheads)
+       if (ndim==3 .and. .not.iplotarrowheads) then
+          call prompt(' plot synchrotron map? ',iplotsynchrotron)
+          if (iplotsynchrotron) then
+             if (iutherm < 0 .or. iutherm > numplot) then
+                print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots'
+                print "(a)",' (could not locate thermal energy in data columns)'
+             endif
+             call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
+             call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
+             call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
+             if (iutherm > 0 .and. iutherm <= numplot) then
+                !--set sensible default value for uthermcutoff
+                if (uthermcutoff < -tiny(uthermcutoff)) then
+                   uthermcutoff = 0.5*(lim(iutherm,1) + lim(iutherm,2))
+                endif
+                call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.)
+             endif
+          endif
+       endif
+       call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)
     endif
 !------------------------------------------------------------------------
  case(5)
-    iplotarrowheads = .not.iplotarrowheads
-    call prompt('plot arrow heads? ',iplotarrowheads)
-    if (ndim==3 .and. .not.iplotarrowheads) then
-       call prompt(' plot synchrotron map? ',iplotsynchrotron)
-       if (iplotsynchrotron) then
-          if (iutherm < 0 .or. iutherm > numplot) then
-             print "(a)",' Warning: cannot use thermal energy cutoff in synchrotron plots'
-             print "(a)",' (could not locate thermal energy in data columns)'
-          endif
-          call prompt(' enter rcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',rcrit,0.)
-          call prompt(' enter zcrit for cosmic ray electron distribution exp(-r/rcrit -z/zcrit)',zcrit,0.)
-          call prompt(' enter synchrotron spectral index I_nu = nu^-alpha ',synchrotronspecindex,0.)
-          if (iutherm > 0 .and. iutherm <= numplot) then
-             !--set sensible default value for uthermcutoff
-             if (uthermcutoff < -tiny(uthermcutoff)) then
-                uthermcutoff = 0.5*(lim(iutherm,1) + lim(iutherm,2))
-             endif
-             call prompt(' enter threshold thermal energy in current units (u < utherm not used) ',uthermcutoff,0.)
-          endif
-       endif
-    endif
-!------------------------------------------------------------------------
- case(6)
     call prompt('hide vector arrows where there are no particles ? ',ihidearrowswherenoparts)
     if (ihidearrowswherenoparts) then
        call prompt(' enter minimum number of particles in pixel cell for arrow to be plotted ',minpartforarrow,1)
     endif
-!------------------------------------------------------------------------
- case(7)
-    iallarrowssamelength = .not.iallarrowssamelength
-    call prompt('make all arrows same length (ie. only show direction, not magnitude) ?',iallarrowssamelength)
  end select
 
  return
