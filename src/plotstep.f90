@@ -3675,13 +3675,15 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
           call vecplot3D_proj(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp), &
                     vecplot(1,1:ninterp),vecplot(2,1:ninterp),vecplot(3,1:ninterp),vmax, &
-                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
+                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp, &
+                    x_sec,zslicemin,zslicemax)
        else
           ivecz = ivecx + (iplotz - ix(1))
           call vecplot3D_proj(xplot(1:ninterp), &
                     yplot(1:ninterp),zplot(1:ninterp), &
                     dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),dat(1:ninterp,ivecz),vmax, &
-                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
+                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp, &
+                    x_sec,zslicemin,zslicemax)
        endif
     case(ivecstyle_arrows)
        plotlegend = iVecplotLegend .and. ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)

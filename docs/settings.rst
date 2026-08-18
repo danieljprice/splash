@@ -396,8 +396,9 @@ Adapting the plot limits
 Press ``a`` in :ref:`sec:interactive` to adapt the plot limits to the current
 minimum and maximum of the quantity being plotted. With the mouse over
 the colour bar, this applies to the colour bar limits. Also works even
-when the page is subdivided into panels. To adapt the size of the arrows
-on :ref:`sec:vectorplots`, press ``w``. To use “adaptive plot limits” (where the
+when the page is subdivided into panels. On :ref:`sec:vectorplots`, ``w`` adapts
+arrow or iron-filings scaling (or resets streamline density for the default
+streamline style); see :ref:`sec:vecstyle`. To use “adaptive plot limits” (where the
 limits change at every timestep), see :ref:`sec:adapt`.
 
 Making the axes logarithmic
@@ -1785,7 +1786,9 @@ the arrow lengths (the change can be multiplied by 10 or more by first
 pressing ``z`` one or more times before pressing ``v`` or ``V``).
 
 On the default **streamline** style the same keys change the line density
-instead (``w`` resets density to 1.0).
+instead (``w`` resets density to 1.0). **Iron filings** (3D only) use the same
+``v``/``V``/``w`` scaling as arrows (field-strength normalisation via ``vecmax``),
+not streamline density.
 
 Plotting vector arrows in white instead of black or vice-versa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1822,7 +1825,8 @@ from option 4 in the :ref:`sec:menu-v`:
   prompted for the line density.
 * ``1`` arrows. One arrow is drawn at the centre of each vector pixel
   (the previous default).
-* ``2`` iron filings (3D only). Short lit line segments on particles,
+* ``2`` iron filings (3D only). Short lit line segments on particles in the
+  active z-slice for cross sections, or on the projected volume otherwise;
   not a 2D streamplot of the projected field.
 
 Streamlines work for 2D plots, 3D cross-section slices, and 3D

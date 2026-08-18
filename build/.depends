@@ -40,7 +40,7 @@ exact_toystar1D.o : exact_toystar1D.f90 ${PLOTLIB:.f90=.o}
 exact_toystar2D.o : exact_toystar2D.f90 ${PLOTLIB:.f90=.o} 
 exact_wave.o : exact_wave.f90 
 extinction.o : extinction.f90 globaldata.o rotate.o units.o options_xsecrotate.o options_render.o options_particleplots.o globaldata.o interpolation.o globaldata.o interpolate3D_projection.o limits.o labels.o 
-fieldlines.o : fieldlines.f90 sort.o kernels.o ${PLOTLIB:.f90=.o} 
+fieldlines.o : fieldlines.f90 sort.o ${PLOTLIB:.f90=.o} kernels.o 
 fparser.o : fparser.f90 
 geometry.o : geometry.f90 
 geomutils.o : geomutils.f90 globaldata.o labels.o geometry.o globaldata.o 
@@ -49,7 +49,7 @@ get_h.o : get_h.f90 timing.o kernels.o
 globaldata.o : globaldata.f90 
 imageutils.o : imageutils.f90 interpolate3D.o interpolate2D.o kernels.o 
 initialise.o : initialise.f90 globaldata.o globaldata.o limits.o labels.o globaldata.o 
-interactive.o : interactive.f90 timing.o parsetext.o system_utils.o pagecolours.o colours.o options_particleplots.o calc_quantities.o globaldata.o transform.o options_limits.o options_vecplot.o options_page.o legends.o interactive_buttons.o particleplot.o partutils.o globaldata.o ${PLOTLIB:.f90=.o} globaldata.o options_render.o limits.o labels.o globaldata.o shapes.o options_xsecrotate.o interactive_utils.o interactive_help.o colourbar.o 
+interactive.o : interactive.f90 timing.o parsetext.o system_utils.o pagecolours.o colours.o options_particleplots.o calc_quantities.o globaldata.o transform.o options_page.o options_limits.o legends.o interactive_buttons.o particleplot.o partutils.o globaldata.o ${PLOTLIB:.f90=.o} options_vecplot.o globaldata.o options_render.o limits.o labels.o globaldata.o shapes.o options_xsecrotate.o interactive_utils.o interactive_help.o colourbar.o 
 interactive_buttons.o : interactive_buttons.f90 interactive_help.o interactive_utils.o ${PLOTLIB:.f90=.o} 
 interactive_help.o : interactive_help.f90 parsetext.o interactive_utils.o legends.o ${PLOTLIB:.f90=.o} 
 interactive_utils.o : interactive_utils.f90 ${PLOTLIB:.f90=.o} limits.o globaldata.o 

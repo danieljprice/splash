@@ -296,7 +296,7 @@ subroutine render_stream(vecpixx,vecpixy,npixx,npixy,xmin,ymin,dx,dy,density,lab
 
  string = 'plotting streamlines'
  if (len_trim(label) > 0) string = trim(string)//' ('//trim(label)//')'
- write (*,"(1x,a,': ',i4,' x ',i4,', density=',g0)") trim(string),npixx,npixy,density
+ write (*,"(1x,a,': ',i4,' x ',i4,', density=',g0.2)") trim(string),npixx,npixy,density
 
  if (iplotarrowheads) then
     call plot_sah(2,45.0,0.7)
