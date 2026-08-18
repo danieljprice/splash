@@ -80,6 +80,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
  use limits,           only:assert_sensible_limits
  use settings_render,  only:projlabelformat,iapplyprojformat
  use settings_data,    only:ndataplots,ntypes,icoords,icoordsnew,iverbose
+ use settings_vecplot, only:ivecstyle,ivecstyle_streamlines,streamdensity
  use plotlib,          only:plot_qwin,plot_curs,plot_sfs,plot_circ,plot_line,plot_pt1, &
                              plot_rect,plot_band,plot_sfs,plot_qcur,plot_left_click,plot_right_click,&
                              plot_scroll_left,plot_scroll_right,plotlib_is_pgplot,&
@@ -432,7 +433,7 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
        if (irender > 0) print*,' f/F      : f)lip to next/previous column in rendering (rendered plots only)'
-       print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
+       print*,' v/V/w    : decrease/increase/adapt arrow size or streamline density (Z for x10)'
        if (ndim >= 3) then
           print*,' k/K      : decrease/increase opacity on opacity-rendered plots (Z for x10)'
        endif
@@ -881,29 +882,45 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
           endif
        endif
        !
-       !--zoom in/out on vector plots (arrow size)
+       !--zoom in/out on vector plots (streamline density or arrow size)
        !
     case('v')
        if (ivecx > 0 .and. ivecy > 0) then
-          !print*,'decreasing vector arrow size'
-          vecmax = zoomfac*scalefac*vecmax
-          call print_message('vmax=',vecmax,'decreasing vector arrow size')
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = streamdensity/(zoomfac*scalefac)
+             if (streamdensity < 0.05) streamdensity = 0.05
+             call print_message('density=',streamdensity,'decreasing streamline density')
+          else
+             vecmax = zoomfac*scalefac*vecmax
+             call print_message('vmax=',vecmax,'decreasing vector arrow size')
+          endif
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
        endif
     case('V')
        if (ivecx > 0 .and. ivecy > 0) then
-          vecmax = vecmax/(zoomfac*scalefac)
-          call print_message('vmax=',vecmax,'increasing vector arrow size')
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = streamdensity*(zoomfac*scalefac)
+             if (streamdensity > 10.) streamdensity = 10.
+             call print_message('density=',streamdensity,'increasing streamline density')
+          else
+             vecmax = vecmax/(zoomfac*scalefac)
+             call print_message('vmax=',vecmax,'increasing vector arrow size')
+          endif
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
        endif
     case('w','W')
        if (ivecx > 0 .and. ivecy > 0) then
-          call print_message('adapting vector arrow size')
-          vecmax = -1.0
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = 1.0
+             call print_message('resetting streamline density')
+          else
+             call print_message('adapting vector arrow size')
+             vecmax = -1.0
+          endif
           iadvance = 0
           interactivereplot = .true.
           iexit = .true.
@@ -1743,6 +1760,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
  use labels,    only:is_coord,iamvec
  use limits,    only:assert_sensible_limits
  use multiplot, only:itrans
+ use settings_vecplot, only:ivecstyle,ivecstyle_streamlines,streamdensity
  use shapes,    only:add_shape_interactive,inshape,edit_shape,delete_shape,nshapes
  use plotlib,   only:plot_qcur,plot_band,plot_qwin,plot_pt1,plot_curs,plot_line,plot_left_click
  use legends,   only:in_legend
@@ -1872,7 +1890,7 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        print*,' ctrl-t, ^: add text or arrow(^) at current position'
        print*,' G/T/H    : move le(G)end, (T)itle or (H) vector legend to current position'
        print*,' m/M/i    : change colour map (m=next,M=previous,i=invert) (rendered plots only)'
-       print*,' v/V/w    : decrease/increase/adapt arrow size on vector plots (Z for x10)'
+       print*,' v/V/w    : decrease/increase/adapt arrow size or streamline density (Z for x10)'
        print*,' s        : (s)ave current settings for all steps'
        print*,' q/Q/esc  : (q)uit plotting'
        print*,' z/Z(oom) : timestepping, zoom and limits-changing multiplied by 10'
@@ -2214,28 +2232,39 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
           endif
        endif
        !
-       !--zoom in/out on vector plots (arrow size)
+       !--zoom in/out on vector plots (streamline density or arrow size)
        !
     case('v')
        if (ivecarr(ipanel) > 0) then
-          !print*,'decreasing vector arrow size'
-          xmax(ivecarr(ipanel)) = zoomfac*scalefac*xmax(ivecarr(ipanel))
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = streamdensity/(zoomfac*scalefac)
+             if (streamdensity < 0.05) streamdensity = 0.05
+          else
+             xmax(ivecarr(ipanel)) = zoomfac*scalefac*xmax(ivecarr(ipanel))
+          endif
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.
        endif
     case('V')
        if (ivecarr(ipanel) > 0) then
-          !print*,'increasing vector arrow size'
-          xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(zoomfac*scalefac)
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = streamdensity*(zoomfac*scalefac)
+             if (streamdensity > 10.) streamdensity = 10.
+          else
+             xmax(ivecarr(ipanel)) = xmax(ivecarr(ipanel))/(zoomfac*scalefac)
+          endif
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.
        endif
     case('w','W')
        if (ivecarr(ipanel) > 0) then
-          !print*,'adapting vector arrow size'
-          xmax(ivecarr(ipanel)) = -1.0
+          if (ivecstyle == ivecstyle_streamlines) then
+             streamdensity = 1.0
+          else
+             xmax(ivecarr(ipanel)) = -1.0
+          endif
           istep = istepnew
           interactivereplot = .true.
           iexit = .true.

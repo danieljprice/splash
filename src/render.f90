@@ -27,7 +27,7 @@
 module render
  use colourbar, only:plotcolourbar
  implicit none
- public :: render_pix, render_vec, set_transparency
+ public :: render_pix, render_vec, render_stream, set_transparency
  private
 
 contains
@@ -198,6 +198,24 @@ subroutine render_pix(datpix,datmin,datmax,label, &
 end subroutine render_pix
 
 !--------------------------------------------------------------------------
+!  set arrow-head style and shrink character height for vector drawing
+!--------------------------------------------------------------------------
+subroutine set_arrow_style(charheight)
+ use settings_vecplot, only:iplotarrowheads
+ use plotlib,          only:plot_sah,plot_qch,plot_sch
+ real, intent(out) :: charheight
+
+ if (iplotarrowheads) then
+    call plot_sah(2,45.0,0.7)
+ else
+    call plot_sah(2,0.0,1.0)
+ endif
+ call plot_qch(charheight)
+ call plot_sch(0.3*charheight)
+
+end subroutine set_arrow_style
+
+!--------------------------------------------------------------------------
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)
 !  and plots an arrow map of it
 !--------------------------------------------------------------------------
@@ -205,9 +223,8 @@ end subroutine render_pix
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
                       xmin,ymin,dx,dy,label,unitslabel,plotlegend)
  use legends,          only:legend_vec
- use settings_vecplot, only:hposlegendvec,vposlegendvec,&
-                            iplotarrowheads,iallarrowssamelength
- use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
+ use settings_vecplot, only:hposlegendvec,vposlegendvec,iallarrowssamelength
+ use plotlib,          only:plot_sch,plot_vect
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx,dy
  real, intent(inout) :: vecmax
@@ -230,13 +247,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  print*,'vector plot..',npixx,'x',npixy,'=',size(vecpixx),' pixels'
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
- if (iplotarrowheads) then
-    call plot_sah(2,45.0,0.7)   ! arrow style
- else
-    call plot_sah(2,0.0,1.0)
- endif
- call plot_qch(charheight)
- call plot_sch(0.3*charheight)          ! size of arrow head
+ call set_arrow_style(charheight)
 
  if (iallarrowssamelength) then
     !!if (vecmax <= 0.0) vecmax = 1.0 ! adaptive limits
@@ -272,6 +283,39 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  call plot_sch(charheight)
 
 end subroutine render_vec
+
+!--------------------------------------------------------------------------
+!  plot an evenly-spaced streamline map of a 2D vector field
+!--------------------------------------------------------------------------
+subroutine render_stream(vecpixx,vecpixy,npixx,npixy,xmin,ymin,dx,dy,density,label)
+ use plotlib,          only:plot_sch,plot_streamplot
+ integer, intent(in) :: npixx,npixy
+ real, intent(in) :: xmin,ymin,dx,dy,density
+ real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
+ character(len=*), intent(in) :: label
+ real :: trans(6)
+ real :: charheight
+ character(len=128) :: string
+
+ trans(1) = xmin - 0.5*dx
+ trans(2) = dx
+ trans(3) = 0.0
+ trans(4) = ymin - 0.5*dy
+ trans(5) = 0.0
+ trans(6) = dy
+
+ string = 'plotting streamlines'
+ if (len_trim(label) > 0) string = trim(string)//' ('//trim(label)//')'
+ write (*,"(1x,a,': ',i4,' x ',i4,', density=',g0.2)") trim(string),npixx,npixy,density
+
+ call set_arrow_style(charheight)
+
+ call plot_streamplot(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
+      1,npixx,1,npixy,density,trans,0.0)
+
+ call plot_sch(charheight)
+
+end subroutine render_stream
 
 !--------------------------------------------------------------------------
 ! set opacity for double-rendering, i.e.:

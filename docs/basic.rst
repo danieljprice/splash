@@ -264,17 +264,19 @@ where the number refers to the column of the first component of the
 vector quantity.
 
 Vector plots in 3D show either the integral of each component along the
-line of sight or, for a :ref:`sec:xsec`, the vector arrows in a :ref:`sec:xsec`
+line of sight or, for a :ref:`sec:xsec`, the in-plane field in a :ref:`sec:xsec`
 slice (depending on whether a projection or :ref:`sec:xsec` has
 been selected for 3D plots – see the rendering examples given
-previously). In 2D vector plots simply show the vector arrows mapped to
-a pixel array using the SPH kernel.
+previously). In 2D the interpolated field is drawn as evenly-spaced
+streamlines by default; a pixel array of arrows
+is still available from the :ref:`sec:menu-v`.
 
 Settings related to vector plots can be changed via :ref:`sec:menu-v`.
-The size of the arrows is set by the maximum plot limit over all of the vector components.
-Alternatively the arrow size can be changed interactively using ``v``, ``V`` (*decrease
-/increase the arrow size*) and ``w`` (*automatically
-adjust arrow size so longest arrow is one pixel width*).
+For the default streamline style, ``v`` and ``V`` decrease and increase
+the line density and ``w`` resets density to 1.0. For the arrow style
+the size of the arrows is set by the maximum plot limit over all of the
+vector components, and ``v``, ``V`` and ``w`` decrease, increase and
+adapt the arrow length so the longest arrow is one pixel width.
 
 Contour plots
 -------------

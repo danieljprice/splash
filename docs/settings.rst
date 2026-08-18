@@ -396,8 +396,9 @@ Adapting the plot limits
 Press ``a`` in :ref:`sec:interactive` to adapt the plot limits to the current
 minimum and maximum of the quantity being plotted. With the mouse over
 the colour bar, this applies to the colour bar limits. Also works even
-when the page is subdivided into panels. To adapt the size of the arrows
-on :ref:`sec:vectorplots`, press ``w``. To use “adaptive plot limits” (where the
+when the page is subdivided into panels. On :ref:`sec:vectorplots`, ``w`` adapts
+arrow or iron-filings scaling (or resets streamline density for the default
+streamline style); see :ref:`sec:vecstyle`. To use “adaptive plot limits” (where the
 limits change at every timestep), see :ref:`sec:adapt`.
 
 Making the axes logarithmic
@@ -1751,22 +1752,26 @@ M\ :math:`_{6}` B-splines with support of 2h and 3h, respectively. See
 Changing the number of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-See :ref:`sec:vecpix`.
+See :ref:`sec:vecpix`. This applies to the **arrow** vector style only
+(option 4 in the :ref:`sec:menu-v`). Streamline density is set separately
+(see :ref:`sec:vecstyle`).
 
 .. _sec:vecpix:
 
 Changing the number of pixels in vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The number of pixels used on :ref:`sec:vectorplots` can be changed via the ``change
+The number of pixels used on arrow-style :ref:`sec:vectorplots` can be changed via the ``change
 number of pixels`` option in the :ref:`sec:menu-v`. This controls the number
 and average size of the arrows which appear (i.e., one arrow is plotted
-at the centre of each pixel).
+at the centre of each pixel). For the default streamline style the field
+is interpolated at the rendering resolution instead; visual spacing of
+the lines is controlled by the streamline density (see :ref:`sec:vecstyle`).
 
 Changing the size of arrows on vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The size of the arrows on :ref:`sec:vectorplots` is proportional to the magnitude
+The size of the arrows on arrow-style :ref:`sec:vectorplots` is proportional to the magnitude
 of the vector quantity at that pixel, where the maximum size is set from
 the maximum plot limit for the x, y and z components of the vector
 quantity being plotted such that the longest arrow fills one pixel.
@@ -1779,6 +1784,11 @@ the equivalent of pressing ``a`` for non-vector quantities). Alternatively
 pressing ``v`` (to decrease) or ``V`` (to increase) can be used to adjust
 the arrow lengths (the change can be multiplied by 10 or more by first
 pressing ``z`` one or more times before pressing ``v`` or ``V``).
+
+On the default **streamline** style the same keys change the line density
+instead (``w`` resets density to 1.0). **Iron filings** (3D only) use the same
+``v``/``V``/``w`` scaling as arrows (field-strength normalisation via ``vecmax``),
+not streamline density.
 
 Plotting vector arrows in white instead of black or vice-versa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1801,28 +1811,36 @@ The position of the :ref:`sec:vectorplots` legend can be set either interactivel
 by positioning the mouse and pressing ``H`` or manually via the ``vector
 plot legend settings`` option in the :ref:`sec:menu-v`.
 
-Plotting stream/fieldlines instead of arrows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _sec:vecstyle:
 
-To plot :ref:`sec:vectorplots` that use stream/fieldlines instead of arrows, set
-the ``plot stream/field lines instead of arrows`` option in the :ref:`sec:menu-v`.
-This option performs a simple integration of the interpolated vector
-field to get the stream function, the contours of which are then plotted
+Vector plot style (streamlines, arrows, iron filings)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. hint::
-   The number of contours can be changed via the
-   ``change number of contours`` option in the :ref:`sec:menu-r`. It is generally advantageous
-   to use a larger number of pixels for the vector interpolation (See
-   :ref:`sec:vecpix`) to get smooth contours.
+The default :ref:`sec:vectorplots` style is evenly-spaced streamlines of the
+interpolated vector field. Choose the style
+from option 4 in the :ref:`sec:menu-v`:
 
-At present this option works quite well for smooth vector fields but can
-perform poorly for vector fields with strong gradients.
+* ``0`` streamlines (default). Trajectories are integrated with RK2 and
+  spaced with an occupancy mask. You are also prompted for the line
+  density and whether to draw direction arrows with heads.
+* ``1`` arrows. One arrow is drawn at the centre of each vector pixel
+  (the previous default). Follow-up prompts set arrow heads and whether
+  all arrows have the same length (direction only). With heads off in 3D
+  you can also enable a synchrotron polarisation map.
+* ``2`` iron filings (3D only). Short lit line segments on particles in the
+  active z-slice for cross sections, or on the projected volume otherwise;
+  not a 2D streamplot of the projected field.
+
+Streamlines work for 2D plots, 3D cross-section slices, and 3D
+projections of the in-plane field. They follow shocks and divergent
+regions; the old stream-function contour method is no longer used.
 
 Turning arrow heads off for vector plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:ref:`sec:vectorplots` can be plotted using arrows without heads using the ``turn
-arrow heads on/off`` option in the :ref:`sec:menu-v`.
+:ref:`sec:vectorplots` can be plotted using arrows without heads. This is
+a follow-up prompt when choosing streamlines or arrows from option 4
+in the :ref:`sec:menu-v` (see :ref:`sec:vecstyle`).
 
 Hiding vector arrows where there are no SPH particles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1844,12 +1862,13 @@ cross section/projection`` option in the :ref:`sec:menu-x`. Setting this to cros
 section and plotting :ref:`sec:vectorplots` produces a vector plot in a cross
 section slice.
 
-Making all arrow the same length (i.e., showing direction only, not magnitude)
+Making all arrows the same length (i.e., showing direction only, not magnitude)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An option to plot all vector arrows of the same length (instead of the
 default option where the length of the arrow is proportional to the
-vector magnitude) can be set from the :ref:`sec:menu-v`.
+vector magnitude) is a follow-up prompt when choosing the arrow style
+from option 4 in the :ref:`sec:menu-v` (see :ref:`sec:vecstyle`).
 
 .. _sec:menu-x:
 

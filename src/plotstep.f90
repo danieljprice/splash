@@ -680,7 +680,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  use settings_render,    only:npix,ncontours,icolours,iColourBarStyle,icolour_particles,&
                                inormalise_interpolations,ifastrender,ilabelcont,double_rendering,&
                                projlabelformat,iapplyprojformat,exact_rendering
- use settings_vecplot,   only:npixvec,iplotpartvec
+ use settings_vecplot,   only:npixvec,iplotpartvec,ivecstyle,ivecstyle_arrows
  use settings_xsecrot,   only:nxsec,irotateaxes,xsec_nomulti,irotate, &
                                flythru,use3Dperspective,use3Dopacityrendering,&
                                anglex,angley,anglez,zobserver,&
@@ -742,7 +742,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
  integer :: i,j,k,icolumn,irow,ix_map,iy_map,iz_map,irender_map,icontour_map
  integer :: nyplot,nframesloop
  integer :: irenderpart,icolours_temp
- integer :: npixyvec,nfreqpts,ipixxsec
+ integer :: npixyvec,npixvecx,nfreqpts,ipixxsec
  integer :: icolourprev,linestyleprev
  integer :: ierr,ipt,nplots,nyplotstart,nyplotend,iaxisy,iaxistemp
  integer :: ivectemp,iamvecx,iamvecy,itransx,itransy,itemp
@@ -2057,7 +2057,13 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
              ! vector maps (can be on top of particle plots and renderings)
              !--------------------------------------------------------------
              if (ivecx > 0 .and. ivecy > 0 .and. ivectorplot > 0) then
-                pixwidthvec  = (xmax-xmin)/real(npixvec)
+                if (ivecstyle == ivecstyle_arrows) then
+                   npixvecx = npixvec
+                else
+                   npixvecx = npixx
+                   if (npixvecx < 256) npixvecx = 256
+                endif
+                pixwidthvec  = (xmax-xmin)/real(npixvecx)
                 if (just==1) then
                    pixwidthvecy = pixwidthvec !(xmax-xmin)/real(npixvec)
                 else
@@ -2085,7 +2091,7 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
                 endif
                 call string_delete(labelvecunits,(/'[',']'/))
 
-                call vector_plot(ivecx,ivecy,npixvec,npixyvec,pixwidthvec,&
+                call vector_plot(ivecx,ivecy,npixvecx,npixyvec,pixwidthvec,&
                    pixwidthvecy,vecmax,labelvecplot,labelvecunits,got_h)
 
                 !--vecmax is returned with the adaptive value if sent in -ve
@@ -3455,17 +3461,17 @@ end subroutine set_weights
 !-------------------------------------------------------------------
 subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
              pixwidthvecy,vmax,label,labelunit,got_h)
- use settings_vecplot, only:UseBackgndColorVecplot,iplotstreamlines,iplotarrowheads, &
+ use settings_vecplot, only:UseBackgndColorVecplot,ivecstyle,ivecstyle_streamlines, &
+       ivecstyle_arrows,ivecstyle_ironfilings,streamdensity,iplotarrowheads, &
        iplotsynchrotron,rcrit,zcrit,synchrotronspecindex,uthermcutoff, &
        ihidearrowswherenoparts,minpartforarrow,iVecplotLegend,iVecLegendOnPanel
  use interpolations2D, only:interpolate2D_vec
  use projections3D,    only:interpolate3D_proj_vec,interp3D_proj_vec_synctron
  use interpolate_vec,  only:mask_vectors,interpolate_vec_average
- use render,           only:render_vec
- use fieldlines,       only:streamlines,vecplot3D_proj
+ use render,           only:render_vec,render_stream,render_pix
+ use fieldlines,       only:vecplot3D_proj
  use labels,           only:iutherm,is_coord
  use plotlib,          only:plot_qci,plot_qlw,plot_sci,plot_slw,plot_set_opacity
- use system_utils,     only:lenvironment
  use legends,          only:ipanelselect
  integer,          intent(in) :: ivecx,ivecy,numpixx,numpixy
  real,             intent(in) :: pixwidthvec,pixwidthvecy
@@ -3474,10 +3480,8 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
  logical,          intent(in) :: got_h
  real, dimension(numpixx,numpixy) :: vecpixx, vecpixy
  real, dimension(max(npixx,numpixx),max(npixy,numpixy)) :: datpixvec
- integer :: i,j,icoloursav,linewidthprev,ivecz
- real    :: vmag
- real    :: blankval,datmax
- logical :: usevecplot,use3Dstreamlines,plotlegend
+ integer :: icoloursav,linewidthprev,ivecz,istyle
+ logical :: usevecplot,plotlegend
 
  !--query colour index and line width
  call plot_qci(icoloursav)
@@ -3488,7 +3492,11 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
        (is_coord(ivecy,ndim) .or. ivecy < 0 .or.(ivecy > ndataplots))) then
     print*,'error finding location of vector plot in array'
  else
-    use3Dstreamlines = (ndim==3) .and. .not.x_sec !lenvironment('SPLASH_3DSTREAMLINES')
+    istyle = ivecstyle
+    if (istyle == ivecstyle_ironfilings .and. ndim /= 3) then
+       print "(a)",' iron filings visualisation is 3D only: using streamlines'
+       istyle = ivecstyle_streamlines
+    endif
 
     !--plot arrows in either background or foreground colour
     if (UseBackgndColorVecplot) then
@@ -3539,7 +3547,7 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
              endif
           endif
        else
-          if (iplotsynchrotron .and. .not.iplotstreamlines .and. .not.iplotarrowheads) then
+          if (iplotsynchrotron .and. istyle==ivecstyle_arrows .and. .not.iplotarrowheads) then
              !--get synchrotron polarisation vectors
              if (iutherm > 0 .and. iutherm <= numplot .and. uthermcutoff > 0.) then
                 if (usevecplot) then
@@ -3567,7 +3575,7 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
                        icolourme(1:ninterp),ninterp,xmin,ymin, &
                        vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec, &
                        rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
-                elseif (.not.iplotstreamlines) then
+                elseif (istyle /= ivecstyle_ironfilings) then
                    call interp3D_proj_vec_synctron(xplot(1:ninterp), &
                        yplot(1:ninterp),zplot(1:ninterp),hh(1:ninterp), &
                        weight(1:ninterp),dat(1:ninterp,ivecx),dat(1:ninterp,ivecy), &
@@ -3576,7 +3584,7 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
                        rcrit,zcrit,synchrotronspecindex,pixwidthvec,.false.)
                 endif
              endif
-          elseif (.not.(iplotstreamlines .and. use3Dstreamlines)) then
+          elseif (istyle /= ivecstyle_ironfilings) then
              if (got_h) then
                 if (usevecplot) then
                    if (.not.allocated(vecplot)) stop 'internal error: vecplot not allocated'
@@ -3653,68 +3661,31 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
        return
     end select
     !
-    !--plot it, either as streamlines or arrows
+    !--plot it as streamlines, arrows, or 3D iron filings
     !
-    if (iplotstreamlines) then
-       if (ndim==3) then
-          !--normalise the 3D vector field
-          do j=1,numpixy
-             do i=1,numpixx
-                vmag = sqrt(vecpixx(i,j)**2 + vecpixy(i,j)**2)
-                if (vmag > tiny(vmag)) then
-                   vecpixx(i,j) = vecpixx(i,j)/vmag
-                   vecpixy(i,j) = vecpixy(i,j)/vmag
-                endif
-             enddo
-          enddo
-       endif
+    if (ihidearrowswherenoparts .and. istyle /= ivecstyle_ironfilings) then
+       call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
+                           xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow,0.)
+    endif
 
-       if (ndim==3 .and. use3Dstreamlines .and. .not.x_sec) then
-          if (usevecplot) then
-             if (.not.allocated(vecplot)) stop 'vecplot not allocated'
-             call vecplot3D_proj(xplot(1:ninterp), &
-                       yplot(1:ninterp),zplot(1:ninterp), &
-                       vecplot(1,1:ninterp),vecplot(2,1:ninterp),vecplot(3,1:ninterp),vmax, &
-                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
-          else
-             ivecz = ivecx + (iplotz - ix(1))
-             call vecplot3D_proj(xplot(1:ninterp), &
-                       yplot(1:ninterp),zplot(1:ninterp), &
-                       dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),dat(1:ninterp,ivecz),vmax, &
-                       weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp)
-
-          endif
+    select case(istyle)
+    case(ivecstyle_ironfilings)
+       if (usevecplot) then
+          if (.not.allocated(vecplot)) stop 'vecplot not allocated'
+          call vecplot3D_proj(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp), &
+                    vecplot(1,1:ninterp),vecplot(2,1:ninterp),vecplot(3,1:ninterp),vmax, &
+                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp, &
+                    x_sec,zslicemin,zslicemax)
        else
-          call streamlines(vecpixx,vecpixy,datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,pixwidthvec)
-
-          if (ihidearrowswherenoparts) then
-             datmax = maxval(datpixvec(1:numpixx,1:numpixy))
-             blankval = 2.*datmax
-             call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
-                                 xmin,xmax,ymin,ymax,datpixvec(1:numpixx,1:numpixy), &
-                                 datpixvec(1:numpixx,1:numpixy),numpixx,numpixy,minpartforarrow,blankval)
-
-             !--use blanking for values of zero
-             call render_pix(datpixvec(1:numpixx,1:numpixy), &
-                            minval(datpixvec(1:numpixx,1:numpixy)), &
-                            datmax, &
-                            'crap',xmin,ymin,pixwidthvec,pixwidthvecy,    &
-                            0,.true.,0,ncontours,.false.,ilabelcont,blank=blankval)
-          else
-             call render_pix(datpixvec(1:numpixx,1:numpixy), &
-                            minval(datpixvec(1:numpixx,1:numpixy)), &
-                            maxval(datpixvec(1:numpixx,1:numpixy)), &
-                            'crap',xmin,ymin,pixwidthvec,pixwidthvecy,    &
-                            0,.true.,0,ncontours,.false.,ilabelcont)
-          endif
+          ivecz = ivecx + (iplotz - ix(1))
+          call vecplot3D_proj(xplot(1:ninterp), &
+                    yplot(1:ninterp),zplot(1:ninterp), &
+                    dat(1:ninterp,ivecx),dat(1:ninterp,ivecy),dat(1:ninterp,ivecz),vmax, &
+                    weight(1:ninterp),icolourme(1:ninterp),ninterp,pixwidthvec,zobservertemp,dzscreentemp, &
+                    x_sec,zslicemin,zslicemax)
        endif
-
-    else
-       if (ihidearrowswherenoparts) then
-          call mask_vectors(xplot(1:ninterp),yplot(1:ninterp),icolourme(1:ninterp),ninterp, &
-                              xmin,xmax,ymin,ymax,vecpixx,vecpixy,numpixx,numpixy,minpartforarrow,0.)
-       endif
-
+    case(ivecstyle_arrows)
        plotlegend = iVecplotLegend .and. ipanelselect(iVecLegendOnPanel,ipanel,irow,icolumn)
        call render_vec(vecpixx,vecpixy,vmax,numpixx,numpixy,xmin,ymin,&
               pixwidthvec,pixwidthvecy,trim(label),trim(labelunit),plotlegend)
@@ -3740,18 +3711,15 @@ subroutine vector_plot(ivecx,ivecy,numpixx,numpixy,pixwidthvec,&
                  rcrit,zcrit,synchrotronspecindex,pixwidthvec,.true.)
           endif
 
-          !--adjust the units of the z-integrated quantity
-          !if (iRescale .and. units(ih) > 0. .and..not.inormalise) then
-          !   datpix = datpix*(unitzintegration/units(ih))
-          !endif
-
           !--plot contours of synchrotron intensity
           call render_pix(datpixvec(1:npixx,1:npixy),minval(datpixvec(1:npixx,1:npixy)), &
               maxval(datpixvec(1:npixx,1:npixy)),'crap', &
               xmin,ymin,pixwidth,pixwidthy,0,.true.,0,ncontours,.false.,ilabelcont)
        endif
-
-    endif
+    case default
+       call render_stream(vecpixx,vecpixy,numpixx,numpixy,xmin,ymin,&
+              pixwidthvec,pixwidthvecy,streamdensity,trim(label))
+    end select
 
  endif
 

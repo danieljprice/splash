@@ -5,6 +5,7 @@
 - automated plotting of .trajectory files from phantom orbit reconstructor^TM Shamrock native .sham data reader implemented
 - --shift=x,y,z flag to centre on sink but shift it to a different position
 - issues with template and license files fixed (thanks to Phil Wyett)
+- vector plots default to evenly-spaced streamlines; arrows remain as a style option
 
 **3.11.6: (30/10/25)**
 
