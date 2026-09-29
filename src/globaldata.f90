@@ -129,6 +129,9 @@ module settings_data
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  logical :: idefaults_file_read,enforce_code_units
+ !--true when the dump header has udist = umass = utime = 1
+ !  (code units). umagfd may still be non-unity in that case.
+ logical :: code_units_are_unity = .false.
  logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)

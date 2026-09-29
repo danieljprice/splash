@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -356,7 +356,8 @@ subroutine rescale_data(firsttime,nsteps_read)
  use filenames,      only:unitsfile
  use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default,&
                           map_shifted_columns,labelorig,labelreq
- use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
+ use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode, &
+                          enforce_code_units,code_units_are_unity
  use settings_units, only:units,units_calc,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
  use params,         only:maxplot
@@ -369,13 +370,16 @@ subroutine rescale_data(firsttime,nsteps_read)
  ! turn physical units on by default if:
  ! 1) the data read has set the physical units
  ! 2) they have not been switched off
+ ! 3) the dump is not in code units (udist = umass = utime = 1).
+ !    umagfd can be non-unity even then, and must not force the switch.
  !
  if (firsttime .and. any(abs(units_default(0:ncolumns)-1.0) > tiny(units))) then
     units = units_default
     unitslabel = unitslabel_default
     unitzintegration = unitzintegration_default
     labelzintegration = labelzintegration_default
-    if (.not.idefaults_file_read .and. .not.enforce_code_units) iRescale = .true.
+    if (.not.idefaults_file_read .and. .not.enforce_code_units &
+        .and. .not.code_units_are_unity) iRescale = .true.
  endif
 
  !

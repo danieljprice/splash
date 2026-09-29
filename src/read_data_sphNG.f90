@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -135,6 +135,19 @@ elemental integer function itypemap_phantom(iphase)
  end select
 
 end function itypemap_phantom
+
+ !-------------------------------------------------------------
+ ! true when distance, mass and time scales are all unity
+ !-------------------------------------------------------------
+pure logical function base_units_are_unity(udist,umass,utime)
+ real(doub_prec), intent(in) :: udist,umass,utime
+ real(doub_prec), parameter :: tol = 1.d-8
+
+ base_units_are_unity = (abs(udist - 1.d0) <= tol .and. &
+                         abs(umass - 1.d0) <= tol .and. &
+                         abs(utime - 1.d0) <= tol)
+
+end function base_units_are_unity
 
  !------------------------------------------
  ! extraction of single integer variables
@@ -2749,7 +2762,8 @@ subroutine set_labels_sphNG
               idustfrac,ideltav,idustfracsum,ideltavsum,igrainsize,igraindens,iradFx, &
               ivrel,make_vector_label,get_label_grain_size,itemp,ikappa,ipmomx,irhorestframe
  use params
- use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode
+ use settings_data,   only:ndim,ndimV,ntypes,ncolumns,UseTypeInRenderings,debugmode, &
+                           code_units_are_unity
  use geometry,        only:labelcoord
  use settings_units,  only:units=>units_default,unitzintegration=>unitzintegration_default,&
                            get_nearest_length_unit,get_nearest_time_unit,&
@@ -2761,6 +2775,9 @@ subroutine set_labels_sphNG
  real(doub_prec)   :: unitx,unitvel,unitmass
  character(len=20) :: string,unitlabelx,unitlabelv
  character(len=20) :: deltav_string
+
+ !--code units when udist = umass = utime = 1. umagfd may still differ from 1.
+ code_units_are_unity = base_units_are_unity(udist,umass,utime)
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_sphNG ***'
