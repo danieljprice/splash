@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2024 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -2878,6 +2878,24 @@ subroutine plotstep(ipos,istep,istepsonpage,irender_nomulti,icontour_nomulti,ive
 contains
 
 !----------------------------------------------
+! Even pixel counts keep the png dimensions even,
+! which mp4 encoding requires. That only matters
+! when no box or axes are drawn and the image
+! fills the paper. An odd paper width set by
+! hand in pixels is left unchanged.
+!----------------------------------------------
+logical function even_npix()
+ use settings_page, only:iaxis,ipapersizeunits,papersizex
+
+ if (iaxis == -2) then
+    even_npix = .not. (ipapersizeunits == 0 .and. mod(nint(papersizex),2) /= 0)
+ else
+    even_npix = .false.
+ endif
+
+end function even_npix
+
+!----------------------------------------------
 ! interfaces to the page setup routines
 ! this is called just before a plot is
 ! actually plotted
@@ -2887,8 +2905,7 @@ subroutine page_setup(dummy_run)
  use pagesetup,     only:setpage2
  use settings_page, only:nstepsperpage,iUseBackgroundColourForAxes, &
                          vposlegend,iPlotLegend,usecolumnorder,interactive,&
-                         xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin,&
-                         ipapersizeunits,papersizex
+                         xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  use settings_limits, only:adjustlimitstodevice
  use plotlib,       only:plot_qvp,plot_sci,plot_page,plotlib_is_pgplot,plot_set_opacity,plot_qcur
  use limits,        only:fix_equal_limits
@@ -3045,7 +3062,7 @@ subroutine page_setup(dummy_run)
 
           npixx = max(nint(xmaxpix-xminpix),1)
           npixy = max(nint(ymaxpix-yminpix),1)
-          if (.not. (ipapersizeunits == 0 .and. mod(nint(papersizex),2) /= 0)) then
+          if (even_npix()) then
              npixx = 2*(npixx/2)
              npixy = 2*(npixy/2)
           endif
