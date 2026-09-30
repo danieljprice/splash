@@ -22,7 +22,7 @@ copyright = '2004-2026 Daniel Price and contributors'
 author = 'Daniel Price'
 
 # The full version, including alpha/beta/rc tags
-release = 'v4.0.0'
+release = 'v4.0.1'
 
 # -- General configuration ---------------------------------------------------
 

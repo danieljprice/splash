@@ -51,6 +51,11 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     4.0.1   : (30/09/26)
+!             bug fix in ensuring even pixel numbers for mp4 device;
+!             bug fix with blank line of pixels at top of plot;
+!             unitless mhd test problems no longer trigger physical units;
+!             fix bug producing blank column when reading phantom dumps with APR
 !     4.0.0   : (31/08/26)
 !             user-friendly interactive mode;
 !             interactive buttons now appear in the plotting window;
@@ -694,7 +699,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.0 [31st Aug 2026]'
+ character(len=*), parameter :: version = 'v4.0.1 [30th Sep 2026]'
 
  !
  ! initialise some basic code variables
