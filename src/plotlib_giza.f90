@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -165,6 +165,9 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
        select case(paperunits)
        case(0)
           units = giza_units_pixels
+          ! yuv420p needs even frame dimensions for mp4
+          width = even_pixel_count(width)
+          height = even_pixel_count(height)
        case(1)
           units = giza_units_inches
        case(2)
@@ -487,26 +490,46 @@ subroutine plot_pap(widthin,aspect,paperunits)
  real,intent(in) :: widthin,aspect
  integer, intent(in), optional :: paperunits
  integer :: units
- real    :: width
+ real    :: width,height
 
  width = widthin
+ height = width*aspect
  units = giza_units_inches
 
  if (present(paperunits)) then
     select case(paperunits)
     case(0)
        units = giza_units_pixels
+       ! yuv420p needs even frame dimensions for mp4
+       width = even_pixel_count(width)
+       height = even_pixel_count(height)
     case(1)
        units = giza_units_inches
     case(2)
        units = giza_units_mm
        width = 0.1*width
+       height = 0.1*height
     end select
  endif
 
- call giza_set_paper_size(units,width,width*aspect)
+ call giza_set_paper_size(units,width,height)
 
 end subroutine plot_pap
+
+!---------------------------------------------
+! nearest even pixel count, at least 2.
+! mp4 frames using yuv420p must be even in
+! both width and height.
+!---------------------------------------------
+real function even_pixel_count(x)
+ real, intent(in) :: x
+ real :: n
+
+ n = 2.*nint(x/2.)
+ if (n < 2.) n = 2.
+ even_pixel_count = n
+
+end function even_pixel_count
 
 subroutine plot_line1(x1, y1, x2, y2)
  real,intent(in) :: x1, y1, x2, y2

@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -1457,7 +1457,8 @@ subroutine interactive_part(npart,iplotx,iploty,iplotz,irender,icontour,ivecx,iv
     case('b','B') ! right click -> go back
        iadvance = -abs(iadvance)
        iexit = .true.
-    case('r') ! replot
+    case('r') ! replot (also sent when a window drag ends)
+       call snap_window_even()
        iadvance = 0
        interactivereplot = .true.
        irerender = .true.
@@ -1688,7 +1689,8 @@ subroutine interactive_step(iadvance,istep,ilaststep,xmin,xmax,ymin,ymax,interac
     case('X','b','B') ! right click -> go back
        iadvance = -abs(iadvance)
        iexit = .true.
-    case('r','R') ! replot
+    case('r','R') ! replot (also sent when a window drag ends)
+       call snap_window_even()
        iadvance = 0
        interactivereplot = .true.
        iexit = .true.
@@ -2423,7 +2425,8 @@ subroutine interactive_multi(iadvance,istep,ifirststeponpage,ilaststep,iframe,if
        istep = istepin - (istepjump)*istepsonpage - iadvance*istepsonpage
        lastpanel = 0
        iexit = .true.
-    case('r') ! replot
+    case('r') ! replot (also sent when a window drag ends)
+       call snap_window_even()
        interactivereplot = .true.
        istep = istepnew
        iexit = .true.
@@ -3166,18 +3169,55 @@ subroutine save_windowsize()
  use plotlib,       only:plot_qvsz
  real :: x1,x2,y1,y2,papersizey
 
+ ! drag may have left an odd size; snap before recording it
+ call snap_window_even()
  call plot_qvsz(0,x1,x2,y1,y2)
 
  if (abs(x2-x1 - 800.) > 0. .and. abs(y2-y1 - 600.) > 0.) then
     !print*,' saving paper size = ',x2-x1,' x ',y2-y1
     ipapersize = 24  ! custom
     ipapersizeunits = 0
-    papersizex = x2-x1
-    papersizey = y2-y1
+    papersizex = even_pixel_count(x2-x1)
+    papersizey = even_pixel_count(y2-y1)
     aspectratio = papersizey/papersizex
  endif
 
 end subroutine save_windowsize
+
+!---------------------------------------------
+! after a window drag, move the paper to the
+! nearest even pixel width and height
+!---------------------------------------------
+subroutine snap_window_even()
+ use settings_page, only:ipapersize,ipapersizeunits,papersizex,aspectratio
+ use plotlib,       only:plot_qvsz,plot_pap
+ real :: x1,x2,y1,y2,width,height
+
+ call plot_qvsz(0,x1,x2,y1,y2)
+ width = even_pixel_count(x2-x1)
+ height = even_pixel_count(y2-y1)
+ if (abs(width-(x2-x1)) > 0.5 .or. abs(height-(y2-y1)) > 0.5) then
+    ipapersize = 24
+    ipapersizeunits = 0
+    papersizex = width
+    aspectratio = height/width
+    call plot_pap(papersizex,aspectratio,0)
+ endif
+
+end subroutine snap_window_even
+
+!---------------------------------------------
+! nearest even pixel count, at least 2
+!---------------------------------------------
+real function even_pixel_count(x)
+ real, intent(in) :: x
+ real :: n
+
+ n = 2.*nint(x/2.)
+ if (n < 2.) n = 2.
+ even_pixel_count = n
+
+end function even_pixel_count
 
 !
 !--saves circles of interaction
