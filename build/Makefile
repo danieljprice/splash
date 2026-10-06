@@ -239,18 +239,22 @@ ifeq ($(SYSTEM),aocc)
    PIELDFLAGS= -fpie
 endif
 
-ifeq ($(SYSTEM),pgf90)
-#  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
-   FC= pgf90
-   FFLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
+ifeq ($(SYSTEM),nvfortran)
+#  NVIDIA HPC SDK Fortran compiler
+   FC= nvfortran
+   FFLAGS= -O3 -fPIC -Mbackslash
    DBLFLAGS= -r8
-   DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
-              -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
+   DEBUGFLAG= -C -g -traceback -Mbounds
    OMPFLAGS= -mp
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -Mbyteswapio  # only works on a little-endian machine
    ENDIANFLAGLITTLE=
    KNOWN_SYSTEM=yes
+   NOWARNFLAG= -Werror
+   CC= nvc
+   CXX= nvc++
+   # could not get nvfortran build to work with -pie
+   PIELDFLAGS=
 endif
 
 ifeq ($(SYSTEM),pathf95)
@@ -692,7 +696,7 @@ compilers:
 	@if type -p flang > /dev/null; then echo "make SYSTEM=aocc"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
-	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;
+	@if type -p nvfortran > /dev/null; then echo "make SYSTEM=nvfortran"; fi;
 	@if type -p xlf90_r > /dev/null; then echo "make SYSTEM=ukaff1a [uses xlf90_r]"; fi;
 	@if type -p gfortran > /dev/null; then echo "make SYSTEM=gfortran"; fi;
 	@if type -p g95 > /dev/null; then echo "make SYSTEM=g95"; fi;

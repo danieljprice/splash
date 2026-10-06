@@ -30,6 +30,7 @@
 !
 !------------------------------------------------------------------------
 module timestep_plotting
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  use params, only:maxplot,doub_prec
  implicit none
 
@@ -3042,7 +3043,7 @@ subroutine page_setup(dummy_run)
     if (.not.dum) print "(a)",' WARNING: '//trim(labely)//'min='//trim(labely)//'max '
     call fix_equal_limits(ymin,ymax)
  endif
- if (irender > 0 .and. abs(rendermax-rendermin) < tiny(rendermax) .or. isnan(rendermax)) then
+ if (irender > 0 .and. abs(rendermax-rendermin) < tiny(rendermax) .or. ieee_is_nan(rendermax)) then
     if (.not.dum) print "(a)",' WARNING: '//trim(labelrender)//'min='//trim(labelrender)//'max '
     call fix_equal_limits(rendermin,rendermax)
  endif

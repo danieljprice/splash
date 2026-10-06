@@ -95,7 +95,7 @@ real elemental function get_opacity(rho,T,X,Y,use_all) result(kappa)
  call ionisation_fraction_Honly(rho,T,xfrac,ne)
  !call ionisation_fraction(rho,T,X,Y,xh0,xh1,xhe0,xhe1,xhe2,ne)
 
- Z = max(1. - X - Y,0.)  ! metallicity
+ Z = max(real(1.,kind=doub_prec) - X - Y, real(0.,kind=doub_prec))  ! metallicity
 
  ! opacity due to Kramer's law (free-free and bound-free transitions)
  !kappa_K = 4e25*Z*(1.+X)*rho*T**(-3.5)      ! Metzger & Pejcha (2017)
