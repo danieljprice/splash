@@ -253,6 +253,8 @@ ifeq ($(SYSTEM),nvfortran)
    NOWARNFLAG= -Werror
    CC= nvc
    CXX= nvc++
+   # could not get nvfortran build to work with -pie
+   PIELDFLAGS=
 endif
 
 ifeq ($(SYSTEM),pathf95)
