@@ -251,6 +251,8 @@ ifeq ($(SYSTEM),nvfortran)
    ENDIANFLAGLITTLE=
    KNOWN_SYSTEM=yes
    NOWARNFLAG= -Werror
+   CC= nvc
+   CXX= nvc++
 endif
 
 ifeq ($(SYSTEM),pathf95)
