@@ -31,6 +31,7 @@
 ! this is a standalone module with no dependencies
 !---------------------------------------------------------------------------
 module asciiutils
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  implicit none
  public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename,numfromfile
  public :: cstring,fstring,add_escape_chars
@@ -511,7 +512,7 @@ integer function ncolumnsline(line,csv,ntot)
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666666.) > tiny(0.) .or. isnan(dummyreal(i)))
+ do while(abs(dummyreal(i)+666666.) > tiny(0.) .or. ieee_is_nan(dummyreal(i)))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i > size(dummyreal)) then

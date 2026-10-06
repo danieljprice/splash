@@ -16,11 +16,14 @@ jobs:
           - {compiler: gcc,   version: 'latest', system: gfortran}
           - {compiler: intel, version: 'latest', system: ifx}
           - {compiler: aocc,  version: 'latest', system: aocc}
+          - {compiler: nvidia-hpc, version: 'latest', system: nvfortran}
         exclude:
           - os: macos-latest
             toolchain: {compiler: intel, version: 'latest', system: ifx}
           - os: macos-latest
             toolchain: {compiler: aocc,  version: 'latest', system: aocc}
+          - os: macos-latest
+            toolchain: {compiler: nvidia-hpc, version: 'latest', system: nvfortran}
     runs-on: ${{ matrix.os }}
 
     steps:

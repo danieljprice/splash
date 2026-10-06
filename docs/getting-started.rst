@@ -99,7 +99,11 @@ available are:
    very good) with (limited) free licence for Linux.
    http://software.intel.com/en-us/articles/intel-compilers/
 
-Both of these successfully compile splash and the giza library.
+-  nvfortran, the NVIDIA HPC SDK Fortran compiler.
+   https://developer.nvidia.com/hpc-sdk
+
+These successfully compile splash and the giza library. Use
+``make SYSTEM=nvfortran`` for the NVIDIA compiler.
 
 Cairo graphics library
 ~~~~~~~~~~~~~~~~~~~~~~~

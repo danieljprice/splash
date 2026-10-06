@@ -28,6 +28,7 @@
 !
 !----------------------------------------------------------
 module limits
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  use params
  implicit none
  real, dimension(maxplot,2) :: lim,range,lim2
@@ -425,7 +426,7 @@ subroutine assert_range(x,min,max)
  if (present(max)) xmax = max
  if (x < xmin) x = xmin
  if (x > xmax) x = xmax
- if (isnan(x)) x = 0.
+ if (ieee_is_nan(x)) x = 0.
 
 end subroutine assert_range
 

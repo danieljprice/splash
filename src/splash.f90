@@ -51,6 +51,8 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     4.0.2   : (06/10/26)
+!             splash compiles with nvfortran; CI check added
 !     4.0.1   : (30/09/26)
 !             bug fix in ensuring even pixel numbers for mp4 device;
 !             bug fix with blank line of pixels at top of plot;
@@ -699,7 +701,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.1 [30th Sep 2026]'
+ character(len=*), parameter :: version = 'v4.0.2 [6th Oct 2026]'
 
  !
  ! initialise some basic code variables

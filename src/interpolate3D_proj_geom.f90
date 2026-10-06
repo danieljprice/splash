@@ -115,9 +115,9 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
  endif
  ncpus = 0
  !$omp parallel
- !$omp masked
+ !$omp single
  !$ ncpus = omp_get_num_threads()
- !$omp end masked
+ !$omp end single
  !$omp end parallel
 
  if (ncpus > 0) then

@@ -1,4 +1,15 @@
 
+**4.0.2: (06/10/26)**
+
+- splash compiles with nvfortran; CI check added
+
+**4.0.1: (30/09/26)**
+
+- bug fix in ensuring even pixel numbers for mp4 device
+- bug fix with blank line of pixels at top of plot
+- unitless mhd test problems no longer trigger physical units
+- fix bug producing blank column when reading phantom dumps with APR
+
 **4.0.0: (31/08/26)**
 
 - user-friendly interactive mode

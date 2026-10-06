@@ -53,6 +53,7 @@
 !
 !---------------------------------------------------------------------------------
 program denoise
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  use readwrite_fits,  only:read_fits_cube,write_fits_cube,write_fits_image,get_from_header
  use imageutils,      only:image_denoise,image_denoise3D,image_rotate
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
@@ -138,7 +139,7 @@ program denoise
  endif
 
  ! eliminate NaNs
- where (isnan(image))
+ where (ieee_is_nan(image))
     image = 0.
  end where
 

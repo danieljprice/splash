@@ -28,6 +28,7 @@
 !----------------------------------------------------------------------
 
 module projections3D
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  implicit none
 
  integer, parameter :: maxcoltable = 1000
@@ -75,7 +76,7 @@ subroutine setup_integratedkernel
     deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
-    if (isnan(deltaz)) print "(a)",'WARNING: NaN in kernel table setup'
+    if (ieee_is_nan(deltaz)) print "(a)",'WARNING: NaN in kernel table setup'
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
@@ -202,9 +203,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
  ncpus = 0
  !$omp parallel
- !$omp masked
+ !$omp single
  !$ ncpus = omp_get_num_threads()
- !$omp end masked
+ !$omp end single
  !$omp end parallel
 
  if (ncpus > 0 .and. iverbose >= 0) then
