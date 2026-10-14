@@ -2404,11 +2404,11 @@ subroutine read_data_sphNG(rootname,indexstart,iposn,nstepsread)
                 if (dat(i,ih,j) <= 0. .and. itype /= itypemap_sink_phantom) iamtype(i,j) = itypemap_unknown_phantom
              endif
           enddo
-          if (nptmasstot > 0) then
-             do i=npart+1,npart+nptmasstot
-                iamtype(i,j) = int(itypemap_sink_phantom,kind=int1)
-             enddo
-          endif
+          !
+          !--sink particles are already included in npart (appended during the
+          !  phantom sink-block read) and have iphase=-3, so the loop above
+          !  already sets iamtype for them. Do not index past npart here.
+          !
        else
           !
           !--sphNG: translate iphase to splash types
