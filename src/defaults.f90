@@ -120,8 +120,43 @@ end subroutine defaults_set_360
 !     writes default options to file (should match defaults_read)
 !
 subroutine defaults_write(filename)
+ use filenames, only:rootname,nfiles
+ character(len=*), intent(in) :: filename
+ integer :: i,ierr
+ integer, parameter :: iunit = 1
+
+ open(unit=iunit,file=trim(adjustl(filename)),status='replace',form='formatted',iostat=ierr)
+ if (ierr /= 0) then
+    print*,'ERROR: cannot write file '//trim(filename)
+    close(unit=iunit)
+    return
+ endif
+ call write_namelists(iunit)
+ do i=1,nfiles
+    write(iunit,"(a)") trim(rootname(i))
+ enddo
+ close(unit=iunit)
+ print "(a)",'default options saved to file '//trim(filename)
+
+end subroutine defaults_write
+
+!-----------------------------------------------
+! print all settings to the terminal, in the
+! same format as the defaults file
+!-----------------------------------------------
+subroutine defaults_print()
+ use, intrinsic :: iso_fortran_env, only:output_unit
+
+ call write_namelists(output_unit)
+
+end subroutine defaults_print
+
+!-----------------------------------------------
+! write all namelist groups to an open unit
+! (should match defaults_read)
+!-----------------------------------------------
+subroutine write_namelists(iunit)
  use exact,              only:exactopts,exactparams
- use filenames,          only:rootname,nfiles
  use settings_data,      only:dataopts
  use settings_part,      only:plotopts
  use settings_page,      only:pageopts
@@ -132,38 +167,24 @@ subroutine defaults_write(filename)
  use multiplot,          only:multi
  use shapes,             only:shapeopts
  use calcquantities,     only:calcopts
- character(len=*), intent(in) :: filename
- integer :: i,ierr
- integer, parameter :: iunit = 1
+ integer, intent(in) :: iunit
 
- open(unit=iunit,file=trim(adjustl(filename)),status='replace',form='formatted', &
-      delim='apostrophe',iostat=ierr) ! without delim namelists may not be readable
- if (ierr /= 0) then
-    print*,'ERROR: cannot write file '//trim(filename)
-    close(unit=iunit)
-    return
- endif
- write(iunit,NML=dataopts)
- write(iunit,NML=plotopts)
- write(iunit,NML=pageopts)
- write(iunit,NML=renderopts)
- write(iunit,NML=vectoropts)
- write(iunit,NML=xsecrotopts)
- write(iunit,NML=powerspecopts)
- write(iunit,NML=exactopts)
- write(iunit,NML=exactparams)
- write(iunit,NML=multi)
- write(iunit,NML=shapeopts)
- write(iunit,NML=calcopts)
- write(iunit,NML=animopts)
- do i=1,nfiles
-    write(iunit,"(a)") trim(rootname(i))
- enddo
- close(unit=iunit)
- print "(a)",'default options saved to file '//trim(filename)
+ ! without delim namelists may not be readable
+ write(iunit,NML=dataopts,delim='apostrophe')
+ write(iunit,NML=plotopts,delim='apostrophe')
+ write(iunit,NML=pageopts,delim='apostrophe')
+ write(iunit,NML=renderopts,delim='apostrophe')
+ write(iunit,NML=vectoropts,delim='apostrophe')
+ write(iunit,NML=xsecrotopts,delim='apostrophe')
+ write(iunit,NML=powerspecopts,delim='apostrophe')
+ write(iunit,NML=exactopts,delim='apostrophe')
+ write(iunit,NML=exactparams,delim='apostrophe')
+ write(iunit,NML=multi,delim='apostrophe')
+ write(iunit,NML=shapeopts,delim='apostrophe')
+ write(iunit,NML=calcopts,delim='apostrophe')
+ write(iunit,NML=animopts,delim='apostrophe')
 
- return
-end subroutine defaults_write
+end subroutine write_namelists
 !-----------------------------------------------
 ! reads default options from file
 ! uses namelist input to group the options
@@ -271,5 +292,81 @@ subroutine defaults_read(filename)
 
  return
 end subroutine defaults_read
+
+!-----------------------------------------------
+! override any setting in the defaults file
+! from the command line, e.g. --npix=500 or
+! --iaxis=-2, by reading each --name=value
+! argument as namelist input. Character
+! variables can be given with or without quotes
+!-----------------------------------------------
+subroutine defaults_read_command_line()
+ use settings_data, only:iverbose
+ character(len=*), parameter :: groups(13) = &
+    (/'dataopts     ','plotopts     ','pageopts     ','renderopts   ', &
+      'vectoropts   ','xsecrotopts  ','powerspecopts','exactopts    ', &
+      'exactparams  ','multi        ','shapeopts    ','calcopts     ', &
+      'animopts     '/)
+ character(len=512) :: arg
+ integer :: i,j,ieq,ierr
+
+ do i=1,command_argument_count()
+    call get_command_argument(i,arg)
+    ieq = index(arg,'=')
+    if (arg(1:2) /= '--' .or. ieq <= 3) cycle
+    ! try each namelist in turn: only the one containing the variable reads cleanly
+    do j=1,size(groups)
+       call read_namelist_from_string(trim(groups(j)),trim(arg(3:)),ierr)
+       ! retry with the value in quotes in case it is a character variable
+       if (ierr /= 0 .and. index(arg(ieq+1:),"'")==0) &
+          call read_namelist_from_string(trim(groups(j)),arg(3:ieq)//"'"//trim(arg(ieq+1:))//"'",ierr)
+       if (ierr == 0) then
+          if (iverbose >= 0) print "(a)",' setting '//trim(arg(3:))//' from command line'
+          exit
+       endif
+    enddo
+ enddo
+
+end subroutine defaults_read_command_line
+
+!-----------------------------------------------
+! read a string of the form 'name=value' into
+! the namelist group with the given name
+!-----------------------------------------------
+subroutine read_namelist_from_string(group,string,ierr)
+ use multiplot,          only:multi
+ use settings_data,      only:dataopts
+ use settings_part,      only:plotopts
+ use settings_page,      only:pageopts
+ use settings_render,    only:renderopts
+ use settings_vecplot,   only:vectoropts
+ use settings_xsecrot,   only:xsecrotopts,animopts
+ use settings_powerspec, only:powerspecopts
+ use exact,              only:exactopts,exactparams
+ use shapes,             only:shapeopts
+ use calcquantities,     only:calcopts
+ character(len=*), intent(in)  :: group,string
+ integer,          intent(out) :: ierr
+ character(len=len(group)+len(string)+4) :: nmlstring
+
+ nmlstring = '&'//group//' '//string//' /'
+ select case(group)
+ case('dataopts');      read(nmlstring,nml=dataopts,iostat=ierr)
+ case('plotopts');      read(nmlstring,nml=plotopts,iostat=ierr)
+ case('pageopts');      read(nmlstring,nml=pageopts,iostat=ierr)
+ case('renderopts');    read(nmlstring,nml=renderopts,iostat=ierr)
+ case('vectoropts');    read(nmlstring,nml=vectoropts,iostat=ierr)
+ case('xsecrotopts');   read(nmlstring,nml=xsecrotopts,iostat=ierr)
+ case('powerspecopts'); read(nmlstring,nml=powerspecopts,iostat=ierr)
+ case('exactopts');     read(nmlstring,nml=exactopts,iostat=ierr)
+ case('exactparams');   read(nmlstring,nml=exactparams,iostat=ierr)
+ case('multi');         read(nmlstring,nml=multi,iostat=ierr)
+ case('shapeopts');     read(nmlstring,nml=shapeopts,iostat=ierr)
+ case('calcopts');      read(nmlstring,nml=calcopts,iostat=ierr)
+ case('animopts');      read(nmlstring,nml=animopts,iostat=ierr)
+ case default;          ierr = 1
+ end select
+
+end subroutine read_namelist_from_string
 
 end module defaults
