@@ -307,7 +307,7 @@ subroutine defaults_read_command_line()
       'vectoropts   ','xsecrotopts  ','powerspecopts','exactopts    ', &
       'exactparams  ','multi        ','shapeopts    ','calcopts     ', &
       'animopts     '/)
- character(len=512) :: arg
+ character(len=512) :: arg,quoted
  integer :: i,j,ieq,ierr
 
  do i=1,command_argument_count()
@@ -317,9 +317,13 @@ subroutine defaults_read_command_line()
     ! try each namelist in turn: only the one containing the variable reads cleanly
     do j=1,size(groups)
        call read_namelist_from_string(trim(groups(j)),trim(arg(3:)),ierr)
-       ! retry with the value in quotes in case it is a character variable
-       if (ierr /= 0 .and. index(arg(ieq+1:),"'")==0) &
-          call read_namelist_from_string(trim(groups(j)),arg(3:ieq)//"'"//trim(arg(ieq+1:))//"'",ierr)
+       ! retry with the value in double quotes in case it is a character variable
+       ! (handles spaces and apostrophes after the shell has stripped its quotes)
+       if (ierr /= 0) then
+          call quote_for_namelist(arg(ieq+1:),quoted)
+          call read_namelist_from_string(trim(groups(j)), &
+               arg(3:ieq)//trim(quoted),ierr)
+       endif
        if (ierr == 0) then
           if (iverbose >= 0) print "(a)",' setting '//trim(arg(3:))//' from command line'
           exit
@@ -328,6 +332,35 @@ subroutine defaults_read_command_line()
  enddo
 
 end subroutine defaults_read_command_line
+
+!-----------------------------------------------
+! wrap a string in double quotes for namelist
+! character input, escaping embedded quotes
+!-----------------------------------------------
+subroutine quote_for_namelist(value,quoted)
+ character(len=*), intent(in)  :: value
+ character(len=*), intent(out) :: quoted
+ ! leave room in quoted for the surrounding " delimiters
+ character(len=max(len(quoted)-2,1)) :: escaped
+ integer :: i,n
+
+ n = 0
+ escaped = ' '
+ do i=1,len_trim(value)
+    if (value(i:i) == '"') then
+       ! Fortran namelist doubles embedded quotation marks
+       if (n+2 > len(escaped)) exit
+       escaped(n+1:n+2) = '""'
+       n = n + 2
+    else
+       if (n+1 > len(escaped)) exit
+       escaped(n+1:n+1) = value(i:i)
+       n = n + 1
+    endif
+ enddo
+ quoted = '"'//escaped(1:n)//'"'
+
+end subroutine quote_for_namelist
 
 !-----------------------------------------------
 ! read a string of the form 'name=value' into

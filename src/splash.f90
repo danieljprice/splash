@@ -996,12 +996,9 @@ program splash
  ! override any setting in the defaults file with --name=value on the command line
  !
  call defaults_read_command_line()
- if (do_print_defaults) then
-    call defaults_print()
-    stop
- endif
  !
  ! set options based on command line flags that OVERRIDE settings in the defaults file
+ ! (applied before --print-defaults so printed settings match a normal run)
  !
  if (get_command_flag('kappa')) then ! e.g. --kappa=10.0
     taupartdepth = get_command_option('kappa',default=taupartdepth)
@@ -1015,6 +1012,25 @@ program splash
  if (get_command_flag('anglex')) irotate = .true.  ! e.g. --anglex=30
  if (get_command_flag('angley')) irotate = .true.
  if (get_command_flag('anglez')) irotate = .true.
+ if (get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
+ endif
+ xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=xminpagemargin)
+ xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=xmaxpagemargin)
+ yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=yminpagemargin)
+ ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=ymaxpagemargin)
+ !--kernel given by --kernel=name or SPLASH_KERNEL takes priority over defaults file
+ call get_environment_or_flag('SPLASH_KERNEL',string)
+ if (len_trim(string) > 0) then
+    call select_kernel_by_name(string,verbose=(iverbose >= 0))
+ else
+    call select_kernel(ikernel,verbose=(iverbose >= 0))
+ endif
+ if (do_print_defaults) then
+    call defaults_print()
+    stop
+ endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',track_string)
  endif
@@ -1034,14 +1050,6 @@ program splash
     iexact = 2 ! override setting in defaults file
     call split_string(exactfile,',',filename_exact,nfiles_exact)
  endif
- if (get_command_flag('code')) then
-    iRescale = .false.
-    enforce_code_units = .true.
- endif
- xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=xminpagemargin)
- xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=xmaxpagemargin)
- yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=yminpagemargin)
- ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=ymaxpagemargin)
  !
  ! check that we have got filenames
  !
@@ -1083,14 +1091,6 @@ program splash
  sort_pad = get_command_flag('sortpad')
  if (ihavereadfilenames .and. (sort .or. sort_pad)) then
     call sort_filenames_for_comparison(nfiles,rootname,pad=sort_pad)
- endif
-
- !--kernel given by --kernel=name or SPLASH_KERNEL takes priority over defaults file
- call get_environment_or_flag('SPLASH_KERNEL',string)
- if (len_trim(string) > 0) then
-    call select_kernel_by_name(string,verbose=(iverbose >= 0))
- else
-    call select_kernel(ikernel,verbose=(iverbose >= 0))
  endif
 
  ! set geometry defaults

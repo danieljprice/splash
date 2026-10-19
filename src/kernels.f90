@@ -179,7 +179,14 @@ subroutine select_kernel_by_name(string,verbose)
     end select
  endif
 
- call select_kernel(jkern,verbose=isverbose)
+ if (jkern == 0) then
+    ! keep the configured kernel rather than silently falling back to cubic
+    if (isverbose) print "(a)",' ERROR: unknown kernel "'//trim(string)// &
+         '", keeping current setting'
+    call select_kernel(ikernel,verbose=isverbose)
+ else
+    call select_kernel(jkern,verbose=isverbose)
+ endif
 
 end subroutine select_kernel_by_name
 
