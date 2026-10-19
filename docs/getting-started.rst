@@ -283,9 +283,9 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 ::
 
    Command line options:
-    
+
     -f format         : input file format to be read (default is ascii, --formats for full list)
-    -p fileprefix     : change prefix to ALL settings files read/written by splash 
+    -p fileprefix     : change prefix to ALL settings files read/written by splash
     -e, -ev           : use default options best suited for line plotting (.ev files)
     -360              : set default options suited to 360 video
     -b, --buffer      : buffer all data files into memory
@@ -293,22 +293,33 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     --header          : print dump file header tags and values, then exit
     --labels          : print column labels one per line, then exit
     --labelsorig      : print original column labels (no units), then exit
-    
+    --formats         : list all supported data formats, then exit
+    --print-defaults  : print all settings (with any --name=value overrides applied), then exit
+    --defaults=file   : settings file to use if no splash.defaults in current directory
+    --kernel=quintic  : change the smoothing kernel used for interpolation (e.g. cubic, quintic)
+    --debug           : turn on verbose debugging output
+
    Command line plotting mode:
-    
+
     -x column         : x axis
     -y column         : y axis
     -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)
     -vec[tor] column  : vector quantity to plot with arrows
     -c[ontour] column : contoured quantity
     -multi            : multiplot
-    -dev device       : specify plotting device on command line (e.g. -dev /xw or -dev /osx)
+    -dev device       : plotting device (e.g. -dev /xw, -dev /png, -dev /pdf or -dev myplot.pdf)
     --movie           : shortcut for -dev /mp4 to make a movie from plot sequence
     --xsec=1.0        : specify location of cross section slice
     --kappa=1.0       : specify opacity, and turn on opacity rendering
     --anglex=30       : rotate around x axis (similarly --angley, --anglez)
     --code            : enforce code units (also --codeunits)
     --sink=1          : centre on sink particle number 1
+    --shift=1,0,0     : with --sink, shift the sink to the specified x,y,z position
+    --dontcentrevel   : with --sink or --origin, do not subtract the sink/particle velocity
+    --corotate=1,2    : plot in frame corotating with sink particles 1 and 2
+    --vzero=1,0,0     : subtract reference velocity (in code units) from all particles
+    --wake=1,3        : plot spiral wake from planet (sink 3) orbiting star (sink 1)
+    --beam=2.0        : enforce minimum smoothing length (in code units)
     --origin=1,0,0    : centre on specified x,y,z coordinates
     --origin=666      : set coordinate system origin to particle number 666
     --origin=maxdens  : set coordinate system origin to particle at maximum density
@@ -317,6 +328,18 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
     --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
     --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)
     --sortpad         : sort filenames and pad all sequences to same length
+    --xmin=0,--xmax=1 : override plot limits (similarly --ymin, --ymax, --zmin, --zmax)
+    --lim=1.0         : set plot limits to centred box [-1,1] on all coordinate axes
+    --limits=-1,1     : set plot limits on all coordinate axes (or one min,max pair per axis)
+    --xminmargin=0.1  : adjust page margins (similarly --xmaxmargin, --yminmargin, --ymaxmargin)
+
+   Overriding settings:
+
+    --name=value      : set any variable in splash.defaults (e.g. --npix=512 --iaxis=-2 --legendtext=t=)
+                        (use --print-defaults to list all variable names and current values)
+    --foo=bar         : same as setting environment variable SPLASH_FOO=bar (or e.g. --sink for
+                        SPLASH_CENTRE_ON_SINK); format-specific options such as --cm, --dense for
+                        phantom are listed at https://splash-viz.readthedocs.io/en/latest/getting-started.html
 
    Example data formats (type --formats for full list):
     
@@ -402,6 +425,21 @@ Command-line options can be entered in any order on the command line
 (even after the dump file names). For more information on the convert
 utility (``splash to ascii``) see :ref:`sec:convert`. For details
 of the ``-o ppm`` or ``-o ascii`` option see :ref:`sec:writepixmap`. For details of the ``-ev`` option, see :ref:`sec:evsplash`.
+
+Overriding settings in the defaults file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Any variable in the ``splash.defaults`` file can be set on the command line
+using ``--name=value``, where ``name`` is the variable name as it appears in
+the defaults file (case insensitive). For example::
+
+   splash -r 6 dump_0* --npix=1024 --iaxis=-2 --legendtext='t=' '--multiplotx(2)=3'
+
+Quotes around character values are optional, and individual array elements
+can be set using brackets (which must be quoted to protect them from the shell).
+Settings given on the command line take precedence over those in the defaults file.
+Use ``splash --print-defaults`` to list all variable names and their current
+values (including any ``--name=value`` overrides).
 
 
 Options affecting all data reads
@@ -645,7 +683,7 @@ For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 +-------------------+-------------------------------------------------------+
 | ``--omegat=3.142``| same as --omega but applies to velocities also        |
 +-------------------+-------------------------------------------------------+
-| ``--timeunit=hrs``| sets default time units, either 's', 'min', 'hrs',    |
+| ``--timeunits=yr``| sets default time units, either 's', 'min', 'hrs',    |
 |                   | 'days', 'yr' or 'tfreefall' (used verbatim in legend) |
 +-------------------+-------------------------------------------------------+
 
@@ -671,7 +709,7 @@ For the srosph read (``splash``) the options are:
 |                                   | from either the MHD or            |
 |                                   | hydrodynamic codes                |
 +-----------------------------------+-----------------------------------+
-| ``--com``                         | if set resets the                 |
+| ``--cm``                          | if set resets the                 |
 |                                   | positions such that the centre of |
 |                                   | mass is exactly at the origin.    |
 +-----------------------------------+-----------------------------------+

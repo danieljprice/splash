@@ -162,7 +162,7 @@ subroutine select_kernel_by_name(string,verbose)
  !
  !--if no match to a kernel name, look for other possible strings
  !
- if (ikernel==0) then
+ if (jkern==0) then
     select case(trim(adjustl(lcase(string))))
     case('wendlandc6','wendland c6','6th order wendland','wendland 3d c6','w6','wendland6')
        jkern = 6
@@ -179,7 +179,14 @@ subroutine select_kernel_by_name(string,verbose)
     end select
  endif
 
- call select_kernel(jkern,verbose=isverbose)
+ if (jkern == 0) then
+    ! keep the configured kernel rather than silently falling back to cubic
+    if (isverbose) print "(a)",' ERROR: unknown kernel "'//trim(string)// &
+         '", keeping current setting'
+    call select_kernel(ikernel,verbose=isverbose)
+ else
+    call select_kernel(jkern,verbose=isverbose)
+ endif
 
 end subroutine select_kernel_by_name
 
