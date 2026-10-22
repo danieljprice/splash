@@ -1,4 +1,15 @@
 
+**4.1.0: (23/10/26)**
+
+- option to override ANY setting in splash.defaults with a command line flag, e.g. --npix=512
+- print all settings (with any overrides applied) using the --print-defaults flag
+- exact rendering now works with all kernels, and is faster
+- bug fix with mass conservation in exact rendering for particles with h ~ pixel size
+- bug fix with mass of sub-pixel particles being overestimated in projections
+- opacity rendering smooths sub-pixel particles over the pixel scale so none are missed
+- fix seg fault in phantom reader with sink particles
+- unit tests of exact kernel integrals run in CI
+
 **4.0.2: (06/10/26)**
 
 - splash compiles with nvfortran; CI check added

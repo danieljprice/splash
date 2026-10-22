@@ -51,10 +51,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     4.1.0   : (19/10/26)
+!     4.1.0   : (23/10/26)
 !             splash compiles with nvfortran; CI check added;
 !             option to override ANY option in splash.defaults with command line flag --foo=bar;
-!             can print all default settings with --print-defaults flag
+!             can print all default settings with --print-defaults flag;
+!             exact rendering now works with all kernels, also faster;
+!             bug fix with mass conservation in exact rendering and sub-pixel particles in all renders;
+!             fix seg fault in phantom reader with sink particles;
+!             unit tests of exact kernel integrals
 !     4.0.1   : (30/09/26)
 !             bug fix in ensuring even pixel numbers for mp4 device;
 !             bug fix with blank line of pixels at top of plot;
@@ -704,7 +708,7 @@ program splash
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.1.0 [19th Oct 2026]'
+ character(len=*), parameter :: version = 'v4.1.0 [23rd Oct 2026]'
 
  !
  ! initialise some basic code variables

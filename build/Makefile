@@ -469,7 +469,7 @@ endif
 SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
-         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
+         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernel_integrals.f90 kernels.f90 \
          plotutils.f90 blackbody.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
@@ -563,7 +563,7 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernel_integrals.f90 kernels.f90 timing.f90 geometry.f90 \
       interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
@@ -605,7 +605,7 @@ SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 la
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
             utils_vectors.f90 lightcurve_utils.f90 read_composition.F90 \
-            $(READFILES) read_data.F90 kernels.f90 get_h.f90\
+            $(READFILES) read_data.F90 kernel_integrals.f90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
@@ -619,7 +619,7 @@ libread: checksystem $(OBJLIBREADALL)
 #
 # splash image manipulation utilities
 #
-SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernel_integrals.f90 kernels.f90 \
               interpolation.f90 interpolate2D.f90 interpolate3D.f90 \
               imageutils.f90 write_fits.f90 denoise.f90
 
@@ -638,7 +638,7 @@ denoise: checksystem checkfits $(OBJECTSIMLIB)
 #
 # splash moments
 #
-SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernel_integrals.f90 kernels.f90 \
           interpolate1D.f90 write_fits.f90 moments.f90 sph_moments.f90
 
 OBJECTSM = $(SOURCESM:.f90=.o)
@@ -865,10 +865,14 @@ targz:
 ## unit tests of various modules as I write them
 .PHONY: tests
 
-test: test1 test2 test3 test_slicer test_prompt test-parse
+test: test1 test2 test3 test_slicer test_prompt test-parse test_kernel_integrals
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o
 	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+TESTKERNOBJ= asciiutils.o kernel_integrals.o kernels.o timing.o sort.o geometry.o interpolation.o \
+             interpolate3D_projection.o interpolate3D_proj_geom.o interpolate3D_opacity.o
+test_kernel_integrals: $(TESTKERNOBJ)
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_kernel_integrals $(TESTDIR)/test_kernel_integrals.f90 $(TESTKERNOBJ)
 test2: transform.o $(TESTDIR)//test_transform.o
 	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
 test3: fieldlines.o $(TESTDIR)//test_fieldlines.o
@@ -899,7 +903,7 @@ depends: clean
 	  exit 1; \
 	fi; \
 	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
-	cd ../src && makedepf90 -free -D HDF5 -D FITS $$SOURCE_FILES | sed 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' > ../build/.depends || \
+	cd ../src && makedepf90 -free -D HDF5 -D FITS $$SOURCE_FILES | sed -e 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' -e 's/[[:space:]]*$$//' > ../build/.depends || \
 	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
 	if [ ! -s ../build/.depends ]; then \
 	  echo "  Error: .depends file is empty"; exit 1; \
