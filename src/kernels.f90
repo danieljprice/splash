@@ -26,7 +26,7 @@
 !
 !-------------------------------------------------------------
 module kernels
- use kernel_integrals, only:maxpieces,maxpow,get_kernel_integral_coeffs, &
+ use kernel_integrals, only:maxpieces,maxdeg,maxpow,set_kernel_integral_coeffs, &
                             edge_int_2d,edge_int_3d
  implicit none
  integer, parameter, public :: nkernels = 6
@@ -63,7 +63,7 @@ module kernels
   end function k_func
  end interface
 
- public :: select_kernel, select_kernel_by_name
+ public :: select_kernel, select_kernel_by_name, get_kernel_pieces
  public :: pint,wallint,soft_func
 
  private
@@ -139,9 +139,24 @@ subroutine select_kernel(j,verbose)
     dwfunc => dw_cubic
  end select
  radkernel2 = radkernel*radkernel
- call get_kernel_integral_coeffs(ikernel,npieces_int,nmax_int,qb_int,g2_int,a3_int)
+ call set_integral_tables(ikernel)
 
 end subroutine select_kernel
+
+!--------------------------------------------------
+!
+! Compute the coefficient tables used for exact
+! integrals of the kernel over pixels and cells
+!
+!--------------------------------------------------
+subroutine set_integral_tables(ikern)
+ integer, intent(in) :: ikern
+ real(doub_prec) :: w(0:maxdeg,maxpieces),c2,c3
+
+ call get_kernel_pieces(ikern,npieces_int,qb_int,w)
+ call set_kernel_integral_coeffs(npieces_int,qb_int,w,nmax_int,g2_int,a3_int,c2,c3)
+
+end subroutine set_integral_tables
 
 !--------------------------------------
 !
@@ -327,6 +342,56 @@ pure real function w_wendlandc6(q2)
  endif
 
 end function w_wendlandc6
+
+!------------------------------------------------------
+!
+!  Coefficients of q^0, q^1, ... for each kernel on each
+!  piece (from qb(j-1), or zero, to qb(j)), i.e. the
+!  functional forms above expanded as polynomials in q
+!
+!------------------------------------------------------
+pure subroutine get_kernel_pieces(ikern,npieces,qb,w)
+ integer,         intent(in)  :: ikern
+ integer,         intent(out) :: npieces
+ real(doub_prec), intent(out) :: qb(maxpieces),w(0:maxdeg,maxpieces)
+
+ ! integer coefficients over a common denominator, so that the
+ ! conversion to double precision is exact
+ qb = 0
+ w  = 0
+ select case(ikern)
+ case(6) ! Wendland C6: (1 - q/2)^8 (1 + 4q + 25/4 q^2 + 4q^3)
+    npieces = 1
+    qb(1) = 2
+    w(0:11,1) = (/1024,0,-2816,0,4224,0,-7392,8448,-4620,1408,-231,16/)/1024.d0
+ case(5) ! Wendland C4: (1 - q/2)^6 (1 + 3q + 35/12 q^2)
+    npieces = 1
+    qb(1) = 2
+    w(0:8,1) = (/768,0,-1792,0,3360,-3584,1680,-384,35/)/768.d0
+ case(4) ! Wendland C2: (1 - q/2)^4 (1 + 2q)
+    npieces = 1
+    qb(1) = 2
+    w(0:5,1) = (/16,0,-40,40,-15,2/)/16.d0
+ case(3) ! M6 quintic: (3-q)^5 - 6(2-q)^5 + 15(1-q)^5, (3-q)^5 - 6(2-q)^5, (3-q)^5
+    npieces = 3
+    qb(1:3) = (/1,2,3/)
+    w(0:5,1) = (/66,0,-60,0,30,-10/)
+    w(0:5,2) = (/51,75,-210,150,-45,5/)
+    w(0:5,3) = (/243,-405,270,-90,15,-1/)
+ case(2) ! M5 quartic: (5/2-q)^4 - 5(3/2-q)^4 + 10(1/2-q)^4, (5/2-q)^4 - 5(3/2-q)^4, (5/2-q)^4
+    npieces = 3
+    qb(1:3) = (/1,3,5/)/2.d0
+    w(0:4,1) = (/230,0,-240,0,96/)/16.d0
+    w(0:4,2) = (/220,80,-480,320,-64/)/16.d0
+    w(0:4,3) = (/625,-1000,600,-160,16/)/16.d0
+ case default ! M4 cubic: 1 - 3/2 q^2 + 3/4 q^3, 1/4 (2-q)^3
+    npieces = 2
+    qb(1:2) = (/1,2/)
+    w(0:3,1) = (/4,0,-6,3/)/4.d0
+    w(0:3,2) = (/8,-12,6,-1/)/4.d0
+ end select
+
+end subroutine get_kernel_pieces
 
 !---------------------------------------
 !

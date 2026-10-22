@@ -370,7 +370,8 @@ end module legacy_cubic
 !-----------------------------------------------------------------------
 module kernel_integral_tests
  use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
- use kernels,       only:pint,wallint,wfunc,radkernel,cnormk2D,cnormk3D
+ use kernels,       only:pint,wallint,wfunc,radkernel,cnormk2D,cnormk3D,ikernel,get_kernel_pieces
+ use kernel_integrals, only:maxpieces,maxdeg,maxpow,set_kernel_integral_coeffs
  use legacy_cubic,  only:pint_legacy,wallint_legacy
  use projections3D, only:interpolate3D_projection,setup_integratedkernel
  use projections3Dgeom,     only:interpolate3D_proj_geom
@@ -875,6 +876,43 @@ real function min_block_sum(pix,ns,noff)
 
 end function min_block_sum
 
+!-----------------------------------------------------------------------
+!+
+!  the polynomial pieces used for the exact integrals must match the
+!  kernel function used elsewhere, including its normalisation
+!+
+!-----------------------------------------------------------------------
+subroutine test_kernel_pieces
+ integer, parameter :: nq = 1000
+ real(dp) :: qb(maxpieces),w(0:maxdeg,maxpieces),g2(-1:maxpow,maxpieces+1)
+ real(dp) :: a3(-1:maxpow,maxpieces+1),c2,c3,q,wpoly,errmax
+ integer  :: npieces,nmax,i,j,k
+
+ call get_kernel_pieces(ikernel,npieces,qb,w)
+ call set_kernel_integral_coeffs(npieces,qb,w,nmax,g2,a3,c2,c3)
+ errmax = 0._dp
+ do i=0,nq
+    q = (i*radkernel)/nq
+    ! evaluate the polynomial on the piece containing q
+    j = 1
+    do while (j < npieces .and. q >= qb(j))
+       j = j + 1
+    enddo
+    wpoly = 0._dp
+    do k=maxdeg,0,-1
+       wpoly = wpoly*q + w(k,j)
+    enddo
+    if (q >= qb(npieces)) wpoly = 0._dp
+    errmax = max(errmax,abs(wpoly - wfunc(real(q*q))))
+ enddo
+ call checkval('kernel pieces match wfunc  ',real(errmax),0.,1.e-12)
+ ! tolerance allows for cancellation when integrating the expanded
+ ! polynomials, e.g. (1 - q/2)^8 for the Wendland C6 kernel
+ call checkval('2D normalisation constant  ',real(c2),cnormk2D,1.e-11*cnormk2D)
+ call checkval('3D normalisation constant  ',real(c3),cnormk3D,1.e-11*cnormk3D)
+
+end subroutine test_kernel_pieces
+
 end module kernel_integral_tests
 
 !-----------------------------------------------------------------------
@@ -893,6 +931,7 @@ program test_kernel_integrals
  do ik=1,nkernels
     call select_kernel(ik,verbose=.false.)
     print "(/,a)",' Testing exact integrals for '//trim(kernelname(ik))
+    call test_kernel_pieces
     call test_normalisation
     call test_partition(0.37)
     call test_partition(1.3)
