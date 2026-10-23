@@ -480,8 +480,8 @@ SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          write_data_gadget.f90 write_data_phantom.f90 write_data_ndspmhd.f90 write_pfm.f90 write_pixmap.f90 \
          labels_chem.f90 write_griddata.f90 write_sphdata.f90 read_composition.F90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
-         exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 \
+         cubicsolve.f90 nonlinsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
+         exact_fromfile.f90 exact_Cshock.f90 exact_mhdshock.f90 exact_mhdshock_sr.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
          exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
@@ -583,8 +583,8 @@ lib: $(OBJLIB)
 SRCLIBEXACT= $(PLOTLIB) libutils.f90 geometry.f90 exact_shock.f90 \
 	exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
-	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
-	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
+	exact_mhdshock.f90 exact_mhdshock_sr.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
+	exact_ringspread.f90 cubicsolve.f90 nonlinsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
 	exact_Cshock.f90 exact_planetdisc.f90 exact_bondi.f90 \
 	libexact.f90
 OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
@@ -865,7 +865,7 @@ targz:
 ## unit tests of various modules as I write them
 .PHONY: tests
 
-test: test1 test2 test3 test_slicer test_prompt test-parse
+test: test1 test2 test3 test_slicer test_prompt test-parse test_nonlinsolve test_mhdshock test_mhdshock_sr
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o
 	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
@@ -879,6 +879,12 @@ test_prompt: prompting.o test_prompting.o
 	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
 test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parsetext.o
 	$(FC) $(FFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
+test_nonlinsolve: nonlinsolve.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_nonlinsolve $(TESTDIR)/test_nonlinsolve.f90 nonlinsolve.o
+test_mhdshock: cubicsolve.o nonlinsolve.o exact_shock.o exact_mhdshock.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_mhdshock $(TESTDIR)/test_mhdshock.f90 cubicsolve.o nonlinsolve.o exact_shock.o exact_mhdshock.o
+test_mhdshock_sr: nonlinsolve.o exact_shock_sr.o exact_mhdshock_sr.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_mhdshock_sr $(TESTDIR)/test_mhdshock_sr.f90 nonlinsolve.o exact_shock_sr.o exact_mhdshock_sr.o
 
 
 depends: clean

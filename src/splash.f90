@@ -587,7 +587,7 @@ program splash
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
-!     exact_mhdshock     : some tabulated solutions for mhd shocks
+!     exact_mhdshock     : exact solution of MHD shock tubes
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh         : exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave

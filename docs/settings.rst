@@ -1216,8 +1216,10 @@ The following exact solutions are provided
 -  Linear wave. This simply plots a sine wave of a specified amplitude,
    period and wavelength on the plot specified.
 
--  MHD shock tubes (tabulated). These are tabulated solutions for 7
-   specific MHD shock tube problems.
+-  MHD shock tubes and special relativistic MHD shock tubes – exact
+   solutions of the Riemann problem for arbitrary left and right states,
+   read automatically from the Phantom ``.setup`` file if present, with
+   presets for standard test problems.
 
 -  h vs :math:`\rho`. This is the exact solution relating smoothing
    length and density in the form :math:`h \propto (m/\rho)^{1/\nu}`
