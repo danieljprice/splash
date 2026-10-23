@@ -647,6 +647,11 @@ subroutine continuation(ua,icon,ref,tstart,target,dfstart,vs,ub,ierr)
  df = dfstart
  ierr = 0
  have_old = .false.
+ !--history is only used once have_old is set, but initialise to keep
+ !  the compiler from warning about uninitialised values
+ ubold = ub
+ vsold = vs
+ fracold = 0._dp
  do while (frac < 1._dp)
     df = min(df,1._dp - frac)
     tk = tstart + (target - tstart)*(frac + df)
