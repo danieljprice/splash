@@ -533,6 +533,7 @@ subroutine submenu_exact(iexact)
     if (ishk > 0) call get_mhdshock_preset(ishk,Bx_mhd,primL_mhd,primR_mhd,ierr)
     call prompt_mhd_states()
     call prompt('enter initial x position of shock ',xshock)
+    prompt_for_gamma = .true.
  case(19)
     print "(a)",' special relativistic MHD shock tubes: '
     print "(a)",' 0) enter left and right states'
@@ -543,6 +544,7 @@ subroutine submenu_exact(iexact)
     if (ishk > 0) call get_mhdshock_sr_preset(ishk,Bx_mhd,primL_mhd,primR_mhd,ierr)
     call prompt_mhd_states()
     call prompt('enter initial x position of shock ',xshock)
+    prompt_for_gamma = .true.
  case(9)
     call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
  case(10)
@@ -1058,7 +1060,8 @@ end subroutine read_exactparams
 ! from the .setup file written by Phantom,
 ! e.g. densleft = 1.0. Sets both the hydro and MHD
 ! shock tube states. ierr = 0 if the density,
-! pressure and x-velocity on both sides were found
+! pressure and x-velocity on both sides were found;
+! otherwise the current states are left unchanged
 !---------------------------------------------------
 subroutine read_shock_setup(filename,iexist,ierr)
  character(len=*), intent(in)  :: filename
@@ -1067,7 +1070,7 @@ subroutine read_shock_setup(filename,iexist,ierr)
  integer, parameter :: iunit = 19
  character(len=120) :: line
  character(len=30)  :: var
- real    :: val
+ real    :: val,bx,pl(7),pr(7),dtg
  integer :: ieq,ios,nread
 
  ierr = 1
@@ -1075,10 +1078,13 @@ subroutine read_shock_setup(filename,iexist,ierr)
  if (.not.iexist) return
  open(unit=iunit,file=filename,status='old',iostat=ios)
  if (ios /= 0) return
+ !--parse into local copies so the current states are kept if the file
+ !  is not a shock tube setup
  nread = 0
- Bx_mhd = 0.
- primL_mhd(3:7) = 0.
- primR_mhd(3:7) = 0.
+ bx  = 0.
+ pl  = 0.
+ pr  = 0.
+ dtg = rdust_to_gas
  do
     read(iunit,"(a)",iostat=ios) line
     if (ios /= 0) exit
@@ -1089,53 +1095,59 @@ subroutine read_shock_setup(filename,iexist,ierr)
     if (ios /= 0) cycle
     select case(trim(var))
     case('densleft')
-       rho_L = val
-       primL_mhd(1) = val
+       pl(1) = val
        nread = nread + 1
     case('densright')
-       rho_R = val
-       primR_mhd(1) = val
+       pr(1) = val
        nread = nread + 1
     case('prleft')
-       pr_L = val
-       primL_mhd(2) = val
+       pl(2) = val
        nread = nread + 1
     case('prright')
-       pr_R = val
-       primR_mhd(2) = val
+       pr(2) = val
        nread = nread + 1
     case('vxleft')
-       v_L = val
-       primL_mhd(3) = val
+       pl(3) = val
        nread = nread + 1
     case('vxright')
-       v_R = val
-       primR_mhd(3) = val
+       pr(3) = val
        nread = nread + 1
     case('vyleft')
-       primL_mhd(4) = val
+       pl(4) = val
     case('vyright')
-       primR_mhd(4) = val
+       pr(4) = val
     case('vzleft')
-       primL_mhd(5) = val
+       pl(5) = val
     case('vzright')
-       primR_mhd(5) = val
+       pr(5) = val
     case('Bxleft')
-       Bx_mhd = val
+       bx = val
     case('Byleft')
-       primL_mhd(6) = val
+       pl(6) = val
     case('Byright')
-       primR_mhd(6) = val
+       pr(6) = val
     case('Bzleft')
-       primL_mhd(7) = val
+       pl(7) = val
     case('Bzright')
-       primR_mhd(7) = val
+       pr(7) = val
     case('dtg')
-       rdust_to_gas = val
+       dtg = val
     end select
  enddo
  close(iunit)
- if (nread == 6) ierr = 0
+ if (nread /= 6) return
+
+ ierr = 0
+ rho_L = pl(1)
+ rho_R = pr(1)
+ pr_L  = pl(2)
+ pr_R  = pr(2)
+ v_L   = pl(3)
+ v_R   = pr(3)
+ rdust_to_gas = dtg
+ Bx_mhd    = bx
+ primL_mhd = pl
+ primR_mhd = pr
 
 end subroutine read_shock_setup
 
