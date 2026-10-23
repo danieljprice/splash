@@ -26,6 +26,8 @@
 !
 !-------------------------------------------------------------
 module kernels
+ use kernel_integrals, only:maxpieces,maxdeg,maxpow,set_kernel_integral_coeffs, &
+                            edge_int_2d,edge_int_3d
  implicit none
  integer, parameter, public :: nkernels = 6
  character(len=24), dimension(0:nkernels), parameter, public :: kernelname = &
@@ -46,6 +48,11 @@ module kernels
  real, public  :: cnormk3D = 1./pi
  integer, parameter :: doub_prec = kind(0.d0)
 
+ ! coefficient tables for exact kernel integrals (set in select_kernel)
+ integer :: npieces_int = 0, nmax_int = 0
+ real(doub_prec) :: qb_int(maxpieces)
+ real(doub_prec) :: g2_int(-1:maxpow,maxpieces+1),a3_int(-1:maxpow,maxpieces+1)
+
  procedure(k_func), pointer, public :: wfunc
  procedure(k_func), pointer, public :: dwfunc
 
@@ -56,7 +63,7 @@ module kernels
   end function k_func
  end interface
 
- public :: select_kernel, select_kernel_by_name
+ public :: select_kernel, select_kernel_by_name, get_kernel_pieces
  public :: pint,wallint,soft_func
 
  private
@@ -132,8 +139,24 @@ subroutine select_kernel(j,verbose)
     dwfunc => dw_cubic
  end select
  radkernel2 = radkernel*radkernel
+ call set_integral_tables(ikernel)
 
 end subroutine select_kernel
+
+!--------------------------------------------------
+!
+! Compute the coefficient tables used for exact
+! integrals of the kernel over pixels and cells
+!
+!--------------------------------------------------
+subroutine set_integral_tables(ikern)
+ integer, intent(in) :: ikern
+ real(doub_prec) :: w(0:maxdeg,maxpieces),c2,c3
+
+ call get_kernel_pieces(ikern,npieces_int,qb_int,w)
+ call set_kernel_integral_coeffs(npieces_int,qb_int,w,nmax_int,g2_int,a3_int,c2,c3)
+
+end subroutine set_integral_tables
 
 !--------------------------------------
 !
@@ -320,350 +343,150 @@ pure real function w_wendlandc6(q2)
 
 end function w_wendlandc6
 
+!------------------------------------------------------
+!
+!  Coefficients of q^0, q^1, ... for each kernel on each
+!  piece (from qb(j-1), or zero, to qb(j)), i.e. the
+!  functional forms above expanded as polynomials in q
+!
+!------------------------------------------------------
+pure subroutine get_kernel_pieces(ikern,npieces,qb,w)
+ integer,         intent(in)  :: ikern
+ integer,         intent(out) :: npieces
+ real(doub_prec), intent(out) :: qb(maxpieces),w(0:maxdeg,maxpieces)
+
+ ! integer coefficients over a common denominator, so that the
+ ! conversion to double precision is exact
+ qb = 0
+ w  = 0
+ select case(ikern)
+ case(6) ! Wendland C6: (1 - q/2)^8 (1 + 4q + 25/4 q^2 + 4q^3)
+    npieces = 1
+    qb(1) = 2
+    w(0:11,1) = (/1024,0,-2816,0,4224,0,-7392,8448,-4620,1408,-231,16/)/1024.d0
+ case(5) ! Wendland C4: (1 - q/2)^6 (1 + 3q + 35/12 q^2)
+    npieces = 1
+    qb(1) = 2
+    w(0:8,1) = (/768,0,-1792,0,3360,-3584,1680,-384,35/)/768.d0
+ case(4) ! Wendland C2: (1 - q/2)^4 (1 + 2q)
+    npieces = 1
+    qb(1) = 2
+    w(0:5,1) = (/16,0,-40,40,-15,2/)/16.d0
+ case(3) ! M6 quintic: (3-q)^5 - 6(2-q)^5 + 15(1-q)^5, (3-q)^5 - 6(2-q)^5, (3-q)^5
+    npieces = 3
+    qb(1:3) = (/1,2,3/)
+    w(0:5,1) = (/66,0,-60,0,30,-10/)
+    w(0:5,2) = (/51,75,-210,150,-45,5/)
+    w(0:5,3) = (/243,-405,270,-90,15,-1/)
+ case(2) ! M5 quartic: (5/2-q)^4 - 5(3/2-q)^4 + 10(1/2-q)^4, (5/2-q)^4 - 5(3/2-q)^4, (5/2-q)^4
+    npieces = 3
+    qb(1:3) = (/1,3,5/)/2.d0
+    w(0:4,1) = (/230,0,-240,0,96/)/16.d0
+    w(0:4,2) = (/220,80,-480,320,-64/)/16.d0
+    w(0:4,3) = (/625,-1000,600,-160,16/)/16.d0
+ case default ! M4 cubic: 1 - 3/2 q^2 + 3/4 q^3, 1/4 (2-q)^3
+    npieces = 2
+    qb(1:2) = (/1,2/)
+    w(0:3,1) = (/4,0,-6,3/)/4.d0
+    w(0:3,2) = (/8,-12,6,-1/)/4.d0
+ end select
+
+end subroutine get_kernel_pieces
+
 !---------------------------------------
 !
 !  Integrals of the kernel, used
 !  when performing exact interpolation
 !  See Petkova, Laibe & Bonnell (2018)
+!  generalised to any kernel in the
+!  kernel_integrals module
 !
 !---------------------------------------
 pure real function pint(r0, d1, d2, hi1)
  real, intent(in) :: r0, d1, d2, hi1
- real :: ar0,q0,tphi1,tphi2,phi1,phi2
+ real(doub_prec) :: q0, v1, v2
 
  if (abs(r0) < tiny(0.)) then
     pint = 0.
     return
  elseif (r0 > 0.) then
     pint = 1.
-    ar0 = r0
  else
     pint = -1.
-    ar0 = -r0
  endif
- q0 = ar0*hi1
- tphi1 = abs(d1)/ar0
- tphi2 = abs(d2)/ar0
- phi1 = atan(tphi1)
- phi2 = atan(tphi2)
-
- if (d1*d2 >= 0.) then
-    pint = pint*(full_2d_mod(phi1,tphi1,q0) + full_2d_mod(phi2,tphi2,q0))
- else
-    if (abs(d1) < abs(d2)) then
-       pint = pint*(full_2d_mod(phi2,tphi2,q0) - full_2d_mod(phi1,tphi1,q0))
-    else
-       pint = pint*(full_2d_mod(phi1,tphi1,q0) - full_2d_mod(phi2,tphi2,q0))
-    endif
- endif
+ q0 = abs(r0)*hi1
+ call edge_int_2d(abs(d1)*real(hi1,doub_prec),abs(d2)*real(hi1,doub_prec),q0, &
+                  npieces_int,nmax_int,qb_int,g2_int,v1,v2)
+ pint = pint*real(combine_vertices(d1,d2,v1,v2))
 
 end function pint
 
 !---------------------------------------
 !
-! Helper functions for kernel integrals
-! See Petkova, Laibe & Bonnell (2018)
+! combine the two vertex integrals on
+! an edge depending on whether the foot
+! of the perpendicular lies between them
 !
 !---------------------------------------
-pure real function full_2d_mod(phi,tphi,q0)
- real, intent(in) :: phi,tphi,q0
- real :: q, phi1, phi2, tphi1, tphi2, cphi, cphi1, cphi2
+pure real(doub_prec) function combine_vertices(d1,d2,v1,v2) result(v)
+ real,            intent(in) :: d1, d2
+ real(doub_prec), intent(in) :: v1, v2
 
- if (q0 <= 1.0) then
-    cphi = cos(phi)
-    q = q0/cphi
-
-    if (q <= 1.0) then
-       full_2d_mod = F1_2d(phi,tphi,cphi,q0)
-    elseif (q <= 2.0) then
-       cphi1 = q0
-       phi1 = acos(q0)
-       tphi1 = tan(phi1)  !  tan (acos x) = sqrt(1-x**2)/x
-       full_2d_mod = F2_2d(phi,tphi,cphi,q0) - F2_2d(phi1,tphi1,cphi1,q0) &
-                   + F1_2d(phi1,tphi1,cphi1,q0)
-    else
-       cphi1 = q0
-       phi1 = acos(q0)
-       cphi2 = 0.5*q0
-       phi2 = acos(0.5*q0)
-       tphi1 = tan(phi1)
-       tphi2 = tan(phi2)
-       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2,tphi2,cphi2,q0) &
-                                - F2_2d(phi1,tphi1,cphi1,q0) &
-                                + F1_2d(phi1,tphi1,cphi1,q0)
-    endif
- elseif (q0 <= 2.0) then
-    cphi = cos(phi)
-    q = q0/cphi
-
-    if (q <= 2.0) then
-       full_2d_mod = F2_2d(phi,tphi,cphi,q0)
-    else
-       cphi2 = 0.5*q0
-       phi2 = acos(0.5*q0)
-       tphi2 = tan(phi2)
-       full_2d_mod = F3_2d(phi) - F3_2d(phi2) + F2_2d(phi2,tphi2,cphi2,q0)
-    endif
- else ! q0 > 2
-    full_2d_mod = F3_2d(phi)
+ if (d1*d2 >= 0.) then
+    v = v1 + v2
+ elseif (abs(d1) < abs(d2)) then
+    v = v2 - v1
+ else
+    v = v1 - v2
  endif
 
-end function full_2d_mod
-
-pure real function F1_2d(phi,tphi,cphi,q0)
- real, intent(in) :: phi,tphi,cphi,q0
- real :: I2, I4, I5, logs, cphi2, q02, q03
-
- !tphi = tan(phi)
- !cphi = cos(phi)
- cphi2 = cphi*cphi
-
- q02 = q0*q0
- q03 = q02*q0
-
- logs = log(tan(phi/2.+pi/4.))
-
- I2 = tphi
- I4 = 1./3. * tphi*(2. + 1./cphi2)
-
- I5 = 1./16. * (0.5*(11.*sin(phi) + 3.*sin(3.*phi))/cphi2/cphi2 + 6.*logs)
-
- F1_2d =  5./7.*q02/pi  * (I2 - 3./4.*q02 *I4 + 0.3*q03 *I5)
-
-end function F1_2d
-
-pure real function F2_2d(phi, tphi, cphi, q0)
- real, intent(in) :: phi, tphi, cphi, q0
- real :: I0, I2, I3, I4, I5, logs, cphi2, q02, q03
-
-! tphi = tan(phi)
-! cphi = cos(phi)
- cphi2 = cphi*cphi
-
- q02 = q0*q0
- q03 = q02*q0
-
- logs = log(tan(phi/2.+pi/4.))
-
- I0 = phi
- I2 = tphi
- I4 = 1./3. * tphi*(2. + 1./(cphi2))
-
- I3 = 1./2.  * (tphi/cphi + logs)
- I5 = 1./16. * (0.5*(11.*sin(phi) + 3.*sin(3.*phi))/cphi2/cphi2 + 6.*logs)
-
- F2_2d =  5./7.*q02/pi  * (2.*I2 - 2.*q0 *I3 + 3./4.*q02 *I4 - 1./10.*q03 *I5 &
-                           - 1./10./q02 *I0)
-
-end function F2_2d
-
-pure real function F3_2d(phi)
- real, intent(in) :: phi
- real :: I0
-
- I0 = phi
- F3_2d = 0.5/pi  *I0
-
-end function F3_2d
+end function combine_vertices
 
 !------------------------------------------------------------
 ! 3D functions to evaluate exact overlap of kernel with wall boundaries
 ! see Petkova, Laibe & Bonnell (2018), J. Comp. Phys
 !------------------------------------------------------------
-real function wallint(r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi)
+pure real function wallint(r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi)
  real, intent(in) :: r0, xp, yp, xc, yc, pixwidthx, pixwidthy, hi
- real(doub_prec) :: R_0, d1, d2, dx, dy, h
+ real :: dx, dy
 
- wallint = 0.0
  dx = xc - xp
  dy = yc - yp
- h = hi
 
  !
  ! Contributions from each of the 4 sides of a cell wall
  !
- R_0 = 0.5*pixwidthy + dy
- d1 = 0.5*pixwidthx - dx
- d2 = 0.5*pixwidthx + dx
- wallint = wallint + pint3D(r0, R_0, d1, d2, h)
-
- R_0 = 0.5*pixwidthy - dy
- d1 = 0.5*pixwidthx + dx
- d2 = 0.5*pixwidthx - dx
- wallint = wallint + pint3D(r0, R_0, d1, d2, h)
-
- R_0 = 0.5*pixwidthx + dx
- d1 = 0.5*pixwidthy + dy
- d2 = 0.5*pixwidthy - dy
- wallint = wallint + pint3D(r0, R_0, d1, d2, h)
-
- R_0 = 0.5*pixwidthx - dx
- d1 = 0.5*pixwidthy - dy
- d2 = 0.5*pixwidthy + dy
- wallint = wallint + pint3D(r0, R_0, d1, d2, h)
+ wallint = pint3D(r0, 0.5*pixwidthy + dy, 0.5*pixwidthx - dx, 0.5*pixwidthx + dx, hi) &
+         + pint3D(r0, 0.5*pixwidthy - dy, 0.5*pixwidthx + dx, 0.5*pixwidthx - dx, hi) &
+         + pint3D(r0, 0.5*pixwidthx + dx, 0.5*pixwidthy + dy, 0.5*pixwidthy - dy, hi) &
+         + pint3D(r0, 0.5*pixwidthx - dx, 0.5*pixwidthy - dy, 0.5*pixwidthy + dy, hi)
 
 end function wallint
 
-
-real function pint3D(r0, R_0, d1, d2, hi)
-
- real(doub_prec), intent(in) :: R_0, d1, d2, hi
- real, intent(in) :: r0
- real(doub_prec) :: ar0, aR_0
- real(doub_prec) :: int1, int2
+!------------------------------------------------------------
+! contribution from one side of a cell wall: r0 is the distance
+! to the wall plane, R_0 the distance in the plane to the edge
+! and d1, d2 the distances along the edge to each vertex
+!------------------------------------------------------------
+pure real function pint3D(r0, R_0, d1, d2, h)
+ real, intent(in) :: r0, R_0, d1, d2, h
+ real(doub_prec) :: c, p, hi1, int1, int2
 
  if (abs(r0) < tiny(0.)) then
-    pint3D = 0.d0
+    pint3D = 0.
     return
  endif
 
- if (r0  >  0.d0) then
-    pint3D = 1.d0
-    ar0 = r0
- else
-    pint3D = -1.d0
-    ar0 = -r0
- endif
-
- if (R_0  >  0.d0) then
-    aR_0 = R_0
- else
-    pint3D = -pint3D
-    aR_0 = -R_0
- endif
-
- int1 = full_integral_3D(d1, ar0, aR_0, hi)
- int2 = full_integral_3D(d2, ar0, aR_0, hi)
-
- if (int1 < 0.d0) int1 = 0.d0
- if (int2 < 0.d0) int2 = 0.d0
-
- if (d1*d2  >=  0) then
-    pint3D = pint3D*(int1 + int2)
-    if (int1 + int2 < 0.d0) pint3D = 0. !print*, 'Error: int1 + int2 < 0'
- elseif (abs(d1)  <  abs(d2)) then
-    pint3D = pint3D*(int2 - int1)
-    if (int2 - int1 < 0.d0) pint3D = 0.! print*, 'Error: int2 - int1 < 0: ', int1, int2, '(', d1, d2,')'
- else
-    pint3D = pint3D*(int1 - int2)
-    if (int1 - int2 < 0.d0) pint3D = 0. !print*, 'Error: int1 - int2 < 0: ', int1, int2, '(', d1, d2,')'
- endif
+ pint3D = sign(1.,r0)*sign(1.,R_0)
+ hi1 = 1.d0/h
+ c = abs(r0)*hi1
+ p = abs(R_0)*hi1
+ call edge_int_3d(abs(d1)*hi1,abs(d2)*hi1,p,c,npieces_int,nmax_int,qb_int,a3_int,int1,int2)
+ int1 = max(int1,0.d0)
+ int2 = max(int2,0.d0)
+ pint3D = pint3D*real(max(combine_vertices(d1,d2,int1,int2),0.d0))
 
 end function pint3D
-
-real(doub_prec) function full_integral_3D(d, r0, R_0, h)
-
- real(doub_prec), intent(in) :: d, r0, R_0, h
- real(doub_prec) :: B1, B2, B3, a, h2
- real(doub_prec), parameter :: pi = 4.*atan(1.)
- real(doub_prec) :: tanphi, phi, a2, cosp, r0h, r03, r0h2, r0h3, r0h_2, r0h_3
- real(doub_prec) :: r2, R_, linedist2, cosphi
- real(doub_prec) :: I0, I1, I_2, I_3, I_4, I_5
- real(doub_prec) :: D2, D3
-
- r0h = r0/h
- tanphi = abs(d)/R_0
- phi = atan(tanphi)
- B1 = 0.d0
- B2 = 0.d0
- B3 = 0.d0
- a = 0.d0
- h2 = 0.d0
-
- if (abs(r0h) < tiny(0.) .or. abs(R_0/h) < tiny(0.) .or. abs(phi) < tiny(0.)) then
-    full_integral_3D = 0.0
-    return
- endif
-
- h2 = h*h
- r03 = r0*r0*r0
- r0h2 = r0h*r0h
- r0h3 = r0h2*r0h
- r0h_2 = 1./r0h2
- r0h_3 = 1./r0h3
-
- if (r0 >= 2.0*h) then
-    B3 = 0.25*h2*h
- elseif (r0 > h) then
-    B3 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3+ 8./5.*r0h_2)
-    B2 = 0.25*r03 *(-4./3. + (r0h) - 0.3*r0h2 + 1./30.*r0h3 - 1./15. *r0h_3)
- else
-    B3 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 + 7./5.*r0h_2)
-    B2 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3 - 1./5.*r0h_2)
-    B1 = 0.25*r03 *(-2./3. + 0.3*r0h2 - 0.1*r0h3)
- endif
-
- a = R_0/r0
- a2 = a*a
-
- linedist2 = (r0*r0 + R_0*R_0)
- cosphi = cos(phi)
- R_ = R_0/cosphi
- r2 = (r0*r0 + R_*R_)
-
- D2 = 0.0
- D3 = 0.0
-
- if (linedist2 < h2) then
-    !////// phi1 business /////
-    cosp = R_0/sqrt(h2-r0*r0)
-    call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
-
-    D2 = -1./6.*I_2 + 0.25*(r0h) *I_3 - 0.15*r0h2 *I_4 + 1./30.*r0h3 *I_5 - 1./60. *r0h_3 *I1 + (B1-B2)/r03 *I0
- endif
- if (linedist2 < 4.*h2) then
-    !////// phi2 business /////
-    cosp = R_0/sqrt(4.0*h2-r0*r0)
-    call get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5)
-
-    D3 = 1./3.*I_2 - 0.25*(r0h) *I_3 + 3./40.*r0h2 *I_4 - 1./120.*r0h3 *I_5 + 4./15. *r0h_3 *I1 + (B2-B3)/r03 *I0 + D2
- endif
-
- !//////////////////////////////
- call get_I_terms(cosphi,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi=phi,tanphi=tanphi)
-
- if (r2 < h2) then
-    full_integral_3D = r0h3/pi  * (1./6. *I_2 - 3./40.*r0h2 *I_4 + 1./40.*r0h3 *I_5 + B1/r03 *I0)
- elseif (r2 < 4.*h2) then
-    full_integral_3D=  r0h3/pi  * (0.25 * (4./3. *I_2 - (r0/h) *I_3 + 0.3*r0h2 *I_4 - &
-    &   1./30.*r0h3 *I_5 + 1./15. *r0h_3 *I1) + B2/r03 *I0 + D2)
- else
-    full_integral_3D = r0h3/pi  * (-0.25*r0h_3 *I1 + B3/r03 *I0 + D3)
- endif
-
-end function full_integral_3D
-
-subroutine get_I_terms(cosp,a2,a,I0,I1,I_2,I_3,I_4,I_5,phi,tanphi)
- real(doub_prec), intent(in) :: cosp,a2,a
- real(doub_prec), intent(out) :: I0,I1,I_2,I_3,I_4,I_5
- real(doub_prec), intent(in), optional :: phi,tanphi
- real(doub_prec) :: cosp2,p,tanp,u2,u,logs,I_1,mu2_1,fac
-
- cosp2 = cosp*cosp
- if (present(phi)) then
-    p = phi
-    tanp = tanphi
- else
-    p = acos(cosp)
-    tanp = sqrt(1.-cosp2)/cosp ! tan(p)
- endif
-
- mu2_1 = 1. / (1. + cosp2/a2)
- I0  = p
- I_2 = p +    a2 * tanp
- I_4 = p + 2.*a2 * tanp + 1./3.*a2*a2 * tanp*(2. + 1./cosp2)
-
- u2 = (1.-cosp2)*mu2_1
- u = sqrt(u2)
- logs = log((1.+u)/(1.-u))
- I1 = atan2(u,a)
-
- fac = 1./(1.-u2)
- I_1 = 0.5*a*logs + I1
- I_3 = I_1 + a*0.25*(1.+a2)*(2.*u*fac + logs)
- I_5 = I_3 + a*(1.+a2)*(1.+a2)/16. *( (10.*u - 6.*u*u2)*fac*fac + 3.*logs)
-
-end subroutine get_I_terms
 
 !------------------------------------------------------------
 ! function to return a soft maximum for 1/x with no bias

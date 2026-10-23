@@ -46,6 +46,11 @@ jobs:
             HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
             FITS=yes HDF5=yes
 
+      - name: Run Fortran unit tests (exact kernel integrals, projection mass conservation)
+        run: |
+          make SYSTEM=gfortran NOWARN=yes test_kernel_integrals
+          bin/test_kernel_integrals
+
       - name: Clone splash-testdata (latest main)
         run: git clone --depth 1 https://github.com/danieljprice/splash-testdata.git
 

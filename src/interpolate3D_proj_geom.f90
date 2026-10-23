@@ -237,6 +237,8 @@ subroutine interpolate3D_proj_geom(x,y,z,hh,weight,dat,itype,npart, &
     else
        termnorm = weight(i)
     endif
+    ! adjust the weight to conserve mass if h has been increased to hmin
+    termnorm = termnorm*(horigi/hi)**2
     term = termnorm*dat(i)
 
     !
