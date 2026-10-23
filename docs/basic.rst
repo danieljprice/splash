@@ -532,7 +532,7 @@ compared to the default options:
    on (in the :ref:`sec:menu-r`) may improve the smoothness of the
    rendering. This is turned off by default because it leads to
    funny-looking edges. Exact rendering performs exact sub-pixel rendering
-   so is more accurate but slower.
+   (for any choice of kernel) so is more accurate but slower.
 
 #. **Remove annotation/axes**. For movies, often axes are unnecessary and
    detract from the visual appeal. Use :ref:`sec:hollywood` or delete

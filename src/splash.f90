@@ -51,8 +51,14 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
-!     4.0.2   : (06/10/26)
-!             splash compiles with nvfortran; CI check added
+!     4.1.0   : (23/10/26)
+!             splash compiles with nvfortran; CI check added;
+!             option to override ANY option in splash.defaults with command line flag --foo=bar;
+!             can print all default settings with --print-defaults flag;
+!             exact rendering now works with all kernels, also faster;
+!             bug fix with mass conservation in exact rendering and sub-pixel particles in all renders;
+!             fix seg fault in phantom reader with sink particles;
+!             unit tests of exact kernel integrals
 !     4.0.1   : (30/09/26)
 !             bug fix in ensuring even pixel numbers for mp4 device;
 !             bug fix with blank line of pixels at top of plot;
@@ -655,7 +661,8 @@ program splash
                       fileprefix,set_filenames
  use getdata,   only:get_data
  use geomutils, only:set_coordlabels
- use defaults,  only:defaults_set,defaults_read,defaults_set_360
+ use defaults,  only:defaults_set,defaults_read,defaults_set_360,defaults_read_command_line,&
+                      defaults_print
  use initialise,only:defaults_set_initial
  use limits,    only:read_limits,lim,set_limits
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
@@ -680,9 +687,9 @@ program splash
  use settings_page,      only:interactive,nomenu,xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
  use settings_limits,    only:iadapt,iadaptcoords
  use settings_part,      only:initialise_coord_transforms
- use settings_render,    only:icolours,rgbfile,npix
+ use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
-                              irotate,anglex,angley,anglez
+                              irotate
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
@@ -696,12 +703,12 @@ program splash
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
  logical :: using_default_options,got_exact,sort,sort_pad,exact_flag
- logical :: do_print_header,do_print_labels,do_print_labelsorig
+ logical :: do_print_header,do_print_labels,do_print_labelsorig,do_print_defaults,quiet
  logical :: limits_overridden
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v4.0.2 [6th Oct 2026]'
+ character(len=*), parameter :: version = 'v4.1.0 [23rd Oct 2026]'
 
  !
  ! initialise some basic code variables
@@ -739,6 +746,7 @@ program splash
  do_print_header = .false.
  do_print_labels = .false.
  do_print_labelsorig = .false.
+ do_print_defaults = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -869,6 +877,8 @@ program splash
           do_print_labels = .true.
        case('labelsorig','-labelsorig')
           do_print_labelsorig = .true.
+       case('print-defaults','-print-defaults')
+          do_print_defaults = .true.
        case('-help')
           call print_usage
           print "(/,a,/)",'Userguide: https://splash-viz.readthedocs.io'
@@ -931,13 +941,14 @@ program splash
     endif
  endif
  !
- ! quiet mode for --header / --labels: skip banner and suppress read chatter
+ ! quiet mode for --header / --labels / --print-defaults: skip banner and suppress read chatter
  !
- if (.not.(do_print_header .or. do_print_labels .or. do_print_labelsorig)) call print_header
+ quiet = do_print_header .or. do_print_labels .or. do_print_labelsorig .or. do_print_defaults
+ if (.not.quiet) call print_header
  !
  ! set quiet before defaults_set so even early messages honour iverbose=-1
  !
- if (do_print_header .or. do_print_labels .or. do_print_labelsorig) iverbose = -1
+ if (quiet) iverbose = -1
  !
  ! set default options (used if defaults file does not exist)
  !
@@ -946,7 +957,7 @@ program splash
  !
  ! re-apply quiet settings (defaults_set resets iverbose)
  !
- if (do_print_header .or. do_print_labels .or. do_print_labelsorig) iverbose = -1
+ if (quiet) iverbose = -1
 
  !
  ! read default options from file if it exists
@@ -980,13 +991,18 @@ program splash
  !
  ! re-apply quiet settings after defaults (namelist may reset iCalcQuantities)
  !
- if (do_print_header .or. do_print_labels .or. do_print_labelsorig) then
+ if (quiet) then
     iverbose = -1
     if (do_print_header .and. .not.do_print_labels .and. .not.do_print_labelsorig) iCalcQuantities = .false.
  endif
 
  !
+ ! override any setting in the defaults file with --name=value on the command line
+ !
+ call defaults_read_command_line()
+ !
  ! set options based on command line flags that OVERRIDE settings in the defaults file
+ ! (applied before --print-defaults so printed settings match a normal run)
  !
  if (get_command_flag('kappa')) then ! e.g. --kappa=10.0
     taupartdepth = get_command_option('kappa',default=taupartdepth)
@@ -996,20 +1012,28 @@ program splash
     xsecpos_nomulti = get_command_option('xsec',default=xsecpos_nomulti)
     xsec_nomulti = .true.   ! set cross section to true if --xsec was set
  endif
- if (get_command_flag('anglex')) then  ! e.g. --anglex=1.0
-    anglex = get_command_option('anglex',default=anglex)
-    irotate = .true.
+ ! angles are set from the namelist override above, but also switch on rotation
+ if (get_command_flag('anglex')) irotate = .true.  ! e.g. --anglex=30
+ if (get_command_flag('angley')) irotate = .true.
+ if (get_command_flag('anglez')) irotate = .true.
+ if (get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
  endif
- if (get_command_flag('angley')) then  ! e.g. --angley=1.0
-    angley = get_command_option('angley',default=angley)
-    irotate = .true.
+ xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=xminpagemargin)
+ xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=xmaxpagemargin)
+ yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=yminpagemargin)
+ ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=ymaxpagemargin)
+ !--kernel given by --kernel=name or SPLASH_KERNEL takes priority over defaults file
+ call get_environment_or_flag('SPLASH_KERNEL',string)
+ if (len_trim(string) > 0) then
+    call select_kernel_by_name(string,verbose=(iverbose >= 0))
+ else
+    call select_kernel(ikernel,verbose=(iverbose >= 0))
  endif
- if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
-    anglez = get_command_option('anglez',default=anglez)
-    irotate = .true.
- endif
- if (get_command_flag('npix')) then  ! e.g. --npix=128
-    npix = nint(get_command_option('npix',default=real(npix)))
+ if (do_print_defaults) then
+    call defaults_print()
+    stop
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',track_string)
@@ -1030,14 +1054,6 @@ program splash
     iexact = 2 ! override setting in defaults file
     call split_string(exactfile,',',filename_exact,nfiles_exact)
  endif
- if (get_command_flag('code')) then
-    iRescale = .false.
-    enforce_code_units = .true.
- endif
- xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=0.)
- xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=0.)
- yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=0.)
- ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=0.)
  !
  ! check that we have got filenames
  !
@@ -1079,18 +1095,6 @@ program splash
  sort_pad = get_command_flag('sortpad')
  if (ihavereadfilenames .and. (sort .or. sort_pad)) then
     call sort_filenames_for_comparison(nfiles,rootname,pad=sort_pad)
- endif
-
- if (ikernel==0) then
-    !--if no kernel has been set
-    call get_environment_or_flag('SPLASH_KERNEL',string)
-    if (len_trim(string) > 0) then
-       call select_kernel_by_name(string,verbose=(iverbose >= 0))
-    else
-       call select_kernel(0,verbose=(iverbose >= 0))
-    endif
- else
-    call select_kernel(ikernel,verbose=(iverbose >= 0))
  endif
 
  ! set geometry defaults
@@ -1315,7 +1319,7 @@ subroutine print_usage(quit)
 
  print "(a,/)",'Command line options:'
  print "(a)",' -f format         : input file format to be read (default is ascii, --formats for full list)'
- print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
+ print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash'
  !print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
  !print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
  print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
@@ -1326,6 +1330,11 @@ subroutine print_usage(quit)
  print "(a)",' --header          : print dump file header tags and values, then exit'
  print "(a)",' --labels          : print column labels one per line, then exit'
  print "(a)",' --labelsorig      : print original column labels (no units), then exit'
+ print "(a)",' --formats         : list all supported data formats, then exit'
+ print "(a)",' --print-defaults  : print all settings (with any --name=value overrides applied), then exit'
+ print "(a)",' --defaults=file   : settings file to use if no splash.defaults in current directory'
+ print "(a)",' --kernel=quintic  : change the smoothing kernel used for interpolation (e.g. cubic, quintic)'
+ print "(a)",' --debug           : turn on verbose debugging output'
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : x axis'
  print "(a)",' -y column         : y axis'
@@ -1333,13 +1342,19 @@ subroutine print_usage(quit)
  print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
  print "(a)",' -c[ontour] column : contoured quantity'
  print "(a)",' -multi            : multiplot'
- print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
+ print "(a)",' -dev device       : plotting device (e.g. -dev /xw, -dev /png, -dev /pdf or -dev myplot.pdf)'
  print "(a)",' --movie           : shortcut for -dev /mp4 to make a movie from plot sequence'
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --shift=1,0,0     : with --sink, shift the sink to the specified x,y,z position'
+ print "(a)",' --dontcentrevel   : with --sink or --origin, do not subtract the sink/particle velocity'
+ print "(a)",' --corotate=1,2    : plot in frame corotating with sink particles 1 and 2'
+ print "(a)",' --vzero=1,0,0     : subtract reference velocity (in code units) from all particles'
+ print "(a)",' --wake=1,3        : plot spiral wake from planet (sink 3) orbiting star (sink 1)'
+ print "(a)",' --beam=2.0        : enforce minimum smoothing length (in code units)'
  print "(a)",' --origin=1,0,0    : centre on specified x,y,z coordinates'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
@@ -1348,6 +1363,16 @@ subroutine print_usage(quit)
  print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  print "(a)",' --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)'
  print "(a)",' --sortpad         : sort filenames and pad all sequences to same length'
+ print "(a)",' --xmin=0,--xmax=1 : override plot limits (similarly --ymin, --ymax, --zmin, --zmax)'
+ print "(a)",' --lim=1.0         : set plot limits to centred box [-1,1] on all coordinate axes'
+ print "(a)",' --limits=-1,1     : set plot limits on all coordinate axes (or one min,max pair per axis)'
+ print "(a)",' --xminmargin=0.1  : adjust page margins (similarly --xmaxmargin, --yminmargin, --ymaxmargin)'
+ print "(/,a,/)",'Overriding settings:'
+ print "(a)",' --name=value      : set any variable in splash.defaults (e.g. --npix=512 --iaxis=-2 --legendtext=t=)'
+ print "(a)",'                     (use --print-defaults to list all variable names and current values)'
+ print "(a)",' --foo=bar         : same as setting environment variable SPLASH_FOO=bar (or e.g. --sink for'
+ print "(a)",'                     SPLASH_CENTRE_ON_SINK); format-specific options such as --cm, --dense for'
+ print "(a)",'                     phantom are listed at https://splash-viz.readthedocs.io/en/latest/getting-started.html'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')
