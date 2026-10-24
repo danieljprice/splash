@@ -34,6 +34,7 @@ module libexact
  use toystar2D,        only:exact_toystar2D
  use gresho,           only:exact_gresho
  use mhdshock,         only:exact_mhdshock
+ use mhdshock_sr,      only:exact_mhdshock_sr
  use rhoh,             only:exact_rhoh
  use densityprofiles,  only:exact_densityprofiles
  use torus,            only:exact_torus
@@ -146,17 +147,29 @@ subroutine gresho_c(iplot,npart,xplot,yplot,ierr) bind(c, name='_gresho')
  call exact_gresho(iplot,xplot,yplot,ierr)
 end subroutine gresho_c
 
-subroutine mhdshock_c(iplot,npart,ishk,time,gamma,xmin,xmax,xshock,&
+subroutine mhdshock_c(iplot,npart,time,gamma,bx,primL,primR,xmin,xmax,xshock,&
                       xplot,yplot,npts,ierr) bind(c, name='_mhdshock')
- integer(c_int), intent(in)    :: iplot,npart,ishk
+ integer(c_int), intent(in)    :: iplot,npart
  integer(c_int), intent(out)   :: npts,ierr
- real(c_real),  intent(in)    :: time,gamma,xmin,xmax,xshock
+ real(c_real),  intent(in)    :: time,gamma,bx,primL(7),primR(7),xmin,xmax,xshock
  real(c_real),  intent(inout) :: xplot(npart)
  real(c_real),  intent(out)   :: yplot(npart)
 
- call exact_mhdshock(iplot,ishk,time,gamma,xmin,xmax,xshock,xplot,yplot,npts,ierr)
+ call exact_mhdshock(iplot,time,gamma,bx,primL,primR,xmin,xmax,xshock,xplot,yplot,npts,ierr)
 
 end subroutine mhdshock_c
+
+subroutine mhdshock_sr_c(iplot,npart,time,gamma,bx,primL,primR,xmin,xmax,xshock,&
+                         xplot,yplot,npts,ierr) bind(c, name='_mhdshock_sr')
+ integer(c_int), intent(in)    :: iplot,npart
+ integer(c_int), intent(out)   :: npts,ierr
+ real(c_real),  intent(in)    :: time,gamma,bx,primL(7),primR(7),xmin,xmax,xshock
+ real(c_real),  intent(inout) :: xplot(npart)
+ real(c_real),  intent(out)   :: yplot(npart)
+
+ call exact_mhdshock_sr(iplot,time,gamma,bx,primL,primR,xmin,xmax,xshock,xplot,yplot,npts,ierr)
+
+end subroutine mhdshock_sr_c
 
 subroutine rhoh_c(iplot,npart,ndim,hfact,pmassval,&
                  xplot,yplot,ierr) bind(c, name='_rhoh')
@@ -255,7 +268,7 @@ subroutine planetdisc_c(iplot,npart,ispiral,iclockwise,inonlin,time,HonR,rplanet
  logical :: use_clockwise,use_nonlin
 
  use_clockwise = (iclockwise > 0)
- use_nonlin    = (inonlin > 0) 
+ use_nonlin    = (inonlin > 0)
 
  call exact_planetdisc(iplot,ispiral,use_clockwise,use_nonlin,&
                        time,HonR,rplanet,q,0.,narms,&

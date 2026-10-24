@@ -63,9 +63,10 @@ module exact
  real :: rhosedov,esedov
  !--polytrope
  real :: polyk
- !--mhd shock solutions
+ !--mhd shock solutions (ishk = preset used to set the states below)
  integer :: ishk
  real :: xshock
+ real :: Bx_mhd,primL_mhd(7),primR_mhd(7)
  !--density profiles
  integer :: iprofile,icolpoten,icolfgrav
  real, dimension(2) :: Msphere,rsoft
@@ -117,7 +118,7 @@ module exact
  namelist /exactparams/ ampl,lambda,period,iwaveploty,iwaveplotx,xzero, &
        htstar,atstar,ctstar,alphatstar,betatstar,ctstar1,ctstar2, &
        polyk,sigma0,norder,morder,rhosedov,esedov, &
-       rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact, &
+       rho_L, rho_R, pr_L, pr_R, v_L, v_R,ishk,hfact,Bx_mhd,primL_mhd,primR_mhd, &
        iprofile,Msphere,rsoft,icolpoten,icolfgrav,Mstar,Rtorus,distortion, &
        Mring,Rring,viscnu,nfunc,funcstring,cs,Kdrag,rhozero,rdust_to_gas, &
        mprim,msec,imapexact,iauto_map_columns,xshock,totmass,machs,macha,&
@@ -137,8 +138,9 @@ contains
  ! sets default values of the exact solution parameters
  !----------------------------------------------------------------------
 subroutine defaults_set_exact
- use plotlib, only:plotlib_maxlinestyle
- integer :: i
+ use plotlib,  only:plotlib_maxlinestyle
+ use mhdshock, only:get_mhdshock_preset
+ integer :: i,ierr
 
  lambda = 1.0    ! sound wave exact solution : wavelength
  ampl = 0.005    ! sound wave exact solution : amplitude
@@ -169,6 +171,7 @@ subroutine defaults_set_exact
  v_R = 0.0
  ishk = 1
  xshock = 0.
+ call get_mhdshock_preset(ishk,Bx_mhd,primL_mhd,primR_mhd,ierr)
  hfact = 1.2
 !   read from file
  nfiles = 1
@@ -264,7 +267,8 @@ subroutine submenu_exact(iexact)
  use prompting,     only:prompt,print_logical
  use filenames,     only:rootname,ifileopen,fileprefix
  use exactfunction, only:check_function
- use mhdshock,      only:nmhdshocksolns,mhdprob
+ use mhdshock,      only:nmhdshocksolns,mhdprob,get_mhdshock_preset
+ use mhdshock_sr,   only:nmhdshocksrsolns,mhdsrprob,get_mhdshock_sr_preset
  use planetdisc,    only:maxspirals,labelspiral
  use asciiutils,    only:get_ncolumns,get_nrows,string_replace,match_tag_start,&
                          add_escape_chars,read_asciifile,read_column_labels
@@ -287,7 +291,7 @@ subroutine submenu_exact(iexact)
            ' 5) polytrope ',/,            &
            ' 6) toy star ',/,             &
            ' 7) gresho vortex ',/,          &
-           ' 8) mhd shock tubes (tabulated) ',/,  &
+           ' 8) MHD shock tube ',/,  &
            ' 9) h vs rho ',/, &
            '10) Plummer/Hernquist spheres ',/, &
            '11) torus ',/, &
@@ -297,8 +301,9 @@ subroutine submenu_exact(iexact)
            '15) Roche lobes/potential ',/, &
            '16) C-shock ',/, &
            '17) Spiral arms (planet-disc interaction)',/, &
-           '18) Bondi flow')
- call prompt('enter exact solution to plot',iexact,0,18)
+           '18) Bondi flow',/, &
+           '19) special relativistic MHD shock tube')
+ call prompt('enter exact solution to plot',iexact,0,19)
  print "(a,i2)",'plotting exact solution number ',iexact
  !
  !--enter parameters for various exact solutions
@@ -519,13 +524,27 @@ subroutine submenu_exact(iexact)
     !   call prompt('enter amplitude ',ampl,0.0)
     !   call prompt('enter period ',period)
  case(8)
-    print "(a)",' MHD shock tube tables: '
-    if (ishk <= 0) ishk = 1
+    print "(a)",' MHD shock tubes: '
+    print "(a)",' 0) enter left and right states'
     do i=1,nmhdshocksolns
        print "(i2,') ',a)",i,trim(mhdprob(i))
     enddo
-    call prompt('enter solution to plot ',ishk,1,7)
+    call prompt('enter solution to plot ',ishk,0,nmhdshocksolns)
+    if (ishk > 0) call get_mhdshock_preset(ishk,Bx_mhd,primL_mhd,primR_mhd,ierr)
+    call prompt_mhd_states()
     call prompt('enter initial x position of shock ',xshock)
+    prompt_for_gamma = .true.
+ case(19)
+    print "(a)",' special relativistic MHD shock tubes: '
+    print "(a)",' 0) enter left and right states'
+    do i=1,nmhdshocksrsolns
+       print "(i2,') ',a)",i,trim(mhdsrprob(i))
+    enddo
+    call prompt('enter solution to plot ',ishk,0,nmhdshocksrsolns)
+    if (ishk > 0) call get_mhdshock_sr_preset(ishk,Bx_mhd,primL_mhd,primR_mhd,ierr)
+    call prompt_mhd_states()
+    call prompt('enter initial x position of shock ',xshock)
+    prompt_for_gamma = .true.
  case(9)
     call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
  case(10)
@@ -652,6 +671,28 @@ subroutine submenu_exact(iexact)
 end subroutine submenu_exact
 
 !---------------------------------------------------
+! prompt for the left and right states (rho,p,vx,vy,vz,By,Bz)
+! and normal field Bx for the MHD shock tube
+!---------------------------------------------------
+subroutine prompt_mhd_states()
+ use prompting, only:prompt
+ character(len=3), parameter :: var(7) = (/'rho','pr ','vx ','vy ','vz ','By ','Bz '/)
+ integer :: i
+
+ call prompt('enter Bx',Bx_mhd)
+ do i=1,7
+    if (i <= 2) then
+       call prompt('enter '//trim(var(i))//' to the left of the shock ',primL_mhd(i),0.)
+       call prompt('enter '//trim(var(i))//' to the right of the shock',primR_mhd(i),0.)
+    else
+       call prompt('enter '//trim(var(i))//' to the left of the shock ',primL_mhd(i))
+       call prompt('enter '//trim(var(i))//' to the right of the shock',primR_mhd(i))
+    endif
+ enddo
+
+end subroutine prompt_mhd_states
+
+!---------------------------------------------------
 ! return number of exact solutions being plotted
 !---------------------------------------------------
 integer function get_nexact(iexact) result(nexact)
@@ -756,7 +797,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
  character(len=*), intent(in)  :: rootname
  integer,          intent(out) :: ierr
 
- integer :: idash,nf,i,j,idrag,idum,linenum,k,ieq,ierrs(6),narmsread,nfiles_got
+ integer :: idash,nf,i,j,idrag,idum,linenum,k,ierrs(6),narmsread,nfiles_got
  character(len=len_trim(rootname)+8) :: filename
  character(len=120) :: line
  character(len=30)  :: var
@@ -874,35 +915,8 @@ subroutine read_exactparams(iexact,rootname,ierr)
        !
        ! look for .setup file for Phantom
        !
-       filename= trim(rootname(1:idash-1))//'.setup'
-       inquire(file=filename,exist=iexist)
-       open(unit=19,file=filename,status='old',iostat=ierr)
-       ierrs(:) = 0
-       do while(ierr==0)
-          read(19,"(a)",iostat=ierr) line
-          ieq = index(line,'=')
-          if (ierr==0 .and. ieq > 1) then
-             var = trim(adjustl(line(1:ieq-1)))
-             select case(trim(var))
-             case('densleft')
-                read(line(ieq+1:),*,iostat=ierrs(1)) rho_L
-             case('densright')
-                read(line(ieq+1:),*,iostat=ierrs(1)) rho_R
-             case('prleft')
-                read(line(ieq+1:),*,iostat=ierrs(1)) pr_L
-             case('prright')
-                read(line(ieq+1:),*,iostat=ierrs(1)) pr_R
-             case('vxleft')
-                read(line(ieq+1:),*,iostat=ierrs(1)) v_L
-             case('vxright')
-                read(line(ieq+1:),*,iostat=ierrs(1)) v_R
-             case('dtg')
-                read(line(ieq+1:),*,iostat=ierrs(1)) rdust_to_gas
-             end select
-          endif
-       enddo
-       ierr = 0
-       if (.not.iexist .or. any(ierrs(1:6)/=0)) ierr = 1
+       filename = trim(rootname(1:idash-1))//'.setup'
+       call read_shock_setup(filename,iexist,ierr)
     endif
     if (iexist) then
        print*,'>> read ',filename
@@ -961,19 +975,19 @@ subroutine read_exactparams(iexact,rootname,ierr)
        ierr = 2
        return
     end select
- case(8)
+ case(8,19)
     !
-    !--attempt to guess which MHD shock tube has been done from filename
+    !--read left and right states from Phantom .setup file, if present
     !
-    !read(rootname(5:5),*,iostat=ios) ishk
-    !if (ios /= 0) ishk = 1
-    !
-    !--prompt for shock type if not set
-    !
-    if (ishk <= 0) then ! prompt
-       ishk = 1
-       call prompt('enter shock solution to plot',ishk,1,7)
+    filename = trim(rootname(1:idash-1))//'.setup'
+    call read_shock_setup(filename,iexist,ierr)
+    if (iexist .and. ierr==0) then
+       ishk = 0
+       print "(a,es10.3)",' >> read '//trim(filename)//': Bx = ',Bx_mhd
+       print "(a,7(1x,es10.3))",' left  (rho,p,v,By,Bz) = ',primL_mhd
+       print "(a,7(1x,es10.3))",' right (rho,p,v,By,Bz) = ',primR_mhd
     endif
+    ierr = 0
     return
  case(14)
     !
@@ -1040,6 +1054,102 @@ subroutine read_exactparams(iexact,rootname,ierr)
  end select
 
 end subroutine read_exactparams
+
+!---------------------------------------------------
+! read the left and right states of a shock tube
+! from the .setup file written by Phantom,
+! e.g. densleft = 1.0. Sets both the hydro and MHD
+! shock tube states. ierr = 0 if the density,
+! pressure and x-velocity on both sides were found;
+! otherwise the current states are left unchanged
+!---------------------------------------------------
+subroutine read_shock_setup(filename,iexist,ierr)
+ character(len=*), intent(in)  :: filename
+ logical,          intent(out) :: iexist
+ integer,          intent(out) :: ierr
+ integer, parameter :: iunit = 19
+ character(len=120) :: line
+ character(len=30)  :: var
+ real    :: val,bx,pl(7),pr(7),dtg
+ integer :: ieq,ios,nread
+
+ ierr = 1
+ inquire(file=filename,exist=iexist)
+ if (.not.iexist) return
+ open(unit=iunit,file=filename,status='old',iostat=ios)
+ if (ios /= 0) return
+ !--parse into local copies so the current states are kept if the file
+ !  is not a shock tube setup
+ nread = 0
+ bx  = 0.
+ pl  = 0.
+ pr  = 0.
+ dtg = rdust_to_gas
+ do
+    read(iunit,"(a)",iostat=ios) line
+    if (ios /= 0) exit
+    ieq = index(line,'=')
+    if (ieq <= 1) cycle
+    var = adjustl(line(1:ieq-1))
+    read(line(ieq+1:),*,iostat=ios) val
+    if (ios /= 0) cycle
+    select case(trim(var))
+    case('densleft')
+       pl(1) = val
+       nread = nread + 1
+    case('densright')
+       pr(1) = val
+       nread = nread + 1
+    case('prleft')
+       pl(2) = val
+       nread = nread + 1
+    case('prright')
+       pr(2) = val
+       nread = nread + 1
+    case('vxleft')
+       pl(3) = val
+       nread = nread + 1
+    case('vxright')
+       pr(3) = val
+       nread = nread + 1
+    case('vyleft')
+       pl(4) = val
+    case('vyright')
+       pr(4) = val
+    case('vzleft')
+       pl(5) = val
+    case('vzright')
+       pr(5) = val
+    case('Bxleft')
+       bx = val
+    case('Byleft')
+       pl(6) = val
+    case('Byright')
+       pr(6) = val
+    case('Bzleft')
+       pl(7) = val
+    case('Bzright')
+       pr(7) = val
+    case('dtg')
+       dtg = val
+    end select
+ enddo
+ close(iunit)
+ if (nread /= 6) return
+
+ ierr = 0
+ rho_L = pl(1)
+ rho_R = pr(1)
+ pr_L  = pl(2)
+ pr_R  = pr(2)
+ v_L   = pl(3)
+ v_R   = pr(3)
+ rdust_to_gas = dtg
+ Bx_mhd    = bx
+ primL_mhd = pl
+ primR_mhd = pr
+
+end subroutine read_shock_setup
 
 !-----------------------------------------------------------------------
 ! subroutine to automatically extract parameters needed for
@@ -1152,6 +1262,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use prompting,       only:prompt
  use exactfromfile,   only:exact_fromfile
  use mhdshock,        only:exact_mhdshock
+ use mhdshock_sr,     only:exact_mhdshock_sr
  use polytrope,       only:exact_polytrope
  use rhoh,            only:exact_rhoh
  use sedov,           only:exact_sedov
@@ -1187,7 +1298,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
 
  real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
- integer :: ncols,nrows,nlab_exact,nsh
+ integer :: ncols,nrows,nlab_exact,nsh,iplot
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
  real :: dx,timei,gammai
  character(len=len(filename_exact)) :: filename_tmp
@@ -1475,34 +1586,9 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  case(8) ! mhd shock tubes
     ! this subroutine modifies xexact
     if (iplotx==ix(1) .and. igeom <= 1) then
-       if (iploty==irho) then
-          call exact_mhdshock(1,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==ipr) then
-          call exact_mhdshock(2,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==ivx) then
-          call exact_mhdshock(3,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==ivx+1 .and. ndimV > 1) then
-          call exact_mhdshock(4,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==ivx+ndimV-1 .and. ndimV > 2) then
-          call exact_mhdshock(5,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==iBfirst+1 .and. ndimV > 1) then
-          call exact_mhdshock(6,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==iBfirst+ndimV-1 .and. ndimV > 2) then
-          call exact_mhdshock(7,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==iutherm) then
-          call exact_mhdshock(8,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       elseif (iploty==iBfirst) then
-          call exact_mhdshock(9,ishk,timei,gammai,xmin,xmax,xshock, &
-                                 xexact,yexact,iexactpts,ierr)
-       endif
+       iplot = get_mhd_iplot(iploty,irho,ipr,ivx,iBfirst,iutherm,ndimV)
+       if (iplot > 0) call exact_mhdshock(iplot,timei,gammai,Bx_mhd,primL_mhd,primR_mhd, &
+                                          xmin,xmax,xshock,xexact,yexact,iexactpts,ierr)
     endif
  case(9)
     !--h = (1/rho)^(1/ndim)
@@ -1639,6 +1725,15 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
        call exact_planetdisc(igeom,ispiral,iclockwise,inonlin,timei,HonR,rplanet,q_index,phase,narms,&
                              spiral_params,xexact,yexact,ierr)
     endif
+ case(19) ! special relativistic mhd shock tubes
+    if (iplotx==ix(1) .and. igeom <= 1) then
+       iplot = get_mhd_iplot(iploty,irho,ipr,ivx,iBfirst,iutherm,ndimV)
+       !--density is the rest frame density, or rho* = rho W as in case 13
+       if (iploty==irhorestframe) iplot = 1
+       if (iploty==irho) iplot = 10
+       if (iplot > 0) call exact_mhdshock_sr(iplot,timei,gammai,Bx_mhd,primL_mhd,primR_mhd, &
+                                             xmin,xmax,xshock,xexact,yexact,iexactpts,ierr)
+    endif
  case(18)
     if (iplotx==irad .or. (igeom==3 .and. iplotx==ix(1))) then
        if (iploty==ivx .and. igeom==3) then
@@ -1670,6 +1765,36 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  if (allocated(xtemp)) deallocate(xtemp)
 
 end subroutine exact_solution
+
+!-----------------------------------------------------------------------
+! which variable to plot in the MHD shock tube solutions
+! (1=rho,2=p,3=vx,4=vy,5=vz,6=By,7=Bz,8=utherm,9=Bx), or 0 if none
+!-----------------------------------------------------------------------
+integer function get_mhd_iplot(iploty,irho,ipr,ivx,iBfirst,iutherm,ndimV) result(iplot)
+ integer, intent(in) :: iploty,irho,ipr,ivx,iBfirst,iutherm,ndimV
+
+ iplot = 0
+ if (iploty==irho) then
+    iplot = 1
+ elseif (iploty==ipr) then
+    iplot = 2
+ elseif (iploty==ivx) then
+    iplot = 3
+ elseif (ivx > 0 .and. iploty==ivx+1 .and. ndimV > 1) then
+    iplot = 4
+ elseif (ivx > 0 .and. iploty==ivx+ndimV-1 .and. ndimV > 2) then
+    iplot = 5
+ elseif (iBfirst > 0 .and. iploty==iBfirst+1 .and. ndimV > 1) then
+    iplot = 6
+ elseif (iBfirst > 0 .and. iploty==iBfirst+ndimV-1 .and. ndimV > 2) then
+    iplot = 7
+ elseif (iploty==iutherm) then
+    iplot = 8
+ elseif (iploty==iBfirst) then
+    iplot = 9
+ endif
+
+end function get_mhd_iplot
 
 !------------------------------------------------------------------
 ! try to figure out how to correctly transform the exact solution
