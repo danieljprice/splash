@@ -1607,13 +1607,15 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                                           xmin,xmax,xshock,xexact,yexact,iexactpts,ierr)
     endif
  case(9) ! cooling shock
-    iplot = -1
-    if (iploty==irho) iplot = 0
-    if (iploty==ivx .and. ndimV > 0) iplot = 1
-    if (iploty==iutherm) iplot = 2
-    if (iploty==ipr) iplot = 3
-    if (iplot >= 0) call exact_coolingshock(iplot,timei,gamma,xshock,rho_L,v_L,pr_L,cooling_length, &
-                                            xexact,yexact,ierr)
+    if (iplotx==ix(1) .and. igeom <= 1) then
+       iplot = -1
+       if (iploty==irho) iplot = 0
+       if (iploty==ivx .and. ndimV > 0) iplot = 1
+       if (iploty==iutherm) iplot = 2
+       if (iploty==ipr) iplot = 3
+       if (iplot >= 0) call exact_coolingshock(iplot,timei,gammai,xshock,rho_L,v_L,pr_L, &
+                                               cooling_length,xexact,yexact,ierr)
+    endif
  case(10) ! density profiles
     if (iplotx==irad .or.(igeom==3 .and. iplotx==ix(1))) then
        if (iploty==irho) then

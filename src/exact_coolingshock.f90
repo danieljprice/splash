@@ -99,8 +99,19 @@ subroutine exact_coolingshock(iplot,time,gamma,xshock,rho_0,v_0,p_0,cooling_leng
 
  ! density immediately behind the shock from the Rankine-Hugoniot relations (A21-A23)
  mach = abs(v_0 - us)/c0
+ if (mach <= 1.) then
+    print "(a)",' ERROR: injection velocity too low to form a shock in cooling shock solution'
+    ierr = 4
+    return
+ endif
  rhos = rho_0/((gamma-1.)/(gamma+1.) + 2./((gamma+1.)*mach**2))
  lambda_s = rhos/rhoc
+ ! the logarithms in F need a < lambda < 1 throughout the cooling region
+ if (lambda_s <= a .or. lambda_s >= 1.) then
+    print "(a)",' ERROR: no valid cooling region for these parameters in cooling shock solution'
+    ierr = 5
+    return
+ endif
 
  ! distance behind the shock is xi = prefac*(F(lambda) - F(lambda_s)), from eq. A11
  prefac = -us*cooling_length*rho_0/((gamma-1.)*c0*rhoc)
