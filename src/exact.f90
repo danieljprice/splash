@@ -227,7 +227,7 @@ subroutine defaults_set_exact
  const1 = 8.
  const2 = 1.
 !   cooling shock
- cooling_length = 0.1
+ cooling_length = 1.0
 
 !   gamma, if not read from file
  gamma_exact = 5./3.
@@ -290,7 +290,7 @@ subroutine submenu_exact(iexact)
            ' 6) toy star ',/,             &
            ' 7) gresho vortex ',/,          &
            ' 8) mhd shock tubes (tabulated) ',/,  &
-           ' 9) cooling shock ',/, &
+           ' 9) cooling shock (Creasey et al. 2011) ',/, &
            '10) Plummer/Hernquist spheres ',/, &
            '11) torus ',/, &
            '12) ring spreading ',/, &
@@ -540,7 +540,7 @@ subroutine submenu_exact(iexact)
        pr_R = pr_L
        v_R = -v_L
     endif
-    call prompt('enter cooling length',cooling_length)
+    call prompt('enter cooling length kB T0 c0/(Lambda n0)',cooling_length,0.)
     !call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
  case(10)
     print 20
@@ -1479,13 +1479,13 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
     endif
  case(9)
     if (iploty==ipr) then
-       call exact_coolingshock(3,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+       call exact_coolingshock(3,timei,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
     elseif (iploty==iutherm) then
-       call exact_coolingshock(2,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+       call exact_coolingshock(2,timei,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
     elseif (iploty==ivx .and. ndimV > 0) then
-       call exact_coolingshock(1,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+       call exact_coolingshock(1,timei,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
     elseif (iploty==irho) then
-       call exact_coolingshock(0,time,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
+       call exact_coolingshock(0,timei,gamma,xshock,rho_L,v_L,pr_L,cooling_length,xexact,yexact,ierr)
     endif
 
     if (.false.) then

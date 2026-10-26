@@ -21,169 +21,275 @@
 !-----------------------------------------------------------------
 
 ! ----------------------------------------------------------------------
-! Plot exact solution for cooling shock problem
-! (ie. one dimensional shock problem with prescribed cooling function)
+! Plot exact solution for the cooling shock problem: two identical
+! streams (rho_0, p_0, +/- v_0) collide at x0 and form a cold dense
+! layer bounded by two radiative shocks, with a linear cooling function
+! in the post-shock gas.
 !
 ! Taken from Creasey et al. (2011), MNRAS 415, 3706-3720
 ! http://adsabs.harvard.edu/abs/2011MNRAS.415.3706C
 !
-! This version implements the full analytical solution including:
-! - Proper shock jump conditions
-! - Temperature-dependent cooling
-! - Profile shifting based on temperature maximum
-! - Complete profiles with pre- and post-shock regions
+! The post-shock cooling region is the stationary similarity solution
+! of Appendix A1, in terms of lambda = rho/rho_c. The shock speed and
+! cold state follow from the isothermal jump conditions (A17-A20).
+! The shock position follows from mass conservation: the cold layer
+! plus the cooling region must contain all the gas swept up, giving
+!
+!   |x_s - x0| = |u_s| t + D/(rho_c - rho_0),
+!
+! where D = int (rho_c - rho) dx is the mass deficit of the cooling
+! region, computed here in closed form. This is exact once the cooling
+! region is stationary, i.e. for t >> cooling_length/c_0.
 ! ----------------------------------------------------------------------
 module coolingshock
  implicit none
  public :: exact_coolingshock
 
- ! Error codes
- integer, parameter :: ierr_none = 0
- integer, parameter :: ierr_alloc = -1
- integer, parameter :: ierr_invalid = -2
+ private
 
 contains
 
-!> Calculate exact solution for cooling shock problem
-!>
-!> @param[in]  iplot          Which quantity to plot (0=density, 1=velocity, 2=temperature, 3=pressure)
-!> @param[in]  time           Current time
-!> @param[in]  gamma          Adiabatic index
-!> @param[in]  xshock         Shock position
-!> @param[in]  rho_0         Initial density
-!> @param[in]  v_0           Initial velocity
-!> @param[in]  p_0           Initial pressure
-!> @param[in]  cooling_length Cooling length scale
-!> @param[out] xplot         x coordinates for solution
-!> @param[out] yplot         y coordinates for selected quantity
-!> @param[out] ierr          Error code (0=success)
+!-----------------------------------------------------------------------
+!+
+!  Exact solution for the cooling shock problem
+!
+!  iplot  : 0=density, 1=velocity, 2=thermal energy, 3=pressure
+!  xshock : position where the two streams collide
+!  v_0    : speed of the left stream (> 0), right stream has -v_0
+!  cooling_length : kB T0 c0/(Lambda n0), eq. 17 of Creasey et al.
+!+
+!-----------------------------------------------------------------------
 subroutine exact_coolingshock(iplot,time,gamma,xshock,rho_0,v_0,p_0,cooling_length,xplot,yplot,ierr)
- integer, intent(in) :: iplot
+ integer, intent(in)  :: iplot
  integer, intent(out) :: ierr
- real, intent(in) :: time,gamma,xshock
- real, intent(in) :: rho_0,v_0,p_0,cooling_length
+ real,    intent(in)  :: time,gamma,xshock
+ real,    intent(in)  :: rho_0,v_0,p_0,cooling_length
  real, dimension(:), intent(out) :: xplot
  real, dimension(size(xplot)), intent(out) :: yplot
+ real, parameter :: xfar = 1.e4  ! distance used for the far upstream point
+ integer :: i,nr,nh
+ real :: c0,u_0,us,rhoc,a,mach,rhos,lambda_s,prefac,deficit,dshock
+ real :: us_ad,rhoc_ad,pc_ad
 
- ! Local variables
- integer :: i,nr
- real :: u_0,cs0,vshock,r1,dr,a
- real :: vc,rhoc,fac,kB_T_on_Lambda_n0
- real :: lambda_min,lambda_max,r1_min,r1_max
- real :: rhos ! Post-shock density from jump conditions
- real :: mach_number, vs, ps ! Additional shock parameters
- real :: x_maxT ! Location of temperature maximum
- real :: deltax ! Shift in x coordinate
- real, allocatable :: rho_shock(:), T_shock(:), v_shock(:), P_shock(:) ! Shock region
- 
- ! Initialize
- ierr = ierr_none
- vc = 0.0  ! Centre velocity (reference frame)
-
- ! Input validation
- if (gamma <= 1.0) then
-    print*,'Error: gamma must be > 1'
-    ierr = ierr_invalid
-    return
- endif
- if (rho_0 <= 0.0 .or. p_0 <= 0.0 .or. cooling_length <= 0.0) then
-    print*,'Error: rho_0, p_0, and cooling_length must be positive'
-    ierr = ierr_invalid
-    return
- endif
- if (size(xplot) < 3) then
-    print*,'Error: output arrays must have size >= 3'
-    ierr = ierr_invalid
-    return
- endif
-
- ! Calculate initial parameters
- u_0 = p_0/((gamma-1.)*rho_0)  ! Initial internal energy
- cs0 = sqrt(gamma*p_0/rho_0)   ! Initial sound speed
- kB_T_on_Lambda_n0 = cooling_length/cs0   ! Eq 17 in Creasey et al.
-
- ! Calculate shock parameters (Eq. A20 in Creasey+2011)
- vshock = 0.5*v_0 + sqrt((0.5*v_0)**2 + p_0/rho_0)
- a = rho_0*(v_0 - vshock)**2/p_0   ! Square of the Mach number
- rhoc = -(v_0 - vshock)*rho_0/vshock  ! Critical density
- 
- ! Calculate jump conditions
- mach_number = abs((v_0-vshock)/cs0)
- ! Post-shock density from Rankine-Hugoniot relations
- rhos = rho_0 / ((gamma-1.)/(gamma+1.) + 2./(gamma+1.)/mach_number**2)
- vs = (v_0-vshock)/rhos*rho_0 + vshock  ! Post-shock velocity
- ps = p_0 + rho_0*(v_0-vshock)**2 - rhos*(vs-vshock)**2  ! Post-shock pressure
-
- ! Define similarity variable range (Eq. A6-A8 in Creasey+2011)
- lambda_min = a/(a + 1.)*(gamma+1.)/gamma
- lambda_max = 0.99999
- r1_min = 1./lambda_min
- r1_max = 1./lambda_max
-
- ! Calculate point distribution for arbitrary input size
+ ierr = 0
  nr = size(xplot)
- 
- allocate(rho_shock(nr), T_shock(nr), v_shock(nr), P_shock(nr), stat=ierr)
- if (ierr /= 0) then
-    print*,'Error allocating shock arrays'
-    ierr = ierr_alloc
+ if (gamma <= 1.) then
+    print "(a)",' ERROR: gamma must be > 1 for cooling shock solution'
+    ierr = 1
     return
  endif
- 
- ! Calculate shock profiles
- dr = (r1_max - r1_min)/(nr-1-2)
- fac = (vc - vshock)/(gamma-1.)*(kB_T_on_Lambda_n0)
- 
- do i=2,nr-1
-    r1 = r1_min + (i-2)*dr
-    ! Spatial coordinate (Eq. A21 in Creasey+2011)
-    xplot(i) = -fac * ( &
-              (gamma-a)/(a-1.)*log(r1 - 1.) &
-              + (1.-a*gamma)/((a-1.)*a**2)*log(1. - a*r1) &
-              - (a+1.)/a*r1 - 0.5*(gamma+1.)*r1**2 )
-    rho_shock(i) = rho_0 + rhoc/r1  ! Density (Eq. A6)
-    T_shock(i) = ((a+1.)*r1 - a*r1*r1)  ! Temperature normalized to T0 (Eq. A8)
-    v_shock(i) = vshock + (vc - vshock)*r1  ! Velocity (Eq. A7)
-    ! Pressure from equation of state P = (gamma-1)*rho*u
-    P_shock(i) = p_0 + (gamma-1.)*(rho_0/r1)*(u_0*((a+1.)*r1 - a*r1*r1))
+ if (rho_0 <= 0. .or. p_0 <= 0. .or. v_0 <= 0. .or. cooling_length <= 0.) then
+    print "(a)",' ERROR: density, pressure, velocity and cooling length must be > 0 for cooling shock'
+    ierr = 2
+    return
+ endif
+ if (nr < 10) then
+    print "(a)",' ERROR: too few points for cooling shock solution'
+    ierr = 3
+    return
+ endif
+
+ c0  = sqrt(gamma*p_0/rho_0)        ! upstream sound speed
+ u_0 = p_0/((gamma-1.)*rho_0)       ! upstream (= cold layer) thermal energy
+
+ ! velocity of the left-moving shock (A20) and density of the cold central gas (A17)
+ us   = 0.5*v_0 - sqrt(0.25*v_0**2 + p_0/rho_0)
+ rhoc = (us - v_0)*rho_0/us
+ a    = rho_0*us**2/p_0             ! eq. A9 with the cold gas (v=0) as reference state
+
+ ! density immediately behind the shock from the Rankine-Hugoniot relations (A21-A23)
+ mach = abs(v_0 - us)/c0
+ rhos = rho_0/((gamma-1.)/(gamma+1.) + 2./((gamma+1.)*mach**2))
+ lambda_s = rhos/rhoc
+
+ ! distance behind the shock is xi = prefac*(F(lambda) - F(lambda_s)), from eq. A11
+ prefac = -us*cooling_length*rho_0/((gamma-1.)*c0*rhoc)
+
+ ! mass deficit of the cooling region, int (rho_c - rho) dxi from lambda_s to 1,
+ ! obtained by integrating by parts and using the antiderivative G of F
+ deficit = rhoc*prefac*(-(1. - lambda_s)*creasey_F(lambda_s,a,gamma) &
+                        + creasey_G1(a,gamma) - creasey_G(lambda_s,a,gamma))
+
+ ! distance of each shock from the collision point once the cooling region is stationary
+ dshock = abs(us)*time + deficit/(rhoc - rho_0)
+
+ ! shock speed, density and pressure of the hot central gas without cooling (A12-A16),
+ ! which is the exact solution at early times before the cooling region forms
+ us_ad   = -0.25*(gamma - 3.)*v_0 - 0.25*sqrt((gamma + 1.)**2*v_0**2 + 16.*p_0/rho_0)
+ rhoc_ad = (us_ad - v_0)*rho_0/us_ad
+ pc_ad   = rhoc_ad*(p_0/rho_0 + 0.5*(gamma - 1.)*v_0**2)
+
+ ! fill the left half (x <= xshock) and mirror it about xshock
+ nh = nr/2
+ xplot(1) = xshock - xfar
+ yplot(1) = select_quantity(iplot,rho_0,v_0,u_0,gamma)
+ if (abs(us_ad)*time < dshock) then
+    ! adiabatic shock is behind the stationary cooling shock: cooling not yet established
+    call fill_plateau(iplot,gamma,xshock-abs(us_ad)*time,xshock,rho_0,v_0,u_0, &
+                      rhoc_ad,pc_ad/((gamma-1.)*rhoc_ad),xplot(2:nh),yplot(2:nh))
+ else
+    call fill_cooling(iplot,gamma,xshock-dshock,xshock,rho_0,v_0,u_0,us,rhoc,a,lambda_s,prefac, &
+                      xplot(2:nh),yplot(2:nh))
+ endif
+
+ ! right half is the mirror image, with velocity reversed
+ do i=1,nh
+    xplot(nr+1-i) = 2.*xshock - xplot(i)
+    yplot(nr+1-i) = yplot(i)
+    if (iplot==1) yplot(nr+1-i) = -yplot(i)
  enddo
- !print*,' xshock = ',x_shock(1),x_shock(nr)
-
- ! Find temperature maximum in negative x region and shift profiles
- !x_maxT = minval(x_shock, mask=T_shock == maxval(T_shock))
- !deltax = x_shock(2) - x_maxT
- !print*,' shifting profile to ',deltax
- !x_shock = x_shock - deltax
- 
- ! Left side (pre-shock)
- xplot(1) = -100.
- rho_shock(1) = rho_0 ! initial density
- T_shock(1) = u_0 ! initial T
- v_shock(1) = v_0
- P_shock(1) = P_0
-
- ! Right side (post-shock)
- xplot(nr) = 100.
- rho_shock(nr) = rhos
- T_shock(nr) = T_shock(nr-1)
- v_shock(nr) = -vs
- P_shock(nr) = ps
- 
- ! Copy to output arrays based on requested quantity
- select case(iplot)
- case(3) ! pressure
-    yplot = P_shock
- case(2) ! temperature
-    yplot = T_shock
- case(1) ! velocity
-    yplot = v_shock
- case default  ! density
-    yplot = rho_shock
- end select
-
- ! Clean up
- deallocate(rho_shock, T_shock, v_shock, P_shock)
+ if (mod(nr,2)==1) then
+    xplot(nh+1) = xshock
+    yplot(nh+1) = yplot(nh)
+ endif
 
 end subroutine exact_coolingshock
+
+!-----------------------------------------------------------------------
+!+
+!  Left half of the profile with a uniform state behind the shock at xs,
+!  extending to the collision point x0 (with xs = x0 this is the initial jump)
+!+
+!-----------------------------------------------------------------------
+subroutine fill_plateau(iplot,gamma,xs,x0,rho_0,v_0,u_0,rhoc,uc,xplot,yplot)
+ integer, intent(in)  :: iplot
+ real,    intent(in)  :: gamma,xs,x0,rho_0,v_0,u_0,rhoc,uc
+ real,    intent(out) :: xplot(:),yplot(:)
+ integer :: i,n
+
+ n = size(xplot)
+ xplot(1) = xs
+ yplot(1) = select_quantity(iplot,rho_0,v_0,u_0,gamma)
+ do i=2,n
+    xplot(i) = xs + (x0 - xs)*real(i-2)/real(n-2)
+    if (xs < x0) then
+       yplot(i) = select_quantity(iplot,rhoc,0.,uc,gamma)
+    else
+       yplot(i) = yplot(1)
+    endif
+ enddo
+
+end subroutine fill_plateau
+
+!-----------------------------------------------------------------------
+!+
+!  Left half of the profile with the stationary cooling region behind
+!  the shock at xs, followed by cold gas at rest up to the collision
+!  point x0. Points are spaced evenly in log(1-lambda), since
+!  x ~ -log(1-lambda) near lambda = 1
+!+
+!-----------------------------------------------------------------------
+subroutine fill_cooling(iplot,gamma,xs,x0,rho_0,v_0,u_0,us,rhoc,a,lambda_s,prefac,xplot,yplot)
+ integer, intent(in)  :: iplot
+ real,    intent(in)  :: gamma,xs,x0,rho_0,v_0,u_0,us,rhoc,a,lambda_s,prefac
+ real,    intent(out) :: xplot(:),yplot(:)
+ real, parameter :: lambda_max = 1. - 1.e-4  ! end of the cooling region (rho = 0.9999 rho_c)
+ integer :: i,n
+ real :: lambda,rho,v,u
+
+ n = size(xplot)
+ xplot(1) = xs
+ yplot(1) = select_quantity(iplot,rho_0,v_0,u_0,gamma)
+ do i=2,n-1
+    lambda = 1. - (1. - lambda_s)*((1. - lambda_max)/(1. - lambda_s))**(real(i-2)/real(n-3))
+    rho = rhoc*lambda                             ! eq. A6
+    v   = us*(1. - 1./lambda)                     ! eq. A7
+    u   = u_0*((a + 1.)/lambda - a/lambda**2)     ! eq. A8
+    xplot(i) = xs + prefac*(creasey_F(lambda,a,gamma) - creasey_F(lambda_s,a,gamma))
+    yplot(i) = select_quantity(iplot,rho,v,u,gamma)
+    ! at early times the cooling region is truncated at the collision point
+    if (xplot(i) >= x0) then
+       xplot(i:n) = x0
+       yplot(i:n) = yplot(i)
+       return
+    endif
+ enddo
+ xplot(n) = x0
+ yplot(n) = select_quantity(iplot,rhoc,0.,u_0,gamma)
+
+end subroutine fill_cooling
+
+!-----------------------------------------------------------------------
+!+
+!  Return the requested quantity given rho, v and u
+!+
+!-----------------------------------------------------------------------
+real function select_quantity(iplot,rho,v,u,gamma)
+ integer, intent(in) :: iplot
+ real,    intent(in) :: rho,v,u,gamma
+
+ select case(iplot)
+ case(3)
+    select_quantity = (gamma-1.)*rho*u
+ case(2)
+    select_quantity = u
+ case(1)
+    select_quantity = v
+ case default
+    select_quantity = rho
+ end select
+
+end function select_quantity
+
+!-----------------------------------------------------------------------
+!+
+!  Bracket in x(lambda) from integrating eq. A11:
+!  F = A ln(1/lambda-1) + B ln(1-a/lambda) - C/lambda - E/lambda^2
+!+
+!-----------------------------------------------------------------------
+real function creasey_F(lambda,a,gamma)
+ real, intent(in) :: lambda,a,gamma
+ real :: ca,cb,cc,ce
+
+ call creasey_coeffs(a,gamma,ca,cb,cc,ce)
+ creasey_F = ca*log(1./lambda - 1.) + cb*log(1. - a/lambda) - cc/lambda - ce/lambda**2
+
+end function creasey_F
+
+!-----------------------------------------------------------------------
+!+
+!  Antiderivative of F with respect to lambda (a < lambda < 1)
+!+
+!-----------------------------------------------------------------------
+real function creasey_G(lambda,a,gamma)
+ real, intent(in) :: lambda,a,gamma
+ real :: ca,cb,cc,ce
+
+ call creasey_coeffs(a,gamma,ca,cb,cc,ce)
+ creasey_G = ca*(-(1. - lambda)*log(1. - lambda) - lambda*log(lambda)) &
+           + cb*((lambda - a)*log(lambda - a) - lambda*log(lambda)) &
+           - cc*log(lambda) + ce/lambda
+
+end function creasey_G
+
+!-----------------------------------------------------------------------
+!+
+!  Limit of the antiderivative of F as lambda -> 1
+!+
+!-----------------------------------------------------------------------
+real function creasey_G1(a,gamma)
+ real, intent(in) :: a,gamma
+ real :: ca,cb,cc,ce
+
+ call creasey_coeffs(a,gamma,ca,cb,cc,ce)
+ creasey_G1 = cb*(1. - a)*log(1. - a) + ce
+
+end function creasey_G1
+
+!-----------------------------------------------------------------------
+!+
+!  Coefficients A, B, C and E of the terms in F
+!+
+!-----------------------------------------------------------------------
+subroutine creasey_coeffs(a,gamma,ca,cb,cc,ce)
+ real, intent(in)  :: a,gamma
+ real, intent(out) :: ca,cb,cc,ce
+
+ ca = (gamma - a)/(a - 1.)
+ cb = (1. - a*gamma)/((a - 1.)*a**2)
+ cc = (a + 1.)/a
+ ce = 0.5*(gamma + 1.)
+
+end subroutine creasey_coeffs
 
 end module coolingshock

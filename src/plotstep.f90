@@ -2995,7 +2995,11 @@ subroutine page_setup(dummy_run)
                 .and. nyplot==nyplotend .and. k==nxsec)
 
  lastinpanel = (istepsonpage==nstepsperpage .or. lastplot)
- plot_exact = (iexact /= 0 .and.nyplot <= nacross*ndown .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
+ ! with one step per page, draw the exact solution on every panel even when the multiplot
+ ! spans several pages; otherwise only on the first page of panels, to avoid overplotting
+ ! the same solution repeatedly when panels wrap around on a page holding several steps
+ plot_exact = (iexact /= 0 .and. (nstepsperpage==1 .or. nyplot <= nacross*ndown) &
+               .and. ipanelselect(iPlotExactOnlyOnPanel,ipanel,irow,icolumn))
  iaxisy = iaxis
  if (tile_plots .and. icolumn /= 1) iaxisy = -1
 
