@@ -1272,7 +1272,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
  use params,          only:int1,maxparttypes
  use settings_data,   only:ncolumns,ncalc
- use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
+ use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ipr,iJfirst,&
                               irhorestframe,is_coord,ideltav,idustfrac,label
  use filenames,       only:ifileopen,rootname
  use asciiutils,      only:string_replace,match_integer
@@ -1313,7 +1313,6 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  logical,       intent(in) :: irescale
  integer :: mytransx,mytransy,imapx,imapy
 
- real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
  integer :: ncols,nrows,nlab_exact,nsh,iplot
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
