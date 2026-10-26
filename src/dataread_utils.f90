@@ -29,7 +29,7 @@ module dataread_utils
  use params, only:doub_prec,int1
  implicit none
 
- public :: check_range,count_types
+ public :: check_range,count_types,set_check_range_verboseness
  integer, private :: iverbose_level = 1 ! can be changed
 
  private

@@ -55,14 +55,14 @@ module readdata_ucla
 contains
 
 subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
- use particle_data, only:dat,npartoftype,time,gamma,maxpart,maxcol,maxstep
+ use particle_data, only:dat,npartoftype,time,maxpart,maxcol
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ncalc
  use mem_allocation, only:alloc
  integer, intent(in) :: indexstart,ipos
  integer, intent(out) :: nstepsread
  character(len=*), intent(in) :: rootname
- integer :: i,j,ierr,nerr,iunit,ncolstep,ncolenv
+ integer :: i,j,ierr,nerr,iunit,ncolstep
  integer :: nprint,npart_max,nstep_max,icol
  integer :: igatherb,ntot,ninit,ninit1,nstar
  logical :: iexist
@@ -119,8 +119,8 @@ subroutine read_data_UCLA(rootname,indexstart,ipos,nstepsread)
  print "(a)",' header info: '
  print "(2(a11,i10))",' igatherb: ',igatherb,' ntot: ',ntot
  print "(2(a11,i10))",' ninit: ',ninit,' ninit1: ',ninit1
- print "(3(a11,1pe10.4))",' hbav1: ',hbav1,' dttot: ',dttot,' xmacc: ',xmacc
- print "(3(a11,1pe10.4))",' accelx: ',xlxacc,' accely: ',xlyacc,' accelz: ',xlzacc
+ print "(3(a11,1pe11.4))",' hbav1: ',hbav1,' dttot: ',dttot,' xmacc: ',xmacc
+ print "(3(a11,1pe11.4))",' accelx: ',xlxacc,' accely: ',xlyacc,' accelz: ',xlzacc
 !
 !--(re)allocate memory
 !
@@ -177,9 +177,9 @@ end subroutine read_data_UCLA
 subroutine set_labels_UCLA
  use labels, only:label,labeltype,ix,irho,ipmass,ih,ipr,ivx,iamvec,labelvec
  use params
- use settings_data, only:ncolumns,ntypes,ndim,ndimV,UseTypeInRenderings
+ use settings_data, only:ntypes,ndim,ndimV,UseTypeInRenderings
  use geometry, only:labelcoord
- integer :: i,ierr,ndimVtemp
+ integer :: i
 
  do i=1,ndim
     ix(i) = i

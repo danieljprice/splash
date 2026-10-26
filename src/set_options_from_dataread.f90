@@ -55,7 +55,7 @@ subroutine set_options_dataread()
              if (iverbose >= 1) print "(a)",' (plotting of '//trim(labeltype(itype))//' particles turned ON)'
           endif
        enddo
-       print*
+       if (iverbose >= 1) print*
     endif
     ! Set particle colouring if it can't render
     if (irho==0 .or. ih==0) then
@@ -78,7 +78,7 @@ subroutine set_options_dataread()
  !--for fits cubes, turn on cross section by default if 3D
  if (ndim >= 3 .and. .not.idefaults_file_read .and. ifileopen > 0) then  ! only on first data read
     if (index(rootname(ifileopen),'.fits') > 0) then
-       print "(a)",' turning cross section ON for fits cube'
+       if (iverbose >= 0) print "(a)",' turning cross section ON for fits cube'
        xsec_nomulti = .true.
     endif
  endif
@@ -97,12 +97,14 @@ subroutine set_options_dataread()
     idash = index(rootname(ifileopen),'_',back=.true.)
     if (idash==0) idash = len_trim(rootname(ifileopen))+1
 
+    ! functions if splash.func found
     inquire(file=trim(rootname(ifileopen))//'.func',exist=iexist)
     if (iexist) iexact = 1
 
     inquire(file=trim(fileprefix)//'.exactfiles',exist=iexist)
     if (iexist) iexact = 2
 
+    ! exact from file if stellar profile ascii file found
     inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.profile',exist=iexist)
     if (iexist) then
        iexact = 2
@@ -119,10 +121,17 @@ subroutine set_options_dataread()
        endif
     endif
 
+    ! spiral arms exact solution if .spirals file present
     inquire(file=trim(rootname(ifileopen))//'.spirals',exist=iexist)
     if (iexist) iexact = 17
 
+    ! flyby trajectory if .trajectory file found
+    inquire(file=trim(rootname(ifileopen)(1:idash-1))//'.trajectory1',exist=iexist)
+    if (iexist .and. iexact==0) iexact = 2
+
     call read_exactparams(iexact,rootname(ifileopen),ierr)
+
+
  endif
 
 end subroutine set_options_dataread

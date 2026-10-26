@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2023 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -83,7 +83,7 @@ module filenames
  character(len=120) :: defaultsfile,limitsfile,unitsfile,coloursfile
  integer, dimension(maxfile) :: nstepsinfile
  character(len=*), parameter :: tagline = &
-  'SPLASH: A visualisation tool for SPH data (c)2004-2025 Daniel Price and contributors'
+  'SPLASH: A visualisation tool for SPH data (c)2004-2026 Daniel Price and contributors'
 
  public
 
@@ -129,6 +129,9 @@ module settings_data
  logical :: ivegotdata, DataIsBuffered, ipartialread
  logical :: buffer_data,iUseStepList,iCalcQuantities,iRescale
  logical :: idefaults_file_read,enforce_code_units
+ !--true when the dump header has udist = umass = utime = 1
+ !  (code units). umagfd may still be non-unity in that case.
+ logical :: code_units_are_unity = .false.
  logical :: buffer_steps_in_file = .false.
  !--required array is dimensioned 0:maxplot so that required(icol) = .true.
  !  does nothing bad if icol = 0 (much safer that way)

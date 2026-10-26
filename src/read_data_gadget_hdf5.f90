@@ -75,7 +75,7 @@ module readdata_gadget_hdf5
  logical :: useids = .false.
  logical :: arepo = .false.
 
- public :: read_data_gadget_hdf5, set_labels_gadget_hdf5
+ public :: read_data_gadget_hdf5, set_labels_gadget_hdf5, file_format_is_gadget_hdf5
 
  interface
   subroutine read_gadget_hdf5_header(filename,maxtypes,maxhdr,npartoftypei,massoftypei,&
@@ -103,6 +103,11 @@ module readdata_gadget_hdf5
    integer(kind=c_int), dimension(ncol), intent(in)  :: isrequired
    integer(kind=c_int), dimension(maxtypes), intent(in) :: i0
   end subroutine read_gadget_hdf5_data
+
+  integer(c_int) function gadget_hdf5_is_gadget_file(filename) bind(c)
+   import
+   character(kind=c_char), dimension(*), intent(in) :: filename
+  end function gadget_hdf5_is_gadget_file
  end interface
 
 contains
@@ -177,7 +182,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,igotids,nfiles,nhfac
  integer, dimension(6) :: i0
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
- logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m
+ logical               :: iexist,reallocate,debug,goterrors,compute_h_from_rho_m,ignore_errors
  real(doub_prec)                    :: timetemp,ztemp,headervalstmp(maxhdr)
  real(doub_prec), dimension(6)      :: massoftypei
  real :: hfact,hfactmean,pmassi
@@ -202,7 +207,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !
 !--check if first data file exists
 !
- useids = lenvironment('GSPLASH_USEIDS') .or. lenvironment('GSPLASH_CHECKIDS')
+ useids = lenvironment('GSPLASH_USEIDS')
+ if (.not.useids) useids = lenvironment('GSPLASH_CHECKIDS')
  if (useids) then
     print "(1x,a)",'reading GADGET HDF5 format: sorted by particle id (--useids)'
  else
@@ -613,7 +619,8 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
 !
 !--pause with fatal errors
 !
- if (goterrors .and. .not.lenvironment('GSPLASH_IGNORE_ERRORS')) then
+ ignore_errors = lenvironment('GSPLASH_IGNORE_ERRORS')
+ if (goterrors .and. .not.ignore_errors) then
     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
     print "(a,/)",'    Please REPORT this and/or fix your file ***'
     print "(a)",'     (set GSPLASH_IGNORE_ERRORS=yes to skip this message)'
@@ -651,7 +658,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
        endif
        if (hfact < 1.125 .or. hfact > 1.45) then
           print "(/,a)",'** FRIENDLY NEIGHBOUR WARNING! **'
-          print "(3x,a,f5.1,a,/,3x,a,f4.2,a,i1,a)", &
+          print "(3x,a,f5.1,a,/,3x,a,f5.2,a,i1,a)", &
                  'It looks like you are using around ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                  'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D:'
 
@@ -674,7 +681,7 @@ subroutine read_data_gadget_hdf5(rootname,istepstart,ipos,nstepsread)
               'A good default is h = 1.2 (m/rho)^1/ndim ', &
               'corresponding to around 58 neighbours in 3D.'
        else
-          print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+          print "(/,1x,a,f5.1,a,/,1x,a,f5.2,a,i1,a,/)", &
                 'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
                 'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
        endif
@@ -910,5 +917,21 @@ subroutine set_header_label_gadget(i,name) bind(c)
  headertags(i+1) = fstring(name)
 
 end subroutine set_header_label_gadget
+
+!-----------------------------------------------------------------
+! return true if filename is a Gadget/SWIFT/Arepo HDF5 dump
+!-----------------------------------------------------------------
+logical function file_format_is_gadget_hdf5(filename) result(is_gadget)
+ use asciiutils, only:cstring
+ use, intrinsic :: iso_c_binding, only:c_int
+ character(len=*), intent(in) :: filename
+ integer(c_int) :: isg
+
+ is_gadget = .false.
+ if (index(filename,'.h5') == 0 .and. index(filename,'.hdf5') == 0) return
+ isg = gadget_hdf5_is_gadget_file(cstring(filename))
+ is_gadget = (isg == 1)
+
+end function file_format_is_gadget_hdf5
 
 end module readdata_gadget_hdf5

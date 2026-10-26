@@ -87,15 +87,15 @@ end function get_temp_from_u
 real elemental function get_opacity(rho,T,X,Y,use_all) result(kappa)
  use physcon, only:sigma_e
  real(doub_prec), intent(in) :: rho,T,X,Y
- real(doub_prec) :: kappa_K,kappa_es,kappa_H,kappa_mol,kappa_abs
+ real(doub_prec) :: kappa_K,kappa_es,kappa_H,kappa_mol
  real(doub_prec) :: Z
- real(doub_prec) :: xfrac,ne,xh0,xh1,xhe0,xhe1,xhe2
+ real(doub_prec) :: xfrac,ne
  logical, intent(in) :: use_all
 
  call ionisation_fraction_Honly(rho,T,xfrac,ne)
  !call ionisation_fraction(rho,T,X,Y,xh0,xh1,xhe0,xhe1,xhe2,ne)
 
- Z = max(1. - X - Y,0.)  ! metallicity
+ Z = max(real(1.,kind=doub_prec) - X - Y, real(0.,kind=doub_prec))  ! metallicity
 
  ! opacity due to Kramer's law (free-free and bound-free transitions)
  !kappa_K = 4e25*Z*(1.+X)*rho*T**(-3.5)      ! Metzger & Pejcha (2017)
@@ -195,7 +195,7 @@ pure subroutine ionisation_fraction_Honly(dens,temp,xh1,ne)
  use physcon,     only:pi,kboltz,hplanck,mh
  real(doub_prec), intent(in) :: dens,temp
  real(doub_prec), intent(out):: xh1,ne
- real(doub_prec)             :: n,nh,nhe,A,const
+ real(doub_prec)             :: n,nh,A,const
  real(doub_prec), parameter  :: twopi=2.*pi,eV=1.60219d-12,mass_electron_cgs=9.10938291d-28,&
                                 chih0=13.6
 

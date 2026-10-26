@@ -29,8 +29,8 @@ Otherwise, you can send an email to the `mailing list <mailto:splash-users@googl
 Acknowledgements
 ================
 
-Josh Calcino contributed significantly to development of the unified 
-splash binary used in version 3. James Wetter led original development
+Josh Calcino contributed significantly to development of the unified
+splash binary (version 3 onwards). James Wetter led original development
 of the giza backend used in version 2 onwards. The exact rendering
 algorithm was contributed by Maya Petkova, based on [Petkova18]_.
 Several of the routines were developed from ideas used by Matthew Bate

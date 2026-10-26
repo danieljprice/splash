@@ -113,12 +113,13 @@ contains
 
 
 subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
- use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep
+ use particle_data,  only:npartoftype,dat,time,gamma,maxcol,maxpart,maxstep,headervals
  use params,         only:doub_prec
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc
- use labels,         only:ivx, iBfirst,ih,ipmass
+ use labels,         only:ivx, iBfirst,ih,ipmass,headertags
  use mem_allocation, only:alloc
  use system_utils,   only:lenvironment
+ use byteswap,       only:open_unformatted_endian
  use vineread,       only:id_gamma,id_iheadlen,id_ndim,id_npart,id_npart_sph,&
                            id_npoim,id_t
  integer, intent(in)          :: indexstart,ipos
@@ -127,7 +128,9 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  integer :: iheadlength
  integer :: i,j,ierr,nparti,ntoti,i1,icol
  integer :: npart_max,nstep_max,ncolstep,nptmass
- logical :: iexist,mhdread,useipindx
+ integer :: iswap
+ logical :: iexist,mhdread,useipindx,use_hfac
+ logical :: other_endian
  character(len=len(rootname)+10)    :: dumpfile
  integer, parameter                 :: maxheadlength = 1000
  integer, dimension(maxheadlength)  :: iheader
@@ -160,10 +163,11 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  ndim = 3
  ndimV = 3
  mhdread = .false.
- if (lenvironment('VSPLASH_MHD') .or. lenvironment('VINE_MHD')) then
-    mhdread = .true.
- endif
- if (lenvironment('VSPLASH_HFAC') .or. lenvironment('VINE_HFAC')) then
+ mhdread = lenvironment('VSPLASH_MHD')
+ if (.not.mhdread) mhdread = lenvironment('VINE_MHD')
+ use_hfac = lenvironment('VSPLASH_HFAC')
+ if (.not.use_hfac) use_hfac = lenvironment('VINE_HFAC')
+ if (use_hfac) then
     hfactor = 2.8
  else
     hfactor = 1.0
@@ -183,11 +187,22 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
  endif
  !
  !--open the (unformatted) binary file and read the number of particles
+ !  retry once with the opposite endianness if the header looks swapped
  !
- open(unit=15,iostat=ierr,file=dumpfile,status='old',form='unformatted')
- if (ierr /= 0) then
-    print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
- else
+ other_endian = .false.
+ ierr = 1
+ do iswap = 0, 1
+    iheadlength = maxheadlength
+    if (iswap == 1) then
+       close(15)
+       other_endian = .true.
+       print "(a)",' retrying with opposite endian'
+    endif
+    call open_unformatted_endian(15,dumpfile,ierr,other_endian)
+    if (ierr /= 0) then
+       print "(a)",'*** ERROR OPENING '//trim(dumpfile)//' ***'
+       exit
+    endif
     !
     !--read timestep header (integers only)
     !
@@ -234,16 +249,17 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
        endif
        call alloc(npart_max,nstep_max,ncolstep+ncalc)
     endif
-    !
-    !--rewind file
-    !
-    rewind(15)
- endif
+    if (ierr == 0) then
+       rewind(15)
+       exit
+    endif
+ enddo
  if (ierr /= 0) then
     print "(/,a)", '  *** ERROR READING TIMESTEP HEADER: wrong endian? ***'
     print "(/,a)", '   (see splash userguide for compiler-dependent'
     print "(a)", '    ways to change endianness on the command line)'
     print "(/,a,/)", '   (set --mhd if you are trying to read MHD format)'
+    close(15)
  else
 
     npart_max = max(npart_max,ntoti)
@@ -281,12 +297,9 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
 !
 !--allocate a temporary array for itstepbin (MHD or point masses only)
 !
-    if (mhdread .or. nptmass > 0) then
-       if (allocated(itstepbin)) deallocate(itstepbin)
-       allocate(itstepbin(npart_max),stat=ierr)
-       !itstepbin = 0
-       if (ierr /= 0) print*,'not enough memory in read_data_VINE (itstepbin)'
-    endif
+    if (allocated(itstepbin)) deallocate(itstepbin)
+    allocate(itstepbin(npart_max),stat=ierr)
+    if (ierr /= 0) print*,'not enough memory in read_data_VINE (itstepbin)'
 !
 !--now read the timestep data in the dumpfile
 !
@@ -372,6 +385,16 @@ subroutine read_data_VINE(rootname,indexstart,ipos,nstepsread)
 !
     time(j)  = real(dheader(id_t    ))
     gamma(j) = real(dheader(id_gamma))
+    !
+    !--copy named header fields for --header / legends
+    !
+    headertags(1:6) = (/'time     ','gamma    ','npart    ','npart_sph','nptmass  ','ndim     '/)
+    headervals(1,j) = time(j)
+    headervals(2,j) = gamma(j)
+    headervals(3,j) = real(ntoti)
+    headervals(4,j) = real(nparti)
+    headervals(5,j) = real(nptmass)
+    headervals(6,j) = real(ndim)
     print "(a,es10.3,3(a,i8))",'t = ',time(j),' n(SPH) = ',ntoti,' n(Nbody) = ',ntoti-nparti,' n(star) = ',nptmass
 !
 !--check sanity of ipindx array: do not sort particles if values not sensible

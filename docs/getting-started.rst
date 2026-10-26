@@ -1,4 +1,3 @@
-
 Getting started
 ===============
 
@@ -15,7 +14,9 @@ Mac OS via homebrew (recommended)::
   brew tap danieljprice/all
   brew install splash
 
-You will also need to install `Xquartz <https://www.xquartz.org>`_ so that the X-windows server launches automatically.
+You will need `Xquartz <https://www.xquartz.org>`_ if you plan to use the
+``/xw`` interactive device. On macOS you can alternatively use the native
+``/osx`` device (see :ref:`tab:devices`) and avoid installing Xquartz.
 
 Mac OS via Macports::
 
@@ -98,7 +99,11 @@ available are:
    very good) with (limited) free licence for Linux.
    http://software.intel.com/en-us/articles/intel-compilers/
 
-Both of these successfully compile splash and the giza library.
+-  nvfortran, the NVIDIA HPC SDK Fortran compiler.
+   https://developer.nvidia.com/hpc-sdk
+
+These successfully compile splash and the giza library. Use
+``make SYSTEM=nvfortran`` for the NVIDIA compiler.
 
 Cairo graphics library
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,19 +207,21 @@ Other supported formats are listed in :ref:`tab:otherreads`, but these require a
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -ndspmhd <file>``   | ndspmhd                    | ``read_data_ndspmhd.f90``     | Format for the ndspmhd SPH/SPMHD code (publicly available from  my  website).                                                                                                                                                                     |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate’s SPH code. Option ``-sphng`` also  works.                                                                                                                                                                                  |
+   | ``splash -phantom <file>``   | sphNG, Phantom             | ``read_data_sphNG.f90``       | sphNG is Matthew Bate's SPH code. Option ``-sphng`` also  works.                                                                                                                                                                                  |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -magma <file>``     | magma                      | ``read_data_srosph.f90``      | Stephan Rosswog’s  code                                                                                                                                                                                                                           |
+   | ``splash -magma <file>``     | magma                      | ``read_data_sro.f90``         | Stephan Rosswog's code (options ``-sro`` or ``-srosph`` also work)                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -seren <file>``     | seren                      | ``read_data_seren.f90``       | The SEREN SPH code (Hubber, McLeod et  al.)                                                                                                                                                                                                       |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    | ``splash -gasoline <file>``  | gasoline, tipsy            | ``read_data_tipsy.f90``       | Reads both binary and ascii TIPSY files (determined automatically). Option ``-tipsy`` also  works.                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash -vine <file>``      | vine                       | ``read_data_fine.f90``        | See environment variable  options.                                                                                                                                                                                                                |
+   | ``splash -vine <file>``      | vine                       | ``read_data_VINE.f90``        | See environment variable  options.                                                                                                                                                                                                                |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
    |``splash -starsmasher <file>``| StarSmasher                | ``read_data_starsmasher.f90`` | The `StarSmasher <http://jalombar.github.io/starsmasher/>`_ code (Gaburov et al. 2018)                                                                                                                                                            |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-   | ``splash file.vtk``          | vtk legacy binary          | ``read_data_vtk.f90``         | VTK legacy binary format, e.g. from Shamrock code                                                                                                                                                                                                 |
+   | ``splash -shamrock <file>``  | shamrock                   | ``read_data_shamrock.f90``    | Native Shamrock particle format (automatically recognised)                                                                                                                                                                                        |
+   +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | ``splash file.vtk``          | vtk legacy binary          | ``read_data_vtk.f90``         | VTK legacy binary format (UNSTRUCTURED_GRID and STRUCTURED_GRID), e.g. from Idefix                                                                                                                                                                  |
    +------------------------------+----------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Below is a list of the supported data formats that require ``HDF5``.
@@ -231,9 +238,11 @@ Below is a list of the supported data formats that require ``HDF5``.
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
    | ``splash -cactus_hdf5 <file>`` | Cactus HDF5            | ``read_data_cactus_hdf5.f90`` |                                                                                         |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-   | ``splash -flash_hdf5 <file>``  | FLASH tracer particles | ``read_dataflash_hdf5.f90``   | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
+   | ``splash -flash_hdf5 <file>``  | FLASH tracer particles | ``read_data_flash_hdf5.f90``  | Reads tracer particle output from the FLASH code. The option ``-flash`` will also work. |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
-   | ``splash -falcon_hdf5 <file>`` | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen’s SPH code format. The option ``-falcon`` will also work.                 |
+   | ``splash -phantom_hdf5 <file>``| Phantom HDF5           | ``read_data_phantom_hdf5.f90``| Phantom/sphNG HDF5 dumps; chemistry abundance columns detected automatically when present |
+   +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
+   | ``splash -falcon_hdf5 <file>`` | falcON                 | ``read_data_falcON_hdf5.f90`` | Walter Dehnen's SPH code format. The option ``-falcon`` will also work.                 |
    +--------------------------------+------------------------+-------------------------------+-----------------------------------------------------------------------------------------+
 
 If the ``HDF5`` read files end with ``.h5``, the suffix ``_hdf5`` from the ``splash`` command can be removed.
@@ -274,40 +283,70 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
 ::
 
    Command line options:
-    
+
     -f format         : input file format to be read (default is ascii, --formats for full list)
-    -p fileprefix     : change prefix to ALL settings files read/written by splash 
+    -p fileprefix     : change prefix to ALL settings files read/written by splash
     -e, -ev           : use default options best suited for line plotting (.ev files)
     -360              : set default options suited to 360 video
     -b, --buffer      : buffer all data files into memory
     -o pixformat      : dump pixel map in specified format (use just -o for list of formats)
-    
+    --header          : print dump file header tags and values, then exit
+    --labels          : print column labels one per line, then exit
+    --labelsorig      : print original column labels (no units), then exit
+    --formats         : list all supported data formats, then exit
+    --print-defaults  : print all settings (with any --name=value overrides applied), then exit
+    --defaults=file   : settings file to use if no splash.defaults in current directory
+    --kernel=quintic  : change the smoothing kernel used for interpolation (e.g. cubic, quintic)
+    --debug           : turn on verbose debugging output
+
    Command line plotting mode:
-    
+
     -x column         : x axis
     -y column         : y axis
     -r[ender] column  : column to render (will use 1 and 2 as x,y if -x,-y not specified)
     -vec[tor] column  : vector quantity to plot with arrows
     -c[ontour] column : contoured quantity
     -multi            : multiplot
-    -dev device       : specify plotting device on command line (e.g. -dev /xw)
+    -dev device       : plotting device (e.g. -dev /xw, -dev /png, -dev /pdf or -dev myplot.pdf)
     --movie           : shortcut for -dev /mp4 to make a movie from plot sequence
     --xsec=1.0        : specify location of cross section slice
     --kappa=1.0       : specify opacity, and turn on opacity rendering
     --anglex=30       : rotate around x axis (similarly --angley, --anglez)
     --code            : enforce code units (also --codeunits)
     --sink=1          : centre on sink particle number 1
+    --shift=1,0,0     : with --sink, shift the sink to the specified x,y,z position
+    --dontcentrevel   : with --sink or --origin, do not subtract the sink/particle velocity
+    --corotate=1,2    : plot in frame corotating with sink particles 1 and 2
+    --vzero=1,0,0     : subtract reference velocity (in code units) from all particles
+    --wake=1,3        : plot spiral wake from planet (sink 3) orbiting star (sink 1)
+    --beam=2.0        : enforce minimum smoothing length (in code units)
+    --origin=1,0,0    : centre on specified x,y,z coordinates
     --origin=666      : set coordinate system origin to particle number 666
     --origin=maxdens  : set coordinate system origin to particle at maximum density
     --track=666       : track particle number 666
     --track=maxdens   : track particle at maximum density
     --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2
     --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)
-    
+    --sortpad         : sort filenames and pad all sequences to same length
+    --xmin=0,--xmax=1 : override plot limits (similarly --ymin, --ymax, --zmin, --zmax)
+    --lim=1.0         : set plot limits to centred box [-1,1] on all coordinate axes
+    --limits=-1,1     : set plot limits on all coordinate axes (or one min,max pair per axis)
+    --xminmargin=0.1  : adjust page margins (similarly --xmaxmargin, --yminmargin, --ymaxmargin)
+
+   Overriding settings:
+
+    --name=value      : set any variable in splash.defaults (e.g. --npix=512 --iaxis=-2 --legendtext=t=)
+                        (use --print-defaults to list all variable names and current values)
+    --foo=bar         : same as setting environment variable SPLASH_FOO=bar (or e.g. --sink for
+                        SPLASH_CENTRE_ON_SINK); format-specific options such as --cm, --dense for
+                        phantom are listed at https://splash-viz.readthedocs.io/en/latest/getting-started.html
+
    Example data formats (type --formats for full list):
     
     -ascii,-csv          : ascii text/csv format (default)
     -phantom -sphng      : Phantom and sphNG codes (auto)
+    -phantom_hdf5        : Phantom HDF5 dumps (auto; incl. chemistry data)
+    -shamrock            : Shamrock code (auto)
     -vtk                 : vtk legacy binary format (auto)
     -ndspmhd             : ndspmhd code (auto)
     -gandalf,-seren      : Gandalf/Seren code
@@ -332,6 +371,7 @@ Typing ``splash --help`` gives a complete and up-to-date list of options. Curren
                          enddo
            to phantom : convert SPH data to binary dump file for PHANTOM
            to gadget  : convert SPH data to default GADGET snapshot file format
+           to ndspmhd : convert SPH data to ndspmhd binary dump file (.dat)
 
     Grid conversion mode ("splash to X dumpfiles"):
        splash to grid         : interpolate basic SPH data (density, plus velocity if present in data)
@@ -386,6 +426,21 @@ Command-line options can be entered in any order on the command line
 utility (``splash to ascii``) see :ref:`sec:convert`. For details
 of the ``-o ppm`` or ``-o ascii`` option see :ref:`sec:writepixmap`. For details of the ``-ev`` option, see :ref:`sec:evsplash`.
 
+Overriding settings in the defaults file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Any variable in the ``splash.defaults`` file can be set on the command line
+using ``--name=value``, where ``name`` is the variable name as it appears in
+the defaults file (case insensitive). For example::
+
+   splash -r 6 dump_0* --npix=1024 --iaxis=-2 --legendtext='t=' '--multiplotx(2)=3'
+
+Quotes around character values are optional, and individual array elements
+can be set using brackets (which must be quoted to protect them from the shell).
+Settings given on the command line take precedence over those in the defaults file.
+Use ``splash --print-defaults`` to list all variable names and their current
+values (including any ``--name=value`` overrides).
+
 
 Options affecting all data reads
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,17 +490,34 @@ Command line flags (or environment variables) that affect all data reads are:
 +----------------------+-----------------------+-------------------------------------------------+
 | ---beam=2.0          | SPLASH_BEAM           | if given a value :math:`>`\ 0 enforces a minimum|
 |                      |                       | smoothing length, specified in code units,      |
-|                      |                       | all the particles. Useful to “dumb-down” the    |
+|                      |                       | all the particles. Useful to "dumb-down" the    |
 |                      |                       | resolution of SPH simulations to match          |
 |                      |                       | observational resolution. If this variable is   |
-|                      |                       | set the “accelerated rendering" option in the   |
+|                      |                       | set the "accelerated rendering" option in the   |
 |                      |                       | :ref:`sec:menu-r` is also turned on, otherwise  |
 |                      |                       | slow rendering can result.                      |
 +----------------------+-----------------------+-------------------------------------------------+
-| ---xmin=0.1          | SPLASH_MARGIN_XMIN    | can be used to manually adjust the left page    |
-| ---xmax=0.1          | SPLASH_MARGIN_XMAX    | page margin (set to fraction of viewport,       |
-| ---ymin=0.1          | SPLASH_MARGIN_YMIN    | negative values are allowed).                   |
-| ---ymax=0.1          | SPLASH_MARGIN_YMAX    |                                                 |
+| ---xmin=0.0          |                       | override plot limits for x,y,z coordinate       |
+| ---xmax=1.0          |                       | columns after splash.limits is read.            |
+| ---ymin=0.0          |                       | Mutually exclusive with --limits and --lim.     |
+| ---ymax=1.0          |                       |                                                 |
+| ---zmin=0.0          |                       |                                                 |
+| ---zmax=1.0          |                       |                                                 |
++----------------------+-----------------------+-------------------------------------------------+
+| ---limits=-1.0,1.0   |                       | set plot limits:                                |
+| ---limits=[-1.0,1.0] |                       | - 2 values: same range on all coordinate axes   |
+|                      |                       | - 2*ndim values: one min,max pair per axis      |
+|                      |                       | - other counts: one min,max pair per column     |
+|                      |                       | Mutually exclusive with --xmin and --lim.       |
++----------------------+-----------------------+-------------------------------------------------+
+| ---lim=1.0           |                       | centred box [-lim,lim] on all coordinate axes   |
+|                      |                       | (same as menu "centred cube"). Exclusive with   |
+|                      |                       | --xmin and --limits.                            |
++----------------------+-----------------------+-------------------------------------------------+
+| ---xminmargin=0.1    | SPLASH_XMINMARGIN     | manually adjust the page margins (fractions     |
+| ---xmaxmargin=0.1    | SPLASH_XMAXMARGIN     | of viewport; negative values allowed).          |
+| ---yminmargin=0.1    | SPLASH_YMINMARGIN     |                                                 |
+| ---ymaxmargin=0.1    | SPLASH_YMAXMARGIN     |                                                 |
 +----------------------+-----------------------+-------------------------------------------------+
 
 .. _sec:splash:
@@ -611,8 +683,8 @@ For the sphNG and PHANTOM read (``splash -phantom``) the options are:
 +-------------------+-------------------------------------------------------+
 | ``--omegat=3.142``| same as --omega but applies to velocities also        |
 +-------------------+-------------------------------------------------------+
-| ``--timeunit=hrs``| sets default time units, either ’s’, ’min’, ’hrs’,    |
-|                   | ’days’, ’yr’ or ’tfreefall’ (used verbatim in legend) |
+| ``--timeunits=yr``| sets default time units, either 's', 'min', 'hrs',    |
+|                   | 'days', 'yr' or 'tfreefall' (used verbatim in legend) |
 +-------------------+-------------------------------------------------------+
 
 dragon data read
@@ -637,7 +709,7 @@ For the srosph read (``splash``) the options are:
 |                                   | from either the MHD or            |
 |                                   | hydrodynamic codes                |
 +-----------------------------------+-----------------------------------+
-| ``--com``                         | if set resets the                 |
+| ``--cm``                          | if set resets the                 |
 |                                   | positions such that the centre of |
 |                                   | mass is exactly at the origin.    |
 +-----------------------------------+-----------------------------------+
@@ -684,7 +756,7 @@ For the H5PART read (``splash -f h5part``) the options are:
 +-----------------------------------+------------------------------------+
 | ``--typeid=MatID``                | name of the dataset containing     |
 |                                   | the particle type identification   |
-|                                   | (default is “MatID”)               |
+|                                   | (default is "MatID")               |
 +-----------------------------------+------------------------------------+
 
 .. _sec:envvariables:
@@ -720,9 +792,9 @@ Probably the most useful is the ability to change font:
    export GIZA_FONT='Helvetica'
 
 where the name is a reasonable guess as to the font you want to use (the
-default is ``Times``). In particular, if you are having trouble displaying
-unicode characters such as greek letters, you can just change the font
-until you find one that works.
+default is ``Helvetica`` unless ``GIZA_FONT`` is set). In particular, if you
+are having trouble displaying unicode characters such as greek letters, you
+can change the font until you find one that works.
 
 Endian changing
 ~~~~~~~~~~~~~~~~

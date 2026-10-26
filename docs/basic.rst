@@ -75,8 +75,8 @@ should be directed.
 Some of the most useful devices are given
 in :ref:`tab:devices`. In the above we have selected
 the X-window driver which means that the output is sent to the screen
-(provided X-windows is running), as demonstrated in the screenshot shown
-in :numref:`fig:rhoh`.
+(provided X-windows is running). On macOS you can use the native
+``/osx`` device instead (no Xquartz required); see :numref:`fig:rhoh`.
 
 
 .. figure:: figs/rhoh.jpg
@@ -102,8 +102,11 @@ in :numref:`fig:rhoh`.
    | ``/pdf``        | PDF             | ``/null``       | null device (no   |
    |                 |                 |                 | output)           |
    +-----------------+-----------------+-----------------+-------------------+
-   | ``/ps``         | Postscript (all | ``/mp4``        | mpeg4 animation   |
-   |                 | pages in one    |                 | (requires ffmpeg) |
+   | ``/osx``        | macOS native    | ``/mp4``        | mpeg4 animation   |
+   |                 | (interactive)   |                 | (requires ffmpeg) |
+   +-----------------+-----------------+-----------------+-------------------+
+   | ``/ps``         | Postscript (all |                 |                   |
+   |                 | pages in one    |                 |                   |
    |                 | file)           |                 |                   |
    +-----------------+-----------------+-----------------+-------------------+
 
@@ -264,17 +267,19 @@ where the number refers to the column of the first component of the
 vector quantity.
 
 Vector plots in 3D show either the integral of each component along the
-line of sight or, for a :ref:`sec:xsec`, the vector arrows in a :ref:`sec:xsec`
+line of sight or, for a :ref:`sec:xsec`, the in-plane field in a :ref:`sec:xsec`
 slice (depending on whether a projection or :ref:`sec:xsec` has
 been selected for 3D plots – see the rendering examples given
-previously). In 2D vector plots simply show the vector arrows mapped to
-a pixel array using the SPH kernel.
+previously). In 2D the interpolated field is drawn as evenly-spaced
+streamlines by default; a pixel array of arrows
+is still available from the :ref:`sec:menu-v`.
 
 Settings related to vector plots can be changed via :ref:`sec:menu-v`.
-The size of the arrows is set by the maximum plot limit over all of the vector components.
-Alternatively the arrow size can be changed interactively using ``v``, ``V`` (*decrease
-/increase the arrow size*) and ``w`` (*automatically
-adjust arrow size so longest arrow is one pixel width*).
+For the default streamline style, ``v`` and ``V`` decrease and increase
+the line density and ``w`` resets density to 1.0. For the arrow style
+the size of the arrows is set by the maximum plot limit over all of the
+vector components, and ``v``, ``V`` and ``w`` decrease, increase and
+adapt the arrow length so the longest arrow is one pixel width.
 
 Contour plots
 -------------
@@ -489,8 +494,12 @@ log in using ssh with X-windows forwarding, e.g.::
 
    ssh -Y dprice@gadi.nci.org.au
 
-Then just plot to an interactive device (``/xw``) as usual and everything
+Then plot to an interactive device (``/xw``) as usual and everything
 in :ref:`sec:interactive` should *just work*.
+
+On a local Mac you do not need X forwarding: use the native ``/osx`` device
+at the graphics prompt (or ``-dev /osx`` on the command line) instead of
+``/xw``.
 
 splash has few dependencies and is simple to :ref:`install in your home space <installhome>` if necessary.
 That said, it is always a good idea to get admins to install a shared package for all users.
@@ -523,7 +532,7 @@ compared to the default options:
    on (in the :ref:`sec:menu-r`) may improve the smoothness of the
    rendering. This is turned off by default because it leads to
    funny-looking edges. Exact rendering performs exact sub-pixel rendering
-   so is more accurate but slower.
+   (for any choice of kernel) so is more accurate but slower.
 
 #. **Remove annotation/axes**. For movies, often axes are unnecessary and
    detract from the visual appeal. Use :ref:`sec:hollywood` or delete

@@ -26,9 +26,12 @@
 !
 !----------------------------------------------------------------------
 module readwrite_fits
- use iso_fortran_env, only:real32,real64
  implicit none
+ integer, parameter :: real32 = 4, real64 = 8
+ logical, parameter :: have_fits_library = .false.
+
  public :: read_fits_image,write_fits_image,fits_error
+ public :: have_fits_library
  public :: read_fits_cube,write_fits_cube
  public :: read_fits_header
  public :: get_floats_from_fits_header,get_from_header,get_from_header_s
@@ -87,31 +90,6 @@ subroutine read_fits_header(filename,hdr,ierr)
 end subroutine read_fits_header
 
 !---------------------------------------------------
-! internal subroutine to read FITS header information
-!---------------------------------------------------
-subroutine read_fits_head(iunit,hdr,ierr)
- integer, intent(in)  :: iunit
- integer, intent(out) :: ierr
- character(len=80), allocatable, intent(inout) :: hdr(:)
-
- ierr = 1
-
-end subroutine read_fits_head
-
-!---------------------------------------------------
-! internal subroutine to write FITS header information
-! excluding things we have changed
-!---------------------------------------------------
-subroutine write_fits_head(iunit,hdr,ierr)
- integer, intent(in) :: iunit
- character(len=80), intent(in) :: hdr(:)
- integer, intent(out) :: ierr
-
- ierr = 1
-
-end subroutine write_fits_head
-
-!---------------------------------------------------
 ! subroutine to read spectral cube from FITS file
 ! using cfitsio library
 !---------------------------------------------------
@@ -164,7 +142,6 @@ end subroutine read_fits_cube
   character(len=*), intent(in) :: filename
   integer,          intent(in) :: naxes(2)
   real(kind=real64),intent(in) :: image(naxes(1),naxes(2))
-  real(kind=real32), allocatable :: img32(:,:)
   integer, intent(out) :: ierr
   character(len=80), intent(in), optional :: hdr(:)
 
@@ -256,38 +233,6 @@ subroutine get_floats_from_fits_header(hdr,tags,vals)
  vals = 0.
 
 end subroutine get_floats_from_fits_header
-
-!------------------------------------------------
-! get tag:val pairs from fits header record
-! will extract anything readable as a floating
-! point number
-!------------------------------------------------
-subroutine get_fits_header_entry(record,key,rval,ierr)
- character(len=80), intent(in) :: record
- character(len=*),  intent(out) :: key
- real, intent(out) :: rval
- integer, intent(out) :: ierr
-
- ierr = 1
- rval = 0.
-
-end subroutine get_fits_header_entry
-
-!------------------------------------------------
-! get tag:val pairs from fits header record
-! returns the string value
-!------------------------------------------------
-subroutine get_fits_header_key_val(record,key,val,ierr)
- character(len=80), intent(in) :: record
- character(len=*),  intent(out) :: key
- character(len=*),  intent(out) :: val
- integer, intent(out) :: ierr
-
- ierr = 1
- key = ''
- val = ''
-
-end subroutine get_fits_header_key_val
 
 !------------------------------------------------
 ! search fits header to find a particular variable

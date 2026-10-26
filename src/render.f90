@@ -27,7 +27,7 @@
 module render
  use colourbar, only:plotcolourbar
  implicit none
- public :: render_pix, render_vec, set_transparency
+ public :: render_pix, render_vec, render_stream, set_transparency
  private
 
 contains
@@ -40,25 +40,25 @@ contains
 !  - colour (icolouropt>1)
 !  contouring plots nc contours between datmin and datmax.
 !------------------------------------------------------------------------
-subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
-                  xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
-                  ilabelcont,contmin,contmax,blank,transparent,alpha)
+subroutine render_pix(datpix,datmin,datmax,label, &
+                      xmin,ymin,dx,dy,icolouropt,iplotcont,iColourBarStyle,ncontours,log, &
+                      ilabelcont,contmin,contmax,blank,transparent,alpha)
  use plotutils,       only:formatreal
  use plotlib,         only:plot_imag,plot_conb,plot_cons,plot_qch,plot_sch,&
                            plot_qch,plot_sch,plot_conl,plot_gray,plot_imag_transparent,&
                            plot_imag_alpha
  use contours_module, only:read_contours,contours_list,contourtitles
- integer, intent(in) :: npixx,npixy,ncontours,icolouropt
+ integer, intent(in) :: ncontours,icolouropt
  real, intent(in) :: xmin,ymin,datmin,datmax,dx,dy
- real, dimension(npixx,npixy), intent(in) :: datpix
+ real, dimension(:,:), intent(in) :: datpix
  logical, intent(in) :: iplotcont,log,ilabelcont
  integer, intent(in) :: iColourBarStyle
  character(len=*), intent(in) :: label
  real, intent(in), optional :: contmin,contmax,blank
  logical, intent(in), optional :: transparent
- real, dimension(npixx,npixy), intent(in), optional :: alpha
+ real, dimension(:,:), intent(in), optional :: alpha
 
- integer :: i,ierr,nc
+ integer :: i,ierr,nc,npixx,npixy
  real :: trans(6),levels(ncontours),dcont,charheight,cmin,cmax
  character(len=12) :: string
  logical :: iuse_transparent,ifixed_contours
@@ -75,7 +75,8 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
  iuse_transparent = .false.
  if (present(transparent)) iuse_transparent = transparent
 
- !print*,'rendering...',npixx,'x',npixy,'=',size(datpix),' pixels'
+ npixx = size(datpix,1)
+ npixy = size(datpix,2)
 
  if (abs(icolouropt)==1) then        ! greyscale
 
@@ -197,6 +198,24 @@ subroutine render_pix(datpix,datmin,datmax,label,npixx,npixy, &
 end subroutine render_pix
 
 !--------------------------------------------------------------------------
+!  set arrow-head style and shrink character height for vector drawing
+!--------------------------------------------------------------------------
+subroutine set_arrow_style(charheight)
+ use settings_vecplot, only:iplotarrowheads
+ use plotlib,          only:plot_sah,plot_qch,plot_sch
+ real, intent(out) :: charheight
+
+ if (iplotarrowheads) then
+    call plot_sah(2,45.0,0.7)
+ else
+    call plot_sah(2,0.0,1.0)
+ endif
+ call plot_qch(charheight)
+ call plot_sch(0.3*charheight)
+
+end subroutine set_arrow_style
+
+!--------------------------------------------------------------------------
 !  this subroutine takes a 2D grid of vector data (ie. x and y components)
 !  and plots an arrow map of it
 !--------------------------------------------------------------------------
@@ -204,9 +223,8 @@ end subroutine render_pix
 subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
                       xmin,ymin,dx,dy,label,unitslabel,plotlegend)
  use legends,          only:legend_vec
- use settings_vecplot, only:hposlegendvec,vposlegendvec,&
-                            iplotarrowheads,iallarrowssamelength
- use plotlib,          only:plot_sah,plot_qch,plot_sch,plot_vect
+ use settings_vecplot, only:hposlegendvec,vposlegendvec,iallarrowssamelength
+ use plotlib,          only:plot_sch,plot_vect
  integer, intent(in) :: npixx,npixy
  real, intent(in) :: xmin,ymin,dx,dy
  real, intent(inout) :: vecmax
@@ -229,13 +247,7 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  print*,'vector plot..',npixx,'x',npixy,'=',size(vecpixx),' pixels'
  !!print*,'max(x component) = ',maxval(vecpixx),'max(y component) = ',maxval(vecpixy)
 
- if (iplotarrowheads) then
-    call plot_sah(2,45.0,0.7)   ! arrow style
- else
-    call plot_sah(2,0.0,1.0)
- endif
- call plot_qch(charheight)
- call plot_sch(0.3*charheight)          ! size of arrow head
+ call set_arrow_style(charheight)
 
  if (iallarrowssamelength) then
     !!if (vecmax <= 0.0) vecmax = 1.0 ! adaptive limits
@@ -271,6 +283,39 @@ subroutine render_vec(vecpixx,vecpixy,vecmax,npixx,npixy, &
  call plot_sch(charheight)
 
 end subroutine render_vec
+
+!--------------------------------------------------------------------------
+!  plot an evenly-spaced streamline map of a 2D vector field
+!--------------------------------------------------------------------------
+subroutine render_stream(vecpixx,vecpixy,npixx,npixy,xmin,ymin,dx,dy,density,label)
+ use plotlib,          only:plot_sch,plot_streamplot
+ integer, intent(in) :: npixx,npixy
+ real, intent(in) :: xmin,ymin,dx,dy,density
+ real, dimension(npixx,npixy), intent(in) :: vecpixx,vecpixy
+ character(len=*), intent(in) :: label
+ real :: trans(6)
+ real :: charheight
+ character(len=128) :: string
+
+ trans(1) = xmin - 0.5*dx
+ trans(2) = dx
+ trans(3) = 0.0
+ trans(4) = ymin - 0.5*dy
+ trans(5) = 0.0
+ trans(6) = dy
+
+ string = 'plotting streamlines'
+ if (len_trim(label) > 0) string = trim(string)//' ('//trim(label)//')'
+ write (*,"(1x,a,': ',i4,' x ',i4,', density=',g0.2)") trim(string),npixx,npixy,density
+
+ call set_arrow_style(charheight)
+
+ call plot_streamplot(vecpixx(:,:),vecpixy(:,:),npixx,npixy, &
+      1,npixx,1,npixy,density,trans,0.0)
+
+ call plot_sch(charheight)
+
+end subroutine render_stream
 
 !--------------------------------------------------------------------------
 ! set opacity for double-rendering, i.e.:

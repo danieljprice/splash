@@ -50,7 +50,7 @@ subroutine exact_rhoh(iplot,ndim,hfact,pmassval,xplot,yplot,ierr)
        end where
     else ! y axis is h
        where (xplot > tiny(xplot))
-          yplot(:) = hfact*(pmassval/xplot(:))**(1./FLOAT(ndim))
+          yplot(:) = hfact*(pmassval/xplot(:))**(1./REAL(ndim))
        elsewhere
           yplot(:) = huge(yplot)
        end where

@@ -136,7 +136,7 @@ subroutine read_data_aly(rootname,indexstart,ipos,nstepsread)
        return
     endif
  endif
- print "(a,f4.2)",' keyword = '//trim(keyword)//' version = ',version
+ print "(a,f5.2)",' keyword = '//trim(keyword)//' version = ',version
  !print "(a)",' title = '//trim(title)
  print "(a,i6,a,es10.3,a,i6)",' step = ',istep,' time = ',timein,' np = ',np
 !

@@ -88,6 +88,7 @@ subroutine convert_all(outformat,igotfilenames,useall)
        call get_data(ifile,igotfilenames,firsttime=.true.)
        !
        ! read plot limits from file (overrides get_data limits settings)
+       ! and apply any command-line limit overrides (--xmin, --limits, --lim, ...)
        !
        call read_limits(trim(limitsfile),ierr)
        !

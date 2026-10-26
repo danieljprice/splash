@@ -200,7 +200,10 @@ subroutine read_data_oilonwater(rootname,indexstart,ipos,nstepsread)
           !
           if (allocated(dattemp)) deallocate(dattemp)
           allocate(dattemp(npart_max,ncolstep),stat=ierr)
-          if (ierr /= 0) print*,'not enough memory in read_data_oilonwater'
+          if (ierr /= 0) then
+             print*,'not enough memory in read_data_oilonwater'
+             return
+          endif
 
           read(15,end=55,iostat=ierr) udisti, umassi, utimei, &
              nprint, n1, n2, timei, gammai, rhozero, RK2, &
@@ -249,7 +252,7 @@ subroutine read_data_oilonwater(rootname,indexstart,ipos,nstepsread)
 !
 !--convert to single precision if necessary
 !
-       if (doubleprec) then
+       if (doubleprec .and. allocated(dattemp)) then
           dat(1:npart,1:ncolstep,j) = real(dattemp(1:npart,1:ncolstep))
        endif
 !

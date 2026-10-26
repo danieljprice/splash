@@ -529,7 +529,7 @@ subroutine getp( pmin, pmax, tol, ps )
 40 tol1 = 2.d0*eps*dabs(b) + 0.5d0*tol
  xm   = 0.5d0*(c - b)
  if ( dabs(xm)  <=  tol1 ) go to 90
- if ( fb == 0.d0 ) go to 90
+ if ( abs(fb) < tiny(0.d0) ) go to 90
 
 ! ------------
 ! is bisection necessary?
@@ -542,7 +542,7 @@ subroutine getp( pmin, pmax, tol, ps )
 ! is quadratic interpolation possible?
 ! ------------------
 
- if ( a  /=  c ) go to 50
+ if ( abs(a - c) > tiny(0.d0) ) go to 50
 
 ! ----------
 ! linear interpolation

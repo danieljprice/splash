@@ -25,3 +25,23 @@ References
 .. [RJ95] `Ryu & Jones (1995), ApJ 442, 228 <http://adsabs.harvard.edu/abs/1995ApJ...442..228R>`_
 
 .. [Toro92] `Toro (1992), Phil. Trans. Phys. Sci. Eng. 338, 43 <https://ui.adsabs.harvard.edu/abs/1992RSPTA.338...43T/abstract>`_
+
+.. [Balsara98] `Balsara (1998), ApJS 116, 133 <https://ui.adsabs.harvard.edu/abs/1998ApJS..116..133B/abstract>`_
+
+.. [Balsara01] `Balsara (2001), ApJS 132, 83 <https://ui.adsabs.harvard.edu/abs/2001ApJS..132...83B/abstract>`_
+
+.. [BW88] `Brio & Wu (1988), J. Comp. Phys. 75, 400 <https://ui.adsabs.harvard.edu/abs/1988JCoPh..75..400B/abstract>`_
+
+.. [FK01] `Falle & Komissarov (2001), J. Plasma Phys. 65, 29 <https://ui.adsabs.harvard.edu/abs/2001JPlPh..65...29F/abstract>`_
+
+.. [GR06] `Giacomazzo & Rezzolla (2006), J. Fluid Mech. 562, 223 <https://ui.adsabs.harvard.edu/abs/2006JFM...562..223G/abstract>`_
+
+.. [Komissarov99] `Komissarov (1999), MNRAS 303, 343 <https://ui.adsabs.harvard.edu/abs/1999MNRAS.303..343K/abstract>`_
+
+.. [MB06] `Mignone & Bodo (2006), MNRAS 368, 1040 <https://ui.adsabs.harvard.edu/abs/2006MNRAS.368.1040M/abstract>`_
+
+.. [Torrilhon02] Torrilhon (2002), Research Report 2002-06, Seminar for Applied Mathematics, ETH Zürich
+
+.. [TY13] `Takahashi & Yamada (2013), J. Plasma Phys. 79, 335 <https://ui.adsabs.harvard.edu/abs/2013JPlPh..79..335T/abstract>`_
+
+.. [TY14] `Takahashi & Yamada (2014), J. Plasma Phys. 80, 255 <https://ui.adsabs.harvard.edu/abs/2014JPlPh..80..255T/abstract>`_

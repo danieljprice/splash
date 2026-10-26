@@ -1,4 +1,83 @@
 
+**4.1.0: (23/10/26)**
+
+- option to override ANY setting in splash.defaults with a command line flag, e.g. --npix=512
+- print all settings (with any overrides applied) using the --print-defaults flag
+- exact rendering now works with all kernels, and is faster
+- bug fix with mass conservation in exact rendering for particles with h ~ pixel size
+- bug fix with mass of sub-pixel particles being overestimated in projections
+- opacity rendering smooths sub-pixel particles over the pixel scale so none are missed
+- fix seg fault in phantom reader with sink particles
+- unit tests of exact kernel integrals run in CI
+
+**4.0.2: (06/10/26)**
+
+- splash compiles with nvfortran; CI check added
+
+**4.0.1: (30/09/26)**
+
+- bug fix in ensuring even pixel numbers for mp4 device
+- bug fix with blank line of pixels at top of plot
+- unitless mhd test problems no longer trigger physical units
+- fix bug producing blank column when reading phantom dumps with APR
+
+**4.0.0: (31/08/26)**
+
+- user-friendly interactive mode
+- interactive buttons now appear in the plotting window
+- cursor movement generates context-dependent help
+- cube viz: slice through data using scroll wheel on your mouse
+- streamline plotting by default for vector plots
+- automatically detect and read phantom hdf5 chemistry data
+- allow simultaneous log of all abundance columns when chemistry data is present
+- added --limits=min,max flag and --xmin,--xmax flags to override limits in splash.limits file
+- added --lim=1.0 flag to set coordinate limits to centred box
+- flags --xminmargin,--xmaxmargin,--yminmargin,--ymaxmargin to adjust page margins
+- vector plot legend defaults to the same vertical position as the time legend
+- fixed bugs with utf8 symbols in giza, copyright symbol added to copyright string
+- splash to ndspmhd converter added
+- splash compiles with aocc compiler, added CI checks for ifx and aocc compilers
+- new /osx device for interactive plotting on macOS
+
+**3.12.0: (16/03/26)**
+
+- sub-pixel interpolation in splash to grid for non-Cartesian geometries
+- added --fcol flag in splash calc lightcurve for spectral hardening factor
+- seg fault in splash to grid fixed
+- automatically read visual extinction from AV_ files alongside phantom dumps
+- splash can now be compiled in parallel with make -j flag
+- added a column for kappa^2/omega^2 when plotting in cylindrical coordinates
+
+**3.11.7: (15/12/25)**
+
+- option for nonlinear corrections to Rafikov planet wake exact solution
+- automated plotting of .trajectory files from phantom orbit reconstructor^TM Shamrock native .sham data reader implemented
+- --shift=x,y,z flag to centre on sink but shift it to a different position
+- issues with template and license files fixed (thanks to Phil Wyett)
+
+**3.11.6: (30/10/25)**
+
+- bug fix causing seg fault in interactive mode if pixel number changes between window refreshes
+- bug fix with transparency in multistep multiple panels (thanks to Yann Bernard)
+- bug fix reading velocity of sink particles from Phantom when extra arrays present after density in file
+- recognise velocity array in shamrock data
+
+**3.11.5: (02/09/25)**
+
+- --sortpad flag to sort files while pausing panels where sequence has finished
+- vtk reader works with structured grid format from Idefix code
+- fix seg fault in gadget-hdf5 read with SWIFT data
+- correctly identify dust growth columns + units from phantom dumps
+
+**3.11.4: (25/06/25)**
+
+- can print time as date and time with offset e.g. 2025-06-25 12:35 in legend
+- plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard)
+- issue reading .comp files fixed
+- fixed issue reading column labels if fewer labels than columns
+- experimental --get_h flag to override smoothing lengths
+- fix bug with truncated name in copyright string (thanks to George Blaylock-Squibbs)
+
 **3.11.3: (23/04/25)**
 
 - bug fix with automatic choice of columns with -360, also render density automatically in 360 mode

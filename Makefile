@@ -3,7 +3,7 @@
 #   This file is just a wrapper for the sub-make in the build
 #   directory. Refer to build/Makefile for more details.
 #
-#   (c) 2007-2013 Daniel Price
+#   (c) 2007-2026 Daniel Price
 #
 #----------------------------------------------------------------
 

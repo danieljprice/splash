@@ -1,56 +1,113 @@
-# This is a basic workflow to help you get started with Actions
-
 name: build
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  build-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        toolchain:
+          - {compiler: gcc,   version: 'latest', system: gfortran,  jobs: 4}
+          - {compiler: intel, version: 'latest', system: ifx,       jobs: 4}
+          - {compiler: aocc,  version: 'latest', system: aocc,      jobs: 4}
+          - {compiler: nvidia-hpc, version: 'latest', system: nvfortran, jobs: 2}
+        exclude:
+          - os: macos-latest
+            toolchain: {compiler: intel, version: 'latest', system: ifx}
+          - os: macos-latest
+            toolchain: {compiler: aocc,  version: 'latest', system: aocc}
+          - os: macos-latest
+            toolchain: {compiler: nvidia-hpc, version: 'latest', system: nvfortran}
+    runs-on: ${{ matrix.os }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Install gfortran and cairo on Linux
-      run: sudo apt-get install gfortran libcairo2-dev
+    - uses: actions/checkout@v5
 
-    - name: Check gfortran version
-      run: gfortran --version
+    - uses: fortran-lang/setup-fortran@v1
+      with:
+        compiler: ${{ matrix.toolchain.compiler }}
+        version: ${{ matrix.toolchain.version }}
 
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          brew install cairo libx11 freetype hdf5 cfitsio
+        fi
+
+    - name: Set PREFIX (macOS)
+      if: runner.os == 'macOS'
+      run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
 
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
-    - name: compile splash
-      run: make SYSTEM=gfortran withgiza
+    - name: compile splash (with NOWARN=yes to enforce no compiler warnings)
+      run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+             make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+             PREFIX="${{ env.PREFIX }}" \
+             X11_DIR="${{ env.PREFIX }}"
+          else
+             make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes
+          fi
+
+    - name: compile splash with HDF5 and FITS
+      run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+            FITS=yes HDF5=yes \
+            PREFIX="${{ env.PREFIX }}" \
+            HDF5ROOT="${{ env.PREFIX }}" \
+            FITS_DIR="${{ env.PREFIX }}" \
+            X11_DIR="${{ env.PREFIX }}"
+          else
+            make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} withgiza NOWARN=yes \
+            HDF5ROOT=/usr/ \
+            HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
+            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
+            FITS=yes HDF5=yes
+          fi
 
     - name: clean
       run: make clean
 
     - name: compile libexact
-      run: make SYSTEM=gfortran libexact
+      run: make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libexact NOWARN=yes
 
     - name: compile libread
-      run: make SYSTEM=gfortran libread
+      run: make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} libread NOWARN=yes
 
     - name: clean
       run: make clean
 
     - name: compile splash in single precision
-      run: make SYSTEM=gfortran DOUBLEPRECISION=no withgiza
+      if: runner.os == 'Linux'
+      run: make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DOUBLEPRECISION=no withgiza
 
     - name: clean
       run: make clean
 
     - name: compile splash with debug flags
-      run: make SYSTEM=gfortran DEBUG=yes withgiza
+      if: runner.os == 'Linux'
+      run: make -j ${{ matrix.toolchain.jobs }} SYSTEM=${{ matrix.toolchain.system }} CC=${{ env.CC }} DEBUG=yes withgiza
+
+  build:
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - run: |
+        if [ "${{ contains(needs.build-matrix.result, 'failure') || contains(needs.build-matrix.result, 'cancelled') }}" == "true" ]; then
+          echo "Matrix build failed"
+          exit 1
+        fi
+        echo "All matrix jobs passed"

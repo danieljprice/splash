@@ -24,6 +24,7 @@
 ! module containing subroutines to do with setting of physical units
 !--------------------------------------------------------------------
 module settings_units
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  use params
  use labels, only:unitslabel,unitslabel_default,lenlabel,&
                   labelzintegration,labelzintegration_default
@@ -524,7 +525,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
     read(line,*,iostat=itemp) units(i)
     if (itemp /= 0) print*,'ERROR reading units for column ',i
     if (units(i) > huge(units)) print "(/,a,i2)",' ERROR: UNITS ARE INFINITE FOR COLUMN ',i
-    if (isnan(units(i))) print "(/,a,i2)",' ERROR: UNITS ARE NaN FOR COLUMN ',i
+    if (ieee_is_nan(units(i))) print "(/,a,i2)",' ERROR: UNITS ARE NaN FOR COLUMN ',i
 !
 !    units label is what comes after the semicolon
 !
@@ -587,7 +588,7 @@ subroutine read_unitsfile(unitsfile,ncolumns,ierr,iverbose)
  !--only give error if we really do not have enough columns
  !  (on first call nextra is not set)
  if (i <= ncolumns) then
-    print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
+    if (isverbose >= 0) print "(1x,a,i2)",'end of file in '//trim(unitsfile)//': units read to column ',i
     ierr = -1
  endif
  if (ierrzunits .and. ndim==3) then

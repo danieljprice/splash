@@ -156,13 +156,14 @@ subroutine write_pixmap_ascii(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,labe
  write(iunit,"(a)",err=66) '#   do j=1,'//trim(adjustl(stringy))
  write(iunit,"(a)",err=66) '#      write(*,*) dat(1:'//trim(adjustl(stringx))//',j)'
  write(iunit,"(a)",err=66) '#   enddo'
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
- write(iunit,"(a,1pe14.6)",          err=66) '# time = ',time
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
+ write(iunit,"(a,1pe16.6)",          err=66) '# time = ',time
  write(iunit,"(a)",err=66) '# '//trim(adjustl(stringx))//' '//trim(adjustl(stringy))
 
- write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe14.6))'
+ !--width 16 allows three-digit exponents (E+/-nnn); 1pe14.6 can drop the 'E'
+ write(fmtstring,"(a,i6,a)",iostat=ierr) '(',npixx,'(1pe16.6))'
  if (ierr /= 0) then
     do j=1,npixy
        write(iunit,*,err=66) datpix(1:npixx,j)
@@ -224,9 +225,9 @@ subroutine write_pixmap_ppm(datpix,npixx,npixy,xmin,ymin,dx,datmin,datmax,label,
  maxcolour = 255
  write(iunit,"(a)",err=66) 'P3'
  write(iunit,"(a)",err=66) '# '//trim(adjustl(filename))//' created by '//trim(tagline)
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
- write(iunit,"(a,1pe14.6,a,1pe14.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# '//trim(label)//': min = ',datmin,' max = ',datmax
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# x axis: min = ',xmin,' max = ',xmin+(npixx-1)*dx
+ write(iunit,"(a,1pe16.6,a,1pe16.6)",err=66) '# y axis: min = ',ymin,' max = ',ymin+(npixy-1)*dx
  write(iunit,"(i4,1x,i4)",err=66) npixx, npixy
  write(iunit,"(i3)",err=66) maxcolour
 !--pixel information

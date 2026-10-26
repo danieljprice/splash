@@ -96,16 +96,15 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,nused,nsink
  integer, dimension(npart) :: iorder
- integer(kind=selected_int_kind(12)) :: ipart
- integer :: nsubgrid,nok
+ integer :: ipart,nsubgrid,nok
  real :: hi,hi1,hi21,radkern,q2,wab,pmassav
 
  !real, dimension(npixx,npixy) :: datnorm
  real :: hsmooth,dati
  real :: term,dy,dy2,ypix,zfrac,hav,zcutoff
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
- real :: hmin,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix
- real :: fopacity,tau,rkappatemp,xi,yi
+ real :: hmin,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,hexact,qexact2
+ real :: fopacity,tau,tau_before,rkappatemp,xi,yi
  real :: t_start,t_end,t_used
  logical :: adjustzperspective,rendersink
  real, dimension(npixx) :: xpix,dx2i
@@ -202,6 +201,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
  nok = 0
  hminall = huge(hminall)
  hmin = 0.5*max(pixwidthx,pixwidthy)
+ !
+ !--with exact rendering, use exact pixel integrals for particles with
+ !  h below this size, where interpolating the table is inaccurate
+ !
+ hexact = 2.*max(pixwidthx,pixwidthy)
  if (iverbose >= 0) then
     write(*,"(a,45x,a)") ' 0% ',' 100%'
     write(*,"(1x,a)",advance='no') '|'
@@ -209,16 +213,16 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
 
 !$omp parallel default(none) &
 !$omp shared(hh,z,x,y,zorig,pmass,dat,datv,weight,itype,datsmooth,npmass,npart) &
-!$omp shared(xmin,xmax,ymin,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy,hmin) &
+!$omp shared(xmin,xmax,ymin,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy,hmin,hexact) &
 !$omp shared(exact_rendering,backwards,iverbose,radkernel,radkernel2) &
 !$omp shared(badpix,datvpix) &
 !$omp shared(npixx,npixy,dscreenfromobserver,zobserver,adjustzperspective) &
 !$omp shared(zcut,zcutoff,iorder,rkappa,tausmooth) &
 !$omp private(hi,zfrac,xi,yi,zi,radkern,rendersink) &
-!$omp private(hi1,hi21,hsmooth,term,dati,datvi,pixwidthz) &
+!$omp private(hi1,hi21,hsmooth,term,dati,datvi,pixwidthz,qexact2) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(dx2i,q2,xpixi,ypix,zpix,dy,dy2,wab,dfac,pixint) &
-!$omp private(ipart,i,ipix,jpix,tau,fopacity) &
+!$omp private(ipart,i,ipix,jpix,tau,tau_before,fopacity) &
 !$omp reduction(+:nused,nsink,nsubgrid,nok) &
 !$omp reduction(min:hminall)
 !!$omp do ordered schedule(dynamic)
@@ -325,6 +329,11 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
           nsubgrid = nsubgrid + 1
           !$omp end single
           hsmooth = hmin
+          ! spread over the minimum length, conserving the total optical depth
+          term = term*(hi/hmin)**2
+          radkern = radkernel*hsmooth
+          hi1 = 1./hsmooth
+          hi21 = hi1*hi1
        else
           hsmooth = hi
           !$omp single
@@ -338,6 +347,8 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
        dfac = hi**2/(pixwidthx*pixwidthy)
        pixwidthz = 2.*radkern ! 3D box bounds entire particle in z direction
        zi = 0.; zpix = 0.
+       ! pixels with any overlap with the kernel have centres within this radius
+       qexact2 = (radkernel + sqrt(0.5*(pixwidthx**2 + pixwidthy**2))*hi1)**2
        !
        !
        !--for each particle work out which pixels it contributes to
@@ -369,7 +380,7 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
           do ipix = ipixmin,ipixmax
              q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
 
-             if (exact_rendering .and. ipixmax-ipixmin <= 10 .and. q2 < radkernel2 + 3.*pixwidthx*pixwidthy*hi21) then
+             if (exact_rendering .and. hi < hexact .and. q2 < qexact2) then
                 xpixi = xminpix + ipix*pixwidthx
 
                 ! Contribution of the cell walls in the xy-plane
@@ -387,13 +398,16 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                 wab = pixint*dfac
 
                 tau = wab*term
-                tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                tau_before = tausmooth(ipix,jpix)
+                tausmooth(ipix,jpix) = tau_before + tau
                 !
                 !--render, obscuring previously drawn pixels by relevant amount
                 !  also calculate total optical depth for each pixel
                 !
                 if (backwards) then
-                   fopacity = exp(-tausmooth(ipix,jpix))*tau
+                   ! line below correctly handles the case where a particle is highly optically thick
+                   ! and reduces to exp(-tau_before)*tau when the opacity is small, matching forward rendering
+                   fopacity = exp(-tau_before)*(1. - exp(-tau))
                    datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
                    if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
                    if (present(badpix)) then
@@ -413,13 +427,14 @@ subroutine interp3D_proj_opacity(x,y,z,pmass,npmass,hh,weight,dat,zorig,itype,np
                    wab = wfromtable(q2)
 
                    tau = wab*term
-                   tausmooth(ipix,jpix) = tausmooth(ipix,jpix) + tau
+                   tau_before = tausmooth(ipix,jpix)
+                   tausmooth(ipix,jpix) = tau_before + tau
                    !
                    !--render, obscuring previously drawn pixels by relevant amount
                    !  also calculate total optical depth for each pixel
                    !
                    if (backwards) then
-                      fopacity = exp(-tausmooth(ipix,jpix))*tau
+                      fopacity = exp(-tau_before)*(1. - exp(-tau))
                       datsmooth(ipix,jpix) = datsmooth(ipix,jpix) + fopacity*dati
                       if (present(datv)) datvpix(:,ipix,jpix) = datvpix(:,ipix,jpix) + fopacity*datvi(:)
                       if (present(badpix)) then

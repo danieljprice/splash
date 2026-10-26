@@ -263,6 +263,7 @@ subroutine get_binary(i1,i2,dat,x0,v0,angle,omega,ndim,ndimV,ncolumns,ix,ivx,ipm
 
  x1 = 0.
  x2 = 0.
+ dx = 0.
  x1(1:ndim) = dat(i1,ix(1:ndim))
  x2(1:ndim) = dat(i2,ix(1:ndim))
  !--get centre of mass

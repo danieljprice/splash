@@ -70,10 +70,10 @@ subroutine adjust_data_codeunits
  use part_utils,      only:locate_first_two_of_type,locate_nth_particle_of_type,&
                            locate_particle_from_string,get_binary,got_particles_of_type
  real :: hmin,dphi,domega,period
- real, dimension(3) :: x0,v0
+ real, dimension(3) :: x0,v0,xsink
  integer :: i,j,ierr,isink,isinkpos,itype,nlist,nerr
  integer :: ntot,isink1,isink2,isinklist(2),iorigin
- logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles
+ logical :: centreonsink,dontCentreVelocity,got_sinks,no_dust_particles,corotate,get_h
  character(len=20), dimension(3) :: list
  character(len=30) :: string
 
@@ -105,7 +105,8 @@ subroutine adjust_data_codeunits
     !
     isinklist = ienvlist('SPLASH_COROTATE',2)
     got_sinks = all(isinklist > 0)
-    if (lenvironment('SPLASH_COROTATE') .or. got_sinks) then
+    corotate = lenvironment('SPLASH_COROTATE')
+    if (corotate .or. got_sinks) then
        itype = get_sink_type(ntypes)
        if (itype > 0) then
           if (all(npartoftype(itype,:) < 2)) then
@@ -142,9 +143,11 @@ subroutine adjust_data_codeunits
     !--environment variable setting to centre plots on a selected sink particle
     !
     !--can specify either just "true" for sink #1, or specify a number for a particular sink
-    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK') .or. lenvironment('SPLASH_CENTER_ON_SINK')
+    centreonsink = lenvironment('SPLASH_CENTRE_ON_SINK')
+    if (.not.centreonsink) centreonsink = lenvironment('SPLASH_CENTER_ON_SINK')
     isink        = max(ienvironment('SPLASH_CENTRE_ON_SINK'),ienvironment('SPLASH_CENTER_ON_SINK'))
-    dontCentreVelocity = lenvironment('SPLASH_DONTCENTREVEL') .or. lenvironment('SPLASH_DONTCENTERVEL')
+    dontCentreVelocity = lenvironment('SPLASH_DONTCENTREVEL')
+    if (.not.dontCentreVelocity) dontCentreVelocity = lenvironment('SPLASH_DONTCENTERVEL')
     if (isink > 0 .or. centreonsink .and. all(ix(1:ndim) > 0)) then
        if (isink==0) isink = 1
        itype = get_sink_type(ntypes)
@@ -153,15 +156,20 @@ subroutine adjust_data_codeunits
              print "(a,i10,a)",' ERROR: --sink = ',isink,' but not enough sink particles'
           else
              if (iverbose >= 1) print*
-             if (isink < 10) then
-                print "(a,i1,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
-             else
-                print "(a,i3,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
-             endif
+             ! feature to centre on a sink particle but shift the origin to a different point
+             x0 = renvlist('SPLASH_SHIFT',ndim,errval=-666.)
+
+             print "(a,i0,a)",' :: CENTREING ON SINK ',isink,' from --sink flag'
              if (dontCentreVelocity) print "(a)",' :: NOT CENTREING VELOCITY'
              do j=1,nstepsinfile(ifileopen)
                 call locate_nth_particle_of_type(isink,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
-                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,iverbose,label='sink')
+                call centre_on_particle(isinkpos,dat(:,:,j),ntot,ndim,ndimV,ncolumns,dontCentreVelocity,&
+                     iverbose,label='sink',xi=xsink)
+                if (all(abs(x0+666.) > tiny(0.))) then
+                   print "(a,3(1x,es10.3),a)",' :: SHIFTING TO x=',x0(1:ndim),' from --shift flag'
+                   call shift_positions(dat(:,:,j),ntot,ndim,x0)
+                   print "(a,3(1x,es10.3))",' :: distance of sink from original origin = ',xsink(1:ndim)+x0(1:ndim)
+               endif
              enddo
           endif
        else
@@ -270,6 +278,19 @@ subroutine adjust_data_codeunits
     dat(:,1,1) = dat(:,1,1) - period*int(dat(:,1,1)/period)
  endif
 
+ !
+ !--recompute smoothing lengths (--geth / --get_h)
+ !
+ get_h = get_command_flag('geth')
+ if (.not.get_h) get_h = get_command_flag('get_h')
+ if (ndim >= 1 .and. get_h) then
+    call get_h_on_all_particles(dat,npartoftype,nstepsinfile(ifileopen),ndim,ncolumns)
+ endif
+
+ !
+ !--overwrite effective radius and effective temperature for sink particles
+ !
+ call set_sink_reff_and_teff(dat,npartoftype,iamtype,nstepsinfile(ifileopen),ntypes)
 
 end subroutine adjust_data_codeunits
 
@@ -316,14 +337,15 @@ end subroutine rotate_particles
 ! routine to centre particle positions and velocities
 ! on a particle location
 !------------------------------------------------------
-subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label)
+subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iverbose,label,xi)
  use labels, only:ix,ivx
  integer, intent(in) :: ipart,np,ndim,ndimV,ncol,iverbose
  logical, intent(in) :: dontCentreVelocity
  real, dimension(:,:), intent(inout) :: dat
+ character(len=*), intent(in) :: label
+ real, dimension(ndim), intent(out), optional :: xi
  real, dimension(ndim)  :: x0
  real, dimension(ndimV) :: v0
- character(len=*), intent(in) :: label
 
  !--sanity check inputs
  if (ipart <= 0) then
@@ -345,6 +367,9 @@ subroutine centre_on_particle(ipart,dat,np,ndim,ndimV,ncol,dontCentreVelocity,iv
     v0 = 0.
  endif
  call shift_particles(dat(:,:),np,ndim,ndimV,ncol,x0,v0)
+
+ ! optionally return the position we shifted things to
+ if (present(xi)) xi = x0
 
 end subroutine centre_on_particle
 
@@ -515,5 +540,87 @@ subroutine fake_twofluids(istart,iend,ndim,ndimV,dat,npartoftype,iamtype)
  endif
 
 end subroutine fake_twofluids
+
+!------------------------------------------------------
+! overwrite radius (h) and effective temperature for sink particles
+! from SPLASH_REFF and SPLASH_TEFF environment variables
+!------------------------------------------------------
+subroutine set_sink_reff_and_teff(dat,npartoftype,iamtype,nsteps,ntypes)
+ use params,         only:int1
+ use system_utils,   only:renvlist
+ use labels,         only:ih,itemp,get_sink_type
+ use part_utils,     only:locate_nth_particle_of_type
+ integer, intent(in) :: ntypes,nsteps
+ integer, dimension(:,:), intent(in) :: npartoftype
+ integer(int1), dimension(:,:), intent(in) :: iamtype
+ real, dimension(:,:,:), intent(inout) :: dat
+ real, dimension(:), allocatable :: reff_list,teff_list
+ integer :: i,j,itype,nsink,isinkpos,ntot
+
+ itype = get_sink_type(ntypes)
+ if (itype <= 0 .or. (ih <= 0 .and. itemp <= 0)) return
+ if (itype > size(npartoftype,1)) return
+
+ nsink = maxval(npartoftype(itype,1:min(nsteps,size(npartoftype,2))))
+ if (nsink <= 0) return
+
+ allocate(reff_list(nsink),teff_list(nsink))
+ reff_list = renvlist('SPLASH_REFF',nsink,errval=-666.)
+ teff_list = renvlist('SPLASH_TEFF',nsink,errval=-666.)
+ do j=1,min(nsteps,size(npartoftype,2))
+    do i=1,npartoftype(itype,j)
+       call locate_nth_particle_of_type(i,isinkpos,itype,iamtype(:,j),npartoftype(:,j),ntot)
+       if (isinkpos <= 0) cycle
+       if (reff_list(i) > 0. .and. ih > 0) then
+          print "(a,1pg10.3,a,i0)",' => setting Reff = ',reff_list(i),' for sink particle ',i
+          dat(isinkpos,ih,j) = reff_list(i)
+       endif
+       if (teff_list(i) > 0. .and. itemp > 0) then
+          print "(a,1pg10.3,a,i0)",' => setting Teff to ',teff_list(i),' for sink particle ',i
+          dat(isinkpos,itemp,j) = teff_list(i)
+       endif
+    enddo
+ enddo
+ deallocate(reff_list,teff_list)
+
+end subroutine set_sink_reff_and_teff
+
+!-------------------------------------------------------------------
+! compute h for all particles in the dataset if not already present
+! WARNING: this is a SLOW routine, use with caution
+!-------------------------------------------------------------------
+subroutine get_h_on_all_particles(dat,npartoftype,nsteps,ndim,ncol)
+ use labels,        only:ih,irho,ix,label,ipmass
+ use get_h,         only:compute_h_and_density
+ integer, intent(in) :: npartoftype(:,:),nsteps,ndim,ncol
+ real, dimension(:,:,:), intent(inout) :: dat
+ real, allocatable :: x(:,:),h(:),rho(:)
+ integer :: i,j,ntot
+ !
+ !--compute h for the dataset if not already present
+ !
+ if (ih == 0 .and. ncol > 1) then
+   ih = ncol - 1
+   label(ih) = 'h'
+ endif
+ if (irho == 0 .and. ncol > 2 .and. ipmass > 0) then
+   irho = ncol - 2
+   label(irho) = 'rho'
+ endif
+ if (ih < 0) return
+ do j=1,nsteps
+    ntot = sum(npartoftype(:,j))
+    allocate(x(ndim,ntot),h(ntot),rho(ntot))
+    do i=ix(1),ix(ndim)
+       x(i,1:ntot) = dat(1:ntot,i,j)
+    enddo
+    h = 0.
+    rho = 0.
+    call compute_h_and_density(ndim,ntot,1.0,x,h,rho)
+    dat(1:ntot,ih,j) = h
+    if (irho==ncol-2 .and. ipmass > 0) dat(1:ntot,irho,j) = rho(1:ntot)*dat(1:ntot,ipmass,j)
+ enddo
+
+end subroutine get_h_on_all_particles
 
 end module adjustdata

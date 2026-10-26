@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2025 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !  The plotting API for SPLASH 2.0 was written by James Wetter
@@ -30,7 +30,7 @@ program splash
 !---------------------------------------------------------------------------------
 !
 !     SPLASH - a plotting utility for SPH data in 1, 2 and 3 dimensions
-!     Copyright (C) 2005-2025 Daniel Price
+!     Copyright (C) 2005-2026 Daniel Price
 !     daniel.price@monash.edu
 !
 !     --------------------------------------------------------------------------
@@ -51,6 +51,64 @@ program splash
 !
 !     -------------------------------------------------------------------------
 !     Version history/ Changelog:
+!     4.1.0   : (23/10/26)
+!             splash compiles with nvfortran; CI check added;
+!             option to override ANY option in splash.defaults with command line flag --foo=bar;
+!             can print all default settings with --print-defaults flag;
+!             exact rendering now works with all kernels, also faster;
+!             bug fix with mass conservation in exact rendering and sub-pixel particles in all renders;
+!             fix seg fault in phantom reader with sink particles;
+!             unit tests of exact kernel integrals
+!     4.0.1   : (30/09/26)
+!             bug fix in ensuring even pixel numbers for mp4 device;
+!             bug fix with blank line of pixels at top of plot;
+!             unitless mhd test problems no longer trigger physical units;
+!             fix bug producing blank column when reading phantom dumps with APR
+!     4.0.0   : (31/08/26)
+!             user-friendly interactive mode;
+!             interactive buttons now appear in the plotting window;
+!             cursor movement generates context-dependent help;
+!             cube viz: slice through data using scroll wheel on your mouse;
+!             streamline plotting by default for vector plots;
+!             automatically detect and read phantom hdf5 chemistry data;
+!             allow simultaneous log of all abundance columns when chemistry data is present;
+!             added --limits=min,max flag and --xmin,--xmax flags to override limits in splash.limits file;
+!             added --lim=1.0 flag to set coordinate limits to centred box;
+!             flags --xminmargin,--xmaxmargin,--yminmargin,--ymaxmargin to adjust page margins;
+!             vector plot legend defaults to the same vertical position as the time legend;
+!             fixed bugs with utf8 symbols in giza, copyright symbol added to copyright string;
+!             splash to ndspmhd converter added;
+!             splash compiles with aocc compiler, added CI checks for ifx and aocc compilers;
+!             new /osx device for interactive plotting on macOS
+!     3.12.0  : (16/03/26)
+!             sub-pixel interpolation in splash to grid for non-Cartesian geometries;
+!             added --fcol flag in splash calc lightcurve for spectral hardening factor;
+!             seg fault in splash to grid fixed;
+!             automatically read visual extinction from AV_ files alongside phantom dumps;
+!             splash can now be compiled in parallel with make -j flag;
+!             added a column for kappa^2/omega^2 when plotting in cylindrical coordinates
+!     3.11.7  : (15/12/25)
+!             option for nonlinear corrections to Rafikov planet wake exact solution;
+!             automated plotting of .trajectory files from phantom orbit reconstructor^TM
+!             Shamrock native .sham data reader implemented;
+!             --shift=x,y,z flag to centre on sink but shift it to a different position;
+!             issues with template and license files fixed (thanks to Phil Wyett)
+!     3.11.6  : (30/10/25)
+!             bug fix causing seg fault in interactive mode if pixel number changes between window refreshes;
+!             bug fix with transparency in multistep multiple panels (thanks to Yann Bernard);
+!             bug fix reading velocity of sink particles from Phantom when extra arrays present after density in file;
+!             recognise velocity array in shamrock data
+!     3.11.5  : (02/09/25)
+!             --sortpad flag to sort files while pausing panels where sequence has finished;
+!             vtk reader works with structured grid format from Idefix code;
+!             fix seg fault in gadget-hdf5 read with SWIFT data;
+!             correctly identify dust growth columns + units from phantom dumps
+!     3.11.4  : (25/06/25)
+!             can print time as date and time with offset e.g. 2025-06-25 12:35 in legend;
+!             plot minimum size point when using scalable markers so sink particles are always visible (thanks to Yann Bernard);
+!             issue reading .comp files fixed; fixed issue reading column labels if fewer labels than columns;
+!             experimental --get_h flag to override smoothing lengths;
+!             fix bug with truncated name in copyright string (thanks to George Blaylock-Squibbs)
 !     3.11.3  : (23/04/25)
 !             bug fix with automatic choice of columns with -360, also render density automatically in 360 mode;
 !             --origin=1,1,1 can be used to set the origin to a fixed coordinate;
@@ -535,7 +593,7 @@ program splash
 !     defaults           : writes/reads default options to/from file
 !     exact              : module handling exact solution settings
 !     exact_fromfile     : reads an exact solution tabulated in a file
-!     exact_mhdshock     : some tabulated solutions for mhd shocks
+!     exact_mhdshock     : exact solution of MHD shock tubes
 !     exact_polytrope    : exact solution for a polytrope
 !     exact_rhoh         : exact relation between density and smoothing length
 !     exact_sedov        : exact solution for sedov blast wave
@@ -603,7 +661,8 @@ program splash
                       fileprefix,set_filenames
  use getdata,   only:get_data
  use geomutils, only:set_coordlabels
- use defaults,  only:defaults_set,defaults_read,defaults_set_360
+ use defaults,  only:defaults_set,defaults_read,defaults_set_360,defaults_read_command_line,&
+                      defaults_print
  use initialise,only:defaults_set_initial
  use limits,    only:read_limits,lim,set_limits
  use kernels,   only:ikernel,select_kernel_by_name,select_kernel
@@ -612,12 +671,13 @@ program splash
  use projections3D,      only:setup_integratedkernel
  use settings_data,      only:buffer_data,lowmemorymode,debugmode,ndim,ncolumns,iexact,&
                               ncalc,nextra,numplot,ndataplots,device,ivegotdata,iautorender,&
-                              track_string,iRescale,enforce_code_units,UseTypeinRenderings
+                              track_string,iRescale,enforce_code_units,UseTypeinRenderings,&
+                              iverbose,iCalcQuantities
  use system_commands,    only:get_number_arguments,get_argument
  use system_utils,       only:lenvironment,renvironment,envlist, &
                               get_environment_or_flag,get_command_option,get_command_flag
  use asciiutils,         only:read_asciifile,basename,match_column,&
-                              sort_filenames_for_comparison,split,extension
+                              sort_filenames_for_comparison,split_string,extension
  use write_pixmap,       only:isoutputformat,iwritepixmap,pixmapformat,isinputformat,ireadpixmap,readpixformat
  use convert,            only:convert_all
  use write_sphdata,      only:issphformat
@@ -625,25 +685,30 @@ program splash
  use analysis,           only:isanalysis
  use timestepping,       only:timestep_loop
  use settings_page,      only:interactive,nomenu,xminpagemargin,xmaxpagemargin,yminpagemargin,ymaxpagemargin
+ use settings_limits,    only:iadapt,iadaptcoords
  use settings_part,      only:initialise_coord_transforms
- use settings_render,    only:icolours,rgbfile,npix
+ use settings_render,    only:icolours,rgbfile
  use settings_xsecrot,   only:xsec_nomulti,xsecpos_nomulti,taupartdepth,use3Dopacityrendering,&
-                              irotate,anglex,angley,anglez
+                              irotate
  use colours,            only:rgbtable,ncoltable,icustom
  use readdata,           only:select_data_format,guess_format,print_available_formats
  use set_options_from_dataread, only:set_options_dataread
  use exact,              only:ispiral,nfiles_exact=>nfiles,filename_exact
  use multiplot,          only:itrans
- use labels,             only:lenlabel,label,unitslabel,shortlabel,irho
+ use labels,             only:lenlabel,label,unitslabel,shortlabel,irho,&
+                              print_headers,print_column_labels,print_column_labels_orig
  use interactive_routines, only:set_movie_mode
+ use particle_data,      only:headervals
  implicit none
  integer :: i,ierr,nargs,ipickx,ipicky,irender,icontour,ivecplot,il
  logical :: ihavereadfilenames,evsplash,doconvert,useall,iexist,use_360,got_format,do_multiplot
- logical :: using_default_options,got_exact
+ logical :: using_default_options,got_exact,sort,sort_pad,exact_flag
+ logical :: do_print_header,do_print_labels,do_print_labelsorig,do_print_defaults,quiet
+ logical :: limits_overridden
  character(len=120) :: string,exactfile
  character(len=12)  :: convertformat
  character(len=lenlabel) :: stringx,stringy,stringr,stringc,stringv
- character(len=*), parameter :: version = 'v3.11.3 [23rd April 2025]'
+ character(len=*), parameter :: version = 'v4.1.0 [23rd Oct 2026]'
 
  !
  ! initialise some basic code variables
@@ -660,7 +725,7 @@ program splash
  call set_filenames(trim(fileprefix))
 
  evsplash = .false.
- lowmemorymode = lenvironment('SPLASH_LOW_MEM') .or. lenvironment('SPLASH_LOWMEM')
+ lowmemorymode = lenvironment('SPLASH_LOWMEM')
  debugmode = lenvironment('SPLASH_DEBUG')
  !
  !  read all arguments off command line
@@ -678,6 +743,10 @@ program splash
  nomenu = .false.
  got_format = .false.
  got_exact = .false.
+ do_print_header = .false.
+ do_print_labels = .false.
+ do_print_labelsorig = .false.
+ do_print_defaults = .false.
  ipickx = 0
  ipicky = 0
  irender = 0
@@ -802,6 +871,14 @@ program splash
        case('-formats')
           call print_available_formats
           stop
+       case('header','-header')
+          do_print_header = .true.
+       case('labels','-labels')
+          do_print_labels = .true.
+       case('labelsorig','-labelsorig')
+          do_print_labelsorig = .true.
+       case('print-defaults','-print-defaults')
+          do_print_defaults = .true.
        case('-help')
           call print_usage
           print "(/,a,/)",'Userguide: https://splash-viz.readthedocs.io'
@@ -857,22 +934,30 @@ program splash
  if (nfiles > 0) then
     il = len_trim(rootname(1))
     if (extension(rootname(1))=='.ev'   .or. &
-        extension(rootname(1))=='.mdot' .or. &
-        extension(rootname(1))=='.out') then
+        extension(rootname(1))=='.mdot') then
        evsplash = .true.
        fileprefix = 'evsplash'
        call set_filenames(trim(fileprefix))
     endif
  endif
  !
- ! print header
+ ! quiet mode for --header / --labels / --print-defaults: skip banner and suppress read chatter
  !
- call print_header
+ quiet = do_print_header .or. do_print_labels .or. do_print_labelsorig .or. do_print_defaults
+ if (.not.quiet) call print_header
+ !
+ ! set quiet before defaults_set so even early messages honour iverbose=-1
+ !
+ if (quiet) iverbose = -1
  !
  ! set default options (used if defaults file does not exist)
  !
  call defaults_set(evsplash)
  if (use_360) call defaults_set_360()
+ !
+ ! re-apply quiet settings (defaults_set resets iverbose)
+ !
+ if (quiet) iverbose = -1
 
  !
  ! read default options from file if it exists
@@ -896,7 +981,7 @@ program splash
        else
           defaultsfile = trim(string)//'.defaults'
        endif
-       print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
+       if (iverbose >= 0) print "(a)",' Using SPLASH_DEFAULTS='//trim(defaultsfile)
        call defaults_read(defaultsfile)
        call set_filenames(trim(fileprefix))
        using_default_options = .false.
@@ -904,7 +989,20 @@ program splash
  endif
 
  !
+ ! re-apply quiet settings after defaults (namelist may reset iCalcQuantities)
+ !
+ if (quiet) then
+    iverbose = -1
+    if (do_print_header .and. .not.do_print_labels .and. .not.do_print_labelsorig) iCalcQuantities = .false.
+ endif
+
+ !
+ ! override any setting in the defaults file with --name=value on the command line
+ !
+ call defaults_read_command_line()
+ !
  ! set options based on command line flags that OVERRIDE settings in the defaults file
+ ! (applied before --print-defaults so printed settings match a normal run)
  !
  if (get_command_flag('kappa')) then ! e.g. --kappa=10.0
     taupartdepth = get_command_option('kappa',default=taupartdepth)
@@ -914,20 +1012,28 @@ program splash
     xsecpos_nomulti = get_command_option('xsec',default=xsecpos_nomulti)
     xsec_nomulti = .true.   ! set cross section to true if --xsec was set
  endif
- if (get_command_flag('anglex')) then  ! e.g. --anglex=1.0
-    anglex = get_command_option('anglex',default=anglex)
-    irotate = .true.
+ ! angles are set from the namelist override above, but also switch on rotation
+ if (get_command_flag('anglex')) irotate = .true.  ! e.g. --anglex=30
+ if (get_command_flag('angley')) irotate = .true.
+ if (get_command_flag('anglez')) irotate = .true.
+ if (get_command_flag('code')) then
+    iRescale = .false.
+    enforce_code_units = .true.
  endif
- if (get_command_flag('angley')) then  ! e.g. --angley=1.0
-    angley = get_command_option('angley',default=angley)
-    irotate = .true.
+ xminpagemargin = renvironment('SPLASH_XMINMARGIN',errval=xminpagemargin)
+ xmaxpagemargin = renvironment('SPLASH_XMAXMARGIN',errval=xmaxpagemargin)
+ yminpagemargin = renvironment('SPLASH_YMINMARGIN',errval=yminpagemargin)
+ ymaxpagemargin = renvironment('SPLASH_YMAXMARGIN',errval=ymaxpagemargin)
+ !--kernel given by --kernel=name or SPLASH_KERNEL takes priority over defaults file
+ call get_environment_or_flag('SPLASH_KERNEL',string)
+ if (len_trim(string) > 0) then
+    call select_kernel_by_name(string,verbose=(iverbose >= 0))
+ else
+    call select_kernel(ikernel,verbose=(iverbose >= 0))
  endif
- if (get_command_flag('anglez')) then  ! e.g. --anglez=1.0
-    anglez = get_command_option('anglez',default=anglez)
-    irotate = .true.
- endif
- if (get_command_flag('npix')) then  ! e.g. --npix=128
-    npix = get_command_option('npix',default=real(npix))
+ if (do_print_defaults) then
+    call defaults_print()
+    stop
  endif
  if (get_command_flag('track')) then  ! e.g. --track=508264
     call get_environment_or_flag('SPLASH_TRACK',track_string)
@@ -936,7 +1042,8 @@ program splash
     iexact = 17
     ispiral = 1
  endif
- if (.not.got_exact .and. get_command_flag('exact')) then  ! e.g. --exact=myfile.dat
+ exact_flag = get_command_flag('exact')
+ if (.not.got_exact .and. exact_flag) then  ! e.g. --exact=myfile.dat
     iexact = 2
     call envlist('exact',nfiles_exact,filename_exact)
     if (len_trim(filename_exact(1))==0) then
@@ -945,16 +1052,8 @@ program splash
     endif
  elseif (got_exact) then
     iexact = 2 ! override setting in defaults file
-    call split(exactfile,',',filename_exact,nfiles_exact)
+    call split_string(exactfile,',',filename_exact,nfiles_exact)
  endif
- if (get_command_flag('codeunits') .or. get_command_flag('code')) then
-    iRescale = .false.
-    enforce_code_units = .true.
- endif
- xminpagemargin = renvironment('SPLASH_MARGIN_XMIN',errval=0.)
- xmaxpagemargin = renvironment('SPLASH_MARGIN_XMAX',errval=0.)
- yminpagemargin = renvironment('SPLASH_MARGIN_YMIN',errval=0.)
- ymaxpagemargin = renvironment('SPLASH_MARGIN_YMAX',errval=0.)
  !
  ! check that we have got filenames
  !
@@ -966,7 +1065,7 @@ program splash
  endif
  if (nfiles >= 1 .and. rootname(1)(1:1) /= ' ') then
     ihavereadfilenames = .true.
-    if (nfiles > 1) print*,nfiles,' filenames read from command line'
+    if (nfiles > 1 .and. iverbose >= 0) print*,nfiles,' filenames read from command line'
  else
     ihavereadfilenames = .false.
     !print "(a)",' no filenames read from command line'
@@ -982,7 +1081,7 @@ program splash
        stop
     endif
  endif
- if (lowmemorymode) print "(a)",' << running in low memory mode >>'
+ if (lowmemorymode .and. iverbose >= 0) print "(a)",' << running in low memory mode >>'
 
  !
  ! Guess format if not already set
@@ -991,20 +1090,11 @@ program splash
     call guess_format(nfiles,rootname,ierr)
  endif
 
- if (ihavereadfilenames .and. get_command_flag('sort')) then
-    call sort_filenames_for_comparison(nfiles,rootname)
- endif
-
- if (ikernel==0) then
-    !--if no kernel has been set
-    call get_environment_or_flag('SPLASH_KERNEL',string)
-    if (len_trim(string) > 0) then
-       call select_kernel_by_name(string)
-    else
-       call select_kernel(0)
-    endif
- else
-    call select_kernel(ikernel)
+ ! options to sort filenames
+ sort     = get_command_flag('sort')
+ sort_pad = get_command_flag('sortpad')
+ if (ihavereadfilenames .and. (sort .or. sort_pad)) then
+    call sort_filenames_for_comparison(nfiles,rootname,pad=sort_pad)
  endif
 
  ! set geometry defaults
@@ -1031,6 +1121,17 @@ program splash
     ! (e.g. switch on sink particles if there is no gas)
     !
     call set_options_dataread()
+    !
+    ! print header tags/values and/or column labels, then exit
+    !
+    if (do_print_header .or. do_print_labels .or. do_print_labelsorig) then
+       if (do_print_header .and. allocated(headervals)) then
+          call print_headers(headervals(:,1))
+       endif
+       if (do_print_labels) call print_column_labels(ncolumns,ncalc)
+       if (do_print_labelsorig) call print_column_labels_orig(ncolumns)
+       stop
+    endif
     !
     !  translate from string to column id
     !
@@ -1072,8 +1173,15 @@ program splash
 
     !
     ! read plot limits from file (overrides get_data limits settings)
+    ! and apply any command-line limit overrides (--xmin, --limits, --lim, ...)
     !
-    if (ivegotdata) call read_limits(trim(limitsfile),ierr)
+    if (ivegotdata) then
+       call read_limits(trim(limitsfile),ierr,limits_overridden)
+       if (limits_overridden) then
+          iadapt = .false.
+          iadaptcoords = .false.
+       endif
+    endif
     !
     ! if device is mp4 auto-render column density in Hollywood mode if nothing is set
     !
@@ -1188,11 +1296,11 @@ subroutine print_header
 20 format(/,  &
    '  ( B | y ) ( D | a | n | i | e | l ) ( P | r | i | c | e )',/)
 
- print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2025 )'
+ print "(a)",'  ( '//trim(version)//' Copyright (C) 2005-2026 )'
  print 30
 30 format(/,    &
    ' * SPLASH comes with ABSOLUTELY NO WARRANTY. This is ',/, &
-   '   free software; can redistribute w/conditions (see LICENCE) *',/,/, &
+   '   free software; can redistribute w/conditions (see LICENSE) *',/,/, &
    '           https://splash-viz.readthedocs.io',/,/, &
    ' Please cite Price (2007), PASA 24, 159 if you use SPLASH in print',/)
 
@@ -1211,7 +1319,7 @@ subroutine print_usage(quit)
 
  print "(a,/)",'Command line options:'
  print "(a)",' -f format         : input file format to be read (default is ascii, --formats for full list)'
- print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash '
+ print "(a)",' -p fileprefix     : change prefix to ALL settings files read/written by splash'
  !print "(a)",' -d defaultsfile   : change name of defaults file read/written by splash'
  !print "(a)",' -l limitsfile     : change name of limits file read/written by splash'
  print "(a)",' -e, -ev           : use default options best suited for line plotting (.ev files)'
@@ -1219,6 +1327,14 @@ subroutine print_usage(quit)
  print "(a)",' -b, --buffer      : buffer all data files into memory'
  !print "(a)",' -lm, -lowmem      : use low memory mode [applies only to sphNG data read at present]'
  print "(a)",' -o pixformat      : dump pixel map in specified format (use just -o for list of formats)'
+ print "(a)",' --header          : print dump file header tags and values, then exit'
+ print "(a)",' --labels          : print column labels one per line, then exit'
+ print "(a)",' --labelsorig      : print original column labels (no units), then exit'
+ print "(a)",' --formats         : list all supported data formats, then exit'
+ print "(a)",' --print-defaults  : print all settings (with any --name=value overrides applied), then exit'
+ print "(a)",' --defaults=file   : settings file to use if no splash.defaults in current directory'
+ print "(a)",' --kernel=quintic  : change the smoothing kernel used for interpolation (e.g. cubic, quintic)'
+ print "(a)",' --debug           : turn on verbose debugging output'
  print "(/,a,/)",'Command line plotting mode:'
  print "(a)",' -x column         : x axis'
  print "(a)",' -y column         : y axis'
@@ -1226,13 +1342,19 @@ subroutine print_usage(quit)
  print "(a)",' -vec[tor] column  : vector quantity to plot with arrows'
  print "(a)",' -c[ontour] column : contoured quantity'
  print "(a)",' -multi            : multiplot'
- print "(a)",' -dev device       : specify plotting device on command line (e.g. -dev /xw)'
+ print "(a)",' -dev device       : plotting device (e.g. -dev /xw, -dev /png, -dev /pdf or -dev myplot.pdf)'
  print "(a)",' --movie           : shortcut for -dev /mp4 to make a movie from plot sequence'
  print "(a)",' --xsec=1.0        : specify location of cross section slice'
  print "(a)",' --kappa=1.0       : specify opacity, and turn on opacity rendering'
  print "(a)",' --anglex=30       : rotate around x axis (similarly --angley, --anglez)'
  print "(a)",' --code            : enforce code units (also --codeunits)'
  print "(a)",' --sink=1          : centre on sink particle number 1'
+ print "(a)",' --shift=1,0,0     : with --sink, shift the sink to the specified x,y,z position'
+ print "(a)",' --dontcentrevel   : with --sink or --origin, do not subtract the sink/particle velocity'
+ print "(a)",' --corotate=1,2    : plot in frame corotating with sink particles 1 and 2'
+ print "(a)",' --vzero=1,0,0     : subtract reference velocity (in code units) from all particles'
+ print "(a)",' --wake=1,3        : plot spiral wake from planet (sink 3) orbiting star (sink 1)'
+ print "(a)",' --beam=2.0        : enforce minimum smoothing length (in code units)'
  print "(a)",' --origin=1,0,0    : centre on specified x,y,z coordinates'
  print "(a)",' --origin=666      : set coordinate system origin to particle number 666'
  print "(a)",' --origin=maxdens  : set coordinate system origin to particle at maximum density'
@@ -1240,6 +1362,17 @@ subroutine print_usage(quit)
  print "(a)",' --track=maxdens   : track particle at maximum density'
  print "(a)",' --exact=file1,f2  : read and plot exact solution from ascii files file1 and f2'
  print "(a)",' --sort            : sort filenames for comparison (e.g. snap_000 snap1_000 snap2_000)'
+ print "(a)",' --sortpad         : sort filenames and pad all sequences to same length'
+ print "(a)",' --xmin=0,--xmax=1 : override plot limits (similarly --ymin, --ymax, --zmin, --zmax)'
+ print "(a)",' --lim=1.0         : set plot limits to centred box [-1,1] on all coordinate axes'
+ print "(a)",' --limits=-1,1     : set plot limits on all coordinate axes (or one min,max pair per axis)'
+ print "(a)",' --xminmargin=0.1  : adjust page margins (similarly --xmaxmargin, --yminmargin, --ymaxmargin)'
+ print "(/,a,/)",'Overriding settings:'
+ print "(a)",' --name=value      : set any variable in splash.defaults (e.g. --npix=512 --iaxis=-2 --legendtext=t=)'
+ print "(a)",'                     (use --print-defaults to list all variable names and current values)'
+ print "(a)",' --foo=bar         : same as setting environment variable SPLASH_FOO=bar (or e.g. --sink for'
+ print "(a)",'                     SPLASH_CENTRE_ON_SINK); format-specific options such as --cm, --dense for'
+ print "(a)",'                     phantom are listed at https://splash-viz.readthedocs.io/en/latest/getting-started.html'
  call print_available_formats('short')
  print "(a)"
  ltemp = issphformat('none')

@@ -150,7 +150,25 @@ subroutine read_data_flash_hdf5(dumpfile,indexstart,ipos,nstepsread)
 
  write(*,"(26('>'),1x,a,1x,26('<'))") trim(dumpfile)
 
+ ierr = 0
+ nprint = 0
+ ncolstep = 0
  call read_flash_hdf5_header(cstring(dumpfile),tread,nprint,ncolstep,ierr)
+ if (ierr /= 0) then
+    print "(a,i3)",' *** ERROR reading FLASH HDF5 header, ierr = ',ierr
+    nstepsread = 0
+    return
+ endif
+ if (nprint <= 0) then
+    print "(a)",' *** ERROR: no tracer particles in FLASH HDF5 file ***'
+    nstepsread = 0
+    return
+ endif
+ if (ncolstep <= 5) then
+    print "(a)",' *** ERROR: invalid FLASH HDF5 column count ***'
+    nstepsread = 0
+    return
+ endif
  ncolstep = ncolstep - 1   ! subtract particle ID column
  print "(a,i10,a,es10.3,a,i2)",' npart = ',nprint,' time = ',tread
 

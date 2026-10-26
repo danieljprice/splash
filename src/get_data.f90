@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -87,10 +87,12 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
  if (present(firsttime)) isfirsttime = firsttime
  if (debugmode) then
     iverbose = 2
- elseif (isfirsttime) then
-    iverbose = 1
- else
-    iverbose = 0
+ elseif (iverbose >= 0) then
+    if (isfirsttime) then
+       iverbose = 1
+    else
+       iverbose = 0
+    endif
  endif
 
  ! ipos is the offset for *which* timestep to read from files containing multiple steps
@@ -122,7 +124,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
     !
     nstepsinfile(1:nfiles) = 0
     required = .true.
-    print "(/a)",' reading ALL dumpfiles into memory'
+    if (iverbose >= 0) print "(/a)",' reading ALL dumpfiles into memory'
     !call endian_info()
 
     do i=1,nfiles
@@ -132,7 +134,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
        if (nstepsinfile(i) > 0 .and. ncolumnsfirst==0 .and. ncolumns > 0) then
           ncolumnsfirst = ncolumns
        elseif (nstepsinfile(i) > 0 .and. ncolumns /= ncolumnsfirst) then
-          print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
+          if (iverbose >= 0) print "(a,i2,a,i2,a)",' WARNING: file contains ',ncolumns, &
            ' columns (',ncolumnsfirst,' previously)'
           ncolumns = max(ncolumns,ncolumnsfirst)
        endif
@@ -144,7 +146,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
     else
        ncolumns = 0
     endif
-    print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
+    if (iverbose >= 0) print "(a,i6,a,i3)",' >> Finished data read, nsteps = ',nsteps,' ncolumns = ',ncolumns
 
     !
     !--set labels (and units) for each column of data
@@ -204,7 +206,7 @@ subroutine get_data(ireadfile,gotfilenames,firsttime,iposinfile)
     !   print "(a)",' trying different endian'
     !   call read_data_otherendian(rootname(ireadfile),istart,nstepsinfile(ireadfile))
     !endif
-    if (dotiming) then
+    if (dotiming .and. iverbose >= 0) then
        call wall_time(t2)
        if (t2-t1 > 1.) then
           if (ipartialread) then
@@ -319,7 +321,7 @@ subroutine get_labels
  use asciiutils,     only:read_asciifile
  use filenames,      only:fileprefix
  use labels,         only:label
- use settings_data,  only:ncolumns
+ use settings_data,  only:ncolumns,iverbose
  use particle_data,  only:maxcol
  use params,         only:maxplot
  use readdata,       only:set_labels
@@ -339,7 +341,7 @@ subroutine get_labels
  nlabelsread = 0
  if (iexist) then
     call read_asciifile(trim(fileprefix)//'.columns',nlabelsread,label(1:min(ncolumns,maxcol,maxplot)))
-    if (nlabelsread < ncolumns) &
+    if (nlabelsread < ncolumns .and. iverbose >= 0) &
        print "(a,i3)",' end of file in '//trim(fileprefix)//'.columns file: labels read to column ',nlabelsread
  endif
 
@@ -354,7 +356,8 @@ subroutine rescale_data(firsttime,nsteps_read)
  use filenames,      only:unitsfile
  use labels,         only:label,unitslabel,unitslabel_default,labelzintegration,labelzintegration_default,&
                           map_shifted_columns,labelorig,labelreq
- use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode,enforce_code_units
+ use settings_data,  only:ncolumns,iRescale,idefaults_file_read,iverbose,debugmode, &
+                          enforce_code_units,code_units_are_unity
  use settings_units, only:units,units_calc,units_default,unitzintegration,unitzintegration_default,read_unitsfile
  use particle_data,  only:maxcol,dat,time
  use params,         only:maxplot
@@ -367,13 +370,16 @@ subroutine rescale_data(firsttime,nsteps_read)
  ! turn physical units on by default if:
  ! 1) the data read has set the physical units
  ! 2) they have not been switched off
+ ! 3) the dump is not in code units (udist = umass = utime = 1).
+ !    umagfd can be non-unity even then, and must not force the switch.
  !
  if (firsttime .and. any(abs(units_default(0:ncolumns)-1.0) > tiny(units))) then
     units = units_default
     unitslabel = unitslabel_default
     unitzintegration = unitzintegration_default
     labelzintegration = labelzintegration_default
-    if (.not.idefaults_file_read .and. .not.enforce_code_units) iRescale = .true.
+    if (.not.idefaults_file_read .and. .not.enforce_code_units &
+        .and. .not.code_units_are_unity) iRescale = .true.
  endif
 
  !
@@ -382,7 +388,8 @@ subroutine rescale_data(firsttime,nsteps_read)
  if (firsttime) call read_unitsfile(trim(unitsfile),ncolumns,ierr,iverbose)
 
  if (firsttime) then
-    labelorig = ''
+    ! save bare column labels before units are appended
+    labelorig = label
     labelreq = ''
  endif
 

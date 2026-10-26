@@ -52,7 +52,7 @@ void read_gadget_hdf5_header(char *filename,
     hid_t file_id;
     hid_t group_id, dataset_id;
     hid_t attrib_id, dataspace_id;
-    herr_t status;
+    herr_t status = 0;
     herr_t HDF5_error = -1;
 
     *ierr = 0;
@@ -108,6 +108,12 @@ void read_gadget_hdf5_header(char *filename,
         attrib_id = H5Aopen_idx(group_id, i);
         ssize_t attr_status;
         attr_status = H5Aget_name(attrib_id, 256, name);
+        if (attr_status == HDF5_error)
+        {
+            printf(" ERROR reading attribute %s \n", name);
+            *ierr = 3;
+            return;
+        }
 
         hid_t type_id;
         type_id = H5Aget_type(attrib_id);
@@ -189,11 +195,13 @@ void read_gadget_hdf5_header(char *filename,
         {
             // Read attribute and automatically convert to double
             status = H5Aread(attrib_id, H5T_NATIVE_DOUBLE, &headervals[i]);
-            set_header_label_gadget(&i, name);
 
             if (status == HDF5_error)
             {
                 printf(" ERROR reading attribute %s \n", name);
+            } else {
+                int icol = i;
+                set_header_label_gadget(&icol, name);
             }
         }
         else
@@ -398,7 +406,7 @@ void read_gadget_hdf5_data(char *filename,
     hid_t group_id;
     herr_t status;
     herr_t HDF5_error = -1;
-    char groupname[12];
+    char groupname[32];
     char datasetname[256], namevels[256], namemass[256];
 
     int i, ndimV, rank;
@@ -657,4 +665,22 @@ void get_mass_info(hid_t group_id, char *name, int *rank)
         *rank = get_rank_by_name(group_id, name);
     }
     return;
+}
+
+/*
+ * return 1 if filename looks like Gadget/SWIFT/Arepo HDF5 (has Header group)
+ */
+int gadget_hdf5_is_gadget_file(char *filename)
+{
+    hid_t file_id;
+    int is_gadget = 0;
+    herr_t HDF5_error = -1;
+
+    file_id = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id == HDF5_error)
+        return 0;
+    if (checkfordataset(file_id, "Header"))
+        is_gadget = 1;
+    H5Fclose(file_id);
+    return is_gadget;
 }

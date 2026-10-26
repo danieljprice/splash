@@ -48,14 +48,7 @@ CAIRO_CFLAGS= -I$(X11_DIR)/include
 # (giza is the default backend for splash v2.x, but can
 #  still be compiled with PGPLOT, just with disabled features)
 #--------------------------------------------------------------
-ifneq ($(BACKEND), pgplot)
-#-- C A I R O --
-   GIZA_DIR= $(PREFIX)
-   PLOTLIB= giza-fortran.F90 plotlib_giza.f90
-   PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
-   CFLAGS= -fPIC -Wall -Wextra -O3 -g
-   CC = gcc
-else
+ifeq ($(BACKEND), pgplot)
 #-- P G P L O T --
    PLOTLIB= plotlib_pgplot.f90
 #
@@ -63,6 +56,17 @@ else
 # (some settings of the SYSTEM variable for specific machines overwrite this)
 #
    PGPLOTLIBS = -L$(PGPLOT_DIR) -lpgplot -lpng
+else
+   ifeq ($(BACKEND), none)
+      PLOTLIB= plotlib_mock.f90
+   else
+#-- C A I R O --
+      GIZA_DIR= $(PREFIX)
+      PLOTLIB= giza-fortran.F90 plotlib_giza.f90
+      PGPLOTLIBS = -L$(GIZA_DIR)/lib -lgiza $(CAIRO_LIBS)
+      CFLAGS= -fPIC -Wall -Wextra -O3 -g
+      CC = gcc
+   endif
 endif
 #--------------------------------------------------------------
 
@@ -145,6 +149,8 @@ else
     CXXLIBS= -lstdc++
 endif
 
+PIELDFLAGS= -pie
+
 #--------------------------------------------------------------
 #  the following are general settings for particular compilers
 #
@@ -159,15 +165,16 @@ endif
 ifeq ($(SYSTEM), gfortran)
 #  gfortran compiler (part of gcc 4.x.x)
    FC= gfortran
-   FFLAGS= -O3 -fPIC
+   FFLAGS= -O3 -fPIC -Wall -Wextra -Wno-unused-dummy-argument
    DBLFLAGS= -fdefault-real-8 -fdefault-double-8
    SYSTEMFILE= system_f2003.f90
-   DEBUGFLAG= -Wall -Wextra -pedantic -g -frange-check -fcheck=all -fbacktrace \
+   DEBUGFLAG= -Wextra -g -frange-check -fcheck=all -fbacktrace \
               -finit-real=NaN #-ffpe-trap=invalid,zero,overflow
    OMPFLAGS= -fopenmp
    ENDIANFLAGBIG= -fconvert=big-endian
    ENDIANFLAGLITTLE= -fconvert=little-endian
    KNOWN_SYSTEM=yes
+   NOWARNFLAG=-Werror
 endif
 
 ifeq ($(SYSTEM),sunf95)
@@ -186,7 +193,7 @@ endif
 ifeq ($(SYSTEM),ifort)
 #  this is for the intel fortran compiler (version 10)
    FC= ifort
-   FFLAGS= -O3 -nbs
+   FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
    DEBUGFLAG= -C -g
@@ -202,10 +209,10 @@ endif
 ifeq ($(SYSTEM),ifx)
 #  this is for the intel fortran compiler (version 10)
    FC= ifx
-   FFLAGS= -O3 -nbs
+   FFLAGS= -O3 -nbs -fPIC
    OMPFLAGS= -qopenmp
    DBLFLAGS= -r8
-   DEBUGFLAG= -C -g
+   DEBUGFLAG= -check all -WB -traceback -g -debug all
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -convert big_endian
    ENDIANFLAGLITTLE= -convert little_endian
@@ -213,20 +220,41 @@ ifeq ($(SYSTEM),ifx)
    KNOWN_SYSTEM=yes
    CC=icc
    CFLAGS=-Wall -O3 -fPIC
+   NOWARNFLAG= -diag-error=warn,remark,vec,par,openmp
 endif
 
-ifeq ($(SYSTEM),pgf90)
-#  this is for the Portland Group Fortran 90 compiler (tested with version 7.2-5)
-   FC= pgf90
-   FFLAGS= -fast -mcmodel=medium -Mbackslash -Ktrap=none
+ifeq ($(SYSTEM),aocc)
+   FC= flang
+   FFLAGS= -O3 -fPIC -Qunused-arguments
+   OMPFLAGS= -fopenmp
+   DBLFLAGS= -fdefault-real-8 -fdefault-double-8
+   DEBUGFLAG= -fcheck=all -g --debug
+   SYSTEMFILE= system_f2003.f90
+   ENDIANFLAGBIG= -fconvert=big-endian
+   ENDIANFLAGLITTLE= -fconvert=little-endian
+   KNOWN_SYSTEM=yes
+   CC= clang
+   CFLAGS= -O3 -fPIC
+   NOWARNFLAG=-Werror
+   PIELDFLAGS= -fpie
+endif
+
+ifeq ($(SYSTEM),nvfortran)
+#  NVIDIA HPC SDK Fortran compiler
+   FC= nvfortran
+   FFLAGS= -O3 -fPIC -Mbackslash
    DBLFLAGS= -r8
-   DEBUGFLAG= -C -g -gopt -Mbounds -Mchkfpstk -Mchkptr -Mchkstk -Mcoff \
-              -Mdwarf1 -Mdwarf2 -Melf -Mpgicoff -traceback
+   DEBUGFLAG= -C -g -traceback -Mbounds
    OMPFLAGS= -mp
    SYSTEMFILE= system_f2003.f90
    ENDIANFLAGBIG= -Mbyteswapio  # only works on a little-endian machine
    ENDIANFLAGLITTLE=
    KNOWN_SYSTEM=yes
+   NOWARNFLAG= -Werror
+   CC= nvc
+   CXX= nvc++
+   # could not get nvfortran build to work with -pie
+   PIELDFLAGS=
 endif
 
 ifeq ($(SYSTEM),pathf95)
@@ -297,6 +325,10 @@ endif
 # add debugging flags at compile time
 ifeq ($(DEBUG),yes)
     FFLAGS += $(DEBUGFLAG)
+endif
+
+ifeq ($(NOWARN), yes)
+    FFLAGS+= $(NOWARNFLAG)
 endif
 
 #
@@ -371,21 +403,24 @@ endif
 # modules must be compiled in the correct order to check interfaces
 # really should include all dependencies but I am lazy
 
-READFILES= read_data_ascii.f90           read_data_sphNG.f90     read_data_ndspmhd.f90 \
-           read_data_gadget.f90          read_data_VINE.f90      read_data_sro.f90 \
-           read_data_dragon.f90          read_data_seren.f90     read_data_tipsy.f90 \
-           read_data_mhutch.f90          read_data_UCLA.f90      read_data_aly.f90 \
-           read_data_bauswein.f90        read_data_egaburov.f90  read_data_starsmasher.f90 \
-           read_data_gadget_jsb.f90      read_data_foulkes.f90   read_data_jjm.f90 \
-           read_data_jjm_multiphase.f90  read_data_mbate.f90     read_data_oilonwater.f90 \
-           read_data_rsph.f90            read_data_urban.f90     read_data_spyros.f90 \
-           read_data_vanaverbeke.f90     read_data_vtk.f90
+READFILES= utils_json.f90 \
+           read_data_ascii.f90           read_data_sphNG.f90        read_data_ndspmhd.f90 \
+           read_data_gadget.f90          read_data_VINE.f90         read_data_sro.f90 \
+           read_data_dragon.f90          read_data_seren.f90        read_data_tipsy.f90 \
+           read_data_mhutch.f90          read_data_UCLA.f90         read_data_aly.f90 \
+           read_data_bauswein.f90        read_data_egaburov.f90     read_data_starsmasher.f90 \
+           read_data_gadget_jsb.f90      read_data_foulkes.f90      read_data_jjm.f90 \
+           read_data_jjm_multiphase.f90  read_data_mbate.f90        read_data_oilonwater.f90 \
+           read_data_rsph.f90            read_data_urban.f90        read_data_shamrock.f90 \
+           read_data_spyros.f90          read_data_vanaverbeke.f90  read_data_vtk.f90
 
-READFILES_HDF5= hdf5_helper_utils.c            read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
+READFILES_HDF5= hdf5_helper_utils.c             read_data_gadget_hdf5_utils.c   read_data_gadget_hdf5.f90 \
                 read_data_amuse_hdf5_utils.c    read_data_amuse_hdf5.f90  \
                 read_data_cactus_hdf5_utils.c   read_data_cactus_hdf5_futils.f90   read_data_cactus_hdf5.f90 \
-                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90
-                #read_data_falcON_hdf5_utils.cc  read_data_falcON_hdf5_utils.f90    read_data_falcON_hdf5.f90 \
+                read_data_flash_hdf5_utils.c    read_data_flash_hdf5.f90 \
+                read_phantom_hdf5_utils.c       read_data_phantom_hdf5.f90 \
+                read_composition_hdf5.f90 \
+                read_data_falcON_hdf5_utils.c   read_data_falcON_hdf5.f90
 
 READFILES_FITS= write_fits.f90 read_data_fits.f90
 
@@ -434,7 +469,7 @@ endif
 SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          asciiutils.f90 byteswap.f90 \
          labels.f90 partutils.f90 transform.f90 setpage.f90 sort.f90 \
-         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernels.f90 \
+         prompting.f90 promptlist.f90 map_columns.f90 geometry.f90 kernel_integrals.f90 kernels.f90 \
          plotutils.f90 blackbody.f90 colourbar.f90 \
          colours.f90 colourparts.f90 timing.f90 pagecolours.f90 \
          interpolation.f90 interpolate1D.f90 interpolate2D.f90 \
@@ -442,25 +477,26 @@ SOURCES= $(PLOTLIB) globaldata.f90 physcon.f90 utils_vectors.f90 \
          interpolate3D_proj_geom.f90 \
          interpolate3D_opacity.f90 interpolate_vec.f90 interpolate3D.f90 \
          units.f90 limits.f90 geomutils.f90 dataread_utils.f90 \
-         write_data_gadget.f90 write_data_phantom.f90 write_pfm.f90 write_pixmap.f90 \
-         write_griddata.f90 write_sphdata.f90 read_composition.f90 \
+         write_data_gadget.f90 write_data_phantom.f90 write_data_ndspmhd.f90 write_pfm.f90 write_pixmap.f90 \
+         labels_chem.f90 write_griddata.f90 write_sphdata.f90 read_composition.F90 \
          $(SYSTEMFILE) system_utils.f90 \
-         cubicsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
-         exact_fromfile.f90 exact_shock.f90 exact_Cshock.f90 exact_coolingshock.f90 exact_mhdshock.f90 \
+         cubicsolve.f90 nonlinsolve.f90 discplot.f90 fparser.f90 parsetext.f90 \
+         exact_fromfile.f90 exact_Cshock.f90 exact_coolingshock.f90 exact_mhdshock.f90 exact_mhdshock_sr.f90 \
          exact_polytrope.f90 exact_rhoh.f90 exact_rochelobe.f90 \
-         exact_sedov.f90 exact_shock_sr.f90 exact_wave.f90 \
+         exact_sedov.f90 exact_shock.f90 exact_shock_sr.f90 exact_wave.f90 \
          exact_toystar1D.f90 exact_toystar2D.f90 exact_function.f90 exact_planetdisc.f90\
          exact_densityprofiles.f90 exact_dustywaves.f90 exact_torus.f90 exact_bondi.f90 \
-         exact_ringspread.f90 exact_gresho.f90 exact.f90 shapes.f90 \
+         exact_ringspread.f90 exact_gresho.f90 exact.f90 \
+         legends.f90 interactive_utils.f90 interactive_help.f90 shapes.f90 \
          allocate.f90 titles.f90 calc_quantities.f90 contours.f90 \
-         legends.f90 options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
+         options_render.f90 options_particleplots.f90 options_xsecrotate.f90 \
          options_limits.f90 options_page.f90 imageutils.f90 \
          lightcurve_utils.f90 $(READFILES) lightcurve.f90 extinction.f90 \
-         read_data.F90 \
+         read_data.F90 get_h.f90\
          adjust_data.f90 set_options_from_dataread.f90 get_data.f90 \
          options_data.f90 options_powerspec.f90 \
          options_vecplot.f90 pdfs.f90 \
-         particleplot.f90 interactive.f90  \
+         particleplot.f90 interactive_buttons.f90 interactive.f90  \
          convert_grid.f90 \
          analysis.f90 convert.f90 fieldlines.f90 \
          powerspectrums.f90 render.f90 \
@@ -481,8 +517,8 @@ OBJECTS= $(OBJECTS3:.cc=.o)
 #
 
 all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS)
-	@echo; echo ' SPLASH v3 successfully compiled! ';
+	$(FC) $(FFLAGS) -o $(BINDIR)/splash $(OBJECTS) $(LDFLAGS) $(PIELDFLAGS)
+	@echo; echo ' SPLASH v4 successfully compiled! ';
 	@echo; echo '   "sudo make install" to copy the binary to $(DESTDIR)$(PREFIX)/bin';
 	@echo; echo ' If you do not have admin privileges, add the following to your .bashrc or equialent:';
 	@echo; echo '   export SPLASH_DIR=$$HOME/splash';
@@ -499,22 +535,13 @@ all: checksystem $(RUN_CHECKS) $(OBJECTS) read_data.o
 	@echo "   alias tsplash='splash -f tipsy' ";
 	@echo "   alias msplash='splash -f mhutch' "; echo;
 
-#---falcON HDF5 read ---
-falcon: falcON
-
-falcON: falcON_hdf5
-
-falcON_hdf5: checksystem checkhdf5 $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/fsplash $(OBJECTS) read_data_falcON_hdf5_utils.o read_data_falcON_hdf5.o $(LDFLAGS) $(CXXLIBS) $(HDF5LIBS) -lhdf5_cpp
-
-read_data_falcON_hdf5_utils.o: read_data_falcON_hdf5_utils.cc
-	$(CXX) $(CXXFLAGS)  -std=c++11 $(HDF5INCLUDE) -c $< -o $@
+#---falcON HDF5 read (now compiled as C and included in the main binary) ---
 
 
 
 #---SILO read ---
 silo: checksystem checksilo $(OBJECTS) read_data_silo_utils.o read_data_silo.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(HDF5LIBS) -lsiloh5
+	$(FC) $(FFLAGS) -o $(BINDIR)/silosplash $(OBJECTS) read_data_silo_utils.o read_data_silo.o $(LDFLAGS) $(PIELDFLAGS) $(HDF5LIBS) -lsiloh5
 
 read_data_silo_utils.o: read_data_silo_utils.c
 	$(CC) $(CFLAGS) $(HDF5INCLUDE) -c $< -o $@
@@ -526,7 +553,7 @@ SRCGRID2PDF= $(SYSTEMFILE) globaldata.f90 prompting.f90 transform.f90 \
              asciiutils.f90 write_griddata.f90 pdfs.f90 grid2pdf.f90
 OBJGRID2PDF= ${SRCGRID2PDF:.f90=.o}
 grid2pdf: checksystem $(OBJGRID2PDF)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJGRID2PDF) $(PIELDFLAGS)
 
 #
 #
@@ -536,7 +563,7 @@ liball: lib libexact libread
 #
 # libsplash: library version of splash interpolation routines
 #
-SRCLIB= sort.f90 asciiutils.f90 kernels.f90 timing.f90 geometry.f90 \
+SRCLIB= sort.f90 asciiutils.f90 kernel_integrals.f90 kernels.f90 timing.f90 geometry.f90 \
       interpolation.f90 interpolate1D.f90 interpolate2D.f90 interpolate3D.f90 \
       interpolate3D_geom.f90 interpolate3D_projection.f90 \
       interpolate3D_proj_geom.f90 interpolate3D_opacity.f90 interpolate3D_xsec.f90 \
@@ -553,28 +580,32 @@ lib: $(OBJLIB)
 #
 # libexact: exact solution library
 #
-SRCLIBEXACT= plotlib_mock.f90 libutils.f90 geometry.f90 exact_shock.f90 \
+SRCLIBEXACT= $(PLOTLIB) libutils.f90 geometry.f90 exact_shock.f90 \
 	exact_shock_sr.f90 exact_sedov.f90 \
 	exact_polytrope.f90 exact_toystar1D.f90 exact_toystar2D.f90 exact_gresho.f90 \
-	exact_mhdshock.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
-	exact_ringspread.f90 cubicsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
+	exact_mhdshock.f90 exact_mhdshock_sr.f90 exact_rhoh.f90 exact_densityprofiles.f90 exact_torus.f90 \
+	exact_ringspread.f90 cubicsolve.f90 nonlinsolve.f90 exact_dustywaves.f90 exact_rochelobe.f90 \
 	exact_Cshock.f90 exact_coolingshock.f90 exact_planetdisc.f90 exact_bondi.f90 \
 	libexact.f90
 OBJLIBEXACT=${SRCLIBEXACT:.f90=.o}
 OBJLIBEXACTALL=${OBJLIBEXACT:.F90=.o}
 
-.PHONY: libexact
-libexact: checksystem $(OBJLIBEXACTALL)
-	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
+.PHONY: libexact libexact2
+libexact:
+	${MAKE} libexact2 BACKEND=none
 
+libexact2: checksystem $(OBJLIBEXACTALL)
+	$(FC) -shared -fPIC $(FFLAGS) $(FPPFLAGS) $(DBLFLAGS) $(OBJLIBEXACTALL) -o libexact.so
 
 #
 # libread: data read library
 #
-SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 allocate.f90 byteswap.f90 $(SYSTEMFILE)\
+SRCLIBREAD= globaldata.f90 physcon.f90 asciiutils.f90 libutils.f90 labels.f90 labels_chem.f90 \
+            allocate.f90 byteswap.f90 $(SYSTEMFILE)\
             system_utils.f90 geometry.f90 prompting.f90 fparser.f90 units.f90 timing.f90\
             sort.f90 geomutils.f90 partutils.f90 calc_quantities.f90 dataread_utils.f90 \
-            utils_vectors.f90 lightcurve_utils.f90 read_kepler.f90 $(READFILES) read_data.F90 \
+            utils_vectors.f90 lightcurve_utils.f90 read_composition.F90 \
+            $(READFILES) read_data.F90 kernel_integrals.f90 kernels.f90 get_h.f90\
             adjust_data.f90 limits.f90 get_data.f90 initialise.f90 read.f90 libread.f90
 
 OBJLIBREAD=${SRCLIBREAD:.f90=.o}
@@ -588,7 +619,7 @@ libread: checksystem $(OBJLIBREADALL)
 #
 # splash image manipulation utilities
 #
-SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+SOURCESIMLIB= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernel_integrals.f90 kernels.f90 \
               interpolation.f90 interpolate2D.f90 interpolate3D.f90 \
               imageutils.f90 write_fits.f90 denoise.f90
 
@@ -600,21 +631,21 @@ splash-image: denoise
 splash-denoise: denoise
 
 denoise: checksystem checkfits $(OBJECTSIMLIB)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSIMLIB) $(FITSLIBS) $(PIELDFLAGS)
 	@echo; echo ' Denoise utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
 #
 # splash moments
 #
-SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernels.f90 \
+SOURCESM= asciiutils.f90 $(SYSTEMFILE) system_utils.f90 timing.f90 kernel_integrals.f90 kernels.f90 \
           interpolate1D.f90 write_fits.f90 moments.f90 sph_moments.f90
 
 OBJECTSM = $(SOURCESM:.f90=.o)
 
 .PHONY: sphmoments
 sphmoments: checksystem checkfits $(OBJECTSM)
-	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS)
+	$(FC) $(FFLAGS) -o $(BINDIR)/$@ $(OBJECTSM) $(FITSLIBS) $(PIELDFLAGS)
 	@echo; echo ' sphmoments utility successfully compiled! ';
 	@echo; echo ' Use "make install" to copy the binaries to $(DESTDIR)$(PREFIX)/bin'; echo;
 
@@ -662,16 +693,19 @@ checksystem:
 compilers:
 	@echo "I suggest one of the following, based on detected Fortran compilers..."; echo;
 	@if type -p ifx > /dev/null; then echo "make SYSTEM=ifx"; fi;
+	@if type -p flang > /dev/null; then echo "make SYSTEM=aocc"; fi;
 	@if type -p ifort > /dev/null; then echo "make SYSTEM=ifort"; fi;
 	@if type -p pathf90 > /dev/null; then echo "make SYSTEM=pathf90"; fi;
-	@if type -p pgf90 > /dev/null; then echo "make SYSTEM=pgf90"; fi;
+	@if type -p nvfortran > /dev/null; then echo "make SYSTEM=nvfortran"; fi;
 	@if type -p xlf90_r > /dev/null; then echo "make SYSTEM=ukaff1a [uses xlf90_r]"; fi;
 	@if type -p gfortran > /dev/null; then echo "make SYSTEM=gfortran"; fi;
 	@if type -p g95 > /dev/null; then echo "make SYSTEM=g95"; fi;
 	@echo "(end of possible selections)"; echo;
 
 checkpgplot:
-   ifeq (X${PGPLOT_DIR}, X)
+   ifneq ($(BACKEND),pgplot)
+	@# Not using PGPLOT, skip check
+   else ifeq (X${PGPLOT_DIR}, X)
 	@echo; echo "ERROR: PGPLOT_DIR should be set before compiling splash"; echo; ${MAKE} err;
    else
 	@if [ -d $$PGPLOT_DIR ]; then echo; echo "PGPLOT_DIR=$$PGPLOT_DIR"; echo; else echo; echo "ERROR: Directory given by PGPLOT_DIR=$$PGPLOT_DIR does not exist"; echo; ${MAKE} err; fi;
@@ -784,7 +818,9 @@ err:
 
 ## other stuff
 
+ifeq ($(BACKEND),pgplot)
 plotlib_pgplot.o: checkpgplot
+endif
 
 plotlib_giza.o : giza-fortran.o
 
@@ -802,7 +838,7 @@ withgiza: ../giza/lib/libgiza.a
 
 ../giza/lib/libgiza.a:
 	@echo "Compiling local copy of giza..."
-	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
+	cd ../giza; ./configure --prefix="$(PWD)/../giza" CC="$(CC)" FC="" CFLAGS="$(CFLAGS)" LDFLAGS="" CAIRO_LIBS="$(CAIRO_LIBS)" CAIRO_CFLAGS="$(CAIRO_CFLAGS)" X11_LIBS="$(X11_LIBS)" X11_CFLAGS="$(X11_CFLAGS)"
 	cd ../giza; $(MAKE) $(MAKECMDFLAGS) install CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 docs: doc
@@ -829,21 +865,62 @@ targz:
 ## unit tests of various modules as I write them
 .PHONY: tests
 
-test: test1 test2 test3 test_slicer test_prompt test-parse
+test: test1 test2 test3 test_slicer test_prompt test-parse test_kernel_integrals test_nonlinsolve test_mhdshock test_mhdshock_sr
 
 test1: interpolate3D_projection.o interpolate3D_xsec.o test_interpolate3D.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_interpolation3D $(TESTDIR)/test_interpolate3D.o interpolate3D_projection.o interpolate3D_xsec.o
+TESTKERNOBJ= asciiutils.o kernel_integrals.o kernels.o timing.o sort.o geometry.o interpolation.o \
+             interpolate3D_projection.o interpolate3D_proj_geom.o interpolate3D_opacity.o
+test_kernel_integrals: $(TESTKERNOBJ)
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_kernel_integrals $(TESTDIR)/test_kernel_integrals.f90 $(TESTKERNOBJ)
 test2: transform.o $(TESTDIR)//test_transform.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_transform $(TESTDIR)/test_transform.o transform.o
 test3: fieldlines.o $(TESTDIR)//test_fieldlines.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_fieldlines $(TESTDIR)/test_fieldlines.o fieldlines.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_fieldlines $(TESTDIR)/test_fieldlines.o fieldlines.o
 test_slicer: interpolate3D_projection.o interpolate3D_xsec.o test_slicer3D.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_slicer3D $(TESTDIR)/test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_slicer3D $(TESTDIR)/test_slicer3D.o interpolate3D_projection.o interpolate3D_xsec.o
 test_prompt: prompting.o test_prompting.o
-	$(FC) $(FFLAGS) $(LDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
+	$(FC) $(FFLAGS) $(LDFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test_prompt prompting.o test_prompting.o
 test-parse: $(PLOTLIB) asciiutils.o fparser.o parsetext.o $(TESTDIR)/test-parsetext.o
-	$(FC) $(FFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
+	$(FC) $(FFLAGS) $(PIELDFLAGS) -o $(BINDIR)/test-parse giza-fortran.o plotlib_giza.o fparser.o asciiutils.o parsetext.o $(TESTDIR)/test-parsetext.o $(LDFLAGS)
+test_nonlinsolve: nonlinsolve.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_nonlinsolve $(TESTDIR)/test_nonlinsolve.f90 nonlinsolve.o
+test_mhdshock: cubicsolve.o nonlinsolve.o exact_shock.o exact_mhdshock.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_mhdshock $(TESTDIR)/test_mhdshock.f90 cubicsolve.o nonlinsolve.o exact_shock.o exact_mhdshock.o
+test_mhdshock_sr: nonlinsolve.o exact_shock_sr.o exact_mhdshock_sr.o
+	$(FC) $(FFLAGS) -o $(BINDIR)/test_mhdshock_sr $(TESTDIR)/test_mhdshock_sr.f90 nonlinsolve.o exact_shock_sr.o exact_mhdshock_sr.o
 
+
+depends: clean
+	@echo '*********************************************************************************'
+	@echo 'Generating dependency lines using makedepf90, writing to .depends'
+	@echo '*********************************************************************************'
+	@echo "  Using git to get list of tracked source files..."; \
+	  SOURCE_FILES=$$(cd .. && git ls-files 'src/*.f90' 'src/*.F90' | sed 's|^src/||' | \
+	    grep -v '^plotlib_pgplot\.f90$$' | grep -v '^plotlib_mock\.f90$$'); \
+	if [ "$(BACKEND)" = "pgplot" ]; then \
+	  SOURCE_FILES=$$(echo $$SOURCE_FILES | sed 's|plotlib_giza\.f90||g'); \
+	fi; \
+	if ! command -v makedepf90 > /dev/null 2>&1; then \
+	  echo "  Error: makedepf90 not found in PATH"; \
+	  echo "    Please install it:"; \
+	  echo "    - Debian/Ubuntu: sudo apt-get install makedepf90"; \
+	  echo "    - Or download from: https://github.com/outpaddling/makedepf90"; \
+	  exit 1; \
+	fi; \
+	echo "  Generating dependencies with makedepf90 (from src directory)..."; \
+	cd ../src && makedepf90 -free -D HDF5 -D FITS $$SOURCE_FILES | sed -e 's/plotlib_[a-z_]*\.o/\$${PLOTLIB:.f90=.o}/g' -e 's/[[:space:]]*$$//' > ../build/.depends || \
+	 (echo "  Error: makedepf90 failed to generate .depends file"; exit 1); \
+	if [ ! -s ../build/.depends ]; then \
+	  echo "  Error: .depends file is empty"; exit 1; \
+	fi; \
+	echo "  Successfully created .depends with $$(grep -c '\.o ' ../build/.depends 2>/dev/null || echo 0) dependency entries"
+	@echo '*************************************************************************'
+	@echo 'Dependency file .depends created successfully'
+	@echo ' -- run "make depends" again if you alter code dependencies'
+	@echo '*************************************************************************'
+	@echo 'Removing object files...'
+	@rm -f $(SRCDIR)/*.o $(SRCDIR)/H5Part/*.o
 #
 #--code dependencies: MAY BE INCOMPLETE - I generate this automatically every so often
 #
@@ -854,6 +931,7 @@ cleanread:
 
 clean:
 	rm -f *.o *.mod $(BINDIR)/?splash $(BINDIR)/splash* libsplash.so libexact.so $(BINDIR)/denoise
+	rm -f $(SRCDIR)/*.o $(SRCDIR)/H5Part/*.o
 
 cleangiza:
 	${MAKE} -C ../giza clean uninstall

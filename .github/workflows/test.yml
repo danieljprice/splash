@@ -1,0 +1,81 @@
+# CLI tests (regression test on standard output plots + data format readers)
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gfortran \
+            make \
+            cmake \
+            libcairo2-dev \
+            libx11-dev \
+            libpng-dev \
+            libhdf5-dev \
+            libcfitsio-dev \
+            python3 \
+            python3-pytest \
+            python3-pil \
+            python3-pip \
+            git
+
+      - name: Install imagehash
+        run: pip3 install imagehash --break-system-packages
+
+      - name: Clone giza and build splash
+        run: |
+          git clone --depth 1 https://github.com/danieljprice/giza
+          make -j 4 SYSTEM=gfortran withgiza NOWARN=yes \
+            HDF5ROOT=/usr/ \
+            HDF5LIBS="$(pkg-config --libs hdf5-serial)" \
+            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
+            FITS=yes HDF5=yes
+
+      - name: Run Fortran unit tests (exact kernel integrals, projection mass conservation)
+        run: |
+          make SYSTEM=gfortran NOWARN=yes test_kernel_integrals
+          bin/test_kernel_integrals
+
+      - name: Clone splash-testdata (latest main)
+        run: git clone --depth 1 https://github.com/danieljprice/splash-testdata.git
+
+      - name: Generate renders
+        run: |
+          mkdir -p test_data
+          export PATH="${PWD}/bin:${PATH}"
+          export LD_LIBRARY_PATH="${PWD}/giza/lib:${LD_LIBRARY_PATH:-}"
+          export TESTDATA_DIR="${PWD}/splash-testdata"
+          export WORK_DIR="${PWD}/test_data"
+          chmod +x scripts/run_render_regression.sh
+          scripts/run_render_regression.sh
+
+      - name: Run pytest
+        run: |
+          export PATH="${PWD}/bin:${PATH}"
+          export LD_LIBRARY_PATH="${PWD}/giza/lib:${LD_LIBRARY_PATH:-}"
+          export SPLASH_TESTDATA="${PWD}/splash-testdata"
+          export SPLASH_WORK_DIR="${PWD}/test_data"
+          python3 -m pytest -v tests/
+
+      - name: Upload rendered PNGs on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-render-pngs
+          path: test_data/*.png
+          if-no-files-found: ignore

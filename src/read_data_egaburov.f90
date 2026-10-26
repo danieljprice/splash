@@ -304,7 +304,7 @@ end subroutine read_data_egaburov
 subroutine set_labels_egaburov
  use labels, only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,ih,irho,ipr,iutherm, idivb, iBfirst
  use params
- use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings
+ use settings_data, only:ndim,ndimV,ntypes,UseTypeInRenderings
  use geometry, only:labelcoord
  use system_utils, only:renvironment
  integer :: i

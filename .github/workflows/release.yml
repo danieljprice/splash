@@ -9,18 +9,229 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: read
+
 jobs:
-  release:
+  build-binaries:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-
+        include:
+          - os: ubuntu-22.04
+            suffix: linux-x86_64
+            container: quay.io/pypa/manylinux_2_28_x86_64
+          - os: macos-latest
+            suffix: macos-arm64
     runs-on: ${{ matrix.os }}
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    container: ${{ matrix.container }}
     steps:
     - name: checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - uses: fortran-lang/setup-fortran@v1
+      if: runner.os == 'macOS'
+      with:
+        compiler: gcc
+        version: 'latest'
+
+    - name: Set Linux compiler
+      if: runner.os == 'Linux'
+      run: |
+        echo "CC=gcc" >> "$GITHUB_ENV"
+        echo "FC=gfortran" >> "$GITHUB_ENV"
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        yum install -y epel-release
+        yum install -y gcc gcc-gfortran make curl wget git python3-pip \
+          libX11-devel libXrender-devel libXext-devel libpng-devel fontconfig-devel freetype-devel \
+          expat-devel pkgconfig zlib-devel libcurl-devel ninja-build
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install pkg-config curl zlib
+        brew install --cask xquartz
+
+    - name: Build static cairo (Linux)
+      if: runner.os == 'Linux'
+      env:
+        CC: ${{ env.CC }}
+        MESON_PYTHON: /opt/python/cp39-cp39/bin/python
+      run: |
+        echo "system python: $(python3 --version 2>&1)"
+        echo "meson python: $($MESON_PYTHON --version 2>&1)"
+        ./install-cairo.sh --prefix $HOME/local/cairo --disable-shared
+
+    - name: Build static cfitsio
+      run: |
+        curl -O https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.6.3.tar.gz
+        tar xzf cfitsio-4.6.3.tar.gz
+        cd cfitsio-4.6.3
+        # -fPIC required for linking into a PIE splash binary
+        CFLAGS="-fPIC" ./configure --prefix=$HOME/local
+        make -j 4
+        make install
+        cd ..
+
+    - name: Build static HDF5
+      env:
+        CC: ${{ env.CC }}
+        CFLAGS: -fPIC
+      run: |
+        ./install-hdf5.sh --prefix $HOME/local/hdf5 --disable-shared
+
+    - name: get a copy of giza
+      run: git clone https://github.com/danieljprice/giza
+
+    - name: compile splash binary
+      run: |
+        if [ "$RUNNER_OS" == "macOS" ]; then
+           make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
+           HDF5ROOT=$HOME/local/hdf5 \
+           HDF5LIBS="$HOME/local/hdf5/lib/libhdf5.a -lz -ldl" \
+           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
+           FITS_DIR="$HOME/local" \
+           PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
+           PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath -framework Cocoa -framework CoreGraphics -framework ApplicationServices -lobjc"
+           otool -L bin/splash
+           if otool -L bin/splash | grep -Eiq 'hdf5|libsz|libaec'; then
+             echo "ERROR: HDF5 or its compression libs are still dynamically linked"
+             exit 1
+           fi
+           if ! otool -L bin/splash | grep -q '/opt/X11/lib/libcairo'; then
+             echo "ERROR: splash is not linked against XQuartz libcairo"
+             exit 1
+           fi
+           bin/splash -help
+        else
+           CAIRO_PREFIX=$HOME/local/cairo
+           CAIRO_LIBDIR=""
+           for d in "$CAIRO_PREFIX/lib" "$CAIRO_PREFIX/lib64"; do
+             if [ -f "$d/libcairo.a" ] && [ -f "$d/libpixman-1.a" ]; then
+               CAIRO_LIBDIR="$d"
+               break
+             fi
+           done
+           test -n "$CAIRO_LIBDIR" || { echo "ERROR: libcairo.a/libpixman-1.a not found under $CAIRO_PREFIX"; exit 1; }
+           export PKG_CONFIG_PATH="$CAIRO_LIBDIR/pkgconfig:${PKG_CONFIG_PATH:-}"
+           CAIRO_SYS_LIBS=$(pkg-config --libs freetype2 fontconfig libpng xrender x11 expat 2>/dev/null || true)
+           CAIRO_SYS_LIBS="$CAIRO_SYS_LIBS -lXext -lz -lm"
+           export CAIRO_LIBS="$CAIRO_LIBDIR/libcairo.a $CAIRO_LIBDIR/libpixman-1.a $CAIRO_SYS_LIBS"
+           export X11_LIBS=""
+           export CAIRO_CFLAGS="-I$CAIRO_PREFIX/include"
+           test -f "$CAIRO_PREFIX/include/cairo/cairo.h" || { echo "ERROR: cairo header not found at $CAIRO_PREFIX/include/cairo/cairo.h"; exit 1; }
+           make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
+           CAIRO_LIBS="$CAIRO_LIBS" CAIRO_CFLAGS="$CAIRO_CFLAGS" X11_LIBS="$X11_LIBS" \
+           HDF5ROOT=$HOME/local/hdf5 \
+           HDF5LIBS="$HOME/local/hdf5/lib/libhdf5.a -lz -ldl" \
+           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
+           FITS_DIR="$HOME/local" \
+           PGPLOTLIBS="../giza/lib/libgiza.a $CAIRO_LIBS" \
+           PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
+           ldd bin/splash
+           if ldd bin/splash | grep -Eiq 'hdf5|cfitsio|cairo|pixman'; then
+             echo "ERROR: HDF5, cfitsio, cairo, or pixman are still dynamically linked"
+             exit 1
+           fi
+           if ! ldd bin/splash | grep -iq 'libX11'; then
+             echo "ERROR: libX11 is not dynamically linked"
+             exit 1
+           fi
+           bin/splash -help
+        fi
+
+    - name: Download linuxdeploy
+      if: runner.os == 'Linux'
+      run: |
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+    - name: Bundle Linux binary with X11 libs
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+        cp bin/splash AppDir/usr/bin/
+
+        cat << 'EOF' > AppDir/usr/share/applications/splash.desktop
+        [Desktop Entry]
+        Name=Splash
+        Exec=splash
+        Icon=splash
+        Type=Application
+        Categories=Science;
+        Terminal=true
+        EOF
+
+        touch AppDir/usr/share/icons/hicolor/256x256/apps/splash.png
+
+        export APPIMAGE_EXTRACT_AND_RUN=1
+        export LDAI_OUTPUT="splash-${{ matrix.suffix }}.AppImage"
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e AppDir/usr/bin/splash --output appimage
+        ls -la *.AppImage
+
+        mkdir -p standalone
+        mv "splash-${{ matrix.suffix }}.AppImage" standalone/splash
+        chmod +x standalone/splash
+        ./standalone/splash -help
+        tar czf splash-${{ matrix.suffix }}.tar.gz -C standalone splash
+
+    - name: Package binary (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        tar czf splash-${{ matrix.suffix }}.tar.gz -C bin splash
+
+    - name: Upload binary artifact (Linux)
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v7
+      with:
+        name: splash-${{ matrix.suffix }}
+        path: splash-${{ matrix.suffix }}.tar.gz
+
+    - name: Upload binary artifact (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v7
+      with:
+        name: splash-${{ matrix.suffix }}
+        path: splash-${{ matrix.suffix }}.tar.gz
+
+  binaries:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    outputs:
+      binary_files: ${{ steps.collect.outputs.binary_files }}
+    steps:
+    - name: Download all binary artifacts
+      uses: actions/download-artifact@v7
+      with:
+        path: binary-artifacts
+        pattern: splash-*
+        merge-multiple: true
+
+    - name: Collect paths for release upload
+      id: collect
+      run: |
+        cd "$GITHUB_WORKSPACE"
+        {
+          echo 'binary_files<<__BINLIST__'
+          find binary-artifacts -maxdepth 1 -type f -name '*.tar.gz' | sort
+          echo '__BINLIST__'
+        } >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v5
       with:
         submodules: recursive
 
@@ -34,16 +245,7 @@ jobs:
         echo "repo=$(basename ${repo})" >> $GITHUB_ENV
         echo "tarfile=$(basename ${repo})-${vernum/refs\/tags\//}.tar.gz" >> $GITHUB_ENV
 
-#    - name: build tarball mac
-#      if: matrix.os == 'macos-latest'
-#      env:
-#          tarfile: ${{ steps.get_version.outputs.tarfile }}
-#          repo: ${{ steps.get_version.outputs.repo }}
-#      run: |
-#          tar cfz /tmp/$tarfile --exclude ".git*" -s "/./${repo}/" .
-
     - name: build tarball
-      if: matrix.os == 'ubuntu-latest'
       env:
           tarfile: ${{ env.tarfile }}
           repo: ${{ env.repo }}
@@ -65,34 +267,31 @@ jobs:
       run: |
           ./scripts/get_release_notes.pl > release-notes.md
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Download binary artifacts for release
+      uses: actions/download-artifact@v7
       with:
-        tag_name: ${{ env.version }}
-        release_name: ${{ env.version }}
-        body_path: release-notes.md
-        draft: false
-        prerelease: false
+        path: binary-artifacts
+        pattern: splash-*
+        merge-multiple: true
 
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: release-notes.md
+        files: |
+          ${{ env.tarfile }}
+          ${{ needs.binaries.outputs.binary_files }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.tarfile }}
-        asset_name: ${{ env.tarfile }}
-        asset_content_type: application/gzip
 
     - name: Set up Homebrew
+      if: github.repository == 'danieljprice/splash'
       id: set-up-homebrew
-      uses: Homebrew/actions/setup-homebrew@master
+      uses: Homebrew/actions/setup-homebrew@main
 
     - name: Bump Brew
+      if: github.repository == 'danieljprice/splash'
+      continue-on-error: true
       env:
         HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.BREW_TOKEN_SPLASH }}
         version: ${{ env.version }}

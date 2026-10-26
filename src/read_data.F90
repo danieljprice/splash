@@ -35,7 +35,7 @@ module readdata
  use readdata_VINE,         only:read_data_VINE,         set_labels_VINE
  use readdata_sro,          only:read_data_sro,          set_labels_sro
  use readdata_dragon,       only:read_data_dragon,       set_labels_dragon
- use readdata_seren,        only:read_data_seren,        set_labels_seren
+ use readdata_seren,        only:read_data_seren,        set_labels_seren, file_format_is_seren
  use readdata_tipsy,        only:read_data_tipsy,        set_labels_tipsy, file_format_is_tipsy
  use readdata_mhutch,       only:read_data_mhutch,       set_labels_mhutch
  use readdata_UCLA,         only:read_data_UCLA,         set_labels_UCLA
@@ -54,14 +54,21 @@ module readdata
  use readdata_urban,        only:read_data_urban,        set_labels_urban
  use readdata_starsmasher,  only:read_data_starsmasher,  set_labels_starsmasher
  use readdata_vtk,          only:read_data_vtk,          set_labels_vtk
+ use readdata_shamrock,     only:read_data_shamrock,     set_labels_shamrock
 
  ! Make hdf5 fortran/c modules available if compiled with hdf5
 #ifdef HDF5
- use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5
- use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5
-! use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5
+ use readdata_phantom_hdf5, only:read_data_phantom_hdf5, set_labels_phantom_hdf5, &
+                                 file_format_is_phantom_hdf5
+ use readdata_amuse_hdf5,   only:read_data_amuse_hdf5,   set_labels_amuse_hdf5, &
+                                 file_format_is_amuse_hdf5
+ use readdata_cactus_hdf5,  only:read_data_cactus_hdf5,  set_labels_cactus_hdf5, &
+                                 file_format_is_cactus_hdf5
+ use readdata_falcON_hdf5,  only:read_data_falcON_hdf5,  set_labels_falcON_hdf5, &
+                                 file_format_is_falcon_hdf5
  use readdata_flash_hdf5,   only:read_data_flash_hdf5,   set_labels_flash_hdf5
- use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5
+ use readdata_gadget_hdf5,  only:read_data_gadget_hdf5,  set_labels_gadget_hdf5, &
+                                 file_format_is_gadget_hdf5
 #endif
 
  ! Same for FITS files
@@ -287,11 +294,15 @@ subroutine select_data_format(string_in,ierr)
    read_data=> read_data_vtk
    set_labels=>set_labels_vtk
 
+ case('shamrock')
+   read_data=>read_data_shamrock
+   set_labels=>set_labels_shamrock
+
  ! Make the hdf5 data formats available if SPLASH has been compiled with HDF5
 #ifdef HDF5
  case('phantom_hdf5', 'sphng_hdf5', 'phantomsph_hdf5')
-   print "(a)",  'Phantom HDF5 files are currently not supported :( '
-   stop
+   read_data=>read_data_phantom_hdf5
+   set_labels=>set_labels_phantom_hdf5
 
  case('gadget_hdf5','swift')
    read_data=>read_data_gadget_hdf5
@@ -301,9 +312,9 @@ subroutine select_data_format(string_in,ierr)
    read_data=>read_data_amuse_hdf5
    set_labels=>set_labels_amuse_hdf5
 
-! case('falcon_hdf5', 'falconhdf5', 'falcon')
-!   read_data=>read_data_falcON_hdf5
-!   set_labels=>set_labels_falcON_hdf5
+ case('falcon_hdf5', 'falconhdf5', 'falcon')
+   read_data=>read_data_falcON_hdf5
+   set_labels=>set_labels_falcON_hdf5
 
  case('flash_hdf5', 'flashhdf5', 'flash')
    read_data=>read_data_flash_hdf5
@@ -359,9 +370,11 @@ subroutine print_available_formats(string)
  endif
  print "(a)"  ,' -ascii,-csv          : ascii text/csv format (default)'
  print "(a)"  ,' -phantom -sphng      : Phantom and sphNG codes (auto)'
+ print "(a)"  ,' -phantom_hdf5        : Phantom HDF5 format'
  print "(a)"  ,' -vtk                 : vtk legacy binary format (auto)'
  print "(a)"  ,' -ndspmhd             : ndspmhd code (auto)'
  print "(a)"  ,' -gandalf,-seren      : Gandalf/Seren code'
+ print "(a)"  ,' -shamrock            : Shamrock code'
 #ifdef HDF5
  print "(a)"  ,' -gadget -gadget_hdf5 : Gadget code (auto)'
  print "(a)"  ,' -falcon -falcon_hdf5 : FalcON code'
@@ -450,7 +463,7 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     elseif (any((index(extensions, '.pb') > 0))) then
        call select_data_format("phantom_hdf5", ierr)
     else
-       call select_data_format('gadget_hdf5',ierr)
+       call guess_format_from_file_header(filenames(1),ierr)
     endif
  elseif (any((index(extensions, '.fits') > 0))) then
     call select_data_format('fits',ierr)
@@ -458,6 +471,8 @@ subroutine guess_format(nfiles,filenames,ierr,informat)
     call select_data_format('vtk',ierr)
  elseif (any((index(extensions, '.pb') > 0))) then
     call select_data_format('phantom', ierr)
+ elseif (any((index(extensions, '.sham') > 0))) then
+    call select_data_format('shamrock', ierr)
  elseif (any((index(extensions, '.pbob') > 0))) then
     call select_data_format('pbob', ierr)
  elseif (any((index(extensions, '.csv') > 0))) then
@@ -489,8 +504,20 @@ subroutine guess_format_from_file_header(filename,ierr)
     call select_data_format('sphNG',ierr)
  elseif (file_format_is_gadget(filename)) then
     call select_data_format('gadget',ierr)
- elseif (index(filename,'.hdf5') > 0) then
+ elseif (file_format_is_seren(filename)) then
+    call select_data_format('seren',ierr)
+#ifdef HDF5
+ elseif (file_format_is_falcon_hdf5(filename)) then
+    call select_data_format('falcon',ierr)
+ elseif (file_format_is_phantom_hdf5(filename)) then
+    call select_data_format('phantom_hdf5',ierr)
+ elseif (file_format_is_amuse_hdf5(filename)) then
+    call select_data_format('amuse_hdf5',ierr)
+ elseif (file_format_is_cactus_hdf5(filename)) then
+    call select_data_format('cactus_hdf5',ierr)
+ elseif (file_format_is_gadget_hdf5(filename)) then
     call select_data_format('gadget_hdf5',ierr)
+#endif
  elseif (file_format_is_ndspmhd(filename)) then
     call select_data_format('ndspmhd',ierr)
  elseif (file_format_is_tipsy(filename)) then

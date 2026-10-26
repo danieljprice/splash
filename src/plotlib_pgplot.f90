@@ -737,4 +737,17 @@ subroutine plot_set_exactpixelboundaries()
  return
 end subroutine plot_set_exactpixelboundaries
 
+!-------------------------------------------------------------------------
+! evenly-spaced streamlines are implemented in giza only; fall back
+! to a PGPLOT arrow map so the pgplot backend still compiles
+!-------------------------------------------------------------------------
+subroutine plot_streamplot(a,b,idim,jdim,i1,i2,j1,j2,density,tr,blank)
+ integer,intent(in) :: idim,jdim,i1,i2,j1,j2
+ real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,density
+
+ print "(a,g10.3)", 'plot_streamplot: streamlines require giza; falling back to arrows, density=', density
+ call plot_vect(a,b,idim,jdim,i1,i2,j1,j2,0.,0,tr,blank)
+
+end subroutine plot_streamplot
+
 end module plotlib

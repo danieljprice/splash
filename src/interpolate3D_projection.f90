@@ -28,6 +28,7 @@
 !----------------------------------------------------------------------
 
 module projections3D
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  implicit none
 
  integer, parameter :: maxcoltable = 1000
@@ -75,7 +76,7 @@ subroutine setup_integratedkernel
     deltaz = sqrt(radkernel2 - rxy2)
     dz = deltaz/real(npts-1)
     coldens = 0.
-    if (isnan(deltaz)) print "(a)",'WARNING: NaN in kernel table setup'
+    if (ieee_is_nan(deltaz)) print "(a)",'WARNING: NaN in kernel table setup'
     do j=1,npts
        z = (j-1)*dz
        q2 = rxy2 + z*z
@@ -182,6 +183,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
  real :: term,termnorm,dy,dy2,ypix,zfrac,hsmooth,horigi
  real :: xpixmin,xpixmax,xmax,ypixmin,ypixmax,ymax
  real :: hmin,fac,hminall,dfac,pixwidthz,pixint,zi,xpixi,zpix,term_exact,termnorm_exact
+ real :: hexact,qexact2
  real, dimension(npixx) :: xpix,dx2i
  real :: t_start,t_end,t_used,datnorm_min
  logical :: iprintprogress,use3Dperspective,accelerate
@@ -202,9 +204,9 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 
  ncpus = 0
  !$omp parallel
- !$omp master
+ !$omp single
  !$ ncpus = omp_get_num_threads()
- !$omp end master
+ !$omp end single
  !$omp end parallel
 
  if (ncpus > 0 .and. iverbose >= 0) then
@@ -252,8 +254,11 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !  sure that particles contribute to at least one pixel
 !
  hmin = 0.5*max(pixwidthx,pixwidthy)
-
- !dhmin3 = 1./(hmin*hmin*hmin)
+!
+!--with exact rendering, use exact pixel integrals for particles with
+!  h below this size, where interpolating the table is inaccurate
+!
+ hexact = 2.*max(pixwidthx,pixwidthy)
 !
 !--store x value for each pixel (for optimisation)
 !
@@ -269,11 +274,11 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
 !$omp shared(xmin,ymin,xmax,ymax,xminpix,yminpix,xpix,pixwidthx,pixwidthy) &
 !$omp shared(npixx,npixy,dscreen,zobserver,use3dperspective,useaccelerate) &
 !$omp shared(normalise,radkernel,radkernel2,datsmooth,datnorm,cnormk3D,exact_rendering) &
-!$omp firstprivate(hmin) & !,dhmin3) &
+!$omp firstprivate(hmin,hexact) &
 !$omp private(hi,zfrac,xi,yi,radkern,xpixmin,xpixmax,ypixmin,ypixmax) &
 !$omp private(hsmooth,horigi,hi1,hi21,term,termnorm,npixpartx,npixparty,jpixi,ipixi) &
 !$omp private(ipixmin,ipixmax,jpixmin,jpixmax,accelerate) &
-!$omp private(dx2i,row,q2,ypix,dy,dy2,wab,termnorm_exact,term_exact) &
+!$omp private(dx2i,row,q2,ypix,dy,dy2,wab,termnorm_exact,term_exact,qexact2) &
 !$omp private(i,ipix,jpix,jpixcopy,fac,dfac,pixwidthz,pixint,zi,xpixi,zpix) &
 !$omp private(iprogress) &
 !$omp firstprivate(iprintnext) &
@@ -328,7 +333,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
        hminall = min(hi,hminall)
        nsubgrid = nsubgrid + 1
        hsmooth = hmin
-       fac = 1. !(horigi*horigi*horigi)*dhmin3      ! factor by which to adjust the weight
+       fac = (hi/hmin)**2 ! adjust the weight so that the particle mass is conserved
     else
        fac = 1.
        hsmooth = hi
@@ -351,6 +356,8 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
     term_exact = termnorm_exact*dat(i)
     pixwidthz = 2.*radkern
     zi = 0.; zpix = 0.
+    ! pixels with any overlap with the kernel have centres within this radius
+    qexact2 = (radkernel + sqrt(0.5*(pixwidthx**2 + pixwidthy**2))*hi1)**2
     !
     !--for each particle work out which pixels it contributes to
     !
@@ -448,7 +455,7 @@ subroutine interpolate3D_projection(x,y,z,hh,weight,dat,itype,npart, &
           do ipix = ipixmin,ipixmax
              q2 = dx2i(ipix) + dy2 ! dx2 pre-calculated; dy2 pre-multiplied by hi21
 
-             if (exact_rendering .and. ipixmax-ipixmin <= 2 .and. q2 < radkernel2 + 3.*pixwidthx*pixwidthy*hi21) then
+             if (exact_rendering .and. hi < hexact .and. q2 < qexact2) then
                 xpixi = xminpix + ipix*pixwidthx
 
                 ! Contribution of the cell walls in the xy-plane
@@ -900,18 +907,17 @@ end subroutine interp3D_proj_vec_synctron
 !--------------------------------------------------------------------------
 !
 !     Same as previous but for column integrated quantities on
-!     a collection  of irregular points
+!     a collection of irregular points
 !
-!     Input: particle coordinates  : x,y   (npart)
+!     Input: particle coordinates  : x,y,z   (npart)
 !            smoothing lengths     : hh    (npart)
 !            weight for each particle : weight (npart)
 !            vector data to smooth : dat  (npart)
 !                                    vecy  (npart)
 !
-!     Output: smoothed vector field   : datsmoothx (npixx,npixy)
-!                                     : vecsmoothy (npixx,npixy)
+!     Output: smoothed vector field   : datsmooth (npoints)
 !
-!     Daniel Price 23/12/04
+!     Daniel Price 2023
 !--------------------------------------------------------------------------
 
 subroutine interpolate3D_proj_points(x,y,z,hh,weight,dat,itype,npart,&

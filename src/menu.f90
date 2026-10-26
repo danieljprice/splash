@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2017 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -33,11 +33,11 @@ contains
 
 subroutine menu
  use filenames,        only:defaultsfile,limitsfile,unitsfile,fileprefix,set_filenames
- use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,ipdf,icolpixmap,is_coord,ix
+ use labels,           only:label,labelvec,iamvec,isurfdens,itoomre,iomegasq,ipdf,icolpixmap,is_coord,ix
  use limits,           only:write_limits,lim2,lim,reset_lim2,lim2set
  use options_data,     only:submenu_data
  use settings_data,    only:ndim,numplot,ndataplots,nextra,ncalc,ivegotdata, &
-                             buffer_data,ncolumns,icoords,icoordsnew,iRescale
+                             buffer_data,ncolumns,icoords,icoordsnew,iRescale,iverbose
  use settings_limits,  only:submenu_limits,iadapt
  use settings_part,    only:submenu_particleplots,mstari
  use settings_page,    only:submenu_page,submenu_legend,interactive,nacross,ndown
@@ -52,17 +52,17 @@ subroutine menu
  use getdata,          only:get_data
  use geomutils,        only:set_coordlabels
  use timestepping
- integer            :: i,icol,ihalf,iadjust,indexi,ierr
+ integer            :: i,icol,indexi,ierr
  integer            :: ipicky,ipickx,irender,ivecplot,icontourplot
  integer            :: iamvecprev, ivecplottemp,ichoose
  integer            :: maxdigits
  character(len=5)   :: ioption
- character(len=100) :: vecprompt,string
+ character(len=120) :: vecprompt,string
  character(len=20)  :: rprompt
  character(len=2)   :: fmtstrlen
- character(len=50)  :: fmtstr1,fmtstr2,fmtstr3
- character(len=*), parameter :: sep="(55('-'))"
- logical            :: iAllowRendering
+ character(len=64)  :: fmtstr3
+ character(len=9)   :: sep
+ logical            :: iAllowRendering,threecol
 
  irender = 0
  icontourplot = 0
@@ -106,10 +106,10 @@ subroutine menu
        if (iamvec(icol) /= 0 .and. iamvec(icol) /= iamvecprev) then
           iamvecprev = iamvec(icol)
           if (iamvec(icol) >= 10) then
-             write(vecprompt(indexi:),"(',',1x,i2,'=',a)") &
-                 iamvec(icol),trim(labelvec(icol))
+             write(vecprompt(indexi:),"(',',1x,i2,'=',a)",iostat=ierr) &
+                   iamvec(icol),trim(labelvec(icol))
           else
-             write(vecprompt(indexi:),"(',',1x,i1,'=',a)") &
+             write(vecprompt(indexi:),"(',',1x,i1,'=',a)",iostat=ierr) &
                  iamvec(icol),trim(labelvec(icol))
           endif
           indexi = len_trim(vecprompt) + 1
@@ -117,6 +117,7 @@ subroutine menu
     enddo
 
     ichoose = 0
+    threecol = .false.
 
 !---------------------------------------------------------------------------
 !  print menu
@@ -127,22 +128,20 @@ subroutine menu
 !--data columns
 !
        call print_header()
-       print sep
-       ihalf = numplot/2                ! print in two columns
-       iadjust = mod(numplot,2)
+
        maxdigits = floor(log10(real(maxplot)))+1
-       write(fmtstrlen,"(A1,I1)") "i",maxdigits
-       fmtstr1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
-                     //trim(adjustl(fmtstrlen))//",')',1x,a20)"
-       print fmtstr1, &
-          (i,transform_label(label(i),itrans(i)), &
-          ihalf + i + iadjust, transform_label(label(ihalf + i + iadjust), &
-          itrans(ihalf+i+iadjust)),i=1,ihalf)
-       if (iadjust /= 0) then
-          fmtstr2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
-          print fmtstr2, &
-              ihalf + iadjust,transform_label(label(ihalf + iadjust), &
-              itrans(ihalf+iadjust))
+       write(fmtstrlen,"(a1,i1)") "i",maxdigits
+       threecol = .false.
+
+       if (numplot > 60) then
+          threecol = .true.
+          sep = "(79('-'))"
+          print sep
+          call print_menu_columns(numplot,3,maxdigits,label,itrans)
+       else
+          sep="(55('-'))"
+          print sep
+          call print_menu_columns(numplot,2,maxdigits,label,itrans)
        endif
 !
 !--multiplot
@@ -155,6 +154,7 @@ subroutine menu
 !
 !--if no data
 !
+       sep = "(55('-'))"
        maxdigits = 1
        print "(/a)",' No data: You may choose from the options below '
     endif
@@ -164,6 +164,8 @@ subroutine menu
     print sep
     if (ndim <= 1) then
        print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end s(ave) q(uit)'
+    elseif (threecol) then
+       print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end r(ender) v(ector) x(sec) s(ave) q(uit)'
     else
        print "(a)",' d(ata) p(age) o(pts) l(imits) le(g)end h(elp)'
        print "(a)",' r(ender) v(ector) x(sec/rotate) s(ave) q(uit)'
@@ -293,7 +295,7 @@ subroutine menu
                 endif
                 ivecplot = 0
              endif
-          elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens) then
+          elseif (ipicky > 0 .and. ipicky==itoomre .or. ipicky==isurfdens .or. ipicky==iomegasq) then
              print "(a)",' setting x axis to r'
              if (ipicky==itoomre) call prompt('enter central mass for Toomre Q calculation [code units] ',mstari)
              ipickx = 1
@@ -400,7 +402,7 @@ subroutine menu
              call set_filenames(trim(fileprefix))
           endif
           call defaults_write(defaultsfile)
-          call write_limits(limitsfile)
+          call write_limits(limitsfile,iverbose)
           if (iRescale) call write_unitsfile(unitsfile,ncolumns)
 !------------------------------------------------------------------------
 !+ Slightly obsolete: prints whatever help may be helpful
@@ -697,14 +699,16 @@ end function allowrendering
 !----------------------------------------------
 subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
  use params,        only:maxplot
- use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,iutherm,ipdf,label,icolpixmap
- use settings_data, only:ndim,icoordsnew,ivegotdata,debugmode
+ use labels,        only:ipowerspec,iacplane,isurfdens,itoomre,ispsound,&
+                         iutherm,ipdf,label,icolpixmap,ivx,iomegasq
+ use settings_data, only:ndim,ndimV,icoordsnew,ivegotdata,debugmode
  use settings_part, only:iexact
  use system_utils,  only:lenvironment
  use write_pixmap,  only:ireadpixmap
  integer, intent(in)    :: ncolumns
  integer, intent(inout) :: ncalc
  integer, intent(out)   :: nextra,numplot,ndataplots
+ logical :: turb_mode
 
  !
  !-add extra columns (but not if nothing read from file)
@@ -724,14 +728,20 @@ subroutine set_extracols(ncolumns,ncalc,nextra,numplot,ndataplots)
           itoomre = ncolumns + ncalc + nextra
           label(itoomre) = 'Toomre Q parameter'
        endif
+       if (ivx > 0 .and. ndimV >= 2) then
+          nextra = nextra + 1
+          iomegasq = ncolumns + ncalc + nextra
+          label(iomegasq) = '\kappa^2/\Omega^2'
+       endif
     endif
-    if (ndim==3 .and. lenvironment('SPLASH_TURB')) then  !--Probability Density Function
+    turb_mode = lenvironment('SPLASH_TURB')
+    if (ndim==3 .and. turb_mode) then  !--Probability Density Function
        nextra = nextra + 1
        ipdf = ncolumns + ncalc + nextra
        label(ipdf) = 'PDF'
     endif
 
-    if (ndim <= 1 .and. lenvironment('SPLASH_TURB')) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
+    if (ndim <= 1 .and. turb_mode) then !! .or. ndim==3) then ! if 1D or no coord data (then prompts for which x)
        nextra = nextra + 1      ! one extra plot = power spectrum
        ipowerspec = ncolumns + ncalc + nextra
        label(ipowerspec) = '1D power spectrum'
@@ -862,5 +872,52 @@ subroutine print_header
  endif
 
 end subroutine print_header
+
+!----------------------------------------------
+! print data columns in strict column-major order:
+! read down col 1 (1..ncol1), then col 2, then col 3, ...
+!----------------------------------------------
+subroutine print_menu_columns(numplot,nvis,maxdigits,label,itrans)
+ use transforms, only:transform_label
+ integer, intent(in) :: numplot,nvis,maxdigits
+ character(len=*), intent(in) :: label(:)
+ integer, intent(in) :: itrans(:)
+ character(len=2) :: fmtstrlen
+ character(len=64) :: fmt1,fmt2,fmt3
+ integer :: i,ic2,ic3,ncol1
+
+ if (numplot <= 0 .or. nvis < 1) return
+ ncol1 = (numplot + nvis - 1)/nvis
+ write(fmtstrlen,"(a1,i1)") "i",maxdigits
+ fmt3 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+ fmt2 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20,1x," &
+             //trim(adjustl(fmtstrlen))//",')',1x,a20)"
+ fmt1 = "(1x,"//trim(adjustl(fmtstrlen))//",')',1x,a20)"
+
+ do i = 1, ncol1
+    ic2 = i + ncol1
+    if (nvis >= 3) then
+       ic3 = i + 2*ncol1
+       if (ic3 <= numplot) then
+          print fmt3, i,transform_label(label(i),itrans(i)), &
+               ic2,transform_label(label(ic2),itrans(ic2)), &
+               ic3,transform_label(label(ic3),itrans(ic3))
+       elseif (ic2 <= numplot) then
+          print fmt2, i,transform_label(label(i),itrans(i)), &
+               ic2,transform_label(label(ic2),itrans(ic2))
+       else
+          print fmt1, i,transform_label(label(i),itrans(i))
+       endif
+    elseif (ic2 <= numplot) then
+       print fmt2, i,transform_label(label(i),itrans(i)), &
+            ic2,transform_label(label(ic2),itrans(ic2))
+    else
+       print fmt1, i,transform_label(label(i),itrans(i))
+    endif
+ enddo
+
+end subroutine print_menu_columns
 
 end module mainmenu

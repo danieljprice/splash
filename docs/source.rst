@@ -2,140 +2,68 @@
 Source code overview
 ====================
 
-Here is a brief and outdated description of various files making up the
-code:
+This is a brief guide to the main Fortran source files. The authoritative
+list is ``src/*.f90`` in the repository; many specialised ``read_data_*``
+routines exist for individual simulation codes.
 
 +-----------------------------------+-----------------------------------+
 | Filename                          | Description                       |
 +===================================+===================================+
-|                                   |                                   |
+| splash.f90                        | main program; startup, version,   |
+|                                   | command-line parsing              |
 +-----------------------------------+-----------------------------------+
-| allocate.f90                      | allocates memory for main arrays  |
+| read_data.F90                     | dispatches to format-specific     |
+|                                   | read_data routines                |
 +-----------------------------------+-----------------------------------+
-| calc_quantities.f90               | calculates additional quantities  |
-|                                   | from particle data                |
-+-----------------------------------+-----------------------------------+
-| colours.f90                       | colour schemes for rendering      |
-+-----------------------------------+-----------------------------------+
-| colourparts.f90                   | colours particles                 |
-+-----------------------------------+-----------------------------------+
-| defaults.f90                      | writes/reads default options      |
-|                                   | to/from file                      |
-+-----------------------------------+-----------------------------------+
-| exact.f90                         | module handling exact solution    |
-|                                   | settings                          |
-+-----------------------------------+-----------------------------------+
-| exact_densityprofiles.f90         | various :math:`N-`\ body density  |
-|                                   | profiles                          |
-+-----------------------------------+-----------------------------------+
-| exact_fromfile.f90                | reads an exact solution tabulated |
-|                                   | in a file                         |
-+-----------------------------------+-----------------------------------+
-| exact_mhdshock.f90                | some tabulated solutions for mhd  |
-|                                   | shocks                            |
-+-----------------------------------+-----------------------------------+
-| exact_polytrope.f90               | exact solution for a polytrope    |
-+-----------------------------------+-----------------------------------+
-| exact_rhoh.f90                    | exact relation between density    |
-|                                   | and smoothing length              |
-+-----------------------------------+-----------------------------------+
-| exact_sedov.f90                   | exact solution for sedov blast    |
-|                                   | wave                              |
-+-----------------------------------+-----------------------------------+
-| exact_shock.f90                   | exact solution for hydrodynamic   |
-|                                   | shocks                            |
-+-----------------------------------+-----------------------------------+
-| exact_wave.f90                    | exact solution for a propagating  |
-|                                   | sine wave                         |
-+-----------------------------------+-----------------------------------+
-| exact_toystar.f90                 | exact solution for the toy star   |
-|                                   | problem                           |
-+-----------------------------------+-----------------------------------+
-| exact_toystar2D.f90               | exact solution for the 2D toy     |
-|                                   | star problem                      |
+| read_data_*.f90                   | one routine per supported data    |
+|                                   | format (see ``splash --formats``) |
 +-----------------------------------+-----------------------------------+
 | get_data.f90                      | wrapper for main data read        |
 +-----------------------------------+-----------------------------------+
-| geometry.f90                      | module handling different         |
-|                                   | coordinate systems                |
-+-----------------------------------+-----------------------------------+
-| globaldata.f90                    | various modules containing        |
-|                                   | "global" variables                |
-+-----------------------------------+-----------------------------------+
-| interactive.f90                   | drives interactive mode           |
-+-----------------------------------+-----------------------------------+
-| interpolate1D.f90                 | interpolation of 1D SPH data to   |
-|                                   | grid using kernel                 |
-+-----------------------------------+-----------------------------------+
-| interpolate2D.f90                 | interpolation of 2D SPH data to   |
-|                                   | grid                              |
-+-----------------------------------+-----------------------------------+
-| interpolate3D_xsec.f90            | 3D cross section interpolations   |
-+-----------------------------------+-----------------------------------+
-| interpolate3D_projection.f90      | 3D interpolation integrated       |
-|                                   | through domain                    |
-+-----------------------------------+-----------------------------------+
-| legends.f90                       | plots (time) legend on plot       |
-+-----------------------------------+-----------------------------------+
-| limits.f90                        | sets initial plot limits and      |
-|                                   | writes to/reads from limits file  |
-+-----------------------------------+-----------------------------------+
-| menu.f90                          | main menu                         |
-+-----------------------------------+-----------------------------------+
-| options_data.f90                  | sets options relating to current  |
-|                                   | data                              |
-+-----------------------------------+-----------------------------------+
-| options_limits.f90                | sets options relating to plot     |
-|                                   | limits                            |
-+-----------------------------------+-----------------------------------+
-| options_page.f90                  | sets options relating to page     |
-|                                   | setup                             |
-+-----------------------------------+-----------------------------------+
-| options_particleplots.f90         | sets options relating to particle |
-|                                   | plots                             |
-+-----------------------------------+-----------------------------------+
-| options_powerspec.f90             | sets options for power spectrum   |
-|                                   | plotting                          |
-+-----------------------------------+-----------------------------------+
-| options_render.f90                | sets options for render plots     |
-+-----------------------------------+-----------------------------------+
-| options_vector.f90                | sets options for vector plots     |
-+-----------------------------------+-----------------------------------+
-| options_xsecrotate.f90            | sets options for cross sections   |
-|                                   | and rotation                      |
-+-----------------------------------+-----------------------------------+
-| particleplot.f90                  | subroutines for particle plotting |
-+-----------------------------------+-----------------------------------+
-| plotstep.f90                      | main “backbone” of the code which |
-|                                   | drives plotting of a single       |
+| plotstep.f90                      | drives plotting of a single       |
 |                                   | timestep                          |
 +-----------------------------------+-----------------------------------+
-| read_data_dansph.f90              | reads data from my format of data |
-|                                   | files                             |
+| menu.f90                          | main text menu                    |
 +-----------------------------------+-----------------------------------+
-| read_data_mbate.f90               | reads data from Matthew Bate’s    |
-|                                   | format of data files              |
+| interactive.f90                   | interactive mode (mouse/keyboard) |
 +-----------------------------------+-----------------------------------+
-| read_data_xxx.f90                 | reads data from …                 |
+| interactive_buttons.f90           | on-screen buttons in interactive  |
+|                                   | plot windows (v4.0+)              |
 +-----------------------------------+-----------------------------------+
-| render.f90                        | takes array of pixels and plots   |
-|                                   | render map/contours etc           |
+| interactive_utils.f90             | coordinate transforms for         |
+|                                   | interactive mouse input           |
 +-----------------------------------+-----------------------------------+
-| rotate.f90                        | subroutines controlling rotation  |
-|                                   | of particles                      |
+| plotlib_giza.f90                  | giza plotting backend interface   |
 +-----------------------------------+-----------------------------------+
-| setpage.f90                       | sets up the PGPLOT page (replaces |
-|                                   | call to PGENV/PGLAB)              |
+| render.f90                        | render maps, contours, opacity    |
 +-----------------------------------+-----------------------------------+
-| splash.f90                        | main program, handles startup/    |
-|                                   | command line reading              |
+| interpolate*.f90                  | SPH interpolation (1D/2D/3D,      |
+|                                   | projections, cross sections)      |
 +-----------------------------------+-----------------------------------+
-| timestepping.f90                  | controls stepping through         |
-|                                   | timesteps                         |
+| exact*.f90, exact.f90             | exact solution test problems      |
 +-----------------------------------+-----------------------------------+
-| titles.f90                        | reads a list of titles to be used |
-|                                   | to label each timestep            |
+| globaldata.f90                    | modules with global variables     |
 +-----------------------------------+-----------------------------------+
-| transform.f90                     | applies various transformations   |
-|                                   | to data (log10, 1/x, etc)         |
+| allocate.f90                      | memory allocation for main arrays |
++-----------------------------------+-----------------------------------+
+| defaults.f90, limits.f90          | read/write ``splash.defaults``    |
+|                                   | and ``splash.limits``             |
++-----------------------------------+-----------------------------------+
+| options_*.f90                     | menu subsystems (render, vector,  |
+|                                   | limits, page, etc.)               |
++-----------------------------------+-----------------------------------+
+| write_sphdata.f90                 | ``splash to ...`` format          |
+|                                   | conversion utilities                |
++-----------------------------------+-----------------------------------+
+| system_utils.f90                  | strings, environment, UTF-8 text  |
++-----------------------------------+-----------------------------------+
+| calc_quantities.f90               | derived quantities from particle  |
+|                                   | data                              |
++-----------------------------------+-----------------------------------+
+| geometry.f90                      | coordinate systems and transforms |
++-----------------------------------+-----------------------------------+
+| timestepping.f90                  | stepping through dump sequences   |
++-----------------------------------+-----------------------------------+
+| tests/                            | Python CLI regression tests       |
+|                                   | (see ``tests/README.md``)         |
 +-----------------------------------+-----------------------------------+

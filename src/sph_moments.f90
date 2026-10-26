@@ -43,6 +43,7 @@
 !     
 !---------------------------------------------------------------------------------
 program sph_moments
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  use readwrite_fits,  only:read_fits_cube,write_fits_image,get_from_header,flatten_header
  use iso_fortran_env, only:stderr=>error_unit, stdout=>output_unit
  use system_utils,    only:get_command_option,count_matching_args,ienvlist
@@ -130,7 +131,7 @@ program sph_moments
  if (ierr /= 0) stop 'error reading file'
 
  ! eliminate NaNs
- where (isnan(cube))
+ where (ieee_is_nan(cube))
     cube = 0.
  end where
 

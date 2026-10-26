@@ -113,7 +113,7 @@ subroutine read_data_foulkes(rootname,indexstart,ipos,nstepsread)
  read(iunit,*,iostat=ierr) nmodel,nprint,hmax,tread,dtmin,tdg
  if (ierr /= 0) print "(a)",' WARNING: error(s) reading first header line'
  print "(a,1pe10.3,a,i10,a,i10)",' time = ',tread,' npart =',nprint,' model number = ',nmodel
- print "(3(a,1pe10.4))",' hmax = ',hmax,' dtmin = ',dtmin,' tdg = ',tdg
+ print "(3(a,1pe11.4))",' hmax = ',hmax,' dtmin = ',dtmin,' tdg = ',tdg
 !
 !--determine how many columns we are going to read
 !

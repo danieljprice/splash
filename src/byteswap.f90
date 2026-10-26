@@ -24,7 +24,7 @@ module byteswap
  integer, parameter :: little_endian_order8(8) = [8,7,6,5,4,3,2,1]
  integer, parameter :: little_endian_order4(4) = [4,3,2,1]
 
- public :: bs
+ public :: bs, open_unformatted_endian
 
  interface bs
   module procedure reverse_bytes_r4,reverse_bytes_r8,&
@@ -97,5 +97,34 @@ integer(kind=8) elemental function reverse_bytes_int8(x) result(y)
  y = transfer(dst_arr,y)
 
 end function reverse_bytes_int8
+
+!--------------------------------------------------------
+! open an unformatted sequential file, optionally using
+! the opposite of the host endianness via CONVERT=
+! (gfortran and ifort/ifx extension)
+!--------------------------------------------------------
+subroutine open_unformatted_endian(iunit,filename,ierr,other_endian)
+ integer,          intent(in)  :: iunit
+ character(len=*), intent(in)  :: filename
+ integer,          intent(out) :: ierr
+ logical,          intent(in)  :: other_endian
+ character(len=16) :: convert
+ logical :: bigendian
+
+ if (.not. other_endian) then
+    open(unit=iunit,file=filename,status='old',form='unformatted',iostat=ierr)
+    return
+ endif
+ ! integer 1 stored with a leading zero byte means a big-endian host
+ bigendian = iachar(transfer(1,'a')) == 0
+ if (bigendian) then
+    convert = 'little_endian'
+ else
+    convert = 'big_endian'
+ endif
+ open(unit=iunit,file=filename,status='old',form='unformatted', &
+      convert=trim(convert),iostat=ierr)
+
+end subroutine open_unformatted_endian
 
 end module byteswap

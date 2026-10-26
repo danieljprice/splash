@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2014 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2026 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -36,12 +36,15 @@ module plotlib
  use giza, only: &
       plot_arro=>giza_arrow, &
       plot_annotate=>giza_annotate, &
-      plot_band=>giza_band, &
+      plot_axis=>giza_axis, &
+      giza_band, &
       plot_bbuf=>giza_begin_buffer,&
       plot_box=>giza_box, &
       plot_circ=>giza_circle, &
       plot_close=>giza_close, &
       plot_curs=>giza_get_key_press, &
+      plot_set_motion_callback=>giza_set_motion_callback, &
+      plot_end_motion_callback=>giza_end_motion_callback, &
       plot_ebuf=>giza_end_buffer, &
       plot_end=>giza_close_device, &
       plot_env=>giza_set_environment, &
@@ -86,6 +89,8 @@ module plotlib
       plot_wnad=>giza_set_window_equal_scale, &
       plot_qcur=>giza_device_has_cursor, &
       plot_rgb_from_table=>giza_rgb_from_table, &
+      plot_set_clipping=>giza_set_clipping, &
+      plot_get_clipping=>giza_get_clipping, &
       giza_contour,            &
       giza_get_character_size, &
       giza_get_surface_size,   &
@@ -98,6 +103,7 @@ module plotlib
       giza_set_colour_table,   &
       giza_stop_prompting,     &
       giza_start_prompting,    &
+      giza_set_font,           &
       plot_left_click=>giza_left_click_f,     &
       plot_right_click=>giza_right_click_f,   &
       plot_middle_click=>giza_middle_click_f, &
@@ -107,6 +113,7 @@ module plotlib
       plot_scroll_left=>giza_scroll_left_f,   &
       plot_scroll_right=>giza_scroll_right_f, &
       giza_vector,             &
+      giza_streamplot,         &
       giza_format_number,      &
       giza_query_device,       &
       giza_draw_pixels, &
@@ -145,6 +152,7 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  integer, intent(in), optional :: paperunits
  real                          :: width,height
  integer                       :: units, id
+ character(len=12) :: string
 
  if (present(papersizex)) then
     width = papersizex
@@ -157,6 +165,9 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
        select case(paperunits)
        case(0)
           units = giza_units_pixels
+          ! yuv420p needs even frame dimensions for mp4
+          width = even_pixel_count(width)
+          height = even_pixel_count(height)
        case(1)
           units = giza_units_inches
        case(2)
@@ -177,6 +188,8 @@ subroutine plot_init(devicein, ierr, papersizex, aspectratio, paperunits)
  else
     ierr = 0
  endif
+ call get_environment_variable('GIZA_FONT',string)
+ if (len_trim(string) <= 0) call giza_set_font('Helvetica')
 
  if (ierr==0) then
     call giza_stop_prompting
@@ -334,7 +347,7 @@ subroutine plot_qinf(item,value,length)
 
  select case(item)
  case('VERSION','version')
-    value = 'giza-1.1'
+    value = 'giza-1.3'
  case('STATE','state')
     print*,' WARNING: query for STATE not yet implemented in giza'
  case('USER','user')
@@ -450,6 +463,16 @@ subroutine plot_vect(a,b,idim,jdim,i1,i2,j1,j2,c,nc,tr,blank)
 
 end subroutine plot_vect
 
+subroutine plot_streamplot(a,b,idim,jdim,i1,i2,j1,j2,density,tr,blank)
+ integer,intent(in) :: idim,jdim,i1,i2,j1,j2
+ real,intent(in)    :: a(idim,jdim),b(idim,jdim),tr(6),blank,density
+ real               :: affine(6)
+
+ call convert_tr_to_affine(tr,affine)
+ call giza_streamplot(idim,jdim,a,b,i1-1,i2-1,j1-1,j2-1,density,affine,blank)
+
+end subroutine plot_streamplot
+
 subroutine plot_pixl(ia,idim,jdim,i1,i2,j1,j2,x1,x2,y1,y2)
  use giza, only:giza_draw_pixels,giza_filter_default
  integer,intent(in) :: idim,jdim,i1,i2,j1,j2
@@ -467,26 +490,76 @@ subroutine plot_pap(widthin,aspect,paperunits)
  real,intent(in) :: widthin,aspect
  integer, intent(in), optional :: paperunits
  integer :: units
- real    :: width
+ real    :: width,height
 
  width = widthin
+ height = width*aspect
  units = giza_units_inches
 
  if (present(paperunits)) then
     select case(paperunits)
     case(0)
        units = giza_units_pixels
+       ! yuv420p needs even frame dimensions for mp4
+       width = even_pixel_count(width)
+       height = even_pixel_count(height)
     case(1)
        units = giza_units_inches
     case(2)
        units = giza_units_mm
        width = 0.1*width
+       height = 0.1*height
     end select
  endif
 
- call giza_set_paper_size(units,width,width*aspect)
+ call giza_set_paper_size(units,width,height)
 
 end subroutine plot_pap
+
+!---------------------------------------------
+! nearest even pixel count, at least 2.
+! mp4 frames using yuv420p must be even in
+! both width and height.
+!---------------------------------------------
+real function even_pixel_count(x)
+ real, intent(in) :: x
+ real :: n
+
+ n = 2.*nint(x/2.)
+ if (n < 2.) n = 2.
+ even_pixel_count = n
+
+end function even_pixel_count
+
+subroutine plot_line1(x1, y1, x2, y2)
+ real,intent(in) :: x1, y1, x2, y2
+ real :: xpts(2),ypts(2)
+
+ xpts = (/x1,x2/)
+ ypts = (/y1,y2/)
+
+ call plot_line(2,xpts,ypts)
+
+end subroutine plot_line1
+
+!--------------------------------------------------------------------------
+!  rubber-band cursor: draw in grey, then restore the previous pen colour.
+!  giza_band uses the current colour index, which is usually the foreground.
+!--------------------------------------------------------------------------
+integer function plot_band(mode, moveCurs, xanc, yanc, x, y, ch)
+ integer, intent(in) :: mode, moveCurs
+ real, intent(in)    :: xanc, yanc
+ real, intent(inout) :: x, y
+ character(len=*), intent(out) :: ch
+ integer :: icol
+ real :: r, g, b
+
+ call plot_qci(icol)
+ call plot_qcr(icol, r, g, b)
+ call plot_scr(icol, 0.6, 0.6, 0.6)
+ plot_band = giza_band(mode, moveCurs, xanc, yanc, x, y, ch)
+ call plot_scr(icol, r, g, b)
+end function plot_band
 
 !
 !--this subroutine can be called  to

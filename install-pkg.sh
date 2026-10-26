@@ -6,35 +6,36 @@
 # We assume packages can be compiled in the "standard" way using
 # "configure" and "make"
 #
-# A better alternative is to use your inbuilt package manager to install things
-#  e.g.
-#   Debian/Ubuntu:
-#      sudo apt-get install package_name
-#   Fedora/Red Hat/CentOS:
-#      sudo yum install package_name
-#   OpenSUSE:
-#      zypper install package_name
-#   MacPorts:
-#      sudo port install package_name
-#   Homebrew:
-#      brew install package_name
+# Usage: install-pkg.sh <url> <prefix> [configure_extra...]
 #
 # Written by Daniel Price, April 2020
 # Contact: daniel.price@monash.edu
 #
 xzdist=xz-5.2.1.tar.gz;
 xzurl="http://tukaani.org/xz/";
-if [ $# -le 1 ]; then
-   echo "Usage: $0 http://blah.org/release/blah.tar.gz install_dir";
+if [ $# -lt 2 ]; then
+   echo "Usage: $0 <url> <install_dir> [configure_extra...]";
    exit 1;
 fi
 disturl=$1;
 installprefix=$2;
+shift 2
+configure_extra="$*"
 distfile=$(basename $disturl);
 pkg_name=$(basename $distfile .tar.gz)
 pkg_name=$(basename $pkg_name .tar.xz)
 extension=${distfile/$pkg_name/}
 pkg_dir=${distfile/$extension/};
+#
+#--parallel make: inherit MAKEFLAGS from the environment when set;
+# otherwise pass an explicit -j flag to make.
+#
+if [ -z "${MAKEFLAGS:-}" ]; then
+   nproc_val=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+   make_j="-j${nproc_val}"
+else
+   make_j=""
+fi
 #
 #--Check that the install dir is present.
 #  This is not strictly necessary, but it means we install cairo and
@@ -51,20 +52,21 @@ check_install_dir_exists()
   fi
 }
 #
-#--if not already downloaded, retrieve the tarball using wget
+#--if not already downloaded, retrieve the tarball
 #
 download_dist_file()
 {
   if [ ! -f $distfile ]; then
      echo "$distfile not downloaded";
-     if !(type -p wget); then
-        echo "ERROR: $0 requires the \"wget\" command, which is not present on";
-        echo "your system. Instead, you will need to download the following file by hand:"; echo
-        echo "$disturl";
-        echo; echo "To proceed, download this files, place them in the current directory and try again"
-        return 1;
-     else
+     if type -p wget > /dev/null 2>&1; then
         wget $disturl;
+     elif type -p curl > /dev/null 2>&1; then
+        curl -LO $disturl;
+     else
+        echo "ERROR: $0 requires wget or curl, which is not present on your system.";
+        echo "Please download the following file by hand:"; echo
+        echo "$disturl";
+        return 1;
      fi
   fi
   if [ ! -f $distfile ]; then
@@ -81,15 +83,16 @@ download_dist_file()
 unpack_dist_file()
 {
    echo ":: unpacking $distfile to $installprefix";
-   if [ $extension==".tar.xz" ]; then
-      tar -Jxf $distfile;
+   if [ "$extension" = ".tar.xz" ]; then
+      tar -Jxf "$distfile";
    else
-      tar xfz $distfile;
+      tar xfz "$distfile";
    fi
-   if [ ! -d $pkg_dir ]; then
-      echo; echo "ERROR: failed to unpack (no directory $pkg_dir)"; echo;
-      return 1;
-      if [ $extension==".tar.xz" ]; then
+   if [ ! -d "$pkg_dir" ]; then
+      if [ "$extension" != ".tar.xz" ]; then
+         echo; echo "ERROR: failed to unpack (no directory $pkg_dir)"; echo;
+         return 1;
+      else
       #
       #--install xzutils if tar -Jxf fails...
       #
@@ -100,7 +103,7 @@ unpack_dist_file()
          cd $xzdir;
          xzinstalldir=/tmp/xz-tmp/;
          ./configure --prefix=$xzinstalldir;
-         make || ( echo; echo "ERROR during xzutils build"; echo; return $? );
+         make $make_j || ( echo; echo "ERROR during xzutils build"; echo; return $? );
          make install || ( echo; echo "ERROR installing xzutils into $xzinstalldir"; echo; return $? );
          cd ..;
       #
@@ -121,11 +124,34 @@ unpack_dist_file()
 install_package()
 {
    echo ":: installing $pkg_name"
-   cd $pkg_dir;
-   ./configure --prefix=$installprefix > /dev/null || ( echo; echo "ERROR during config"; echo; return $? );
-   make > /dev/null || ( echo; echo "ERROR during build"; echo; return $? );
-   make install > /dev/null || ( echo; echo "ERROR installing into $installdir"; echo; return $? );
-   cd ..;
+   cd "$pkg_dir" || return 1
+   if [ ! -f ./configure ]; then
+      echo; echo "ERROR: no ./configure in $pkg_dir (autotools required)"; echo
+      cd ..; return 1
+   fi
+   if [ -n "$CC" ]; then
+      export CC
+   fi
+   if [ -n "$CFLAGS" ]; then
+      export CFLAGS
+   fi
+   if [ -n "$PKG_CONFIG_PATH" ]; then
+      export PKG_CONFIG_PATH
+   fi
+   echo ":: configure $pkg_name (CC=${CC:-default} CFLAGS=${CFLAGS:-default})"
+   if ! ./configure --prefix="$installprefix" $configure_extra; then
+      echo; echo "ERROR during config for $pkg_name"; echo
+      cd ..; return 1
+   fi
+   if ! make $make_j; then
+      echo; echo "ERROR during build for $pkg_name"; echo
+      cd ..; return 1
+   fi
+   if ! make install; then
+      echo; echo "ERROR installing $pkg_name into $installprefix"; echo
+      cd ..; return 1
+   fi
+   cd ..
 }
 check_and_finish()
 {

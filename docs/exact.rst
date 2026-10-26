@@ -241,9 +241,52 @@ close to its initial value).
 MHD shock tubes
 ---------------
 
-These are some tabulated solutions for specific MHD shock tube problems
-at a given time taken from the tables given in [DW94]_
-and [RJ95]_.
+The subroutine ``exact_mhdshock`` computes the exact solution of the
+Riemann problem in ideal magnetohydrodynamics for arbitrary left and
+right states :math:`(\rho, p, v_x, v_y, v_z, B_y, B_z)` and normal field
+:math:`B_x`, for an adiabatic or (with :math:`\gamma = 1`) isothermal
+equation of state. The fast, rotational (Alfvén) and slow waves either
+side of the contact discontinuity are each described by a single
+strength parameter, and the parameters are iterated with a damped
+Newton-Raphson method until the pressure, velocity and transverse
+magnetic field match at the contact, following [Torrilhon02]_ and
+[TY14]_. Shocks are found from the jump conditions, written as a cubic
+(fast shocks) or quadratic (slow shocks) equation for the compression
+ratio, and rarefactions by integrating along the right eigenvectors.
+
+The physically relevant solution of the MHD Riemann problem is not
+always unique. When the transverse fields and velocities lie in a plane
+(e.g. the [BW88]_ problem) the solution returned is that of the coplanar
+MHD system, in which the slow wave may be an intermediate shock or a
+compound wave ([FK01]_; [TY13]_). This is the solution found by numerical
+simulations. Otherwise the regular solution is returned. Problems with
+zero transverse field on one side are handled using switch-on shocks and
+rarefactions.
+
+The left and right states are read automatically from the ``.setup``
+file written by Phantom (``densleft``, ``prleft``, ``vxleft``, ...,
+``Bxleft``, ``Byleft``, ``Bzleft`` and the corresponding right states)
+if present. Otherwise they can be entered manually, or set from one of
+the preset problems of [BW88]_, [RJ95]_, [Balsara98]_ and [DW94]_.
+
+Special relativistic MHD shock tubes
+------------------------------------
+
+The subroutine ``exact_mhdshock_sr`` computes the exact solution of the
+Riemann problem in special relativistic MHD, following [GR06]_. As in
+that paper the solution is regular, consisting of fast, Alfvén and slow
+waves either side of a contact discontinuity (or only fast waves and a
+tangential discontinuity when :math:`B_x = 0`), so compound waves seen
+in numerical solutions of e.g. the relativistic Brio & Wu problem are
+not reproduced. Shocks and Alfvén discontinuities are found by solving
+the jump conditions :math:`[[F]] = V_s [[U]]` together with one condition
+fixing the wave strength, and rarefactions by integrating along the
+eigenvectors of the flux Jacobian, with the magnetosonic speeds from the
+quartic dispersion relation (e.g. [MB06]_). The solutions reproduce the
+tables in [GR06]_ for the test problems of [Komissarov99]_ and
+[Balsara01]_, which are provided as presets. Velocities and fields are
+measured in the lab frame, with :math:`c = 1`, and the density may be
+plotted either in the rest frame or as :math:`\rho^* = \rho W`.
 
 h vs :math:`\rho`
 -----------------

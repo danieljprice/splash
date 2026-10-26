@@ -34,6 +34,7 @@ contains
 !----------------------------------------------------------------------------
 subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
  use particle_data
+ use settings_data, only:iverbose
  integer, intent(in) :: npartin,nstep,ncolumnsin
  logical, intent(in), optional :: mixedtypes
  integer :: maxpartold,maxstepold,maxcolold
@@ -97,7 +98,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     if (maxpart /= npartin) reallocate_part = .true.
     if (maxstep /= nstep) reallocate_step = .true.
 
-    if (npartin > 1000000) print 10,'> reallocating memory:',npartin,nstep,ncolumns
+    if (npartin > 1000000 .and. iverbose >= 0) print 10,'> reallocating memory:',npartin,nstep,ncolumns
 10  format (a,' parts = ',i10,' steps = ',i6,' cols = ',i4)
     allocate(dattemp(maxpartold,maxcolold,maxstepold), stat=ierr)
     if (ierr /= 0) stop 'error allocating memory (dattemp)'
@@ -131,28 +132,28 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     if (reallocate_step) then
        allocate(npartoftypetemp(maxparttypes,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
-       npartoftypetemp = npartoftype
+       npartoftypetemp(:,1:maxstepold) = npartoftype(:,1:maxstepold)
        deallocate(npartoftype)
 
        allocate(masstypetemp(maxparttypes,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (npartoftypetemp)'
-       masstypetemp = masstype
+       masstypetemp(:,1:maxstepold) = masstype(:,1:maxstepold)
        deallocate(masstype)
 
        allocate(timetemp(maxstep),gammatemp(maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (timetemp,gammatemp)'
-       timetemp = time
-       gammatemp = gamma
+       timetemp(1:maxstepold) = time(1:maxstepold)
+       gammatemp(1:maxstepold) = gamma(1:maxstepold)
        deallocate(time,gamma)
 
-       allocate(headervalstemp(maxhdr,maxstep))
+       allocate(headervalstemp(maxhdr,maxstep),stat=ierr)
        if (ierr /= 0) stop 'error allocating memory (hdrvalstemp)'
-       headervalstemp = headervals
+       headervalstemp(:,1:maxstepold) = headervals(:,1:maxstepold)
        deallocate(headervals)
     endif
 
  else
-    if (npartin > 1000000) print 10,'> allocating memory:',npartin,nstep,ncolumns
+    if (npartin > 1000000 .and. iverbose >= 0) print 10,'> allocating memory:',npartin,nstep,ncolumns
     maxpart = npartin
     maxstep = nstep
     maxcol = ncolumns
@@ -173,7 +174,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
  endif
 
  if (reallocate) then
-    dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp(1:maxpartold,1:maxcolold,1:maxstepold)
+    dat(1:maxpartold,1:maxcolold,1:maxstepold) = dattemp
     deallocate(dattemp)
  else
     dat = 0.
@@ -181,6 +182,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
 !
 !--type array if necessary
 !
+ if (.not.allocated(iamtypetemp)) allocate(iamtypetemp(0,0)) ! to avoid compiler warning
  if (present(mixedtypes)) then
     if (mixedtypes .and. .not.allocated(iamtype)) then
        allocate(iamtype(maxpart,maxstep), stat=ierr)
@@ -189,7 +191,6 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        !--copy contents if reallocating
        if (reallocate_itype) then
           iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-          deallocate(iamtypetemp)
        endif
     elseif (.not.mixedtypes) then
        !--if called with mixedtypes explictly false, deallocate itype array
@@ -202,8 +203,8 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     iamtype = 1
 
     iamtype(1:maxpartold,1:maxstepold) = iamtypetemp(1:maxpartold,1:maxstepold)
-    deallocate(iamtypetemp)
  endif
+ if (allocated(iamtypetemp)) deallocate(iamtypetemp)
  !--make sure iamtype is always allocated for safety, just with size=1 if not used
  if (.not.allocated(iamtype)) then
     allocate(iamtype(1,maxstep),stat=ierr)
@@ -217,7 +218,7 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
     if (ierr /= 0) stop 'error allocating memory for icolourme array'
     icolourme = 1
 
-    if (reallocate_part) then
+    if (reallocate_part .and. allocated(icolourmetemp)) then
        icolourme(1:maxpartold) = icolourmetemp(1:maxpartold)
        deallocate(icolourmetemp)
     endif
@@ -248,15 +249,14 @@ subroutine alloc(npartin,nstep,ncolumnsin,mixedtypes)
        npartoftype(:,1:maxstepold) = npartoftypetemp(:,1:maxstepold)
        masstype(:,1:maxstepold) = masstypetemp(:,1:maxstepold)
        time(1:maxstepold) = timetemp(1:maxstepold)
-       gamma(1:maxstepold) = gammatemp(1:maxstepold)
-       headervals(:,1:maxstepold) = headervalstemp(:,1:maxstepold)
+       if (allocated(gammatemp)) gamma(1:maxstepold) = gammatemp(1:maxstepold)
+       if (allocated(headervalstemp)) headervals(:,1:maxstepold) = headervalstemp(:,1:maxstepold)
        deallocate(npartoftypetemp,masstypetemp)
        deallocate(timetemp,gammatemp)
        deallocate(headervalstemp)
     endif
  endif
 
- return
 end subroutine alloc
 
 

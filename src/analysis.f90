@@ -403,14 +403,16 @@ subroutine open_analysis(analysistype,required,ncolumns,ndim,ndimV,nsinks)
 
  case('lightcurve')
     !
-    !--for lightcurve need to h, mass and utherm
+    !--for lightcurve need h, mass, density, temperature and opacity
     !
     required(ix(1:ndim)) = .true.
     required(ih) = .true.
+    required(irho) = .true.
     required(iutherm) = .true.
     required(ipmass) = .true.
     required(itemp) = .true.
     required(ikappa) = .true.
+    if (ivx > 0 .and. ivx+ndimV-1 <= ncolumns) required(ivx:ivx+ndimV-1) = .true.
     !
     !--set filename and header line
     !

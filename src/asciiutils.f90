@@ -31,13 +31,14 @@
 ! this is a standalone module with no dependencies
 !---------------------------------------------------------------------------
 module asciiutils
+ use, intrinsic :: ieee_arithmetic, only:ieee_is_nan
  implicit none
  public :: read_asciifile,get_ncolumns,get_nrows,ncolumnsline,safename,basename,numfromfile
  public :: cstring,fstring,add_escape_chars
  public :: string_replace,string_delete,get_nheaderlines,string_sub
  public :: ucase,lcase,strip
  public :: get_line_containing
- public :: enumerate,isdigit,get_digits,integer_to_string,split
+ public :: enumerate,isdigit,get_digits,integer_to_string,split_string
  public :: get_column_labels,read_column_labels
  public :: match_tag,match_taglist,append_number,make_tags_unique,get_value
  public :: match_column,match_tag_start,match_integer,match_lists
@@ -511,7 +512,7 @@ integer function ncolumnsline(line,csv,ntot)
 
  i = 1
  ncolumnsline = 0
- do while(abs(dummyreal(i)+666666.) > tiny(0.) .or. dummyreal(i) /= dummyreal(i))
+ do while(abs(dummyreal(i)+666666.) > tiny(0.) .or. ieee_is_nan(dummyreal(i)))
     ncolumnsline = ncolumnsline + 1
     i = i + 1
     if (i > size(dummyreal)) then
@@ -537,7 +538,7 @@ integer function ncolumnsline_csv(line,ntot) result(ncols)
  real :: dum
 
  ! split line by commas
- call split(line,',',fields,nfields)
+ call split_string(line,',',fields,nfields)
 
  ! report how many columns contain real numbers
  ! or blank (non-text) entries
@@ -573,7 +574,7 @@ subroutine readline_csv(line,ncols,datcol)
  integer :: nfields,i,icol,ierr
 
  ! split line by commas
- call split(line,',',fields,nfields)
+ call split_string(line,',',fields,nfields)
 
  ! read only columns that contain real numbers
  icol = 0
@@ -1013,7 +1014,7 @@ end function enumerate
 ! Split a string into substrings based on a delimiter
 !
 !---------------------------------------------------------------------------
-pure subroutine split(string,delim,stringarr,nsplit)
+pure subroutine split_string(string,delim,stringarr,nsplit)
  character(len=*), intent(in)  :: string
  character(len=*), intent(in)  :: delim
  character(len=*), intent(out), dimension(:), optional :: stringarr
@@ -1050,7 +1051,7 @@ pure subroutine split(string,delim,stringarr,nsplit)
     i = iend + len(delim) + 1
  enddo
 
-end subroutine split
+end subroutine split_string
 
 !---------------------------------------------------------------------------
 !
@@ -1095,7 +1096,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     i1 = max(index(line,'[')+1,i1)    ! strip leading square bracket
     ! try with different number of spaces between brackets (if labels not found)
     over_spaces1: do i=4,0,-1
-       call split(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
+       call split_string(line(i1:),']'//spaces(1:i)//'[',labels,nlabels)
        if (nlabels > 1) exit over_spaces1
     enddo over_spaces1
  elseif (index(line,',') > 1 .or. is_csv) then
@@ -1103,7 +1104,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     ! format style 2: mylabel1,mylabel2,mylabel3
     !
     istyle = 2
-    call split(line(i1:),',',labels,nlabelstmp)
+    call split_string(line(i1:),',',labels,nlabelstmp)
     if (is_csv) then
        nlabels = nlabelstmp  ! allow blank/arbitrary labels in csv format
     else
@@ -1117,7 +1118,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
     ! try splitting with 4, then 3, then 2 spaces until the number of labels decreases
     nlabels_prev = 0
     over_spaces: do i=4,2,-1
-       call split(line(i1:),spaces(1:i),labels,nlabelstmp)
+       call split_string(line(i1:),spaces(1:i),labels,nlabelstmp)
        ! quit if we already have the target number of labels
        if (nlabelstmp == ntarget) exit over_spaces
 
@@ -1126,7 +1127,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
        if ((nlabelstmp < nlabels_prev .or. nlabelstmp >= max(nlabels_prev,2)  &
             .and. i < 4 .and. .not. (ntarget > 0 .and. nlabelstmp > ntarget))) then
           ! take the answer with the previous number of spaces
-          call split(line(i1:),spaces(1:i+1),labels,nlabelstmp)
+          call split_string(line(i1:),spaces(1:i+1),labels,nlabelstmp)
           exit over_spaces
        endif
        nlabels_prev = nlabelstmp
@@ -1142,7 +1143,7 @@ subroutine get_column_labels(line,nlabels,labels,method,ndesired,csv)
        ! (this style is also dangerous)
        !
        istyle = 4
-       call split(line(i1:),' ',labels,nlabelstmp)
+       call split_string(line(i1:),' ',labels,nlabelstmp)
        nlabels = count_sensible_labels(nlabelstmp,labels)
     endif
  endif
@@ -1362,21 +1363,31 @@ end function get_value
 ! match multiple tags against a list of strings
 ! e.g. find 'x','y','z' in list of labels
 !-----------------------------------------------
-subroutine match_taglist(taglist,tags,istartmatch,nmatch)
+subroutine match_taglist(taglist,tags,istartmatch,nmatch,lower)
  character(len=*), intent(in)  :: taglist(:)
  character(len=*), intent(in)  :: tags(:)
  integer,          intent(out) :: istartmatch,nmatch
+ logical,          intent(in), optional :: lower
  integer :: i,j
+ character(len=len(taglist)) :: taglistj
+ logical :: use_lower
+
+ use_lower = .false.
+ if (present(lower)) use_lower = lower
 
  istartmatch = 0
  nmatch = 0
  if (size(taglist) < 1) return
  do i=1,size(tags)
-    if (nmatch <= 1 .and. trim(tags(i))==trim(taglist(1))) then
+    taglistj = trim(taglist(1))
+    if (use_lower) taglistj = trim(lcase(taglistj))
+    if (nmatch <= 1 .and. trim(tags(i))==trim(taglistj)) then
        nmatch = 1
        istartmatch = i
        do j=2,min(size(taglist),size(tags)-i+1)
-          if (trim(tags(i+j-1))==trim(taglist(j))) then
+          taglistj = trim(taglist(j))
+          if (use_lower) taglistj = trim(lcase(taglistj))
+          if (trim(tags(i+j-1))==trim(taglistj)) then
              nmatch = nmatch + 1
           endif
        enddo
@@ -1646,10 +1657,14 @@ end function numfromfile
 !
 !  disc_00000 disc1_00000 disc_00001 disc1_00001 disc_00002
 !
+! Enhanced to handle padding: if multiple sequences exist and
+! one runs out of files, it pads with the last available file
+! from that sequence
 !------------------------------------------------------------
-subroutine sort_filenames_for_comparison(nfiles,filenames)
- integer, intent(in) :: nfiles
- character(len=*), intent(inout) :: filenames(nfiles)
+subroutine sort_filenames_for_comparison(nfiles,filenames,pad)
+ integer, intent(inout) :: nfiles
+ character(len=*), intent(inout) :: filenames(:)
+ logical, intent(in), optional :: pad
  character(len=100) :: key
  integer :: i,j,num
 
@@ -1668,7 +1683,69 @@ subroutine sort_filenames_for_comparison(nfiles,filenames)
     filenames(j+1) = key
  enddo
 
+ ! Apply padding for incomplete groups
+ if (present(pad)) then
+    if (pad) call pad_incomplete_groups(nfiles, filenames)
+ endif
+
 end subroutine sort_filenames_for_comparison
+
+!------------------------------------------------------------
+! Subroutine to pad incomplete groups with files from
+! the last complete group
+!------------------------------------------------------------
+subroutine pad_incomplete_groups(nfiles, filenames)
+ integer, intent(inout) :: nfiles
+ character(len=*), intent(inout) :: filenames(:)
+ integer :: i, j, group_size, expected_size, last_complete_start
+ integer :: current_num, last_complete_num
+
+ ! Find expected group size and last complete group
+ expected_size = 1
+ last_complete_start = 1
+ last_complete_num = -1
+ i = 1
+
+ do while (i <= nfiles)
+    current_num = numfromfile(filenames(i))
+    group_size = 1
+    do while (i + group_size <= nfiles .and. numfromfile(filenames(i + group_size)) == current_num)
+       group_size = group_size + 1
+    enddo
+
+    if (group_size >= expected_size) then
+       expected_size = group_size
+       if (group_size > 1) then
+          last_complete_start = i
+          last_complete_num = current_num
+       endif
+    endif
+    i = i + group_size
+ enddo
+
+ ! Pad incomplete groups that come after the last complete group
+ if (expected_size > 1 .and. last_complete_num >= 0) then
+    i = 1
+    do while (i <= nfiles)
+       current_num = numfromfile(filenames(i))
+       if (current_num > last_complete_num .and. i < nfiles .and. &
+           numfromfile(filenames(i+1)) /= current_num) then
+          ! This is an incomplete group - insert padding file after it
+          if (nfiles < size(filenames)) then
+             nfiles = nfiles + 1
+             ! Shift everything after this position
+             do j = nfiles, i + 2, -1
+                filenames(j) = filenames(j-1)
+             enddo
+             ! Insert the padding file
+             filenames(i+1) = filenames(last_complete_start + 1)
+          endif
+       endif
+       i = i + 1
+    enddo
+ endif
+
+end subroutine pad_incomplete_groups
 
 !------------------------------------------------------------
 ! utility to read a variable from an ascii file

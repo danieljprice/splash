@@ -135,7 +135,7 @@ subroutine submenu_particleplots(ichoose)
  use asciiutils,      only:enumerate
  use exact,           only:HonR,rplanet,q_index,phase
  integer, intent(in) :: ichoose
- integer             :: i,iaction,n,itype,icoordsprev,ierr,icol,isinktype,nt
+ integer             :: i,iaction,n,itype,icoordsprev,ierr,icol,isinktype,nt,nminus
  character(len=2)    :: charntypes
  character(len=20)   :: substring2,substring3
  character(len=1000) :: fmtstring
@@ -349,7 +349,8 @@ subroutine submenu_particleplots(ichoose)
           do n=1,ncircpart
              if (icircpart(n)==0) then
                 if (n > 1) then
-                   icircpart(n) = icircpart(n-1)+1
+                   nminus = max(1,n-1)
+                   icircpart(n) = icircpart(nminus)+1
                 else
                    icircpart(n) = 1
                 endif

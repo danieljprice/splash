@@ -81,6 +81,11 @@ module amusehdf5read
    integer(kind=c_int), intent(out) :: ierr
    integer(kind=c_int), dimension(ncol), intent(in)  :: isrequired
   end subroutine read_amuse_hdf5_data
+
+  integer(c_int) function amuse_hdf5_is_amuse_file(filename) bind(c)
+   import
+   character(kind=c_char), dimension(*), intent(in) :: filename
+  end function amuse_hdf5_is_amuse_file
  end interface
 
 end module amusehdf5read
@@ -94,7 +99,7 @@ end module amusehdf5read
 module readdata_amuse_hdf5
  implicit none
 
- public :: read_data_amuse_hdf5, set_labels_amuse_hdf5
+ public :: read_data_amuse_hdf5, set_labels_amuse_hdf5, file_format_is_amuse_hdf5
 
  private
 contains
@@ -104,7 +109,6 @@ subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
  use params,         only:doub_prec,maxplot
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,required,ipartialread, &
                            ntypes,iverbose,debugmode
- use settings_page,  only:legendtext
  use mem_allocation, only:alloc
  use labels,         only:ih,irho,ipmass
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
@@ -263,7 +267,7 @@ subroutine read_data_amuse_hdf5(rootname,istepstart,ipos,nstepsread)
        enddo
        hfact = hfactmean/real(nhfac)
        havewarned = .true.
-       print "(/,1x,a,f5.1,a,/,1x,a,f4.2,a,i1,a,/)", &
+       print "(/,1x,a,f5.1,a,/,1x,a,f5.2,a,i1,a,/)", &
              'Simulations employ ',4./3.*pi*(2.*hfact)**3,' neighbours,', &
              'corresponding to h = ',hfact,'*(m/rho)^(1/',ndim,') in 3D'
     endif
@@ -392,4 +396,22 @@ subroutine set_blocklabel(icol,name) bind(c)
  !print*,icol,' name = ',trim(blocklabel(icol))
 
 end subroutine set_blocklabel
+
+!-----------------------------------------------------------------
+! return true if filename is an AMUSE HDF5 dump
+!-----------------------------------------------------------------
+logical function file_format_is_amuse_hdf5(filename) result(is_amuse)
+ use asciiutils,     only:cstring
+ use amusehdf5read,  only:amuse_hdf5_is_amuse_file
+ use, intrinsic :: iso_c_binding, only:c_int
+ character(len=*), intent(in) :: filename
+ integer(c_int) :: isa
+
+ is_amuse = .false.
+ if (index(filename,'.h5') == 0 .and. index(filename,'.hdf5') == 0) return
+ isa = amuse_hdf5_is_amuse_file(cstring(filename))
+ is_amuse = (isa == 1)
+
+end function file_format_is_amuse_hdf5
+
 end module readdata_amuse_hdf5

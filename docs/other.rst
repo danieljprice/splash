@@ -40,6 +40,15 @@ in splash.
 
 See also :ref:`sec:commandline`.
 
+Conversion to ndspmhd format
+----------------------------
+
+To export SPH data in the ndspmhd binary dump format, use::
+
+   splash to ndspmhd dump001 dump002 dump???
+
+which writes ``dump001.dat``, ``dump002.dat`` etc.
+
 .. _sec:converttogrid:
 
 Interpolation of SPH data to 2D and 3D grids
@@ -100,7 +109,7 @@ ascii format
 The default output of splash to grid is a simple ascii file per quantity.
 The header of this file explains the format::
 
-   # SPLASH: A visualisation tool for SPH data (c)2004-2023 Daniel Price and contributors
+   # SPLASH: A visualisation tool for SPH data (c)2004-2026 Daniel Price and contributors
    # snap_012_density_grid.dat produced using "splash to grid" on file snap_012
    #
    # time:
@@ -451,7 +460,7 @@ See above for how to output the raw pixel map to a file. The resulting .pix file
   print (array.shape)
   plt.imshow(img)
 
-A slightly more advanced script that also reads the x and y limits from the .pix file is provided in `splash/scripts/plot_pix.py <https://github.com/danieljprice/splash/blob/master/scripts/plot_pix.py>`_::
+A slightly more advanced script that also reads the x and y limits from the .pix file is provided in `splash/scripts/plot_pix.py <https://github.com/danieljprice/splash/blob/main/scripts/plot_pix.py>`_::
 
   python plot_pix.py discG_00300_columndensitygcm2_proj.pix
 

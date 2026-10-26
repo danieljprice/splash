@@ -90,12 +90,12 @@ module readdata_gadget
 contains
 
 subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
- use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep
+ use particle_data,  only:dat,npartoftype,masstype,time,gamma,maxpart,maxcol,maxstep,headervals
  use params,         only:doub_prec,sing_prec,maxparttypes
  use settings_data,  only:ndim,ndimV,ncolumns,ncalc,iformat,required,ipartialread, &
                            ntypes,debugmode,iverbose
  use mem_allocation, only:alloc
- use labels,         only:ih,irho,ipmass,labeltype,iamvec
+ use labels,         only:ih,irho,ipmass,labeltype,iamvec,headertags
  use system_utils,   only:renvironment,lenvironment,ienvironment,envlist
  integer, intent(in)                :: istepstart,ipos
  integer, intent(out)               :: nstepsread
@@ -110,9 +110,11 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
  integer               :: ncolstep,npart_max,nstep_max,ntoti,nacc,ntotall,idot
  integer               :: iFlagSfr,iFlagFeedback,iFlagCool,nfiles,istart,nhfac
  integer               :: nextracols,nstarcols,i1,i2,i3,i4,lenblock,idumpformat
+ integer               :: imax
  integer, dimension(6) :: i0,i1all,i2all
  integer, parameter    :: iunit = 11, iunitd = 102, iunith = 103
  logical               :: iexist,reallocate,checkids,goterrors
+ logical               :: ignore_iflagcool,ignore_errors
  logical, dimension(6) :: ireadtype
  real(doub_prec)                    :: timetemp,ztemp
  real(doub_prec), dimension(6)      :: massoftypei
@@ -301,8 +303,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     else
 
        iformat = 0
-       if (iFlagCool==1 .and. .not.(lenvironment('GSPLASH_IGNORE-IFLAGCOOL') &
-                               .or. lenvironment('GSPLASH_IGNORE_IFLAGCOOL'))) then
+       ignore_iflagcool = lenvironment('GSPLASH_IGNORE-IFLAGCOOL')
+       if (.not.ignore_iflagcool) ignore_iflagcool = lenvironment('GSPLASH_IGNORE_IFLAGCOOL')
+       if (iFlagCool==1 .and. .not.ignore_iflagcool) then
           iformat = 1
           ncolstep = 12 ! 3 x pos, 3 x vel, pmass, utherm, rho, Ne, Nh, h
           if (ifile==1) print "(a)",' cooling flag on : assuming Ne, Nh dumped before h'
@@ -453,6 +456,24 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
     !
     if (ifile==1) then
        time(i) = real(timetemp)
+       !
+       !--copy named snapshot header for --header / legends
+       !  (use all-file totals when this dump is split across nfiles)
+       !
+       headertags(1:4) = (/'time    ','redshift','nfiles  ','nparttot'/)
+       headervals(1,i) = real(timetemp)
+       headervals(2,i) = real(ztemp)
+       headervals(3,i) = real(nfiles)
+       headertags(5:10) = (/'npart1','npart2','npart3','npart4','npart5','npart6'/)
+       headertags(11:16) = (/'mass1','mass2','mass3','mass4','mass5','mass6'/)
+       if (nfiles > 1) then
+          headervals(4,i) = real(sum(Nall(1:6)))
+          headervals(5:10,i) = real(Nall(1:6))
+       else
+          headervals(4,i) = real(ntoti)
+          headervals(5:10,i) = real(npartoftypei(1:6))
+       endif
+       headervals(11:16,i) = real(massoftypei(1:6))
     else
        if (abs(real(timetemp)-time(i)) > tiny(0.)) print*,'ERROR: time different between files in multiple-file read'
        if (sum(Nall) /= ntotall) then
@@ -770,7 +791,10 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                    if (nvec > 1) then
                       if (nfiles > 1) then
                          !read (iunit,iostat=ierr) (((dat(k,j,i),j=icol-nvec+1,icol),k=i1all(itype),i2all(itype)),itype=1,ntypesused)
-                         call allocate_temp(dattemp,nvec,ntoti)
+                         ! i1all/i2all are global offsets, which can exceed ntoti (this-file count)
+                         imax = ntoti
+                         if (ntypesused > 0) imax = max(imax,maxval(i2all(1:ntypesused)))
+                         call allocate_temp(dattemp,nvec,imax)
                          read (iunit,iostat=ierr) ((dattemp(1:nvec,j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
                          do itype=1,ntypesused
                             do j=i1all(itype),i2all(itype)
@@ -787,7 +811,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
                       endif
                    else
                       if (nfiles > 1) then
-                         call allocate_temp1(dattemp1,ntoti)
+                         imax = ntoti
+                         if (ntypesused > 0) imax = max(imax,maxval(i2all(1:ntypesused)))
+                         call allocate_temp1(dattemp1,imax)
                          read (iunit,iostat=ierr) ((dattemp1(j),j=i1all(itype),i2all(itype)),itype=1,ntypesused)
                          ! convert to real*8 if compiled in single precision
                          do itype=1,ntypesused
@@ -1011,7 +1037,9 @@ subroutine read_data_gadget(rootname,istepstart,ipos,nstepsread)
 !
 !--pause with fatal errors
 !
- if (goterrors .and. .not.(lenvironment('GSPLASH_IGNORE_ERRORS').or.lenvironment('GSPLASH_IGNORE-ERRORS'))) then
+ ignore_errors = lenvironment('GSPLASH_IGNORE_ERRORS')
+ if (.not.ignore_errors) ignore_errors = lenvironment('GSPLASH_IGNORE-ERRORS')
+ if (goterrors .and. .not.ignore_errors) then
     print "(/,a)",'*** ERRORS detected during data read: data will be corrupted'
     print "(a,/)",'    Please REPORT this and/or fix your file ***'
     print "(a)",'     (set --ignore-errors=yes to skip this message)'
@@ -1168,7 +1196,7 @@ end subroutine allocate_temp1
 !!------------------------------------------------------------
 
 subroutine set_labels_gadget
- use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,lenlabel,set_vector_labels, &
+ use labels,        only:label,iamvec,labelvec,labeltype,ix,ivx,ipmass,set_vector_labels, &
                           ih,irho,ipr,iutherm,iBfirst,iBpol,iBtor,idivB,iax,make_vector_label
  use params
  use settings_data, only:ndim,ndimV,ncolumns,ntypes,UseTypeInRenderings,iformat
@@ -1177,7 +1205,6 @@ subroutine set_labels_gadget
  use asciiutils,    only:lcase
  integer :: i,nextracols,nstarcols,icol,ihset
  character(len=30), dimension(10) :: labelextra
- character(len=lenlabel) :: tmplabel
 
  if (ndim <= 0 .or. ndim > 3) then
     print*,'*** ERROR: ndim = ',ndim,' in set_labels_gadget ***'
@@ -1670,19 +1697,36 @@ end subroutine set_labels_gadget
 
 !-----------------------------------------------------------
 !
-! check if a file is in phantom/sphNG format
+! check if a file is in Gadget binary format
+!
+! Gadget format-1 headers are a Fortran unformatted record of
+! length 256; format-2 starts with an 8-byte "HEAD" record.
+! Checking that framing rejects unrelated dumps whose leading
+! bytes happen to decode as plausible header integers.
 !
 !-----------------------------------------------------------
 logical function file_format_is_gadget(filename) result(is_gadget)
- use params, only:doub_prec
+ use params,   only:doub_prec
+ use byteswap, only:bs
  character(len=*), intent(in) :: filename
- integer :: iunit,ierr,lenblock
+ integer :: iunit,ierr,lenblock,reclen
  real(doub_prec)  :: time,z
  real(doub_prec)  :: massoftypei(6)
  character(len=4) :: blocklabel
  integer :: noftype(6),Nall(6),iFlagSfr,iFlagFeedback,iFlagcool,nfiles
 
  is_gadget = .false.
+ !
+ ! peek at the Fortran record length framing the first block
+ !
+ open(newunit=iunit,iostat=ierr,file=filename,status='old',form='unformatted',&
+      access='stream')
+ if (ierr /= 0) return
+ read(iunit,iostat=ierr) reclen
+ close(iunit)
+ if (ierr /= 0) return
+ if (.not.(reclen == 256 .or. bs(reclen) == 256 .or. &
+           reclen == 8   .or. bs(reclen) == 8)) return
  !
  ! open file and read the first line
  !

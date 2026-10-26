@@ -37,6 +37,11 @@ module cactushdf5read
    integer(kind=c_int), intent(out) :: ierr
   end subroutine close_cactus_hdf5_file
 
+  integer(c_int) function cactus_hdf5_is_cactus_file(filename) bind(c)
+   import
+   character(kind=c_char), dimension(*), intent(in) :: filename
+  end function cactus_hdf5_is_cactus_file
+
  end interface
 
 contains
@@ -141,7 +146,7 @@ subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ik
 
  igxx = 0; igxy = 0; igxz = 0; igyy = 0; igyz = 0; igzz = 0
  ikxx = 0; ikxy = 0; ikxz = 0; ikyy = 0; ikyz = 0; ikzz = 0
- irho = 0; ialp = 0; ivel0 = 0; ivel1 = 0; ivel2 = 0
+ irho = 0; ialp = 0; ivel0 = 0; ivel1 = 0; ivel2 = 0; idens = 0
  do i=1,ncols
     select case(labelcol(i))
     case('gxx')
@@ -186,7 +191,7 @@ subroutine find_metric(ncols,labelcol,igxx,igxy,igxz,igyy,igyz,igzz,ikxx,ikxy,ik
  enddo
 
  ! if we didn't find 'rho' in cols, use dens instead
- if (gotrho .eqv. .False.) irho = idens
+ if (.not.gotrho) irho = idens
 
 end subroutine find_metric
 

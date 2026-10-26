@@ -80,6 +80,7 @@ subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
  real(doub_prec), dimension(:), allocatable :: dattemp
  integer, dimension(:), allocatable :: iam
  integer, dimension(:), allocatable :: iwas
+ logical :: barycentric
 
  iunit = 11 ! file unit number
  ndim_max = 1
@@ -308,7 +309,8 @@ subroutine read_data_mhutch(rootname,indexstart,ipos,nstepsread)
 
  call set_labels_mhutch
 
- if ( fluidsw < 0 .and. .not.lenvironment('NSPLASH_BARYCENTRIC') ) then
+ barycentric = lenvironment('NSPLASH_BARYCENTRIC')
+ if ( fluidsw < 0 .and. .not.barycentric ) then
     call fake_twofluids
  endif
 

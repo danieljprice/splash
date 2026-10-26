@@ -1,4 +1,6 @@
 
+.. _sec:advanced:
+
 Advanced plotting examples
 ==========================
 

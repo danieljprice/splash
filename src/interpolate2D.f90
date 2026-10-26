@@ -839,7 +839,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
  real, intent(in), optional :: fac
 
  real, dimension(npixx,npixy) :: datnorm,datold
- real, dimension(npixx) :: dx2i,qq2,wabi
+ real, dimension(npixx) :: dx2i
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax,its,itsmax
  real :: hi,hi1,radkernx,radkerny,q2,wab,const
@@ -890,7 +890,7 @@ subroutine interpolate2D_pixels(x,y,itype,npart, &
     !$omp shared(pixwidthx,pixwidthy,normalise,hfac) &
     !$omp private(i,xi,yi,ipix,jpix,hi,hi1) &
     !$omp private(radkernx,radkerny,ipixmin,ipixmax,jpixmin,jpixmax) &
-    !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,termnorm,qq2,wabi)
+    !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,termnorm)
     over_parts: do i=1,npart
        !
        !--skip particles with itype < 0
@@ -1024,7 +1024,7 @@ subroutine interpolate2D_fromgrid(x,y,hh,dat,gradh,sigma,mask,npart, &
  real,    intent(in) :: xmin,ymin,pixwidthx,pixwidthy
  real,    intent(in), dimension(npixx,npixy) :: datpix
 
- real, dimension(npixx) :: dx2i,qq2
+ real, dimension(npixx) :: dx2i
 
  integer :: i,ipix,jpix,ipixmin,ipixmax,jpixmin,jpixmax
  real :: hi,hi1,radkernx,radkerny,q2,wab,const,datpart
@@ -1051,7 +1051,7 @@ subroutine interpolate2D_fromgrid(x,y,hh,dat,gradh,sigma,mask,npart, &
  !$omp shared(pixwidthx,pixwidthy) &
  !$omp private(i,xi,yi,ipix,jpix,hi,hi1,datpart) &
  !$omp private(radkernx,radkerny,ipixmin,ipixmax,jpixmin,jpixmax) &
- !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,qq2,dwabdh,gradhi)
+ !$omp private(dx2i,xpix,ypix,dy,dy2,q2,wab,term,dwabdh,gradhi)
  over_parts: do i=1,npart
     !
     !--skip particles with itype < 0
