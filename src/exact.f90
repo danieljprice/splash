@@ -15,7 +15,7 @@
 !  a) You must cause the modified files to carry prominent notices
 !     stating that you changed the files and the date of any change.
 !
-!  Copyright (C) 2005-2016 Daniel Price. All rights reserved.
+!  Copyright (C) 2005-2022 Daniel Price. All rights reserved.
 !  Contact: daniel.price@monash.edu
 !
 !-----------------------------------------------------------------
@@ -104,6 +104,8 @@ module exact
  !--bondi flow
  logical :: relativistic, geodesic_flow,is_wind
  real    :: const1,const2
+ !--cooling shock
+ real    :: cooling_length
  !--gamma, for manual setting
  real :: gamma_exact,gamma2_exact
  logical :: use_gamma_exact,use_gamma2_exact
@@ -126,7 +128,7 @@ module exact
        gamma_exact,gamma2_exact,use_gamma_exact,use_gamma2_exact,&
        HonR,rplanet,q_index,relativistic,geodesic_flow,is_wind,&
        const1,const2,ispiral,narms,spiral_params,phase,&
-       iread_wakeparams,iclockwise,inonlin
+       iread_wakeparams,iclockwise,inonlin,cooling_length
 
  public :: defaults_set_exact,submenu_exact,options_exact,read_exactparams
  public :: exact_solution,get_nexact
@@ -229,6 +231,8 @@ subroutine defaults_set_exact
  is_wind       = .true.
  const1 = 8.
  const2 = 1.
+!   cooling shock
+ cooling_length = 1.0
 
 !   gamma, if not read from file
  gamma_exact = 5./3.
@@ -292,7 +296,7 @@ subroutine submenu_exact(iexact)
            ' 6) toy star ',/,             &
            ' 7) gresho vortex ',/,          &
            ' 8) MHD shock tube ',/,  &
-           ' 9) h vs rho ',/, &
+           ' 9) cooling shock (Creasey et al. 2011) ',/, &
            '10) Plummer/Hernquist spheres ',/, &
            '11) torus ',/, &
            '12) ring spreading ',/, &
@@ -546,7 +550,20 @@ subroutine submenu_exact(iexact)
     call prompt('enter initial x position of shock ',xshock)
     prompt_for_gamma = .true.
  case(9)
-    call prompt('enter hfact [h = hfact*(m/rho)**1/ndim]',hfact,0.)
+    !
+    !--read shock parameters from the .shk file
+    !
+    call read_exactparams(iexact,trim(rootname(1)),ierr)
+    if (ierr /= 0) then
+       call prompt('enter initial x position of shock',xshock)
+       call prompt('enter background density   ',rho_L,0.0)
+       call prompt('enter background pressure  ',pr_L,0.0)
+       call prompt('enter injection velocity  ',v_L)
+       rho_R = rho_L
+       pr_R = pr_L
+       v_R = -v_L
+    endif
+    call prompt('enter cooling length kB T0 c0/(Lambda n0)',cooling_length,0.)
  case(10)
     print 20
 20  format(' 1) Plummer sphere  [ rho = 3M r_s**2 /(4 pi (r**2 + r_s**2)**5/2) ]',/, &
@@ -892,7 +909,7 @@ subroutine read_exactparams(iexact,rootname,ierr)
     elseif (nfiles_got > 0) then
        nfiles = nfiles_got
     endif
- case(3,13)
+ case(3,9,13)
     !
     !--shock tube parameters from .shk file
     !
@@ -1255,7 +1272,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
                             pmassmin,pmassmax,npart,imarker,unitsx,unitsy,irescale,iaxisy)
  use params,          only:int1,maxparttypes
  use settings_data,   only:ncolumns,ncalc
- use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ih,ipr,iJfirst,&
+ use labels,          only:ix,irad,iBfirst,ivx,irho,ike,iutherm,ipr,iJfirst,&
                               irhorestframe,is_coord,ideltav,idustfrac,label
  use filenames,       only:ifileopen,rootname
  use asciiutils,      only:string_replace,match_integer
@@ -1264,7 +1281,6 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use mhdshock,        only:exact_mhdshock
  use mhdshock_sr,     only:exact_mhdshock_sr
  use polytrope,       only:exact_polytrope
- use rhoh,            only:exact_rhoh
  use sedov,           only:exact_sedov
  use shock,           only:exact_shock
  use shock_sr,        only:exact_shock_sr
@@ -1279,6 +1295,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  use rochelobe,       only:exact_rochelobe
  use gresho,          only:exact_gresho
  use Cshock,          only:exact_Cshock
+ use coolingshock,    only:exact_coolingshock
  use planetdisc,      only:exact_planetdisc
  use bondi,           only:exact_bondi
  use transforms,      only:transform,transform_inverse
@@ -1296,7 +1313,6 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  logical,       intent(in) :: irescale
  integer :: mytransx,mytransy,imapx,imapy
 
- real, parameter :: zero = 1.e-10
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
  integer :: ncols,nrows,nlab_exact,nsh,iplot
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
@@ -1590,32 +1606,15 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
        if (iplot > 0) call exact_mhdshock(iplot,timei,gammai,Bx_mhd,primL_mhd,primR_mhd, &
                                           xmin,xmax,xshock,xexact,yexact,iexactpts,ierr)
     endif
- case(9)
-    !--h = (1/rho)^(1/ndim)
-    if (((iploty==ih).and.(iplotx==irho)) .or. &
-           ((iplotx==ih).and.(iploty==irho))) then
-       if (iplotx==ih) then
-          call exact_rhoh(2,ndim,hfact,pmassmin,xexact,yexact,ierr)
-       else
-          call exact_rhoh(1,ndim,hfact,pmassmin,xexact,yexact,ierr)
-       endif
-
-       !--if variable particle masses, plot one for each pmass value
-       if (abs(pmassmin-pmassmax) > zero .and. pmassmin > zero) then
-          !--plot first line
-          if (ierr <= 0) then
-             xtemp = xexact ! must not transform xexact as this is done again below
-             if (itransx > 0) call transform(xtemp,itransx)
-             if (itransy > 0) call transform(yexact,itransy)
-             call plot_line(iexactpts,xtemp(1:iexactpts),yexact(1:iexactpts))
-          endif
-          !--leave this one to be plotted below
-          if (iplotx==ih) then
-             call exact_rhoh(2,ndim,hfact,pmassmax,xexact,yexact,ierr)
-          else
-             call exact_rhoh(1,ndim,hfact,pmassmax,xexact,yexact,ierr)
-          endif
-       endif
+ case(9) ! cooling shock
+    if (iplotx==ix(1) .and. igeom <= 1) then
+       iplot = -1
+       if (iploty==irho) iplot = 0
+       if (iploty==ivx .and. ndimV > 0) iplot = 1
+       if (iploty==iutherm) iplot = 2
+       if (iploty==ipr) iplot = 3
+       if (iplot >= 0) call exact_coolingshock(iplot,timei,gammai,xshock,rho_L,v_L,pr_L, &
+                                               cooling_length,xexact,yexact,ierr)
     endif
  case(10) ! density profiles
     if (iplotx==irad .or.(igeom==3 .and. iplotx==ix(1))) then

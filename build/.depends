@@ -18,9 +18,10 @@ dataread_utils.o : dataread_utils.f90 globaldata.o
 defaults.o : defaults.f90 calc_quantities.o shapes.o globaldata.o titles.o globaldata.o units.o options_powerspec.o options_xsecrotate.o options_vecplot.o options_render.o options_page.o options_particleplots.o options_data.o options_limits.o globaldata.o exact.o
 denoise.o : denoise.f90 system_utils.o imageutils.o write_fits.o
 discplot.o : discplot.f90 ${PLOTLIB:.f90=.o} partutils.o physcon.o globaldata.o transform.o
-exact.o : exact.f90 transform.o exact_bondi.o exact_Cshock.o exact_gresho.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_densityprofiles.o exact_wave.o exact_toystar2D.o exact_toystar1D.o exact_torus.o exact_shock_sr.o exact_shock.o exact_sedov.o exact_rhoh.o exact_polytrope.o exact_fromfile.o system_utils.o partutils.o globaldata.o physcon.o map_columns.o labels.o asciiutils.o exact_planetdisc.o exact_mhdshock_sr.o exact_function.o globaldata.o prompting.o globaldata.o exact_mhdshock.o ${PLOTLIB:.f90=.o} globaldata.o
+exact.o : exact.f90 transform.o exact_bondi.o exact_coolingshock.o exact_Cshock.o exact_gresho.o exact_rochelobe.o exact_dustywaves.o exact_ringspread.o exact_densityprofiles.o exact_wave.o exact_toystar2D.o exact_toystar1D.o exact_torus.o exact_shock_sr.o exact_shock.o exact_sedov.o exact_polytrope.o exact_fromfile.o system_utils.o partutils.o globaldata.o physcon.o map_columns.o labels.o asciiutils.o exact_planetdisc.o exact_mhdshock_sr.o exact_function.o globaldata.o prompting.o globaldata.o exact_mhdshock.o ${PLOTLIB:.f90=.o} globaldata.o
 exact_Cshock.o : exact_Cshock.f90
 exact_bondi.o : exact_bondi.f90
+exact_coolingshock.o : exact_coolingshock.f90
 exact_densityprofiles.o : exact_densityprofiles.f90
 exact_dustywaves.o : exact_dustywaves.f90 cubicsolve.o
 exact_fromfile.o : exact_fromfile.f90 asciiutils.o
