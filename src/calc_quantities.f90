@@ -923,7 +923,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                    call change_coords(unitvals(1:ncolumns+icalc-1),ncolumns+icalc-1,&
                                       ndim,icoords,icoordsnew,x0(1:ndim),v0(1:ndim))
                    ! DP: see comment below
-                   units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                   if (i==ifromstep) units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
                 endif
              else
                 !!$omp parallel do default(none) private(j,vals,icolumn) shared(dat,i,icalc,ncolumns)
@@ -941,7 +941,7 @@ subroutine calc_quantities(ifromstep,itostep,dontcalculate)
                    ! For now, this is done manually by recognising the dimensionality of certain computed quantities
                    ! in identify_calculated_quantities
                    !
-                   units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
+                   if (i==ifromstep) units_calc(ncolumns+icalc) = units(ncolumns+icalc) !real(evalf(icalc,unitvals(1:ncolumns+icalc+nextravars+nhdr-1)))
                 endif
                !!$omp end parallel do
              endif
