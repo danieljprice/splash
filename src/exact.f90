@@ -30,7 +30,7 @@
 ! it is called under different circumstances to the other solutions).
 !
 module exact
- use params, only:maxplot
+ use params, only:maxplot,doub_prec
  implicit none
  !
  !--maximum number of solutions in any one plot
@@ -1316,7 +1316,7 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
  integer :: i,ierr,iexactpts,iCurrentColour,iCurrentLineStyle,LineStyle
  integer :: ncols,nrows,nlab_exact,nsh,iplot
  real, allocatable :: xexact(:),yexact(:),xtemp(:)
- real :: dx,timei,gammai
+ real :: dx,timei,gammai,ux,uy
  character(len=len(filename_exact)) :: filename_tmp
 
  !
@@ -1423,17 +1423,22 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
           print "(a)",'> reading '//trim(exact_labels(imapx))//' and '//trim(exact_labels(imapy))//' from '//trim(filename_tmp)
           call exact_fromfile(filename_tmp,xexact,yexact,imapx,imapy,iexactpts,ierr)
           ! if everything has been done automatically, try to guess whether
-          ! the solution is in code units or physical units
-          if (iRescale .and. iauto_map_columns) then
-             iApplyUnitsExactFile = guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
+          ! the solution is in plot units, code units or cgs units
+          ! (not if the solution is already logged, as units are then not applied)
+          ux = unitsx
+          uy = unitsy
+          if (iRescale .and. iauto_map_columns .and. iApplyTransExactFile .and. ierr <= 0) then
+             call guess_units_of_exact(xplot,yplot,xexact(1:iexactpts),yexact(1:iexactpts),unitsx,unitsy,&
+                                       itransx,itransy,exact_labels(imapx),exact_labels(imapy),ux,uy)
+             iApplyUnitsExactFile = .true.
           endif
           !--plot this untransformed (as may already be in log space)
           if (ierr <= 0) then
              if (iApplyTransExactFile) then
                 !--change into physical units if appropriate
                 if (iRescale .and. iApplyUnitsExactFile) then
-                   xexact(1:iexactpts) = xexact(1:iexactpts)*unitsx
-                   yexact(1:iexactpts) = yexact(1:iexactpts)*unitsy
+                   xexact(1:iexactpts) = xexact(1:iexactpts)*ux
+                   yexact(1:iexactpts) = yexact(1:iexactpts)*uy
                 endif
              endif
              !--change line style between files
@@ -1823,38 +1828,103 @@ integer function get_transform(itrans,apply_trans,label_start) result(mytrans)
 end function get_transform
 
 !------------------------------------------------------------------
-! try to figure out how to correctly transform the exact solution
+! guess whether an exact solution read from file is in plot units,
+! code units or cgs units: the x factor is the one giving the best
+! overlap with the particle x range, the y factor the one giving the
+! smallest relative difference from the particles at matching x
 !------------------------------------------------------------------
-logical function guess_whether_to_apply_units_to_exact(xplot,yplot,xexact,yexact,unitsx,unitsy)
- real, intent(in) :: xplot(:),yplot(:),xexact(:),yexact(:)
- real, intent(in) :: unitsx,unitsy
+subroutine guess_units_of_exact(xplot,yplot,xexact,yexact,unitsx,unitsy,itransx,itransy,labelx,labely,ux,uy)
+ use transforms, only:transform
+ real,    intent(in)  :: xplot(:),yplot(:),xexact(:),yexact(:),unitsx,unitsy
+ integer, intent(in)  :: itransx,itransy
+ character(len=*), intent(in) :: labelx,labely
+ real,    intent(out) :: ux,uy
+ integer, parameter :: maxs = 2000
+ character(len=4), parameter :: unitname(3) = (/'plot','code','cgs '/)
+ real    :: tryx(3),tryy(3),xe(size(xexact)),ye(maxs),yp(maxs),score,best
+ integer :: jn(maxs),i,k,kx,ky,n,mytransx,mytransy
 
- real :: range_xplot, range_yplot
- real :: range_xexact_no_units, range_yexact_no_units
- real :: range_xexact_with_units, range_yexact_with_units
+ tryx = unit_candidates(unitsx,labelx)
+ tryy = unit_candidates(unitsy,labely)
+ mytransx = get_transform(itransx,.true.,labelx(1:3))
+ mytransy = get_transform(itransy,.true.,labely(1:3))
 
- ! Calculate ranges for xplot and yplot
- range_xplot = maxval(xplot) - minval(xplot)
- range_yplot = maxval(yplot) - minval(yplot)
+ !
+ ! x axis, guess the unit scaling factor that best matches range 
+ !         of exact solution to the particle data
+ !
+ kx = 1
+ best = -huge(best)
+ do k=1,3
+    if (tryx(k) <= 0.) cycle
+    xe = xexact*tryx(k)
+    if (mytransx /= 0) call transform(xe,mytransx)
+    score = (min(maxval(xe),maxval(xplot)) - max(minval(xe),minval(xplot))) &
+           /max(max(maxval(xe),maxval(xplot)) - min(minval(xe),minval(xplot)),tiny(0.))
+    if (score > best) then
+       best = score
+       kx = k
+    endif
+ enddo
+ ux = tryx(kx)
+ xe = xexact*ux
+ if (mytransx /= 0) call transform(xe,mytransx)
+ !--sample particles within the x range of the exact solution and find the nearest exact point
+ n = 0
+ do i=1,size(xplot),max(size(xplot)/maxs,1)
+    if (n < maxs .and. xplot(i) >= minval(xe) .and. xplot(i) <= maxval(xe)) then
+       n = n + 1
+       yp(n) = yplot(i)
+       jn(n) = minloc(abs(xe - xplot(i)),dim=1)
+    endif
+ enddo
+ !
+ !  y axis, compare the difference between exact column and particle values
+ !          at matching x position
+ !
+ ky = 1
+ best = huge(best)
+ do k=1,3
+    if (tryy(k) <= 0. .or. n==0) cycle
+    ye(1:n) = yexact(jn(1:n))*tryy(k)
+    if (mytransy /= 0) call transform(ye(1:n),mytransy)
+    score = sum(abs(yp(1:n) - ye(1:n)))/max(sum(abs(yp(1:n)) + abs(ye(1:n))),tiny(0.))
+    if (score < best) then
+       best = score
+       ky = k
+    endif
+ enddo
+ uy = tryy(ky)
+ print "(a)",' > assuming '//trim(labelx)//' in '//trim(unitname(kx))//' units, '// &
+             trim(labely)//' in '//trim(unitname(ky))//' units'
 
- ! Calculate ranges for xexact and yexact without applying units
- range_xexact_no_units = maxval(xexact) - minval(xexact)
- range_yexact_no_units = maxval(yexact) - minval(yexact)
+end subroutine guess_units_of_exact
 
- ! Calculate ranges for xexact and yexact with applying units
- range_xexact_with_units = maxval(xexact * unitsx) - minval(xexact * unitsx)
- range_yexact_with_units = maxval(yexact * unitsy) - minval(yexact * unitsy)
+!------------------------------------------------------------------
+! factors converting values read from an exact solution file into
+! plot units, assuming the file is in (1) plot units, (2) code units
+! or (3) cgs units. Zero means the option does not apply
+!------------------------------------------------------------------
+function unit_candidates(units,label) result(try)
+ use asciiutils,     only:lcase,get_value
+ use labels,         only:label_synonym,headertags
+ use particle_data,  only:headervals
+ use settings_units, only:code_unit_in_cgs
+ real,             intent(in) :: units
+ character(len=*), intent(in) :: label
+ real :: try(3)
+ real(doub_prec) :: ucgs,udist,umass,utime
 
- ! Determine if applying units results in a closer range to xplot and yplot
- ! that is at least an order of magnitude closer in one of the axes
- if (abs(range_xexact_with_units - range_xplot) < 10.*abs(range_xexact_no_units - range_xplot) .or. &
-     abs(range_yexact_with_units - range_yplot) < 10.*abs(range_yexact_no_units - range_yplot)) then
-    guess_whether_to_apply_units_to_exact = .true.
- else
-    guess_whether_to_apply_units_to_exact = .false.
- endif
+ try = (/1.,units,0./)
+ if (lcase(label(1:3))=='log') try(2) = 0.  ! logged values cannot be rescaled
+ ! code units in cgs from the file header, if present
+ udist = get_value('udist',headertags,headervals(:,1))
+ umass = get_value('umass',headertags,headervals(:,1))
+ utime = get_value('utime',headertags,headervals(:,1))
+ ucgs = code_unit_in_cgs(label_synonym(label),udist,umass,utime)
+ if (try(2) > 0. .and. ucgs > 0.d0) try(3) = real(units/ucgs)
 
-end function guess_whether_to_apply_units_to_exact
+end function unit_candidates
 
 !------------------------------------------------------------------
 ! Wrapper routine to plot the exact solution line on current graph

@@ -1011,6 +1011,8 @@ subroutine identify_calculated_quantity(labelcol,ncolumns,icolumn)
  case('r','radius','rad')
     call assign_column(irad,icolumn,ncolumns,debugmode,'radius')
     if (iRescale .and. ix(1) > 0) units_calc(icolumn) = units(ix(1))
+ case('velocity')
+    if (iRescale .and. ivx > 0) units_calc(icolumn) = units(ivx)
  case('kinetic energy','ke','1/2 v^2','v^2/2')
     call assign_column(ike,icolumn,ncolumns,debugmode,'kinetic energy')
     if (iRescale .and. ivx > 0) units_calc(icolumn) = units(ivx)**2

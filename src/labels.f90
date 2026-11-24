@@ -217,6 +217,8 @@ elemental function label_synonym(string)
  call string_delete(labeli,'\u')
  call string_delete(labeli,'\')
  call string_delete(labeli,'_')
+ call string_delete(labeli,'{')
+ call string_delete(labeli,'}')
 
  ! remove log from the front of the label
  if (labeli(1:3)=='log') labeli = labeli(4:)
@@ -236,6 +238,9 @@ elemental function label_synonym(string)
     label_synonym = 'pressure'
  elseif (trim(labeli)=='r' .or. labeli(1:3)=='rad') then
     label_synonym = 'radius'
+ elseif (trim(labeli)=='v' .or. trim(labeli)=='vr' .or. trim(labeli)=='|v|') then
+    ! v in a radial profile matches v_r (if present) or |v|
+    label_synonym = 'velocity'
  else
     ! by default the label synonym is the same as the original label
     label_synonym = labeli
