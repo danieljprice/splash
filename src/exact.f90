@@ -1428,7 +1428,8 @@ subroutine exact_solution(iexact,iplotx,iploty,itransx,itransy,igeom, &
           ux = unitsx
           uy = unitsy
           if (iRescale .and. iauto_map_columns .and. iApplyTransExactFile .and. ierr <= 0) then
-             call guess_units_of_exact(xplot,yplot,xexact(1:iexactpts),yexact(1:iexactpts),unitsx,unitsy,&
+             call guess_units_of_exact(xplot,yplot,itag,iamtype,noftype,iplot_type,&
+                                       xexact(1:iexactpts),yexact(1:iexactpts),unitsx,unitsy,&
                                        itransx,itransy,exact_labels(imapx),exact_labels(imapy),ux,uy)
              iApplyUnitsExactFile = .true.
           endif
@@ -1833,24 +1834,36 @@ end function get_transform
 ! overlap with the particle x range, the y factor the one giving the
 ! smallest relative difference from the particles at matching x
 !------------------------------------------------------------------
-subroutine guess_units_of_exact(xplot,yplot,xexact,yexact,unitsx,unitsy,itransx,itransy,labelx,labely,ux,uy)
+subroutine guess_units_of_exact(xplot,yplot,itag,iamtype,noftype,iplot_type,&
+                                xexact,yexact,unitsx,unitsy,itransx,itransy,labelx,labely,ux,uy)
  use transforms, only:transform
+ use params,     only:int1,maxparttypes
  real,    intent(in)  :: xplot(:),yplot(:),xexact(:),yexact(:),unitsx,unitsy
- integer, intent(in)  :: itransx,itransy
+ integer, intent(in)  :: itag(:),itransx,itransy
+ integer(int1), intent(in) :: iamtype(:)
+ integer,       intent(in) :: noftype(maxparttypes)
+ logical,       intent(in) :: iplot_type(maxparttypes)
  character(len=*), intent(in) :: labelx,labely
  real,    intent(out) :: ux,uy
  integer, parameter :: maxs = 2000
  character(len=4), parameter :: unitname(3) = (/'plot','code','cgs '/)
- real    :: tryx(3),tryy(3),xe(size(xexact)),ye(maxs),yp(maxs),score,best
- integer :: jn(maxs),i,k,kx,ky,n,mytransx,mytransy
+ real    :: tryx(3),tryy(3),xe(size(xexact)),ye(maxs),yp(maxs),wn(maxs),score,best,xmin,xmax
+ integer :: jn(maxs),i,j,k,kx,ky,n,mytransx,mytransy
+ logical :: plotted(size(xplot))
 
  tryx = unit_candidates(unitsx,labelx)
  tryy = unit_candidates(unitsy,labely)
  mytransx = get_transform(itransx,.true.,labelx(1:3))
  mytransy = get_transform(itransy,.true.,labely(1:3))
+ ! only use particle types that are plotted
+ do i=1,size(xplot)
+    plotted(i) = plotted_type(i,itag,iamtype,noftype,iplot_type) > 0
+ enddo
+ xmin = minval(xplot,mask=plotted)
+ xmax = maxval(xplot,mask=plotted)
 
  !
- ! x axis, guess the unit scaling factor that best matches range 
+ ! x axis, guess the unit scaling factor that best matches range
  !         of exact solution to the particle data
  !
  kx = 1
@@ -1859,8 +1872,8 @@ subroutine guess_units_of_exact(xplot,yplot,xexact,yexact,unitsx,unitsy,itransx,
     if (tryx(k) <= 0.) cycle
     xe = xexact*tryx(k)
     if (mytransx /= 0) call transform(xe,mytransx)
-    score = (min(maxval(xe),maxval(xplot)) - max(minval(xe),minval(xplot))) &
-           /max(max(maxval(xe),maxval(xplot)) - min(minval(xe),minval(xplot)),tiny(0.))
+    score = (min(maxval(xe),xmax) - max(minval(xe),xmin)) &
+           /max(max(maxval(xe),xmax) - min(minval(xe),xmin),tiny(0.))
     if (score > best) then
        best = score
        kx = k
@@ -1869,13 +1882,19 @@ subroutine guess_units_of_exact(xplot,yplot,xexact,yexact,unitsx,unitsy,itransx,
  ux = tryx(kx)
  xe = xexact*ux
  if (mytransx /= 0) call transform(xe,mytransx)
- !--sample particles within the x range of the exact solution and find the nearest exact point
+ !--sample plotted particles, recording the interval j,j+1 of the exact solution
+ !  bracketing each one in x, and the weight for linear interpolation within it
  n = 0
  do i=1,size(xplot),max(size(xplot)/maxs,1)
-    if (n < maxs .and. xplot(i) >= minval(xe) .and. xplot(i) <= maxval(xe)) then
+    if (n >= maxs .or. .not.plotted(i)) cycle
+    do j=1,size(xe)-1
+       if ((xe(j) <= xplot(i)) .neqv. (xe(j+1) <= xplot(i))) exit
+    enddo
+    if (j < size(xe)) then
        n = n + 1
        yp(n) = yplot(i)
-       jn(n) = minloc(abs(xe - xplot(i)),dim=1)
+       jn(n) = j
+       wn(n) = (xplot(i) - xe(j))/(xe(j+1) - xe(j))
     endif
  enddo
  !
@@ -1886,7 +1905,7 @@ subroutine guess_units_of_exact(xplot,yplot,xexact,yexact,unitsx,unitsy,itransx,
  best = huge(best)
  do k=1,3
     if (tryy(k) <= 0. .or. n==0) cycle
-    ye(1:n) = yexact(jn(1:n))*tryy(k)
+    ye(1:n) = ((1. - wn(1:n))*yexact(jn(1:n)) + wn(1:n)*yexact(jn(1:n)+1))*tryy(k)
     if (mytransy /= 0) call transform(ye(1:n),mytransy)
     score = sum(abs(yp(1:n) - ye(1:n)))/max(sum(abs(yp(1:n)) + abs(ye(1:n))),tiny(0.))
     if (score < best) then
@@ -2009,7 +2028,6 @@ end subroutine plot_exact_solution
  !--------------------------------
 subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_type,&
                               xmin,xmax,residual,errL1,errL2,errLinf,iused,imatchtype)
- use part_utils, only:igettype
  use params,     only:int1,maxparttypes
  real,    intent(in)  :: xexact(:),yexact(:),xpts(:),ypts(:),xmin,xmax
  integer, intent(in)  :: itag(:)
@@ -2022,7 +2040,6 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
  integer, intent(in)  :: imatchtype
  integer :: i,j,npart,nerr,nused,itype
  real    :: xi,dy,dx,yexacti,err1,ymax
- logical :: mixedtypes
 
  errL1 = 0.
  errL2 = 0.
@@ -2033,18 +2050,13 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
  ymax = 0.
  nerr = 0
  nused = 0
- mixedtypes = size(iamtype) > 1
 
  do i=1,npart
     xi = xpts(i)
     yexacti = 0.
-    if (xi >= xmin .and. xi <= xmax .and. itag(i) > 0) then
-       if (mixedtypes) then
-          itype = min(max(int(iamtype(i)),1),maxparttypes)
-       else
-          itype = igettype(i,noftype)
-       endif
-       if (iplot_type(itype) .and. ((imatchtype==0).or.(itype==imatchtype))) then
+    if (xi >= xmin .and. xi <= xmax) then
+       itype = plotted_type(i,itag,iamtype,noftype,iplot_type)
+       if (itype > 0 .and. ((imatchtype==0).or.(itype==imatchtype))) then
           !
           !--find nearest point in exact solution table
           !
@@ -2099,6 +2111,28 @@ subroutine calculate_errors(xexact,yexact,xpts,ypts,itag,iamtype,noftype,iplot_t
  if (nerr > 0) print*,'WARNING: ',nerr,' errors in residual calculation'
 
 end subroutine calculate_errors
+
+!------------------------------------------------------------------
+! type of particle i if it is plotted, zero otherwise
+!------------------------------------------------------------------
+integer function plotted_type(i,itag,iamtype,noftype,iplot_type) result(itype)
+ use part_utils, only:igettype
+ use params,     only:int1,maxparttypes
+ integer,       intent(in) :: i,itag(:)
+ integer(int1), intent(in) :: iamtype(:)
+ integer,       intent(in) :: noftype(maxparttypes)
+ logical,       intent(in) :: iplot_type(maxparttypes)
+
+ itype = 0
+ if (itag(i) <= 0) return
+ if (size(iamtype) > 1) then
+    itype = min(max(int(iamtype(i)),1),maxparttypes)
+ else
+    itype = igettype(i,noftype)
+ endif
+ if (.not.iplot_type(itype)) itype = 0
+
+end function plotted_type
 
  !------------------------------------
  ! Plot residual errors as inset plot
