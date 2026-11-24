@@ -35,6 +35,7 @@ module settings_units
  public :: set_units,read_unitsfile,write_unitsfile,defaults_set_units
  public :: get_nearest_length_unit,get_nearest_time_unit
  public :: get_nearest_mass_unit,get_nearest_velocity_unit
+ public :: code_unit_in_cgs
 
  integer, parameter :: nx = 9
  real(doub_prec), parameter :: unit_length(nx) = &
@@ -127,6 +128,38 @@ subroutine defaults_set_units
  labelzintegration_default = ' '
 
 end subroutine defaults_set_units
+
+!-----------------------------------------------------------------------
+!
+!  code unit of a quantity in cgs, given the code units of length, mass
+!  and time in cgs (zero if the quantity is not recognised)
+!
+!-----------------------------------------------------------------------
+real(doub_prec) function code_unit_in_cgs(quantity,udist,umass,utime) result(ucgs)
+ character(len=*), intent(in) :: quantity
+ real(doub_prec),  intent(in) :: udist,umass,utime
+
+ ucgs = 0.d0
+ if (udist <= 0.d0 .or. umass <= 0.d0 .or. utime <= 0.d0) return
+
+ select case(trim(quantity))
+ case('radius','x','y','z','h')
+    ucgs = udist
+ case('pmass')
+    ucgs = umass
+ case('t','time')
+    ucgs = utime
+ case('velocity','vx','vy','vz')
+    ucgs = udist/utime
+ case('density')
+    ucgs = umass/udist**3
+ case('u')
+    ucgs = (udist/utime)**2
+ case('pressure')
+    ucgs = umass/(udist*utime**2)
+ end select
+
+end function code_unit_in_cgs
 
 !-------------------------------------------
 !
